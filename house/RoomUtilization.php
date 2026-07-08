@@ -22,7 +22,7 @@ require ("homeIncludes.php");
 
 
 try {
-    $wInit = new ebInit();
+    $wInit = new WebInit();
 } catch (Exception $exw) {
     die($exw->getMessage());
 }

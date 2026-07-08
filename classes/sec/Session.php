@@ -149,11 +149,11 @@ class Session
 
     /**
      * Summary of getSessionName
-     * @param mixed $confPath
-     * @param mixed $confFile
+     * @param string $confPath
+     * @param string $confFile
      * @return string
      */
-    private function getSessionName(string $confPath, string $confFile)
+    private function getSessionName(string $confPath, string $confFile): string
     {
         if(!empty($confPath) && !empty($confFile)){
             try{

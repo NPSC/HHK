@@ -845,12 +845,12 @@ Order by `t`.`List_Order`;");
         return $rowsAffected;
     }
 
-    public static function replaceLookups(\PDO $dbh, $category, array $title, array $use)
+    public static function replaceLookups(\PDO $dbh, $category, array|bool|null $title, array $use)
     {
         $uS = Session::getInstance();
         $rowsAffected = 0;
 
-        if (isset($title)) {
+        if (is_array($title)) {
 
             $reserveStatuses = Common::readLookups($dbh, "ReservStatus", "Code", true);
 

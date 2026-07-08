@@ -155,6 +155,7 @@ if (isset($_POST['btnSubmitTable']) or isset($_POST['btnSubmitClean'])) {
 $rescGroups = Common::readGenLookupsPDO($dbh, 'Room_Group');
 
 $rescGroupBy = '';
+$groupingTitle = '';
 
 if (isset($rescGroups[$uS->CalResourceGroupBy])) {
     $rescGroupBy = $uS->CalResourceGroupBy;

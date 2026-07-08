@@ -12,20 +12,8 @@ use HHK\HTMLControls\HTMLTable;
 use HHK\Purchase\PriceModel\AbstractPriceModel;
 use HHK\Purchase\RoomRate;
 use HHK\Purchase\ValueAddedTax;
-use HHK\sec\{
-    Session,
-};
-use HHK\SysConst\{
-    ResourceStatus,
-    RoomRateCategories,
-    GLTableNames,
-    ItemPriceCode,
-    InvoiceStatus,
-    ItemType,
-    ItemId,
-    VolMemberType
-};
-
+use HHK\sec\Session;
+use HHK\SysConst\{ResourceStatus, RoomRateCategories, GLTableNames, ItemPriceCode, InvoiceStatus, ItemType, ItemId, VolMemberType};
 use HHK\TableLog\HouseLog;
 
 class VisitIntervalOldRpt {

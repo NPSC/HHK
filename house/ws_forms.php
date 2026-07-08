@@ -89,7 +89,7 @@ try {
              if(!$uS->logged){
                  $events['error'] = "Unauthorized for page: Please login";
              }else{
-                 $id = filter_var($_GET["id"], FILTER_SANITIZE_NUMBER_INT);
+                 $id = intval(filter_var($_GET["id"], FILTER_SANITIZE_NUMBER_INT), 10);
                  if($id > 0){
                      $formDocument = new FormDocument();
                      if($formDocument->loadDocument($dbh, $id)){
@@ -108,34 +108,36 @@ try {
 
          case 'previewform':
 
-             $style = "";
-             $formData = "";
-             if(isset($_REQUEST['style'])){
-                 $style = filter_var($_REQUEST['style'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
-             }
-             if(isset($_REQUEST['initialGuests'])){
-                 $initialGuests = filter_var($_REQUEST['initialGuests'], FILTER_SANITIZE_NUMBER_INT);
-             }
-             if(isset($_REQUEST['maxGuests'])){
-                 $maxGuests = filter_var($_REQUEST['maxGuests'], FILTER_SANITIZE_NUMBER_INT);
-             }
-             if(isset($_REQUEST['formData'])){
-                $formData = filter_var($_REQUEST['formData'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
-             }
+            $style = "";
+            $formData = "";
+            $initialGuests = 1;
+            $maxGuests = 4;
+            if(isset($_REQUEST['style'])){
+                $style = filter_var($_REQUEST['style'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+            }
+            if(isset($_REQUEST['initialGuests'])){
+                $initialGuests = filter_var($_REQUEST['initialGuests'], FILTER_SANITIZE_NUMBER_INT);
+            }
+            if(isset($_REQUEST['maxGuests'])){
+                $maxGuests = filter_var($_REQUEST['maxGuests'], FILTER_SANITIZE_NUMBER_INT);
+            }
+            if(isset($_REQUEST['formData'])){
+               $formData = filter_var($_REQUEST['formData'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+            }
 
-             if(!$uS->logged){
-                 $events['error'] = "Unauthorized for page: Please login";
-             }else{
-                 $events['formData'] = $formData;
-                 $events['formSettings']['formStyle'] = $style;
-                 $events['formSettings']['enableRecaptcha'] = false;
-                 $events['formSettings']['initialGuests'] = $initialGuests;
-                 $events['formSettings']['maxGuests'] = $maxGuests;
-                 $events['lookups'] = FormTemplate::getLookups($dbh);
-             }
-             break;
+            if(!$uS->logged){
+                $events['error'] = "Unauthorized for page: Please login";
+            }else{
+                $events['formData'] = $formData;
+                $events['formSettings']['formStyle'] = $style;
+                $events['formSettings']['enableRecaptcha'] = false;
+                $events['formSettings']['initialGuests'] = $initialGuests;
+                $events['formSettings']['maxGuests'] = $maxGuests;
+                $events['lookups'] = FormTemplate::getLookups($dbh);
+            }
+            break;
 
-         case "submitform" :
+        case "submitform" :
 
 			$recaptchaToken = '';
 			if(isset($_POST['recaptchaToken'])){
@@ -144,7 +146,7 @@ try {
 
 			$recaptcha = new Recaptcha();
 			if(($uS->mode == 'demo' || $uS->mode == 'live') && $recaptchaToken != ''){
-			     $score = $recaptcha->verify($recaptchaToken);
+			    $score = $recaptcha->verify($recaptchaToken);
 			}else{
 			    $score = 1.0;
 			}

@@ -47,7 +47,7 @@ $labels = Labels::getLabels();
 
 
 
-function getPeopleReport(\PDO $dbh, $local, $showRelationship, $whClause, $start, $end, $showAddr, $showFullName, $showNoReturn, $showUnique, $showAssoc, $labels, $showDiagnosis, $showLocation, $showDemog) {
+function getPeopleReport(\PDO $dbh, bool $local, bool $showRelationship, string $whClause, string $start, string $end, bool $showAddr, bool $showFullName, bool $showNoReturn, bool $showUnique, bool $showAssoc, Labels $labels, bool $showDiagnosis, bool $showLocation, bool $showDemog) {
 
     $uS = Session::getInstance();
 
@@ -418,7 +418,7 @@ where  DATE(ifnull(s.Span_End_Date, now())) >= DATE('$start') and DATE(s.Span_St
     }
 }
 
-function getPsgReport(\PDO $dbh, $local, $whFields, $start, $end, $relCodes, $hospCodes, $labels, $showAssoc, $showDiagnosis, $showDiagDetails, $showLocation, $patBirthDate, $patAsGuest = true, $showCounty = FALSE) {
+function getPsgReport(\PDO $dbh, bool $local, string $whFields, string $start, string $end, array $relCodes, array $hospCodes, Labels $labels, bool $showAssoc, bool $showDiagnosis, bool $showDiagDetails, bool $showLocation, bool $patBirthDate, bool $patAsGuest = true, bool $showCounty = FALSE) {
 
     $diagTitle = $labels->getString('hospital', 'diagnosis', 'Diagnosis');
     $diagDetailTitle = $labels->getString('hospital', 'diagnosisDetail', 'Diagnosis Details');
@@ -651,7 +651,7 @@ order by ng.idPsg, `ispat`, `Id`";
 
 }
 
-function getNoReturn(\PDO $dbh, $local){
+function getNoReturn(\PDO $dbh, bool $local){
 
 
     $query = "SELECT N.idName AS `Id`, N.Name_First AS `First Name`, N.Name_Last AS `Last Name`, NRT.Description AS `No Return Reason` FROM `name` N
@@ -713,7 +713,7 @@ function getNoReturn(\PDO $dbh, $local){
     }
 }
 
-function getIncidentsReport(\PDO $dbh, $local, $irSelection) {
+function getIncidentsReport(\PDO $dbh, bool $local, array $irSelection) {
 
 	$whStatus = array(
 			0=>'',

@@ -487,7 +487,7 @@ class CustomRegisterForm {
      * @param bool $insideAgreement
      * @return string
      */
-    public function SignatureLinesMkup(array $guests, $primaryGuestId, bool $insideAgreement = false){
+    public function SignatureLinesMkup(array $guests, $primaryGuestId, bool $insideAgreement = false): string{
         $uS = Session::getInstance();
 
         $mkup = "";
@@ -541,7 +541,7 @@ class CustomRegisterForm {
         return $mkup;
     }
 
-    public function BlankSignatureLineMkup(){
+    public function BlankSignatureLineMkup(): string{
         return '<div class="row mt-4 signWrapper">
         <div class="col-8 row" style="align-items:flex-end;">
             <div class="col pr-0" style="max-width: fit-content;">Signature</div>
@@ -556,7 +556,7 @@ class CustomRegisterForm {
     </div>';
     }
 
-    public function InitialsLineMkup(){
+    public function InitialsLineMkup(): string{
         return '<span class="signWrapper" data-idbtn="">
                             <i class="bi bi-arrow-right-circle-fill pr-2"></i>
                             <span class="sigLine hhk-line" style="justify-content:end; width: 50px; display: inline-block;">' . (!empty($this->settings["Signatures"]["eSign"]) && ($this->settings["Signatures"]["eSign"] == 'jSign' || $this->settings["Signatures"]["eSign"] == 'topaz') ? '<img src="" style="display:none; width:100%"><input type="hidden" class="regFormInput" data-inputtype="signature"></span>
@@ -564,38 +564,38 @@ class CustomRegisterForm {
                     </span>';
     }
 
-    public function BlankTextBox(){
+    public function BlankTextBox(): string{
         return '<span class="textboxWrapper hhk-flex">
                     <i class="bi bi-arrow-right-circle-fill pr-2"></i>
                     <input type="text" class="regFormInput ui-state-highlight">
                 </span>';
     }
 
-    public function BlankInlineTextBox(){
+    public function BlankInlineTextBox(): string{
         return '<span class="textboxWrapper hhk-flex d-inline-flex">
                     <i class="bi bi-arrow-right-circle-fill pr-2"></i>
                     <input type="text" class="regFormInput ui-state-highlight">
                 </span>';
     }
 
-    public function BlankTextarea(){
+    public function BlankTextarea(): string{
         return '<span class="textboxWrapper hhk-flex">
                     <i class="bi bi-arrow-right-circle-fill pr-2"></i>
                     <textarea class="regFormInput ui-state-highlight" data-inputtype="textarea"></textarea>
                 </span>';
     }
 
-    public function checkbox(){
+    public function checkbox(): string{
         return '<span class="checkboxWrapper bi bi-square"><input type="hidden" class="regFormInput" data-inputtype="checkbox"></span>';
     }
 
-    protected function paymentRecord($feesRecord) {
+    protected function paymentRecord($feesRecord): string {
 
         $mkup = HTMLContainer::generateMarkup('div',  HTMLContainer::generateMarkup('h2', 'Payment Record'), array('style'=>'border:none;border-bottom:1.5pt solid #98C723;padding-left:0;')) . $feesRecord;
         return $mkup;
     }
 
-    protected function creditBlock(array $cardTokens = []) {
+    protected function creditBlock(array $cardTokens = []): string {
 
         $mkup = HTMLContainer::generateMarkup('h2', 'Payment Information', array('class'=>"mb-2"));
 
@@ -617,7 +617,7 @@ class CustomRegisterForm {
         return HTMLContainer::generateMarkup('div', $mkup);
     }
 
-    protected function notesBlock($notes, $title = 'Check-in Notes') {
+    protected function notesBlock($notes, $title = 'Check-in Notes'): string {
 
         $mkup = '';
 
@@ -630,7 +630,7 @@ class CustomRegisterForm {
         return $mkup;
     }
 
-    protected function guestBlock(\PDO $dbh, array $guests, array $relationText, int $primaryGuestId = 0) {
+    protected function guestBlock(\PDO $dbh, array $guests, array $relationText, int $primaryGuestId = 0): string {
 
         $uS = Session::getInstance();
         $ecRels = $uS->guestLookups[GLTableNames::PatientRel];
@@ -704,22 +704,22 @@ class CustomRegisterForm {
 
     }
 
-    protected function printFooterBlock($primaryGuestName = "", $room = ""){
+    protected function printFooterBlock($primaryGuestName = "", $room = ""): string{
         $mkup = '<footer class="row pt-3" style="width: 100%;"><div class="col">Registration Form' . ($primaryGuestName != "" ? "  &bull;  " . $primaryGuestName : "") . ($room != '' ? '  &bull;  Room ' . $room : "") . '</div><div class="col" style="text-align:right; max-width: fit-content;">Printed at ' . date("m/d/Y g:i A") . '</div></footer>';
 
         return $mkup;
     }
 
-    protected function setPageTitle($primaryGuestName = "", $room = ""){
+    protected function setPageTitle($primaryGuestName = "", $room = ""): void{
         $this->pageTitle = 'Registration Form' . ($primaryGuestName != "" ? " - " . $primaryGuestName : "") . ($room != '' ? ' - Room ' . $room : "");
     }
 
-    public function getPageTitle(){
+    public function getPageTitle(): string{
         return $this->pageTitle;
     }
 
     protected function generateDocument(\PDO $dbh, $title, AbstractRole $patient, $referralAgent, array $guests,  $houseAddr, $hospital, $mrn, $hospRoom, $diagnosis, $location, $doctor, $patientRelCodes,
-            $vehicles, $agent, $rate, $roomTitle, $arrival, $expectedDeparture, $expDepartPrompt, $agreementDocId, $cardTokens, $notes, $primaryGuestId = 0) {
+            $vehicles, $agent, $rate, $roomTitle, $arrival, $expectedDeparture, $expDepartPrompt, $agreementDocId, $cardTokens, $notes, $primaryGuestId = 0): string {
 
         $uS = Session::getInstance();
 
@@ -781,7 +781,7 @@ class CustomRegisterForm {
         return $mkup;
     }
 
-    public function prepareRegForm(\PDO $dbh, $idVisit, $span, $idReservation, $doc = []) {
+    public function prepareRegForm(\PDO $dbh, $idVisit, $span, $idReservation, $doc = []): string {
 
         $uS = Session::getInstance();
         $guests = array();
@@ -1100,7 +1100,7 @@ class CustomRegisterForm {
 
     }
 
-    public function getEditMkup(){
+    public function getEditMkup(): string{
         $mkup = HTMLContainer::generateMarkup("h2", "Registration Form Layout Options");
 
         foreach($this->settingTemplate as $group=>$inputs){
@@ -1146,7 +1146,7 @@ class CustomRegisterForm {
         return HTMLContainer::generateMarkup("div", $mkup);
     }
 
-    public function validateSettings($post = array()){
+    public function validateSettings($post = array()): array{
 
         $settings = [];
 
@@ -1173,7 +1173,7 @@ class CustomRegisterForm {
 
     }
 
-    public function getDefaultSettings(){
+    public function getDefaultSettings(): array{
         $settings = [];
         foreach($this->settingTemplate as $group=>$inputs){
 
