@@ -9,7 +9,6 @@ use HHK\CrmExport\Salesforce\Subresponse\AbstractCompositeSubresponse;
 use HHK\Crypto;
 use HHK\Exception\RuntimeException;
 use HHK\SysConst\RelLinkType;
-use HHK\TableLog\ExternalAPILog;
 use HHK\Tables\CmsGatewayRS;
 use HHK\Tables\EditRS;
 use HHK\HTMLControls\{HTMLContainer, HTMLTable, HTMLInput, HTMLSelector};
@@ -75,7 +74,7 @@ class SalesforceManager extends AbstractExportManager {
      * {@inheritDoc}
      * @see \HHK\CrmExport\AbstractExportManager::__construct()
      */
-    public function __construct(\PDO $dbh, $cmsName) {
+    public function __construct(\PDO $dbh, string $cmsName) {
         parent::__construct($dbh, $cmsName);
 
         // build the urls

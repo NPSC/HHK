@@ -434,6 +434,11 @@ class UserClass
                     ':newPw' => $newPwHash
                 ));
 
+                // the cached session row is now stale if the current user changed their own password
+                if ($id == $ssn->uid) {
+                    unset($ssn->userCredentials);
+                }
+
                 return TRUE;
             }
         }
@@ -897,6 +902,15 @@ class UserClass
 
         $uname = str_ireplace("'", "", $username);
 
+        // Serve the logged-in user's own row from the session cache instead of re-querying.
+        // Populated/refreshed in setSession() at login; callers that mutate this user's row
+        // (password/2FA/status changes) must unset $uS->userCredentials afterward.
+        $isSessionUser = ($uS->logged === true && strcasecmp((string) $uS->username, $uname) === 0);
+
+        if ($isSessionUser && isset($uS->userCredentials)) {
+            return $uS->userCredentials;
+        }
+
         $stmt = $dbh->prepare("SELECT u.*, a.Role_Id as Role_Id, ifnull(idp.Name, 'Unknown Provider') as 'authProvider'
 FROM w_users u join w_auth a on u.idName = a.idName
 join `name` n on n.idName = u.idName
@@ -906,11 +920,13 @@ WHERE n.idName is not null and u.Status IN ('a', 'd') and n.`Member_Status` = 'a
         $stmt->execute(array(':uname'=>$uname));
         $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
-        if (count($rows) == 1) {
-            return $rows[0];
+        $result = (count($rows) == 1) ? $rows[0] : NULL;
+
+        if ($isSessionUser) {
+            $uS->userCredentials = $result;
         }
 
-        return NULL;
+        return $result;
     }
 
     /**
@@ -1006,6 +1022,7 @@ WHERE n.idName is not null and u.Status IN ('a', 'd') and n.`Member_Status` = 'a
 
         $ssn->logged = true;
         $ssn->userAgent = filter_input(INPUT_SERVER, "HTTP_USER_AGENT", FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+        $ssn->userCredentials = $r;
         unset($ssn->Challtries);
 
         if ($init) {

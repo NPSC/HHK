@@ -37,8 +37,8 @@ class SF_Connector {
      */
     protected $credentials;
 
-    protected Client $client;
-    
+    protected ?Client $client = null;
+
     /**
      * The number of concurrent async requests to send at one time
      * @const CONCURRENT_REQUESTS
@@ -50,15 +50,31 @@ class SF_Connector {
         $this->dbh = $dbh;
         $this->credentials = $credentials;
         $this->oAuth = new SalesForceOAuth($this->dbh, $credentials);
-        $this->oAuth->login();
-        $this->client = new Client([
-            'base_uri' => $this->credentials->getBaseURI(),
-            'handler' => GuzzleAPILogger::createStack($this->dbh, SalesforceManager::LOG_SERVICE_NAME),
-            'headers' => [
-                'Authorization' => 'Bearer ' . $this->oAuth->getAccessToken(),
-                'Content-Type' => 'application/json',
-            ]
-        ]);
+    }
+
+    /**
+     * Logs in and builds the Guzzle client on first use only, so constructing
+     * an SF_Connector does not by itself request an OAuth token.
+     *
+     * @return Client
+     */
+    protected function getClient(): Client {
+
+        if ($this->client === null) {
+
+            $this->oAuth->login();
+
+            $this->client = new Client([
+                'base_uri' => $this->credentials->getBaseURI(),
+                'handler' => GuzzleAPILogger::createStack($this->dbh, SalesforceManager::LOG_SERVICE_NAME),
+                'headers' => [
+                    'Authorization' => 'Bearer ' . $this->oAuth->getAccessToken(),
+                    'Content-Type' => 'application/json',
+                ]
+            ]);
+        }
+
+        return $this->client;
     }
 
     /**
@@ -73,7 +89,7 @@ class SF_Connector {
         $result = null;
         try{
 
-            $response = $this->client->request('GET', $endpoint, [
+            $response = $this->getClient()->request('GET', $endpoint, [
                 RequestOptions::QUERY => [
                     'q' => $query
                 ]
@@ -98,7 +114,7 @@ class SF_Connector {
         $result = null;
         try{
 
-            $response = $this->client->request('GET', $endpoint);
+            $response = $this->getClient()->request('GET', $endpoint);
 
             $result = json_decode($response->getBody(), true);
 
@@ -124,7 +140,7 @@ class SF_Connector {
 
             $request = new Request('POST', $endpoint, [], json_encode($params));
 
-            $response = $this->client->send($request);
+            $response = $this->getClient()->send($request);
 
             $result = json_decode($response->getBody(), true);
 
@@ -154,7 +170,7 @@ class SF_Connector {
                 $batchRequests[$batchId] = new Request('POST', $endpoint, [], json_encode($params));
             }
 
-            $pool = new Pool($this->client, $batchRequests, [
+            $pool = new Pool($this->getClient(), $batchRequests, [
                 'concurrency' => self::CONCURRENT_REQUESTS,
                 'fulfilled' =>function (ResponseInterface $response, $batchId) use (&$batchResults){ //if the response is success
                     $batchResults[$batchId] = ['success'=>json_decode($response->getBody(), true)];
@@ -197,7 +213,7 @@ class SF_Connector {
 
             $request = new Request('PATCH', $endpoint, [], json_encode($params));
 
-            $response = $this->client->send($request);
+            $response = $this->getClient()->send($request);
 
             $result = json_decode($response->getBody(), true);
         } catch (BadResponseException $exception) {

@@ -99,33 +99,25 @@ try {
     }
 }
 
-if (isset($_REQUEST['regid'])) {
-    $idRegistration = intval(filter_var($_REQUEST['regid'], FILTER_SANITIZE_FULL_SPECIAL_CHARS), 10);
-}
+$intParm = ['filter' => FILTER_VALIDATE_INT, 'options' => ['default' => 0]];
 
-if (isset($_GET['vid'])) {
-    $idVisit = intval(filter_var($_REQUEST['vid'], FILTER_SANITIZE_FULL_SPECIAL_CHARS), 10);
-}
+$reqParms = filter_input_array(INPUT_GET, [
+    'regid'         => $intParm,
+    'vid'           => $intParm,
+    'payId'         => $intParm,
+    'invoiceNumber' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
+    'span'          => $intParm,
+    'rid'           => $intParm,
+    'idDoc'         => $intParm,
+]);
 
-if (isset($_GET['payId'])) {
-    $idPayment = intval(filter_var($_REQUEST['payId'], FILTER_SANITIZE_FULL_SPECIAL_CHARS), 10);
-}
-
-if (isset($_GET['invoiceNumber'])) {
-    $invoiceNumber = filter_var($_REQUEST['invoiceNumber'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
-}
-
-if (isset($_GET['span'])) {
-    $span = intval(filter_var($_REQUEST['span'], FILTER_SANITIZE_FULL_SPECIAL_CHARS), 10);
-}
-
-if (isset($_GET['rid'])) {
-    $idResv = intval(filter_var($_REQUEST['rid'], FILTER_SANITIZE_FULL_SPECIAL_CHARS), 10);
-}
-
-if(isset($_GET["idDoc"])){
-    $idDoc = intval(filter_var($_REQUEST['idDoc'], FILTER_SANITIZE_FULL_SPECIAL_CHARS), 10);
-}
+$idRegistration = $reqParms['regid'] ?? 0;
+$idVisit = $reqParms['vid'] ?? 0;
+$idPayment = $reqParms['payId'] ?? 0;
+$invoiceNumber = $reqParms['invoiceNumber'] ?? '';
+$span = $reqParms['span'] ?? 0;
+$idResv = $reqParms['rid'] ?? 0;
+$idDoc = $reqParms['idDoc'] ?? 0;
 
 if ($idVisit == 0 && $idResv > 0) {
     $stmt = $dbh->query("Select idVisit from visit where idReservation = $idResv");

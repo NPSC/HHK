@@ -213,6 +213,9 @@ switch ($c) {
 
         if(isset($mfa)){
             $success = $mfa->disable($dbh);
+            if ($success) {
+                unset($uS->userCredentials); // stale now that the MFA secret changed
+            }
             $events = ["success" => $success, "mkup" => $mfa->getEditMarkup($dbh)];
         }else{
             $events = ["error" => "Invalid method"];
@@ -408,6 +411,7 @@ function saveTwoFA(PDO $dbh, $secret, $OTP, $method){
                 if($ga->verifyCode($dbh, $OTP) == false){
                     $events = ['error' => "One Time Code is invalid"];
                 }elseif($backup->saveSecret($dbh) && $ga->saveSecret($dbh)){
+                    unset($uS->userCredentials); // stale now that the MFA secrets changed
                     $events = ['success' => 'Two Factor Authentication enabled', 'backupCodes' => $backup->getCode()];
                 }else{
                     $events = ['error' => "Unable to enable Two factor Authentication"];
@@ -423,6 +427,7 @@ function saveTwoFA(PDO $dbh, $secret, $OTP, $method){
             if($email->verifyCode($dbh, $OTP) == false){
                 $events = ['error' => "One Time Code is invalid"];
             }elseif($email->saveSecret($dbh)){
+                unset($uS->userCredentials); // stale now that the MFA secret changed
                 $events = ['success' => 'Two Factor Authentication enabled'];
             }else{
                 $events = ['error' => "Unable to enable Two factor Authentication"];
