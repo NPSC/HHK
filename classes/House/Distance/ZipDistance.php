@@ -40,7 +40,15 @@ class ZipDistance extends AbstractDistance{
         return array("type"=>"zip", "units"=>"miles", "value"=>$miles);
     }
 
-    protected static function GPS2Miles($lat_A, $long_A, $lat_B, $long_B) {
+    /**
+     * Calculate distance between two lat/long points using the Haversine formula
+     * @param mixed $lat_A
+     * @param mixed $long_A
+     * @param mixed $lat_B
+     * @param mixed $long_B
+     * @return float
+     */
+    public static function GPS2Miles($lat_A, $long_A, $lat_B, $long_B): float {
 
         $distance = sin(deg2rad((float)$lat_A)) * sin(deg2rad((float)$lat_B)) + cos(deg2rad((float)$lat_A)) * cos(deg2rad((float)$lat_B)) * cos(deg2rad((float)$long_A - (float)$long_B));
         $distance2 = (rad2deg(acos($distance))) * 69.09;
@@ -49,5 +57,3 @@ class ZipDistance extends AbstractDistance{
     }
 
 }
-
-?>

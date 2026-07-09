@@ -185,11 +185,11 @@ class RateChooser {
     /**
      * Summary of changeRoomRate
      * @param \PDO $dbh
-     * @param \HHK\House\Visit\Visit $visit
+     * @param Visit $visit
      * @param mixed $post
      * @return string
      */
-    public function changeRoomRate(\PDO $dbh, Visit $visit, $post) {
+    public function changeRoomRate(\PDO $dbh, Visit $visit, array $post) {
 
         $uS = Session::getInstance();
         $reply = '';
@@ -347,12 +347,12 @@ class RateChooser {
     /**
      * Summary of splitVisitSpan
      * @param \PDO $dbh
-     * @param \HHK\House\Visit\Visit $visit
+     * @param Visit $visit
      * @param string $rateCategory
      * @param float|int $assignedRate
      * @param float|int $rateAdj
      * @param string $uname
-     * @param \DateTime $changeDT
+     * @param \DateTimeInterface $changeDT
      * @return string
      */
     protected function splitVisitSpan(\PDO $dbh, Visit $visit, $rateCategory, $assignedRate, $rateAdj, $idRateAdjust, $uname, \DateTimeInterface $changeDT) {
@@ -375,7 +375,9 @@ class RateChooser {
             if ($spanId > $visit->getSpan()) {
 
                 // Increment the Visit span id
-                $upcount = $dbh->exec("UPDATE `visit` SET `Span`= '" . ($spanId + 1) . "' WHERE `idVisit`='$idVisit' and `Span`='$spanId'");
+                $upStmt = $dbh->prepare("UPDATE `visit` SET `Span`= :newSpan WHERE `idVisit`= :idVisit and `Span`= :span");
+                $upStmt->execute(array(':newSpan' => $spanId + 1, ':idVisit' => $idVisit, ':span' => $spanId));
+                $upcount = $upStmt->rowCount();
 
                 if ($upcount != 1) {
                     $reply .= "Error on visit update, span Id = " . $spanId;
@@ -413,7 +415,7 @@ class RateChooser {
     /**
      * Summary of createCheckinMarkup
      * @param \PDO $dbh
-     * @param \HHK\House\Reservation\Reservation_1 $resv
+     * @param Reservation_1 $resv
      * @param int $numNights
      * @param string $visitFeeTitle
      * @return string
@@ -435,7 +437,7 @@ class RateChooser {
     /**
      * Summary of createResvMarkup
      * @param \PDO $dbh
-     * @param \HHK\House\Reservation\Reservation_1 $resv
+     * @param Reservation_1 $resv
      * @param int $numNights
      * @param string $visitFeeTitle
      * @param int $idRegistration
@@ -467,7 +469,7 @@ class RateChooser {
     /**
      * Summary of createStaticMarkup
      * @param \PDO $dbh
-     * @param \HHK\House\Reservation\Reservation_1 $resv
+     * @param Reservation_1 $resv
      * @param string $visitFeeTitle
      * @return string
      */
@@ -645,7 +647,7 @@ class RateChooser {
     /**
      * Summary of createBasicChooserMarkup
      * @param \PDO $dbh
-     * @param \HHK\House\Reservation\Reservation_1 $resv
+     * @param Reservation_1 $resv
      * @param int $nites
      * @param string $visitFeeTitle
      * @param int $idRegistration

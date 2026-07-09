@@ -422,6 +422,7 @@ where lp.idPayment > 0
 
     $fltrdTitles = $colSelector->getFilteredTitles();
     $fltrdFields = $colSelector->getFilteredFields();
+    $writer = null;
 
     if ($local) {
         $tbl = new HTMLTable();
@@ -506,7 +507,7 @@ where lp.idPayment > 0
 
     } else {
         HouseLog::logDownload($dbh, 'Payment Report', "Excel", "Payment Report for " . $filter->getReportStart() . " - " . $filter->getReportEnd() . " downloaded", $uS->username);
-        $writer->download();
+        $writer?->download();
     }
 
 }

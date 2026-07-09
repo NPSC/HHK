@@ -19,9 +19,8 @@ class LogMiddleware
     
     public function __invoke(Request $request, RequestHandler $handler):ResponseInterface
     {
-
+        $response = $handler->handle($request);
         try {
-            $response = $handler->handle($request);
             
             if($request->getMethod() !== 'OPTIONS') {
                 $requestJson = json_encode(["method"=> $request->getMethod(), "uri"=> $request->getUri()->getPath(), "headers"=>$this->formatHeaders($request->getHeaders()), "params"=>$request->getQueryParams()], JSON_PRETTY_PRINT);
@@ -43,7 +42,7 @@ class LogMiddleware
             }
         }catch (\Exception $e) {
 
-            if(!isset($response) || !$response instanceof Response) {
+            if(!$response instanceof Response) {
                 $response = $handler->handle($request);
             }
         }

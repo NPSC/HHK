@@ -510,19 +510,11 @@ class GuestDemogReport {
 
         $rows = $stmt->fetchAll(\PDO::FETCH_NUM);
         if (count($rows) == 2) {
-            $miles = self::calcDist($rows[0][1], $rows[0][2], $rows[1][1], $rows[1][2]);
+            $miles = ZipDistance::GPS2Miles($rows[0][1], $rows[0][2], $rows[1][1], $rows[1][2]);
         } else {
             throw new RuntimeException("One or both zip codes not found in zip table, source=$sourceZip, dest=$destZip.  ");
         }
         return $miles;
-    }
-
-    protected static function calcDist($lat_A, $long_A, $lat_B, $long_B) {
-
-        $distance = sin(deg2rad((float)$lat_A)) * sin(deg2rad((float)$lat_B)) + cos(deg2rad((float)$lat_A)) * cos(deg2rad((float)$lat_B)) * cos(deg2rad((float)$long_A - (float)$long_B));
-        $distance2 = (rad2deg(acos($distance))) * 69.09;
-
-        return $distance2;
     }
 
     protected static function makeCounters($GL_Table, $includeBlank = TRUE) {

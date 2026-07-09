@@ -919,9 +919,6 @@ where
                         try {
                             $this->doMarkup($fltrdFields, $savedr, $visit, $dPaid, $unpaid, $departureDT, $matrix, $local, $rateTitles, $uS, $visitFee);
                         } catch (\Exception $e) {
-                            if (isset($writer)) {
-                                die();
-                            }
                         }
                     }
                 }
@@ -1208,9 +1205,6 @@ where
                 try {
                     $this->doMarkup($fltrdFields, $savedr, $visit, $dPaid, $unpaid, $departureDT, $matrix, $local, $rateTitles, $uS, $visitFee);
                 } catch (\Exception $e) {
-                    if (isset($writer)) {
-                        die();
-                    }
                 }
             }
         } // End of last visit

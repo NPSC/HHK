@@ -385,6 +385,7 @@ where $whDeleted  $whDates  $whItem and il.Item_Id != 5  $whStatus $whDiags grou
     $hdr = array();
     $fltrdTitles = $colSelector->getFilteredTitles();
     $fltrdFields = $colSelector->getFilteredFields();
+    $writer = null;
 
 
     if ($local) {
@@ -463,7 +464,7 @@ where $whDeleted  $whDates  $whItem and il.Item_Id != 5  $whStatus $whDiags grou
 
     } else {
         HouseLog::logDownload($dbh, 'Item Report', "Excel", "Item Report for " . $filter->getReportStart() . " - " . $filter->getReportEnd() . " downloaded", $uS->username);
-        $writer->download();
+        $writer?->download();
     }
 
 }
