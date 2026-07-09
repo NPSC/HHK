@@ -922,11 +922,11 @@ where PriceModel = '$priceModelCode' order by `breakpointOrder` desc, FA_Categor
             	PriceBasic::InstallRate($dbh);
                 break;
 
-            case ItemPriceCode::Dailey;
+            case ItemPriceCode::Dailey:
             PriceDaily::installRate($dbh, $incomeRated);
                 break;
 
-            case ItemPriceCode::PerGuestDaily;
+            case ItemPriceCode::PerGuestDaily:
             PriceGuestDay::installRate($dbh, $incomeRated);
                 break;
 

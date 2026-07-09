@@ -51,76 +51,60 @@ switch ($c) {
 
     case "delRel":
 
-        $id = 0;
-        $rId = 0;
+        $post = filter_input_array(INPUT_POST, [
+            'id' => FILTER_SANITIZE_NUMBER_INT,
+            'rId' => FILTER_SANITIZE_NUMBER_INT,
+            'rc' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
+        ]);
 
-        if (isset($_POST['id'])) {
-            $id = intval(filter_var($_POST['id'], FILTER_SANITIZE_NUMBER_INT), 10);
-        }
-        if (isset($_POST['rId'])) {
-            $rId = intval(filter_var($_POST['rId'], FILTER_SANITIZE_NUMBER_INT), 10);
-        }
-
-        if (isset($_POST['rc'])) {
-            $rc = filter_var($_POST['rc'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
-        }
+        $id = intval($post['id'], 10);
+        $rId = intval($post['rId'], 10);
+        $rc = $post['rc'] ?? '';
 
         $events = deleteRelationLink($dbh, $id, $rId, $rc);
         break;
 
     case "newRel":
 
-        $id = 0;
-        $rId = 0;
+        $post = filter_input_array(INPUT_POST, [
+            'id' => FILTER_SANITIZE_NUMBER_INT,
+            'rId' => FILTER_SANITIZE_NUMBER_INT,
+            'rc' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
+        ]);
 
-        if (isset($_POST['id'])) {
-            $id = intval(filter_var($_POST['id'], FILTER_SANITIZE_NUMBER_INT), 10);
-        }
-        if (isset($_POST['rId'])) {
-            $rId = intval(filter_var($_POST['rId'], FILTER_SANITIZE_NUMBER_INT), 10);
-        }
-
-        if (isset($_POST['rc'])) {
-            $rc = filter_var($_POST['rc'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
-        }
+        $id = intval($post['id'], 10);
+        $rId = intval($post['rId'], 10);
+        $rc = $post['rc'] ?? '';
 
         $events = newRelationLink($dbh, $id, $rId, $rc);
         break;
 
     case "addcareof":
 
-        $id = 0;
-        $rId = 0;
+        $post = filter_input_array(INPUT_POST, [
+            'id' => FILTER_SANITIZE_NUMBER_INT,
+            'rId' => FILTER_SANITIZE_NUMBER_INT,
+            'rc' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
+        ]);
 
-        if (isset($_POST['id'])) {
-            $id = intval(filter_var($_POST['id'], FILTER_SANITIZE_NUMBER_INT), 10);
-        }
-        if (isset($_POST['rId'])) {
-            $rId = intval(filter_var($_POST['rId'], FILTER_SANITIZE_NUMBER_INT), 10);
-        }
-
-        if (isset($_POST['rc'])) {
-            $rc = filter_var($_POST['rc'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
-        }
+        $id = intval($post['id'], 10);
+        $rId = intval($post['rId'], 10);
+        $rc = $post['rc'] ?? '';
 
         $events = changeCareOfFlag($dbh, $id, $rId, $rc, TRUE);
         break;
 
     case "delcareof":
 
-        $id = 0;
-        $rId = 0;
+        $post = filter_input_array(INPUT_POST, [
+            'id' => FILTER_SANITIZE_NUMBER_INT,
+            'rId' => FILTER_SANITIZE_NUMBER_INT,
+            'rc' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
+        ]);
 
-        if (isset($_POST['id'])) {
-            $id = intval(filter_var($_POST['id'], FILTER_SANITIZE_NUMBER_INT), 10);
-        }
-        if (isset($_POST['rId'])) {
-            $rId = intval(filter_var($_POST['rId'], FILTER_SANITIZE_NUMBER_INT), 10);
-        }
-
-        if (isset($_POST['rc'])) {
-            $rc = filter_var($_POST['rc'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
-        }
+        $id = intval($post['id'], 10);
+        $rId = intval($post['rId'], 10);
+        $rc = $post['rc'] ?? '';
 
         $events = changeCareOfFlag($dbh, $id, $rId, $rc, FALSE);
         break;
@@ -304,7 +288,7 @@ function getCounties(PDO $dbh, $state) {
     return $events;
 }
 
-function changeCareOfFlag(PDO $dbh, $id, $rId, $relCode, $flag) {
+function changeCareOfFlag(PDO $dbh, int $id, int $rId, string $relCode, bool $flag) {
 
     $rel = AbstractRelation::instantiateRelation($dbh, $relCode, $id);
 
@@ -320,7 +304,7 @@ function changeCareOfFlag(PDO $dbh, $id, $rId, $relCode, $flag) {
 
 }
 
-function deleteRelationLink(PDO $dbh, $id, $rId, $relCode) {
+function deleteRelationLink(PDO $dbh, int $id, int $rId, string $relCode) {
 
     $rel = AbstractRelation::instantiateRelation($dbh, $relCode, $id);
 
@@ -336,7 +320,7 @@ function deleteRelationLink(PDO $dbh, $id, $rId, $relCode) {
 
 }
 
-function newRelationLink(PDO $dbh, $id, $rId, $relCode) {
+function newRelationLink(PDO $dbh, int $id, int $rId, string $relCode) {
 
     $uS = Session::getInstance();
 
@@ -444,6 +428,9 @@ function saveTwoFA(PDO $dbh, $secret, $OTP, $method){
                 $events = ['error' => "Unable to enable Two factor Authentication"];
             }
             break;
+
+        default:
+            $events = ['error' => 'Invalid method'];
     }
 
     return $events;

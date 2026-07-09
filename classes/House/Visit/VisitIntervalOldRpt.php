@@ -15,12 +15,13 @@ use HHK\Purchase\ValueAddedTax;
 use HHK\sec\Session;
 use HHK\SysConst\{ResourceStatus, RoomRateCategories, GLTableNames, ItemPriceCode, InvoiceStatus, ItemType, ItemId, VolMemberType};
 use HHK\TableLog\HouseLog;
+use Pdo\Mysql;
 
 class VisitIntervalOldRpt {
 
-    protected $eachTaxPaid;
+    protected array $eachTaxPaid;
 
-    public function __construct($eachTaxPaid)
+    public function __construct(array $eachTaxPaid)
     {
         $this->eachTaxPaid = $eachTaxPaid;
     }
@@ -227,7 +228,7 @@ ORDER BY s.idVisit , s.Visit_Span");
 
         if ($emod > 0) {
             // odd number of entries
-            $median = $visitNites[(ceil($entries / 2) - 1)];
+            $median = $visitNites[intdiv($entries, 2)];
         } else {
             $median = ($visitNites[($entries / 2) - 1] + $visitNites[($entries / 2)]) / 2;
         }
@@ -461,20 +462,20 @@ where
 
     /**
      * Summary of doMarkup - Pretify a row
-     * @param mixed $fltrdFields
-     * @param mixed $r
-     * @param mixed $visit
+     * @param array $fltrdFields
+     * @param array $r
+     * @param array $visit
      * @param mixed $paid
      * @param mixed $unpaid
      * @param \DateTimeInterface $departureDT
      * @param mixed $matrix
-     * @param mixed $local
-     * @param mixed $rateTitles
-     * @param mixed $uS
+     * @param bool $local
+     * @param array $rateTitles
+     * @param Session $uS
      * @param mixed $visitFee
      * @return void
      */
-    protected function doMarkup($fltrdFields, $r, $visit, $paid, $unpaid, \DateTimeInterface $departureDT, &$matrix, $local, $rateTitles, $uS, $visitFee = FALSE)
+    protected function doMarkup(array $fltrdFields, array $r, array $visit, $paid, $unpaid, \DateTimeInterface $departureDT, &$matrix, bool $local, array $rateTitles, Session $uS, $visitFee = FALSE)
     {
 
         $arrivalDT = new \DateTime($r['Arrival_Date']);
@@ -686,7 +687,7 @@ where
     /**
      * Summary of doReport
      * @param \PDO $dbh
-     * @param \HHK\ColumnSelectors $colSelector
+     * @param ColumnSelectors $colSelector
      * @param mixed $start
      * @param mixed $end
      * @param mixed $whHosp
@@ -783,7 +784,7 @@ where
 
         $vat = new ValueAddedTax($dbh);
 
-        $dbh->setAttribute(\PDO::MYSQL_ATTR_USE_BUFFERED_QUERY, FALSE);
+        $dbh->setAttribute(Mysql::ATTR_USE_BUFFERED_QUERY, FALSE);
 
         $query = $this->buildQuery($start, $end, $uS->subsidyId, $eachTaxSql) . $whHosp . $whAssoc . " group by v.idVisit, v.Span order by v.idVisit, v.Span";
 
@@ -1249,7 +1250,7 @@ where
 
                 if ($emod > 0) {
                     // odd number of entries
-                    $medDailyFee = $chargesAr[(ceil($entries / 2) - 1)];
+                    $medDailyFee = $chargesAr[intdiv($entries, 2)];
                 } else {
                     $medDailyFee = ($chargesAr[($entries / 2) - 1] + $chargesAr[($entries / 2)]) / 2;
                 }
