@@ -20,10 +20,10 @@ class Session
     const SESSION_NOT_STARTED = FALSE;
 
     // The state of the session
-    private $sessionState = self::SESSION_NOT_STARTED;
+    private bool $sessionState = self::SESSION_NOT_STARTED;
 
     // THE only instance of the class
-    private static $instance;
+    private static Session $instance;
 
 
     // Empty Constructor
@@ -36,7 +36,7 @@ class Session
     *
     *    @return    object
     **/
-    public static function getInstance($confPath = CONF_PATH, $confFile = ciCFG_FILE)
+    public static function getInstance(string $confPath = CONF_PATH, string $confFile = ciCFG_FILE): Session
     {
         if (!isset(self::$instance))
         {
@@ -55,7 +55,7 @@ class Session
     *    @return    bool    TRUE if the session has been initialized, else FALSE.
     **/
 
-    public function startSession(string $confPath = '', string $confFile = '')
+    public function startSession(string $confPath = '', string $confFile = ''): bool
     {
         if ( $this->sessionState == self::SESSION_NOT_STARTED || session_status() !== PHP_SESSION_ACTIVE)
         {
@@ -166,22 +166,4 @@ class Session
             return 'HHKSESSION';
         }
     }
-
-    //        session_start();
-//
-//        // Unset all of the session variables.
-//        $_SESSION = array();
-//
-//        // If it's desired to kill the session, also delete the session cookie.
-//        // Note: This will destroy the session, and not just the session data!
-//        if (ini_get("session.use_cookies")) {
-//            $params = session_get_cookie_params();
-//            setcookie(session_name(), '', time() - 42000,
-//                $params["path"], $params["domain"],
-//                $params["secure"], $params["httponly"]
-//            );
-//        }
-//
-//
-
 }

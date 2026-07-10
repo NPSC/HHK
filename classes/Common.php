@@ -8,7 +8,6 @@ use DebugBar\DataCollector\PDO\TraceablePDO;
 use HHK\Debug\DebugBarSupport;
 use HHK\Exception\RuntimeException;
 use HHK\Exception\UnexpectedValueException;
-use HHK\HTMLControls\HTMLSelector;
 use HHK\sec\Session;
 use HHK\SysConst\{WebRole};
 use HHK\sec\{SecurityComponent, SysConfig};
@@ -111,7 +110,7 @@ class Common {
 
     /**
      * Sync house timezone in PHP + database
-     * @param \PDO $dbh
+     * @param PDO $dbh
      * @return void
      */
     public static function syncTimeZone(PDO $dbh): void
@@ -185,9 +184,10 @@ class Common {
 
     public static function readGenLookupsPDO(PDO $dbh, string $tbl, string $orderBy = "Code"): array
     {
-        $safeTbl = str_replace("'", '', $tbl);
-        $query = "SELECT `Code`, `Description`, `Substitute`, `Type`, `Order`, `Attributes` FROM `gen_lookups` WHERE `Table_Name` = '$safeTbl' order by `$orderBy`;";
-        $stmt = $dbh->query($query);
+        $orderBy = preg_replace('/[^A-Za-z0-9_]/', '', $orderBy);
+
+        $stmt = $dbh->prepare("SELECT `Code`, `Description`, `Substitute`, `Type`, `Order`, `Attributes` FROM `gen_lookups` WHERE `Table_Name` = :tbl order by `$orderBy`;");
+        $stmt->execute([':tbl' => $tbl]);
 
         $genArray = array();
 
@@ -240,7 +240,7 @@ class Common {
     /**
      * Summary of parseStringToArray
      * @param array $inputArray
-     * @throws \HHK\Exception\RuntimeException
+     * @throws RuntimeException
      * @return array
      */
     public static function parseKeysToArray(array $inputArray): array
