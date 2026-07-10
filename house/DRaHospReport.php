@@ -43,7 +43,6 @@ $isGuestAdmin = SecurityComponent::is_Authorized('guestadmin');
 
 $labels = Labels::getLabels();
 
-
 $filter = new ReportFilter();
 $filter->createTimePeriod(date('Y'), '19', $uS->fy_diff_Months);
 $filter->createHospitals();
@@ -196,47 +195,42 @@ function getRecords(\PDO $dbh, bool $local, string $type, string $colNameTitle, 
 }
 
 
-function blanksOnly(\PDO $dbh, $type, $whClause, ReportFilter $filter, $labels) {
+function blanksOnly(\PDO $dbh, string $type, string $whClause, ReportFilter $filter, Labels $labels) {
 
-    $class = '';
-    $htmlId = '';
     $nameCol = $labels->getString('MemberType', 'patient', 'Patient');
     $hospitalCol = $labels->getString('hospital', 'hospital', 'Hospital');
 
     if ($type == VolMemberType::Doctor) {
-        $Id = 'idDoctor';
-        $prefix = 'd';
-        $class = 'hhk-docInfo';
-        $htmlId = 'txtDocSch';
+        $id = 'idDoctor';
     } else if ($type == VolMemberType::ReferralAgent) {
-        $Id = 'idReferralAgent';
-        $prefix = 'a';
-        $class = 'hhk-agentInfo';
-        $htmlId = 'txtAgentSch';
+        $id = 'idReferralAgent';
     }
 
-    $query = "select hs.idPatient as `Id`, n.Name_Full as `$nameCol Name`, h.Title as `$hospitalCol`, hs.idPsg
+    if (isset($id)) {
+
+        $query = "select hs.idPatient as `Id`, n.Name_Full as `$nameCol Name`, h.Title as `$hospitalCol`, hs.idPsg
 from hospital_stay hs left join `name` n on hs.idPatient = n.idName
 left join reservation rv on hs.idHospital_stay = rv.idHospital_Stay
 left join hospital h on h.idHospital = hs.idHospital
-where hs.$Id = 0 and rv.`Status` in ('" . ReservationStatus::Checkedout . "', '" . ReservationStatus::Staying . "') "
+where hs.$id = 0 and rv.`Status` in ('" . ReservationStatus::Checkedout . "', '" . ReservationStatus::Staying . "') "
  . " and DATE(ifnull(rv.Actual_Departure, rv.Expected_Departure)) >= DATE('".$filter->getReportStart()."') and DATE(ifnull(rv.Actual_Arrival, rv.Expected_Arrival)) < DATE('".$filter->getQueryEnd()."') $whClause";
 
-    $stmt = $dbh->query($query);
+        $stmt = $dbh->query($query);
 
-    $rows = array();
+        $rows = array();
 
-    while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
+        while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
 
-        $r['Id'] = HTMLContainer::generateMarkup('a', $r['Id'], array('href'=>'GuestEdit.php?id=' . $r['Id'] . '&psg=' . $r['idPsg']));
+            $r['Id'] = HTMLContainer::generateMarkup('a', $r['Id'], array('href'=>'GuestEdit.php?id=' . $r['Id'] . '&psg=' . $r['idPsg']));
 
-        unset($r['idPsg']);
+            unset($r['idPsg']);
 
-        $rows[] = $r;
-    }
+            $rows[] = $r;
+        }
 
-    if (count($rows) > 0) {
-        return CreateMarkupFromDB::generateHTML_Table($rows, '');
+        if (count($rows) > 0) {
+            return CreateMarkupFromDB::generateHTML_Table($rows, '');
+        }
     }
 
 }

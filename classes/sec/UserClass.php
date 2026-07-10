@@ -124,6 +124,7 @@ class UserClass
                     }
                     return FALSE;
                 }else if($OTPRequired && $otp != '' && $otpMethod){
+                    $mfaObj = null;
                     switch($otpMethod) {
                         case "authenticator":
                             $mfaObj = new GoogleAuthenticator($r);
@@ -138,9 +139,9 @@ class UserClass
                             $success = false;
                     }
 
-                    if($mfaObj->verifyCode($dbh, $otp) == true){
+                    if($mfaObj?->verifyCode($dbh, $otp) == true){
                         if($rememberMe){
-                            $rememberObj->rememberMe($dbh);
+                            $rememberObj?->rememberMe($dbh);
                         }
 
                         $success = true;

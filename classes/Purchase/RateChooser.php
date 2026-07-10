@@ -210,7 +210,7 @@ class RateChooser {
         $today->setTime(0, 0, 0);
         $now = new \DateTime();
         $hr = $now->format('H');
-        $min = $now->format('m');
+        $min = $now->format('i');
 
         if (isset($post['rbReplaceRate'])) {
             $replaceMode = filter_var($post['rbReplaceRate'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
@@ -229,11 +229,15 @@ class RateChooser {
 
             } else {
                 $chRateDT = $today;
+                $chDT = new \DateTime($today->format('Y-m-d'));
+                $chDT->setTime($hr, $min, 0);
             }
 
         } else {
             // set date to start of span
             $chRateDT = new \DateTime($visitRs->Span_Start->getStoredVal());
+            $chDT = new \DateTime($chRateDT->format('Y-m-d'));
+            $chDT->setTime($hr, $min, 0);
         }
 
         if (is_null($chRateDT)) {

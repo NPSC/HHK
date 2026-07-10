@@ -10,7 +10,7 @@ use HHK\Payment\Invoice\Invoice;
 use HHK\Payment\PaymentGateway\AbstractPaymentGateway;
 use HHK\Payment\PaymentGateway\CreditPayments\{ReturnReply, SaleReply, VoidReply};
 use HHK\Payment\PaymentManager\PaymentManagerPayment;
-use HHK\Payment\PaymentResult\{PaymentResult, ReturnResult, RefundResult};
+use HHK\Payment\PaymentResult\{PaymentResult, RefundResult};
 use HHK\SysConst\{MemBasis, MpTranType, PaymentMethod, PaymentStatusCode, TransMethod, TransType};
 use HHK\Tables\EditRS;
 use HHK\Tables\Payment\{PaymentRS, Payment_AuthRS};
@@ -61,8 +61,8 @@ class LocalGateway extends AbstractPaymentGateway {
 	/**
 	 * Summary of creditSale
 	 * @param \PDO $dbh
-	 * @param \HHK\Payment\PaymentManager\PaymentManagerPayment $pmp
-	 * @param \HHK\Payment\Invoice\Invoice $invoice
+	 * @param PaymentManagerPayment $pmp
+	 * @param Invoice $invoice
 	 * @param mixed $postbackUrl
 	 * @return PaymentResult
 	 */
@@ -223,9 +223,9 @@ class LocalGateway extends AbstractPaymentGateway {
 	/**
 	 * Summary of _returnPayment
 	 * @param \PDO $dbh
-	 * @param \HHK\Payment\Invoice\Invoice $invoice
-	 * @param \HHK\Tables\Payment\PaymentRS $payRs
-	 * @param \HHK\Tables\Payment\Payment_AuthRS $pAuthRs
+	 * @param Invoice $invoice
+	 * @param PaymentRS $payRs
+	 * @param Payment_AuthRS $pAuthRs
 	 * @param mixed $retAmount
 	 * @param mixed $bid
 	 * @return array{bid: mixed|string[]}
@@ -285,7 +285,7 @@ class LocalGateway extends AbstractPaymentGateway {
  /**
   * Summary of returnAmount
   * @param \PDO $dbh
-  * @param \HHK\Payment\Invoice\Invoice $invoice
+  * @param Invoice $invoice
   * @param mixed $rtnTokenId
   * @param string $paymentNotes
   * @return RefundResult
@@ -465,6 +465,7 @@ class LocalGateway extends AbstractPaymentGateway {
 
 		// Charge card list
 		$ccs = Common::readGenLookupsPDO ( $dbh, 'Charge_Cards' );
+		$cardNames = [];
 
 		foreach ( $ccs as $v ) {
 		    $v[0] = $v[1];

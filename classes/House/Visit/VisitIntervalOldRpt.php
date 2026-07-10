@@ -734,6 +734,8 @@ where
         $curVisit = 0;
         $curRoom = 0;
         $curRate = '';
+        $curRateId = 0;
+        $curAdj = 0;
         $curAmt = 0;
 
         $totalCharged = 0;

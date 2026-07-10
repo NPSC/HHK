@@ -784,6 +784,13 @@ class CustomRegisterForm {
     public function prepareRegForm(\PDO $dbh, $idVisit, $span, $idReservation, $doc = []): string {
 
         $uS = Session::getInstance();
+        $patient = NULL;
+        $referralAgent = NULL;
+        $mrn = '';
+        $hospRoom = '';
+        $diagnosis = '';
+        $location = '';
+        $doctor = NULL;
         $guests = array();
         $depDate = '';
         $reg = NULL;

@@ -32,7 +32,7 @@ class Siblings extends AbstractRelation {
      * @param \PDO $dbh
      * @return \PDOStatement|bool
      */
-    protected function getPdoStmt(\PDO $dbh) {
+    protected function getPdoStmt(\PDO $dbh): bool|\PDOStatement {
 
         $query = "Select v.Id, concat(v.Name_First, ' ', v.Name_Last) as `Name`, v.MemberStatus as `MemStatus`, r . *
 from relationship r
@@ -114,7 +114,9 @@ where
                 values ($id, $ur_gc, '$RelCode', 'a', now(), '" . $user . "');";
             $dbh->exec($q);
         } else if ($my_gc == 0 && $ur_gc == 0) {
+
             // Get a new group code.
+            $relCtr = 0;
             $dbh->query("CALL IncrementCounter('relationship', @num);");
             foreach ($dbh->query("SELECT @num") as $row) {
                 $relCtr = $row[0];

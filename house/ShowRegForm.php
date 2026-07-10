@@ -47,9 +47,12 @@ $receiptMarkup = '';
 $receiptBilledToEmail = '';
 $receiptPaymentId = 0;
 $invoiceNumber = '';
+$signedDate = null;
 $menuMarkup = '';
 $regButtonStyle = 'display:none;';
 $showSignedTab = false;
+$signedDocCount = 0;
+$signedTabControl = '';
 $isTopazRequired = false;
 $blankFormTitle = "Registration Form";
 $signatures = array();
@@ -210,8 +213,6 @@ if($idVisit || $idResv){
 
         $signedDocCount = count($signedDocsArray);
         if($signedDocCount > 0){
-            $showSignedTab = true;
-            
             $blankFormTitle = "Blank Registration Form";
             
             foreach ($signedDocsArray as $r) {
@@ -235,6 +236,7 @@ if($idVisit || $idResv){
 
             $signedUl = HTMLContainer::generateMarkup('ul', $signedLi, array());
             $signedTabControl = HTMLContainer::generateMarkup('div', $signedUl . $signedTabContent, array('id'=>'signedRegTabDiv'));
+            $showSignedTab = true;
         }
     }catch(\Exception $e){
         $tabControl = HTMLContainer::generateMarkup("div", $e->getMessage(), array("class"=>"ui-widget ui-widget-content ui-corner-all ui-state-highlight hhk-panel hhk-tdbox my-2"));
@@ -244,7 +246,7 @@ if($idVisit || $idResv){
     $tabControl = HTMLContainer::generateMarkup('div',
         HTMLInput::generateMarkup(
             'Print', ['type'=>'button', 'class'=>'btnPrint mb-3', 'data-tab'=>'', 'data-title'=>$labels->getString('MemberType', 'guest', 'Guest') . ' Registration Form']) .
-        $regContents . HTMLContainer::generateMarkup('p', "Signed: " . $signedDate->format("M j, Y g:i a"), ['class'=>'mt-4 signTimestamp', 'style'=>'text-align:end;'])
+        $regContents . ($signedDate !== null ? HTMLContainer::generateMarkup('p', "Signed: " . $signedDate->format("M j, Y g:i a"), ['class'=>'mt-4 signTimestamp', 'style'=>'text-align:end;']) : '')
     );
 }
 //"<span class='ui-icon ui-icon-extlink' style='float: right; margin-left: .3em;'></span>"

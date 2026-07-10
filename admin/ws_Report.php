@@ -17,7 +17,7 @@ $wInit = new WebInit(WebPageCode::Service);
 $dbh = $wInit->dbh;
 
 
-function campaignList(PDO $dbh, $yr) {
+function campaignList(PDO $dbh, string$yr) {
     // Year where-clause
     $headerYears = "";
 
@@ -65,12 +65,13 @@ function campaignList(PDO $dbh, $yr) {
     return array("success" => "No Campaigns Found");
 }
 
-function campaignReport(PDO $dbh, $rbsel, $yr, $fyMonthsAdjust) {
+function campaignReport(PDO $dbh, string $rbsel, string $yr, $fyMonthsAdjust) {
 
     // Year where-clause
     $whClause = "";
     $headerYears = "";
     $pArray = NULL;
+    $dateMkup = "";
 
     if ($rbsel == "cy") {
 
@@ -175,12 +176,13 @@ function campaignReport(PDO $dbh, $rbsel, $yr, $fyMonthsAdjust) {
     return $txtreport . "</table>";
 }
 
-function campaignInKindReport(PDO $dbh, $rbsel, $yr, $fyMonthsAdjust) {
+function campaignInKindReport(PDO $dbh, string $rbsel, string $yr, $fyMonthsAdjust) {
 
     // Year where-clause
     $whClause = "";
     $headerYears = "";
     $pArray = NULL;
+    $dateMkup = "";
 
     if ($rbsel == "cy") {
 

@@ -477,79 +477,46 @@ try {
 
         case "delRel":
 
-            $id = 0;
-            $rId = 0;
-            $relCode = "";
-            if (isset($_POST['id'])) {
-                $id = intval(filter_var($_POST['id'], FILTER_SANITIZE_NUMBER_INT), 10);
-            }
-            if (isset($_POST['rId'])) {
-                $rId = intval(filter_var($_POST['rId'], FILTER_SANITIZE_NUMBER_INT), 10);
-            }
-
-            if (isset($_POST['rc'])) {
-                $rc = filter_var($_POST['rc'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
-            }
-
-            $events = deleteRelationLink($dbh, $id, $rId, $rc);
+            $post = filter_input_array(INPUT_POST, [
+                "id" => FILTER_SANITIZE_NUMBER_INT,
+                "rId" => FILTER_SANITIZE_NUMBER_INT,
+                "rc" => FILTER_SANITIZE_FULL_SPECIAL_CHARS
+            ]);
+            
+            $events = deleteRelationLink($dbh, $post['id'], $post['rId'], $post['rc']);
             break;
 
         case "newRel":
-
-            $id = 0;
-            $rId = 0;
-            $relCode = "";
             
-            if (isset($_POST['id'])) {
-                $id = intval(filter_var($_POST['id'], FILTER_SANITIZE_NUMBER_INT), 10);
-            }
-            if (isset($_POST['rId'])) {
-                $rId = intval(filter_var($_POST['rId'], FILTER_SANITIZE_NUMBER_INT), 10);
-            }
+            $post = filter_input_array(INPUT_POST, [
+                "id" => FILTER_SANITIZE_NUMBER_INT,
+                "rId" => FILTER_SANITIZE_NUMBER_INT,
+                "rc" => FILTER_SANITIZE_FULL_SPECIAL_CHARS
+            ]);
 
-            if (isset($_POST['rc'])) {
-                $relCode = filter_var($_POST['rc'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
-            }
-
-            $events = newRelationLink($dbh, $id, $rId, $relCode);
+            $events = newRelationLink($dbh, $post['id'], $post['rId'], $post['rc']);
             break;
 
         case "addcareof":
 
-            $id = 0;
-            $rId = 0;
-            $relCode = "";
-            if (isset($_POST['id'])) {
-                $id = intval(filter_var($_POST['id'], FILTER_SANITIZE_NUMBER_INT), 10);
-            }
-            if (isset($_POST['rId'])) {
-                $rId = intval(filter_var($_POST['rId'], FILTER_SANITIZE_NUMBER_INT), 10);
-            }
+            $post = filter_input_array(INPUT_POST, [
+                "id" => FILTER_SANITIZE_NUMBER_INT,
+                "rId" => FILTER_SANITIZE_NUMBER_INT,
+                "rc" => FILTER_SANITIZE_FULL_SPECIAL_CHARS
+            ]);
 
-            if (isset($_POST['rc'])) {
-                $relCode = filter_var($_POST['rc'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
-            }
-
-            $events = changeCareOfFlag($dbh, $id, $rId, $relCode, TRUE);
+            $events = changeCareOfFlag($dbh, $post['id'], $post['rId'], $post['rc'], TRUE);
             break;
 
         case "delcareof":
 
-            $id = 0;
-            $rId = 0;
-            $relCode = "";
-            if (isset($_POST['id'])) {
-                $id = intval(filter_var($_POST['id'], FILTER_SANITIZE_NUMBER_INT), 10);
-            }
-            if (isset($_POST['rId'])) {
-                $rId = intval(filter_var($_POST['rId'], FILTER_SANITIZE_NUMBER_INT), 10);
-            }
+            $post = filter_input_array(INPUT_POST, [
+                "id" => FILTER_SANITIZE_NUMBER_INT,
+                "rId" => FILTER_SANITIZE_NUMBER_INT,
+                "rc" => FILTER_SANITIZE_FULL_SPECIAL_CHARS
+            ]);
 
-            if (isset($_POST['rc'])) {
-                $relCode = filter_var($_POST['rc'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
-            }
-
-            $events = changeCareOfFlag($dbh, $id, $rId, $relCode, FALSE);
+            $events = changeCareOfFlag($dbh, $post['id'], $post['rId'], $post['rc'], FALSE);
             break;
 
         case "adchgpw":

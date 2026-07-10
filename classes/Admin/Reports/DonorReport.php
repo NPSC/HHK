@@ -36,6 +36,7 @@ class DonorReport
         $wclause = "";
         $notNull = array();
         $totalCategories = 0;
+        $txtheadr = "";
 
         $uS = Session::getInstance();
         $uname = $uS->username;
@@ -43,11 +44,7 @@ class DonorReport
         $includeDeceased = filter_has_var(INPUT_POST, "exDeceased");
         $slFlag = !filter_has_var(INPUT_POST, "btnstreamlined");
 
-        if (filter_input(INPUT_POST, "rb_dandOr", FILTER_SANITIZE_FULL_SPECIAL_CHARS) == "or") {
-            $andOr = "or";
-        } else {
-            $andOr = "and";
-        }
+        $andOr = filter_input(INPUT_POST, "rb_dandOr", FILTER_SANITIZE_FULL_SPECIAL_CHARS) == "or" ? "or" : "and";
 
         $voldCat->set_andOr($andOr);
 

@@ -65,9 +65,7 @@ $statusSelections = array();
 $payTypeSelections = array();
 $billingAgentSelections = array();
 $calSelection = '19';
-$gwList = array();
 $gwSelector = '';
-$gwSelections = array();
 
 $year = date('Y');
 $months = array(date('n'));       // logically overloaded.
@@ -353,6 +351,8 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
 
         $whGw = '';
         $gwText = '';
+        $gwList = $filter->getPaymentGateways();
+        $gwSelections = $filter->getSelectedPaymentGateways();
 
         if (count($gwSelections) > 0) {
 

@@ -4,14 +4,12 @@ namespace HHK\House\Report;
 
 use HHK\Common;
 use HHK\HTMLControls\HTMLContainer;
-use HHK\HTMLControls\HTMLSelector;
 use HHK\Purchase\PriceModel\AbstractPriceModel;
 use HHK\Purchase\RoomRate;
 use HHK\Purchase\ValueAddedTax;
 use HHK\sec\Session;
 use HHK\sec\Labels;
-use HHK\HTMLControls\HTMLTable;
-use HHK\SysConst\{ReservationStatus, ItemId};
+use HHK\SysConst\ItemId;
 use HHK\SysConst\InvoiceStatus;
 use HHK\SysConst\ItemPriceCode;
 use HHK\SysConst\ItemType;
@@ -490,7 +488,11 @@ where
         $curVisit = 0;
         $curRoom = 0;
         $curRate = '';
+        $curRateId = 0;
+        $curAdj = 0;
         $curAmt = 0;
+        $lodgeTax = 0;
+        $totalCatNites = [];
 
         $visit = array();
         $savedr = array();
