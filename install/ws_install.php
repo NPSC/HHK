@@ -47,6 +47,8 @@ if ($c == "testdb") {
         $filedata = file_get_contents('initialdata.sql');
         $parts = explode('-- ;', $filedata);
 
+        $dbh->beginTransaction();
+
         foreach ($parts as $q) {
 
             $q = trim($q);
@@ -55,9 +57,16 @@ if ($c == "testdb") {
                 try {
                     $dbh->exec($q);
                 } catch (PDOException $pex) {
-                    $errorMsg .= $pex->getMessage() . '.  ';
+                    $errorMsg .= 'Rolling back database: ' . $pex->getMessage() . '.  <br> QUERY: ' . $q;
+                    if ($dbh->inTransaction()) {
+                        $dbh->rollBack();
+                    }
                 }
             }
+        }
+
+        if ($dbh->inTransaction()) {
+            $dbh->commit();
         }
 
         // Update admin password
