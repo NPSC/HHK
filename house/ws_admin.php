@@ -28,7 +28,7 @@ use HHK\SysConst\GLTableNames;
 require ("homeIncludes.php");
 
 // Set page type for AdminPageCommon
-$wInit = new webInit(WebPageCode::Service);
+$wInit = new WebInit(WebPageCode::Service);
 
 $dbh = $wInit->dbh;
 
@@ -51,76 +51,60 @@ switch ($c) {
 
     case "delRel":
 
-        $id = 0;
-        $rId = 0;
+        $post = filter_input_array(INPUT_POST, [
+            'id' => FILTER_SANITIZE_NUMBER_INT,
+            'rId' => FILTER_SANITIZE_NUMBER_INT,
+            'rc' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
+        ]);
 
-        if (isset($_POST['id'])) {
-            $id = intval(filter_var($_POST['id'], FILTER_SANITIZE_NUMBER_INT), 10);
-        }
-        if (isset($_POST['rId'])) {
-            $rId = intval(filter_var($_POST['rId'], FILTER_SANITIZE_NUMBER_INT), 10);
-        }
-
-        if (isset($_POST['rc'])) {
-            $rc = filter_var($_POST['rc'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
-        }
+        $id = intval($post['id'], 10);
+        $rId = intval($post['rId'], 10);
+        $rc = $post['rc'] ?? '';
 
         $events = deleteRelationLink($dbh, $id, $rId, $rc);
         break;
 
     case "newRel":
 
-        $id = 0;
-        $rId = 0;
+        $post = filter_input_array(INPUT_POST, [
+            'id' => FILTER_SANITIZE_NUMBER_INT,
+            'rId' => FILTER_SANITIZE_NUMBER_INT,
+            'rc' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
+        ]);
 
-        if (isset($_POST['id'])) {
-            $id = intval(filter_var($_POST['id'], FILTER_SANITIZE_NUMBER_INT), 10);
-        }
-        if (isset($_POST['rId'])) {
-            $rId = intval(filter_var($_POST['rId'], FILTER_SANITIZE_NUMBER_INT), 10);
-        }
-
-        if (isset($_POST['rc'])) {
-            $rc = filter_var($_POST['rc'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
-        }
+        $id = intval($post['id'], 10);
+        $rId = intval($post['rId'], 10);
+        $rc = $post['rc'] ?? '';
 
         $events = newRelationLink($dbh, $id, $rId, $rc);
         break;
 
     case "addcareof":
 
-        $id = 0;
-        $rId = 0;
+        $post = filter_input_array(INPUT_POST, [
+            'id' => FILTER_SANITIZE_NUMBER_INT,
+            'rId' => FILTER_SANITIZE_NUMBER_INT,
+            'rc' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
+        ]);
 
-        if (isset($_POST['id'])) {
-            $id = intval(filter_var($_POST['id'], FILTER_SANITIZE_NUMBER_INT), 10);
-        }
-        if (isset($_POST['rId'])) {
-            $rId = intval(filter_var($_POST['rId'], FILTER_SANITIZE_NUMBER_INT), 10);
-        }
-
-        if (isset($_POST['rc'])) {
-            $rc = filter_var($_POST['rc'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
-        }
+        $id = intval($post['id'], 10);
+        $rId = intval($post['rId'], 10);
+        $rc = $post['rc'] ?? '';
 
         $events = changeCareOfFlag($dbh, $id, $rId, $rc, TRUE);
         break;
 
     case "delcareof":
 
-        $id = 0;
-        $rId = 0;
+        $post = filter_input_array(INPUT_POST, [
+            'id' => FILTER_SANITIZE_NUMBER_INT,
+            'rId' => FILTER_SANITIZE_NUMBER_INT,
+            'rc' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
+        ]);
 
-        if (isset($_POST['id'])) {
-            $id = intval(filter_var($_POST['id'], FILTER_SANITIZE_NUMBER_INT), 10);
-        }
-        if (isset($_POST['rId'])) {
-            $rId = intval(filter_var($_POST['rId'], FILTER_SANITIZE_NUMBER_INT), 10);
-        }
-
-        if (isset($_POST['rc'])) {
-            $rc = filter_var($_POST['rc'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
-        }
+        $id = intval($post['id'], 10);
+        $rId = intval($post['rId'], 10);
+        $rc = $post['rc'] ?? '';
 
         $events = changeCareOfFlag($dbh, $id, $rId, $rc, FALSE);
         break;
@@ -229,6 +213,9 @@ switch ($c) {
 
         if(isset($mfa)){
             $success = $mfa->disable($dbh);
+            if ($success) {
+                unset($uS->userCredentials); // stale now that the MFA secret changed
+            }
             $events = ["success" => $success, "mkup" => $mfa->getEditMarkup($dbh)];
         }else{
             $events = ["error" => "Invalid method"];
@@ -304,7 +291,7 @@ function getCounties(PDO $dbh, $state) {
     return $events;
 }
 
-function changeCareOfFlag(PDO $dbh, $id, $rId, $relCode, $flag) {
+function changeCareOfFlag(PDO $dbh, int $id, int $rId, string $relCode, bool $flag) {
 
     $rel = AbstractRelation::instantiateRelation($dbh, $relCode, $id);
 
@@ -320,7 +307,7 @@ function changeCareOfFlag(PDO $dbh, $id, $rId, $relCode, $flag) {
 
 }
 
-function deleteRelationLink(PDO $dbh, $id, $rId, $relCode) {
+function deleteRelationLink(PDO $dbh, int $id, int $rId, string $relCode) {
 
     $rel = AbstractRelation::instantiateRelation($dbh, $relCode, $id);
 
@@ -336,7 +323,7 @@ function deleteRelationLink(PDO $dbh, $id, $rId, $relCode) {
 
 }
 
-function newRelationLink(PDO $dbh, $id, $rId, $relCode) {
+function newRelationLink(PDO $dbh, int $id, int $rId, string $relCode) {
 
     $uS = Session::getInstance();
 
@@ -424,6 +411,7 @@ function saveTwoFA(PDO $dbh, $secret, $OTP, $method){
                 if($ga->verifyCode($dbh, $OTP) == false){
                     $events = ['error' => "One Time Code is invalid"];
                 }elseif($backup->saveSecret($dbh) && $ga->saveSecret($dbh)){
+                    unset($uS->userCredentials); // stale now that the MFA secrets changed
                     $events = ['success' => 'Two Factor Authentication enabled', 'backupCodes' => $backup->getCode()];
                 }else{
                     $events = ['error' => "Unable to enable Two factor Authentication"];
@@ -439,11 +427,15 @@ function saveTwoFA(PDO $dbh, $secret, $OTP, $method){
             if($email->verifyCode($dbh, $OTP) == false){
                 $events = ['error' => "One Time Code is invalid"];
             }elseif($email->saveSecret($dbh)){
+                unset($uS->userCredentials); // stale now that the MFA secret changed
                 $events = ['success' => 'Two Factor Authentication enabled'];
             }else{
                 $events = ['error' => "Unable to enable Two factor Authentication"];
             }
             break;
+
+        default:
+            $events = ['error' => 'Invalid method'];
     }
 
     return $events;

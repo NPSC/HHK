@@ -1,6 +1,6 @@
 <?php
 
-use HHK\sec\{WebInit};
+use HHK\sec\WebInit;
 
 /**
  * nonReportables.php
@@ -12,7 +12,7 @@ use HHK\sec\{WebInit};
  */
 require ("AdminIncludes.php");
 
-$wInit = new webInit();
+$wInit = new WebInit();
 $dbh = $wInit->dbh;
 $pageTitle = $wInit->pageTitle;
 $testVersion = $wInit->testVersion;

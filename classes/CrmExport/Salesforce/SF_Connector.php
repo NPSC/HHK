@@ -26,7 +26,7 @@ class SF_Connector {
     protected SalesForceOAuth $oAuth;
     protected \PDO $dbh;
     protected Credentials $credentials;
-    protected Client $client;
+    protected ?Client $client = null;
 
     /**
      * The number of concurrent async requests to send at one time

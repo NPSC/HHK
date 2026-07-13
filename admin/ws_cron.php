@@ -1,7 +1,6 @@
 <?php
 use GO\Scheduler;
 use HHK\Common;
-use HHK\Cron\EmailCheckedoutJob;
 use HHK\Cron\AbstractJob;
 use HHK\Cron\JobFactory;
 use HHK\Cron\JobInterface;
@@ -97,11 +96,13 @@ foreach($jobs as $job){
                     break;
             }
 
-            $jobObjs[] = $jobObj;
-            $scheduler->call(function($jobObj){
-                    $jobObj->run();
-                },array("jobObj"=>$jobObj))
-                ->$interval($time); // $time must be in format hh:mm or mm or "m h dom mon dow"
+            if(isset($time) && $time != ""){
+                $jobObjs[] = $jobObj;
+                $scheduler->call(function($jobObj){
+                        $jobObj->run();
+                    },array("jobObj"=>$jobObj))
+                    ?->$interval($time); // $time must be in format hh:mm or mm or "m h dom mon dow"
+            }
         }
     }
 }

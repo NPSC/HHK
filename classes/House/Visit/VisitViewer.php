@@ -4,7 +4,6 @@ namespace HHK\House\Visit;
 
 use HHK\Common;
 use HHK\House\OperatingHours;
-use HHK\Purchase\PriceModel\PriceGuestDay;
 use HHK\sec\Labels;
 use HHK\sec\Session;
 use HHK\HTMLControls\{HTMLContainer, HTMLTable};
@@ -49,7 +48,7 @@ class VisitViewer {
      * Summary of createActiveMarkup
      * @param \PDO $dbh
      * @param mixed $r
-     * @param \HHK\Purchase\VisitCharges $visitCharge
+     * @param VisitCharges $visitCharge
      * @param bool $keyDepFlag
      * @param bool $visitFeeFlag
      * @param bool $isAdmin
@@ -579,6 +578,8 @@ class VisitViewer {
         $actionButton = "";
         $ckOutDate = "";
         $name = $r['Name_First'] . ' ' . $r['Name_Last'];
+        $pgAttrs = [];
+        $pgRb = '';
 
         if (($action == 'so' || $action == 'ref') && $r['Status'] != VisitStatus::CheckedIn) {
             return '';
@@ -771,7 +772,7 @@ class VisitViewer {
      * Summary of createPaymentMarkup
      * @param \PDO $dbh
      * @param array $r
-     * @param \HHK\Purchase\VisitCharges $visitCharge
+     * @param VisitCharges $visitCharge
      * @param int $idGuest
      * @param string $action
      * @return string

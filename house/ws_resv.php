@@ -349,9 +349,13 @@ try {
 
             $note = new Note($noteId);
             $updateAr = $note->updateContents($dbh, $data, $noteCategory, $uS->username);
+            
+            $events = ['update' => $updateAr['counter'], 'idNote' => $noteId, 'noteText'=>$updateAr['noteRS']->Note_Text->getStoredVal()];
+        }else{
+            $events = ['update' => 0, 'idNote' => $noteId, 'noteText'=>''];
         }
 
-        $events = ['update' => $updateAr['counter'], 'idNote' => $noteId, 'noteText'=>$updateAr['noteRS']->Note_Text->getStoredVal()];
+        
 
         break;
 
@@ -397,6 +401,7 @@ try {
 
         $noteId = 0;
         $flagCount = 0;
+        $flag = 0;
 
         if (isset($_POST['idNote'])) {
             $noteId = intval(filter_input(INPUT_POST, 'idNote', FILTER_SANITIZE_NUMBER_INT), 10);

@@ -33,7 +33,7 @@ use HHK\TableLog\HouseLog;
 require ("homeIncludes.php");
 
 try {
-    $wInit = new webInit();
+    $wInit = new WebInit();
 } catch (Exception $exw) {
     die("arrg!  " . $exw->getMessage());
 }
@@ -65,9 +65,7 @@ $statusSelections = array();
 $payTypeSelections = array();
 $billingAgentSelections = array();
 $calSelection = '19';
-$gwList = array();
 $gwSelector = '';
-$gwSelections = array();
 
 $year = date('Y');
 $months = array(date('n'));       // logically overloaded.
@@ -353,6 +351,8 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
 
         $whGw = '';
         $gwText = '';
+        $gwList = $filter->getPaymentGateways();
+        $gwSelections = $filter->getSelectedPaymentGateways();
 
         if (count($gwSelections) > 0) {
 
@@ -422,6 +422,7 @@ where lp.idPayment > 0
 
     $fltrdTitles = $colSelector->getFilteredTitles();
     $fltrdFields = $colSelector->getFilteredFields();
+    $writer = null;
 
     if ($local) {
         $tbl = new HTMLTable();
@@ -506,7 +507,7 @@ where lp.idPayment > 0
 
     } else {
         HouseLog::logDownload($dbh, 'Payment Report', "Excel", "Payment Report for " . $filter->getReportStart() . " - " . $filter->getReportEnd() . " downloaded", $uS->username);
-        $writer->download();
+        $writer?->download();
     }
 
 }

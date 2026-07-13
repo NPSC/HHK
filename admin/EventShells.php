@@ -17,7 +17,7 @@ use HHK\Tables\VolCalendar\ShellEventsRS;
 
 require("AdminIncludes.php");
 
-$wInit = new webInit();
+$wInit = new WebInit();
 $dbh = $wInit->dbh;
 $uS = Session::getInstance();
 

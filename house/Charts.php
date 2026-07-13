@@ -19,7 +19,7 @@ use HHK\sec\Labels;
 require ("homeIncludes.php");
 
 try {
-    $wInit = new webInit();
+    $wInit = new WebInit();
 } catch (Exception $exw) {
     die("arrg!  " . $exw->getMessage());
 }
@@ -213,7 +213,7 @@ if (filter_has_var(INPUT_POST, 'cmd')) {
 
     $cmd = filter_input(INPUT_POST, 'cmd', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
-    if ($cmd = 'getRoomNights') {
+    if ($cmd == 'getRoomNights') {
 
         $data = array('info'=>rmNiteData($dbh, date('Y')));
         echo(json_encode($data));

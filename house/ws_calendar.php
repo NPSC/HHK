@@ -1,6 +1,6 @@
 <?php
 use HHK\Exception\InvalidArgumentException;
-use HHK\House\GuestRegister;
+use HHK\House\GuestRegister\GuestRegister;
 use HHK\sec\Session;
 use HHK\sec\WebInit;
 use HHK\SysConst\WebPageCode;

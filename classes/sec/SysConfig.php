@@ -29,9 +29,8 @@ class SysConfig {
      * @param string|array $category
      * @param string $tableName
      * @throws RuntimeException
-     * @return void
      */
-    public static function getCategory(\PDO $dbh, Session $uS, string|array $category, string $tableName)
+    public static function getCategory(\PDO $dbh, Session $uS, array|string $category, string $tableName): void
     {
 
         if ($tableName == '' || $category == '') {
@@ -47,6 +46,7 @@ class SysConfig {
             $category = "'" . $category . "'";
         }
 
+        $rows = [];
         try {
             $stmt = $dbh->query("select `Key`,`Value`,`Type` from `" . $tableName . "` where Category in ($category) order by `Key`");
             $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
@@ -75,7 +75,7 @@ class SysConfig {
      * @throws RuntimeException
      * @return mixed
      */
-    public static function getKeyValue(\PDO $dbh, $tableName, $key, $default = null) {
+    public static function getKeyValue(\PDO $dbh, string $tableName, string $key, $default = null) {
 
         if ($tableName == '' || $key == '') {
             throw new RuntimeException('System Configuration database table name or key not specified.  ');
@@ -106,7 +106,7 @@ class SysConfig {
      * @throws RuntimeException
      * @return mixed
      */
-    public static function getKeyRecord(\PDO $dbh, $tableName, $key) {
+    public static function getKeyRecord(\PDO $dbh, string $tableName, string $key) {
 
         if ($tableName == '' || $key == '') {
             throw new RuntimeException('System Configuration database table name or key not specified.  ');
@@ -141,7 +141,7 @@ class SysConfig {
      * @throws RuntimeException
      * @return void
      */
-    public static function saveKeyValue(\PDO $dbh, $tableName, $key, $value, $category = null) {
+    public static function saveKeyValue(\PDO $dbh, string $tableName, string $key, $value, ?string $category = null) {
 
         if ($tableName == '' || $key == '') {
             throw new RuntimeException('System Configuration database table name or key not specified.  ');

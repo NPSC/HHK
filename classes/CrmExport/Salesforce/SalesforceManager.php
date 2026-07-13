@@ -753,48 +753,48 @@ class SalesforceManager extends AbstractExportManager {
             }
         }
 
+        $sentAt = new \DateTime();
         // Show request trace?
+        if ($this->trace) {
+            $this->traceData .= "<p>Transfer initiated at: " . $sentAt->format(DATE_W3C) . "</p>";
+        }
+
+        // Transfer this package to SF API
+        try {
+            $batchResults = $this->webService->postUrlAsync($this->endPoint . "composite/graph", $batchBodies);
+
             if ($this->trace) {
-                $sentAt = new \DateTime();
-                $this->traceData .= "<p>Transfer initiated at: " . $sentAt->format(DATE_W3C) . "</p>";
+                $completedAt = new \DateTime();
+                $this->traceData .= "<p>Transfer completed at: " . $completedAt->format(DATE_W3C) . "</p>";
+                $this->traceData .= "<p>Elapsed Time: " . $completedAt->getTimestamp() - $sentAt->getTimestamp() . " seconds</p>";
+                $this->traceData .= "<p>Total requests sent: " . count($batchResults['batchResults']) . "</p>";
             }
 
-            // Transfer this package to SF API
-            try {
-                $batchResults = $this->webService->postUrlAsync($this->endPoint . "composite/graph", $batchBodies);
-
+            foreach($batchResults['batchResults'] as $batchId=>$batchResult){
                 if ($this->trace) {
-                    $completedAt = new \DateTime();
-                    $this->traceData .= "<p>Transfer completed at: " . $completedAt->format(DATE_W3C) . "</p>";
-                    $this->traceData .= "<p>Elapsed Time: " . $completedAt->getTimestamp() - $sentAt->getTimestamp() . " seconds</p>";
-                    $this->traceData .= "<p>Total requests sent: " . count($batchResults['batchResults']) . "</p>";
+                    $this->traceData .= "<hr class='my-3'><h4>Request</h4><pre>" . json_encode($batchBodies[$batchId], JSON_PRETTY_PRINT) . "</pre>";
                 }
 
-                    foreach($batchResults['batchResults'] as $batchId=>$batchResult){
-                        if ($this->trace) {
-                            $this->traceData .= "<hr class='my-3'><h4>Request</h4><pre>" . json_encode($batchBodies[$batchId], JSON_PRETTY_PRINT) . "</pre>";
-                        }
-
-                        if(isset($batchResult['success'])){
-                            if ($this->trace) {
-                                $this->traceData .= "<h4>Response</h4><pre>" . json_encode($batchResult['success'], JSON_PRETTY_PRINT) . "</pre>";
-                            }
-                            $this->processGraphsResult($dbh, $batchResult['success'], $batches[$batchId]["batchRows"]);
-                        }else if (isset($batchResult["error"])){
-                            $this->errorResult[] = $batchResult["error"];
-                            if ($this->trace) {
-                                $this->traceData .= "<h4>Errors</h4><pre>" .json_encode($batchResult['error'], JSON_PRETTY_PRINT) . "</pre>";
-                            }
-                        }
+                if(isset($batchResult['success'])){
+                    if ($this->trace) {
+                        $this->traceData .= "<h4>Response</h4><pre>" . json_encode($batchResult['success'], JSON_PRETTY_PRINT) . "</pre>";
                     }
-
-            } catch (\RuntimeException $ex) {
-                $this->errorResult[] = $ex->getMessage();
-
-                if ($this->trace) {
-                    $this->traceData .= "<h4>Errors</h4><pre>" .json_encode($ex->getMessage(), JSON_PRETTY_PRINT) . "</pre>";
+                    $this->processGraphsResult($dbh, $batchResult['success'], $batches[$batchId]["batchRows"]);
+                }else if (isset($batchResult["error"])){
+                    $this->errorResult[] = $batchResult["error"];
+                    if ($this->trace) {
+                        $this->traceData .= "<h4>Errors</h4><pre>" .json_encode($batchResult['error'], JSON_PRETTY_PRINT) . "</pre>";
+                    }
                 }
             }
+
+        } catch (\RuntimeException $ex) {
+            $this->errorResult[] = $ex->getMessage();
+
+            if ($this->trace) {
+                $this->traceData .= "<h4>Errors</h4><pre>" .json_encode($ex->getMessage(), JSON_PRETTY_PRINT) . "</pre>";
+            }
+        }
     }
 
     /**
@@ -811,6 +811,7 @@ class SalesforceManager extends AbstractExportManager {
         $subrequests = [];
         $graph = [];
         $contactsInThisGraph = [];  // guests whose Contact subrequest is in this specific graph
+        $filteredRow = [];
 
         $additnl = '_' . $graphId;
 

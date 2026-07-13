@@ -1,8 +1,6 @@
 <?php
 
 use HHK\Exception\RuntimeException;
-use HHK\House\Visit\Visit;
-use HHK\Payment\PaymentResult\PaymentResult;
 use HHK\sec\{Session, WebInit, Labels};
 use HHK\Payment\PaymentSvcs;
 use HHK\SysConst\WebPageCode;
@@ -25,7 +23,7 @@ use HHK\House\RegistrationForm\CustomRegisterForm;
 
 require ("homeIncludes.php");
 
-$wInit = new webInit(WebPageCode::Page);
+$wInit = new WebInit(WebPageCode::Page);
 $pageTitle = $wInit->pageTitle;
 
 /* @var $dbh PDO */
@@ -49,9 +47,12 @@ $receiptMarkup = '';
 $receiptBilledToEmail = '';
 $receiptPaymentId = 0;
 $invoiceNumber = '';
+$signedDate = null;
 $menuMarkup = '';
 $regButtonStyle = 'display:none;';
 $showSignedTab = false;
+$signedDocCount = 0;
+$signedTabControl = '';
 $isTopazRequired = false;
 $blankFormTitle = "Registration Form";
 $signatures = array();
@@ -101,33 +102,25 @@ try {
     }
 }
 
-if (isset($_REQUEST['regid'])) {
-    $idRegistration = intval(filter_var($_REQUEST['regid'], FILTER_SANITIZE_FULL_SPECIAL_CHARS), 10);
-}
+$intParm = ['filter' => FILTER_VALIDATE_INT, 'options' => ['default' => 0]];
 
-if (isset($_GET['vid'])) {
-    $idVisit = intval(filter_var($_REQUEST['vid'], FILTER_SANITIZE_FULL_SPECIAL_CHARS), 10);
-}
+$reqParms = filter_input_array(INPUT_GET, [
+    'regid'         => $intParm,
+    'vid'           => $intParm,
+    'payId'         => $intParm,
+    'invoiceNumber' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
+    'span'          => $intParm,
+    'rid'           => $intParm,
+    'idDoc'         => $intParm,
+]);
 
-if (isset($_GET['payId'])) {
-    $idPayment = intval(filter_var($_REQUEST['payId'], FILTER_SANITIZE_FULL_SPECIAL_CHARS), 10);
-}
-
-if (isset($_GET['invoiceNumber'])) {
-    $invoiceNumber = filter_var($_REQUEST['invoiceNumber'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
-}
-
-if (isset($_GET['span'])) {
-    $span = intval(filter_var($_REQUEST['span'], FILTER_SANITIZE_FULL_SPECIAL_CHARS), 10);
-}
-
-if (isset($_GET['rid'])) {
-    $idResv = intval(filter_var($_REQUEST['rid'], FILTER_SANITIZE_FULL_SPECIAL_CHARS), 10);
-}
-
-if(isset($_GET["idDoc"])){
-    $idDoc = intval(filter_var($_REQUEST['idDoc'], FILTER_SANITIZE_FULL_SPECIAL_CHARS), 10);
-}
+$idRegistration = $reqParms['regid'] ?? 0;
+$idVisit = $reqParms['vid'] ?? 0;
+$idPayment = $reqParms['payId'] ?? 0;
+$invoiceNumber = $reqParms['invoiceNumber'] ?? '';
+$span = $reqParms['span'] ?? 0;
+$idResv = $reqParms['rid'] ?? 0;
+$idDoc = $reqParms['idDoc'] ?? 0;
 
 if ($idVisit == 0 && $idResv > 0) {
     $stmt = $dbh->query("Select idVisit from visit where idReservation = $idResv");
@@ -220,8 +213,6 @@ if($idVisit || $idResv){
 
         $signedDocCount = count($signedDocsArray);
         if($signedDocCount > 0){
-            $showSignedTab = true;
-            
             $blankFormTitle = "Blank Registration Form";
             
             foreach ($signedDocsArray as $r) {
@@ -245,6 +236,7 @@ if($idVisit || $idResv){
 
             $signedUl = HTMLContainer::generateMarkup('ul', $signedLi, array());
             $signedTabControl = HTMLContainer::generateMarkup('div', $signedUl . $signedTabContent, array('id'=>'signedRegTabDiv'));
+            $showSignedTab = true;
         }
     }catch(\Exception $e){
         $tabControl = HTMLContainer::generateMarkup("div", $e->getMessage(), array("class"=>"ui-widget ui-widget-content ui-corner-all ui-state-highlight hhk-panel hhk-tdbox my-2"));
@@ -254,7 +246,7 @@ if($idVisit || $idResv){
     $tabControl = HTMLContainer::generateMarkup('div',
         HTMLInput::generateMarkup(
             'Print', ['type'=>'button', 'class'=>'btnPrint mb-3', 'data-tab'=>'', 'data-title'=>$labels->getString('MemberType', 'guest', 'Guest') . ' Registration Form']) .
-        $regContents . HTMLContainer::generateMarkup('p', "Signed: " . $signedDate->format("M j, Y g:i a"), ['class'=>'mt-4 signTimestamp', 'style'=>'text-align:end;'])
+        $regContents . ($signedDate !== null ? HTMLContainer::generateMarkup('p', "Signed: " . $signedDate->format("M j, Y g:i a"), ['class'=>'mt-4 signTimestamp', 'style'=>'text-align:end;']) : '')
     );
 }
 //"<span class='ui-icon ui-icon-extlink' style='float: right; margin-left: .3em;'></span>"

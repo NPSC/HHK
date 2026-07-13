@@ -11,10 +11,6 @@ namespace HHK\Tables\Fields;
 
 class DbBlobSanitizer implements DbFieldSanitizerInterface {
 
-    /**
-     *
-     * @param int $maxLength
-     */
     function __construct() {
     }
 

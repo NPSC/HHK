@@ -39,31 +39,31 @@ abstract class AbstractPriceModel {
      * Summary of roomRates
      * @var array
      */
-    protected $roomRates;
+    protected array $roomRates;
 
     /**
      * Summary of activeRoomRates
      * @var array
      */
-    protected $activeRoomRates;
+    protected array $activeRoomRates;
 
     /**
      * Summary of remainderAmt
      * @var float|int
      */
-    protected $remainderAmt = 0.0;
+    protected float|int $remainderAmt = 0.0;
 
     /**
      * Summary of visitStatus
      * @var string
      */
-    protected $visitStatus = '';
+    protected string $visitStatus = '';
 
     /**
      * Summary of priceModelCode
      * @var string
      */
-    protected $priceModelCode = '';
+    protected string $priceModelCode = '';
 
     /**
      * Summary of hasPerGuestCharge
@@ -922,11 +922,11 @@ where PriceModel = '$priceModelCode' order by `breakpointOrder` desc, FA_Categor
             	PriceBasic::InstallRate($dbh);
                 break;
 
-            case ItemPriceCode::Dailey;
+            case ItemPriceCode::Dailey:
             PriceDaily::installRate($dbh, $incomeRated);
                 break;
 
-            case ItemPriceCode::PerGuestDaily;
+            case ItemPriceCode::PerGuestDaily:
             PriceGuestDay::installRate($dbh, $incomeRated);
                 break;
 

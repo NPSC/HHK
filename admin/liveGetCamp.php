@@ -16,7 +16,7 @@ use HHK\SysConst\WebPageCode;
 require ("AdminIncludes.php");
 
 // Set page type for AdminPageCommon
-$wInit = new webInit(WebPageCode::Service);
+$wInit = new WebInit(WebPageCode::Service);
 
 $dbh = $wInit->dbh;
 

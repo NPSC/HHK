@@ -15,7 +15,7 @@ use HHK\SysConst\{WebSiteCode};
  */
 require ("AdminIncludes.php");
 
-$wInit = new webInit();
+$wInit = new WebInit();
 
 $dbh = $wInit->dbh;
 

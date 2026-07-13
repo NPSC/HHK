@@ -114,7 +114,9 @@ where
                 values ($id, $ur_gc, '$RelCode', 'a', now(), '" . $user . "');";
             $dbh->exec($q);
         } else if ($my_gc == 0 && $ur_gc == 0) {
+
             // Get a new group code.
+            $relCtr = 0;
             $dbh->query("CALL IncrementCounter('relationship', @num);");
             foreach ($dbh->query("SELECT @num") as $row) {
                 $relCtr = $row[0];

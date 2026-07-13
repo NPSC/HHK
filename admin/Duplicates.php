@@ -1,6 +1,5 @@
 <?php
 
-use HHK\AlertControl\AlertMessage;
 use HHK\Duplicate;
 use HHK\HTMLControls\HTMLInput;
 use HHK\sec\{Session, WebInit};
@@ -19,7 +18,7 @@ use HHK\SysConst\GLTableNames;
 require ("AdminIncludes.php");
 
 
-$wInit = new webInit();
+$wInit = new WebInit();
 $dbh = $wInit->dbh;
 $uS = Session::getInstance();
 $debugMode = ($uS->mode == "dev");

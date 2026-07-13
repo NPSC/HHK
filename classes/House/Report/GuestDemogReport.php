@@ -60,15 +60,12 @@ class GuestDemogReport {
 
         $accum = array();
         $periods = array();
-//        $totalPSGs = array();
-
-//        $firstPeriod = $thisPeriod = $stDT->format($periodFormat);
         $badZipCodes = array();
 
         $now = new \DateTime();
         $now->setTime(0, 0, 0);
 
-        // Set up user selected demographics categoryeis.
+        // Set up user selected demographics categories.
         $demoCategorys = array();
 
         $fields = '';
@@ -169,12 +166,14 @@ class GuestDemogReport {
 
         $th .= HTMLTable::makeTh("Total");
 
+        $query = "SELECT ";
+
         if ($whichGuests == 'new') {
-            $query = "SELECT s.idName, MIN(s.Span_Start_Date) AS `minDate`,";
+            $query = "s.idName, MIN(s.Span_Start_Date) AS `minDate`,";
         } else if ($whichGuests == 'allStarted'){
-            $query = "SELECT s.idName, DATE(s.Span_Start_Date) as `minDate`,";
+            $query = "s.idName, DATE(s.Span_Start_Date) as `minDate`,";
         }else if ($whichGuests == 'allStayed'){
-            $query = "SELECT DISTINCT s.idName,";
+            $query = "DISTINCT s.idName,";
         }
 
         $query .= "na.idName_Address,	
@@ -511,19 +510,11 @@ class GuestDemogReport {
 
         $rows = $stmt->fetchAll(\PDO::FETCH_NUM);
         if (count($rows) == 2) {
-            $miles = self::calcDist($rows[0][1], $rows[0][2], $rows[1][1], $rows[1][2]);
+            $miles = ZipDistance::GPS2Miles($rows[0][1], $rows[0][2], $rows[1][1], $rows[1][2]);
         } else {
             throw new RuntimeException("One or both zip codes not found in zip table, source=$sourceZip, dest=$destZip.  ");
         }
         return $miles;
-    }
-
-    protected static function calcDist(float|string $lat_A, float|string $long_A, float|string $lat_B, float|string $long_B): float {
-
-        $distance = sin(deg2rad((float)$lat_A)) * sin(deg2rad((float)$lat_B)) + cos(deg2rad((float)$lat_A)) * cos(deg2rad((float)$lat_B)) * cos(deg2rad((float)$long_A - (float)$long_B));
-        $distance2 = (rad2deg(acos($distance))) * 69.09;
-
-        return $distance2;
     }
 
     protected static function makeCounters($GL_Table, $includeBlank = TRUE) {
