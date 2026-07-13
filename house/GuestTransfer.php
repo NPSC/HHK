@@ -366,8 +366,8 @@ function searchVisits(\PDO $dbh, string $start, string $end, int $maxGuests, Abs
 
 /**
  * Summary of getNeonTypes
- * @param NeonManager $CmsManager
- * @param mixed $list
+ * @param ExportManagerInterface $CmsManager
+ * @param array $list
  * @return array<array>
  */
 function getNeonTypes(ExportManagerInterface $CmsManager, array $list): array {

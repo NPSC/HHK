@@ -14,24 +14,24 @@ use HHK\Tables\Fields\{DB_Field, DbIntSanitizer, DbStrSanitizer, DbDateSanitizer
 
 class DocumentRS extends AbstractTableRS {
 
-    public $idDocument;  // INT NOT NULL AUTO_INCREMENT,
-    public $Title;  // VARCHAR(128) NOT NULL,
-    public $Name;
-    public $Category;  // VARCHAR(5) NOT NULL DEFAULT '',
-    public $Type;  // VARCHAR(5) NOT NULL DEFAULT '',
-    public $Folder;
-    public $Language;
-    public $Mime_Type;  // VARCHAR(85) NOT NULL DEFAULT '',
-    public $Abstract;  // TEXT NULL,
-    public $Doc;  // BLOB NULL,
-    public $UserData; // MEDIUMTEXT NULL,
-    public $Style; //LONGTEXT NULL,
-    public $Status;  // VARCHAR(5) NOT NULL,
-    public $Last_Updated;  // DATETIME NULL,
-    public $Created_By;
-    public $Updated_By;  // VARCHAR(45) NOT NULL DEFAULT '',
+    public DB_Field $idDocument;  // INT NOT NULL AUTO_INCREMENT,
+    public DB_Field $Title;  // VARCHAR(128) NOT NULL,
+    public DB_Field $Name;
+    public DB_Field $Category;  // VARCHAR(5) NOT NULL DEFAULT '',
+    public DB_Field $Type;  // VARCHAR(5) NOT NULL DEFAULT '',
+    public DB_Field $Folder;
+    public DB_Field $Language;
+    public DB_Field $Mime_Type;  // VARCHAR(85) NOT NULL DEFAULT '',
+    public DB_Field $Abstract;  // TEXT NULL,
+    public DB_Field $Doc;  // BLOB NULL,
+    public DB_Field $UserData; // MEDIUMTEXT NULL,
+    public DB_Field $Style; //LONGTEXT NULL,
+    public DB_Field $Status;  // VARCHAR(5) NOT NULL,
+    public DB_Field $Last_Updated;  // DATETIME NULL,
+    public DB_Field $Created_By;
+    public DB_Field $Updated_By;  // VARCHAR(45) NOT NULL DEFAULT '',
 
-    public $Timestamp;  // TIMESTAMP NOT NULL DEFAULT now(),
+    public DB_Field $Timestamp;  // TIMESTAMP NOT NULL DEFAULT now(),
 
     function __construct($TableName = "document") {
 

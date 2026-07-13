@@ -15,15 +15,15 @@ use HHK\Tables\Fields\{DB_Field, DbIntSanitizer, DbStrSanitizer, DbDateSanitizer
 
 class NameEmailRS extends AbstractTableRS {
     
-    public $idName;  // int(11) NOT NULL,
-    public $Purpose;  // varchar(25) NOT NULL DEFAULT '',
-    public $Email;  // varchar(140) NOT NULL DEFAULT '',
-    public $Bad_Address;  // varchar(15) NOT NULL DEFAULT '' COMMENT '				',
-    public $Last_Verified;  // date DEFAULT NULL,
-    public $Status;  // varchar(15) NOT NULL DEFAULT '',
-    public $Last_Updated;  // date DEFAULT NULL,
-    public $Updated_By;  // varchar(45) DEFAULT NULL,
-    public $Timestamp;  // timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    public DB_Field $idName;  // int(11) NOT NULL,
+    public DB_Field $Purpose;  // varchar(25) NOT NULL DEFAULT '',
+    public DB_Field $Email;  // varchar(140) NOT NULL DEFAULT '',
+    public DB_Field $Bad_Address;  // varchar(15) NOT NULL DEFAULT '' COMMENT '				',
+    public DB_Field $Last_Verified;  // date DEFAULT NULL,
+    public DB_Field $Status;  // varchar(15) NOT NULL DEFAULT '',
+    public DB_Field $Last_Updated;  // date DEFAULT NULL,
+    public DB_Field $Updated_By;  // varchar(45) DEFAULT NULL,
+    public DB_Field $Timestamp;  // timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
     
     
     function __construct($TableName = "name_email") {

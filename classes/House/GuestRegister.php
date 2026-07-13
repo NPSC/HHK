@@ -1060,12 +1060,12 @@ where DATE(ru.Start_Date) <= DATE('" . $endDate->format('Y-m-d') . "') and ifnul
 
                 if ($expectedArrival instanceof \DateTimeInterface) {
                     $arrivalDiff = $today->diff($expectedArrival);
-                    $arrivalDiffDays = (integer) $arrivalDiff->format("%R%a");
+                    $arrivalDiffDays = (int) $arrivalDiff->format("%R%a");
                 }
 
                 if ($expectedDeparture instanceof \DateTimeInterface) {
                     $departureDiff = $today->diff($expectedDeparture);
-                    $departureDiffDays = (integer) $departureDiff->format("%R%a");
+                    $departureDiffDays = (int) $departureDiff->format("%R%a");
                 }
 
                 if (isset($r["Visit_Status"]) && in_array($r["Visit_Status"], [VisitStatus::CheckedOut, VisitStatus::ChangeRate, VisitStatus::NewSpan]) == false && $expectedDeparture instanceof \DateTimeInterface && $departureDiffDays == 0) { //checking out today
@@ -1129,12 +1129,12 @@ where DATE(ru.Start_Date) <= DATE('" . $endDate->format('Y-m-d') . "') and ifnul
 
                 if ($expectedArrival instanceof \DateTimeInterface) {
                     $arrivalDiff = $today->diff($expectedArrival);
-                    $arrivalDiffDays = (integer) $arrivalDiff->format("%R%a");
+                    $arrivalDiffDays = (int) $arrivalDiff->format("%R%a");
                 }
 
                 if ($expectedDeparture instanceof \DateTimeInterface) {
                     $departureDiff = $today->diff($expectedDeparture);
-                    $departureDiffDays = (integer) $departureDiff->format("%R%a");
+                    $departureDiffDays = (int) $departureDiff->format("%R%a");
                 }
 
                 if (isset($r["Visit_Status"]) && in_array($r["Visit_Status"], [VisitStatus::CheckedOut, VisitStatus::ChangeRate, VisitStatus::NewSpan]) == false && $expectedDeparture instanceof \DateTimeInterface && $departureDiffDays == 0) { //checking out today

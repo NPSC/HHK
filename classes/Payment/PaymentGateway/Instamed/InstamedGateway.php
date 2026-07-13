@@ -11,7 +11,7 @@ use HHK\Payment\Invoice\Invoice;
 use HHK\Payment\PaymentGateway\AbstractPaymentGateway;
 use HHK\Payment\PaymentGateway\CreditPayments\{AbstractCreditPayments, ReturnReply, SaleReply, VoidReply};
 use HHK\Payment\PaymentGateway\Instamed\Connect\{HeaderResponse, ImCurlRequest, VerifyCurlResponse, VerifyCurlVoidResponse, VerifyCurlReturnResponse, VerifyCurlCofResponse, WebhookResponse};
-use HHK\SysConst\{MpStatusValues, MpTranType, PaymentMethod, PaymentStatusCode, TransMethod, TransType, WebHookStatus, InvoiceStatus};
+use HHK\SysConst\{MpStatusValues, MpTranType, PaymentMethod, PaymentStatusCode, PayType, TransMethod, TransType, WebHookStatus, InvoiceStatus};
 use HHK\Tables\EditRS;
 use HHK\Tables\Payment\{PaymentInvoiceRS, PaymentRS, Payment_AuthRS};
 use HHK\Tables\PaymentGW\{SsoTokenRS, Guest_TokenRS, InstamedGatewayRS};
@@ -64,14 +64,14 @@ class InstamedGateway extends AbstractPaymentGateway {
     //Response Messages
     const RESPONSE_APPROVED = 'APPROVAL';
 
-    protected $ssoUrl;
-    protected $soapUrl;
-    protected $NvpUrl;
-    protected $saleUrl;
-    protected $saleTokenUrl;
-    protected $cofUrl;
-    protected $returnUrl;
-    protected $voidUrl;
+    protected string $ssoUrl;
+    protected string $soapUrl;
+    protected string $NvpUrl;
+    protected string $saleUrl;
+    protected string $saleTokenUrl;
+    protected string $cofUrl;
+    protected string $returnUrl;
+    protected string $voidUrl;
 
     public static function getPaymentMethod() {
         return PaymentMethod::Charge;
@@ -83,6 +83,11 @@ class InstamedGateway extends AbstractPaymentGateway {
 
     public function hasVoidReturn() {
     	return FALSE;
+    }
+
+    private function cleanupSessionData() {
+        $uS = Session::getInstance();
+        unset($uS->imtoken, $uS->paymentIds, $uS->imHostedPaymentInfo, $uS->cardHolderName, $uS->imcomplete);
     }
 
     public function creditSale(\PDO $dbh, PaymentManagerPayment $pmp, Invoice $invoice, $postbackUrl) {
@@ -103,7 +108,7 @@ class InstamedGateway extends AbstractPaymentGateway {
                     . "&CardPresentStatus=notpresentphone"
                     . "&paymentMethodID=" . $tokenRS->Token->getStoredVal();
 
-            $curlRequest = new ImCurlRequest();
+            $curlRequest = new ImCurlRequest($dbh);
 
             $resp = $curlRequest->submit($params, $this->saleTokenUrl, $this->getCredentials()->id, $this->getCredentials()->password);
 
@@ -220,16 +225,18 @@ class InstamedGateway extends AbstractPaymentGateway {
                 //put card on file first
                 $fwrder = $this->initCardOnFile($dbh, "", $invoice->getSoldToId(), $invoice->getIdGroup(), $pmp->getManualKeyEntry(), $pmp->getCardHolderName(), $postbackUrl);
 
-                //save info to process token payment in next step
-                $uS->imHostedPaymentInfo = ["invoice"=>$invoice, "paymentManagerPayment"=>$pmp, "postbackUrl"=>$postbackUrl];
+                // Store invoice info in card_id so completeCof can chain into creditSale
+                $ssoToken = $fwrder['CardId'] ?? '';
+                if ($ssoToken != '') {
+                    $stmt = $dbh->prepare("UPDATE card_id SET InvoiceNumber = ?, Amount = ? WHERE CardID = ?");
+                    $stmt->execute([$invoice->getInvoiceNumber(), $invoice->getAmountToPay(), $ssoToken]);
+                }
 
                 $payResult = new PaymentResult($invoice->getIdInvoice(), $invoice->getIdGroup(), $invoice->getSoldToId());
                 $payResult->setForwardHostedPayment($fwrder);
                 $payResult->setDisplayMessage('Forward to Payment Page. ');
 
             } catch (PaymentException $hpx) {
-
-                unset($uS->imHostedPaymentInfo);
 
                 $payResult = new PaymentResult($invoice->getIdInvoice(), 0, 0);
                 $payResult->setStatus(PaymentResult::ERROR);
@@ -242,6 +249,7 @@ class InstamedGateway extends AbstractPaymentGateway {
 
     protected function initHostedPayment(\PDO $dbh, Invoice $invoice, $postbackUrl, $manualKey, $cardHolderName) {
 
+        $this->cleanupSessionData();
         $uS = Session::getInstance();
         $dataArray = array();
 
@@ -305,21 +313,12 @@ class InstamedGateway extends AbstractPaymentGateway {
             EditRS::insert($dbh, $ssoTknRs);
 
             $uS->imtoken = $headerResponse->getToken();
-
-            $payIds = array();
-            if (isset($uS->paymentIds)) {
-                $payIds = $uS->paymentIds;
-            }
-
-            $payIds[$headerResponse->getToken()] = $invoice->getIdInvoice();
-            $uS->paymentIds = $payIds;
             $uS->ccgw = $this->getMerchant();
 
             $dataArray = array('inctx' => $headerResponse->getRelayState(), 'PaymentId' => $headerResponse->getToken());
         } else {
 
             // The initialization failed.
-            unset($uS->imtoken);
             throw new PaymentException("Credit Payment Gateway Error: " . $headerResponse->getResponseMessage());
         }
 
@@ -328,6 +327,7 @@ class InstamedGateway extends AbstractPaymentGateway {
 
     public function initCardOnFile(\PDO $dbh, $pageTitle, $idGuest, $idGroup, $manualKey, $cardHolderName, $postbackUrl, $selChgType = '', $chgAcct = '', $idx = '') {
 
+        $this->cleanupSessionData();
         $uS = Session::getInstance();
         $dataArray = array();
 
@@ -371,22 +371,27 @@ class InstamedGateway extends AbstractPaymentGateway {
         // Verify response
         if ($headerResponse->getToken() != '') {
 
-            // Save payment ID
-            $ciq = "replace into card_id (idName, `idGroup`, `Transaction`, InvoiceNumber, CardID, Init_Date, Frequency, ResponseCode)"
-                    . " values (" . $idGuest . " , " . $idGroup . ", '" . InstamedGateway::COF_TRANS . "', '', '" . $headerResponse->getToken() . "', now(), 'OneTime', " . $headerResponse->getResponseCode() . ")";
+            // Save payment ID in card_id
+            $stmt = $dbh->prepare("REPLACE INTO card_id (idName, `idGroup`, `Transaction`, InvoiceNumber, CardID, Init_Date, Frequency, ResponseCode, Merchant)"
+                    . " VALUES (?, ?, ?, '', ?, NOW(), 'OneTime', ?, ?)");
+            $stmt->execute([$idGuest, $idGroup, InstamedGateway::COF_TRANS, $headerResponse->getToken(), $headerResponse->getResponseCode(), $this->getMerchant()]);
 
-            $dbh->exec($ciq);
+            // Save ssoToken for CardHolderName lookup on return
+            $ssoTknRs = new SsoTokenRS();
+            $ssoTknRs->Token->setNewVal($headerResponse->getToken());
+            $ssoTknRs->idName->setNewVal($idGuest);
+            $ssoTknRs->idGroup->setNewVal($idGroup);
+            $ssoTknRs->CardHolderName->setNewVal($cardHolderName);
+            $ssoTknRs->State->setNewVal(WebHookStatus::Init);
+            EditRS::insert($dbh, $ssoTknRs);
 
             $uS->imtoken = $headerResponse->getToken();
-            $uS->cardHolderName = $cardHolderName;
             $uS->ccgw = $this->getMerchant();
 
             $dataArray = array('inctx' => $headerResponse->getRelayState(), 'CardId' => $headerResponse->getToken());
         } else {
 
             // The initialization failed.
-            unset($uS->imtoken);
-            unset($uS->cardHolderName);
             throw new PaymentException("Credit Payment Gateway Error: " . $headerResponse->getResponseMessage());
         }
 
@@ -404,7 +409,7 @@ class InstamedGateway extends AbstractPaymentGateway {
                 . "&primaryCardPresentStatus=PresentManualKey"
                 . "&primaryTransactionID=" . $pAuthRs->AcqRefData->getStoredVal();
 
-        $curlRequest = new ImCurlRequest();
+        $curlRequest = new ImCurlRequest($dbh);
 
         $resp = $curlRequest->submit($params, $this->NvpUrl, $this->getCredentials()->id, $this->getCredentials()->password);
 
@@ -607,7 +612,7 @@ group by pa.Approved_Amount having `Total` >= $amount;");
                 . "&primaryTransactionID=" . $paymentTransId
                 . "&amount=" . number_format($returnAmt, 2);
 
-        $curlRequest = new ImCurlRequest();
+        $curlRequest = new ImCurlRequest($dbh);
 
         $resp = $curlRequest->submit($params, $this->NvpUrl, $this->getCredentials()->id, $this->getCredentials()->password);
 
@@ -657,7 +662,6 @@ group by pa.Approved_Amount having `Total` >= $amount;");
 
     public function processHostedReply(\PDO $dbh, $post, $ssoToken, $idInv, $payNotes, $payDate) {
 
-        $uS = Session::getInstance();
         $transType = '';
         $transResult = '';
         $payResult = NULL;
@@ -707,7 +711,19 @@ group by pa.Approved_Amount having `Total` >= $amount;");
 
         } else if ($transType == InstamedGateway::COF_TRANS) {
 
-            $payResult = $this->completeCof($dbh, $ssoToken, $uS->cardHolderName);
+            // Look up cardHolderName from ssotoken DB instead of session
+            $cardHolderName = '';
+            if ($ssoToken != '') {
+                $ssoLookup = new SsoTokenRS();
+                $ssoLookup->Token->setStoredVal($ssoToken);
+                $ssoRows = EditRS::select($dbh, $ssoLookup, array($ssoLookup->Token));
+                if (count($ssoRows) > 0) {
+                    EditRS::loadRow($ssoRows[0], $ssoLookup);
+                    $cardHolderName = $ssoLookup->CardHolderName->getStoredVal();
+                }
+            }
+
+            $payResult = $this->completeCof($dbh, $ssoToken, $cardHolderName);
         }
 
         return $payResult;
@@ -834,7 +850,6 @@ group by pa.Approved_Amount having `Total` >= $amount;");
     protected function completeCof(\PDO $dbh, $ssoToken, $cardHolderName) {
 
         $cidInfo = $this->getInfoFromCardId($dbh, $ssoToken);
-        $uS = Session::getInstance();
 
         if (count($cidInfo) < 1) {
 
@@ -850,7 +865,7 @@ group by pa.Approved_Amount having `Total` >= $amount;");
                 . "&requestToken=false"
                 . "&singleSignOnToken=" . $ssoToken;
 
-        $curl = new ImCurlRequest();
+        $curl = new ImCurlRequest($dbh);
         $resp = $curl->submit($params, $this->NvpUrl, $this->getCredentials()->id, $this->getCredentials()->password);
 
         $resp['InvoiceNumber'] = 0;
@@ -875,19 +890,22 @@ group by pa.Approved_Amount having `Total` >= $amount;");
         // save token
         $idToken = CreditToken::storeToken($dbh, $vr->idRegistration, $vr->idPayor, $response);
 
-        //if there's an invoice waiting to be paid, set token and do creditSale
-        if ($idToken > 0 && isset($uS->imHostedPaymentInfo["invoice"]) && $uS->imHostedPaymentInfo["invoice"] instanceof Invoice && $uS->imHostedPaymentInfo["invoice"]->getStatus() == InvoiceStatus::Unpaid) {
-            $invoice = $uS->imHostedPaymentInfo["invoice"];
-            $pmp = $uS->imHostedPaymentInfo["paymentManagerPayment"];
-            $pmp->setIdToken($idToken);
-            $postbackUrl = $uS->imHostedPaymentInfo["postbackUrl"];
+        // If card_id had invoice info, this was chained from creditSale — complete the payment
+        $invoiceNumber = $cidInfo['InvoiceNumber'] ?? '';
+        if ($idToken > 0 && $invoiceNumber != '') {
+            try {
+                $invoice = new Invoice($dbh, $invoiceNumber);
+                if ($invoice->getStatus() == InvoiceStatus::Unpaid) {
+                    $invoice->setAmountToPay($invoice->getBalance());
 
-            unset($uS->imHostedPaymentInfo);
+                    $pmp = new PaymentManagerPayment(PayType::Charge);
+                    $pmp->setIdToken($idToken);
 
-            return $this->creditSale($dbh, $pmp, $invoice, $postbackUrl);
-        }else{
-            //clean up if something went wrong
-            unset($uS->imHostedPaymentInfo);
+                    return $this->creditSale($dbh, $pmp, $invoice, '');
+                }
+            } catch (\Exception $ex) {
+                // Invoice not found or other error — fall through to COF result
+            }
         }
 
         return new CofResult($vr->response->getResponseMessage(), $vr->getStatus(), $vr->idPayor, $vr->idRegistration);
@@ -978,11 +996,17 @@ group by pa.Approved_Amount having `Total` >= $amount;");
             $partlyApproved = TRUE;
         }
 
+        // Load invoice from DB — use idInv if available, otherwise look up by invoice number from ssotoken
+        if ($idInv > 0) {
+            $invoice = new Invoice($dbh);
+            $invoice->loadInvoice($dbh, $idInv);
+        } else {
+            $invoice = new Invoice($dbh, $ssoTknRs->InvoiceNumber->getStoredVal());
+            $idInv = $invoice->getIdInvoice();
+        }
+
         $gwResp = new StandInGwResponse($pAuthRs, $gTRs->OperatorID->getStoredVal(), $pAuthRs->Cardholder_Name->getStoredVal(), $gTRs->ExpDate->getStoredVal(), $gTRs->Token->getStoredVal(), $idInv, $payRs->Amount->getStoredVal());
         $payResp = new ImPaymentResponse($gwResp, $ssoTknRs->idName->getStoredVal(), $ssoTknRs->idGroup->getStoredVal(), $ssoTknRs->InvoiceNumber->getStoredVal(), $paymentNotes, $payRs->Payment_Date->getStoredVal(), $partlyApproved);
-
-        $invoice = new Invoice($dbh);
-        $invoice->loadInvoice($dbh, $idInv);
 
         $payResult = new PaymentResult($invoice->getIdInvoice(), $invoice->getIdGroup(), $invoice->getSoldToId());
 
@@ -1221,11 +1245,11 @@ where r.idRegistration =" . $idReg);
             );
             $tbl->addBodyTr(
                     HTMLTable::makeTh('Password', array('class' => 'tdlabel'))
-                    . HTMLTable::makeTd(HTMLInput::generateMarkup(($gwRs->password->getStoredVal() == '' ? '' : self::PW_PLACEHOLDER), array('name' => $indx . '_txtpwd', 'size' => '80')))
+                    . HTMLTable::makeTd(HTMLInput::generateMarkup(($gwRs->password->getStoredVal() == '' ? '' : self::PW_PLACEHOLDER), array('name' => $indx . '_txtpwd', 'size' => '80', 'type'=>'password')))
             );
             $tbl->addBodyTr(
                     HTMLTable::makeTh('SSO Password', array('class' => 'tdlabel'))
-                    . HTMLTable::makeTd(HTMLInput::generateMarkup(($gwRs->security_Key->getStoredVal() == '' ? '' : self::PW_PLACEHOLDER), array('name' => $indx . '_txtsk', 'size' => '80')))
+                    . HTMLTable::makeTd(HTMLInput::generateMarkup(($gwRs->security_Key->getStoredVal() == '' ? '' : self::PW_PLACEHOLDER), array('name' => $indx . '_txtsk', 'size' => '80', 'type'=>'password')))
             );
             $tbl->addBodyTr(
                     HTMLTable::makeTh('SSO Alias', array('class' => 'tdlabel'))

@@ -35,9 +35,9 @@ class ScriptAuthClass extends SecurityComponent {
 
     /**
      * Summary of __construct
-     * @param \PDO $dbh
+     * @param PDO $dbh
      */
-    function __construct(\PDO $dbh) {
+    function __construct(PDO $dbh) {
 
         parent::__construct();
         $uS = Session::getInstance();
@@ -84,11 +84,11 @@ class ScriptAuthClass extends SecurityComponent {
 
     /**
      * Summary of loadWebSite
-     * @param \PDO $dbh
+     * @param PDO $dbh
      * @throws RuntimeException
      * @return mixed
      */
-    protected function loadWebSite(\PDO $dbh) {
+    protected function loadWebSite(PDO $dbh) {
 
         $uS = Session::getInstance();
 
@@ -103,7 +103,7 @@ class ScriptAuthClass extends SecurityComponent {
 
             if ($stmt->rowCount() > 0) {
 
-                while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
+                while ($r = $stmt->fetch(PDO::FETCH_ASSOC)) {
 
                     if ($r['Site_Code'] == WebSiteCode::Volunteer && !$uS->Volunteers) {
                         continue;
@@ -195,7 +195,7 @@ class ScriptAuthClass extends SecurityComponent {
                 $wp = array();
                 $lastId = 0;
 
-                while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
+                while ($r = $stmt->fetch(PDO::FETCH_ASSOC)) {
 
                     if ($lastId == $r['idPage']) {
 

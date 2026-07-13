@@ -15,11 +15,11 @@ use HHK\Tables\Fields\{DB_Field, DbIntSanitizer, DbStrSanitizer};
 
 class InsuranceTypeRS extends AbstractTableRS {
 
-    public $idInsurance_type;   // INT(3) NOT NULL PRIMARY KEY,
-    public $Title;   // varchar(45) NOT NULL DEFAULT '',
-    public $Is_Primary; // INT(1) NOT NULL DEFAULT 0,
-    public $List_Order; // INT(3) NOT NULL DEFAULT 0,
-    public $Status;  // varchar(1) NOT NULL DEFAULT 'a',
+    public DB_Field $idInsurance_type;   // INT(3) NOT NULL PRIMARY KEY,
+    public DB_Field $Title;   // varchar(45) NOT NULL DEFAULT '',
+    public DB_Field $Is_Primary; // INT(1) NOT NULL DEFAULT 0,
+    public DB_Field $List_Order; // INT(3) NOT NULL DEFAULT 0,
+    public DB_Field $Status;  // varchar(1) NOT NULL DEFAULT 'a',
 
     function __construct($TableName = "insurance_type") {
 

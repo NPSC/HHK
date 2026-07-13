@@ -3,6 +3,7 @@
 use HHK\API\OAuth\CRUD\Client;
 use HHK\Cron\SendConfirmationEmailJob;
 use HHK\House\Report\AbstractReport;
+use HHK\Payment\PaymentGateway\AbstractPaymentGateway;
 use HHK\sec\Pages;
 use HHK\sec\{Session, SecurityComponent, UserClass, WebInit};
 use HHK\SysConst\WebPageCode;
@@ -18,6 +19,9 @@ use HHK\Cron\EmailReportJob;
 use HHK\CrmExport\AbstractExportManager;
 use HHK\House\Distance\ZipDistance;
 use HHK\TableLog\ExternalAPILog;
+use HHK\Payment\PaymentGateway\Deluxe\DeluxeGateway;
+use HHK\Payment\PaymentGateway\Deluxe\Request\SearchPaymentRequest;
+use HHK\Payment\PaymentGateway\Deluxe\Request\VoidRequest;
 
 /**
  * ws_gen.php
@@ -613,13 +617,86 @@ try {
             ];
             $filtered = filter_input_array(INPUT_GET, $arguments);
 
-            $allowedServices = ['Deluxe'];
+            $allowedServices = [AbstractPaymentGateway::DELUXE, AbstractPaymentGateway::INSTAMED];
 
             if (in_array($filtered["service"], $allowedServices)) {
                 $events = ExternalAPILog::getLog($dbh, $filtered["service"]);
             } else {
                 throw new RuntimeException("Invalid service name: " . $filtered["service"]);
             }
+
+            break;
+
+        case 'searchDeluxePayment':
+
+            if (!SecurityComponent::is_TheAdmin()) {
+                throw new RuntimeException("Insufficient authorization.");
+            }
+
+            if (strtolower($uS->PaymentGateway) !== AbstractPaymentGateway::DELUXE) {
+                throw new RuntimeException("Search payment is only available for the Deluxe payment gateway.");
+            }
+
+            $paymentId = '';
+            if (isset($_POST['paymentId'])) {
+                $paymentId = filter_var($_POST['paymentId'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+            }
+
+            if ($paymentId === '') {
+                throw new RuntimeException("Payment ID is required.");
+            }
+
+            if (!preg_match('/^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/', $paymentId)) {
+                throw new RuntimeException("Payment ID must be a valid UUID.");
+            }
+
+            $gwRow = $dbh->query("SELECT `cc_name` FROM `cc_hosted_gateway` WHERE `Gateway_Name` = '" . AbstractPaymentGateway::DELUXE . "' LIMIT 1")->fetch(\PDO::FETCH_ASSOC);
+            if ($gwRow === false) {
+                throw new RuntimeException("No Deluxe payment gateway merchant found.");
+            }
+            $gway = new DeluxeGateway($dbh, $gwRow['cc_name']);
+            $searchRequest = new SearchPaymentRequest($dbh, $gway);
+            $result = $searchRequest->submit($paymentId);
+            $events = ['success' => true, 'payment' => $result];
+
+            break;
+
+        case 'voidDeluxePayment':
+
+            if (!SecurityComponent::is_TheAdmin()) {
+                throw new RuntimeException("Insufficient authorization.");
+            }
+
+            if (strtolower($uS->PaymentGateway) !== AbstractPaymentGateway::DELUXE) {
+                throw new RuntimeException("Void payment is only available for the Deluxe payment gateway.");
+            }
+
+            $paymentId = '';
+            if (isset($_POST['paymentId'])) {
+                $paymentId = filter_var($_POST['paymentId'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+            }
+
+            if ($paymentId === '') {
+                throw new RuntimeException("Payment ID is required.");
+            }
+
+            if (!preg_match('/^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/', $paymentId)) {
+                throw new RuntimeException("Payment ID must be a valid UUID.");
+            }
+
+            $gwRow = $dbh->query("SELECT `cc_name` FROM `cc_hosted_gateway` WHERE `Gateway_Name` = '" . AbstractPaymentGateway::DELUXE . "' LIMIT 1")->fetch(\PDO::FETCH_ASSOC);
+            if ($gwRow === false) {
+                throw new RuntimeException("No Deluxe payment gateway merchant found.");
+            }
+            $gway = new DeluxeGateway($dbh, $gwRow['cc_name']);
+            $voidRequest = new VoidRequest($dbh, $gway);
+            $gatewayResponse = $voidRequest->submit($paymentId);
+            $events = [
+                'success' => true,
+                'responseCode' => $gatewayResponse->getResponseCode(),
+                'message' => $gatewayResponse->getMessage(),
+                'paymentId' => $gatewayResponse->getAcqRefData(),
+            ];
 
             break;
 

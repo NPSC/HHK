@@ -15,16 +15,16 @@ use HHK\Tables\Fields\{DB_Field, DbIntSanitizer, DbStrSanitizer, DbDateSanitizer
 
 class Name_GuestRS extends AbstractTableRS {
 
-    public $idName;   // int(11) NOT NULL,
-    public $idPsg;   // int(11) NOT NULL,
-    public $Status;   // varchar(5) NOT NULL DEFAULT '',
-    public $Legal_Custody;  // int(11) NOT NULL DEFAULT '0',
-    public $Relationship_Code;   // varchar(5) NOT NULL DEFAULT '',
-    public $Type;   // varchar(45) NOT NULL DEFAULT '',
-    public $External_Id;   // varchar(45) NOT NULL DEFAULT '',
-    public $Last_Updated;   // datetime DEFAULT NULL,
-    public $Updated_By;   // varchar(45) NOT NULL DEFAULT '',
-    public $Timestamp;   // timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    public DB_Field $idName;   // int(11) NOT NULL,
+    public DB_Field $idPsg;   // int(11) NOT NULL,
+    public DB_Field $Status;   // varchar(5) NOT NULL DEFAULT '',
+    public DB_Field $Legal_Custody;  // int(11) NOT NULL DEFAULT '0',
+    public DB_Field $Relationship_Code;   // varchar(5) NOT NULL DEFAULT '',
+    public DB_Field $Type;   // varchar(45) NOT NULL DEFAULT '',
+    public DB_Field $External_Id;   // varchar(45) NOT NULL DEFAULT '',
+    public DB_Field $Last_Updated;   // datetime DEFAULT NULL,
+    public DB_Field $Updated_By;   // varchar(45) NOT NULL DEFAULT '',
+    public DB_Field $Timestamp;   // timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
 
     function __construct($TableName = "name_guest") {

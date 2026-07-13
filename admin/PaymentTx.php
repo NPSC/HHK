@@ -1,6 +1,6 @@
 <?php
 
-use HHK\sec\{Session, WebInit};
+use HHK\sec\{Session, SecurityComponent, WebInit};
 use HHK\HTMLControls\{HTMLContainer, HTMLSelector, HTMLTable};
 use HHK\Payment\PaymentGateway\AbstractPaymentGateway;
 use HHK\Tables\EditRS;
@@ -26,6 +26,8 @@ $menuMarkup = $wInit->generatePageMenu();
 
 $uS = Session::getInstance();
 $isDeluxe = strtolower($uS->PaymentGateway) === AbstractPaymentGateway::DELUXE;
+$isTheAdmin = SecurityComponent::is_TheAdmin();
+$showLog = in_array(strtolower($uS->PaymentGateway), [AbstractPaymentGateway::DELUXE, AbstractPaymentGateway::INSTAMED]);
 
 
 function makeParmtable($parms) {
@@ -250,8 +252,9 @@ $txSelector = HTMLSelector::generateMarkup(
                     </tr>
                 </table>
                 <input type='submit' value='Go' name='btnGo' class="ui-button ui-corner-all"/>
-                <?php if ($isDeluxe) { ?>
+                <?php if ($showLog) { ?>
                 <button type="button" id="btnShowLog" class="ui-button ui-corner-all ml-2">Show Detailed Log</button>
+                <?php if ($isTheAdmin && $isDeluxe){ ?><button type="button" id="btnSearchPayment" class="ui-button ui-corner-all ml-2">Search Payment</button><?php } ?>
                 <?php } ?>
                 </form>
             </div>
@@ -261,8 +264,24 @@ $txSelector = HTMLSelector::generateMarkup(
             </div>
             <?php } ?>
         </div>
-        <?php if ($isDeluxe) { ?>
+        <?php if ($showLog) { ?>
         <div id="logDialog" class="hhk-tdbox hhk-visitdialog" style="font-size: .85em; display:none;"><table id="deluxeLog"></table></div>
+        <?php if ($isTheAdmin) { ?>
+        <div id="searchPaymentDialog" style="display:none; font-size: .9em;">
+            <div class="mb-3">
+                <label for="txtPaymentId"><strong>Payment ID:</strong></label>
+                <input type="text" id="txtPaymentId" class="ml-2" style="width:320px;" placeholder="Enter Deluxe Payment ID" />
+                <button type="button" id="btnSearchPaymentGo" class="ui-button ui-corner-all ml-2">Search</button>
+            </div>
+            <div id="searchPaymentResults" style="display:none;">
+                <div id="searchPaymentDetails" class="ui-widget ui-widget-content ui-corner-all p-3 mb-3"></div>
+                <div id="searchPaymentVoidDiv" style="display:none;">
+                    <button type="button" id="btnVoidPayment" class="ui-button ui-corner-all">Void This Payment</button>
+                </div>
+                <div id="searchPaymentVoidResult" class="mt-2"></div>
+            </div>
+        </div>
+        <?php } ?>
         <script type="text/javascript">
             $(document).ready(function () {
 
@@ -355,7 +374,7 @@ $txSelector = HTMLSelector::generateMarkup(
                         url: 'ws_gen.php',
                         data: function (d) {
                             d.cmd = 'viewLog';
-                            d.service = 'Deluxe';
+                            d.service = '<?php echo $uS->PaymentGateway; ?>';
                         }
                     },
                     createdRow: function (row, data, dataIndex) {
@@ -380,7 +399,8 @@ $txSelector = HTMLSelector::generateMarkup(
                     return '<div class="d-flex">' +
                         (row.request != '' ? '<div class="mx-3 p-2 ui-widget ui-widget-content ui-corner-all">' +
                             '<strong>Request</strong>' +
-                            '<pre style="white-space: pre-wrap;">' + row.request + '</pre>' +
+                            (row.requestHeaders != '' ? '<details><summary>Headers</summary><pre style="white-space: pre-wrap;">' + row.requestHeaders + '</pre></details>' : '') +
+                            '<details open><summary>Body</summary><pre style="white-space: pre-wrap;">' + row.request + '</pre></details>' +
                         '</div>' : '') +
                         '<div class="mx-3 p-2 ui-widget ui-widget-content ui-corner-all">' +
                             '<strong>Response</strong>' +
@@ -391,9 +411,10 @@ $txSelector = HTMLSelector::generateMarkup(
 
                 var $logDialog = $("#logDialog").dialog({
                     autoOpen: false,
-                    modal: false,
+                    modal: true,
                     minWidth: getDialogWidth(1500),
-                    title: 'Deluxe Payment Log',
+                    maxHeight: $(window).height() - 100,
+                    title: 'Payment Log',
                     buttons: {
                         "Close": function () {
                             $logDialog.dialog('close');
@@ -407,6 +428,153 @@ $txSelector = HTMLSelector::generateMarkup(
                 $('#btnShowLog').click(function () {
                     $logDialog.dialog('open');
                 });
+
+                <?php if ($isTheAdmin) { ?>
+                var $searchPaymentDialog = $("#searchPaymentDialog").dialog({
+                    autoOpen: false,
+                    modal: true,
+                    width: getDialogWidth(700),
+                    title: 'Search Deluxe Payment',
+                    close: function () {
+                        $('#txtPaymentId').val('');
+                        $('#searchPaymentResults').hide();
+                        $('#searchPaymentDetails').html('');
+                        $('#searchPaymentVoidDiv').hide();
+                        $('#searchPaymentVoidResult').html('');
+                    }
+                });
+
+                $('#btnSearchPayment').click(function () {
+                    $searchPaymentDialog.dialog('open');
+                });
+
+                $('#btnSearchPaymentGo').click(function () {
+                    var paymentId = $('#txtPaymentId').val().trim();
+                    if (!paymentId) {
+                        alert('Please enter a Payment ID.');
+                        return;
+                    }
+                    if (!/^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(paymentId)) {
+                        alert('Payment ID must be a valid UUID (e.g. 630bd170-4705-4532-a1cc-974ae30f19e8).');
+                        return;
+                    }
+
+                    $('#searchPaymentResults').hide();
+                    $('#searchPaymentDetails').html('').addClass('hhk-loading');
+                    $('#searchPaymentResults').show();
+                    $('#searchPaymentVoidDiv').hide();
+                    $('#searchPaymentVoidResult').html('');
+
+                    $.post('ws_gen.php', { cmd: 'searchDeluxePayment', paymentId: paymentId }, function (data) {
+                        $('#searchPaymentDetails').removeClass('hhk-loading');
+                        if (data.error) {
+                            $('#searchPaymentDetails').html('<span class="ui-state-error" style="padding:5px;">' + data.error + '</span>');
+                            return;
+                        }
+
+                        var resp = (data.payment && data.payment.data) ? data.payment.data : {};
+
+                        if (!resp.payments || resp.payments.length === 0) {
+                            var errMsg = (resp.errorMessages && resp.errorMessages.length > 0) ? resp.errorMessages.join(', ') : 'Payment not found.';
+                            $('#searchPaymentDetails').html('<span class="ui-state-error" style="padding:5px;">' + $('<span>').text(errMsg).html() + '</span>');
+                            $('#searchPaymentVoidDiv').hide();
+                            return;
+                        }
+
+                        var p = resp.payments[0];
+                        var pmt = p.payment || {};
+                        var card = p.card || {};
+                        var billing = p.billingAddress || {};
+
+                        function row(label, val) {
+                            if (val === null || val === undefined || val === '') return '';
+                            return '<tr><th style="text-align:left;padding:3px 10px;white-space:nowrap;font-weight:normal;">' +
+                                $('<span>').text(label).html() + ':</th>' +
+                                '<td style="padding:3px 10px;">' + $('<span>').text(String(val)).html() + '</td></tr>';
+                        }
+
+                        function section(title) {
+                            return '<tr><td colspan="2" style="padding:6px 10px 2px;font-weight:bold;border-top:1px solid #ccc;">' + title + '</td></tr>';
+                        }
+
+                        var html = '<table style="width:100%;border-collapse:collapse;">';
+                        html += section('Payment');
+                        html += row('Payment ID', p.paymentId);
+                        html += row('Type', pmt.paymentType);
+                        html += row('Amount', pmt.amount !== undefined ? '$' + parseFloat(pmt.amount).toFixed(2) : '');
+                        html += row('Date/Time', pmt.paymentDateTime);
+                        html += row('Auth Response', pmt.authResponse);
+                        html += row('Response Code', pmt.responseCode);
+                        html += row('Order ID', pmt.orderId);
+                        html += row('Batch Number', pmt.batchNumber);
+                        html += row('Settled', pmt.settled !== undefined ? (pmt.settled ? 'Yes' : 'No') : '');
+                        html += row('Settled Date', pmt.settledDate);
+                        html += row('Successful', pmt.isSuccessful !== undefined ? (pmt.isSuccessful ? 'Yes' : 'No') : '');
+
+                        html += section('Card');
+                        html += row('Cardholder Name', card.cardholderName);
+                        html += row('Card Type', card.cardType);
+                        html += row('Last 4', card.card);
+                        html += row('Expiry', card.expiry);
+
+                        if (billing.paymentOrigin || billing.email || billing.phone) {
+                            html += section('Billing');
+                            html += row('Payment Origin', billing.paymentOrigin);
+                            html += row('Email', billing.email);
+                            html += row('Phone', billing.phone);
+                        }
+
+                        html += '</table>';
+                        $('#searchPaymentDetails').html(html);
+
+                        var canVoid = pmt.isSuccessful === true && pmt.settled === false &&
+                            pmt.paymentType !== 'VOID' && pmt.paymentType !== 'REFUND';
+                        if (canVoid) {
+                            $('#searchPaymentVoidDiv').show();
+                        } else {
+                            $('#searchPaymentVoidDiv').hide();
+                        }
+                    }, 'json').fail(function () {
+                        $('#searchPaymentDetails').removeClass('hhk-loading').html('<span class="ui-state-error" style="padding:5px;">An unexpected error occurred.</span>');
+                    });
+                });
+
+                $('#txtPaymentId').on('keydown', function (e) {
+                    if (e.key === 'Enter') {
+                        $('#btnSearchPaymentGo').trigger('click');
+                    }
+                });
+
+                $('#btnVoidPayment').click(function () {
+                    var paymentId = $('#txtPaymentId').val().trim();
+                    if (!paymentId || !/^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(paymentId)) return;
+
+                    if (!confirm('Are you sure you want to void payment ' + paymentId + '? This action cannot be undone.')) {
+                        return;
+                    }
+
+                    $('#btnVoidPayment').prop('disabled', true).text('Voiding...');
+                    $('#searchPaymentVoidResult').html('');
+
+                    $.post('ws_gen.php', { cmd: 'voidDeluxePayment', paymentId: paymentId }, function (data) {
+                        $('#btnVoidPayment').prop('disabled', false).text('Void This Payment');
+
+                        if (data.error) {
+                            $('#searchPaymentVoidResult').html('<span class="ui-state-error" style="padding:5px;">' + data.error + '</span>');
+                            return;
+                        }
+
+                        $('#searchPaymentVoidDiv').hide();
+                        $('#searchPaymentVoidResult').html('<span class="ui-state-highlight" style="padding:5px; display:inline-block;">' +
+                            'Payment voided successfully. ' +
+                            (data.message ? ' — ' + $('<span>').text(data.message).html() : '') +
+                            '</span>');
+                    }, 'json').fail(function () {
+                        $('#btnVoidPayment').prop('disabled', false).text('Void This Payment');
+                        $('#searchPaymentVoidResult').html('<span class="ui-state-error" style="padding:5px;">An unexpected error occurred.</span>');
+                    });
+                });
+                <?php } ?>
             });
         </script>
         <?php } ?>

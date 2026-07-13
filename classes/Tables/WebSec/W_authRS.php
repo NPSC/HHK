@@ -15,16 +15,15 @@ use HHK\Tables\Fields\{DB_Field, DbIntSanitizer, DbStrSanitizer, DbDateSanitizer
 
 class W_authRS extends AbstractTableRS {
     
-    public $idName;  // int(11) NOT NULL,
-    public $Role_Id;  // varchar(3) NOT NULL DEFAULT '',
-    public $Organization_Id;  // varchar(3) NOT NULL DEFAULT '',
-    public $Policy_id;  // int(11) NOT NULL DEFAULT '0',
-    public $User_Name;  // varchar(245) NOT NULL DEFAULT '',
-    //public $Ticket;  // char(128) CHARACTER SET latin1 COLLATE latin1_bin NOT NULL DEFAULT '0',
-    public $Status;  // varchar(2) NOT NULL DEFAULT '',
-    public $Last_Updated;  // datetime DEFAULT NULL,
-    public $Updated_By;  // varchar(45) DEFAULT '',
-    public $Timestamp;  // timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    public DB_Field $idName;  // int(11) NOT NULL,
+    public DB_Field $Role_Id;  // varchar(3) NOT NULL DEFAULT '',
+    public DB_Field $Organization_Id;  // varchar(3) NOT NULL DEFAULT '',
+    public DB_Field $Policy_id;  // int(11) NOT NULL DEFAULT '0',
+    public DB_Field $User_Name;  // varchar(245) NOT NULL DEFAULT '',
+    public DB_Field $Status;  // varchar(2) NOT NULL DEFAULT '',
+    public DB_Field $Last_Updated;  // datetime DEFAULT NULL,
+    public DB_Field $Updated_By;  // varchar(45) DEFAULT '',
+    public DB_Field $Timestamp;  // timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
     
     function __construct($TableName = "w_auth") {
         $this->idName = new DB_Field("idName", 0, new DbIntSanitizer());

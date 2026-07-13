@@ -15,13 +15,13 @@ use HHK\Tables\Fields\{DB_Field, DbIntSanitizer, DbDateSanitizer, DbStrSanitizer
 
 class Desig_HolidaysRS extends AbstractTableRS {
 
-    public $Year;   // int(11) NOT NULL,
-    public $dh1;   // date DEFAULT NULL,
-    public $dh2;   // date DEFAULT NULL,
-    public $dh3;   // date DEFAULT NULL,
-    public $dh4;   // date DEFAULT NULL,
-    public $Updated_By;   // varchar(45) NOT NULL DEFAULT '',
-    public $Last_Updated;   // datetime DEFAULT NULL,
+    public DB_Field $Year;   // int(11) NOT NULL,
+    public DB_Field $dh1;   // date DEFAULT NULL,
+    public DB_Field $dh2;   // date DEFAULT NULL,
+    public DB_Field $dh3;   // date DEFAULT NULL,
+    public DB_Field $dh4;   // date DEFAULT NULL,
+    public DB_Field $Updated_By;   // varchar(45) NOT NULL DEFAULT '',
+    public DB_Field $Last_Updated;   // datetime DEFAULT NULL,
 
     function __construct($TableName = "desig_holidays") {
 

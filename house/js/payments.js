@@ -238,7 +238,7 @@ function saveDiscountPayment(orderNumber, item, amt, discount, addnlCharge, adjD
  *
  * @param {object} item
  * @param {int} orderNum
- * @param (integer) index
+ * @param {int} index
  * @returns {undefined}
  */
 function getInvoicee(item, orderNum, index) {

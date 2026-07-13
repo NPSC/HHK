@@ -317,18 +317,6 @@ class FinAssistance {
         return $this->finAppRs->FA_Applied_Date->getStoredVal();
     }
 
-    /**
-     * Summary of getEstAmount
-     * @param \PDO $dbh
-     * @param int $days
-     * @param string $category
-     * @param mixed $pledgedRate
-     * @return mixed
-     */
-//    public function getEstAmount(\PDO $dbh, $days, $category, $pledgedRate = 0) {
-//        return self::amountCalculator($dbh, $days, $category, $pledgedRate);
-//    }
-
     public function getIdRoomRate() {
         return $this->idRoomRate;
     }

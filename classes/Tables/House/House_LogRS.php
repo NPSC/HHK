@@ -15,15 +15,15 @@ use HHK\Tables\Fields\{DB_Field, DbStrSanitizer, DbIntSanitizer, DbDateSanitizer
 
 class House_LogRS extends AbstractTableRS {
 
-    public $Log_Type;  // VARCHAR(45) NOT NULL DEFAULT '' ,
-    public $Sub_Type;  // VARCHAR(45) NOT NULL DEFAULT '' ,
-    public $User_Name;  // VARCHAR(45) NOT NULL DEFAULT '' ,
-    public $Id1;  // INT NOT NULL DEFAULT 0 ,
-    public $Id2;  // INT NOT NULL DEFAULT 0 ,
-    public $Str1;  // VARCHAR(45) NOT NULL DEFAULT '' ,
-    public $Str2;  // VARCHAR(45) NOT NULL DEFAULT '' 0 ,
-    public $Log_Text;  // VARCHAR(5000) NOT NULL DEFAULT '' ,
-    public $Timestamp;  // TIMESTAMP NOT NULL DEFAULT now()
+    public DB_Field $Log_Type;  // VARCHAR(45) NOT NULL DEFAULT '' ,
+    public DB_Field $Sub_Type;  // VARCHAR(45) NOT NULL DEFAULT '' ,
+    public DB_Field $User_Name;  // VARCHAR(45) NOT NULL DEFAULT '' ,
+    public DB_Field $Id1;  // INT NOT NULL DEFAULT 0 ,
+    public DB_Field $Id2;  // INT NOT NULL DEFAULT 0 ,
+    public DB_Field $Str1;  // VARCHAR(45) NOT NULL DEFAULT '' ,
+    public DB_Field $Str2;  // VARCHAR(45) NOT NULL DEFAULT '' 0 ,
+    public DB_Field $Log_Text;  // VARCHAR(5000) NOT NULL DEFAULT '' ,
+    public DB_Field $Timestamp;  // TIMESTAMP NOT NULL DEFAULT now()
 
 
     function __construct($TableName = "house_log") {

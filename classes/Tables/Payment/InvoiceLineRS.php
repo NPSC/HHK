@@ -15,20 +15,20 @@ use HHK\Tables\Fields\{DB_Field, DbIntSanitizer, DbDecimalSanitizer, DbStrSaniti
 
 class InvoiceLineRS extends AbstractTableRS {
     
-    public $idInvoice_Line;  // INTEGER NOT NULL,
-    public $Invoice_Id;  // INTEGER,
-    public $Type_Id;  //Integer NOT NULL DEFAULT '0',
-    public $Amount;  // DECIMAL(22,10) NOT NULL,
-    public $Quantity;  // DECIMAL(22,10),
-    public $Price;  // DECIMAL(22,10),
-    public $Period_Start;  // DATETIME,
-    public $Period_End;
-    public $Deleted;  // SMALLINT default 0 NOT NULL,
-    public $Item_Id;  // INTEGER,
-    public $Description;  // VARCHAR(1000),
-    public $Source_Item_Id;  // INTEGER,
-    public $Is_Percentage;  // SMALLINT default 0 NOT NULL,
-    public $Timestamp;  // timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    public DB_Field $idInvoice_Line;  // INTEGER NOT NULL,
+    public DB_Field $Invoice_Id;  // INTEGER,
+    public DB_Field $Type_Id;  //Integer NOT NULL DEFAULT '0',
+    public DB_Field $Amount;  // DECIMAL(22,10) NOT NULL,
+    public DB_Field $Quantity;  // DECIMAL(22,10),
+    public DB_Field $Price;  // DECIMAL(22,10),
+    public DB_Field $Period_Start;  // DATETIME,
+    public DB_Field $Period_End;
+    public DB_Field $Deleted;  // SMALLINT default 0 NOT NULL,
+    public DB_Field $Item_Id;  // INTEGER,
+    public DB_Field $Description;  // VARCHAR(1000),
+    public DB_Field $Source_Item_Id;  // INTEGER,
+    public DB_Field $Is_Percentage;  // SMALLINT default 0 NOT NULL,
+    public DB_Field $Timestamp;  // timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
     
     function __construct($TableName = 'invoice_line') {
         $this->idInvoice_Line = new DB_Field('idInvoice_Line', 0, new DbIntSanitizer(), TRUE, TRUE);

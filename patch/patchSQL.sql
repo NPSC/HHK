@@ -55,6 +55,56 @@ SET `Order` = 5
 WHERE `Table_Name` = 'Pay_Type'
   AND `Code` = 'in';
 
+INSERT IGNORE INTO `gen_lookups` (
+	`Table_Name`,
+	`Code`,
+	`Description`,
+	`Substitute`,
+	`Type`,
+	`Order`
+)
+  VALUES (
+		'Oauth_Scopes',
+		'rooms:read',
+		'Read rooms',
+		'',
+		'',
+		0
+	);
+
+  INSERT IGNORE INTO `gen_lookups` (
+	`Table_Name`,
+	`Code`,
+	`Description`,
+	`Substitute`,
+	`Type`,
+	`Order`
+)
+  VALUES (
+		'Oauth_Scopes',
+		'rooms:write',
+		'Write rooms',
+		'',
+		'',
+		0
+	);
+
+    INSERT IGNORE INTO `gen_lookups` (
+	`Table_Name`,
+	`Code`,
+	`Description`,
+	`Substitute`,
+	`Type`,
+	`Order`
+)
+  VALUES (
+		'Oauth_Scopes',
+		'lookups:read',
+		'Read lookups',
+		'',
+		'',
+		0
+	);
 UPDATE gen_lookups
 SET `Substitute` = 'Whole_Number',
 `Order` = 1
@@ -137,3 +187,24 @@ INSERT IGNORE INTO `gen_lookups` (`Table_Name`,`Code`,`Description`,`Substitute`
 
 INSERT IGNORE INTO `gen_lookups` (`Table_Name`,`Code`,`Description`,`Substitute`,`Type`,`Order`)
   VALUES ('Oauth_Scopes','lookups:read','Read lookups','','',0);
+ALTER TABLE `external_api_log` ADD COLUMN IF NOT EXISTS `requestHeaders` LONGTEXT NOT NULL DEFAULT '' AFTER `responseCode`;
+
+-- add guest transfer web service
+call `new_webpage`(
+    'ws_tran.php',
+    31,
+    '',
+    0,
+    'h',
+    '',
+    '',
+    's',
+    '',
+    '',
+    now(),
+    'ga'
+);
+
+-- Add hospital label if missing
+INSERT IGNORE INTO `labels` (`Key`,`Value`,`Type`,`Category`,`Header`,`Description`)
+VALUES ('hospital','Hospital','s','h','','Default: Hospital');
