@@ -17,6 +17,7 @@ use HHK\Tables\Name\Name_GuestRS;
 use HHK\HTMLControls\{HTMLContainer, HTMLTable, HTMLInput, HTMLSelector};
 use HHK\sec\Session;
 use HHK\OAuth\Credentials;
+use HHK\sec\SecurityComponent;
 use PDOStatement;
 
 
@@ -1672,17 +1673,20 @@ class SalesforceManager extends AbstractExportManager {
     }
 
     protected function showMaintenanceSection(): string {
-
-        $tbl = new HTMLTable();
-        $tbl->addBodyTr(
-            HTMLTable::makeTh('Maintenance', ['style' => 'border-top:2px solid black;'])
-            . HTMLTable::makeTd(
-                HTMLInput::generateMarkup('Fix Inverse Relationships', ['type' => 'submit', 'name' => '_fixInverseRelations', 'class' => 'btn btn-warning btn-sm'])
-                . HTMLContainer::generateMarkup('span', ' Corrects existing relationship records where Contact and Related Contact are swapped. Run once after initial sync.', ['class' => 'ml-2']),
-                ['style' => 'border-top:2px solid black;']
-            )
-        );
-        return $tbl->generateMarkup(['style' => 'margin-top:15px;']);
+        if(SecurityComponent::is_TheAdmin()){
+            $tbl = new HTMLTable();
+            $tbl->addBodyTr(
+                HTMLTable::makeTh('Maintenance', ['style' => 'border-top:2px solid black;'])
+                . HTMLTable::makeTd(
+                    HTMLInput::generateMarkup('Fix Inverse Relationships', ['type' => 'submit', 'name' => '_fixInverseRelations', 'class' => 'btn btn-warning btn-sm'])
+                    . HTMLContainer::generateMarkup('span', ' Corrects existing relationship records where Contact and Related Contact are swapped. Run once after initial sync.', ['class' => 'ml-2']),
+                    ['style' => 'border-top:2px solid black;']
+                )
+            );
+            return $tbl->generateMarkup(['style' => 'margin-top:15px;']);
+        }else{
+            return '';
+        }
     }
 
     protected function showSetupGuide(): string {
@@ -1979,7 +1983,7 @@ JS;
         $inSearch = (bool) ($row['in_search'] ?? 0);
 
         $isRequired = \in_array($hhkField, self::REQUIRED_FIELDS[$obj] ?? [], true);
-        $isConditional = $this->linkRelatives && \in_array($hhkField, self::CONDITIONAL_REQUIRED_FIELDS[$obj] ?? [], true);
+        $isConditional = !$isRequired && \in_array($hhkField, self::CONDITIONAL_REQUIRED_FIELDS[$obj] ?? [], true);
 
         $hhkOpts = HTMLSelector::doOptionsMkup($hhkOptions, $hhkField, true);
         $hhkCell = HTMLTable::makeTd(
@@ -2019,8 +2023,19 @@ JS;
             );
         } elseif ($isConditional) {
             $actionCell = HTMLTable::makeTd(
-                HTMLContainer::generateMarkup('span', 'Required', ['style' => 'color:#b58105;font-weight:bold;font-size:0.85em;', 'title' => 'Required when creating relationships in Salesforce']),
-                ['class' => 'text-center']
+                HTMLContainer::generateMarkup('span', 'Required', [
+                    'class' => 'hhk-cond-required-label',
+                    'style' => 'color:#c00;font-weight:bold;font-size:0.85em;' . ($this->linkRelatives ? '' : 'display:none;'),
+                    'title' => 'Required when creating relationships in Salesforce',
+                ])
+                . HTMLContainer::generateMarkup('ul',
+                    HTMLContainer::generateMarkup('li',
+                        HTMLContainer::generateMarkup('span', '', ['class' => 'bi bi-trash3']),
+                        ['class' => 'hhk-fldmap-remove ui-corner-all ui-state-default p-1', 'title' => 'Remove mapping']
+                    ),
+                    ['class' => 'ui-widget ui-helper-clearfix hhk-ui-icons hhk-cond-remove-ui', 'style' => $this->linkRelatives ? 'display:none;' : '']
+                ),
+                ['class' => 'text-center actionBtns']
             );
         } else {
             $actionCell = HTMLTable::makeTd(
@@ -2031,7 +2046,7 @@ JS;
                     ),
                     ['class' => 'ui-widget ui-helper-clearfix hhk-ui-icons']
                 ),
-                ['class' => 'text-center']
+                ['class' => 'text-center actionBtns']
             );
         }
 
@@ -2113,9 +2128,16 @@ JS;
             );
 
             foreach ($rows as $hhkField => $row) {
-                $isRequired = \in_array($hhkField, self::REQUIRED_FIELDS[$obj] ?? [], true)
-                    || ($this->linkRelatives && \in_array($hhkField, self::CONDITIONAL_REQUIRED_FIELDS[$obj] ?? [], true));
-                $trAttrs = $isRequired ? ['data-required' => '1'] : [];
+                $isHardRequired = \in_array($hhkField, self::REQUIRED_FIELDS[$obj] ?? [], true);
+                $isConditionalField = \in_array($hhkField, self::CONDITIONAL_REQUIRED_FIELDS[$obj] ?? [], true);
+                $isRequired = $isHardRequired || ($this->linkRelatives && $isConditionalField);
+                $trAttrs = [];
+                if ($isRequired) {
+                    $trAttrs['data-required'] = '1';
+                }
+                if ($isConditionalField && !$isHardRequired) {
+                    $trAttrs['data-conditional-required'] = '1';
+                }
                 $tbl->addBodyTr($this->makeFieldMapRow($obj, $hhkField, $row, $idx, $sfFields, $hhkOptions), $trAttrs);
                 $idx++;
             }
@@ -2186,6 +2208,18 @@ JS;
         });
         return '<select name="' + escHtml(name) + '" style="max-width:200px;">' + opts + '</select>';
     }
+
+    function syncConditionalRequired() {
+        var linked = $('#_cbLinkRelatives').is(':checked');
+        $('tr[data-conditional-required="1"]').each(function () {
+            var $row = $(this);
+            $row.data('required', linked ? '1' : '');
+            $row.find('.hhk-cond-required-label').toggle(linked);
+            $row.find('.hhk-cond-remove-ui').toggle(!linked);
+        });
+    }
+    $(document).off('.hhkcondreq').on('change.hhkcondreq', '#_cbLinkRelatives', syncConditionalRequired);
+    syncConditionalRequired();
 
     $('table.sortable tbody').sortable({
         handle: '.sort-handle',
