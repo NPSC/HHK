@@ -250,7 +250,7 @@ class CategoryReport
 
                 $writer->writeSheet($flds, "Constraints"); */
             } else if ($csvFlag) {
-                $headr .= "<tr><td colspan='5'>";
+                // No header row for the plain email list.
             } else {
                 $headr .= "<thead><tr>
                     <th>Id</th>
@@ -271,6 +271,9 @@ class CategoryReport
             }
 
             $txtreport = "<tbody>";
+            if ($csvFlag) {
+                $txtreport .= "<tr><td colspan='5'>";
+            }
 
             // get the data set.
             $stmt = $dbh->query($query);
@@ -346,6 +349,9 @@ class CategoryReport
             }
 
             if (!$dlFlag) {
+                if ($csvFlag) {
+                    $txtreport .= "</td></tr>";
+                }
                 $txtreport .= "</tbody>";
             }
 
@@ -355,8 +361,6 @@ class CategoryReport
 
             if ($dlFlag) {
                 $writer->download();
-            } else if ($csvFlag) {
-                $txtreport .= "</td></tr>";
             }
         }
 
