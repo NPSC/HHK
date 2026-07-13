@@ -17,6 +17,7 @@ use HHK\Tables\CronRS;
 use HHK\Cron\AbstractJob;
 use HHK\Cron\EmailReportJob;
 use HHK\CrmExport\AbstractExportManager;
+use HHK\CrmExport\Salesforce\SalesforceManager;
 use HHK\House\Distance\ZipDistance;
 use HHK\TableLog\ExternalAPILog;
 use HHK\Payment\PaymentGateway\Deluxe\DeluxeGateway;
@@ -567,7 +568,17 @@ try {
             if ($exportManager !== NULL) {
                 $events = $exportManager->savePicklistMap($dbh);
             }
-            
+
+            break;
+
+        case 'resetFieldMap':
+
+            $exportManager = AbstractExportManager::factory($dbh, $uS->ContactManager);
+
+            if ($exportManager instanceof SalesforceManager) {
+                $events = $exportManager->resetFieldMap($dbh);
+            }
+
             break;
 
         case 'viewLog':

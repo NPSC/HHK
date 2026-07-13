@@ -1673,13 +1673,31 @@ class SalesforceManager extends AbstractExportManager {
         return $markup;
     }
 
+    /**
+     * Wipe and reseed the field mapping with service defaults, then return the
+     * freshly rendered config markup so the caller can refresh the display.
+     * @param \PDO $dbh
+     * @return string
+     */
+    public function resetFieldMap(\PDO $dbh): string {
+
+        $gatewayId = (int) $this->getGatewayId();
+
+        if ($gatewayId > 0) {
+            FieldMapper::resetToDefaults($dbh, $gatewayId, $this->getServiceName());
+            $this->fieldMapper = new FieldMapper($dbh, $gatewayId);
+        }
+
+        return $this->showConfig($dbh);
+    }
+
     protected function showMaintenanceSection(): string {
         if(SecurityComponent::is_TheAdmin()){
             $tbl = new HTMLTable();
             $tbl->addBodyTr(
                 HTMLTable::makeTh('Maintenance', ['style' => 'border-top:2px solid black;'])
                 . HTMLTable::makeTd(
-                    HTMLInput::generateMarkup('Fix Inverse Relationships', ['type' => 'submit', 'name' => '_fixInverseRelations', 'class' => 'btn btn-warning btn-sm'])
+                    HTMLInput::generateMarkup('Fix Inverse Relationships', ['type' => 'submit', 'name' => '_fixInverseRelations', 'class' => 'ui-button ui-corner-all'])
                     . HTMLContainer::generateMarkup('span', ' Corrects existing relationship records where Contact and Related Contact are swapped. Run once after initial sync.', ['class' => 'ml-2']),
                     ['style' => 'border-top:2px solid black;']
                 )
@@ -2172,8 +2190,20 @@ JS;
             ['id' => 'sfPicklistModal', 'title' => 'Map Picklist Values', 'style' => 'display:none;']
         );
 
+        $resetBtn = HTMLInput::generateMarkup('Reset to Defaults', [
+            'type'  => 'button',
+            'class' => 'ui-button ui-corner-all ui-widget hhk-fldmap-reset ml-2',
+            'title' => 'Discard all current field mappings and reseed the default Salesforce mapping.',
+        ]);
+
+        $heading = HTMLContainer::generateMarkup('div',
+            HTMLContainer::generateMarkup('h3', 'Field Mapping', ['class' => 'mb-0', 'style' => 'display:inline-block;'])
+            . $resetBtn,
+            ['style' => 'border-top:2px solid black;', 'class' => 'mt-3 pt-2 mb-2']
+        );
+
         return HTMLContainer::generateMarkup('div',
-            HTMLContainer::generateMarkup('h3', 'Field Mapping', ['style' => 'border-top:2px solid black;','class'=>'mt-3 pt-2 mb-2'])
+            $heading
             . HTMLContainer::generateMarkup('div', $markup, ['class' => 'hhk-flex flex-wrap'])
             . $modal,
             []
@@ -2270,6 +2300,21 @@ JS;
             var $row = $(this).closest('tr');
             if ($row.data('required')) { return; }
             $row.remove();
+        })
+        .on('click.hhkfldmap', '.hhk-fldmap-reset', function () {
+            if (!confirm('Reset all Salesforce field mappings to the defaults? Any custom mapping changes will be lost.')) {
+                return;
+            }
+            var $btn = $(this);
+            $btn.prop('disabled', true);
+            $.post('ws_gen.php', { cmd: 'resetFieldMap' })
+                .done(function (data) {
+                    $('#serviceContent').empty().prepend(data);
+                })
+                .fail(function () {
+                    alert('Error resetting field mappings.');
+                    $btn.prop('disabled', false);
+                });
         })
         .on('click.hhkfldmap', '.hhk-fldmap-picklist', function () {
             var btn      = $(this);

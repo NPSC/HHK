@@ -91,6 +91,14 @@ class FieldMapper {
     }
 
     /**
+     * Wipe any existing mappings for this gateway and reseed with service defaults.
+     */
+    public static function resetToDefaults(\PDO $dbh, int $gatewayId, string $serviceName): void {
+        $dbh->prepare("DELETE FROM `crm_field_map` WHERE `gateway_id` = :gw")->execute(['gw' => $gatewayId]);
+        self::insertDefaults($dbh, $gatewayId, $serviceName);
+    }
+
+    /**
      * Seed crm_field_map with service defaults if no rows exist yet for this gateway.
      */
     public static function insertDefaults(\PDO $dbh, int $gatewayId, string $serviceName): void {
@@ -153,6 +161,7 @@ class FieldMapper {
             ['Contact', 'address.home.state',       'MailingState',      0, 1],
             ['Contact', 'address.home.postal_code', 'MailingPostalCode', 0, 1],
             ['Contact', 'address.home.country',     'MailingCountry',    0, 1],
+            ['Contact', 'contact_type',              'Contact_Type__c',   0, 1],
             ['Contact', 'is_deceased',              'Deceased__c',       0, 1],
             ['Account',               'psg_id',                  'HHK_idPsg__c',     0, 1],
             ['npe4__Relationship__c', 'relationship_to_patient', 'npe4__Type__c',    0, 1],
