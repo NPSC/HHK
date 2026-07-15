@@ -697,13 +697,15 @@ class HouseServices {
         if ($idItem == ItemId::Discount) {
 
             $codes = Common::readGenLookupsPDO($dbh, 'House_Discount');
+            $discountLabel = (new Item($dbh, ItemId::Discount))->getDescription();
 
             if (isset($codes[$discount])) {
 
                 $amount = 0 - $amount;
+                $discountItem = new Item($dbh, ItemId::Discount, $amount);
 
                 $invLine = new OneTimeInvoiceLine();
-                $invLine->createNewLine(new Item($dbh, ItemId::Discount, $amount), 1, $codes[$discount][1]);
+                $invLine->createNewLine($discountItem, 1, $codes[$discount][1]);
                 $invoice = new Invoice($dbh);
 
                 $invoice->newInvoice(
@@ -722,10 +724,10 @@ class HouseServices {
                 // Pay the invoice
                 $invoice->updateInvoiceBalance($dbh, $amount, $uS->username);
 
-                $dataArray['reply'] = $codes[$discount][1] . ' Discount Applied.  ';
+                $dataArray['reply'] = $codes[$discount][1] . ' ' . $discountLabel . ' Applied.  ';
 
             } else {
-                $dataArray['reply'] = 'Discount code not found: ' . $discount;
+                $dataArray['reply'] = $discountLabel . ' code not found: ' . $discount;
             }
 
         }
@@ -733,11 +735,13 @@ class HouseServices {
         if ($idItem == ItemId::AddnlCharge) {
 
             $codes = Common::readGenLookupsPDO($dbh, 'Addnl_Charge');
+            $addnlChargeItem = new Item($dbh, ItemId::AddnlCharge, $amount);
+            $addnlChargeLabel = $addnlChargeItem->getDescription();
 
             if (isset($codes[$addnlCharge])) {
 
                 $invLine = new OneTimeInvoiceLine();
-                $invLine->createNewLine(new Item($dbh, ItemId::AddnlCharge, $amount), 1, $codes[$addnlCharge][1]);
+                $invLine->createNewLine($addnlChargeItem, 1, $codes[$addnlCharge][1]);
 
                 if (is_null($invoice)) {
                     $invoice = new Invoice($dbh);
@@ -796,11 +800,11 @@ class HouseServices {
                     }
 
                 } else {
-                    $dataArray['reply'] = $codes[$addnlCharge][1] . ' additional charge is invoiced. ';
+                    $dataArray['reply'] = $codes[$addnlCharge][1] . ' ' . $addnlChargeLabel . ' is invoiced. ';
                 }
 
             } else {
-                $dataArray['reply'] = 'Additional Charge code not found: ' . $addnlCharge;
+                $dataArray['reply'] = $addnlChargeLabel . ' code not found: ' . $addnlCharge;
             }
         }
 

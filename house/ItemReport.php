@@ -150,8 +150,6 @@ while($r = $stmt->fetch(PDO::FETCH_NUM)) {
 
     if ($r[0] == ItemId::LodgingDonate) {
         $r[1] = "Lodging Donation";
-    } else if ($r[0] == ItemId::AddnlCharge) {
-        $r[1] = "Additional Charges";
     }
 
     if ($r[2] != 0) {

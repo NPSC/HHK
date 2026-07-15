@@ -13,6 +13,7 @@ use HHK\House\Reservation\Reservation_1;
 use HHK\Payment\Invoice\Invoice;
 use HHK\Payment\PaymentGateway\AbstractPaymentGateway;
 use HHK\Purchase\CurrentAccount;
+use HHK\Purchase\Item;
 use HHK\Purchase\PaymentChooser;
 use HHK\Purchase\ValueAddedTax;
 use HHK\Purchase\VisitCharges;
@@ -835,7 +836,7 @@ class VisitViewer {
             // Current fees block
             $currFees = HTMLContainer::generateMarkup('fieldset',
                     HTMLContainer::generateMarkup('legend', ($r['Status'] == VisitStatus::CheckedIn ? 'To-Date Fees & Balance Due' : 'Final Fees & Balance Due'), ['style'=>'font-weight:bold;'])
-                    . HTMLContainer::generateMarkup('div', self::createCurrentFees($r['Status'], $visitCharge, $vat, $includeVisitFee, $showRoomFees, $showGuestNights), ['id'=>'divCurrFees'])
+                    . HTMLContainer::generateMarkup('div', self::createCurrentFees($dbh, $r['Status'], $visitCharge, $vat, $includeVisitFee, $showRoomFees, $showGuestNights), ['id'=>'divCurrFees'])
                         , ['class'=>'hhk-panel mr-2','style'=>'min-width: max-content;']);
 
             // Enable Final payment?
@@ -867,6 +868,7 @@ class VisitViewer {
 
     /**
      * Summary of createCurrentFees
+     * @param \PDO $dbh
      * @param string $visitStatus
      * @param \HHK\Purchase\VisitCharges $visitCharge
      * @param \HHK\Purchase\ValueAddedTax $vat
@@ -875,14 +877,14 @@ class VisitViewer {
      * @param mixed $showGuestNights
      * @return string
      */
-    public static function createCurrentFees($visitStatus, VisitCharges $visitCharge, ValueAddedTax $vat, $showVisitFee = FALSE, $showRoomFees = TRUE, $showGuestNights = FALSE) {
+    public static function createCurrentFees(\PDO $dbh, $visitStatus, VisitCharges $visitCharge, ValueAddedTax $vat, $showVisitFee = FALSE, $showRoomFees = TRUE, $showGuestNights = FALSE) {
 
         $roomAccount = new CurrentAccount($visitStatus, $showVisitFee, $showRoomFees, $showGuestNights);
 
         $roomAccount->load($visitCharge, $vat);
         $roomAccount->setDueToday();
 
-        return self::currentBalanceMarkup($roomAccount);
+        return self::currentBalanceMarkup($dbh, $roomAccount);
     }
 
     /**
@@ -890,7 +892,7 @@ class VisitViewer {
      * @param \HHK\Purchase\CurrentAccount $curAccount
      * @return string
      */
-    protected static function currentBalanceMarkup(CurrentAccount $curAccount) {
+    protected static function currentBalanceMarkup(\PDO $dbh, CurrentAccount $curAccount) {
 
         $uS = Session::getInstance();
         $tbl2 = new HTMLTable();
@@ -976,9 +978,10 @@ class VisitViewer {
         if ($curAccount->getAdditionalCharge() > 0) {
 
             $showSubTotal = TRUE;
+            $addnlChargeLabel = (new Item($dbh, ItemId::AddnlCharge))->getDescription().'s';
 
             $tbl2->addBodyTr(
-                HTMLTable::makeTd('Additional Charges:', array('class'=>'tdlabel'))
+                HTMLTable::makeTd($addnlChargeLabel . ':', array('class'=>'tdlabel'))
                 . HTMLTable::makeTd('$' . number_format($curAccount->getAdditionalCharge(), 2), array('style'=>'text-align:right;'))
             );
 
@@ -989,7 +992,7 @@ class VisitViewer {
 
                 foreach ($taxingItems as $t) {
                     $tbl2->addBodyTr(
-                        HTMLTable::makeTd('Additional Charges Tax (' . $t->getTextPercentTax() . '):', array('class'=>'tdlabel', 'style'=>'font-size:small;'))
+                        HTMLTable::makeTd($addnlChargeLabel . ' Tax (' . $t->getTextPercentTax() . '):', array('class'=>'tdlabel', 'style'=>'font-size:small;'))
                         . HTMLTable::makeTd('$' . number_format($curAccount->getAdditionalChargeTax(), 2), array('style'=>'text-align:right;font-size:small;'))
                     );
                 }

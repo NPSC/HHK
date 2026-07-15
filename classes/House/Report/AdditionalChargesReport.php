@@ -35,6 +35,8 @@ class AdditionalChargesReport extends AbstractReport implements ReportInterface 
     public array $additionalCharges;
     public array $selectedAdditionalCharges = [];
     protected array $statsArray = [];
+    protected string $addnlChargeLabel;
+    protected string $discountLabel;
 
 
     public function __construct(\PDO $dbh, array $request = []){
@@ -45,7 +47,9 @@ class AdditionalChargesReport extends AbstractReport implements ReportInterface 
         $this->inputSetReportName = "additionalCharges";
 
         $this->demogs = Common::readGenLookupsPDO($dbh, 'Demographics');
-        $this->additionalCharges = array_merge($this->formatGenLookup(Common::readGenLookupsPDO($dbh, 'Addnl_Charge'), "Additional Charges"), $this->formatGenLookup(Common::readGenLookupsPDO($dbh, 'House_Discount'), "Discounts"));
+        $this->addnlChargeLabel = $dbh->query("SELECT Description FROM item WHERE idItem = " . ItemId::AddnlCharge)->fetchColumn() . 's';
+        $this->discountLabel = $dbh->query("SELECT Description FROM item WHERE idItem = " . ItemId::Discount)->fetchColumn() . 's';
+        $this->additionalCharges = array_merge($this->formatGenLookup(Common::readGenLookupsPDO($dbh, 'Addnl_Charge'), $this->addnlChargeLabel), $this->formatGenLookup(Common::readGenLookupsPDO($dbh, 'House_Discount'), $this->discountLabel));
 
         if (filter_has_var(INPUT_POST, 'selAdditionalCharges')) {
             $this->selectedAdditionalCharges = filter_input(INPUT_POST, 'selAdditionalCharges', FILTER_SANITIZE_FULL_SPECIAL_CHARS, FILTER_REQUIRE_ARRAY);
@@ -77,7 +81,7 @@ class AdditionalChargesReport extends AbstractReport implements ReportInterface 
         $tbl = new HTMLTable();
         $tr = '';
         
-        $tbl->addHeaderTr( HTMLTable::makeTh("Additional Charges/Discounts"));
+        $tbl->addHeaderTr( HTMLTable::makeTh($this->addnlChargeLabel . '/' . $this->discountLabel));
         
         $tbl->addBodyTr(HTMLTable::makeTd($additionalChargesSelector, array('style'=>'vertical-align: top;')));
         
@@ -297,7 +301,7 @@ where i.Deleted = 0 and " . $whDates . $whBilling . $whDiags . $whCharges . " gr
         $cFields[] = array($labels->getString("MemberType", "primaryGuest", "Primary Guest") . " Last", 'pgLast', 'checked', '', 'string', '20');
         $cFields[] = array("Visit Status", 'Status_Title', 'checked', '', 'string', '15');
         $cFields[] = array("Invoice", 'Invoice_Number', 'checked', '', 'string', '15');
-        $cFields[] = array("Additional Charge/Discount", 'Additional Charge/Discount', 'checked', '', 'string', '20');
+        $cFields[] = array($this->addnlChargeLabel . '/' . $this->discountLabel, 'Additional Charge/Discount', 'checked', '', 'string', '20');
         $cFields[] = array("Billed To", 'Billed To', 'checked', '', 'string', '20');
         //$cFields[] = array("Nights Billed", "PaidNights", 'checked', '', 'string', '20');
         $cFields[] = array("Amount", 'Invoice_Amount', 'checked', '', 'string', '15');
@@ -316,7 +320,7 @@ where i.Deleted = 0 and " . $whDates . $whBilling . $whDiags . $whCharges . " gr
 
         $mkup .= HTMLContainer::generateMarkup("p", 'Biling Agents: ' . $this->filter->getSelectedBillingAgentsString());
 
-        $mkup .= HTMLContainer::generateMarkup("p", 'Additional Charges/Discounts: ' . $this->getSelectedAdditionalChargesString());
+        $mkup .= HTMLContainer::generateMarkup("p", $this->addnlChargeLabel . '/' . $this->discountLabel . ': ' . $this->getSelectedAdditionalChargesString());
 
         $mkup .= HTMLContainer::generateMarkup("p", 'Diagnoses: ' . $this->filter->getSelectedDiagnosesString());
         
@@ -329,7 +333,7 @@ where i.Deleted = 0 and " . $whDates . $whBilling . $whDiags . $whCharges . " gr
         }
 
         $totalsMkup = "";
-        $totalsMkup .= $this->generateSummaryTable("Additional Charge", $this->getAdditionalChargeCounts())->generateMarkup(['class'=>'mx-2 mb-2']);
+        $totalsMkup .= $this->generateSummaryTable($this->addnlChargeLabel, $this->getAdditionalChargeCounts())->generateMarkup(['class'=>'mx-2 mb-2']);
         
 
         foreach($this->colSelector->getFilteredFields() as $fld){
@@ -602,7 +606,7 @@ group by de.`description` order by de.Order asc, de.`Code` asc
         $this->getResultSet();
 
         //summary sheet
-        $this->generateExcelSummaryTable("Additional Charge", $this->getAdditionalChargeCounts(), $writer);
+        $this->generateExcelSummaryTable($this->addnlChargeLabel, $this->getAdditionalChargeCounts(), $writer);
 
         foreach($this->colSelector->getFilteredFields() as $fld){
             if($fld[1] == "Age"){

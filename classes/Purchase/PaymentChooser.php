@@ -721,6 +721,7 @@ class PaymentChooser {
 
     /**
      * Summary of createHousePaymentMarkup
+     * @param \PDO $dbh
      * @param mixed $discounts
      * @param mixed $addnls
      * @param int $idVisit
@@ -728,7 +729,7 @@ class PaymentChooser {
      * @param mixed $arrivalDate
      * @return string
      */
-    public static function createHousePaymentMarkup(array $discounts, array $addnls, $idVisit, $itemTaxSums, $arrivalDate = '') {
+    public static function createHousePaymentMarkup(\PDO $dbh, array $discounts, array $addnls, $idVisit, $itemTaxSums, $arrivalDate = '') {
 
         if (count($discounts) < 1 && count($addnls) < 1) {
             return '';
@@ -739,7 +740,9 @@ class PaymentChooser {
 
         if (count($discounts) > 0) {
 
-            $buttons .= HTMLContainer::generateMarkup('label', 'Discount', array('for'=>'cbAdjustPmt1'))
+            $discountLabel = $dbh->query("SELECT Description FROM item WHERE idItem = " . ItemId::Discount)->fetchColumn();
+
+            $buttons .= HTMLContainer::generateMarkup('label', $discountLabel, array('for'=>'cbAdjustPmt1'))
             . HTMLInput::generateMarkup('', array('type'=>'radio', 'name'=>'cbAdjustPmt', 'id'=>'cbAdjustPmt1', 'data-sho'=>'houseDisc', 'data-hid'=>'addnlChg', 'data-item'=>ItemId::Discount));
 
             $select .= HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup(HTMLSelector::removeOptionGroups($discounts), '', TRUE), array('name'=>'selHouseDisc', 'class'=>'houseDisc', 'data-amts'=>'disc', "style"=>"width:100%"));
@@ -748,7 +751,9 @@ class PaymentChooser {
 
         if (count($addnls) > 0) {
 
-            $buttons .= HTMLContainer::generateMarkup('label', 'Additional Charge', array('for'=>'cbAdjustPmt2'))
+            $addnlChargeLabel = $dbh->query("SELECT Description FROM item WHERE idItem = " . ItemId::AddnlCharge)->fetchColumn();
+
+            $buttons .= HTMLContainer::generateMarkup('label', $addnlChargeLabel, array('for'=>'cbAdjustPmt2'))
                 . HTMLInput::generateMarkup('', array('type'=>'radio', 'name'=>'cbAdjustPmt', 'id'=>'cbAdjustPmt2', 'data-hid'=>'houseDisc', 'data-sho'=>'addnlChg', 'data-item'=>ItemId::AddnlCharge));
 
             $select .= HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup(HTMLSelector::removeOptionGroups($addnls), '', TRUE), array('name'=>'selAddnlChg', 'class'=>'addnlChg', 'data-amts'=>'addnl', "style"=>"width:100%"));

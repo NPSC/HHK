@@ -633,7 +633,7 @@ try {
 
             $vat = new ValueAddedTax($dbh);
 
-            $events['markup'] = PaymentChooser::createHousePaymentMarkup($discounts, $addnls, $ordNum, $vat->getTaxedItemSums($ordNum, 0), $arrDate);
+            $events['markup'] = PaymentChooser::createHousePaymentMarkup($dbh, $discounts, $addnls, $ordNum, $vat->getTaxedItemSums($ordNum, 0), $arrDate);
 
         } else {
             $events = ['error' => 'Visit Id is missing.  '];
