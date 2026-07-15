@@ -1,21 +1,8 @@
 <?php
-use HHK\Common;
 use HHK\House\Report\ItemReport;
 use HHK\sec\WebInit;
 use HHK\sec\Session;
-use HHK\HTMLControls\HTMLContainer;
-use HHK\SysConst\VolMemberType;
-use HHK\HTMLControls\HTMLTable;
-use HHK\ColumnSelectors;
-use HHK\SysConst\ItemId;
-use HHK\Purchase\TaxedItem;
-use HHK\HTMLControls\HTMLSelector;
-use HHK\HTMLControls\HTMLInput;
-use HHK\ExcelHelper;
 use HHK\sec\Labels;
-use HHK\House\Report\ReportFieldSet;
-use HHK\House\Report\ReportFilter;
-use HHK\TableLog\HouseLog;
 
 /**
  * ItemReport.php
@@ -41,463 +28,22 @@ $pageTitle = $wInit->pageTitle;
 
 // get session instance
 $uS = Session::getInstance();
+$labels = Labels::getLabels();
 
 $menuMarkup = $wInit->generatePageMenu();
 
+$dataTableWrapper = '';
 
-$labels = Labels::getLabels();
+$report = new ItemReport($dbh, $_REQUEST);
 
-$filter = new ReportFilter();
-$filter->createTimePeriod(date('Y'), '19', $uS->fy_diff_Months);
-
-$mkTable = '';  // var handed to javascript to make the report table or not.
-$headerTableMu = '';
-$dataTable = '';
-
-$statusSelections = array();
-
-$itemSelections = array();
-$calSelection = '19';
-$showDeleted = FALSE;
-$diagSelections = array();
-
-$year = date('Y');
-$months = array(date('n'));       // logically overloaded.
-$txtStart = '';
-$txtEnd = '';
-$start = '';
-$end = '';
-
-$statusList = Common::readGenLookupsPDO($dbh, 'Invoice_Status');
-
-
-
-// Report column-selector
-// array: title, ColumnName, checked, fixed, Excel Type, Excel colWidth, td parms
-$cFields[] = array('Visit Id', 'vid', 'checked', '', 'string', '15', array());
-$cFields[] = array("Organization", 'Company', 'checked', '', 'string', '20', array());
-$cFields[] = array($labels->getString('memberType', 'guest', 'Guest') . ' Last', 'Last', 'checked', '', 'string', '20', array());
-$cFields[] = array($labels->getString('memberType', 'guest', 'Guest') . " First", 'First', 'checked', '', 'string', '20', array());
-$pFields = array('Address', 'City');
-$pTitles = array($labels->getString('memberType', 'guest', 'Guest') . ' Address', 'City');
-$paFields = array('Patient_Address', 'Patient_City');
-$paTitles = array($labels->getString('memberType', 'patient', 'Patient') . ' Address', $labels->getString('memberType', 'patient', 'Patient') . ' City');
-
-if ($uS->county) {
-    $pFields[] = 'County';
-    $pTitles[] = $labels->getString('memberType', 'guest', 'Guest') . ' County';
-    $paFields[] = 'Patient_County';
-    $paTitles[] = $labels->getString('memberType', 'patient', 'Patient') . ' County';
+if (isset($_POST['btnHere-' . $report->getInputSetReportName()])) {
+    $dataTableWrapper = $report->generateMarkup();
 }
 
-$pFields = array_merge($pFields, array('State_Province', 'Postal_Code', 'Country'));
-$pTitles = array_merge($pTitles, array('State', 'Zip', 'Country'));
-$paFields = array_merge($paFields, array("Patient_State_Province", "Patient_Postal_Code", "Patient_Country"));
-$paTitles = array_merge($paTitles, array($labels->getString('memberType', 'patient', 'Patient') . " State", $labels->getString('memberType', 'patient', 'Patient') . " Zip", $labels->getString('memberType', 'patient', 'Patient') . " Country"));
-
-$cFields[] = array($pTitles, $pFields, '', '', 'string', '20', array());
-$cFields[] = array("Date", 'Date', 'checked', '', 'MM/DD/YYYY', '15', array(), 'date');
-$cFields[] = array("Invoice", 'Invoice_Number', 'checked', '', 'string', '15', array());
-$cFields[] = array("Description", 'Description', 'checked', '', 'string', '20', array());
-$cFields[] = array("Invoice Notes", 'Invoice_Notes', '', '', 'string', '20', array());
-$cFields[] = array("Payment Notes", 'Payment_Notes', '', '', 'string', '20', array());
-$cFields[]= array($labels->getString('memberType', 'patient', 'Patient') . " Id", 'Patient_Id', '', '', 'string', '20', array());
-$cFields[]= array($labels->getString('memberType', 'patient', 'Patient') . " Last", 'Patient_Name_Last', '', '', 'string', '20', array());
-$cFields[]= array($labels->getString('memberType', 'patient', 'Patient') . " First", 'Patient_Name_First', '', '', 'string', '20', array());
-$cFields[] = array($paTitles, $paFields, '', '', 'string', '20', array());
-
-$locations = Common::readGenLookupsPDO($dbh, 'Location');
-if (count($locations) > 0) {
-    $cFields[] = array($labels->getString('hospital', 'location', 'Location'), 'Location', '', '', 'string', '20', array());
+if (isset($_POST['btnExcel-' . $report->getInputSetReportName()])) {
+    ini_set('memory_limit', "280M");
+    $report->downloadExcel("ItemReport");
 }
-
-// Diagnosis
-$diags = Common::readGenLookupsPDO($dbh, 'Diagnosis', 'Description');
-$diagCats = Common::readGenLookupsPDO($dbh, 'Diagnosis_Category', 'Description');
-//prepare diag categories for doOptionsMkup
-foreach($diags as $key=>$diag){
-    if(!empty($diag['Substitute'])){
-        $diags[$key][2] = $diagCats[$diag['Substitute']][1];
-        $diags[$key][1] = $diagCats[$diag['Substitute']][1] . ": " . $diags[$key][1];
-    }
-}
-
-if (count($diags) > 0) {
-    $cFields[] = array($labels->getString('hospital', 'diagnosis', 'Diagnosis'), 'Diagnosis', '', '', 'string', '20', array());
-}
-
-$cFields[] = array("Updated By", 'Updated_By', '', '', 'string', '15', array());
-$cFields[] = array("Status", 'Status', 'checked', '', 'string', '15', array());
-$cFields[] = array("Amount", 'Amount', 'checked', '', 'dollar', '15', array('style'=>'text-align:right;'));
-
-$fieldSets = ReportFieldSet::listFieldSets($dbh, 'item', true);
-$fieldSetSelection = (isset($_REQUEST['fieldset']) ? $_REQUEST['fieldset']: '');
-$colSelector = new ColumnSelectors($cFields, 'selFld', true, $fieldSets, $fieldSetSelection);
-$defaultFields = array();
-foreach($cFields as $field){
-    if($field[2] == 'checked'){
-        $defaultFields[] = $field[1];
-    }
-}
-
-// Items
-$addnlCharges = Common::readGenLookupsPDO($dbh, 'Addnl_Charge');
-
-$stmt = $dbh->query("SELECT idItem, Description, Percentage, Last_Order_Id from item where Deleted = 0");
-$itemList = array();
-
-while($r = $stmt->fetch(PDO::FETCH_NUM)) {
-
-    if ($r[0] == ItemId::LodgingDonate) {
-        $r[1] = "Lodging Donation";
-    }
-
-    if ($r[2] != 0) {
-        $r[1] .= ' '.TaxedItem::suppressTrailingZeros($r[2]);
-
-        if ($r[3] != 0) {
-            $r[2] = 'Old Rates';
-        } else {
-            $r[2] = '';
-        }
-    } else {
-        $r[2] = '';
-    }
-
-    if ($r[0] == ItemId::DepositRefund && $uS->KeyDeposit === FALSE) {
-        continue;
-    } else if ($r[0] == ItemId::KeyDeposit && $uS->KeyDeposit === FALSE) {
-        continue;
-    } else if ($r[0] == ItemId::VisitFee && $uS->VisitFee === FALSE) {
-        continue;
-    } else if ($r[0] == ItemId::AddnlCharge && count($addnlCharges) == 0) {
-        continue;
-    } else if ($r[0] == ItemId::InvoiceDue) {
-        continue;
-    }
-
-    $itemList[$r[0]] = $r;
-}
-
-
-
-if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
-
-    $headerTable = new HTMLTable();
-    $headerTable->addBodyTr(HTMLTable::makeTd('Report Generated: ', array('class'=>'tdlabel')) . HTMLTable::makeTd(date('M j, Y')));
-
-    // set the column selectors
-    $colSelector->setColumnSelectors($_POST);
-
-    $filter->loadSelectedTimePeriod();
-
-    $local = TRUE;
-    if (isset($_POST['btnExcel'])) {
-        $local = FALSE;
-    }
-
-    if (isset($_POST['cbShoDel'])) {
-        $showDeleted = TRUE;
-    }
-
-    if (isset($_POST['selDiag'])) {
-
-        $reqs = $_POST['selDiag'];
-
-        if (is_array($reqs)) {
-            $diagSelections = filter_var_array($reqs, FILTER_SANITIZE_FULL_SPECIAL_CHARS);
-        }
-    }
-
-    if (isset($_POST['selPayStatus'])) {
-        $reqs = $_POST['selPayStatus'];
-        if (is_array($reqs)) {
-            $statusSelections = filter_var_array($reqs, FILTER_SANITIZE_FULL_SPECIAL_CHARS);
-        }
-    }
-
-    if (isset($_POST['selItems'])) {
-        $reqs = $_POST['selItems'];
-        if (is_array($reqs)) {
-            $itemSelections = filter_var_array($reqs, FILTER_SANITIZE_FULL_SPECIAL_CHARS);
-        }
-    }
-
-    $whDates = " and DATE(i.Invoice_Date) < DATE('".$filter->getQueryEnd()."') and DATE(i.Invoice_Date) >= DATE('".$filter->getReportStart()."') ";
-
-    $endDT = new DateTime($end);
-    $endDT->sub(new DateInterval('P1D'));
-
-    $headerTable->addBodyTr(HTMLTable::makeTd('Reporting Period: ', array('class'=>'tdlabel')) . HTMLTable::makeTd(date('M j, Y', strtotime($filter->getReportStart())) . ' thru ' . date('M j, Y', strtotime($filter->getReportEnd()))));
-
-
-
-    $whStatus = '';
-    $payStatusText = '';
-    foreach ($statusSelections as $s) {
-        if ($s != '') {
-            // Set up query where part.
-            if ($whStatus == '') {
-                $whStatus = "'" . $s . "'";
-            } else {
-                $whStatus .= ",'".$s . "'";
-            }
-
-            if ($payStatusText == '') {
-                $payStatusText = $statusList[$s][1];
-            } else {
-                $payStatusText .= ', ' . $statusList[$s][1];
-            }
-        }
-    }
-
-    if ($whStatus != '') {
-        $whStatus = " and i.Status in (" . $whStatus . ") ";
-    } else {
-        $payStatusText = 'All';
-    }
-
-    $headerTable->addBodyTr(HTMLTable::makeTd('Invoice Statuses: ', array('class'=>'tdlabel')) . HTMLTable::makeTd($payStatusText));
-
-    if ($showDeleted) {
-        $whDeleted = ' 1=1 ';
-    } else {
-        $whDeleted = ' i.Deleted = 0 and il.Deleted = 0 ';
-    }
-
-
-    $whItem = '';
-    $itemText = '';
-    foreach ($itemSelections as $s) {
-        if ($s != '') {
-            // Set up query where part.
-            if ($whItem == '') {
-                $whItem = $s ;
-            } else {
-                $whItem .= ",".$s;
-            }
-
-            if ($itemText == '') {
-                $itemText .= $itemList[$s][1];
-            } else {
-                $itemText .= ', ' . $itemList[$s][1];
-            }
-        }
-    }
-
-    if ($whItem != '') {
-        $whItem = " and il.Item_Id in (" . $whItem . ") ";
-    } else {
-        $itemText = 'All';
-    }
-
-    $headerTable->addBodyTr(HTMLTable::makeTd('Items: ', array('class'=>'tdlabel')) . HTMLTable::makeTd($itemText));
-
-    $whDiags = '';
-    $tdDiags = '';
-
-    foreach ($diagSelections as $a) {
-        if ($a != '') {
-            if ($whDiags == '') {
-                $whDiags .= "'" . $a . "'";
-                $tdDiags .= $diags[$a][1];
-            } else {
-                $whDiags .= ",'". $a . "'";
-                $tdDiags .= ', ' . $diags[$a][1];
-            }
-        }
-    }
-
-    if ($whDiags != '') {
-        $whDiags = " and hs.Diagnosis in (".$whDiags.") ";
-    } else {
-        $tdDiags = 'All';
-    }
-
-    $headerTable->addBodyTr(HTMLTable::makeTd($labels->getString('hospital', 'diagnosis', 'Diagnosis') . ':', array('class'=>'tdlabel')) . HTMLTable::makeTd($tdDiags));
-
-        $query = "select
-    il.idInvoice_Line,
-    i.idInvoice,
-    i.Invoice_Number,
-    i.Delegated_Invoice_Id,
-    i.`Amount` as `Invoice_Amount`,
-    i.Sold_To_Id,
-    i.idGroup,
-    i.Order_Number,
-    i.Suborder_Number,
-    i.Invoice_Date,
-    i.`Status`,
-    i.Carried_Amount,
-    i.`Balance`,
-    i.`Deleted` as `Invoice_Deleted`,
-    i.`Updated_By`,
-    i.`Notes` as `Invoice_Notes`,
-    ifnull(p.`Notes`, '') as `Payment_Notes`,
-    il.`Price`,
-    il.`Amount`,
-    il.`Quantity`,
-    il.`Description`,
-    il.Item_Id,
-    il.Period_Start,
-    il.Period_End,
-    il.`Deleted` as `Line_Deleted`,
-    ifnull(pn.Name_Last, '') as `Patient_Name_Last`,
-    ifnull(pn.Name_First, '') as `Patient_Name_First`,
-    ifnull(pn.idName, '') as `Patient_Id`,
-    ifnull(hs.Diagnosis, '') as `Diagnosis`,
-    ifnull(hs.Location, '') as `Location`,
-    CASE when IFNULL(pa.Address_2, '') = '' THEN IFNULL(pa.Address_1, '') ELSE CONCAT(IFNULL(pa.Address_1, ''), ' ', IFNULL(pa.Address_2, '')) END AS `Patient_Address`,
-    IFNULL(pa.City, '') AS `Patient_City`,
-    IFNULL(pa.County, '') AS `Patient_County`,
-    IFNULL(pa.State_Province, '') AS `Patient_State_Province`,
-    IFNULL(pa.Postal_Code, '') AS `Patient_Postal_Code`,
-    IFNULL(pa.Country_Code, '') AS `Patient_Country`,
-    ifnull(n.Name_Last, '') as `Name_Last`,
-    ifnull(n.Name_First, '') as `Name_First`,
-    CASE when IFNULL(na.Address_2, '') = '' THEN IFNULL(na.Address_1, '') ELSE CONCAT(IFNULL(na.Address_1, ''), ' ', IFNULL(na.Address_2, '')) END AS `Address`,
-    IFNULL(na.City, '') AS `City`,
-    IFNULL(na.County, '') AS `County`,
-    IFNULL(na.State_Province, '') AS `State_Province`,
-    IFNULL(na.Postal_Code, '') AS `Postal_Code`,
-    IFNULL(na.Country_Code, '') AS `Country`,
-    ifnull(n.`Company`, '') as `Company`,
-    ifnull(nv.Vol_Code, '') as `Billing_Agent`
-from
-    invoice_line il join invoice i ON il.Invoice_Id = i.idInvoice
-    left join `payment_invoice` pi on i.idInvoice = pi.Invoice_Id
-    left join `payment` p on pi.Payment_Id = p.idPayment
-    left join `name` n on i.Sold_To_Id = n.idName
-    left join `name_address` na ON n.idName = na.idName and n.Preferred_Mail_Address = na.Purpose
-    left join visit v on i.Order_Number = v.idVisit and i.Suborder_Number = v.Span
-    left join hospital_stay hs on hs.idHospital_stay = v.idHospital_stay
-    left join `name` pn on hs.idPatient = pn.idName
-    left join `name_address` pa on pn.idName = pa.idName
-    left join name_volunteer2 nv on nv.idName = n.idName and nv.Vol_Category = 'Vol_Type' and nv.Vol_Code = '" . VolMemberType::BillingAgent . "'
-where $whDeleted  $whDates  $whItem and il.Item_Id != 5  $whStatus $whDiags group by il.idInvoice_Line order by i.idInvoice, il.idInvoice_Line";
-
-
-    $tbl = null;
-    $sml = null;
-    $reportRows = 0;
-    $hdr = array();
-    $fltrdTitles = $colSelector->getFilteredTitles();
-    $fltrdFields = $colSelector->getFilteredFields();
-    $writer = null;
-
-
-    if ($local) {
-
-        $tbl = new HTMLTable();
-        $th = '';
-
-        foreach ($fltrdTitles as $t) {
-            $th .= HTMLTable::makeTh($t);
-        }
-        $tbl->addHeaderTr($th);
-
-    } else {
-
-
-        $reportRows = 1;
-        $file = 'ItemReport';
-        $writer = new ExcelHelper($file);
-        $writer->setAuthor($uS->username);
-        $writer->setTitle('Item Report');
-
-        // build header
-        $hdr = array();
-        $colWidths = array();
-        $n = 0;
-
-        foreach($fltrdFields as $field){
-            $hdr[$field[0]] = $field[4]; //set column header name and type;
-            $colWidths[] = $field[5]; //set column width
-        }
-
-        $hdrStyle = $writer->getHdrStyle($colWidths);
-        $writer->writeSheetHeader("Sheet1", $hdr, $hdrStyle);
-        $reportRows++;
-    }
-
-    $total = 0.0;
-
-    $name_lk = $uS->nameLookups;
-    $name_lk['Invoice_Status'] = $statusList;
-    $uS->nameLookups = $name_lk;
-
-    // Now the data ...
-    $stmt = $dbh->query($query);
-
-    while ($r = $stmt->fetch(PDO::FETCH_ASSOC)) {
-
-        ItemReport::doMarkupRow($colSelector->getFilteredFields(), $r, $local, $statusList, $diags, $locations, $total, $tbl, $writer, $hdr, $reportRows, $uS->subsidyId, $uS->returnId, $labels);
-
-    }
-
-
-    // Finalize and print.
-    if ($local) {
-        if(in_array("Amount", $fltrdTitles)){
-            $footercolspan = count($fltrdTitles) - 2;
-            $footerspace = '';
-            if($footercolspan > 0){
-                $footerspace = HTMLTable::makeTd('', array('colspan'=> $footercolspan));
-            }
-            $tbl->addFooterTr($footerspace
-                .HTMLTable::makeTd('Total:', array('style'=>'text-align:right;font-weight:bold; border-top:2px solid black;'))
-                .HTMLTable::makeTd('$'.number_format($total,2), array('style'=>'text-align:right;font-weight:bold; border-top:2px solid black;'))
-                );
-        }else{
-            $tbl->addFooterTr(HTMLTable::makeTd('', array('colspan'=> (count($fltrdTitles)))));
-        }
-
-        $dataTable = $tbl->generateMarkup(array('id'=>'tblrpt', 'class'=>'display'));
-        $mkTable = 1;
-        $sortCol = array_search("Last", $fltrdTitles);
-        if(!$sortCol){
-            $sortCol = 0;
-        }
-        $headerTableMu = $headerTable->generateMarkup();
-
-    } else {
-        HouseLog::logDownload($dbh, 'Item Report', "Excel", "Item Report for " . $filter->getReportStart() . " - " . $filter->getReportEnd() . " downloaded", $uS->username);
-        $writer?->download();
-    }
-
-}
-
-// Setups for the page.
-
-$monSize = 5;
-
-// Prepare controls
-
-$statusSelector = HTMLSelector::generateMarkup(
-                HTMLSelector::doOptionsMkup($statusList, $statusSelections), array('name' => 'selPayStatus[]', 'size' => '4', 'multiple' => 'multiple'));
-
-$itemSelector = HTMLSelector::generateMarkup(
-                HTMLSelector::doOptionsMkup($itemList, $itemSelections), array('name' => 'selItems[]', 'size' => (count($itemList) + 1), 'multiple' => 'multiple'));
-
-$dAttrs = array('name'=>'cbShoDel', 'id'=>'cbShoDel', 'type'=>'checkbox', 'style'=>'margin-right:.3em;');
-
-if ($showDeleted) {
-    $dAttrs['checked'] = 'checked';
-}
-$shoDeletedCb = HTMLInput::generateMarkup('', $dAttrs)
-        . HTMLContainer::generateMarkup('label', 'Show Deleted Invoices', array('for'=>'cbShoDel'));
-
-$timePeriodMarkup = $filter->timePeriodMarkup("Invoice")->generateMarkup();
-
-$selDiag = '';
-if (count($diags) > 0) {
-
-    $selDiag = HTMLSelector::generateMarkup( HTMLSelector::doOptionsMkup($diags, $diagSelections, TRUE),
-        array('name'=>'selDiag[]', 'multiple'=>'multiple', 'size'=>min(count($diags)+1, 12)));
-}
-
-
-$columSelector = $colSelector->makeSelectorTable(TRUE)->generateMarkup(array('style'=>'display: inline-block; vertical-align: top;', 'id'=>'includeFields'));
 
 ?>
 <!DOCTYPE html>
@@ -518,7 +64,6 @@ $columSelector = $colSelector->makeSelectorTable(TRUE)->generateMarkup(array('st
         <script type="text/javascript" src="<?php echo JQ_JS ?>"></script>
         <script type="text/javascript" src="<?php echo JQ_UI_JS ?>"></script>
         <script type="text/javascript" src="<?php echo JQ_DT_JS ?>"></script>
-        <script type="text/javascript" src="<?php echo PRINT_AREA_JS ?>"></script>
         <script type="text/javascript" src="<?php echo MOMENT_JS ?>"></script>
         <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
 
@@ -562,24 +107,11 @@ function invoiceAction(idInvoice, action, eid, container, show) {
         }
     });
 }
+    var dateFormat = '<?php echo $labels->getString("momentFormats", "report", "MMM D, YYYY"); ?>';
     $(document).ready(function() {
-        var dateFormat = '<?php echo $labels->getString("momentFormats", "report", "MMM D, YYYY"); ?>';
-        var makeTable = '<?php echo $mkTable; ?>';
-        var columnDefs = $.parseJSON('<?php echo json_encode($colSelector->getColumnDefs()); ?>');
-        var sortCol = '<?php echo (isset($sortCol) ? $sortCol: ""); ?>';
-        $('#btnHere, #btnExcel, #cbColClearAll, #cbColSelAll').button();
-        $('#cbColClearAll').click(function () {
-            $('#selFld option').each(function () {
-                $(this).prop('selected', false);
-            });
-        });
-        $('#cbColSelAll').click(function () {
-            $('#selFld option').each(function () {
-                $(this).prop('selected', true);
-            });
-        });
-        
-        <?php echo $filter->getTimePeriodScript(); ?>
+
+        <?php echo $report->filter->getTimePeriodScript(); ?>;
+        <?php echo $report->generateReportScript(); ?>
 
         // disappear the pop-up room chooser.
         $(document).mousedown(function (event) {
@@ -589,30 +121,9 @@ function invoiceAction(idInvoice, action, eid, container, show) {
             }
         });
 
-        if (makeTable === '1') {
-            $('div#printArea').css('display', 'block');
-            $('#tblrpt').dataTable({
-                'columnDefs': [
-                    {'targets': columnDefs,
-                     'type': 'date',
-                     'render': function ( data, type, row ) {return dateRender(data, type, dateFormat);}
-                    }
-                 ],
-                "displayLength": 50,
-                "lengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]],
-                "dom": '<"top ui-toolbar ui-helper-clearfix"ilf><\"hhk-overflow-x\"rt><"bottom ui-toolbar ui-helper-clearfix"ilp><"clear">',
-                "order": [[ sortCol, 'asc' ]]
-            });
-
-            $('#printButton').button().click(function() {
-                $("div#printArea").printArea();
-            });
-            $('#tblrpt').on('click', '.invAction', function (event) {
-                invoiceAction($(this).data('iid'), 'view', event.target.id, '', true);
-            });
-        }
-
-        $('#includeFields').fieldSets({'reportName': 'item', 'defaultFields': <?php echo json_encode($defaultFields); ?>});
+        $(document).on('click', '.invAction', function (event) {
+            invoiceAction($(this).data('iid'), 'view', event.target.id, '', true);
+        });
 
     });
  </script>
@@ -621,57 +132,7 @@ function invoiceAction(idInvoice, action, eid, container, show) {
         <?php echo $menuMarkup; ?>
         <div id="contentDiv">
         <h2><?php echo $wInit->pageHeading; ?></h2>
-            <div id="vcategory" class="ui-widget ui-widget-content ui-corner-all hhk-member-detail hhk-tdbox hhk-visitdialog" style="clear:left; min-width: 400px; padding:10px;">
-                <form id="fcat" action="ItemReport.php" method="post">
-                	<div style="display: inline-block; vertical-align: top;">
-                    	<?php echo $timePeriodMarkup; ?>
-                    </div>
-                    <table style="display: inline-block; vertical-align: top;">
-                        <tr>
-                            <th>Invoice Status</th>
-                        </tr>
-                        <tr>
-                           <td><?php echo $statusSelector; ?></td>
-                        </tr>
-                    </table>
-                    <table style="display: inline-block; vertical-align: top;">
-                        <tr>
-                            <th>Item Filter</th>
-                        </tr>
-                        <tr>
-                           <td><?php echo $itemSelector; ?></td>
-                        </tr>
-                    </table>
-                    <?php if (count($diags) > 0) { ?>
-                    <table style="display: inline-block; vertical-align: top;">
-                        <tr>
-                            <th><?php echo $labels->getString('hospital', 'diagnosis', 'Diagnosis'); ?></th>
-                        </tr>
-                        <tr>
-                            <td><?php echo $selDiag; ?></td>
-                        </tr>
-                    </table>
-                    <?php } ?>
-                    <?php echo $columSelector; ?>
-                    <table style="width:100%; clear:both;">
-                        <tr>
-                            <td style="width:50%;"><?php echo $shoDeletedCb; ?></td>
-                            <td><input type="submit" name="btnHere" id="btnHere" value="Run Here"/></td>
-                            <td><input type="submit" name="btnExcel" id="btnExcel" value="Download to Excel"/></td>
-                        </tr>
-                    </table>
-                </form>
-            </div>
-            <div style="clear:both;"></div>
-            <div id="printArea" class="ui-widget ui-widget-content ui-corner-all hhk-tdbox hhk-visitdialog" style="display:none; font-size: .9em; padding: 5px; padding-bottom:25px; margin: 10px 0">
-                <div><input id="printButton" value="Print" type="button"/></div>
-                <div style="margin-top:10px; margin-bottom:10px; min-width: 350px;">
-                    <?php echo $headerTableMu; ?>
-                </div>
-                <form autocomplete="off">
-                <?php echo $dataTable; ?>
-                </form>
-            </div>
+            <?php echo $report->generateFilterMarkup() . $dataTableWrapper; ?>
         </div>
     </body>
 </html>

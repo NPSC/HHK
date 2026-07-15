@@ -4,7 +4,9 @@ namespace HHK\House\Report;
 
 use HHK\Common;
 use HHK\HTMLControls\{HTMLContainer, HTMLInput, HTMLSelector, HTMLTable};
+use HHK\Purchase\TaxedItem;
 use HHK\SysConst\GLTableNames;
+use HHK\SysConst\ItemId;
 use HHK\sec\Labels;
 use HHK\sec\Session;
 use HHK\SysConst\VolMemberType;
@@ -175,14 +177,36 @@ class ReportFilter {
 
     /**
      * Summary of selectedPaymentGateways
-     * @var 
+     * @var
      */
     protected $selectedPaymentGateways;
     /**
      * Summary of paymentGateways
-     * @var 
+     * @var
      */
     protected $paymentGateways;
+
+    /**
+     * Summary of selectedInvoiceStatuses
+     * @var
+     */
+    protected $selectedInvoiceStatuses;
+    /**
+     * Summary of invoiceStatuses
+     * @var
+     */
+    protected $invoiceStatuses;
+
+    /**
+     * Summary of selectedItems
+     * @var
+     */
+    protected $selectedItems;
+    /**
+     * Summary of items
+     * @var
+     */
+    protected $items;
 
     /**
      * Summary of reportStart
@@ -215,6 +239,8 @@ class ReportFilter {
         $this->selectedMonths = array();
         $this->hospitals = array();
         $this->paymentGateways = array();
+        $this->selectedInvoiceStatuses = array();
+        $this->selectedItems = array();
     }
 
     /**
@@ -839,6 +865,131 @@ $ckdate";
     }
 
     /**
+     * Load Invoice Statuses
+     * @param \PDO $dbh
+     * @return ReportFilter
+     */
+    public function createInvoiceStatuses(\PDO $dbh){
+        $this->invoiceStatuses = Common::readGenLookupsPDO($dbh, 'Invoice_Status');
+        return $this;
+    }
+
+    /**
+     * Summary of loadSelectedInvoiceStatuses
+     * @return ReportFilter
+     */
+    public function loadSelectedInvoiceStatuses() {
+
+        if (filter_has_var(INPUT_POST, 'selInvoiceStatus')) {
+            $reqs = $_POST['selInvoiceStatus'];
+            if (is_array($reqs)) {
+                $this->selectedInvoiceStatuses = filter_var_array($reqs, FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+            }
+        }
+
+        return $this;
+    }
+
+    /**
+     * Summary of invoiceStatusMarkup
+     * @return HTMLTable
+     */
+    public function invoiceStatusMarkup() {
+
+        $statusSelector = HTMLSelector::generateMarkup(
+            HTMLSelector::doOptionsMkup($this->invoiceStatuses, $this->selectedInvoiceStatuses), array('name' => 'selInvoiceStatus[]', 'size' => '4', 'multiple' => 'multiple', 'style'=>'width: 100%;'));
+
+        $tbl = new HTMLTable();
+
+        $tbl->addHeaderTr(HTMLTable::makeTh("Invoice Status"));
+        $tbl->addBodyTr(HTMLTable::makeTd($statusSelector, array('style'=>'vertical-align: top;')));
+
+        return $tbl;
+    }
+
+    /**
+     * Load Items
+     * @param \PDO $dbh
+     * @return ReportFilter
+     */
+    public function createItems(\PDO $dbh){
+
+        $uS = Session::getInstance();
+        $addnlCharges = Common::readGenLookupsPDO($dbh, 'Addnl_Charge');
+
+        $stmt = $dbh->query("SELECT idItem, Description, Percentage, Last_Order_Id from item where Deleted = 0");
+        $this->items = array();
+
+        while ($r = $stmt->fetch(\PDO::FETCH_NUM)) {
+
+            if ($r[0] == ItemId::LodgingDonate) {
+                $r[1] = "Lodging Donation";
+            }
+
+            if ($r[2] != 0) {
+                $r[1] .= ' ' . TaxedItem::suppressTrailingZeros($r[2]);
+
+                if ($r[3] != 0) {
+                    $r[2] = 'Old Rates';
+                } else {
+                    $r[2] = '';
+                }
+            } else {
+                $r[2] = '';
+            }
+
+            if ($r[0] == ItemId::DepositRefund && $uS->KeyDeposit === FALSE) {
+                continue;
+            } else if ($r[0] == ItemId::KeyDeposit && $uS->KeyDeposit === FALSE) {
+                continue;
+            } else if ($r[0] == ItemId::VisitFee && $uS->VisitFee === FALSE) {
+                continue;
+            } else if ($r[0] == ItemId::AddnlCharge && count($addnlCharges) == 0) {
+                continue;
+            } else if ($r[0] == ItemId::InvoiceDue) {
+                continue;
+            }
+
+            $this->items[$r[0]] = $r;
+        }
+
+        return $this;
+    }
+
+    /**
+     * Summary of loadSelectedItems
+     * @return ReportFilter
+     */
+    public function loadSelectedItems() {
+
+        if (filter_has_var(INPUT_POST, 'selItems')) {
+            $reqs = $_POST['selItems'];
+            if (is_array($reqs)) {
+                $this->selectedItems = filter_var_array($reqs, FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+            }
+        }
+
+        return $this;
+    }
+
+    /**
+     * Summary of itemsMarkup
+     * @return HTMLTable
+     */
+    public function itemsMarkup() {
+
+        $itemSelector = HTMLSelector::generateMarkup(
+            HTMLSelector::doOptionsMkup($this->items, $this->selectedItems), array('name' => 'selItems[]', 'size' => (count($this->items) + 1), 'multiple' => 'multiple'));
+
+        $tbl = new HTMLTable();
+
+        $tbl->addHeaderTr(HTMLTable::makeTh("Item Filter"));
+        $tbl->addBodyTr(HTMLTable::makeTd($itemSelector, array('style'=>'vertical-align: top;')));
+
+        return $tbl;
+    }
+
+    /**
      * Load Payment Gateways
      * @param \PDO $dbh
      * @return ReportFilter
@@ -1030,6 +1181,54 @@ $ckdate";
 
     public function getSelectedPaymentGateways(){
         return $this->selectedPaymentGateways;
+    }
+
+    public function getInvoiceStatuses(){
+        return $this->invoiceStatuses;
+    }
+
+    public function getSelectedInvoiceStatuses(){
+        return $this->selectedInvoiceStatuses;
+    }
+
+    public function getSelectedInvoiceStatusesString(){
+        $list = $this->getInvoiceStatuses();
+        $titles = "";
+        foreach ($this->getSelectedInvoiceStatuses() as $h) {
+            if (isset($list[$h])) {
+                $titles .= $list[$h][1] . ', ';
+            }
+        }
+        if ($titles != '') {
+            $h = trim($titles);
+            return substr($h, 0, strlen($h) - 1);
+        }else{
+            return "All";
+        }
+    }
+
+    public function getItems(){
+        return $this->items;
+    }
+
+    public function getSelectedItems(){
+        return $this->selectedItems;
+    }
+
+    public function getSelectedItemsString(){
+        $list = $this->getItems();
+        $titles = "";
+        foreach ($this->getSelectedItems() as $h) {
+            if (isset($list[$h])) {
+                $titles .= $list[$h][1] . ', ';
+            }
+        }
+        if ($titles != '') {
+            $h = trim($titles);
+            return substr($h, 0, strlen($h) - 1);
+        }else{
+            return "All";
+        }
     }
 
     /**

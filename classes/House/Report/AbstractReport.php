@@ -47,6 +47,7 @@ abstract class AbstractReport {
     protected string $inputSetReportName = "";
     protected bool $rendered = false;
     protected string $statsMkup = "";
+    protected int $defaultSortCol = 0;
 
     /**
      * @param \PDO $dbh
@@ -172,9 +173,18 @@ abstract class AbstractReport {
             $tbl->addBodyTr($tr);
         }
 
+        $this->makeFooterMkup($tbl);
+
         $this->rendered = true;
 
         return HTMLContainer::generateMarkup('form', HTMLContainer::generateMarkup("div", $this->generateSummaryMkup() . $tbl->generateMarkup(array('id'=>'tbl' . $this->inputSetReportName . 'rpt', 'class'=>'display', 'style'=>'width:100%;')), array('class'=>"ui-widget ui-widget-content ui-corner-all hhk-tdbox", 'id'=>'hhk-reportWrapper')), array('autocomplete'=>'off'));
+    }
+
+    /**
+     * Optional hook for subclasses to add a footer row (eg. totals) to the report table.
+     * No-op by default.
+     */
+    protected function makeFooterMkup(HTMLTable $tbl): void {
     }
 
     public function generateSummaryMkup():string {
@@ -217,6 +227,7 @@ abstract class AbstractReport {
             ],
             "displayLength": 50,
             "lengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]],
+            "order": [[' . $this->defaultSortCol . ', "asc"]],
             "dom": "<\"top ui-toolbar ui-helper-clearfix\"Bif><\"hhk-overflow-x\"rt><\"bottom ui-toolbar ui-helper-clearfix\"lp>",
             "buttons": [
             {
