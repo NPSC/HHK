@@ -59,7 +59,7 @@ try {
             break;
         case 'acs':
             $saml = new SAML($dbh, $idpId);
-            $events = $saml->acs();
+            $saml->acs();
             break;
         case 'metadata':
             if(SecurityComponent::is_Admin()){

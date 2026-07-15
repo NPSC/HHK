@@ -137,7 +137,7 @@ class ReportFilter {
      * Summary of diagnsoses
      * @var
      */
-    protected $diagnoses;
+    public $diagnoses;
     protected $diagnosisCategories;
 
     /**
@@ -149,7 +149,7 @@ class ReportFilter {
      * Summary of billingAgents
      * @var 
      */
-    protected $billingAgents;
+    public $billingAgents;
 
     /**
      * Summary of selectedPayTypes
@@ -731,7 +731,7 @@ $ckdate";
      * Summary of billingAgentMarkup
      * @return HTMLTable
      */
-    public function billingAgentMarkup() {
+    public function billingAgentMarkup(): HTMLTable {
 
         $agents = HTMLSelector::generateMarkup( HTMLSelector::doOptionsMkup($this->billingAgents, $this->selectedBillingAgents, TRUE),
         array('name'=>'selBillingAgents[]', 'size'=>(count($this->billingAgents)>12 ? '12' : count($this->billingAgents))+1, 'multiple'=>'multiple', 'style'=>'min-width:60px; width: 100%'));

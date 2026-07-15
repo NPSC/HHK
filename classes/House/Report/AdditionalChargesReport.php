@@ -7,11 +7,9 @@ use HHK\ExcelHelper;
 use HHK\HTMLControls\HTMLContainer;
 use HHK\HTMLControls\HTMLSelector;
 use HHK\HTMLControls\HTMLTable;
-use HHK\Purchase\TaxedItem;
 use HHK\sec\Session;
 use HHK\sec\Labels;
 use HHK\SysConst\ItemId;
-use HHK\SysConst\VolMemberType;
 use HHK\TableLog\HouseLog;
 
 /**
@@ -73,7 +71,8 @@ class AdditionalChargesReport extends AbstractReport implements ReportInterface 
         return $genLookups;
     }
 
-    protected function getAdditionalChargesMarkup(){
+    protected function getAdditionalChargesMarkup(): HTMLTable{
+
         $additionalChargesSelector = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($this->additionalCharges, $this->selectedAdditionalCharges), array('name' => 'selAdditionalCharges[]', 'size' => (count($this->additionalCharges) + 3), 'multiple' => 'multiple', 'style'=>'width: 100%;'));
         $tbl = new HTMLTable();
         $tr = '';
@@ -251,9 +250,9 @@ where i.Deleted = 0 and " . $whDates . $whBilling . $whDiags . $whCharges . " gr
 
     public function makeFilterMkup():void{
         $this->filterMkup .= $this->filter->timePeriodMarkup()->generateMarkup();
-        $this->filterMkup .= $this->filter->billingAgentMarkup()->generateMarkup();
-        $this->filterMkup .= $this->getAdditionalChargesMarkup()->generateMarkup();
-        $this->filterMkup .= $this->filter->diagnosisMarkup()->generateMarkup();
+        $this->filterMkup .= (count($this->filter->billingAgents) > 0 ? $this->filter->billingAgentMarkup()->generateMarkup() : '');
+        $this->filterMkup .= (count($this->additionalCharges) > 0 ? $this->getAdditionalChargesMarkup()->generateMarkup() : '');
+        $this->filterMkup .= (count($this->filter->diagnoses) > 0 ? $this->filter->diagnosisMarkup()->generateMarkup() : '');
         $this->filterMkup .= $this->getColSelectorMkup();
     }
 

@@ -2699,7 +2699,7 @@ JS;
              JOIN `name_guest` ng ON vt.`HHK Id` = ng.idName AND vt.`PSG Id` = ng.idPsg
              WHERE IFNULL(DATE(vt.`Departure`), DATE(NOW())) >= DATE('$start')
                AND DATE(vt.`Arrival`) < DATE('$end')
-             GROUP BY vt.`HHK ID`
+             GROUP BY vt.`PSG Id`, vt.`HHK Id`
              ORDER BY vt.`PSG Id`"
         );
 

@@ -247,6 +247,8 @@ class FormDocument {
 
         $uS = Session::getInstance();
 
+        $minResvDays = SysConfig::getKeyValue($dbh, 'sys_config', 'minResvDays');
+
         $fieldData = [];
 
         foreach($fields as $key=>$field){
@@ -305,7 +307,6 @@ class FormDocument {
                         }
 
                         $days = $checkin->diff($checkout)->days;
-                        $minResvDays = SysConfig::getKeyValue($dbh, 'sys_config', 'minResvDays');
                         if($minResvDays > 0 && $checkin->diff($checkout)->days < $minResvDays){
                             $response["errors"][] = ['field'=>'checkoutdate', 'error'=>'Stay dates must be a minimum of ' . $minResvDays . " days"];
                         }

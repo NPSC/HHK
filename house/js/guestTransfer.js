@@ -1171,9 +1171,9 @@ $(document).ready(function () {
     });
 
     $('#hhkdgpnew').button().click(function () {
-        $('.hhk-tf-update').each(function () {
-            $(this).prop('checked', false);
-        });
+        $('input.hhk-tfmem[data-patient="1"]').prop('disabled', false);
+        $('.hhk-tf-update').prop('checked', false);
+        $('.hhk-tfmem').not('.hhk-tf-update').prop('checked', true);
         syncAllPatientAndPsg();
     });
 
