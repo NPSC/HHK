@@ -4316,7 +4316,7 @@ values
 	(6, 'Discount'),
 	(7, 'Reversal'),
 	(8, 'Lodging Donation'),
-	(9, ''),
+	(9, 'Additional Charge'),
 	(10, 'Lodging MOA'),
 	(11, 'Waive');
 

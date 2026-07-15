@@ -208,3 +208,6 @@ call `new_webpage`(
 -- Add hospital label if missing
 INSERT IGNORE INTO `labels` (`Key`,`Value`,`Type`,`Category`,`Header`,`Description`)
 VALUES ('hospital','Hospital','s','h','','Default: Hospital');
+
+
+update `item` set `Description` = "Additional Charge" where `idItem` = 9 and `Description` = "";
