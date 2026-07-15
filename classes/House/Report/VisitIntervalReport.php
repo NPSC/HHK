@@ -67,13 +67,13 @@ class VisitIntervalReport extends AbstractReport implements ReportInterface {
 
     /**
      */
-    public function makeCFields():array {
+    public function makeFields():array {
         $uS = Session::getInstance();
         $labels = Labels::getLabels();
 
-        $cFields[] = array('Visit Id', 'idVisit', 'checked', 'f', 'n', '', array('style' => 'text-align:center;'));
-        $cFields[] = array($labels->getString('MemberType', 'primaryGuest', 'Primary Guest'), 'idPrimaryGuest', 'checked', '', 's', '', array());
-        $cFields[] = array($labels->getString('MemberType', 'patient', 'Patient'), 'idPatient', 'checked', '', 's', '', array());
+        $fields[] = array('Visit Id', 'idVisit', 'checked', 'f', 'n', '', array('style' => 'text-align:center;'));
+        $fields[] = array($labels->getString('MemberType', 'primaryGuest', 'Primary Guest'), 'idPrimaryGuest', 'checked', '', 's', '', array());
+        $fields[] = array($labels->getString('MemberType', 'patient', 'Patient'), 'idPatient', 'checked', '', 's', '', array());
 
         // Patient address.
         if ($uS->PatientAddr) {
@@ -89,69 +89,69 @@ class VisitIntervalReport extends AbstractReport implements ReportInterface {
             $pFields = array_merge($pFields, array('pState', 'pCountry', 'pZip'));
             $pTitles = array_merge($pTitles, array($labels->getString('MemberType', 'patient', 'Patient') . ' State', $labels->getString('MemberType', 'patient', 'Patient') . ' Country', $labels->getString('MemberType', 'patient', 'Patient') . ' Zip'));
 
-            $cFields[] = array($pTitles, $pFields, '', '', 's', '', array());
+            $fields[] = array($pTitles, $pFields, '', '', 's', '', array());
         }
 
         if ($uS->ShowBirthDate) {
-            $cFields[] = array($labels->getString('MemberType', 'patient', 'Patient') . ' DOB', 'pBirth', '', '', 'n', "", array(), 'date');
+            $fields[] = array($labels->getString('MemberType', 'patient', 'Patient') . ' DOB', 'pBirth', '', '', 'n', "", array(), 'date');
         }
 
         // Referral Agent
         if ($uS->ReferralAgent) {
-            $cFields[] = array($labels->getString('hospital', 'referralAgent', 'Ref. Agent'), 'Referral_Agent', 'checked', '', 's', '', array());
+            $fields[] = array($labels->getString('hospital', 'referralAgent', 'Ref. Agent'), 'Referral_Agent', 'checked', '', 's', '', array());
         }
 
         // Hospital
         if ((count($this->filter->getAList()) + count($this->filter->getHList())) > 1) {
 
-            $cFields[] = array($labels->getString('hospital', 'hospital', 'Hospital'), 'Hospital', 'checked', '', 'string', '20');
+            $fields[] = array($labels->getString('hospital', 'hospital', 'Hospital'), 'Hospital', 'checked', '', 'string', '20');
 
             if (count($this->filter->getAList()) > 0) {
-                $cFields[] = array($labels->getString('hospital', 'association', 'Association'), 'Assoc', 'checked', '', 'string', '20');
+                $fields[] = array($labels->getString('hospital', 'association', 'Association'), 'Assoc', 'checked', '', 'string', '20');
             }
         }
 
 
         if ($uS->Doctor) {
-            $cFields[] = array("Doctor", 'Doctor', '', '', 's', '', array());
+            $fields[] = array("Doctor", 'Doctor', '', '', 's', '', array());
         }
 
                 if (count($this->locations) > 0) {
-            $cFields[] = array($labels->getString('hospital', 'location', 'Location'), 'Location', 'checked', '', 's', '', array());
+            $fields[] = array($labels->getString('hospital', 'location', 'Location'), 'Location', 'checked', '', 's', '', array());
         }
 
         if (count($this->diags) > 0) {
-            $cFields[] = array($labels->getString('hospital', 'diagnosis', 'Diagnosis'), 'Diagnosis', 'checked', '', 's', '', array());
+            $fields[] = array($labels->getString('hospital', 'diagnosis', 'Diagnosis'), 'Diagnosis', 'checked', '', 's', '', array());
         }
 
         if ($uS->ShowDiagTB) {
-            $cFields[] = array($labels->getString('hospital', 'diagnosisDetail', 'Diagnosis Details'), 'Diagnosis2', 'checked', '', 's', '20', array());
+            $fields[] = array($labels->getString('hospital', 'diagnosisDetail', 'Diagnosis Details'), 'Diagnosis2', 'checked', '', 's', '20', array());
         }
 
         if ($uS->InsuranceChooser) {
-            $cFields[] = array($labels->getString('MemberType', 'patient', 'Patient') . " Insurance", 'Insurance', '', '', 's', '', array());
+            $fields[] = array($labels->getString('MemberType', 'patient', 'Patient') . " Insurance", 'Insurance', '', '', 's', '', array());
         }
 
-        $cFields[] = array("Arrive", 'Arrival', 'checked', '', 'n', '', array(), 'date');
-        $cFields[] = array("Depart", 'Departure', 'checked', '', 'n', '', array(), 'date');
-        $cFields[] = array("Room", 'Title', 'checked', '', 's', '', array('style' => 'text-align:center;'));
+        $fields[] = array("Arrive", 'Arrival', 'checked', '', 'n', '', array(), 'date');
+        $fields[] = array("Depart", 'Departure', 'checked', '', 'n', '', array(), 'date');
+        $fields[] = array("Room", 'Title', 'checked', '', 's', '', array('style' => 'text-align:center;'));
 
         if ($uS->VisitFee) {
-            $cFields[] = array($labels->getString('statement', 'cleaningFeeLabel', "Clean Fee"), 'visitFee', 'checked', '', 's', '', array('style' => 'text-align:right;'));
+            $fields[] = array($labels->getString('statement', 'cleaningFeeLabel', "Clean Fee"), 'visitFee', 'checked', '', 's', '', array('style' => 'text-align:right;'));
         }
 
 
         if (count($this->adjusts) > 0) {
-            $cFields[] = array("Addnl Charge", 'adjch', 'checked', '', 's', '', array('style' => 'text-align:right;'));
+            $fields[] = array("Addnl Charge", 'adjch', 'checked', '', 's', '', array('style' => 'text-align:right;'));
 
             if ($this->useTaxes) {
-                $cFields[] = array("Addnl Tax", 'adjchtx', 'checked', '', 's', '', array('style' => 'text-align:right;'));
+                $fields[] = array("Addnl Tax", 'adjchtx', 'checked', '', 's', '', array('style' => 'text-align:right;'));
             }
         }
 
 
-        $cFields[] = array("Nights", 'nights', 'checked', '', 'n', '', array('style' => 'text-align:center;'));
-        $cFields[] = array("Days", 'days', '', '', 'n', '', array('style' => 'text-align:center;'));
+        $fields[] = array("Nights", 'nights', 'checked', '', 'n', '', array('style' => 'text-align:center;'));
+        $fields[] = array("Days", 'days', '', '', 'n', '', array('style' => 'text-align:center;'));
 
         $amtChecked = 'checked';
 
@@ -159,51 +159,51 @@ class VisitIntervalReport extends AbstractReport implements ReportInterface {
 
             if ($uS->RoomPriceModel == ItemPriceCode::PerGuestDaily) {
 
-                $cFields[] = array($labels->getString('MemberType', 'guest', 'Guest') . " Nights", 'gnights', 'checked', '', 'n', '', array('style' => 'text-align:center;'));
-                $cFields[] = array("Rate Per " . $labels->getString('MemberType', 'guest', 'Guest'), 'rate', $amtChecked, '', 's', '_(* #,##0.00_);_(* \(#,##0.00\);_(* "-"??_);_(@_)', array());
-                $cFields[] = array("Mean Rate Per " . $labels->getString('MemberType', 'guest', 'Guest'), 'meanGstRate', $amtChecked, '', 's', '_(* #,##0.00_);_(* \(#,##0.00\);_(* "-"??_);_(@_)', array('style' => 'text-align:right;'));
+                $fields[] = array($labels->getString('MemberType', 'guest', 'Guest') . " Nights", 'gnights', 'checked', '', 'n', '', array('style' => 'text-align:center;'));
+                $fields[] = array("Rate Per " . $labels->getString('MemberType', 'guest', 'Guest'), 'rate', $amtChecked, '', 's', '_(* #,##0.00_);_(* \(#,##0.00\);_(* "-"??_);_(@_)', array());
+                $fields[] = array("Mean Rate Per " . $labels->getString('MemberType', 'guest', 'Guest'), 'meanGstRate', $amtChecked, '', 's', '_(* #,##0.00_);_(* \(#,##0.00\);_(* "-"??_);_(@_)', array('style' => 'text-align:right;'));
 
             } else {
 
-                $cFields[] = array("Rate", 'rate', $amtChecked, '', 's', '_(* #,##0.00_);_(* \(#,##0.00\);_(* "-"??_);_(@_)', array());
+                $fields[] = array("Rate", 'rate', $amtChecked, '', 's', '_(* #,##0.00_);_(* \(#,##0.00\);_(* "-"??_);_(@_)', array());
 
                 if ($uS->RoomPriceModel == ItemPriceCode::NdayBlock) {
-                    $cFields[] = array("Adj. Rate", 'rateAdj', $amtChecked, '', 's', '_(* #,##0.00_);_(* \(#,##0.00\);_(* "-"??_);_(@_)', array('style' => 'text-align:right;'));
+                    $fields[] = array("Adj. Rate", 'rateAdj', $amtChecked, '', 's', '_(* #,##0.00_);_(* \(#,##0.00\);_(* "-"??_);_(@_)', array('style' => 'text-align:right;'));
                 }
 
-                $cFields[] = array("Mean Rate", 'meanRate', $amtChecked, '', 's', '_(* #,##0.00_);_(* \(#,##0.00\);_(* "-"??_);_(@_)', array('style' => 'text-align:right;'));
+                $fields[] = array("Mean Rate", 'meanRate', $amtChecked, '', 's', '_(* #,##0.00_);_(* \(#,##0.00\);_(* "-"??_);_(@_)', array('style' => 'text-align:right;'));
             }
 
-            $cFields[] = array("Lodging Charge", 'lodg', $amtChecked, '', 's', '_(* #,##0.00_);_(* \(#,##0.00\);_(* "-"??_);_(@_)', array('style' => 'text-align:right;'));
+            $fields[] = array("Lodging Charge", 'lodg', $amtChecked, '', 's', '_(* #,##0.00_);_(* \(#,##0.00\);_(* "-"??_);_(@_)', array('style' => 'text-align:right;'));
 
             if ($this->useTaxes) {
-                $cFields[] = array('Tax Charged', 'taxcgd', $amtChecked, '', 's', '_(* #,##0.00_);_(* \(#,##0.00\);_(* "-"??_);_(@_)', array('style' => 'text-align:right;'));
+                $fields[] = array('Tax Charged', 'taxcgd', $amtChecked, '', 's', '_(* #,##0.00_);_(* \(#,##0.00\);_(* "-"??_);_(@_)', array('style' => 'text-align:right;'));
             }
 
-            $cFields[] = array($labels->getString('MemberType', 'visitor', 'Guest') . " Paid", 'gpaid', $amtChecked, '', 's', '_(* #,##0.00_);_(* \(#,##0.00\);_(* "-"??_);_(@_)', array('style' => 'text-align:right;'));
-            $cFields[] = array("3rd Party Paid", 'thdpaid', $amtChecked, '', 's', '_(* #,##0.00_);_(* \(#,##0.00\);_(* "-"??_);_(@_)', array('style' => 'text-align:right;'));
-            $cFields[] = array("House Paid", 'hpaid', $amtChecked, '', 's', '_(* #,##0.00_);_(* \(#,##0.00\);_(* "-"??_);_(@_)', array('style' => 'text-align:right;'));
-            $cFields[] = array("Lodging Paid", 'totpd', $amtChecked, '', 's', '_(* #,##0.00_);_(* \(#,##0.00\);_(* "-"??_);_(@_)', array('style' => 'text-align:right;'));
+            $fields[] = array($labels->getString('MemberType', 'visitor', 'Guest') . " Paid", 'gpaid', $amtChecked, '', 's', '_(* #,##0.00_);_(* \(#,##0.00\);_(* "-"??_);_(@_)', array('style' => 'text-align:right;'));
+            $fields[] = array("3rd Party Paid", 'thdpaid', $amtChecked, '', 's', '_(* #,##0.00_);_(* \(#,##0.00\);_(* "-"??_);_(@_)', array('style' => 'text-align:right;'));
+            $fields[] = array("House Paid", 'hpaid', $amtChecked, '', 's', '_(* #,##0.00_);_(* \(#,##0.00\);_(* "-"??_);_(@_)', array('style' => 'text-align:right;'));
+            $fields[] = array("Lodging Paid", 'totpd', $amtChecked, '', 's', '_(* #,##0.00_);_(* \(#,##0.00\);_(* "-"??_);_(@_)', array('style' => 'text-align:right;'));
 
             if ($this->useTaxes) {
-                $cFields[] = array('Tax Paid', 'taxpd', $amtChecked, '', 's', '_(* #,##0.00_);_(* \(#,##0.00\);_(* "-"??_);_(@_)', array('style' => 'text-align:right;'));
+                $fields[] = array('Tax Paid', 'taxpd', $amtChecked, '', 's', '_(* #,##0.00_);_(* \(#,##0.00\);_(* "-"??_);_(@_)', array('style' => 'text-align:right;'));
             }
 
-            $cFields[] = array("Unpaid", 'unpaid', $amtChecked, '', 's', '_(* #,##0.00_);_(* \(#,##0.00\);_(* "-"??_);_(@_)', array('style' => 'text-align:right;'));
-            $cFields[] = array("Pending", 'pndg', $amtChecked, '', 's', '_(* #,##0.00_);_(* \(#,##0.00\);_(* "-"??_);_(@_)', array('style' => 'text-align:right;'));
+            $fields[] = array("Unpaid", 'unpaid', $amtChecked, '', 's', '_(* #,##0.00_);_(* \(#,##0.00\);_(* "-"??_);_(@_)', array('style' => 'text-align:right;'));
+            $fields[] = array("Pending", 'pndg', $amtChecked, '', 's', '_(* #,##0.00_);_(* \(#,##0.00\);_(* "-"??_);_(@_)', array('style' => 'text-align:right;'));
 
             if ($this->useTaxes) {
-                $cFields[] = array('Tax Pending', 'taxpndg', $amtChecked, '', 's', '_(* #,##0.00_);_(* \(#,##0.00\);_(* "-"??_);_(@_)', array('style' => 'text-align:right;'));
+                $fields[] = array('Tax Pending', 'taxpndg', $amtChecked, '', 's', '_(* #,##0.00_);_(* \(#,##0.00\);_(* "-"??_);_(@_)', array('style' => 'text-align:right;'));
             }
 
             if ($uS->RoomPriceModel != ItemPriceCode::NdayBlock) {
-                $cFields[] = array("Rate Subsidy", 'sub', $amtChecked, '', 's', '_(* #,##0.00_);_(* \(#,##0.00\);_(* "-"??_);_(@_)', array('style' => 'text-align:right;'));
+                $fields[] = array("Rate Subsidy", 'sub', $amtChecked, '', 's', '_(* #,##0.00_);_(* \(#,##0.00\);_(* "-"??_);_(@_)', array('style' => 'text-align:right;'));
             }
 
-            $cFields[] = array("Contribution", 'donpd', $amtChecked, '', 's', '_(* #,##0.00_);_(* \(#,##0.00\);_(* "-"??_);_(@_)', array('style' => 'text-align:right;'));
+            $fields[] = array("Contribution", 'donpd', $amtChecked, '', 's', '_(* #,##0.00_);_(* \(#,##0.00\);_(* "-"??_);_(@_)', array('style' => 'text-align:right;'));
         }
 
-        return $cFields;
+        return $fields;
     }
 
     /**

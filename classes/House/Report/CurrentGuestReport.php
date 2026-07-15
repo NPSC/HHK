@@ -78,50 +78,50 @@ class CurrentGuestReport extends AbstractReport implements ReportInterface {
     }
 
     /**
-     * Summary of makeCFields
+     * Summary of makeFields
      * @return array
      */
-    public function makeCFields(): array
+    public function makeFields(): array
     {
         $uS = Session::getInstance();
-        $cFields = array();
+        $fields = array();
 
         // Report column selector
         // array: title, ColumnName, checked, fixed, Excel Type, Excel Style
-        $cFields[] = array("Room", 'Room', 'checked', '', 'string', '15');
-        $cFields[] = array(Labels::getString('memberType', 'guest', 'Guest') . ' Last Name', 'Guest Last Name', 'checked', '', 'string', '20');
-        $cFields[] = array(Labels::getString('memberType', 'guest', 'Guest') . " First Name", 'Guest First Name', 'checked', '', 'string', '20');
-        $cFields[] = array("Phone", 'Phone', 'checked', '', 'string', '15');
-        $cFields[] = array('City', 'City', '', '', 'string', '20');
-        $cFields[] = array("State", 'State', '', '', 'string', '20');
-        $cFields[] = array(Labels::getString('memberType', 'patient', 'Patient') . ' Last Name', 'Patient Last Name', '', '', 'string', '20');
-        $cFields[] = array(Labels::getString('memberType', 'patient', 'Patient') . " First Name", 'Patient First Name', '', '', 'string', '20');
-        $cFields[] = array("Arrival", 'Arrival', 'checked', '', 'MM/DD/YYYY', '15', array(), 'date');
-        $cFields[] = array("Expected Departure", 'Expected Departure', 'checked', '', 'MM/DD/YYYY', '15', array(), 'date');
+        $fields[] = array("Room", 'Room', 'checked', '', 'string', '15');
+        $fields[] = array(Labels::getString('memberType', 'guest', 'Guest') . ' Last Name', 'Guest Last Name', 'checked', '', 'string', '20');
+        $fields[] = array(Labels::getString('memberType', 'guest', 'Guest') . " First Name", 'Guest First Name', 'checked', '', 'string', '20');
+        $fields[] = array("Phone", 'Phone', 'checked', '', 'string', '15');
+        $fields[] = array('City', 'City', '', '', 'string', '20');
+        $fields[] = array("State", 'State', '', '', 'string', '20');
+        $fields[] = array(Labels::getString('memberType', 'patient', 'Patient') . ' Last Name', 'Patient Last Name', '', '', 'string', '20');
+        $fields[] = array(Labels::getString('memberType', 'patient', 'Patient') . " First Name", 'Patient First Name', '', '', 'string', '20');
+        $fields[] = array("Arrival", 'Arrival', 'checked', '', 'MM/DD/YYYY', '15', array(), 'date');
+        $fields[] = array("Expected Departure", 'Expected Departure', 'checked', '', 'MM/DD/YYYY', '15', array(), 'date');
         if ($uS->EmptyExtendLimit > 0) {
-            $cFields[] = array("On Leave", 'On_Leave', 'checked', '', 'string', '15');
+            $fields[] = array("On Leave", 'On_Leave', 'checked', '', 'string', '15');
         }
-        $cFields[] = array("Nights", 'Nights', '', '', 'integer', '10');
-        $cFields[] = array(Labels::getString('hospital', 'hospital', 'Hospital'), 'Hospital', '', '', 'string', '20');
-        $cFields[] = array(Labels::getString('hospital', 'diagnosis', 'Diagnosis'), 'Diagnosis', '', '', 'string', '20');
-        $cFields[] = array(Labels::getString('hospital', 'location', 'Location'), 'Location', '', '', 'string', '20');
+        $fields[] = array("Nights", 'Nights', '', '', 'integer', '10');
+        $fields[] = array(Labels::getString('hospital', 'hospital', 'Hospital'), 'Hospital', '', '', 'string', '20');
+        $fields[] = array(Labels::getString('hospital', 'diagnosis', 'Diagnosis'), 'Diagnosis', '', '', 'string', '20');
+        $fields[] = array(Labels::getString('hospital', 'location', 'Location'), 'Location', '', '', 'string', '20');
 
         $eFields = array('EC Name', 'EC Phone Home', 'EC Phone Alternate');
         $eTitles = array('Emergency Contact', 'Emergency Contact Home Phone', 'Emergency Contact Alternate Phone');
 
-        $cFields[] = array($eTitles, $eFields, '', '', 'string', '20', array());
+        $fields[] = array($eTitles, $eFields, '', '', 'string', '20', array());
 
         if ($uS->TrackAuto) {
-            $cFields[] = array('Vehicle', 'Vehicle', 'checked', '', 'string', '20');
-            //$cFields[] = array('Make', 'Make', 'checked', '', 'string', '20');
-            //$cFields[] = array('Model', 'Model', 'checked', '', 'string', '20');
-            //$cFields[] = array('Color', 'Color', 'checked', '', 'string', '20');
-            $cFields[] = array('State Reg.', 'State Reg.', 'checked', '', 'string', '20');
-            $cFields[] = array(Labels::getString('referral', 'licensePlate', 'License Plate'), 'License Plate', 'checked', '', 'string', '20');
-            $cFields[] = array(Labels::getString('referral', 'vehicleNotes', 'Notes'), 'Note', 'checked', '', 'string', '20');
+            $fields[] = array('Vehicle', 'Vehicle', 'checked', '', 'string', '20');
+            //$fields[] = array('Make', 'Make', 'checked', '', 'string', '20');
+            //$fields[] = array('Model', 'Model', 'checked', '', 'string', '20');
+            //$fields[] = array('Color', 'Color', 'checked', '', 'string', '20');
+            $fields[] = array('State Reg.', 'State Reg.', 'checked', '', 'string', '20');
+            $fields[] = array(Labels::getString('referral', 'licensePlate', 'License Plate'), 'License Plate', 'checked', '', 'string', '20');
+            $fields[] = array(Labels::getString('referral', 'vehicleNotes', 'Notes'), 'Note', 'checked', '', 'string', '20');
         }
 
-        return $cFields;
+        return $fields;
     }
 
     /**

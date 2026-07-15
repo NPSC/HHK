@@ -9,11 +9,11 @@ interface ReportInterface {
     public function makeQuery():void;
 
     /**
-     * Build your cFields array
+     * Build your fields array
      *
      * @return array
      */
-    public function makeCFields():array;
+    public function makeFields():array;
 
     /**
      * Build your interior filter markup (wrapper, form and buttons are added via AbstractReport::generateFilterMarkup())

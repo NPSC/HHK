@@ -240,53 +240,53 @@ where s.Key = 'AcceptResvPaymt' AND " . $whDates . $whHosp . $whAssoc . $whStatu
 
     }
 
-    public function makeCFields():array{
+    public function makeFields():array{
         $labels = Labels::getLabels();
         $uS = Session::getInstance();
 
-        $cFields[] = array('Resv Id', 'idReservation', 'checked', 'f', 'string', '10');
-        $cFields[] = array("Room", 'Room', 'checked', '', 'string', '15');
+        $fields[] = array('Resv Id', 'idReservation', 'checked', 'f', 'string', '10');
+        $fields[] = array("Room", 'Room', 'checked', '', 'string', '15');
 
         if ((count($this->filter->getAList()) + count($this->filter->getHList())) > 1) {
 
-            $cFields[] = array($labels->getString('hospital', 'hospital', 'Hospital'), 'Hospital', 'checked', '', 'string', '20');
+            $fields[] = array($labels->getString('hospital', 'hospital', 'Hospital'), 'Hospital', 'checked', '', 'string', '20');
 
             if (count($this->filter->getAList()) > 0) {
-                $cFields[] = array($labels->getString('hospital', 'association', 'Association'), 'Assoc', 'checked', '', 'string', '20');
+                $fields[] = array($labels->getString('hospital', 'association', 'Association'), 'Assoc', 'checked', '', 'string', '20');
             }
         }
 
 
         if (count($this->locations) > 0) {
-            $cFields[] = array($labels->getString('hospital', 'location', 'Location'), 'Location', 'checked', '', 'string', '20', array());
+            $fields[] = array($labels->getString('hospital', 'location', 'Location'), 'Location', 'checked', '', 'string', '20', array());
         }
 
 
         if (count($this->diags) > 0) {
-            $cFields[] = array($labels->getString('hospital', 'diagnosis', 'Diagnosis'), 'Diagnosis', 'checked', '', 'string', '20', array());
+            $fields[] = array($labels->getString('hospital', 'diagnosis', 'Diagnosis'), 'Diagnosis', 'checked', '', 'string', '20', array());
         }
 
         if($uS->ShowDiagTB){
-            $cFields[] = array($labels->getString('hospital', 'diagnosisDetail', 'Diagnosis Details'), 'Diagnosis2', 'checked', '', 'string', '20', array());
+            $fields[] = array($labels->getString('hospital', 'diagnosisDetail', 'Diagnosis Details'), 'Diagnosis2', 'checked', '', 'string', '20', array());
         }
 
         if ($uS->Doctor) {
-            $cFields[] = array("Doctor", 'Name_Doctor', '', '', 'string', '20');
+            $fields[] = array("Doctor", 'Name_Doctor', '', '', 'string', '20');
         }
 
         if ($uS->InsuranceChooser) {
-            $cFields[] = array($labels->getString('MemberType', 'patient', 'Patient') . " Insurance", 'Insurance', '', '', 's', '', array());
+            $fields[] = array($labels->getString('MemberType', 'patient', 'Patient') . " Insurance", 'Insurance', '', '', 's', '', array());
         }
 
         if ($uS->ReferralAgent) {
-            $cFields[] = array($labels->getString('hospital', 'referralAgent', 'Referral Agent'), 'Name_Agent', '', '', 'string', '20');
+            $fields[] = array($labels->getString('hospital', 'referralAgent', 'Referral Agent'), 'Name_Agent', '', '', 'string', '20');
         }
 
-        $cFields[] = array($labels->getString('MemberType', 'patient', 'Patient') . " First", 'Name_First_Patient', '', '', 'string', '20');
-        $cFields[] = array($labels->getString('MemberType', 'patient', 'Patient') . " Last", 'Name_Last_Patient', '', '', 'string', '20');
+        $fields[] = array($labels->getString('MemberType', 'patient', 'Patient') . " First", 'Name_First_Patient', '', '', 'string', '20');
+        $fields[] = array($labels->getString('MemberType', 'patient', 'Patient') . " Last", 'Name_Last_Patient', '', '', 'string', '20');
 
-        $cFields[] = array("Primary " . $labels->getString('MemberType', 'visitor', 'Guest') . " First", 'Name_First', 'checked', '', 'string', '20');
-        $cFields[] = array("Primary " . $labels->getString('MemberType', 'visitor', 'Guest') . " Last", 'Name_Last', 'checked', '', 'string', '20');
+        $fields[] = array("Primary " . $labels->getString('MemberType', 'visitor', 'Guest') . " First", 'Name_First', 'checked', '', 'string', '20');
+        $fields[] = array("Primary " . $labels->getString('MemberType', 'visitor', 'Guest') . " Last", 'Name_Last', 'checked', '', 'string', '20');
 
         // Address.
         $pFields = array('gAddr', 'gCity');
@@ -300,21 +300,21 @@ where s.Key = 'AcceptResvPaymt' AND " . $whDates . $whHosp . $whAssoc . $whStatu
         $pFields = array_merge($pFields, array('gState', 'gCountry', 'gZip'));
         $pTitles = array_merge($pTitles, array('State', 'Country', 'Zip'));
 
-        $cFields[] = array($pTitles, $pFields, '', '', 'string', '15', array());
+        $fields[] = array($pTitles, $pFields, '', '', 'string', '15', array());
 
-        $cFields[] = array("Room Phone", 'Phone', '', '', 'string', '20');
-        $cFields[] = array("Primary " . $labels->getString('MemberType', 'visitor', 'Guest')." Phone", 'Phone_Num', '', '', 'string', '20');
-        $cFields[] = array("Primary " . $labels->getString('MemberType', 'visitor', 'Guest')." Email", 'Email', '', '', 'string', '20');
-        $cFields[] = array("Primary " . $labels->getString('MemberType', 'visitor', 'Guest')." Birth Date", 'BirthDate', '', '', 'MM/DD/YYYY', '15', array(), 'date');
-        $cFields[] = array("Arrive", 'Arrival', 'checked', '', 'MM/DD/YYYY', '15', array(), 'date');
-        $cFields[] = array("Depart", 'Departure', 'checked', '', 'MM/DD/YYYY', '15', array(), 'date');
-        $cFields[] = array("Nights", 'Nights', 'checked', '', 'integer', '10');
-        $cFields[] = array("Days", 'Days', '', '', 'integer', '10');
-        $cFields[] = array("Rate", 'FA_Category', 'checked', '', 'string', '20');
+        $fields[] = array("Room Phone", 'Phone', '', '', 'string', '20');
+        $fields[] = array("Primary " . $labels->getString('MemberType', 'visitor', 'Guest')." Phone", 'Phone_Num', '', '', 'string', '20');
+        $fields[] = array("Primary " . $labels->getString('MemberType', 'visitor', 'Guest')." Email", 'Email', '', '', 'string', '20');
+        $fields[] = array("Primary " . $labels->getString('MemberType', 'visitor', 'Guest')." Birth Date", 'BirthDate', '', '', 'MM/DD/YYYY', '15', array(), 'date');
+        $fields[] = array("Arrive", 'Arrival', 'checked', '', 'MM/DD/YYYY', '15', array(), 'date');
+        $fields[] = array("Depart", 'Departure', 'checked', '', 'MM/DD/YYYY', '15', array(), 'date');
+        $fields[] = array("Nights", 'Nights', 'checked', '', 'integer', '10');
+        $fields[] = array("Days", 'Days', '', '', 'integer', '10');
+        $fields[] = array("Rate", 'FA_Category', 'checked', '', 'string', '20');
 
         // Reservation pre-payment
         if ($uS->AcceptResvPaymt) {
-            $cFields[] = array('Pre-Paymt', 'PrePaymt', 'checked', '', 's', '_(* #,##0.00_);_(* \(#,##0.00\);_(* "-"??_);_(@_)');
+            $fields[] = array('Pre-Paymt', 'PrePaymt', 'checked', '', 's', '_(* #,##0.00_);_(* \(#,##0.00\);_(* "-"??_);_(@_)');
         }
 
         if ($uS->useChecklists && count($this->checklistItems) > 0) {
@@ -327,14 +327,14 @@ where s.Key = 'AcceptResvPaymt' AND " . $whDates . $whHosp . $whAssoc . $whStatu
                 $ciTitles[] = $item[1];
             }
 
-            $cFields[] = array($ciTitles, $ciFields, '', '', 'MM/DD/YYYY', '15', array(), 'date', 'selOptionTitle' => (isset($this->checklistTypes[ChecklistType::PSG]["Description"]) ? $this->checklistTypes[ChecklistType::PSG]["Description"] . " Checklist" : "PSG Checklist"));
+            $fields[] = array($ciTitles, $ciFields, '', '', 'MM/DD/YYYY', '15', array(), 'date', 'selOptionTitle' => (isset($this->checklistTypes[ChecklistType::PSG]["Description"]) ? $this->checklistTypes[ChecklistType::PSG]["Description"] . " Checklist" : "PSG Checklist"));
         }
         
-        $cFields[] = array("Status", 'Status_Title', 'checked', '', 'string', '15');
-        $cFields[] = array("Created Date", 'Created_Date', 'checked', '', 'MM/DD/YYYY h:mm AM/PM', '25', array(), 'datetime');
-        $cFields[] = array("Last Updated", 'Last_Updated', '', '', 'MM/DD/YYYY h:mm AM/PM', '25', array(), 'datetime');
+        $fields[] = array("Status", 'Status_Title', 'checked', '', 'string', '15');
+        $fields[] = array("Created Date", 'Created_Date', 'checked', '', 'MM/DD/YYYY h:mm AM/PM', '25', array(), 'datetime');
+        $fields[] = array("Last Updated", 'Last_Updated', '', '', 'MM/DD/YYYY h:mm AM/PM', '25', array(), 'datetime');
 
-        return $cFields;
+        return $fields;
     }
 
     public function makeSummaryMkup():string {

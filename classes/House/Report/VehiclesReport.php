@@ -46,27 +46,27 @@ class VehiclesReport extends AbstractReport implements ReportInterface {
         return $mkup;
     }
 
-    public function makeCFields(): array
+    public function makeFields(): array
     {
-        $cFields = array();
+        $fields = array();
 
         // Report column selector
         // array: title, ColumnName, checked, fixed, Excel Type, Excel Style
-        $cFields[] = array('Last Name', 'Last Name', 'checked', '', 'string', '20');
-        $cFields[] = array("First Name", 'First Name', 'checked', '', 'string', '20');
-        $cFields[] = array("Room", 'Room', 'checked', '', 'string', '15');
-        $cFields[] = array("Phone", 'Phone', 'checked', '', 'string', '15');
-        $cFields[] = array("Arrival", 'Arrival', 'checked', '', 'MM/DD/YYYY', '15', array(), 'date');
-        $cFields[] = array("Expected Departure", 'Expected Departure', 'checked', '', 'MM/DD/YYYY', '15', array(), 'date');
-        $cFields[] = array("Status", 'Status', 'checked', '', 'string', '15');
-        $cFields[] = array('Make', 'Make', 'checked', '', 'string', '20');
-        $cFields[] = array('Model', 'Model', 'checked', '', 'string', '20');
-        $cFields[] = array('Color', 'Color', 'checked', '', 'string', '20');
-        $cFields[] = array('State Reg.', 'State Reg.', 'checked', '', 'string', '20');
-        $cFields[] = array(Labels::getString('referral', 'licensePlate', 'License Plate'), 'License Plate', 'checked', '', 'string', '20');
-        $cFields[] = array(Labels::getString('referral', 'vehicleNotes', 'Notes'), 'Note', 'checked', '', 'string', '20');
+        $fields[] = array('Last Name', 'Last Name', 'checked', '', 'string', '20');
+        $fields[] = array("First Name", 'First Name', 'checked', '', 'string', '20');
+        $fields[] = array("Room", 'Room', 'checked', '', 'string', '15');
+        $fields[] = array("Phone", 'Phone', 'checked', '', 'string', '15');
+        $fields[] = array("Arrival", 'Arrival', 'checked', '', 'MM/DD/YYYY', '15', array(), 'date');
+        $fields[] = array("Expected Departure", 'Expected Departure', 'checked', '', 'MM/DD/YYYY', '15', array(), 'date');
+        $fields[] = array("Status", 'Status', 'checked', '', 'string', '15');
+        $fields[] = array('Make', 'Make', 'checked', '', 'string', '20');
+        $fields[] = array('Model', 'Model', 'checked', '', 'string', '20');
+        $fields[] = array('Color', 'Color', 'checked', '', 'string', '20');
+        $fields[] = array('State Reg.', 'State Reg.', 'checked', '', 'string', '20');
+        $fields[] = array(Labels::getString('referral', 'licensePlate', 'License Plate'), 'License Plate', 'checked', '', 'string', '20');
+        $fields[] = array(Labels::getString('referral', 'vehicleNotes', 'Notes'), 'Note', 'checked', '', 'string', '20');
 
-        return $cFields;
+        return $fields;
     }
 
     public function makeQuery(): void

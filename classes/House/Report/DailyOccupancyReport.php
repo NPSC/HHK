@@ -44,7 +44,7 @@ class DailyOccupancyReport extends AbstractReport implements ReportInterface
 
     }
 
-    public function makeCFields(): array
+    public function makeFields(): array
     {
         return array();
     }
