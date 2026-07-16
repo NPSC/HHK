@@ -214,3 +214,6 @@ update `item` set `Description` = "Additional Charge" where `idItem` = 9 and `De
 
 INSERT IGNORE INTO `labels` (`Key`,`Value`,`Type`,`Category`,`Header`,`Description`)
 VALUES ('adjustFees','Adjust Fees','s','vi','','');
+
+INSERT IGNORE INTO `labels` (`Key`,`Value`,`Type`,`Category`,`Header`,`Description`)
+SELECT 'hospitals', CONCAT(`Value`, 's'), 's', 'h', '', '' FROM `labels` WHERE `Key` = 'hospital';

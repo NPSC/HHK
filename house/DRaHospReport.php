@@ -347,7 +347,7 @@ if (filter_has_var(INPUT_POST, 'btnHere') || filter_has_var(INPUT_POST, 'btnExce
         $assocTitles = $filter->getSelectedAssocString();
 
         $sTbl->addBodyTr(HTMLTable::makeTd('From', array('class'=>'tdlabel')) . HTMLTable::makeTd(date('M j, Y', strtotime($filter->getReportStart()))) . HTMLTable::makeTd('Thru', array('class'=>'tdlabel')) . HTMLTable::makeTd(date('M j, Y', strtotime($filter->getReportEnd()))));
-        $sTbl->addBodyTr(HTMLTable::makeTd($labels->getString('hospital', 'hospital', 'Hospital') . 's', array('class'=>'tdlabel')) . HTMLTable::makeTd($hospitalTitles) . HTMLTable::makeTd('Associations', array('class'=>'tdlabel')) . HTMLTable::makeTd($assocTitles));
+        $sTbl->addBodyTr(HTMLTable::makeTd($labels->getString('hospital', 'hospitals', 'Hospitals'), array('class'=>'tdlabel')) . HTMLTable::makeTd($hospitalTitles) . HTMLTable::makeTd('Associations', array('class'=>'tdlabel')) . HTMLTable::makeTd($assocTitles));
         $settingstable = $sTbl->generateMarkup();
 
         $mkTable = 1;

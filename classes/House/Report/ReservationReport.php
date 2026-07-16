@@ -366,9 +366,9 @@ where s.Key = 'AcceptResvPaymt' AND " . $whDates . $whHosp . $whAssoc . $whStatu
         if ($hospitalTitles != '') {
             $h = trim($hospitalTitles);
             $hospitalTitles = substr($h, 0, strlen($h) - 1);
-            $mkup .= HTMLContainer::generateMarkup('p', Labels::getString('hospital', 'hospital', 'Hospital').'s: ' . $hospitalTitles);
+            $mkup .= HTMLContainer::generateMarkup('p', Labels::getString('hospital', 'hospitals', 'Hospitals') . ': ' . $hospitalTitles);
         } else {
-            $mkup .= HTMLContainer::generateMarkup('p', 'All '. Labels::getString('hospital', 'hospital', 'Hospital').'s');
+            $mkup .= HTMLContainer::generateMarkup('p', 'All '. Labels::getString('hospital', 'hospitals', 'Hospitals'));
         }
 
         $statusTitles = '';

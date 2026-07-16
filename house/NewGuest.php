@@ -212,9 +212,9 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
         $hospitalTitles = $filter->getSelectedHospitalsString();
 
         if ($hospitalTitles != 'All') {
-            $headerTable .= HTMLContainer::generateMarkup('p', $labels->getString('hospital', 'hospital', 'Hospital').'s: ' . $hospitalTitles);
+            $headerTable .= HTMLContainer::generateMarkup('p', $labels->getString('hospital', 'hospitals', 'Hospitals') . ': ' . $hospitalTitles);
         } else {
-            $headerTable .= HTMLContainer::generateMarkup('p', 'All '.$labels->getString('hospital', 'hospital', 'Hospital').'s');
+            $headerTable .= HTMLContainer::generateMarkup('p', 'All ' . $labels->getString('hospital', 'hospitals', 'Hospitals'));
         }
 
     } else {

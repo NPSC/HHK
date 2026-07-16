@@ -3689,6 +3689,14 @@ VALUES
 		'Default: Hospital'
 	),
 	(
+		'hospitals',
+		'Hospitals',
+		's',
+		'h',
+		'',
+		''
+	),
+	(
 		'association',
 		'Association',
 		's',

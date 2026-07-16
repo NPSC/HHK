@@ -262,7 +262,7 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
 		$hospList = $filter->getHospitals();
 
         if (count($hospList) > 0) {
-            $headerTable->addBodyTr(HTMLTable::makeTd($labels->getString('hospital', 'hospital', 'Hospital') . 's: ', ['class' => 'tdlabel']) . HTMLTable::makeTd($hdrHosps));
+            $headerTable->addBodyTr(HTMLTable::makeTd($labels->getString('hospital', 'hospitals', 'Hospitals') . ': ', ['class' => 'tdlabel']) . HTMLTable::makeTd($hdrHosps));
         }
 
         if (count($filter->getAList()) > 1) {

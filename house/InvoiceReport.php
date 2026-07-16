@@ -418,7 +418,7 @@ if (filter_has_var(INPUT_POST, 'btnHere') || filter_has_var(INPUT_POST, 'btnExce
         $hdrHosps = $filter->getSelectedHospitalsString();
         $hdrAssocs = $filter->getSelectedAssocString();
 
-        $headerTable->addBodyTr(HTMLTable::makeTd($labels->getString('hospital', 'hospital', 'Hospital').'s: ', array('class'=>'tdlabel')) . HTMLTable::makeTd($hdrHosps));
+        $headerTable->addBodyTr(HTMLTable::makeTd($labels->getString('hospital', 'hospitals', 'Hospitals') . ': ', array('class'=>'tdlabel')) . HTMLTable::makeTd($hdrHosps));
 
         if (count($aList) > 0) {
             $headerTable->addBodyTr(HTMLTable::makeTd('Associations: ', array('class'=>'tdlabel')) . HTMLTable::makeTd($hdrAssocs));

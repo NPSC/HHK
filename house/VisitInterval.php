@@ -402,9 +402,9 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel']) || isset($_POST['btnSt
         if ($hospitalTitles != '') {
             $h = trim($hospitalTitles);
             $hospitalTitles = substr($h, 0, strlen($h) - 1);
-            $headerTable .= HTMLContainer::generateMarkup('p', $labels->getString('hospital', 'hospital', 'Hospital') . 's: ' . $hospitalTitles);
+            $headerTable .= HTMLContainer::generateMarkup('p', $labels->getString('hospital', 'hospitals', 'Hospitals') . ': ' . $hospitalTitles);
         } else {
-            $headerTable .= HTMLContainer::generateMarkup('p', 'All ' . $labels->getString('hospital', 'hospital', 'Hospital') . 's');
+            $headerTable .= HTMLContainer::generateMarkup('p', 'All ' . $labels->getString('hospital', 'hospitals', 'Hospitals'));
         }
 
     } else {
