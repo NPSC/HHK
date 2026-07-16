@@ -2386,7 +2386,7 @@ foreach ($items as $d) {
         $trs .= HTMLTable::makeTd(match($d['idItem']) {
             ItemId::Lodging => "Lodging",
             ItemId::VisitFee => "Visit Fee",
-            ItemId::KeyDeposit => "Key Deposit",
+            ItemId::KeyDeposit => Labels::getString('resourceBuilder', 'keyDepositLabel', 'Key Deposit'),
             ItemId::DepositRefund => "Deposit Refund",
             ItemId::InvoiceDue => "Invoice Due",
             ItemId::Discount => "Discount",
@@ -2400,7 +2400,8 @@ foreach ($items as $d) {
         HTMLTable::makeTd(HTMLInput::generateMarkup(
             $d['Description'],
             [
-                'name' => 'txtItem[' . $d['idItem'] . ']'
+                'name' => 'txtItem[' . $d['idItem'] . ']',
+                ...(!in_array($d['idItem'], [ItemId::AddnlCharge, ItemId::Discount]) ? ['readonly' => 'readonly', 'style' => 'border:none;'] : [])
             ]
         )) . ($uS->useGLCodes ? HTMLTable::makeTd(HTMLInput::generateMarkup(
                 $d['Gl_Code'],

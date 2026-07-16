@@ -345,7 +345,10 @@ class VisitViewer {
         // Adjust button
         if ($showAdjust && $action != 'ref') {
 
-            $visitBoxLabel .= HTMLInput::generateMarkup('Adjust Fees...', array('name'=>'paymentAdjust', 'type'=>'button', 'style'=>'font-size:.8em;', 'title'=>'Create one-time additional charges or discounts.', 'class'=>'ml-3'));
+            $addnlChargeLabel = strtolower((new Item($dbh, ItemId::AddnlCharge))->getDescription()) . 's';
+            $discountLabel = strtolower((new Item($dbh, ItemId::Discount))->getDescription()) . 's';
+
+            $visitBoxLabel .= HTMLInput::generateMarkup(Labels::getString('visit', 'adjustFees', 'Adjust Fees') . '...', array('name'=>'paymentAdjust', 'type'=>'button', 'style'=>'font-size:.8em;', 'title'=>'Create one-time ' . $addnlChargeLabel . ' or ' . $discountLabel . '.', 'class'=>'ml-3'));
         }
 
         if ($r['Status'] == VisitStatus::CheckedIn && $action != 'ref' && $uS->TrackAuto) {

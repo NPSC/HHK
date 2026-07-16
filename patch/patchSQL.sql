@@ -211,3 +211,6 @@ VALUES ('hospital','Hospital','s','h','','Default: Hospital');
 
 
 update `item` set `Description` = "Additional Charge" where `idItem` = 9 and `Description` = "";
+
+INSERT IGNORE INTO `labels` (`Key`,`Value`,`Type`,`Category`,`Header`,`Description`)
+VALUES ('adjustFees','Adjust Fees','s','vi','','');

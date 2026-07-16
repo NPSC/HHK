@@ -10,6 +10,7 @@ use HHK\HTMLControls\HTMLContainer;
 use HHK\Payment\PaymentGateway\AbstractPaymentGateway;
 use HHK\Payment\PaymentGateway\Deluxe\DeluxeGateway;
 use HHK\Payment\PaymentSvcs;
+use HHK\Purchase\Item;
 use HHK\sec\{
     Session,
     WebInit,
@@ -225,10 +226,11 @@ if ($uS->VisitFee) {
 
 $adjusts = Common::readGenLookupsPDO($dbh, 'Addnl_Charge');
 if (count($adjusts) > 0) {
-    $cFields[] = array("Addnl Charge", 'adjch', 'checked', '', 's', '', array('style' => 'text-align:right;'));
+    $addnlChargeLabel = (new Item($dbh, ItemId::AddnlCharge))->getDescription();
+    $cFields[] = array($addnlChargeLabel, 'adjch', 'checked', '', 's', '', array('style' => 'text-align:right;'));
 
     if ($useTaxes) {
-        $cFields[] = ["Addnl Tax", 'adjchtx', 'checked', '', 's', '', ['style' => 'text-align:right;']];
+        $cFields[] = array($addnlChargeLabel . " Tax", 'adjchtx', 'checked', '', 's', '', array('style' => 'text-align:right;'));
     }
 }
 

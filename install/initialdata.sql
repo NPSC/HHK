@@ -3777,6 +3777,14 @@ VALUES
 		'',
 		''
 	),
+	(
+		'adjustFees',
+		'Adjust Fees',
+		's',
+		'vi',
+		'',
+		''
+	),
 	('rtnDeposit', 'Deposit Refund', 's', 'pc', '', ''),
 	(
 		'RmFeesPledged',

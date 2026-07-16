@@ -634,7 +634,7 @@ try {
             $vat = new ValueAddedTax($dbh);
 
             $events['markup'] = PaymentChooser::createHousePaymentMarkup($dbh, $discounts, $addnls, $ordNum, $vat->getTaxedItemSums($ordNum, 0), $arrDate);
-
+            $events['dialogTitle'] = Labels::getString('visit', 'adjustFees', 'Adjust Fees');
         } else {
             $events = ['error' => 'Visit Id is missing.  '];
         }

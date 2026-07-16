@@ -7,6 +7,7 @@ use HHK\ExcelHelper;
 use HHK\HTMLControls\HTMLContainer;
 use HHK\HTMLControls\HTMLSelector;
 use HHK\HTMLControls\HTMLTable;
+use HHK\Purchase\Item;
 use HHK\sec\Session;
 use HHK\sec\Labels;
 use HHK\SysConst\ItemId;
@@ -41,14 +42,14 @@ class AdditionalChargesReport extends AbstractReport implements ReportInterface 
 
     public function __construct(\PDO $dbh, array $request = []){
         $uS = Session::getInstance();
-
-        $this->reportTitle = $uS->siteName . ' Additional Charges Report';
-        $this->description = "This report shows all additional charges charged to patients and their demographics who stayed in the time period";
+        $this->addnlChargeLabel = (new Item($dbh, ItemId::AddnlCharge))->getDescription() . 's';
+        $this->discountLabel = (new Item($dbh, ItemId::Discount))->getDescription() . 's';
+        $this->reportTitle = $uS->siteName . ' ' . $this->addnlChargeLabel . ' Report';
+        
+        $this->description = "This report shows all " . strtolower($this->addnlChargeLabel) . " and " . strtolower($this->discountLabel) . " applied to patients and their demographics who stayed in the time period";
         $this->inputSetReportName = "additionalCharges";
 
         $this->demogs = Common::readGenLookupsPDO($dbh, 'Demographics');
-        $this->addnlChargeLabel = $dbh->query("SELECT Description FROM item WHERE idItem = " . ItemId::AddnlCharge)->fetchColumn() . 's';
-        $this->discountLabel = $dbh->query("SELECT Description FROM item WHERE idItem = " . ItemId::Discount)->fetchColumn() . 's';
         $this->additionalCharges = array_merge($this->formatGenLookup(Common::readGenLookupsPDO($dbh, 'Addnl_Charge'), $this->addnlChargeLabel), $this->formatGenLookup(Common::readGenLookupsPDO($dbh, 'House_Discount'), $this->discountLabel));
 
         if (filter_has_var(INPUT_POST, 'selAdditionalCharges')) {

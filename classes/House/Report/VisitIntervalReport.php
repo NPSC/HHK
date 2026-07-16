@@ -4,6 +4,7 @@ namespace HHK\House\Report;
 
 use HHK\Common;
 use HHK\HTMLControls\HTMLContainer;
+use HHK\Purchase\Item;
 use HHK\Purchase\PriceModel\AbstractPriceModel;
 use HHK\Purchase\RoomRate;
 use HHK\Purchase\ValueAddedTax;
@@ -142,10 +143,11 @@ class VisitIntervalReport extends AbstractReport implements ReportInterface {
 
 
         if (count($this->adjusts) > 0) {
-            $fields[] = array("Addnl Charge", 'adjch', 'checked', '', 's', '', array('style' => 'text-align:right;'));
+            $addnlChargeLabel = (new Item($this->dbh, ItemId::AddnlCharge))->getDescription();
+            $fields[] = array($addnlChargeLabel, 'adjch', 'checked', '', 's', '', array('style' => 'text-align:right;'));
 
             if ($this->useTaxes) {
-                $fields[] = array("Addnl Tax", 'adjchtx', 'checked', '', 's', '', array('style' => 'text-align:right;'));
+                $fields[] = array($addnlChargeLabel . " Tax", 'adjchtx', 'checked', '', 's', '', array('style' => 'text-align:right;'));
             }
         }
 

@@ -1079,7 +1079,7 @@ where
 
         }   // End of while
 
-        $dbh->setAttribute(\PDO::MYSQL_ATTR_USE_BUFFERED_QUERY, TRUE);
+        $dbh->setAttribute(Mysql::ATTR_USE_BUFFERED_QUERY, TRUE);
 
 
 
