@@ -2882,6 +2882,7 @@ function resvManager(initData, options) {
 
         if (data.deleted) {
             $('#guestSearch').hide();
+            $('#form1').remove();
             $('#contentDiv').append('<p>' + data.deleted + '</p>');
 
             if (data.childDeleted && data.childDeleted > 0) {

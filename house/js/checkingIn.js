@@ -193,6 +193,11 @@ $(document).ready(function() {
                         flagAlertMessage(data.error, 'error');
                     }
 
+                    if (data.deleted) {
+                        flagAlertMessage(data.deleted, 'error');
+                        $('#form1').remove();
+                    }
+
 //                    if (!data.vid || data.vid === 0) {
 //                        pageManager.loadResv(data);
 //                    } else {
