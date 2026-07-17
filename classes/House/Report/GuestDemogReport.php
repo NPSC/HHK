@@ -169,11 +169,11 @@ class GuestDemogReport {
         $query = "SELECT ";
 
         if ($whichGuests == 'new') {
-            $query = "s.idName, MIN(s.Span_Start_Date) AS `minDate`,";
+            $query .= "s.idName, MIN(s.Span_Start_Date) AS `minDate`,";
         } else if ($whichGuests == 'allStarted'){
-            $query = "s.idName, DATE(s.Span_Start_Date) as `minDate`,";
+            $query .= "s.idName, DATE(s.Span_Start_Date) as `minDate`,";
         }else if ($whichGuests == 'allStayed'){
-            $query = "DISTINCT s.idName,";
+            $query .= "DISTINCT s.idName,";
         }
 
         $query .= "na.idName_Address,	
