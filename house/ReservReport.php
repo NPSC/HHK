@@ -76,7 +76,6 @@ if (isset($_POST['btnExcel-' . $reservationReport->getInputSetReportName()])) {
                 var dateFormat = '<?php echo $labels->getString("momentFormats", "report", "MMM D, YYYY"); ?>';
                 var columnDefs = $.parseJSON('<?php echo json_encode($reservationReport->colSelector->getColumnDefs()); ?>');
 
-                <?php echo $reservationReport->filter->getTimePeriodScript(); ?>;
                 <?php echo $reservationReport->generateReportScript(); ?>
 
                 function viewInsurance(idName, eventTarget, detailDiv) {

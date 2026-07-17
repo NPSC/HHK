@@ -173,7 +173,6 @@ if (isset($_POST['btnExcel-' . $report->getInputSetReportName()])) {
                     });
                 };
 
-                <?php echo $report->filter->getTimePeriodScript(); ?>;
                 <?php echo $report->generateReportScript(); ?>
                 
 		        pmtMkup = '<?php echo $paymentMarkup; ?>'

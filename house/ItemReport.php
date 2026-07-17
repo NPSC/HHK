@@ -110,7 +110,6 @@ function invoiceAction(idInvoice, action, eid, container, show) {
     var dateFormat = '<?php echo $labels->getString("momentFormats", "report", "MMM D, YYYY"); ?>';
     $(document).ready(function() {
 
-        <?php echo $report->filter->getTimePeriodScript(); ?>;
         <?php echo $report->generateReportScript(); ?>
 
         // disappear the pop-up room chooser.

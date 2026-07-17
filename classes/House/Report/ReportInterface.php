@@ -3,6 +3,8 @@ namespace HHK\House\Report;
 
 interface ReportInterface {
 
+    public function __construct(\PDO $dbh, array $filterOpts = []);
+    
     /**
      * Build the report query string, set $this->query
      */
