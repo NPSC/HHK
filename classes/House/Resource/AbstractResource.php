@@ -30,10 +30,7 @@ abstract class AbstractResource {
      * @var ResourceRS
      */
     public $resourceRS;
-    /**
-     * Summary of optGroup
-     * @var
-     */
+
     public $optGroup;
     /**
      * Summary of rooms
@@ -158,7 +155,7 @@ order by r.Util_Priority;", array(\PDO::ATTR_CURSOR => \PDO::CURSOR_FWDONLY));
     /**
      * Summary of getThisFromRS
      * @param \PDO $dbh
-     * @param \HHK\Tables\House\ResourceRS $resRS
+     * @param ResourceRS $resRS
      * @param mixed $loadCurrentOccupants
      * @return PartitionResource|RemoteResource|RoomResource|null
      */
@@ -212,7 +209,7 @@ order by r.Util_Priority;", array(\PDO::ATTR_CURSOR => \PDO::CURSOR_FWDONLY));
      * Summary of loadResourceRS
      * @param \PDO $dbh
      * @param int $idResource
-     * @throws \HHK\Exception\RuntimeException
+     * @throws RuntimeException
      * @return ResourceRS
      */
     protected static function loadResourceRS(\PDO $dbh, $idResource) {
@@ -551,7 +548,7 @@ where rr.idResource = :idr group by rr.idRoom;", array(\PDO::ATTR_CURSOR => \PDO
     /**
      * Summary of getCurrantOccupants
      * @param mixed $dbh
-     * @throws \HHK\Exception\RuntimeException
+     * @throws RuntimeException
      * @return float|int
      */
     public function getCurrantOccupants($dbh = null) {

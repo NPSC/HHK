@@ -38,8 +38,9 @@ class SearchNameData implements SearchNameDataInterface {
 
     /**
      * @param mixed $id
+     * @return static
      */
-    public function setId($id)
+    public function setId($id): static
     {
         $this->id = $id;
         return $this;
@@ -47,96 +48,108 @@ class SearchNameData implements SearchNameDataInterface {
 
     /**
      * @param string $nameFirst
+     * @return static
      */
-    public function setNameFirst($nameFirst) {
+    public function setNameFirst($nameFirst): static {
         $this->nameFirst = trim($nameFirst);
         return $this;
     }
 
     /**
      * @param string $nameMiddle
+     * @return static
      */
-    public function setNameMiddle($nameMiddle) {
+    public function setNameMiddle($nameMiddle): static {
         $this->nameMiddle = trim($nameMiddle);
         return $this;
     }
 
     /**
      * @param string $nameLast
+     * @return static
      */
-    public function setNameLast($nameLast) {
+    public function setNameLast($nameLast): static {
         $this->nameLast = trim($nameLast);
         return $this;
     }
 
     /**
      * @param string $nickname
+     * @return static
      */
-    public function setNickname($nickname) {
+    public function setNickname($nickname): static {
         $this->nickname = trim($nickname);
         return $this;
     }
 
     /**
      * @param string $prefix
+     * @return static
      */
-    public function setPrefix($prefix) {
+    public function setPrefix($prefix): static {
         $this->prefix = trim($prefix);
         return $this;
     }
 
         /**
      * @param string $suffix
+     * @return static
      */
-    public function setSuffix($suffix) {
+    public function setSuffix($suffix): static {
         $this->suffix = trim($suffix);
         return $this;
     }
 
 /**
      * @param string $gender
+     * @return static
      */
-    public function setGender($gender) {
+    public function setGender($gender): static {
         $this->gender = trim($gender);
         return $this;
     }
 
     /**
      * @param string $ethnicity
+     * @return static
      */
-    public function setEthnicity($ethnicity) {
+    public function setEthnicity($ethnicity): static {
         $this->ethnicity = trim($ethnicity);
         return $this;
     }
 
 /**
-     * @param string $birthDate
+     * @param string $strBirthDate
+     * @return static
      */
-    public function setBirthDate($strBirthDate) {
+    public function setBirthDate($strBirthDate): static {
         $this->birthDate = $strBirthDate;
         return $this;
     }
 
     /**
      * @param string $relationship
+     * @return static
      */
-    public function setRelationship($rel) {
-        $this->relationship = trim($rel);
+    public function setRelationship($relationship): static {
+        $this->relationship = trim($relationship);
         return $this;
     }
 
     /**
      * @param string $email
+     * @return static
      */
-    public function setEmail($email) {
+    public function setEmail($email): static {
         $this->email = trim(filter_var($email, FILTER_SANITIZE_EMAIL));
         return $this;
     }
 
     /**
      * @param string $phone
+     * @return static
      */
-    public function setPhone($phone) {
+    public function setPhone($phone): static {
         $ary = array('-');
         $this->phone = str_replace($ary, '', filter_var($phone, FILTER_SANITIZE_SPECIAL_CHARS));
         return $this;
@@ -144,64 +157,72 @@ class SearchNameData implements SearchNameDataInterface {
 
     /**
      * @param string $sms
+     * @return static
      */
-    public function setSMS_Status($sms) {
+    public function setSMS_Status($sms): static {
         $this->sms_status = trim($sms);
         return $this;
     }
 
     /**
      * @param string $addressStreet1
+     * @return static
      */
-    public function setAddressStreet1($addressStreet1) {
+    public function setAddressStreet1($addressStreet1): static {
         $this->addressStreet1 = trim($addressStreet1);
         return $this;
     }
 
     /**
      * @param string $addressStreet2
+     * @return static
      */
-    public function setAddressStreet2($addressStreet2) {
+    public function setAddressStreet2($addressStreet2): static {
         $this->addressStreet2 = trim($addressStreet2);
         return $this;
     }
 
     /**
      * @param string $addressCity
+     * @return static
      */
-    public function setAddressCity($addressCity) {
+    public function setAddressCity($addressCity): static {
         $this->addressCity = trim($addressCity);
         return $this;
     }
 
     /**
      * @param string $addressCounty
+     * @return static
      */
-    public function setAddressCounty($addressCounty) {
+    public function setAddressCounty($addressCounty): static {
         $this->addressCounty = trim($addressCounty);
         return $this;
     }
 
     /**
      * @param string $addressState
+     * @return static
      */
-    public function setAddressState($addressState) {
+    public function setAddressState($addressState): static {
         $this->addressState = trim($addressState);
         return $this;
     }
 
     /**
      * @param string $addressZip
+     * @return static
      */
-    public function setAddressZip($addressZip) {
+    public function setAddressZip($addressZip): static {
         $this->addressZip = trim($addressZip);
         return $this;
     }
 
     /**
      * @param string $addressCountry
+     * @return static
      */
-    public function setAddressCountry($addressCountry) {
+    public function setAddressCountry($addressCountry): static {
         $this->addressCountry = trim($addressCountry);
         return $this;
     }

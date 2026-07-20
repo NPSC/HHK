@@ -12,15 +12,9 @@ namespace HHK\Member\Address;
  */
 class CleanAddress {
 
-    /**
-     * Summary of stSuffixes
-     * @var
-     */
+
     protected $stSuffixes;
-    /**
-     * Summary of secAbvrs
-     * @var
-     */
+
     protected $secAbvrs;
 
     /**

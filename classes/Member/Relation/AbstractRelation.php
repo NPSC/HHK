@@ -48,8 +48,7 @@ abstract class AbstractRelation {
     /**
      *
      * @param \PDO $dbh
-     * @param AbstractMember $name
-     * @param string $idPrefix
+     * @param $idName
      */
     public function __construct(\PDO $dbh, $idName) {
 
@@ -128,7 +127,7 @@ abstract class AbstractRelation {
     /**
      *
      * @param \PDO $dbh
-     * @return [relationsRS]
+     * @return array
      */
     protected function loadRecords(\PDO $dbh) {
         $rels = array();

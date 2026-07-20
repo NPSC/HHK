@@ -20,7 +20,7 @@ interface ReportInterface {
     /**
      * Build your interior filter markup (wrapper, form and buttons are added via AbstractReport::generateFilterMarkup())
      *
-     * @return array
+     * @return void
      */
     public function makeFilterMkup():void;
 

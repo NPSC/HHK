@@ -186,7 +186,7 @@ class RateChooser {
      * Summary of changeRoomRate
      * @param \PDO $dbh
      * @param Visit $visit
-     * @param mixed $post
+     * @param array $post
      * @return string
      */
     public function changeRoomRate(\PDO $dbh, Visit $visit, array $post) {

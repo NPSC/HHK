@@ -74,7 +74,7 @@ abstract class AbstractPriceModel {
 
     /**
      * Summary of __construct
-     * @param mixed $roomRates
+     * @param array $roomRates
      */
     public function __construct(array $roomRates) {
 

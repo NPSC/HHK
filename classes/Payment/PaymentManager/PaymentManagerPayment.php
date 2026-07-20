@@ -102,10 +102,6 @@ class PaymentManagerPayment {
      */
     protected $totalCharges;
 
-    /**
-     * Summary of payInvoices
-     * @var
-     */
     protected $payInvoices;
     /**
      * Summary of payType

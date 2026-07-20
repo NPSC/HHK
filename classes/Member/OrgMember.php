@@ -62,7 +62,6 @@ class OrgMember extends AbstractMember {
 
     /**
      *
-     * @param \PDO $dbh
      * @return string
      */
     public function createMarkupTable() {
@@ -245,7 +244,7 @@ class OrgMember extends AbstractMember {
     /**
      * Summary of set_memberRcrd
      * @param mixed $v
-     * @throws \HHK\Exception\InvalidArgumentException
+     * @throws InvalidArgumentException
      * @return void
      */
     public function set_memberRcrd($v) {
@@ -257,7 +256,7 @@ class OrgMember extends AbstractMember {
     /**
      * Summary of set_firstName
      * @param mixed $firstName
-     * @throws \HHK\Exception\RuntimeException
+     * @throws RuntimeException
      * @return never
      */
     public function set_firstName($firstName) {
@@ -275,7 +274,7 @@ class OrgMember extends AbstractMember {
     /**
      * Summary of set_middleName
      * @param mixed $middleName
-     * @throws \HHK\Exception\RuntimeException
+     * @throws RuntimeException
      * @return never
      */
     public function set_middleName($middleName) {
@@ -293,7 +292,7 @@ class OrgMember extends AbstractMember {
     /**
      * Summary of set_lastName
      * @param mixed $lastName
-     * @throws \HHK\Exception\RuntimeException
+     * @throws RuntimeException
      * @return never
      */
     public function set_lastName($lastName) {
@@ -328,7 +327,7 @@ class OrgMember extends AbstractMember {
     /**
      * Summary of set_nickName
      * @param mixed $nickName
-     * @throws \HHK\Exception\RuntimeException
+     * @throws RuntimeException
      * @return never
      */
     public function set_nickName($nickName) {
@@ -363,7 +362,7 @@ class OrgMember extends AbstractMember {
     /**
      * Summary of set_previousName
      * @param mixed $previousName
-     * @throws \HHK\Exception\RuntimeException
+     * @throws RuntimeException
      * @return never
      */
     public function set_previousName($previousName) {
@@ -381,7 +380,7 @@ class OrgMember extends AbstractMember {
     /**
      * Summary of set_sex
      * @param mixed $sex
-     * @throws \HHK\Exception\RuntimeException
+     * @throws RuntimeException
      * @return never
      */
     public function set_sex($sex) {
@@ -399,7 +398,7 @@ class OrgMember extends AbstractMember {
     /**
      * Summary of set_suffix
      * @param mixed $suffix
-     * @throws \HHK\Exception\RuntimeException
+     * @throws RuntimeException
      * @return never
      */
     public function set_suffix($suffix) {
@@ -417,7 +416,7 @@ class OrgMember extends AbstractMember {
     /**
      * Summary of set_prefix
      * @param mixed $prefix
-     * @throws \HHK\Exception\RuntimeException
+     * @throws RuntimeException
      * @return never
      */
     public function set_prefix($prefix) {
@@ -435,7 +434,7 @@ class OrgMember extends AbstractMember {
     /**
      * Summary of set_companyId
      * @param mixed $companyId
-     * @throws \HHK\Exception\RuntimeException
+     * @throws RuntimeException
      * @return never
      */
     public function set_companyId($companyId) {
@@ -453,7 +452,7 @@ class OrgMember extends AbstractMember {
     /**
      * Summary of set_companyCareOf
      * @param mixed $v
-     * @throws \HHK\Exception\RuntimeException
+     * @throws RuntimeException
      * @return never
      */
     public function set_companyCareOf($v) {

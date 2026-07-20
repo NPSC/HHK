@@ -84,11 +84,11 @@ class Visit {
      * @param int $idVisit
      * @param \DateTime|null $arrivalDT
      * @param \DateTime|null $departureDT
-     * @param \HHK\House\Resource\AbstractResource|null $resource
+     * @param AbstractResource|null $resource
      * @param string $userName
      * @param int $span
      * @param bool $forceNew
-     * @throws \HHK\Exception\RuntimeException
+     * @throws RuntimeException
      */
     function __construct(\PDO $dbh, $idReg, $idVisit, \DateTimeInterface|null $arrivalDT = null, \DateTimeInterface|null $departureDT = null, AbstractResource|null $resource = null, $userName = '', $span = -1, $forceNew = false) {
 
@@ -233,11 +233,11 @@ class Visit {
     /**
      * Summary of updateVisitRecordStatic
      * @param \PDO $dbh
-     * @param \HHK\Tables\Visit\VisitRS $visitRS
+     * @param VisitRS $visitRS
      * @param string $uname
      * @return int
      */
-    public static function updateVisitRecordStatic(\PDO $dbh, VisitRs $visitRS, $uname = '') {
+    public static function updateVisitRecordStatic(\PDO $dbh, VisitRS $visitRS, $uname = '') {
 
         $visitRS->Last_Updated->setNewVal(date("Y-m-d H:i:s"));
         $visitRS->Updated_By->setNewVal($uname);
@@ -262,8 +262,8 @@ class Visit {
      * @param string $stayStartDate
      * @param string $expectedCO
      * @param mixed $stayOnLeave
-     * @throws \HHK\Exception\RuntimeException
-     * @throws \HHK\Exception\UnexpectedValueException
+     * @throws RuntimeException
+     * @throws UnexpectedValueException
      * @return void
      */
     public function addGuestStay($idGuest, $checkinDate, $stayStartDate, $expectedCO = '', $stayOnLeave = 0) {
@@ -333,7 +333,7 @@ class Visit {
      * Summary of checkin
      * @param \PDO $dbh
      * @param string $username
-     * @throws \HHK\Exception\UnexpectedValueException
+     * @throws UnexpectedValueException
      * @return bool
      */
     public function checkin(\PDO $dbh, $username) {
@@ -387,12 +387,12 @@ class Visit {
     /**
      * Summary of changeRooms
      * @param \PDO $dbh
-     * @param \HHK\House\Resource\AbstractResource $resc
+     * @param AbstractResource $resc
      * @param string $uname
      * @param \DateTime $chgDT
      * @param bool $isAdmin
      * @param string $newRateCategory
-     * @throws \HHK\Exception\RuntimeException
+     * @throws RuntimeException
      * @return array
      */
     public function changeRooms(\PDO $dbh, AbstractResource $resc, $uname, \DateTimeInterface $chgDT, $isAdmin, $newRateCategory = '', $targetExpectedDeparture = NULL) {
@@ -610,14 +610,14 @@ class Visit {
     /**
      * Summary of replaceRoomRate: change the rate for this span.
      * @param \PDO $dbh
-     * @param \HHK\Tables\Visit\VisitRS $visitRs
+     * @param VisitRS $visitRs
      * @param string $newRateCategory
      * @param float $pledgedRate
      * @param float $rateAdjust
      * @param string $uname
      * @return string
      */
-    public static function replaceRoomRate(\PDO $dbh, VisitRs $visitRs, $newRateCategory, $pledgedRate, $rateAdjust, $idRateAdjust, $uname) {
+    public static function replaceRoomRate(\PDO $dbh, VisitRS $visitRs, $newRateCategory, $pledgedRate, $rateAdjust, $idRateAdjust, $uname) {
 
         $uS = Session::getInstance();
         $reply = "";
@@ -697,9 +697,8 @@ class Visit {
      * @param string $newRateCategory
      * @param float $pledgedRate
      * @param float $rateAdjust
-     * @param string $uname
+     * @param mixed $idRateAdjust
      * @param \DateTimeInterface $chgDT
-     * @param mixed $useRateGlide
      * @param mixed $stayOnLeave
      * @return string
      */
@@ -757,7 +756,7 @@ class Visit {
      * @param integer $newRateId
      * @param float $pledgedRate
      * @param float $rateAdjust
-     * @param string $uname
+     * @param mixed $idRateAdjust
      * @param string $changeDate
      * @param integer $newSpan  span Id for new visit span.
      * @param integer $stayOnLeave
@@ -825,7 +824,7 @@ class Visit {
      * @param mixed $oldVisitStatus
      * @param mixed $uname
      * @param mixed $stayOnLeave
-     * @throws \HHK\Exception\RuntimeException
+     * @throws RuntimeException
      * @return void
      */
     protected function replaceStays(\PDO $dbh, $oldVisitStatus, $uname, $stayOnLeave = 0) {
@@ -1241,7 +1240,7 @@ class Visit {
      * Summary of removeSpanStub
      * @param \PDO $dbh
      * @param \DateTime $dateDepartedDT
-     * @throws \HHK\Exception\RuntimeException
+     * @throws RuntimeException
      * @return void
      */
     protected function removeSpanStub(\PDO $dbh, \DateTimeInterface $dateDepartedDT){
@@ -1864,7 +1863,7 @@ class Visit {
         } else {
 
             /**
-             * @var \DateTimeImmutable $stayStartDT
+             * @var ?\DateTimeImmutable $stayStartDT
              */
             $stayStartDT = NULL;
 
@@ -2548,8 +2547,6 @@ class Visit {
     /**
      * Summary of setNotes
      * @param mixed $notes
-     * @param mixed $username
-     * @param mixed $roomTitle
      * @return void
      */
     public function setNotes($notes) {

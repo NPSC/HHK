@@ -34,7 +34,7 @@ class Session
     *    Returns THE instance of 'Session'.
     *    The session is automatically initialized if it wasn't.
     *
-    *    @return    object
+    *    @return Session
     **/
     public static function getInstance(string $confPath = CONF_PATH, string $confFile = ciCFG_FILE): Session
     {

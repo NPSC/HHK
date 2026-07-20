@@ -15,7 +15,6 @@ use HHK\Tables\EditRS;
 use HHK\Tables\Name\NameAddressRS;
 use HHK\AuditLog\NameLog;
 use HHK\Exception\{InvalidArgumentException, RuntimeException};
-use HHK\Tables\TableRSInterface;
 use HHK\House\Distance\DistanceFactory;
 
 /**
@@ -427,7 +426,7 @@ class Address extends AbstractContactPoint{
     /**
      * Summary of saveAddress
      * @param \PDO $dbh
-     * @param mixed $p
+     * @param array $p
      * @param mixed $purpose
      * @param mixed $incomplete
      * @param mixed $user
@@ -626,7 +625,7 @@ class Address extends AbstractContactPoint{
      * Summary of checkZip
      * @param \PDO $dbh
      * @param NameAddressRS $a
-     * @param mixed $p
+     * @param array $p
      * @return mixed
      */
     public function checkZip(\PDO $dbh, NameAddressRS $a, array $p) {

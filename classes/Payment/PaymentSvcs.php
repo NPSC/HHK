@@ -44,8 +44,8 @@ class PaymentSvcs {
     /**
      * Summary of payAmount
      * @param \PDO $dbh
-     * @param \HHK\Payment\Invoice\Invoice $invoice
-     * @param \HHK\Payment\PaymentManager\PaymentManagerPayment $pmp
+     * @param Invoice $invoice
+     * @param PaymentManagerPayment $pmp
      * @param string $postbackUrl
      * @return PaymentResult|null
      */
@@ -173,8 +173,8 @@ class PaymentSvcs {
      * @param \PDO $dbh
      * @param Invoice $invoice
      * @param PaymentManagerPayment $pmp
-     * @param string $postPage
      * @param string $paymentDate
+     * @param $resvId
      * @return ReturnResult
      */
     public static function returnAmount(\PDO $dbh, Invoice $invoice, PaymentManagerPayment $pmp, $paymentDate = '', $resvId = 0) {
@@ -695,7 +695,7 @@ class PaymentSvcs {
      * @param \PDO $dbh
      * @param mixed $idPayment
      * @param mixed $bid
-     * @throws \HHK\Exception\PaymentException
+     * @throws PaymentException
      * @return array
      */
     public static function undoReturnFees(\PDO $dbh, $idPayment, $bid) {

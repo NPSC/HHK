@@ -48,7 +48,7 @@ class VisitViewer {
     /**
      * Summary of createActiveMarkup
      * @param \PDO $dbh
-     * @param mixed $r
+     * @param array $r
      * @param VisitCharges $visitCharge
      * @param bool $keyDepFlag
      * @param bool $visitFeeFlag

@@ -397,7 +397,7 @@ class LocalGateway extends AbstractPaymentGateway {
 		return $dataArray;
 	}
 
-	public function undoReturnAmount(\PDO $dbh, $invoice, PaymentRs $payRs, Payment_AuthRS $pAuthRs, $bid) {
+	public function undoReturnAmount(\PDO $dbh, Invoice $invoice, PaymentRS $payRs, Payment_AuthRS $pAuthRs, $bid) {
 
 		$uS = Session::getInstance();
 		$dataArray = array('bid' => $bid);

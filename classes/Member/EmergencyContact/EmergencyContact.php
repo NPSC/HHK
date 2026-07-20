@@ -25,7 +25,7 @@ class EmergencyContact implements EmergencyContactInterface {
 
     /**
      * Summary of ecRS
-     * @var
+     * @var EmergContactRS
      */
     protected $ecRS;
 
@@ -46,7 +46,7 @@ class EmergencyContact implements EmergencyContactInterface {
      * @param mixed $id
      * @return EmergContactRS
      */
-    public static function loadDbRecord(\PDO $dbh, $id) {
+    public static function loadDbRecord(\PDO $dbh, $id): EmergContactRS {
 
         $ecRS = new EmergContactRs();
 

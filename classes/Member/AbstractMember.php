@@ -4,9 +4,7 @@ namespace HHK\Member;
 
 use HHK\HTMLControls\{HTMLContainer, HTMLInput, HTMLTable};
 use HHK\Member\Address\AbstractContactPoint;
-use HHK\Member\Address\Phones;
 use HHK\SysConst\{GLTableNames, MemDesignation, MemStatus};
-use HHK\SysConst\MemBasis;
 use HHK\Tables\EditRS;
 use HHK\Tables\Name\{NameDemogRS, NameRS};
 use HHK\sec\Session;
@@ -67,8 +65,8 @@ abstract class AbstractMember {
      * @param \PDO $dbh
      * @param string $defaultMemberBasis
      * @param int $nid
-     * @param NameRS $nRS
-     * @throws RuntimeException
+     * @param ?NameRS $nRS
+     * @throws RuntimeException 
      */
     public function __construct(\PDO $dbh, $defaultMemberBasis, $nid = 0, NameRS|null $nRS = null) {
 
@@ -878,7 +876,7 @@ abstract class AbstractMember {
     /**
      * Summary of verifyPreferredAddress
      * @param \PDO $dbh
-     * @param \HHK\Member\Address\AbstractContactPoint $cp
+     * @param AbstractContactPoint $cp
      * @param mixed $uname
      * @return string
      */

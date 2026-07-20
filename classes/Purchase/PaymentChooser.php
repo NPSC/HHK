@@ -393,15 +393,13 @@ class PaymentChooser {
      *
      * @param \PDO $dbh
      * @param int $idGuest
+     * @param int $idResv
      * @param int $idRegistration
      * @param VisitCharges $visitCharge
      * @param AbstractPaymentGateway $paymentGateway
      * @param string $defaultPayType
-     * @param bool $useDeposit
-     * @param boolean $showFinalPayment
-     * @param boolean $payVFeeFirst
-     * @param number $prefTokenId
-     * @param boolean $useVisitFee
+     * @param bool $showFinalPayment
+     * @param $prefTokenId
      * @return string
      */
     public static function createMarkup(
@@ -722,8 +720,8 @@ class PaymentChooser {
     /**
      * Summary of createHousePaymentMarkup
      * @param \PDO $dbh
-     * @param mixed $discounts
-     * @param mixed $addnls
+     * @param array $discounts
+     * @param array $addnls
      * @param int $idVisit
      * @param mixed $itemTaxSums
      * @param mixed $arrivalDate

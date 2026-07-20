@@ -273,7 +273,7 @@ class Phones extends AbstractContactPoint {
     /**
      * Summary of savePost
      * @param \PDO $dbh
-     * @param mixed $post
+     * @param array $post
      * @param mixed $user
      * @param mixed $idPrefix
      * @return string
@@ -371,8 +371,8 @@ class Phones extends AbstractContactPoint {
 
     /**
      * Summary of loadPostData
-     * @param \HHK\Tables\Name\NamePhoneRS $a
-     * @param mixed $p
+     * @param NamePhoneRS $a
+     * @param array $p
      * @param mixed $typeCode
      * @param mixed $uname
      * @param mixed $idPrefix

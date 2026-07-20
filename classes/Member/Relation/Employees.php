@@ -49,7 +49,7 @@ where c.Id = :id;";
     /**
      * Summary of loadRecords
      * @param \PDO $dbh
-     * @return [relationsRS]
+     * @return array
      */
     protected function loadRecords(\PDO $dbh) {
         $rels = array();

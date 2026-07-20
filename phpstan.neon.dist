@@ -6,3 +6,7 @@ parameters:
         - admin
         - house
         - install
+#    ignoreErrors:
+#        -
+#            identifier: property.notFound
+#            message: '#Access to an undefined property HHK\\sec\\Session::\$#'

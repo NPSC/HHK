@@ -32,10 +32,6 @@ class PriceNdayBlock extends AbstractPriceModel {
      */
     protected $blocks = 0;
 
-    /**
-     * Summary of daysAccumulator
-     * @var
-     */
     protected $daysAccumulator;
 
     /**
