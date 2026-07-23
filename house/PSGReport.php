@@ -458,7 +458,7 @@ from
         left join
     gen_lookups g1 on g1.`Table_Name` = 'Location' and g1.`Code` = hs.Location
 
-where n.Member_Status != 'TBD' and DATE(ifnull(v.Span_End, now())) >= DATE('$start') and DATE(v.Span_Start) < DATE('$end')
+where n.Member_Status != 'TBD' and DATE(ifnull(v.Span_End, now())) >= DATE('$start') and DATE(v.Span_Start) < DATE('$end') and DATEDIFF(DATE(ifnull(v.Span_End, now())), DATE(v.Span_Start)) > 0
  $whFields
 order by ng.idPsg, `ispat`, `Id`";
 
