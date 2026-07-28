@@ -64,7 +64,8 @@ class SalesforceManager extends AbstractExportManager {
 
     protected $transferResult;
     protected $errorResult;
-    protected SF_connector $webService;
+    protected ?SF_connector $webService = null;
+    private ?string $webServiceError = null;
 
     protected $uniqueGuests;
     protected bool $trace;
@@ -98,13 +99,30 @@ class SalesforceManager extends AbstractExportManager {
         $credentials->setUsername($this->userId);
         $credentials->setPassword(Crypto::decryptMessage($this->getPassword()));
 
-        $this->webService = new SF_Connector($dbh, $credentials);
-        
+        try {
+            $this->webService = new SF_Connector($dbh, $credentials);
+        } catch (\Throwable $e) {
+            $this->webService = null;
+            $this->webServiceError = $e->getMessage();
+        }
+
         try{
             $this->fieldMapper = new FieldMapper($dbh, (int) $this->getGatewayId());
         }catch(Exception $e){
 
         }
+    }
+
+    /**
+     * Returns the connected web service, or throws if the Salesforce connection
+     * failed to initialize. Used to guard every call into the Salesforce API.
+     * @throws RuntimeException
+     */
+    protected function getWebService(): SF_connector {
+        if ($this->webService === null) {
+            throw new RuntimeException('Salesforce connection is unavailable: ' . $this->webServiceError);
+        }
+        return $this->webService;
     }
 
     /**
@@ -162,7 +180,7 @@ class SalesforceManager extends AbstractExportManager {
             $toFetch
         );
 
-        $result = $this->webService->postUrl(
+        $result = $this->getWebService()->postUrl(
             "{$this->endPoint}composite/batch",
             ['batchRequests' => $batchRequests, 'haltOnError' => false]
         );
@@ -269,7 +287,7 @@ class SalesforceManager extends AbstractExportManager {
 
         $query = "FIND {" . $searchCriteria['letters'] . "*} IN Name Fields RETURNING Contact(Id, Name, phone, email)";
 
-        $result = $this->webService->search($query, $this->searchEndpoint);
+        $result = $this->getWebService()->search($query, $this->searchEndpoint);
 
         if (isset($result['searchRecords'])) {
 
@@ -364,7 +382,7 @@ class SalesforceManager extends AbstractExportManager {
      */
     protected function retrieveURL(string $url) {
 
-        $results = $this->webService->goUrl($url);
+        $results = $this->getWebService()->goUrl($url);
 
         return $results;
     }
@@ -382,11 +400,14 @@ class SalesforceManager extends AbstractExportManager {
      */
     public function exportMembers(\PDO $dbh, array $sourceIds, array $updateIds = []): array {
         $replys = [];
-        
+
         if (count($sourceIds) == 0) {
             $replys[0] = ['error' => "The list of HHK Id's to send is empty."];
             return $replys;
         }
+
+        // Fail fast rather than doing local DB work before hitting a down connection.
+        $this->getWebService();
 
 
         // Load search parameters for each source ID
@@ -545,7 +566,7 @@ class SalesforceManager extends AbstractExportManager {
                 // Create new account
                 try {
 
-                    $newAcctResult = $this->webService->postUrl($this->endPoint . 'sobjects/Contact/', $filteredRow);
+                    $newAcctResult = $this->getWebService()->postUrl($this->endPoint . 'sobjects/Contact/', $filteredRow);
 
                     if ($this->checkError($newAcctResult)) {
                         $f['Result'] = $this->errorMessage;
@@ -595,6 +616,10 @@ class SalesforceManager extends AbstractExportManager {
      * @return array
      */
     public function upsertMembers(\PDO $dbh, array $sourceIds, bool $trace = false, bool $linkRelatives = true): array {
+
+        // Fail fast: batch failures below are caught and skipped per-batch, which would
+        // otherwise mask a down connection as an empty, "successful" result.
+        $this->getWebService();
 
         $this->uniqueGuests = [];   // Keep track to not repeat a guest upsert into multiple psgs?
         $this->transferResult = [];
@@ -761,7 +786,7 @@ class SalesforceManager extends AbstractExportManager {
 
         // Transfer this package to SF API
         try {
-            $batchResults = $this->webService->postUrlAsync($this->endPoint . "composite/graph", $batchBodies);
+            $batchResults = $this->getWebService()->postUrlAsync($this->endPoint . "composite/graph", $batchBodies);
 
             if ($this->trace) {
                 $completedAt = new \DateTime();
@@ -1117,7 +1142,7 @@ class SalesforceManager extends AbstractExportManager {
 
         $idList  = implode("','", array_unique($relIds));
         $query   = "SELECT Id FROM npe4__Relationship__c WHERE Id IN ('$idList') LIMIT 2000";
-        $result  = $this->webService->search($query, $this->queryEndpoint);
+        $result  = $this->getWebService()->search($query, $this->queryEndpoint);
 
         $existingIds = [];
         if (isset($result['records'])) {
@@ -1143,7 +1168,7 @@ class SalesforceManager extends AbstractExportManager {
 
         $idList = implode("','", $relIds);
         $query  = "SELECT Id, npe4__Contact__c FROM npe4__Relationship__c WHERE Id IN ('$idList') LIMIT 2000";
-        $result = $this->webService->search($query, $this->queryEndpoint);
+        $result = $this->getWebService()->search($query, $this->queryEndpoint);
 
         $map = [];
         if (isset($result['records'])) {
@@ -1161,6 +1186,9 @@ class SalesforceManager extends AbstractExportManager {
      * Updates the local External_Id on success.
      */
     public function fixInverseRelationships(\PDO $dbh): array {
+
+        // Fail fast so a down connection isn't mistaken for "no relationships found".
+        $this->getWebService();
 
         $transferResult = [];
         $errorResult    = [];
@@ -1255,7 +1283,7 @@ class SalesforceManager extends AbstractExportManager {
         }
 
         try {
-            $batchResults = $this->webService->postUrlAsync($this->endPoint . 'composite/graph', $batchBodies);
+            $batchResults = $this->getWebService()->postUrlAsync($this->endPoint . 'composite/graph', $batchBodies);
 
             foreach ($batchResults['batchResults'] as $batchResult) {
                 if (!isset($batchResult['success']['graphs'])) {
@@ -1361,7 +1389,7 @@ class SalesforceManager extends AbstractExportManager {
         if (count($this->proposedUpdates) > 0 && $updateIt) {
 
             // Update account
-            $acctResult = $this->webService->patchUrl($this->endPoint . 'sobjects/Contact/' . $accountData['Id'], $this->proposedUpdates);
+            $acctResult = $this->getWebService()->patchUrl($this->endPoint . 'sobjects/Contact/' . $accountData['Id'], $this->proposedUpdates);
 
             if ($this->checkError($acctResult)) {
                 $msg = $this->errorMessage;
@@ -1486,7 +1514,7 @@ class SalesforceManager extends AbstractExportManager {
             ? "{$type}Id='{$r['external_id']}'"
             : "{$type}HHK_idName__c={$r['hhk_id']}";
 
-        return $this->webService->search("SELECT $fields FROM Contact WHERE $where LIMIT 10", $this->queryEndpoint);
+        return $this->getWebService()->search("SELECT $fields FROM Contact WHERE $where LIMIT 10", $this->queryEndpoint);
     }
 
     /**
@@ -1501,7 +1529,7 @@ class SalesforceManager extends AbstractExportManager {
         if ($where != '') {
             $where = " WHERE " . $where;
         }
-        return $this->webService->search("SELECT $select FROM $from $where LIMIT 100", $this->queryEndpoint);
+        return $this->getWebService()->search("SELECT $select FROM $from $where LIMIT 100", $this->queryEndpoint);
 
     }
 
@@ -1661,6 +1689,15 @@ class SalesforceManager extends AbstractExportManager {
 
         $markup = $this->showSetupGuide();
         $markup .= $this->showGatewayCredentials();
+
+        if ($this->webService === null) {
+            $markup .= HTMLContainer::generateMarkup('p',
+                'Unable to connect to Salesforce: ' . $this->webServiceError . '. Field mapping and custom field configuration is unavailable until the connection is restored.',
+                ['class' => 'ui-corner-all ui-state-error p-2 mb-3']
+            );
+
+            return $markup;
+        }
 
         try {
             $markup .= $this->createFieldMappingSection($dbh);

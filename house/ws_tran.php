@@ -65,7 +65,7 @@ try {
                     $events = $transfer->upsertMembers($dbh, $post['ids'], $post['trace'], $transfer->getLinkRelatives());
 
                 } catch (Exception $ex) {
-                    $events = ["error" => "Transfer Error: " . $ex->getMessage() . " Exception class: " . get_class($ex)];
+                    $events = ["error" => "Transfer Error: " . $ex->getMessage()];
                 }
 
             } else {
@@ -89,7 +89,7 @@ try {
                 try {
                     $events['members'] = $transfer->exportMembers($dbh, $post['ids']);
                 } catch (Exception $ex) {
-                    $events = ["error" => "Transfer Error: " . $ex->getMessage() . " Exception class: " . get_class($ex)];
+                    $events = ["error" => "Transfer Error: " . $ex->getMessage()];
                 }
 
             } else {
