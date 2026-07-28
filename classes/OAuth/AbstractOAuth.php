@@ -32,10 +32,18 @@ abstract class AbstractOAuth implements OAuthInterface {
     abstract protected function getTokenTtl(object $tokenResponse): int;
 
     /**
-     * Session key unique to this provider + credential set.
+     * Session key unique to this provider + credential set. Includes every credential
+     * that affects the token request so that changing any of them (URL, client id,
+     * client secret) naturally invalidates the previously cached token instead of
+     * reusing one issued under the old credentials.
      */
     protected function getSessionKey(): string {
-        return 'oauth_' . md5($this->credentials->getClientId() . $this->getLogServiceName());
+        return 'oauth_' . md5(
+            $this->credentials->getBaseURI()
+            . $this->credentials->getClientId()
+            . $this->credentials->getClientSecret()
+            . $this->getLogServiceName()
+        );
     }
 
     /**

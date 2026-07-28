@@ -1693,7 +1693,7 @@ class SalesforceManager extends AbstractExportManager {
         if ($this->webService === null) {
             $markup .= HTMLContainer::generateMarkup('p',
                 'Unable to connect to Salesforce: ' . $this->webServiceError . '. Field mapping and custom field configuration is unavailable until the connection is restored.',
-                ['class' => 'ui-corner-all ui-state-error p-2 mb-3']
+                ['class' => 'ui-corner-all ui-state-error p-2 my-3']
             );
 
             return $markup;
