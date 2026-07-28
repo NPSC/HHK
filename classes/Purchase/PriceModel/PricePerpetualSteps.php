@@ -188,6 +188,27 @@ class PricePerpetualSteps extends AbstractPriceModel {
 
     }
 
+    /**
+     * Appends a tier, folding it into the previous tier when the rate is unchanged
+     * (e.g. two consecutive chunks that have both bottomed out at Min_Rate).
+     * @param array $tiers
+     * @param float $rate
+     * @param int $days
+     * @param float $amt
+     * @return void
+     */
+    protected function addTier(array &$tiers, $rate, $days, $amt) {
+
+        $lastIdx = count($tiers) - 1;
+
+        if ($lastIdx >= 0 && abs($tiers[$lastIdx]['rate'] - $rate) < 0.0001) {
+            $tiers[$lastIdx]['days'] += $days;
+            $tiers[$lastIdx]['amt'] += $amt;
+        } else {
+            $tiers[] = array('rate'=>$rate, 'days'=>$days, 'amt'=>$amt);
+        }
+    }
+
     public function tiersCalculation($days, $idRoomRate, $rateCategory = '', $pledgedRate = 0, $rateAdjust = 0, $guestDays = 0) {
 
         $tiers = array();
@@ -200,7 +221,7 @@ class PricePerpetualSteps extends AbstractPriceModel {
 
         // Short circuit for fixed rate x
         if ($rrateRs->FA_Category->getStoredVal() == RoomRateCategories::Fixed_Rate_Category) {
-            $tiers[] = array('rate'=> $pledgedRate, 'days'=>$days, 'amt'=>($days * $pledgedRate));
+            $this->addTier($tiers, $pledgedRate, $days, ($days * $pledgedRate));
             return $tiers;
         }
 
@@ -209,7 +230,7 @@ class PricePerpetualSteps extends AbstractPriceModel {
         // Flat Rate?
         if ($rrateRs->FA_Category->getStoredVal() == RoomRateCategories::FlatRateCategory) {
            $amount = $rrateRs->Reduced_Rate_1->getStoredVal() * $days * $adjRatio;
-           $tiers[] = array('rate'=>$rrateRs->Reduced_Rate_1->getStoredVal() * $adjRatio, 'days'=>$days, 'amt'=>$amount);
+           $this->addTier($tiers, $rrateRs->Reduced_Rate_1->getStoredVal() * $adjRatio, $days, $amount);
            return $tiers;
         }
 
@@ -225,7 +246,7 @@ class PricePerpetualSteps extends AbstractPriceModel {
                 || $rrateRs->FA_Category->getStoredVal() == RoomRateCategories::FlatRateCategory) {
 
             // No steps
-            $tiers[] = array('rate'=> $rate * $adjRatio, 'days'=>$days, 'amt'=>($days * $rate * $adjRatio));
+            $this->addTier($tiers, $rate * $adjRatio, $days, ($days * $rate * $adjRatio));
             return  $tiers;
         }
 
@@ -240,12 +261,12 @@ class PricePerpetualSteps extends AbstractPriceModel {
 
         // Nothing left to charge.
         if ($rate <= 0) {
-            $tiers[] = array('rate'=> 0, 'days'=>$days, 'amt'=>0);
+            $this->addTier($tiers, 0, $days, 0);
             return  $tiers;
         }
 
         if (($days + $creditLeft) <= $interval) {
-            $tiers[] = array('rate'=> $rate * $adjRatio, 'days'=>$days, 'amt'=>($days * $rate * $adjRatio));
+            $this->addTier($tiers, $rate * $adjRatio, $days, ($days * $rate * $adjRatio));
             return  $tiers;
         }
 
@@ -254,7 +275,7 @@ class PricePerpetualSteps extends AbstractPriceModel {
 
             // A few more days in the current rate interval
             $amount = ($interval - $creditLeft) * $rate * $adjRatio;
-            $tiers[] = array('rate'=> $rate * $adjRatio, 'days'=>($interval - $creditLeft), 'amt'=>$amount);
+            $this->addTier($tiers, $rate * $adjRatio, ($interval - $creditLeft), $amount);
             $rate = max($minRate, $rate - $deltaAmount);
             $nitesLeft = $days - ($interval - $creditLeft);
 
@@ -265,13 +286,13 @@ class PricePerpetualSteps extends AbstractPriceModel {
         }
 
         if ($nitesLeft <= $interval) {
-            $tiers[] = array('rate'=> $rate * $adjRatio, 'days'=>$nitesLeft, 'amt'=>($nitesLeft * $rate * $adjRatio));
+            $this->addTier($tiers, $rate * $adjRatio, $nitesLeft, ($nitesLeft * $rate * $adjRatio));
             return $tiers;
         }
 
         do {
             // Add each full interval
-            $tiers[] = array('rate'=> $rate * $adjRatio, 'days'=>$interval, 'amt'=>($interval * $rate * $adjRatio));
+            $this->addTier($tiers, $rate * $adjRatio, $interval, ($interval * $rate * $adjRatio));
 
             $nitesLeft = $nitesLeft - $interval;
             $rate = max($minRate, $rate - $deltaAmount);
@@ -281,7 +302,7 @@ class PricePerpetualSteps extends AbstractPriceModel {
         // Add up any leftover days
         if ($nitesLeft > 0) {
 
-            $tiers[] = array('rate'=> $rate * $adjRatio, 'days'=>$nitesLeft, 'amt'=>($nitesLeft * $rate * $adjRatio));
+            $this->addTier($tiers, $rate * $adjRatio, $nitesLeft, ($nitesLeft * $rate * $adjRatio));
 
         }
 

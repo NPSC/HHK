@@ -455,10 +455,10 @@ class IndivMember extends AbstractMember
         //CRM External Id
         if ($uS->ContactManager != '') {
 
-            $CmsManager = AbstractExportManager::factory($dbh, $uS->ContactManager);
+            $cmsTitle = AbstractExportManager::getCmsTitle($dbh, $uS->ContactManager);
 
             $tbl2->addBodyTr(
-                HTMLTable::makeTd($CmsManager->getServiceTitle() . ' Id:', array('class' => 'tdlabel'))
+                HTMLTable::makeTd($cmsTitle . ' Id:', array('class' => 'tdlabel'))
                 . HTMLTable::makeTd(
                     HTMLInput::generateMarkup(
                         $this->nameRS->External_Id,

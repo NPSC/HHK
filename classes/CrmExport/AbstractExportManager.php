@@ -52,6 +52,20 @@ abstract class AbstractExportManager implements ExportManagerInterface{
     const SearchViewName = '';
 
 
+    /**
+     * Looks up a CMS's display title without constructing a full manager
+     * (which would open a connection, decrypt credentials, load field maps, etc).
+     */
+    public static function getCmsTitle(\PDO $dbh, string $cmsName): string {
+
+        $stmt = $dbh->prepare("SELECT `Description` FROM `gen_lookups` WHERE `Table_Name` = 'ExternalCRM' AND `Code` = :code;");
+        $stmt->execute([':code' => $cmsName]);
+        $title = $stmt->fetchColumn();
+
+        return $title === false ? '' : $title;
+    }
+
+
     public static function factory(\PDO $dbh, string $cmsName): ?ExportManagerInterface {
 
         switch (strtolower($cmsName)) {

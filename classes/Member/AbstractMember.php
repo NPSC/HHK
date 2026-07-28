@@ -469,16 +469,16 @@ abstract class AbstractMember {
         // Exclude CMS
         if ($uS->ContactManager != '') {
 
-            $CmsManager = AbstractExportManager::factory($dbh, $uS->ContactManager);
+            $cmsTitle = AbstractExportManager::getCmsTitle($dbh, $uS->ContactManager);
 
-            $exNeonAttr = array('name'=>'exCms', 'type'=>'checkbox', 'class'=>'hhk-ex', 'title'=>'Check to exclude '. $CmsManager->getServiceTitle() .' Transfers');
+            $exNeonAttr = array('name'=>'exCms', 'type'=>'checkbox', 'class'=>'hhk-ex', 'title'=>'Check to exclude '. $cmsTitle .' Transfers');
 
             if ($this->get_ExternalId() == AbstractExportManager::EXCLUDE_TERM) {
                 $exNeonAttr['checked'] = 'checked';
                 $insertTabIcon = TRUE;
             }
             $table->addBodyTr(
-                HTMLTable::makeTd(HTMLContainer::generateMarkup('label', 'Exclude ' . $CmsManager->getServiceTitle(), array('for'=>'exCms')), array('class'=>'tdlabel'))
+                HTMLTable::makeTd(HTMLContainer::generateMarkup('label', 'Exclude ' . $cmsTitle, array('for'=>'exCms')), array('class'=>'tdlabel'))
                 . HTMLTable::makeTd(
                     HTMLInput::generateMarkup(
                         '',
