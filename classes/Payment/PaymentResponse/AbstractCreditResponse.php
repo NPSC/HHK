@@ -16,10 +16,6 @@ use HHK\Tables\EditRS;
 
 abstract class AbstractCreditResponse extends AbstractPaymentResponse {
 
-    /**
-     * Summary of response
-     * @var
-     */
     public $response;
     /**
      * Summary of idPaymentAuth

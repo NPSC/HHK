@@ -26,17 +26,16 @@ class RoomRate {
 
     /**
      * Summary of makeSelectorOptions
-     * @param \HHK\Purchase\PriceModel\AbstractPriceModel $priceModel
+     * @param AbstractPriceModel $priceModel
      * @param int $idRoomRate
      * @return array<array>
      */
-    public static function makeSelectorOptions(AbstractPriceModel $priceModel, $idRoomRate = 0) {
+    public static function makeSelectorOptions(AbstractPriceModel $priceModel, int $idRoomRate = 0): array {
         // Room Rate
         $rateCategories = array();
         $activeRates = $priceModel->getActiveModelRoomRates();
 
         foreach ($activeRates as $rc) {
-
             $decimals = 0;
             if (floor($rc->Reduced_Rate_1->getStoredVal()) != $rc->Reduced_Rate_1->getStoredVal()) {
                 $decimals = 2;
@@ -59,7 +58,7 @@ class RoomRate {
             }
 
             $rateCategories[$rateRs->FA_Category->getStoredVal()] = array(0=>$rateRs->FA_Category->getStoredVal(),
-                1=>'*'.self::titleAddAmount($rc->Title->getStoredVal(), $rc->FA_Category->getStoredVal(), number_format($rc->Reduced_Rate_1->getStoredVal())),
+                1=>'*'.self::titleAddAmount($rateRs->Title->getStoredVal(), $rateRs->FA_Category->getStoredVal(), number_format($rateRs->Reduced_Rate_1->getStoredVal())),
                 2=>number_format($rateRs->Reduced_Rate_1->getStoredVal(), $decimals));
 
         }
@@ -73,7 +72,7 @@ class RoomRate {
      * @param \PDO $dbh
      * @return array
      */
-    public static function makeDescriptions(\PDO $dbh) {
+    public static function makeDescriptions(\PDO $dbh): array {
 
         $rateRs = new Room_RateRS();
         $rows = EditRS::select($dbh, $rateRs, array());

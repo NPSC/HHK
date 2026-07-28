@@ -30,7 +30,7 @@ use HHK\US_Holidays;
  */
 require ("homeIncludes.php");
 
-$wInit = new webInit();
+$wInit = new WebInit();
 
 $dbh = $wInit->dbh;
 

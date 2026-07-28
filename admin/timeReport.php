@@ -15,7 +15,7 @@ use HHK\HTMLControls\selCtrl;
  */
 require("AdminIncludes.php");
 
-$wInit = new webInit();
+$wInit = new WebInit();
 
 $dbh = $wInit->dbh;
 

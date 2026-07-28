@@ -1,8 +1,12 @@
 parameters:
-    level: 0
+    level: 1
     paths:
         - classes
         - functions
         - admin
         - house
         - install
+#    ignoreErrors:
+#        -
+#            identifier: property.notFound
+#            message: '#Access to an undefined property HHK\\sec\\Session::\$#'

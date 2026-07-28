@@ -26,7 +26,7 @@ use HHK\ExcelHelper;
  */
 class PaymentReport {
 
-    public static function generateDayReport(\PDO $dbh, $post) {
+    public static function generateDayReport(\PDO $dbh, array $post) {
 
         $uS = Session::getInstance();
 
@@ -35,6 +35,8 @@ class PaymentReport {
         $txtEnd = '';
         $statusSelections = [];
         $payTypeSelections = [];
+        $start = date('Y-m-d 00:00:00');
+        $end = date('Y-m-d 23:59:59');
 
         if (isset($post['stDate'])) {
             $txtStart = filter_var($post['stDate'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);

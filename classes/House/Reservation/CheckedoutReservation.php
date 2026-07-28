@@ -25,7 +25,7 @@ class CheckedoutReservation extends CheckingIn {
     /**
      * Summary of createMarkup
      * @param \PDO $dbh
-     * @throws \HHK\Exception\RuntimeException
+     * @throws RuntimeException
      * @return array
      */
     public function createMarkup(\PDO $dbh) {
@@ -183,7 +183,7 @@ class CheckedoutReservation extends CheckingIn {
     /**
      * Summary of addGuestStay
      * @param \PDO $dbh
-     * @throws \HHK\Exception\RuntimeException
+     * @throws RuntimeException
      * @return CheckedoutReservation|null
      */
     protected function addGuestStay(\PDO $dbh) {
@@ -242,6 +242,7 @@ class CheckedoutReservation extends CheckingIn {
 
         // Count people staying during the new guest's time.
         $stays = array();
+        $roomId = 0;
 
         while ($s = $stmts->fetch(\PDO::FETCH_ASSOC)) {
 
@@ -354,4 +355,3 @@ class CheckedoutReservation extends CheckingIn {
 
     }
 }
-?>

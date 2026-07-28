@@ -97,15 +97,15 @@ if (isset($_POST['btnRoom']) && count($rPrices) > 0) {
 
     if ($rateCode != '' && isset($rPrices[$rateCode])) {
 
-    	SysConfig::saveKeyValue($dbh, webInit::SYS_CONFIG, 'RoomPriceModel', $rateCode);
+    	SysConfig::saveKeyValue($dbh, WebInit::SYS_CONFIG, 'RoomPriceModel', $rateCode);
 
         if (isset($_POST['cbFin'])) {
-        	SysConfig::saveKeyValue($dbh, webInit::SYS_CONFIG, 'IncomeRated', 'true');
+        	SysConfig::saveKeyValue($dbh, WebInit::SYS_CONFIG, 'IncomeRated', 'true');
         } else {
-        	SysConfig::saveKeyValue($dbh, webInit::SYS_CONFIG, 'IncomeRated', 'false');
+        	SysConfig::saveKeyValue($dbh, WebInit::SYS_CONFIG, 'IncomeRated', 'false');
         }
 
-        SysConfig::getCategory($dbh, $ssn, ["h", "hf"], webInit::SYS_CONFIG);
+        SysConfig::getCategory($dbh, $ssn, ["h", "hf"], WebInit::SYS_CONFIG);
 
         $dbh->exec("delete from `room_rate`");
 
@@ -137,14 +137,14 @@ if (isset($_POST['btnRoom']) && count($rPrices) > 0) {
         $siteId = $dbh->lastInsertId();
         $ssn->sId = $siteId;
 
-        SysConfig::saveKeyValue($dbh, 'sys_config', 'sId', $siteId);
+        SysConfig::saveKeyValue($dbh, WebInit::SYS_CONFIG, 'sId', $siteId);
 
     }
 
     if ($ssn->subsidyId == 0 && $siteId > 0) {
         $ssn->subsidyId = $siteId;
 
-        SysConfig::saveKeyValue($dbh, 'sys_config', 'subsidyId', $siteId);
+        SysConfig::saveKeyValue($dbh, WebInit::SYS_CONFIG, 'subsidyId', $siteId);
 
     }
 

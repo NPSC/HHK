@@ -26,15 +26,19 @@ class RelationCompositeSubresponse extends AbstractCompositeSubresponse {
      * @return string
      */
     public function processResult(\PDO $dbh): string {
-        $result = '';
 
         if ($this->subresponse->getBody_success()) {
-            $result = 'New Relationship';
+            // POST — new relationship created; save the returned SF id locally
             $this->updateLocal($dbh);
-        } else {
-            $result = $result = 'Relat: ' . $this->subresponse->getBody_errorCode() . $this->subresponse->getBody_message() . '(' . $this->subresponse->getHttpStatusCode() . ')';
+            return 'New Relationship';
         }
-        return $result;
+
+        if ($this->subresponse->getHttpStatusCode() === 204) {
+            // PATCH — successful update returns 204 No Content
+            return 'Relationship Updated';
+        }
+
+        return 'Relat: ' . $this->subresponse->getBody_errorCode() . $this->subresponse->getBody_message() . '(' . $this->subresponse->getHttpStatusCode() . ')';
     }
 
     /**
@@ -69,7 +73,7 @@ class RelationCompositeSubresponse extends AbstractCompositeSubresponse {
             EditRS::loadRow($rows[0], $nameRs);
 
             $nameRs->External_Id->setNewVal($externalId);
-            $upd = EditRS::update($dbh, $nameRs, [$nameRs->idName]);
+            $upd = EditRS::update($dbh, $nameRs, [$nameRs->idName, $nameRs->idPsg]);
 
             if ($upd > 0) {
                 NameLog::writeUpdate($dbh, $nameRs, $nameRs->idName->getStoredVal(), $uS->username);

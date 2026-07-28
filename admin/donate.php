@@ -22,7 +22,7 @@ use HHK\Donation\Campaign;
 
 require ("AdminIncludes.php");
 
-$wInit = new webInit(WebPageCode::Service);
+$wInit = new WebInit(WebPageCode::Service);
 $dbh = $wInit->dbh;
 
 // get session instance

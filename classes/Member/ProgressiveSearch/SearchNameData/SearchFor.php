@@ -27,9 +27,11 @@ class SearchFor extends SearchNameData
     }
 
     /**
-     * @param string $birthDate
+     * @param string $strBirthDate
+     * @param bool $include
+     * @return static
      */
-    public function setBirthDate($strBirthDate, $include = FALSE) {
+    public function setBirthDate($strBirthDate, $include = FALSE): static {
 
         parent::setBirthDate($strBirthDate);
 
@@ -44,7 +46,7 @@ class SearchFor extends SearchNameData
     /**
      * @param string $email
      */
-    public function setEmail($email, $include = TRUE) {
+    public function setEmail($email, $include = TRUE): static {
 
         parent::setEmail($email);
 
@@ -57,7 +59,7 @@ class SearchFor extends SearchNameData
     /**
      * @param string $phone
      */
-    public function setPhone($phone, $include = TRUE) {
+    public function setPhone($phone, $include = TRUE): static {
 
         parent::setPhone($phone);
 
@@ -68,9 +70,11 @@ class SearchFor extends SearchNameData
     }
 
     /**
-     * @param string $phone
+     * @param string $status
+     * @param bool $include
+     * @return static
      */
-    public function setSMS_Status($status, $include = TRUE) {
+    public function setSMS_Status($status, $include = TRUE): static {
 
         parent::setSMS_Status($status);
 

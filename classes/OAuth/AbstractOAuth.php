@@ -5,6 +5,7 @@ use GuzzleHttp\{Client, Psr7\Request, RequestOptions};
 use HHK\Exception\RuntimeException;
 use GuzzleHttp\Exception\BadResponseException;
 use HHK\Integrations\GuzzleAPILogger;
+use HHK\sec\Session;
 
 /**
  * Handles the OAuth login and token request process
@@ -25,13 +26,63 @@ abstract class AbstractOAuth implements OAuthInterface {
     }
 
     /**
-     * Get a Bearer token from the OAuth server and save in $this->accessToken
+     * Return the TTL (in seconds) for a token response from this provider.
+     * Subclasses may use $tokenResponse->expires_in or return a constant.
+     */
+    abstract protected function getTokenTtl(object $tokenResponse): int;
+
+    /**
+     * Session key unique to this provider + credential set. Includes every credential
+     * that affects the token request so that changing any of them (URL, client id,
+     * client secret) naturally invalidates the previously cached token instead of
+     * reusing one issued under the old credentials.
+     */
+    protected function getSessionKey(): string {
+        return 'oauth_' . md5(
+            $this->credentials->getBaseURI()
+            . $this->credentials->getClientId()
+            . $this->credentials->getClientSecret()
+            . $this->getLogServiceName()
+        );
+    }
+
+    /**
+     * Remove the cached token from the session (e.g. after a 401).
+     */
+    public function clearCachedToken(): void {
+        $uS = Session::getInstance();
+        $key = $this->getSessionKey();
+        unset($uS->{$key});
+    }
+
+    /**
+     * Get a Bearer token from the OAuth server and save in $this->accessToken.
+     * Returns immediately if a valid cached token exists in the session.
      *
      * @return bool
      */
-    public function login():bool{
+    public function login(): bool {
+        $uS = Session::getInstance();
+        $key = $this->getSessionKey();
+
+        if (isset($uS->{$key}) && $uS->{$key}['expires_at'] > time()) {
+            $this->accessToken = $uS->{$key}['access_token'];
+            $this->instanceURL = $uS->{$key}['instance_url'] ?? '';
+            return true;
+        }
+
         $tokenResponse = $this->requestToken();
-        return $this->validateTokenResponse($tokenResponse);
+        $valid = $this->validateTokenResponse($tokenResponse);
+
+        if ($valid) {
+            $uS->{$key} = [
+                'access_token' => $this->accessToken,
+                'instance_url' => $this->instanceURL ?? '',
+                'expires_at'   => time() + $this->getTokenTtl($tokenResponse),
+            ];
+        }
+
+        return $valid;
     }
 
     /**

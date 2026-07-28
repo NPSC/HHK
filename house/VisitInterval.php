@@ -10,6 +10,7 @@ use HHK\HTMLControls\HTMLContainer;
 use HHK\Payment\PaymentGateway\AbstractPaymentGateway;
 use HHK\Payment\PaymentGateway\Deluxe\DeluxeGateway;
 use HHK\Payment\PaymentSvcs;
+use HHK\Purchase\Item;
 use HHK\sec\{
     Session,
     WebInit,
@@ -37,7 +38,7 @@ use HHK\SysConst\Mode;
 require "homeIncludes.php";
 
 try {
-    $wInit = new webInit();
+    $wInit = new WebInit();
 } catch (Exception $exw) {
     die("Arrg!  " . $exw->getMessage());
 }
@@ -225,10 +226,11 @@ if ($uS->VisitFee) {
 
 $adjusts = Common::readGenLookupsPDO($dbh, 'Addnl_Charge');
 if (count($adjusts) > 0) {
-    $cFields[] = array("Addnl Charge", 'adjch', 'checked', '', 's', '', array('style' => 'text-align:right;'));
+    $addnlChargeLabel = (new Item($dbh, ItemId::AddnlCharge))->getDescription();
+    $cFields[] = array($addnlChargeLabel, 'adjch', 'checked', '', 's', '', array('style' => 'text-align:right;'));
 
     if ($useTaxes) {
-        $cFields[] = ["Addnl Tax", 'adjchtx', 'checked', '', 's', '', ['style' => 'text-align:right;']];
+        $cFields[] = array($addnlChargeLabel . " Tax", 'adjchtx', 'checked', '', 's', '', array('style' => 'text-align:right;'));
     }
 }
 
@@ -400,9 +402,9 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel']) || isset($_POST['btnSt
         if ($hospitalTitles != '') {
             $h = trim($hospitalTitles);
             $hospitalTitles = substr($h, 0, strlen($h) - 1);
-            $headerTable .= HTMLContainer::generateMarkup('p', $labels->getString('hospital', 'hospital', 'Hospital') . 's: ' . $hospitalTitles);
+            $headerTable .= HTMLContainer::generateMarkup('p', $labels->getString('hospital', 'hospitals', 'Hospitals') . ': ' . $hospitalTitles);
         } else {
-            $headerTable .= HTMLContainer::generateMarkup('p', 'All ' . $labels->getString('hospital', 'hospital', 'Hospital') . 's');
+            $headerTable .= HTMLContainer::generateMarkup('p', 'All ' . $labels->getString('hospital', 'hospitals', 'Hospitals'));
         }
 
     } else {

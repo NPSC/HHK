@@ -1251,6 +1251,69 @@ CREATE  OR REPLACE VIEW `vguest_data_sf` AS
 
 
 -- -----------------------------------------------------
+-- View `vguest_canonical`
+-- Stable-aliased export view shared by all CRM adapters.
+-- -----------------------------------------------------
+CREATE OR REPLACE VIEW `vguest_canonical` AS
+    SELECT
+        `ng1`.`idName`                                                     AS `hhk_id`,
+        `n`.`External_Id`                                                  AS `external_id`,
+        IFNULL(`g1`.`Description`, '')                                     AS `prefix`,
+        `n`.`Name_First`                                                   AS `first_name`,
+        `n`.`Name_Middle`                                                  AS `middle_name`,
+        `n`.`Name_Last`                                                    AS `last_name`,
+        IFNULL(`g2`.`Description`, '')                                     AS `suffix`,
+        `n`.`Name_Nickname`                                                AS `nickname`,
+        IFNULL(`g3`.`Description`, '')                                     AS `gender`,
+        IFNULL(`ne`.`Email`, '')                                           AS `email`,
+        IFNULL(`np`.`Phone_Num`, '')                                       AS `home_phone`,
+        IFNULL(CONCAT_WS(' ', `na`.`Address_1`, `na`.`Address_2`), '')    AS `address.home.street`,
+        IFNULL(`na`.`City`, '')                                            AS `address.home.city`,
+        IFNULL(`na`.`State_Province`, '')                                  AS `address.home.state`,
+        IFNULL(`na`.`Postal_Code`, '')                                     AS `address.home.postal_code`,
+        IFNULL(`cc`.`Country_Name`, '')                                    AS `address.home.country`,
+        IFNULL(DATE_FORMAT(`n`.`BirthDate`, '%Y-%m-%d'), '')               AS `birthdate`,
+        CASE WHEN IFNULL(`ng1`.`Relationship_Code`, '') = ''
+             THEN 'Family Member'
+             ELSE `gr`.`Description`
+        END                                                                AS `contact_type`,
+        CASE WHEN IFNULL(`n`.`Date_Deceased`, '') = ''
+             THEN 'false'
+             ELSE 'true'
+        END                                                                AS `is_deceased`,
+        IFNULL(`ng1`.`Relationship_Code`, '')                             AS `relationship_code`,
+        IFNULL(`st`.`SF_Type_Code`, '')                                   AS `relationship_to_patient`,
+        IFNULL(`ng1`.`idPsg`, 0)                                          AS `psg_id`,
+        IFNULL(`ng1`.`Legal_Custody`, 0)                                  AS `legal_custody`,
+        IFNULL(`ng1`.`External_Id`, '')                                   AS `relationship_id`
+    FROM
+        `name_guest` `ng1`
+        JOIN  `name` `n`          ON `n`.`idName`   = `ng1`.`idName`
+        LEFT JOIN `name_address` `na` ON `n`.`idName`   = `na`.`idName`
+            AND `n`.`Preferred_Mail_Address` = `na`.`Purpose`
+        LEFT JOIN `name_phone`   `np` ON `n`.`idName`   = `np`.`idName`
+            AND `n`.`Preferred_Phone`        = `np`.`Phone_Code`
+        LEFT JOIN `name_email`   `ne` ON `n`.`idName`   = `ne`.`idName`
+            AND `n`.`Preferred_Email`        = `ne`.`Purpose`
+        LEFT JOIN `sf_type_map`  `st` ON `ng1`.`Relationship_Code` = `st`.`HHK_Type_Code`
+            AND `st`.`List_Name` = 'npe4__Relationship__c:npe4__Type__c'
+        LEFT JOIN `gen_lookups`  `g1` ON `n`.`Name_Prefix`  = `g1`.`Code`
+            AND `g1`.`Table_Name` = 'Name_Prefix'
+        LEFT JOIN `gen_lookups`  `g2` ON `n`.`Name_Suffix`  = `g2`.`Code`
+            AND `g2`.`Table_Name` = 'Name_Suffix'
+        LEFT JOIN `gen_lookups`  `g3` ON `n`.`Gender`       = `g3`.`Code`
+            AND `g3`.`Table_Name` = 'Gender'
+        LEFT JOIN `country_code` `cc` ON `na`.`Country_Code` = `cc`.`ISO_3166-1-alpha-2`
+        LEFT JOIN `gen_lookups`  `gr` ON `ng1`.`Relationship_Code` = `gr`.`Code`
+            AND `gr`.`Table_Name` = 'Patient_Rel_Type'
+    WHERE
+        `n`.`idName` > 0
+        AND `n`.`Record_Member` = 1
+        AND `n`.`Member_Status` IN ('a', 'd', 'in')
+        AND `n`.`External_Id` != 'excld';
+
+
+-- -----------------------------------------------------
 -- View `vguest_search_neon`
 -- -----------------------------------------------------
 CREATE OR REPLACE VIEW `vguest_search_neon` AS

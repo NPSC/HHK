@@ -15,7 +15,7 @@ use HHK\Admin\Reports\DirectoryReport;
  */
 require ("AdminIncludes.php");
 
-$wInit = new webInit();
+$wInit = new WebInit();
 
 $dbh = $wInit->dbh;
 

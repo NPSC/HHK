@@ -1,8 +1,5 @@
 <?php
-
 use HHK\Notification\Mail\HHKMailer;
-//use HHK\Payment\PaymentGateway\Deluxe\DeluxeGateway;
-//use HHK\Payment\PaymentGateway\Deluxe\Request\PaymentLinkRequest;
 use HHK\sec\{Session, WebInit};
 use HHK\SysConst\WebPageCode;
 use HHK\Payment\Invoice\Invoice;
@@ -21,7 +18,7 @@ use PHPMailer\PHPMailer\PHPMailer;
 require ("homeIncludes.php");
 
 
-$wInit = new webInit(WebPageCode::Page);
+$wInit = new WebInit(WebPageCode::Page);
 $pageTitle = $wInit->pageTitle;
 
 /* @var $dbh PDO */
@@ -107,6 +104,7 @@ try {
 
         }
 
+        $emSubject = '';
         if (isset($_POST['txtSubject'])) {
             $emSubject = filter_var($_POST['txtSubject'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
             if ($emSubject == '') {

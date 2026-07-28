@@ -3,6 +3,7 @@ namespace HHK\sec;
 
 use donatj\UserAgent\UserAgentParser;
 use HHK\Crypto;
+use HHK\sec\MFA\AbstractMultiFactorAuth;
 use HHK\SysConst\WebRole;
 use HHK\Tables\WebSec\W_auth_ipRS;
 use HHK\Tables\EditRS;
@@ -62,7 +63,7 @@ class UserClass
      * @param string $otp
      * @return bool
      */
-    public function _checkLogin(\PDO $dbh, $username, $password, $rememberMe = FALSE, $checkOTP = true, $otpMethod = '', $otp = '')
+    public function _checkLogin(\PDO $dbh, $username, $password, bool $rememberMe = FALSE, bool $checkOTP = true, $otpMethod = '', $otp = '')
     {
         $ssn = Session::getInstance();
 
@@ -124,6 +125,7 @@ class UserClass
                     }
                     return FALSE;
                 }else if($OTPRequired && $otp != '' && $otpMethod){
+                    $mfaObj = null;
                     switch($otpMethod) {
                         case "authenticator":
                             $mfaObj = new GoogleAuthenticator($r);
@@ -138,9 +140,9 @@ class UserClass
                             $success = false;
                     }
 
-                    if($mfaObj->verifyCode($dbh, $otp) == true){
+                    if($mfaObj instanceof AbstractMultiFactorAuth && $mfaObj->verifyCode($dbh, $otp) == true){
                         if($rememberMe){
-                            $rememberObj->rememberMe($dbh);
+                            $rememberObj?->rememberMe($dbh);
                         }
 
                         $success = true;
@@ -370,7 +372,7 @@ class UserClass
      * @param mixed $resetNextLogin
      * @return bool
      */
-    public function updateDbPassword(\PDO $dbh, $id, $oldPw, $newPw, $uname, $resetNextLogin = 0)
+    public function updateDbPassword(\PDO $dbh, $id, $oldPw, $newPw, $uname, $resetNextLogin = 0): bool
     {
         $ssn = Session::getInstance();
         $priorPasswords = SysConfig::getKeyValue($dbh, 'sys_config', 'PriorPasswords');
@@ -434,6 +436,11 @@ class UserClass
                     ':newPw' => $newPwHash
                 ));
 
+                // the cached session row is now stale if the current user changed their own password
+                if ($id == $ssn->uid) {
+                    unset($ssn->userCredentials);
+                }
+
                 return TRUE;
             }
         }
@@ -447,7 +454,7 @@ class UserClass
      * @param string $newPw
      * @return bool
      */
-    public function isPasswordUsed(\PDO $dbh, $newPw)
+    public function isPasswordUsed(\PDO $dbh, $newPw): bool
     {
         $uS = Session::getInstance();
 
@@ -472,7 +479,7 @@ class UserClass
      * @param string $newPw
      * @return bool
      */
-    public function setPassword(\PDO $dbh, $id, $newPw)
+    public function setPassword(\PDO $dbh, $id, $newPw): bool
     {
         $uS = Session::getInstance();
         if ($newPw != '' && $id != 0) {
@@ -501,7 +508,7 @@ class UserClass
      * @param mixed $uS
      * @return bool
      */
-    public static function isUserNew(\PDO $dbh, $uS)
+    public static function isUserNew(\PDO $dbh, Session $uS): bool
     {
         $query = "select idAnswer, idQuestion from w_user_answers A join w_users U on A.idUser = U.idName where U.User_Name='" . $uS->username . "' limit 3;";
         $stmt = $dbh->query($query);
@@ -518,7 +525,7 @@ class UserClass
      * @param mixed $uS
      * @return bool
      */
-    public static function isPassExpired(\PDO $dbh, $uS)
+    public static function isPassExpired(\PDO $dbh, Session $uS): bool
     {
         $u = self::getUserCredentials($dbh, $uS->username);
         if (isset($u['Chg_PW']) && $u['Chg_PW']  && $u['idIdp'] == '0') {
@@ -577,7 +584,7 @@ class UserClass
      * @param string $username
      * @return bool|string
      */
-    public static function getDefaultOtpMethod(\PDO $dbh, $username)
+    public static function getDefaultOtpMethod(\PDO $dbh, $username): bool|string
     {
         $u = self::getUserCredentials($dbh, $username);
         if ($u['totpSecret'] !== '') {
@@ -614,11 +621,8 @@ class UserClass
      * @param string $username
      * @return bool
      */
-    public static function isLocalUser(\PDO $dbh, $uS, $username = false)
+    public static function isLocalUser(\PDO $dbh, $uS, $username = false): bool
     {
-        if($username === false){
-            $username = $uS->username;
-        }
         $u = self::getUserCredentials($dbh, $username);
         return (isset($u['idIdp']) && $u['idIdp'] > 0 ? false : true);
     }
@@ -668,7 +672,7 @@ class UserClass
      * @param string $hiddenMethod
      * @return string
      */
-    public static function getOtpMethodMarkup(\PDO $dbh, $username, $hiddenMethod = ''){
+    public static function getOtpMethodMarkup(\PDO $dbh, $username, $hiddenMethod = ''): string{
         $userAr = UserClass::getUserCredentials($dbh, $username);
         $mkup = '';
 
@@ -692,7 +696,7 @@ class UserClass
      * @param \PDO $dbh
      * @return string
      */
-    public static function createUserSettingsMarkup(\PDO $dbh)
+    public static function createUserSettingsMarkup(\PDO $dbh): string
     {
         $uS = Session::getInstance();
         $userAr = UserClass::getUserCredentials($dbh, $uS->username);
@@ -897,6 +901,15 @@ class UserClass
 
         $uname = str_ireplace("'", "", $username);
 
+        // Serve the logged-in user's own row from the session cache instead of re-querying.
+        // Populated/refreshed in setSession() at login; callers that mutate this user's row
+        // (password/2FA/status changes) must unset $uS->userCredentials afterward.
+        $isSessionUser = ($uS->logged === true && strcasecmp((string) $uS->username, $uname) === 0);
+
+        if ($isSessionUser && isset($uS->userCredentials)) {
+            return $uS->userCredentials;
+        }
+
         $stmt = $dbh->prepare("SELECT u.*, a.Role_Id as Role_Id, ifnull(idp.Name, 'Unknown Provider') as 'authProvider'
 FROM w_users u join w_auth a on u.idName = a.idName
 join `name` n on n.idName = u.idName
@@ -906,11 +919,13 @@ WHERE n.idName is not null and u.Status IN ('a', 'd') and n.`Member_Status` = 'a
         $stmt->execute(array(':uname'=>$uname));
         $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
-        if (count($rows) == 1) {
-            return $rows[0];
+        $result = (count($rows) == 1) ? $rows[0] : NULL;
+
+        if ($isSessionUser) {
+            $uS->userCredentials = $result;
         }
 
-        return NULL;
+        return $result;
     }
 
     /**
@@ -991,7 +1006,7 @@ WHERE n.idName is not null and u.Status IN ('a', 'd') and n.`Member_Status` = 'a
      * @param mixed $init
      * @return void
      */
-    public function setSession(\PDO $dbh, Session $ssn, $r, $init = true)
+    public function setSession(\PDO $dbh, Session $ssn, $r, $init = true): void
     {
         $ssn->uid = $r["idName"];
         $ssn->username = htmlspecialchars($r["User_Name"]);
@@ -1006,6 +1021,7 @@ WHERE n.idName is not null and u.Status IN ('a', 'd') and n.`Member_Status` = 'a
 
         $ssn->logged = true;
         $ssn->userAgent = filter_input(INPUT_SERVER, "HTTP_USER_AGENT", FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+        $ssn->userCredentials = $r;
         unset($ssn->Challtries);
 
         if ($init) {
@@ -1026,7 +1042,7 @@ WHERE n.idName is not null and u.Status IN ('a', 'd') and n.`Member_Status` = 'a
      * Summary of isCron
      * @return bool
      */
-    public static function isCron(){
+    public static function isCron(): bool{
         return (php_sapi_name() == 'cli')? true:false;
     }
 
@@ -1034,7 +1050,7 @@ WHERE n.idName is not null and u.Status IN ('a', 'd') and n.`Member_Status` = 'a
      * Summary of _logout
      * @return void
      */
-    public static function _logout()
+    public static function _logout(): void
     {
         $uS = Session::getInstance();
         $uS->destroy();
@@ -1058,7 +1074,7 @@ WHERE n.idName is not null and u.Status IN ('a', 'd') and n.`Member_Status` = 'a
      * @param int $max
      * @return bool
      */
-    private function testTries($max = 3) {
+    private function testTries(int $max = 3): bool {
         $ssn = Session::getInstance();
         if (isset($ssn->Challtries) && $ssn->Challtries > $max) {
             return FALSE;
@@ -1070,7 +1086,7 @@ WHERE n.idName is not null and u.Status IN ('a', 'd') and n.`Member_Status` = 'a
      * Summary of resetTries
      * @return void
      */
-    private function resetTries(){
+    private function resetTries(): void{
         $ssn = Session::getInstance();
         if (isset($ssn->Challtries)){
             unset($ssn->Challtries);
@@ -1096,7 +1112,7 @@ WHERE n.idName is not null and u.Status IN ('a', 'd') and n.`Member_Status` = 'a
      * @param string $available_sets
      * @return string
      */
-    public function generateStrongPassword($length = 9, $add_dashes = false, $available_sets = 'luds')
+    public function generateStrongPassword(int $length = 9, bool $add_dashes = false, string $available_sets = 'luds'): string
     {
         $sets = array();
         if(strpos($available_sets, 'l') !== false)

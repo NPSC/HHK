@@ -100,7 +100,7 @@ class Note {
 
     /**
      * Summary of noteRS
-     * @var
+     * @var NoteRS
      */
     private $noteRS;
 

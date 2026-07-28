@@ -51,6 +51,7 @@
 		"phpstan/phpstan": "^2.1",
 		"phpunit/phpunit": "^11.5",
 		"php-debugbar/php-debugbar": "^3.4",
-		"staabm/phpstan-dba": "^0.4.3"
+		"staabm/phpstan-dba": "^0.4.3",
+		"squizlabs/php_codesniffer": "^4.0"
 	}
 }

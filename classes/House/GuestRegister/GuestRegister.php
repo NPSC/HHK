@@ -1,8 +1,9 @@
 <?php
 
-namespace HHK\House;
+namespace HHK\House\GuestRegister;
 
 use HHK\Common;
+use HHK\House\ResourceView;
 use HHK\sec\Labels;
 use HHK\sec\Session;
 use HHK\SysConst\CalendarStatusColors;
@@ -26,18 +27,18 @@ use HHK\SysConst\CalEventKind;
 class GuestRegister
 {
 
-    protected $noAssocId;
-    protected $ribbonColors;
-    protected $robbonBottomColors;
+    protected int $noAssocId;
+    protected array $ribbonColors;
+    protected array $robbonBottomColors;
     const WAITLIST_RESC_ID = '9999';
 
-    public static function getCalendarRescs(\PDO $dbh, $startDate, $endDate, $timezone, $rescGroupBy)
+    public static function getCalendarRescs(\PDO $dbh, string $startDate, string $endDate, string $timezone, string $rescGroupBy): array
     {
 
         $uS = Session::getInstance();
         $rescs = array();
 
-        if ($startDate == '') {
+        if ($startDate == '' || $endDate == '') {
             return array();
         }
 
@@ -46,11 +47,7 @@ class GuestRegister
         }
 
         $beginDT = self::parseDateTime($startDate, new \DateTimeZone($timezone));
-
-        if ($endDate != '') {
-            $endDT = self::parseDateTime($endDate, new \DateTimeZone($timezone));
-
-        }
+        $endDT = self::parseDateTime($endDate, new \DateTimeZone($timezone));
 
         //Resource grouping controls
         $rescGroups = Common::readGenLookupsPDO($dbh, 'Room_Group');
@@ -214,7 +211,7 @@ where ru.idResource_use is null
      * @param string $endTime
      * @return array
      */
-    public function getRegister(\PDO $dbh, $startTime, $endTime, $timezone)
+    public function getRegister(\PDO $dbh, string $startTime, string $endTime, ?string $timezone): array
     {
 
         $uS = Session::getInstance();
@@ -228,7 +225,7 @@ where ru.idResource_use is null
             return $events;
         }
 
-        if ($timezone == '') {
+        if ($timezone == null || $timezone == '') {
             $timezone = $uS->tz;
         }
 
@@ -341,6 +338,7 @@ where
             } else if ($endYear == $endHolidays->getYear()) {
                 $myHolidays = $endHolidays;
             } else {
+                $myHolidays = null;
                 $validHolidays = FALSE;
             }
 
@@ -684,7 +682,7 @@ where
 
 
     // Parses a string into a DateTime object, optionally forced into the given timezone.
-    public static function parseDateTime($string, $timezone = null)
+    public static function parseDateTime(string $string, ?\DateTimeZone $timezone = null)
     {
         $date = new \DateTime(
             $string,
@@ -702,43 +700,17 @@ where
 
     // Takes the year/month/date values of the given DateTime and converts them to a new DateTime,
     // but in UTC.
-    public static function stripTime($datetime)
+    public static function stripTime(\DateTimeInterface $datetime): \DateTime
     {
         return new \DateTime($datetime->format('Y-m-d'));
     }
 
-
-    //     protected function addBackgroundEvent($r, $hospitals, $hospitalColors) {
-
-    //         $uS = Session::getInstance();
-//         $backgroundBorderColor = '';
-
-    //         $hospitalColors = $uS->RibbonBottomColor || strtolower($uS->GuestNameColor) == 'hospital';
-
-    //             // Use Association colors?
-//         if ($hospitalColors) {
-
-    //             if ($r['idAssociation'] != $this->noAssocId && $r['idAssociation'] > 0) {
-
-    //             	if (isset($hospitals[$r['idAssociation']])) {
-//             	    $backgroundBorderColor = $hospitals[$r['idAssociation']]['Background_Color'];
-//             	}
-
-    //             } else if (isset($hospitals[$r['idHospital']])) {
-//                 $backgroundBorderColor = $hospitals[$r['idHospital']]['Background_Color'];
-//             }
-
-    //         }
-
-    //         return $backgroundBorderColor;
-//     }
-
-    protected function addVisitBlackouts(&$events, US_Holidays$myHolidays, $dtendDate, $timezone, $idResc, $nonClean)
+    protected function addVisitBlackouts(array &$events, ?US_Holidays $myHolidays, \DateTime $dtendDate, ?string $timezone, int $idResc, $nonClean)
     {
 
         $p1d = new \DateInterval('P1D');
 
-        while ($myHolidays->is_holiday($dtendDate->format('U'))) {
+        while ($myHolidays?->is_holiday($dtendDate->format('U'))) {
             $c = array(
                 'id' => 'H' . $idResc,
                 'kind' => CalEventKind::BO,
@@ -796,7 +768,7 @@ where
 
 
         // Check for holidays again?
-        while ($myHolidays->is_holiday($dtendDate->format('U'))) {
+        while ($myHolidays?->is_holiday($dtendDate->format('U'))) {
             $c = array(
                 'id' => 'H' . $idResc,
                 'kind' => CalEventKind::BO,
@@ -821,7 +793,7 @@ where
 
     }
 
-    protected function getRoomOosEvents(\PDO $dbh, \DateTime $beginDate, \DateTime $endDate, $timezone, &$events)
+    protected function getRoomOosEvents(\PDO $dbh, \DateTime $beginDate, \DateTime $endDate, \DateTimeZone|string|null $timezone, array &$events)
     {
 
         $idCounter = 10;
@@ -880,7 +852,7 @@ where DATE(ru.Start_Date) <= DATE('" . $endDate->format('Y-m-d') . "') and ifnul
         }
     }
 
-    protected function getRetiredRoomEvents(\PDO $dbh, \DateTime $beginDate, \DateTime $endDate, $timezone, &$events)
+    protected function getRetiredRoomEvents(\PDO $dbh, \DateTime $beginDate, \DateTime $endDate, \DateTimeZone|string|null $timezone, array &$events): void
     {
 
         $idCounter = 10;
@@ -925,7 +897,7 @@ where DATE(ru.Start_Date) <= DATE('" . $endDate->format('Y-m-d') . "') and ifnul
 
     }
 
-    protected function getRibbonColors(\PDO $dbh, $hospitals)
+    protected function getRibbonColors(\PDO $dbh, array $hospitals): void
     {
 
         $uS = Session::getInstance();
@@ -1005,7 +977,7 @@ where DATE(ru.Start_Date) <= DATE('" . $endDate->format('Y-m-d') . "') and ifnul
 
     }
 
-    protected function getHospitals(\PDO $dbh)
+    protected function getHospitals(\PDO $dbh): array
     {
 
         $hospitals = array(0 => array('Title' => '', 'idHospital' => 0, 'Background_Color' => 'blue', 'Text_Color' => 'white'));
@@ -1019,14 +991,14 @@ where DATE(ru.Start_Date) <= DATE('" . $endDate->format('Y-m-d') . "') and ifnul
             $hospitals[$h['idHospital']] = $h;
 
             if ($h['Title'] == '(None)') {
-                $this->noAssocId = $h['idHospital'];
+                $this->noAssocId = (int) $h['idHospital'];
             }
         }
 
         return $hospitals;
     }
 
-    protected function setRibbonColors($r, &$s)
+    protected function setRibbonColors(array $r, array &$s): void
     {
 
         $uS = Session::getInstance();        //$s['backBorderColor'] = $this->addBackgroundEvent($r, $hospitals);
@@ -1057,6 +1029,8 @@ where DATE(ru.Start_Date) <= DATE('" . $endDate->format('Y-m-d') . "') and ifnul
 
                 $expectedArrival = (isset($r["Expected_Arrival"]) ? (new \DateTime($r["Expected_Arrival"]))->setTime(0, 0, 0) : "");
                 $expectedDeparture = (isset($r["Expected_Departure"]) ? (new \DateTime($r["Expected_Departure"]))->setTime(0, 0, 0) : "");
+                $arrivalDiffDays = null;
+                $departureDiffDays = null;
 
                 if ($expectedArrival instanceof \DateTimeInterface) {
                     $arrivalDiff = $today->diff($expectedArrival);
@@ -1126,6 +1100,8 @@ where DATE(ru.Start_Date) <= DATE('" . $endDate->format('Y-m-d') . "') and ifnul
 
                 $expectedArrival = (isset($r["Expected_Arrival"]) ? (new \DateTime($r["Expected_Arrival"]))->setTime(0, 0, 0) : "");
                 $expectedDeparture = (isset($r["Expected_Departure"]) ? (new \DateTime($r["Expected_Departure"]))->setTime(0, 0, 0) : "");
+                $arrivalDiffDays = null;
+                $departureDiffDays = null;
 
                 if ($expectedArrival instanceof \DateTimeInterface) {
                     $arrivalDiff = $today->diff($expectedArrival);
@@ -1173,108 +1149,6 @@ where DATE(ru.Start_Date) <= DATE('" . $endDate->format('Y-m-d') . "') and ifnul
         } else {
             return false;
         }
-    }
-
-}
-
-
-class Event
-{
-
-    // Tests whether the given ISO8601 string has a time-of-day or not
-    const ALL_DAY_REGEX = '/^\d{4}-\d\d-\d\d$/'; // matches strings like "2013-12-29"
-
-    public $title;
-    public $allDay; // a boolean
-    public $start; // a DateTime
-    public $end; // a DateTime, or null
-    public $properties = array(); // an array of other misc properties
-
-
-    // Constructs an Event object from the given array of key=>values.
-    // You can optionally force the timezone of the parsed dates.
-    public function __construct($array, $timezone = null)
-    {
-
-        $this->title = '';
-        ;
-        if (isset($array['title'])) {
-            $this->title = $array['title'];
-        }
-
-        if (isset($array['allDay'])) {
-            // allDay has been explicitly specified
-            $this->allDay = (bool) $array['allDay'];
-        } else {
-            // Guess allDay based off of ISO8601 date strings
-            $this->allDay = preg_match(self::ALL_DAY_REGEX, $array['start']) &&
-                (!isset($array['end']) || preg_match(self::ALL_DAY_REGEX, $array['end']));
-        }
-
-        if (is_string($timezone)) {
-            $timezone = new \DateTimeZone($timezone);
-        }
-
-        if ($this->allDay) {
-            // If dates are allDay, we want to parse them in UTC to avoid DST issues.
-            $timezone = null;
-        }
-
-        // Parse dates
-        $this->start = GuestRegister::parseDateTime($array['start'], $timezone);
-        $this->end = isset($array['end']) ? GuestRegister::parseDateTime($array['end'], $timezone) : null;
-
-        // Record misc properties
-        foreach ($array as $name => $value) {
-            if (!in_array($name, array('title', 'allDay', 'start', 'end'))) {
-                $this->properties[$name] = $value;
-            }
-        }
-    }
-
-
-    // Returns whether the date range of our event intersects with the given all-day range.
-    // $rangeStart and $rangeEnd are assumed to be dates in UTC with 00:00:00 time.
-    public function isWithinDayRange($rangeStart, $rangeEnd)
-    {
-
-        // Normalize our event's dates for comparison with the all-day range.
-        $eventStart = GuestRegister::stripTime($this->start);
-
-        if (isset($this->end)) {
-            $eventEnd = GuestRegister::stripTime($this->end); // normalize
-        } else {
-            $eventEnd = $eventStart; // consider this a zero-duration event
-        }
-
-        // Check if the two whole-day ranges intersect.
-        return $eventStart < $rangeEnd && $eventEnd >= $rangeStart;
-    }
-
-
-    // Converts this Event object back to a plain data array, to be used for generating JSON
-    public function toArray()
-    {
-
-        // Start with the misc properties (don't worry, PHP won't affect the original array)
-        $array = $this->properties;
-
-        $array['title'] = $this->title;
-
-        // Figure out the date format. This essentially encodes allDay into the date string.
-        if ($this->allDay) {
-            $format = 'Y-m-d'; // output like "2013-12-29"
-        } else {
-            $format = 'c'; // full ISO8601 output, like "2013-12-29T09:00:00+08:00"
-        }
-
-        // Serialize dates into strings
-        $array['start'] = $this->start->format($format);
-        if (isset($this->end)) {
-            $array['end'] = $this->end->format($format);
-        }
-
-        return $array;
     }
 
 }

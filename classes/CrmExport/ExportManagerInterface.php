@@ -13,19 +13,21 @@ interface ExportManagerInterface {
 
     public function exportMembers(\PDO $dbh, array $ids): array;
 
+    public function upsertMembers(\PDO $dbh, array $sourceIds, bool $trace = false, bool $linkRelatives = true): array;
+
     public function exportPayments(\PDO $dbh, string $startDateString, string $endDateString): array;
 
     public function exportVisits(\PDO $dbh, mixed $idPsg, array $rels): array;
 
-    public static function getSearchFields(\PDO $dbh, string $tableName): array;
+    public function getSearchFields(\PDO $dbh, string $tableName): array;
 
     public function setExcludeMembers(\PDO $dbh, array $psgIds): array;
 
     public function searchMembers(array $criteria): array;
 
-    public function getMember(\PDO $dbh, mixed $parameters): string;
+    public function getMember(\PDO $dbh, array $parameters): string;
 
-    public function retrieveRemoteAccount(mixed $accountId): array;
+    public function retrieveRemoteAccount(string|int $accountId): array;
 
     public function updateRemoteMember(\PDO $dbh, array $accountData, int $idName, array $extraSourceCols = [], bool $updateAddr = false): string;
 
@@ -45,6 +47,8 @@ interface ExportManagerInterface {
 
     public function unencodeHTML(mixed $text): array|string|null;
 
+    public function getTransferReport(\PDO $dbh, string $start, string $end): array|bool;
+    
     public function getAccountId(): mixed;
 
     public function setAccountId(string|int $v): void;

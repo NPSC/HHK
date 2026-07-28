@@ -34,7 +34,7 @@ abstract class AbstractReport {
     public array $filteredTitles;
     public ColumnSelectors $colSelector;
     protected $defaultFields;
-    protected array $cFields;
+    protected array $fields;
     public array $fieldSets;
     public array $resultSet = [];
     protected string $query = "";
@@ -47,6 +47,7 @@ abstract class AbstractReport {
     protected string $inputSetReportName = "";
     protected bool $rendered = false;
     protected string $statsMkup = "";
+    protected int $defaultSortCol = 0;
 
     /**
      * @param \PDO $dbh
@@ -62,11 +63,11 @@ abstract class AbstractReport {
         $this->filter->createTimePeriod(date('Y'), '19', $uS->fy_diff_Months);
         $this->filter->createHospitals();
 
-        $this->cFields = $this->makeCFields();
+        $this->fields = $this->makeFields();
 
         $this->fieldSets = ReportFieldSet::listFieldSets($this->dbh, $report, true);
         $fieldSetSelection = (isset($request['fieldset']) ? $request['fieldset']: '');
-        $this->colSelector = new ColumnSelectors($this->cFields, $report . '-selFld', true, $this->fieldSets, $fieldSetSelection);
+        $this->colSelector = new ColumnSelectors($this->fields, $report . '-selFld', true, $this->fieldSets, $fieldSetSelection);
 
         // set the selected filters
         $this->colSelector->setColumnSelectors($request);
@@ -76,7 +77,7 @@ abstract class AbstractReport {
         $this->filteredFields = $this->colSelector->getFilteredFields();
 
         //default fields
-        foreach($this->cFields as $field){
+        foreach($this->fields as $field){
             if($field[2] == 'checked'){
                 $this->defaultFields[] = $field[1];
             }
@@ -172,9 +173,18 @@ abstract class AbstractReport {
             $tbl->addBodyTr($tr);
         }
 
+        $this->makeFooterMkup($tbl);
+
         $this->rendered = true;
 
         return HTMLContainer::generateMarkup('form', HTMLContainer::generateMarkup("div", $this->generateSummaryMkup() . $tbl->generateMarkup(array('id'=>'tbl' . $this->inputSetReportName . 'rpt', 'class'=>'display', 'style'=>'width:100%;')), array('class'=>"ui-widget ui-widget-content ui-corner-all hhk-tdbox", 'id'=>'hhk-reportWrapper')), array('autocomplete'=>'off'));
+    }
+
+    /**
+     * Optional hook for subclasses to add a footer row (eg. totals) to the report table.
+     * No-op by default.
+     */
+    protected function makeFooterMkup(HTMLTable $tbl): void {
     }
 
     public function generateSummaryMkup():string {
@@ -217,6 +227,7 @@ abstract class AbstractReport {
             ],
             "displayLength": 50,
             "lengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]],
+            "order": [[' . $this->defaultSortCol . ', "asc"]],
             "dom": "<\"top ui-toolbar ui-helper-clearfix\"Bif><\"hhk-overflow-x\"rt><\"bottom ui-toolbar ui-helper-clearfix\"lp>",
             "buttons": [
             {
@@ -481,7 +492,7 @@ abstract class AbstractReport {
 
     public abstract function makeSummaryMkup();
 
-    public abstract function makeCFields();
+    public abstract function makeFields();
 
     public abstract function makeQuery();
 

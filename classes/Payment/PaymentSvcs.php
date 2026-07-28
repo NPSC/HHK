@@ -17,7 +17,6 @@ use HHK\Tables\EditRS;
 use HHK\Tables\Payment\{PaymentRS, Payment_AuthRS, PaymentInfoCheckRS};
 use HHK\HTMLControls\{HTMLContainer};
 use HHK\Exception\PaymentException;
-use HHK\Tables\Payment\TransRS;
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception as PHPMailerException;
 use RuntimeException;
@@ -45,8 +44,8 @@ class PaymentSvcs {
     /**
      * Summary of payAmount
      * @param \PDO $dbh
-     * @param \HHK\Payment\Invoice\Invoice $invoice
-     * @param \HHK\Payment\PaymentManager\PaymentManagerPayment $pmp
+     * @param Invoice $invoice
+     * @param PaymentManagerPayment $pmp
      * @param string $postbackUrl
      * @return PaymentResult|null
      */
@@ -174,8 +173,8 @@ class PaymentSvcs {
      * @param \PDO $dbh
      * @param Invoice $invoice
      * @param PaymentManagerPayment $pmp
-     * @param string $postPage
      * @param string $paymentDate
+     * @param $resvId
      * @return ReturnResult
      */
     public static function returnAmount(\PDO $dbh, Invoice $invoice, PaymentManagerPayment $pmp, $paymentDate = '', $resvId = 0) {
@@ -342,7 +341,7 @@ class PaymentSvcs {
 
         $dataArray = $gateway->voidSale($dbh, $invoice, $payRs, $$pAuths, $bid);
 
-        if(isset($dataArray['receipt'], $dataArray['success'], $invoice) && $invoice instanceof Invoice){
+        if(isset($dataArray['receipt'], $dataArray['success']) && $invoice instanceof Invoice){
             $autoEmailAr = PaymentResult::isAutoEmailEligible($dbh, $invoice->getIdGroup(), $invoice->getSoldToId());
 
             if ($autoEmailAr['autoEmail'] == true) {
@@ -414,7 +413,7 @@ class PaymentSvcs {
 
         $dataArray = $gateway->reverseSale($dbh, $invoice, $payRs, $pAuthRs, $bid);
 
-        if(isset($dataArray['receipt'], $dataArray['success'], $invoice) && $invoice instanceof Invoice){
+        if(isset($dataArray['receipt'], $dataArray['success']) && $invoice instanceof Invoice){
             $autoEmailAr = PaymentResult::isAutoEmailEligible($dbh, $invoice->getIdGroup(), $invoice->getSoldToId());
 
             if ($autoEmailAr['autoEmail'] == true) {
@@ -442,7 +441,7 @@ class PaymentSvcs {
      * @param \PDO $dbh
      * @param int $idPayment
      * @param string $bid
-     * @throws \HHK\Exception\PaymentException
+     * @throws PaymentException
      * @return array
      */
     public static function returnPayment(\PDO $dbh, $idPayment, $bid) {
@@ -596,7 +595,7 @@ class PaymentSvcs {
                 throw new PaymentException('Unknown pay type.  ');
         }
 
-        if(isset($dataArray['receipt'], $dataArray['success'], $invoice) && $invoice instanceof Invoice){
+        if(isset($dataArray['receipt'], $dataArray['success']) && $invoice instanceof Invoice){
             $autoEmailAr = PaymentResult::isAutoEmailEligible($dbh, $invoice->getIdGroup(), $invoice->getSoldToId());
 
             if ($autoEmailAr['autoEmail'] == true) {
@@ -669,7 +668,7 @@ class PaymentSvcs {
         $gateway = AbstractPaymentGateway::factory($dbh, $uS->PaymentGateway, $pAuthRs->Merchant->getStoredVal());
         $dataArray =  array_merge($dataArray,  $gateway->voidReturn($dbh, $invoice, $payRs, $pAuthRs, $bid));
 
-        if(isset($dataArray['receipt'], $dataArray['success'], $invoice) && $invoice instanceof Invoice){
+        if(isset($dataArray['receipt'], $dataArray['success']) && $invoice instanceof Invoice){
             $autoEmailAr = PaymentResult::isAutoEmailEligible($dbh, $invoice->getIdGroup(), $invoice->getSoldToId());
 
             if ($autoEmailAr['autoEmail'] == true) {
@@ -696,7 +695,7 @@ class PaymentSvcs {
      * @param \PDO $dbh
      * @param mixed $idPayment
      * @param mixed $bid
-     * @throws \HHK\Exception\PaymentException
+     * @throws PaymentException
      * @return array
      */
     public static function undoReturnFees(\PDO $dbh, $idPayment, $bid) {
@@ -829,7 +828,7 @@ class PaymentSvcs {
                 throw new PaymentException('The pay type is ineligible.  ');
         }
 
-        if(isset($dataArray['receipt'], $dataArray['success'], $invoice) && $invoice instanceof Invoice){
+        if(isset($dataArray['receipt'], $dataArray['success']) && $invoice instanceof Invoice){
             $autoEmailAr = PaymentResult::isAutoEmailEligible($dbh, $invoice->getIdGroup(), $invoice->getSoldToId());
 
             if ($autoEmailAr['autoEmail'] == true) {
@@ -858,7 +857,7 @@ class PaymentSvcs {
      * @param mixed $idPaymentMethod
      * @param mixed $paymentAmount
      * @param mixed $bid
-     * @throws \HHK\Exception\PaymentException
+     * @throws PaymentException
      * @return array
      */
     protected static function undoReturnAmount(\PDO $dbh, $idPayment, $idPaymentMethod, $paymentAmount, $bid) {
@@ -973,7 +972,7 @@ class PaymentSvcs {
                 throw new PaymentException('This pay type is ineligible for Undo Refund Amount.  ');
         }
 
-        if(isset($dataArray['receipt'], $dataArray['success'], $invoice) && $invoice instanceof Invoice){
+        if(isset($dataArray['receipt'], $dataArray['success']) && $invoice instanceof Invoice){
             $autoEmailAr = PaymentResult::isAutoEmailEligible($dbh, $invoice->getIdGroup(), $invoice->getSoldToId());
 
             if ($autoEmailAr['autoEmail'] == true) {

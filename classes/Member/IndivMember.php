@@ -202,8 +202,6 @@ class IndivMember extends AbstractMember
     /**
      *
      * @param \PDO $dbh
-     * @param string $inputClass HTML class attribute for each control
-     * @param bool $showOrientDate
      * @return string HTML UL with following DIV tab panels
      */
     public function createMiscTabsMarkup(\PDO $dbh)

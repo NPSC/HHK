@@ -6,8 +6,6 @@ use HHK\Errors\ErrorHandler;
 use HHK\Exception\PaymentException;
 use HHK\Exception\RuntimeException;
 use HHK\House\HouseServices;
-use HHK\House\Reservation\Reservation;
-use HHK\House\Reservation\Reservation_1;
 use HHK\HTMLControls\HTMLContainer;
 use HHK\HTMLControls\HTMLInput;
 use HHK\HTMLControls\HTMLSelector;
@@ -27,13 +25,10 @@ use HHK\Payment\PaymentGateway\Deluxe\Request\Webhooks\SubscribeEventRequest;
 use HHK\Payment\PaymentGateway\Deluxe\Response\AuthorizeCreditResponse;
 use HHK\Payment\PaymentGateway\Deluxe\Response\PaymentCreditResponse;
 use HHK\Payment\PaymentGateway\Deluxe\Response\RefundCreditResponse;
-use HHK\Payment\PaymentGateway\Deluxe\Response\RefundGatewayResponse;
 use HHK\Payment\PaymentGateway\Deluxe\Response\VoidCreditResponse;
 use HHK\Payment\PaymentManager\PaymentManagerPayment;
 use HHK\Payment\PaymentResponse\AbstractCreditResponse;
-use HHK\Payment\PaymentResult\CofResult;
 use HHK\Payment\PaymentResult\PaymentResult;
-use HHK\Payment\PaymentResult\ReturnResult;
 use HHK\Payment\PaymentResult\RefundResult;
 use HHK\Payment\Receipt;
 use HHK\Payment\Transaction;
@@ -44,7 +39,6 @@ use HHK\SysConst\PaymentStatusCode;
 use HHK\SysConst\PayType;
 use HHK\SysConst\TransMethod;
 use HHK\SysConst\TransType;
-use HHK\SysConst\VisitStatus;
 use HHK\TableLog\AbstractTableLog;
 use HHK\TableLog\HouseLog;
 use HHK\Tables\EditRS;
@@ -1153,7 +1147,7 @@ order by pa.Timestamp desc");
                         }
                     }
 
-                    if ($success) {
+                    if (isset($success) && $success) {
                         $msg .= HTMLContainer::generateMarkup('p', $ccRs->Gateway_Name->getStoredVal() . " - Webhooks configured successfully");
                         $ccRs->Trans_Url->setNewVal(json_encode($response["events"]));
                     }else{

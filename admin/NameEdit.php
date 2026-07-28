@@ -24,7 +24,7 @@ use HHK\sec\SAML;
 
 require ("AdminIncludes.php");
 
-$wInit = new webInit();
+$wInit = new WebInit();
 
 $dbh = $wInit->dbh;
 

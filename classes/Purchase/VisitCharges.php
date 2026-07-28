@@ -139,7 +139,7 @@ class VisitCharges {
     /**
      * Summary of sumCurrentRoomCharge
      * @param \PDO $dbh
-     * @param \HHK\Purchase\PriceModel\AbstractPriceModel $priceModel
+     * @param AbstractPriceModel $priceModel
      * @param float|int $newPayment
      * @param bool $calcDaysPaid
      * @param mixed $givenPaid
@@ -153,7 +153,7 @@ class VisitCharges {
     /**
      * Summary of sumDatedRoomCharge
      * @param \PDO $dbh
-     * @param \HHK\Purchase\PriceModel\AbstractPriceModel $priceModel
+     * @param AbstractPriceModel $priceModel
      * @param string $coDate
      * @param float|int $newPayment
      * @param bool $calcDaysPaid
@@ -213,7 +213,7 @@ class VisitCharges {
     /**
      * Summary of getVisitData
      * @param mixed $spans
-     * @param \HHK\Purchase\PriceModel\AbstractPriceModel $priceModel
+     * @param AbstractPriceModel $priceModel
      * @param float|int $newPayment
      * @param bool $calcDaysPaid
      * @param mixed $givenPaid
@@ -222,6 +222,8 @@ class VisitCharges {
     protected function getVisitData($spans, AbstractPriceModel $priceModel, $newPayment = 0, $calcDaysPaid = FALSE, $givenPaid = NULL) {
 
         $uS = Session::getInstance();
+
+        $rateSummary = [];
 
         if ($newPayment > 0) {
             $calcDaysPaid = TRUE;

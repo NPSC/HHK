@@ -25,10 +25,10 @@ class Patch {
     public $oldVersion = '';
     public $newVersion = '';
 
-    public $results;
+    public array $results;
 
     public function __construct() {
-        $this->results = array();
+        $this->results = [];
     }
 
     public function updateWithSqlStmts(\PDO $dbh, $tfile, $type = '', $delimiter = ';', $splitAt = ';') {
@@ -56,14 +56,15 @@ class Patch {
 
     public static function multiQueryPDO(\PDO $dbh, $query, $delimiter = ";", $splitAt = ';') {
 
-        $msg = array();
+        $msg = [];
 
         if ($query === FALSE || trim($query) == '') {
             return $msg[] = array('error'=>'Empty query file ', 'errno'=> '', 'query'=> $query );
         }
 
         $qParts = explode($splitAt, $query);
-
+        $q = '';
+        
         try{
             $dbh->beginTransaction();
 

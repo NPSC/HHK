@@ -17,7 +17,7 @@ class RelationCode {
 
     /**
      * Summary of __construct
-     * @param mixed $codeArray
+     * @param array $codeArray
      */
     public function __construct(array $codeArray) {
         $this->code = $codeArray["Code"];

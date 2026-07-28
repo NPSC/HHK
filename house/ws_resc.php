@@ -848,7 +848,7 @@ function getCssVars(Session $uS){
     return $vars;
 }
 
-function getNameDetails(\PDO $dbh, $post){
+function getNameDetails(\PDO $dbh, array $post){
     if(isset($post['idNames'])){
 
         $query = "select distinct n.idName, n.Name_First, n.Name_Last, na.Address_1 as `address1`, na.Address_2 as `address2`,	na.City as `city`, na.State_Province, na.Postal_Code

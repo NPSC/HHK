@@ -129,6 +129,7 @@ class Pages {
                 $pageRs->Web_Site->setNewVal($website);
 
                 // Page type
+                $pgType = '';
                 if (isset($post['selPageType'][$pageId])) {
                     $pgType = $post['selPageType'][$pageId];
                 }

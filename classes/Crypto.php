@@ -19,12 +19,12 @@ class Crypto {
 
     private const IV = "fYfhHeDmf j98UUy4";
 
-    public static function encryptMessage($input)
+    public static function encryptMessage(string $input): string
     {
         return static::encrypt_decrypt('encrypt', $input, static::KEY, static::IV);
     }
 
-    public static function decryptMessage($encrypt)
+    public static function decryptMessage(string $encrypt): string
     {
         return static::encrypt_decrypt('decrypt', $encrypt, static::KEY, static::IV);
     }
@@ -40,7 +40,7 @@ class Crypto {
      *
      * @return string
      */
-    private static function encrypt_decrypt($action, $string, $secret_key, $secret_iv)
+    private static function encrypt_decrypt(string $action, string $string, string $secret_key, string $secret_iv): string
     {
         $output = false;
         $encrypt_method = "AES-256-CBC";

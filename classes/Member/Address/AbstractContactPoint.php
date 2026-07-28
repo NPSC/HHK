@@ -107,7 +107,7 @@ abstract class AbstractContactPoint {
     /**
      * Summary of savePost
      * @param \PDO $dbh
-     * @param mixed $post
+     * @param array $post
      * @param mixed $user
      * @return void
      */

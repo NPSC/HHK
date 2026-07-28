@@ -9,11 +9,10 @@ use GuzzleHttp\RequestOptions;
 use HHK\Integrations\GuzzleAPILogger;
 use HHK\OAuth\SalesForceOAuth;
 use HHK\OAuth\Credentials;
-use HHK\Exception\{RuntimeException, UploadException};
+use HHK\Exception\RuntimeException;
 use GuzzleHttp\Exception\BadResponseException;
 use HHK\sec\Session;
 use HHK\TableLog\ExternalAPILog;
-use HHK\TableLog\HouseLog;
 use Psr\Http\Message\ResponseInterface;
 
 
@@ -24,26 +23,16 @@ use Psr\Http\Message\ResponseInterface;
  */
 class SF_Connector {
 
-    /**
-     * Summary of oAuth
-     * @var SalesForceOauth|null
-     */
     protected SalesForceOAuth $oAuth;
-
     protected \PDO $dbh;
-    /**
-     * Summary of credentials
-     * @var Credentials
-     */
-    protected $credentials;
+    protected Credentials $credentials;
+    protected ?Client $client = null;
 
-    protected Client $client;
-    
     /**
      * The number of concurrent async requests to send at one time
      * @const CONCURRENT_REQUESTS
      */
-    protected const CONCURRENT_REQUESTS = 5;
+    protected const int CONCURRENT_REQUESTS = 5;
 
     public function __construct(\PDO $dbh, Credentials $credentials) {
 
@@ -51,6 +40,10 @@ class SF_Connector {
         $this->credentials = $credentials;
         $this->oAuth = new SalesForceOAuth($this->dbh, $credentials);
         $this->oAuth->login();
+        $this->buildClient();
+    }
+
+    protected function buildClient(): void {
         $this->client = new Client([
             'base_uri' => $this->credentials->getBaseURI(),
             'handler' => GuzzleAPILogger::createStack($this->dbh, SalesforceManager::LOG_SERVICE_NAME),
@@ -61,6 +54,35 @@ class SF_Connector {
         ]);
     }
 
+    protected function reauthorize(): void {
+        $this->oAuth->clearCachedToken();
+        $this->oAuth->login();
+        $this->buildClient();
+    }
+
+    /**
+     * Runs $fn(). On a 401 reauthorizes and retries once; all other errors go through checkErrors().
+     */
+    protected function withReauth(callable $fn): mixed {
+        try {
+            return $fn();
+        } catch (BadResponseException $e) {
+            if ($e->getResponse()->getStatusCode() !== 401) {
+                $this->checkErrors($e);
+                return null;
+            }
+        }
+
+        $this->reauthorize();
+
+        try {
+            return $fn();
+        } catch (BadResponseException $e) {
+            $this->checkErrors($e);
+            return null;
+        }
+    }
+
     /**
      * Search the $endpoint using $query.  Uses HTTP::GET
      *
@@ -68,46 +90,25 @@ class SF_Connector {
      * @param string $endpoint
      * @return mixed
      */
-    public function search($query, $endpoint) {
-
-        $result = null;
-        try{
-
+    public function search(string $query, string $endpoint) {
+        return $this->withReauth(function () use ($query, $endpoint) {
             $response = $this->client->request('GET', $endpoint, [
-                RequestOptions::QUERY => [
-                    'q' => $query
-                ]
+                RequestOptions::QUERY => ['q' => $query]
             ]);
-
-            $result = json_decode($response->getBody(), true);
-
-        } catch (BadResponseException $exception) {
-            $this->checkErrors($exception);
-        }
-
-        return $result;
+            return json_decode($response->getBody(), true);
+        });
     }
 
     /**
      * Summary of goUrl
-     * @param mixed $endpoint
+     * @param string $endpoint
      * @return mixed
      */
-    public function goUrl($endpoint) {
-
-        $result = null;
-        try{
-
+    public function goUrl(string $endpoint) {
+        return $this->withReauth(function () use ($endpoint) {
             $response = $this->client->request('GET', $endpoint);
-
-            $result = json_decode($response->getBody(), true);
-
-        } catch (BadResponseException $exception) {
-            $this->checkErrors($exception);
-
-        }
-
-        return $result;
+            return json_decode($response->getBody(), true);
+        });
     }
 
     /**
@@ -117,22 +118,12 @@ class SF_Connector {
      * @param array $params
      * @return mixed
      */
-    public function postUrl($endpoint, array $params, $isUpdate = FALSE) {
-
-        $result = null;
-       try{
-
+    public function postUrl(string $endpoint, array $params, bool $isUpdate = FALSE) {
+        return $this->withReauth(function () use ($endpoint, $params) {
             $request = new Request('POST', $endpoint, [], json_encode($params));
-
             $response = $this->client->send($request);
-
-            $result = json_decode($response->getBody(), true);
-
-        } catch (BadResponseException $exception) {
-            $this->checkErrors($exception);
-        }
-
-        return $result;
+            return json_decode($response->getBody(), true);
+        });
     }
 
     /**
@@ -142,44 +133,53 @@ class SF_Connector {
      * @param array $jsonBodies An array of request bodies to be sent asyncronously
      * @return array An array of batchRequests and batchResults
      */
-    public function postUrlAsync($endpoint, array $jsonBodies, $isUpdate = FALSE) {
+    public function postUrlAsync(string $endpoint, array $jsonBodies, bool $isUpdate = FALSE) {
 
-        $result = null;
-        try{
-
+        try {
             $batchRequests = [];
-            $batchResults = [];
-
-            foreach($jsonBodies as $batchId=>$params){
+            foreach ($jsonBodies as $batchId => $params) {
                 $batchRequests[$batchId] = new Request('POST', $endpoint, [], json_encode($params));
             }
-
-            $pool = new Pool($this->client, $batchRequests, [
-                'concurrency' => self::CONCURRENT_REQUESTS,
-                'fulfilled' =>function (ResponseInterface $response, $batchId) use ($batchRequests, &$batchResults){ //if the response is success
-                    $batchResults[$batchId] = ['success'=>json_decode($response->getBody(), true)];
-                },
-                'rejected' => function (BadResponseException $exception, $batchId) use (&$batchResults) { //if the response is not success
-                    try{
-                        $this->checkErrors($exception);
-                    }catch(Exception $e){
-                        $batchResults[$batchId] = ['error'=>$e->getMessage()];
-                    }
-                }
-            ]);
-
-            // Initiate the transfers and create a promise
-            $promise = $pool->promise();
-
-            // Wait for the pool of requests to complete.
-            $promise->wait();
-
-
+            return $this->runPool($batchRequests);
         } catch (Exception $exception) {
             throw new RuntimeException($exception->getMessage());
         }
+    }
 
-        return ['batchRequests'=>$batchRequests, 'batchResults'=>$batchResults];
+    /**
+     * Executes a Guzzle Pool against $this->client.
+     * On a 401, reauthorizes and retries the full pool once ($allowReauth prevents loops).
+     */
+    private function runPool(array $batchRequests, bool $allowReauth = true): array {
+        $batchResults = [];
+        $needsReauth = false;
+
+        $pool = new Pool($this->client, $batchRequests, [
+            'concurrency' => self::CONCURRENT_REQUESTS,
+            'fulfilled' => function (ResponseInterface $response, $batchId) use (&$batchResults) {
+                $batchResults[$batchId] = ['success' => json_decode($response->getBody(), true)];
+            },
+            'rejected' => function (BadResponseException $exception, $batchId) use (&$batchResults, &$needsReauth, $allowReauth) {
+                if ($allowReauth && $exception->getResponse()->getStatusCode() === 401) {
+                    $needsReauth = true;
+                    return;
+                }
+                try {
+                    $this->checkErrors($exception);
+                } catch (Exception $e) {
+                    $batchResults[$batchId] = ['error' => $e->getMessage()];
+                }
+            }
+        ]);
+
+        $pool->promise()->wait();
+
+        if ($needsReauth) {
+            $this->reauthorize();
+            return $this->runPool($batchRequests, false);
+        }
+
+        return ['batchRequests' => $batchRequests, 'batchResults' => $batchResults];
     }
 
     /**
@@ -189,22 +189,12 @@ class SF_Connector {
      * @param array $params
      * @return mixed
      */
-    public function patchUrl($endpoint, array $params)
-    {
-
-        $result = null;
-        try {
-
+    public function patchUrl(string $endpoint, array $params) {
+        return $this->withReauth(function () use ($endpoint, $params) {
             $request = new Request('PATCH', $endpoint, [], json_encode($params));
-
             $response = $this->client->send($request);
-
-            $result = json_decode($response->getBody(), true);
-        } catch (BadResponseException $exception) {
-            $this->checkErrors($exception);
-        }
-
-        return $result;
+            return json_decode($response->getBody(), true);
+        });
     }
 
 
@@ -213,7 +203,7 @@ class SF_Connector {
      * @param mixed $errorJson
      * @return string
      */
-    protected function collectErrors($errorJson){
+    protected function collectErrors($errorJson): string {
         $errors = '';
         if(is_array($errorJson)){
             foreach($errorJson as $error){
@@ -224,11 +214,11 @@ class SF_Connector {
     }
 
     /**
-     * Log and handle Salesforce Response errrors
+     * Log and handle Salesforce Response errors
      * @param BadResponseException $exception
      * @throws RuntimeException
      */
-    protected function checkErrors(BadResponseException $exception) {
+    protected function checkErrors(BadResponseException $exception): void {
 
         $uS = Session::getInstance();
         $errorResponse = $exception->getResponse();
@@ -251,6 +241,4 @@ class SF_Connector {
 
     }
 
-
 }
-

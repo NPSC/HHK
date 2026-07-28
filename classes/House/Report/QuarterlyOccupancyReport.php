@@ -74,37 +74,37 @@ class QuarterlyOccupancyReport extends AbstractReport implements ReportInterface
 
     }
 
-    public function makeCFields(): array {
-        $cFields = [];
+    public function makeFields(): array {
+        $fields = [];
 
         if($this->dispType == "excel"){
-            $cFields[] = array("Date", "Date", 'checked', '', 'date', '20');
-            $cFields[] = array("Room-nights available", "Room-nights available", 'checked', '', 'string', '20');
-            $cFields[] = array("Room-nights occupied", "Room-nights occupied", 'checked', '', 'string', '20');
-            $cFields[] = array("Occupancy Rate", "Occupancy Rate", 'checked', '', 'string', '20');
-            $cFields[] = array($this->rmtroomTitle . "-nights occupied", $this->rmtroomTitle . "-nights occupied", 'checked', '', 'string', '20');
-            $cFields[] = array("Unique " . Labels::getString("Statement", "psgPlural", "PSGs"), "Unique " . Labels::getString("Statement", "psgPlural", "PSGs"), 'checked', '', 'string', '20');
-            $cFields[] = array("New " . Labels::getString("Statement", "psgPlural", "PSGs"), "New " . Labels::getString("Statement", "psgPlural", "PSGs"), 'checked', '', 'string', '20');
-            $cFields[] = array("Total Visits", "Total Visits", 'checked', '', 'string', '20');
-            $cFields[] = array("Average Visit Length", "Average Visit Length", 'checked', '', 'string', '20');
-            $cFields[] = array("Median Visit Length", "Median Visit Length", 'checked', '', 'string', '20');
-            $cFields[] = array("Average First Visit Length", "Average First Visit Length", 'checked', '', 'string', '20');
-            $cFields[] = array("Median First Visit Length", "Median First Visit Length", 'checked', '', 'string', '20');
+            $fields[] = array("Date", "Date", 'checked', '', 'date', '20');
+            $fields[] = array("Room-nights available", "Room-nights available", 'checked', '', 'string', '20');
+            $fields[] = array("Room-nights occupied", "Room-nights occupied", 'checked', '', 'string', '20');
+            $fields[] = array("Occupancy Rate", "Occupancy Rate", 'checked', '', 'string', '20');
+            $fields[] = array($this->rmtroomTitle . "-nights occupied", $this->rmtroomTitle . "-nights occupied", 'checked', '', 'string', '20');
+            $fields[] = array("Unique " . Labels::getString("Statement", "psgPlural", "PSGs"), "Unique " . Labels::getString("Statement", "psgPlural", "PSGs"), 'checked', '', 'string', '20');
+            $fields[] = array("New " . Labels::getString("Statement", "psgPlural", "PSGs"), "New " . Labels::getString("Statement", "psgPlural", "PSGs"), 'checked', '', 'string', '20');
+            $fields[] = array("Total Visits", "Total Visits", 'checked', '', 'string', '20');
+            $fields[] = array("Average Visit Length", "Average Visit Length", 'checked', '', 'string', '20');
+            $fields[] = array("Median Visit Length", "Median Visit Length", 'checked', '', 'string', '20');
+            $fields[] = array("Average First Visit Length", "Average First Visit Length", 'checked', '', 'string', '20');
+            $fields[] = array("Median First Visit Length", "Median First Visit Length", 'checked', '', 'string', '20');
 
             //age distribution
-            $cFields[] = array("Adult", "Adult", 'checked', '', 'string', '20');
-            $cFields[] = array("Child", "Child", 'checked', '', 'string', '20');
-            $cFields[] = array(self::NOT_INDICATED, self::NOT_INDICATED, 'checked', '', 'string', '20');
-            $cFields[] = array("Total Guests", "Total Guests", 'checked', '', 'string', '20');
+            $fields[] = array("Adult", "Adult", 'checked', '', 'string', '20');
+            $fields[] = array("Child", "Child", 'checked', '', 'string', '20');
+            $fields[] = array(self::NOT_INDICATED, self::NOT_INDICATED, 'checked', '', 'string', '20');
+            $fields[] = array("Total Guests", "Total Guests", 'checked', '', 'string', '20');
 
             //diagCategories
             foreach($this->diagCats as $cat){
-                $cFields[] = array($cat[1], $cat[1], 'checked', '', 'string', '20');
+                $fields[] = array($cat[1], $cat[1], 'checked', '', 'string', '20');
             }
-            $cFields[] = array(self::NO_CAT, self::NO_CAT, 'checked', '', 'string', '20');
-            $cFields[] = array(self::NO_DIAGNOSIS, self::NO_DIAGNOSIS, 'checked', '', 'string', '20');
+            $fields[] = array(self::NO_CAT, self::NO_CAT, 'checked', '', 'string', '20');
+            $fields[] = array(self::NO_DIAGNOSIS, self::NO_DIAGNOSIS, 'checked', '', 'string', '20');
         }
-        return $cFields;
+        return $fields;
 
     }
 

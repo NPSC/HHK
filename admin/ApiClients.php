@@ -2,7 +2,7 @@
 
 use HHK\Common;
 use HHK\HTMLControls\HTMLSelector;
-use HHK\sec\{Session, UserClass, WebInit, SecurityComponent};
+use HHK\sec\{Session, WebInit, SecurityComponent};
 use HHK\sec\Labels;
 
 /**
@@ -16,7 +16,7 @@ use HHK\sec\Labels;
 require ("AdminIncludes.php");
 
 
-$wInit = new webInit();
+$wInit = new WebInit();
 $dbh = $wInit->dbh;
 $pageTitle = $wInit->pageTitle;
 $testVersion = $wInit->testVersion;

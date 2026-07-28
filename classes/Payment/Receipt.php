@@ -9,10 +9,8 @@ use HHK\sec\Session;
 use HHK\SysConst\{ItemId};
 use HHK\SysConst\MemBasis;
 use HHK\HTMLControls\{HTMLTable, HTMLContainer};
-use HHK\House\Registration;
 use HHK\Member\AbstractMember;
 use HHK\sec\SysConfig;
-use HHK\SysConst\PaymentStatusCode;
 use Mpdf\Mpdf;
 
 /**
@@ -502,7 +500,8 @@ where
      * @return mixed
      */
     public static function getHospitalNames(\PDO $dbh, $orderNumber) {
-
+        $hsNames = '';
+        
         // Find the hospital
         if ($orderNumber > 0) {
 

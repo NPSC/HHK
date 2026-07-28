@@ -36,7 +36,7 @@ class FormDocument {
 
     }
 
-    public static function listForms(\PDO $dbh, $status, $params, $totalsOnly = false){
+    public static function listForms(\PDO $dbh, string $status, array $params, bool $totalsOnly = false): array{
 
         if($totalsOnly){
             //sync referral/resv statuses
@@ -92,7 +92,7 @@ class FormDocument {
      * @param int $id
      * @return boolean
      */
-    public function loadDocument(\PDO $dbh, $id){
+    public function loadDocument(\PDO $dbh, int $id): bool{
         $this->doc = new Document(intval($id));
         $this->doc->loadDocument($dbh);
         if($this->doc->getType() ==  self::JsonType && $this->doc->getCategory() == self::formCat){
@@ -106,10 +106,11 @@ class FormDocument {
     /**
      *
      * @param \PDO $dbh
-     * @param string $json
+     * @param array $fields
+     * @param int $templateId
      * @return array[]|string[]|string[]
      */
-    public function saveNew(\PDO $dbh, array $fields, $templateId = 0){
+    public function saveNew(\PDO $dbh, array $fields, int $templateId = 0): array{
 
         $this->formTemplate = new FormTemplate();
         $this->formTemplate->loadTemplate($dbh, $templateId);
@@ -225,7 +226,7 @@ class FormDocument {
 
     }
 
-    public function updateStatus(\PDO $dbh, $status){
+    public function updateStatus(\PDO $dbh, string $status){
         if($this->getStatus() == 'd' && $status == 'd'){
             return $this->doc->updateStatus($dbh, 'dd'); //fully delete
         }else{
@@ -246,6 +247,8 @@ class FormDocument {
 
         $uS = Session::getInstance();
 
+        $minResvDays = SysConfig::getKeyValue($dbh, 'sys_config', 'minResvDays');
+
         $fieldData = [];
 
         foreach($fields as $key=>$field){
@@ -258,6 +261,7 @@ class FormDocument {
                         $date = new \DateTime($field->userData[0]);
                     }catch(\Exception $e){
                         $response["errors"][] = ['field'=>$field->name, 'error'=>$field->label . ' must be a valid date.'];
+                        continue;
                     }
 
                     $today = new \DateTime();
@@ -303,7 +307,6 @@ class FormDocument {
                         }
 
                         $days = $checkin->diff($checkout)->days;
-                        $minResvDays = SysConfig::getKeyValue($dbh, 'sys_config', 'minResvDays');
                         if($minResvDays > 0 && $checkin->diff($checkout)->days < $minResvDays){
                             $response["errors"][] = ['field'=>'checkoutdate', 'error'=>'Stay dates must be a minimum of ' . $minResvDays . " days"];
                         }

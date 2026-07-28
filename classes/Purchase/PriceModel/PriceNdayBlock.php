@@ -32,10 +32,6 @@ class PriceNdayBlock extends AbstractPriceModel {
      */
     protected $blocks = 0;
 
-    /**
-     * Summary of daysAccumulator
-     * @var
-     */
     protected $daysAccumulator;
 
     /**
@@ -98,7 +94,7 @@ class PriceNdayBlock extends AbstractPriceModel {
      * @param bool $financialAssistance
      * @return HTMLTable
      */
-    public function getEditMarkup(\PDO $dbh, $defaultRoomRate = 'e', $financialAssistance = false) {
+    public function getEditMarkup(\PDO $dbh, $defaultRoomRate = 'e', $financialAssistance = false): HTMLTable {
 
 
         $fTbl = new HTMLTable();

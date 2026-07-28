@@ -418,7 +418,7 @@ if (filter_has_var(INPUT_POST, 'btnHere') || filter_has_var(INPUT_POST, 'btnExce
         $hdrHosps = $filter->getSelectedHospitalsString();
         $hdrAssocs = $filter->getSelectedAssocString();
 
-        $headerTable->addBodyTr(HTMLTable::makeTd($labels->getString('hospital', 'hospital', 'Hospital').'s: ', array('class'=>'tdlabel')) . HTMLTable::makeTd($hdrHosps));
+        $headerTable->addBodyTr(HTMLTable::makeTd($labels->getString('hospital', 'hospitals', 'Hospitals') . ': ', array('class'=>'tdlabel')) . HTMLTable::makeTd($hdrHosps));
 
         if (count($aList) > 0) {
             $headerTable->addBodyTr(HTMLTable::makeTd('Associations: ', array('class'=>'tdlabel')) . HTMLTable::makeTd($hdrAssocs));
@@ -530,6 +530,7 @@ where $whDeleted $whDates $whHosp $whAssoc  $whStatus $whBillAgent ";
     $fltrdFields = $colSelector->getFilteredFields();
 
     $hdr = array();
+    $writer = null;
 
     if ($local) {
         $tbl = new HTMLTable();
@@ -642,7 +643,7 @@ where $whDeleted $whDates $whHosp $whAssoc  $whStatus $whBillAgent ";
 
     } else {
         HouseLog::logDownload($dbh, 'Invoice Report', "Excel", "Invoice Report for " . $filter->getReportStart() . " - " . $filter->getReportEnd() . " downloaded", $uS->username);
-        $writer->download();
+        $writer?->download();
     }
 
 }

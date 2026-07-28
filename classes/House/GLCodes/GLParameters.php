@@ -158,11 +158,7 @@ class GLParameters {
 
         foreach ($items as $d) {
 
-            if ($d['idItem'] == ItemId::AddnlCharge) {
-                $des = '(Additional Charges)';
-            } else {
-                $des = $d['Description'];
-            }
+            $des = $d['Description'];
 
             $glTbl->addBodyTr(
                 HTMLTable::makeTh($des, array('class'=>'tdlabel'))

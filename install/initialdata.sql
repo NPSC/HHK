@@ -3689,6 +3689,14 @@ VALUES
 		'Default: Hospital'
 	),
 	(
+		'hospitals',
+		'Hospitals',
+		's',
+		'h',
+		'',
+		''
+	),
+	(
 		'association',
 		'Association',
 		's',
@@ -3774,6 +3782,14 @@ VALUES
 		'Return Amount',
 		's',
 		'pc',
+		'',
+		''
+	),
+	(
+		'adjustFees',
+		'Adjust Fees',
+		's',
+		'vi',
 		'',
 		''
 	),
@@ -4316,7 +4332,7 @@ values
 	(6, 'Discount'),
 	(7, 'Reversal'),
 	(8, 'Lodging Donation'),
-	(9, ''),
+	(9, 'Additional Charge'),
 	(10, 'Lodging MOA'),
 	(11, 'Waive');
 
@@ -4660,7 +4676,7 @@ VALUES
 		'Patient_Rel_Type'
 	),
 	('account/listGenders', 'genders', 'gender', 'Gender'),
-	('account/listPrefixes', 'prefixes', 'prefix', 'Name_Prefix'),
+	('account/listPrefixes', 'prefixes', 'prefix', 'Name_Prefix')
 ;
 
 -- ;

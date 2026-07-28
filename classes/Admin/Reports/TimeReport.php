@@ -117,10 +117,9 @@ class TimeReport
                         if (isset($_POST["selIntFy"])) {
                             $year = filter_var($_POST["selIntFy"], FILTER_SANITIZE_NUMBER_INT);
                             $intYear = intval($year);
+                            $sumaryRows["Year"] = $intYear;
+                            $wClause .= " and YEAR(DATE_ADD(c.E_End, INTERVAL $fyMonthsAdjust MONTH)) = $intYear ";
                         }
-
-                        $sumaryRows["Year"] = $intYear;
-                        $wClause .= " and YEAR(DATE_ADD(c.E_End, INTERVAL $fyMonthsAdjust MONTH)) = $intYear ";
                         break;
 
                     case "cy":
@@ -129,10 +128,9 @@ class TimeReport
                         if (isset($_POST["selIntFy"])) {
                             $year = filter_var($_POST["selIntFy"], FILTER_SANITIZE_NUMBER_INT);
                             $intYear = intval($year);
+                            $sumaryRows["Year"] = $intYear;
+                            $wClause .= " and YEAR(c.E_End) = $intYear ";
                         }
-
-                        $sumaryRows["Year"] = $intYear;
-                        $wClause .= " and YEAR(c.E_End) = $intYear ";
                         break;
 
                     default:

@@ -1,11 +1,9 @@
 <?php
 
 use HHK\AlertControl\AlertMessage;
-use HHK\Exception\DuplicateException;
 use HHK\HTMLControls\HTMLSelector;
 use HHK\sec\Pages;
 use HHK\sec\{SecurityComponent, WebInit};
-use HHK\Exception\RuntimeException;
 
 /**
  * PageEdit.php
@@ -18,7 +16,7 @@ use HHK\Exception\RuntimeException;
 
 require ("AdminIncludes.php");
 
-$wInit = new webInit();
+$wInit = new WebInit();
 
 $dbh = $wInit->dbh;
 $pageTitle = $wInit->pageTitle;

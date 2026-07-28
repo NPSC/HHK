@@ -1309,3 +1309,8 @@ input:checked + .hhk-slider:before {
         display: none;
     }
 }
+
+.addnlChg input[readonly] {
+	background-color: transparent;
+	border: none;
+}

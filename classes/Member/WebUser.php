@@ -33,7 +33,7 @@ class WebUser {
      * @param mixed $id
      * @return W_usersRS
      */
-    public static function loadWebUserRS(\PDO $dbh, $id) {
+    public static function loadWebUserRS(\PDO $dbh, $id): W_usersRS {
         $wUserRS = new W_usersRS();
 
         if ($id > 0) {
@@ -205,6 +205,7 @@ class WebUser {
      */
     public static function getSecurityGroupMarkup(\PDO $dbh, $id, $allowFlag) {
 
+        $sArray = array();
         $stmt = $dbh->query("select `Group_Code` as `Code`, `Title` as `Description` from w_groups");
         $grps = $stmt->fetchAll();
         foreach ($grps as $g) {

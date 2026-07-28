@@ -5,14 +5,14 @@ use HHK\sec\WebInit;
 /**
  * KeyStats.php
  *
--- @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
--- @copyright 2010-2018 <nonprofitsoftwarecorp.org>
--- @license   MIT
--- @link      https://github.com/NPSC/HHK
+ * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
+ * @copyright 2010-2018 <nonprofitsoftwarecorp.org>
+ * @license   MIT
+ * @link      https://github.com/NPSC/HHK
  */
 require_once ("AdminIncludes.php");
 
-$wInit = new webInit();
+$wInit = new WebInit();
 
 $dbh = $wInit->dbh;
 

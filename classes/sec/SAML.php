@@ -40,7 +40,7 @@ use HHK\Tables\WebSec\W_idp_secgroupsRS;
 
 class SAML {
 
-    protected $auth;
+    protected Auth $auth;
 
     protected $IdpId;
     protected $IdpConfig;
@@ -54,7 +54,7 @@ class SAML {
     protected $SPRolloverCert;
     protected $SPkey;
 
-    protected $dbh;
+    protected \PDO $dbh;
     protected $auditUser;
 
     public function __construct(\PDO $dbh, $idpId = 'new'){
@@ -93,11 +93,7 @@ class SAML {
         $uS = Session::getInstance();
         $error = false;
 
-        if (isset($uS->AuthNRequestID)) {
-            $requestID = $uS->AuthNRequestID;
-        } else {
-            $requestID = null;
-        }
+        $requestID = (isset($uS->AuthNRequestID)) ? $uS->AuthNRequestID : null;
 
         $this->auth->processResponse($requestID);
         unset($uS->AuthNRequestID);
@@ -252,6 +248,8 @@ class SAML {
                 //skip security group update if user has different idp id and IdP has not sent security groups
             }else{
 
+                // force a fresh read: the role/idIdp update above may not be reflected in the session cache
+                unset($uS->userCredentials);
                 $user = UserClass::getUserCredentials($this->dbh, $this->auth->getNameId());
 
                 //make parms array for group update
@@ -419,6 +417,7 @@ class SAML {
         $groups = $stmt->fetchAll(\PDO::FETCH_BOTH);
 
         if($titlesOnly){ //list titles
+            $sArray = array();
             foreach ($groups as $g) {
                 $sArray[] = $g['Title'];
             }
@@ -428,7 +427,7 @@ class SAML {
         }
     }
 
-    public function getSettings(){
+    public function getSettings(): array{
 
         $settings = array();
 
@@ -625,21 +624,15 @@ class SAML {
 
     private function getCertificateInfo($type, $certStr = ''){
 
-        if($type == "idpSign"){
-            $certData = $this->IdpConfig["IdP_SigningCert"];
-        }else if($type == "idpSign2"){
-                $certData = $this->IdpConfig["IdP_SigningCert2"];
-        }else if($type == "idpEncryption"){
-            $certData = $this->IdpConfig["IdP_EncryptionCert"];
-        }else if($type == "idpEncryption2"){
-                $certData = $this->IdpConfig["IdP_EncryptionCert2"];
-        }else if($type == "sp"){
-            $certData = $this->SPcert;
-        }else if($type == "sprollover"){
-            $certData = $this->SPRolloverCert;
-        }else{
-            $certData = $certStr;
-        }
+        $certData = match ($type) {
+            "idpSign" => $this->IdpConfig["IdP_SigningCert"],
+            "idpSign2" => $this->IdpConfig["IdP_SigningCert2"],
+            "idpEncryption" => $this->IdpConfig["IdP_EncryptionCert"],
+            "idpEncryption2" => $this->IdpConfig["IdP_EncryptionCert2"],
+            "sp" => $this->SPcert,
+            "sprollover" => $this->SPRolloverCert,
+            default => $certStr,
+        };
 
         $certInfo = (!empty($certData) ? openssl_x509_parse($certData):false);
         if($certInfo){
@@ -1216,7 +1209,7 @@ class SAML {
 
     private function updateDefaultSecurityGroups(array $parms){
         // Group Code security table
-        //$sArray = readGenLookups($dbh, "Group_Code");
+        $sArray = [];
         $stmt = $this->dbh->query("select Group_Code as Code, Description from w_groups");
         $groups = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
@@ -1287,4 +1280,3 @@ class SAML {
     }
 
 }
-?>

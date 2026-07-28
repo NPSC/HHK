@@ -4,10 +4,7 @@ use HHK\SysConst\VisitStatus;
 use HHK\Update\SiteLog;
 use HHK\AlertControl\AlertMessage;
 use HHK\AuditLog\NameLog;
-use HHK\sec\{
-    Session,
-    WebInit
-};
+use HHK\sec\{Session, WebInit};
 use HHK\SysConst\GLTableNames;
 use HHK\Tables\EditRS;
 use HHK\Tables\Name\NameRS;
@@ -150,15 +147,19 @@ if (isset($_POST["btnGenLookups"])) {
         $lookUpAlert->set_Text("Don't mess with these settings.  ");
     } else {
 
-        $code = filter_var($_POST["txtCode"], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+        $lookupPost = filter_input_array(INPUT_POST, array(
+            "txtCode" => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
+            "txtDesc" => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
+            "txtAddl" => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
+            "selLookup" => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
+            "selCode" => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
+        ));
 
-        $desc = filter_var($_POST["txtDesc"], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
-
-        $subt = filter_var($_POST["txtAddl"], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
-
-        $selTbl = filter_var($_POST["selLookup"], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
-
-        $selCode = filter_var($_POST["selCode"], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+        $code = $lookupPost["txtCode"] ?? '';
+        $desc = $lookupPost["txtDesc"] ?? '';
+        $subt = $lookupPost["txtAddl"] ?? '';
+        $selTbl = $lookupPost["selLookup"] ?? '';
+        $selCode = $lookupPost["selCode"] ?? '';
 
         if ($selTbl == "") {
             $lookUpAlert->set_Text("The Table_Name must be filled in");
@@ -168,30 +169,37 @@ if (isset($_POST["btnGenLookups"])) {
 
             // Is the table_name there?
 
-            $res = $dbh->query("select count(*) from gen_lookups where Table_Name='" . $selTbl . "';");
-            $rows = $res->fetchAll(PDO::FETCH_NUM);
+            $stmt = $dbh->prepare("select count(*) from gen_lookups where Table_Name = ?");
+            $stmt->execute(array($selTbl));
+            $rows = $stmt->fetchAll(PDO::FETCH_NUM);
 
             if ($rows[0][0] == 0) {
                 $lookUpAlert->set_Text("That Table_Name does not exist.");
             } else {
 
                 // Is the Code there?
-                $query = "select count(*) from gen_lookups where Table_Name='" . $selTbl . "' and Code='" . $code . "';";
-                $res1 = $dbh->query($query);
-                $row = $res1->fetchAll(PDO::FETCH_NUM);
+                $stmt1 = $dbh->prepare("select count(*) from gen_lookups where Table_Name = ? and Code = ?");
+                $stmt1->execute(array($selTbl, $code));
+                $row = $stmt1->fetchAll(PDO::FETCH_NUM);
+
+                $query = "";
+                $params = array();
 
                 if ($row[0][0] == 0 && $selCode == "n_$") {
                     // add a new code with desc.
-                    $query = "insert into gen_lookups (Table_Name, Code, Description, Substitute) values ('" . $selTbl . "', '" . $code . "', '" . $desc . "', '" . $subt . "');";
+                    $query = "insert into gen_lookups (Table_Name, Code, Description, Substitute) values (?, ?, ?, ?)";
+                    $params = array($selTbl, $code, $desc, $subt);
                 } else if ($row[0][0] > 0 && $selCode != "n_$") {
                     // just update the description
-                    $query = "update gen_lookups set Description='" . $desc . "', Substitute='" . $subt . "' where Table_Name='" . $selTbl . "' and Code='" . $code . "';";
+                    $query = "update gen_lookups set Description = ?, Substitute = ? where Table_Name = ? and Code = ?";
+                    $params = array($desc, $subt, $selTbl, $code);
                 } else {
                     $lookUpAlert->set_Text("sorry, don't understand (been a long day)");
                 }
 
                 if ($query != "") {
-                    $dbh->exec($query);
+                    $upStmt = $dbh->prepare($query);
+                    $upStmt->execute($params);
                     $lookUpAlert->set_Context(AlertMessage::Success);
                     $lookUpAlert->set_Text("Okay");
                 }

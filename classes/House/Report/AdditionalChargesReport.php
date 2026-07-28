@@ -7,11 +7,10 @@ use HHK\ExcelHelper;
 use HHK\HTMLControls\HTMLContainer;
 use HHK\HTMLControls\HTMLSelector;
 use HHK\HTMLControls\HTMLTable;
-use HHK\Purchase\TaxedItem;
+use HHK\Purchase\Item;
 use HHK\sec\Session;
 use HHK\sec\Labels;
 use HHK\SysConst\ItemId;
-use HHK\SysConst\VolMemberType;
 use HHK\TableLog\HouseLog;
 
 /**
@@ -37,17 +36,21 @@ class AdditionalChargesReport extends AbstractReport implements ReportInterface 
     public array $additionalCharges;
     public array $selectedAdditionalCharges = [];
     protected array $statsArray = [];
+    protected string $addnlChargeLabel;
+    protected string $discountLabel;
 
 
     public function __construct(\PDO $dbh, array $request = []){
         $uS = Session::getInstance();
-
-        $this->reportTitle = $uS->siteName . ' Additional Charges Report';
-        $this->description = "This report shows all additional charges charged to patients and their demographics who stayed in the time period";
+        $this->addnlChargeLabel = (new Item($dbh, ItemId::AddnlCharge))->getDescription() . 's';
+        $this->discountLabel = (new Item($dbh, ItemId::Discount))->getDescription() . 's';
+        $this->reportTitle = $uS->siteName . ' ' . $this->addnlChargeLabel . ' Report';
+        
+        $this->description = "This report shows all " . strtolower($this->addnlChargeLabel) . " and " . strtolower($this->discountLabel) . " applied to patients and their demographics who stayed in the time period";
         $this->inputSetReportName = "additionalCharges";
 
         $this->demogs = Common::readGenLookupsPDO($dbh, 'Demographics');
-        $this->additionalCharges = array_merge($this->formatGenLookup(Common::readGenLookupsPDO($dbh, 'Addnl_Charge'), "Additional Charges"), $this->formatGenLookup(Common::readGenLookupsPDO($dbh, 'House_Discount'), "Discounts"));
+        $this->additionalCharges = array_merge($this->formatGenLookup(Common::readGenLookupsPDO($dbh, 'Addnl_Charge'), $this->addnlChargeLabel), $this->formatGenLookup(Common::readGenLookupsPDO($dbh, 'House_Discount'), $this->discountLabel));
 
         if (filter_has_var(INPUT_POST, 'selAdditionalCharges')) {
             $this->selectedAdditionalCharges = filter_input(INPUT_POST, 'selAdditionalCharges', FILTER_SANITIZE_FULL_SPECIAL_CHARS, FILTER_REQUIRE_ARRAY);
@@ -73,12 +76,13 @@ class AdditionalChargesReport extends AbstractReport implements ReportInterface 
         return $genLookups;
     }
 
-    protected function getAdditionalChargesMarkup(){
+    protected function getAdditionalChargesMarkup(): HTMLTable{
+
         $additionalChargesSelector = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($this->additionalCharges, $this->selectedAdditionalCharges), array('name' => 'selAdditionalCharges[]', 'size' => (count($this->additionalCharges) + 3), 'multiple' => 'multiple', 'style'=>'width: 100%;'));
         $tbl = new HTMLTable();
         $tr = '';
         
-        $tbl->addHeaderTr( HTMLTable::makeTh("Additional Charges/Discounts"));
+        $tbl->addHeaderTr( HTMLTable::makeTh($this->addnlChargeLabel . '/' . $this->discountLabel));
         
         $tbl->addBodyTr(HTMLTable::makeTd($additionalChargesSelector, array('style'=>'vertical-align: top;')));
         
@@ -251,21 +255,21 @@ where i.Deleted = 0 and " . $whDates . $whBilling . $whDiags . $whCharges . " gr
 
     public function makeFilterMkup():void{
         $this->filterMkup .= $this->filter->timePeriodMarkup()->generateMarkup();
-        $this->filterMkup .= $this->filter->billingAgentMarkup()->generateMarkup();
-        $this->filterMkup .= $this->getAdditionalChargesMarkup()->generateMarkup();
-        $this->filterMkup .= $this->filter->diagnosisMarkup()->generateMarkup();
+        $this->filterMkup .= (count($this->filter->billingAgents) > 0 ? $this->filter->billingAgentMarkup()->generateMarkup() : '');
+        $this->filterMkup .= (count($this->additionalCharges) > 0 ? $this->getAdditionalChargesMarkup()->generateMarkup() : '');
+        $this->filterMkup .= (count($this->filter->diagnoses) > 0 ? $this->filter->diagnosisMarkup()->generateMarkup() : '');
         $this->filterMkup .= $this->getColSelectorMkup();
     }
 
-    public function makeCFields():array{
+    public function makeFields():array{
         $labels = Labels::getLabels();
         $uS = Session::getInstance();
         
-        //$cFields[] = array("Invoice", 'Invoice_Number', 'checked', '', 'string', '15');
-        $cFields[] = array("Visit ID", 'idVisit', 'checked', '', 'string', '20');
-        $cFields[] = array($labels->getString("MemberType", "patient", "Patient") . " ID", 'pId', 'checked', '', 'string', '20');
-        $cFields[] = array($labels->getString("MemberType", "patient", "Patient") . " First", 'Name_First', 'checked', '', 'string', '20');
-        $cFields[] = array($labels->getString("MemberType", "patient", "Patient") . " Last", 'Name_Last', 'checked', '', 'string', '20');
+        //$fields[] = array("Invoice", 'Invoice_Number', 'checked', '', 'string', '15');
+        $fields[] = array("Visit ID", 'idVisit', 'checked', '', 'string', '20');
+        $fields[] = array($labels->getString("MemberType", "patient", "Patient") . " ID", 'pId', 'checked', '', 'string', '20');
+        $fields[] = array($labels->getString("MemberType", "patient", "Patient") . " First", 'Name_First', 'checked', '', 'string', '20');
+        $fields[] = array($labels->getString("MemberType", "patient", "Patient") . " Last", 'Name_Last', 'checked', '', 'string', '20');
 
         // Address.
         $pFields = array('pAddr', 'pCity');
@@ -279,33 +283,33 @@ where i.Deleted = 0 and " . $whDates . $whBilling . $whDiags . $whCharges . " gr
         $pFields = array_merge($pFields, array('pState', 'pCountry', 'pZip'));
         $pTitles = array_merge($pTitles, array($labels->getString("MemberType", "patient", "Patient") . ' State', $labels->getString("MemberType", "patient", "Patient") . ' Country', $labels->getString("MemberType", "patient", "Patient") . ' Zip'));
 
-        $cFields[] = array($pTitles, $pFields, '', '', 'string', '15', array());
+        $fields[] = array($pTitles, $pFields, '', '', 'string', '15', array());
 
-        $cFields[] = array($labels->getString("MemberType", "patient", "Patient") . " DOB", 'DOB', '', '', 'MM/DD/YYYY', '15', array(), 'date');
-        $cFields[] = array($labels->getString("MemberType", "patient", "Patient") . " Age", 'Age', '', '', 'string', '15');
-        $cFields[] = array($labels->getString("MemberType", "patient", "Patient") . " Diagnosis", 'Diagnosis', '', '', 'string', '20');
+        $fields[] = array($labels->getString("MemberType", "patient", "Patient") . " DOB", 'DOB', '', '', 'MM/DD/YYYY', '15', array(), 'date');
+        $fields[] = array($labels->getString("MemberType", "patient", "Patient") . " Age", 'Age', '', '', 'string', '15');
+        $fields[] = array($labels->getString("MemberType", "patient", "Patient") . " Diagnosis", 'Diagnosis', '', '', 'string', '20');
 
         //demographics
         foreach ($this->demogs as $d) {
             if (strtolower($d[2]) == 'y'){
-                $cFields[] = array($labels->getString("MemberType", "patient", "Patient") . " " . $d[1], $d[0], '', '', 'string', '20');
+                $fields[] = array($labels->getString("MemberType", "patient", "Patient") . " " . $d[1], $d[0], '', '', 'string', '20');
             }
         }
 
-        $cFields[] = array("Visit Span Arrival", 'Arrival', 'checked', '', 'MM/DD/YYYY', '15', array(), 'date');
-        $cFields[] = array("Visit Span Departure", 'Departure', 'checked', '', 'MM/DD/YYYY', '15', array(), 'date');
-        $cFields[] = array($labels->getString("MemberType", "primaryGuest", "Primary Guest") . " First", 'pgFirst', 'checked', '', 'string', '20');
-        $cFields[] = array($labels->getString("MemberType", "primaryGuest", "Primary Guest") . " Last", 'pgLast', 'checked', '', 'string', '20');
-        $cFields[] = array("Visit Status", 'Status_Title', 'checked', '', 'string', '15');
-        $cFields[] = array("Invoice", 'Invoice_Number', 'checked', '', 'string', '15');
-        $cFields[] = array("Additional Charge/Discount", 'Additional Charge/Discount', 'checked', '', 'string', '20');
-        $cFields[] = array("Billed To", 'Billed To', 'checked', '', 'string', '20');
-        //$cFields[] = array("Nights Billed", "PaidNights", 'checked', '', 'string', '20');
-        $cFields[] = array("Amount", 'Invoice_Amount', 'checked', '', 'string', '15');
-        //$cFields[] = array("Invoice Status", 'Invoice_Status_Title', 'checked', '', 'string', '15');
+        $fields[] = array("Visit Span Arrival", 'Arrival', 'checked', '', 'MM/DD/YYYY', '15', array(), 'date');
+        $fields[] = array("Visit Span Departure", 'Departure', 'checked', '', 'MM/DD/YYYY', '15', array(), 'date');
+        $fields[] = array($labels->getString("MemberType", "primaryGuest", "Primary Guest") . " First", 'pgFirst', 'checked', '', 'string', '20');
+        $fields[] = array($labels->getString("MemberType", "primaryGuest", "Primary Guest") . " Last", 'pgLast', 'checked', '', 'string', '20');
+        $fields[] = array("Visit Status", 'Status_Title', 'checked', '', 'string', '15');
+        $fields[] = array("Invoice", 'Invoice_Number', 'checked', '', 'string', '15');
+        $fields[] = array($this->addnlChargeLabel . '/' . $this->discountLabel, 'Additional Charge/Discount', 'checked', '', 'string', '20');
+        $fields[] = array("Billed To", 'Billed To', 'checked', '', 'string', '20');
+        //$fields[] = array("Nights Billed", "PaidNights", 'checked', '', 'string', '20');
+        $fields[] = array("Amount", 'Invoice_Amount', 'checked', '', 'string', '15');
+        //$fields[] = array("Invoice Status", 'Invoice_Status_Title', 'checked', '', 'string',('MemberType", "patient", "Patient") . " Last", 'Name_Last', '
 
 
-        return $cFields;
+        return $fields;
     }
 
     public function makeSummaryMkup():string {
@@ -317,7 +321,7 @@ where i.Deleted = 0 and " . $whDates . $whBilling . $whDiags . $whCharges . " gr
 
         $mkup .= HTMLContainer::generateMarkup("p", 'Biling Agents: ' . $this->filter->getSelectedBillingAgentsString());
 
-        $mkup .= HTMLContainer::generateMarkup("p", 'Additional Charges/Discounts: ' . $this->getSelectedAdditionalChargesString());
+        $mkup .= HTMLContainer::generateMarkup("p", $this->addnlChargeLabel . '/' . $this->discountLabel . ': ' . $this->getSelectedAdditionalChargesString());
 
         $mkup .= HTMLContainer::generateMarkup("p", 'Diagnoses: ' . $this->filter->getSelectedDiagnosesString());
         
@@ -330,7 +334,7 @@ where i.Deleted = 0 and " . $whDates . $whBilling . $whDiags . $whCharges . " gr
         }
 
         $totalsMkup = "";
-        $totalsMkup .= $this->generateSummaryTable("Additional Charge", $this->getAdditionalChargeCounts())->generateMarkup(['class'=>'mx-2 mb-2']);
+        $totalsMkup .= $this->generateSummaryTable($this->addnlChargeLabel, $this->getAdditionalChargeCounts())->generateMarkup(['class'=>'mx-2 mb-2']);
         
 
         foreach($this->colSelector->getFilteredFields() as $fld){
@@ -603,7 +607,7 @@ group by de.`description` order by de.Order asc, de.`Code` asc
         $this->getResultSet();
 
         //summary sheet
-        $this->generateExcelSummaryTable("Additional Charge", $this->getAdditionalChargeCounts(), $writer);
+        $this->generateExcelSummaryTable($this->addnlChargeLabel, $this->getAdditionalChargeCounts(), $writer);
 
         foreach($this->colSelector->getFilteredFields() as $fld){
             if($fld[1] == "Age"){

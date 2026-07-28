@@ -316,6 +316,11 @@ $(document).ready(function() {
                             $('#btnDone').val('Save').show();
                         }
 
+                        if (responseData.deleted) {
+                            flagAlertMessage(responseData.deleted, 'error');
+                            $('#form1').remove();
+                        }
+
                         if (responseData.xfer || responseData.inctx || responseData.deluxehpf) {
                             paymentRedirect(responseData, $('#xform'), { resvId: pageManager.getIdResv() });
 
@@ -341,7 +346,9 @@ $(document).ready(function() {
                             flagAlertMessage(responseData.payError, 'error');
                         }
 
-                        if (responseData.resv !== undefined) {
+                        if (responseData.deleted) {
+                            // Nothing was saved; the deleted alert above already covers it.
+                        } else if (responseData.resv !== undefined) {
                             if (responseData.warning === undefined) {
                                 flagAlertMessage(responseData.resvTitle + ' Saved. ' + (responseData.resv.rdiv.rStatTitle === undefined ? '' : ' Status: ' + responseData.resv.rdiv.rStatTitle), 'success');
                             }

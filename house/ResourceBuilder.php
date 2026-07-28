@@ -63,7 +63,7 @@ const MAX_FINANCIAL_RATE_CATEGORIES = 16;
 const MAX_FINANCIAL_HOUSEHOLDS = 20;
 
 try {
-    $wInit = new webInit();
+    $wInit = new WebInit();
 } catch (Exception $exw) {
     die($exw->getMessage());
 }
@@ -2348,7 +2348,7 @@ $items = $sitems->fetchAll(\PDO::FETCH_ASSOC);
 
 $itbl = new HTMLTable();
 
-$ths = HTMLTable::makeTh('Description') . ($uS->useGLCodes ? HTMLTable::makeTh('GL Code') : "");
+$ths = HTMLTable::makeTh('Item') . HTMLTable::makeTh('Description') . ($uS->useGLCodes ? HTMLTable::makeTh('GL Code') : "");
 $colCounter = [];
 
 // Make tax columns
@@ -2375,18 +2375,33 @@ foreach ($items as $d) {
 
     $trs = '';
 
-    if ($d['idItem'] == ItemId::AddnlCharge) {
+    /*if ($d['idItem'] == ItemId::AddnlCharge) {
         $trs .= HTMLTable::makeTd('(Additional Charges)') . ($uS->useGLCodes ? HTMLTable::makeTd(HTMLInput::generateMarkup(
             $d['Gl_Code'],
             [
                 'name' => 'txtGlCode[' . $d['idItem'] . ']'
             ]
         )) : "");
-    } else {
-        $trs .= HTMLTable::makeTd(HTMLInput::generateMarkup(
+    } else { */
+        $trs .= HTMLTable::makeTd(match($d['idItem']) {
+            ItemId::Lodging => "Lodging",
+            ItemId::VisitFee => "Visit Fee",
+            ItemId::KeyDeposit => Labels::getString('resourceBuilder', 'keyDepositLabel', 'Key Deposit'),
+            ItemId::DepositRefund => "Deposit Refund",
+            ItemId::InvoiceDue => "Invoice Due",
+            ItemId::Discount => "Discount",
+            ItemId::LodgingReversal => "Lodging Reversal",
+            ItemId::LodgingDonate => "Lodging Donate",
+            ItemId::LodgingMOA => "Lodging MOA",
+            ItemId::AddnlCharge => "Additional Charge",
+            ItemId::Waive => "Waive",
+            default => ''
+        }) . 
+        HTMLTable::makeTd(HTMLInput::generateMarkup(
             $d['Description'],
             [
-                'name' => 'txtItem[' . $d['idItem'] . ']'
+                'name' => 'txtItem[' . $d['idItem'] . ']',
+                ...(!in_array($d['idItem'], [ItemId::AddnlCharge, ItemId::Discount]) ? ['readonly' => 'readonly', 'style' => 'border:none;'] : [])
             ]
         )) . ($uS->useGLCodes ? HTMLTable::makeTd(HTMLInput::generateMarkup(
                 $d['Gl_Code'],
@@ -2394,7 +2409,7 @@ foreach ($items as $d) {
                     'name' => 'txtGlCode[' . $d['idItem'] . ']'
                 ]
             )) : "");
-    }
+    //}
 
     foreach ($colCounter as $c) {
 

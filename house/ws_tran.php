@@ -55,17 +55,17 @@ try {
                     'filter' => FILTER_SANITIZE_NUMBER_INT,
                     'flags' => FILTER_FORCE_ARRAY,
                 ],
-                'trace' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
+                'trace' => FILTER_VALIDATE_BOOLEAN,
             ];
             $post = filter_input_array(INPUT_POST, $rags);
 
             if (isset($post['ids']) && count($post['ids']) > 0) {
 
                 try {
-                    $events = $transfer->upsertMembers($dbh, $post['ids'], $post['trace']);
+                    $events = $transfer->upsertMembers($dbh, $post['ids'], $post['trace'], $transfer->getLinkRelatives());
 
                 } catch (Exception $ex) {
-                    $events = ["error" => "Transfer Error: " . $ex->getMessage() . " Exception class: " . get_class($ex)];
+                    $events = ["error" => "Transfer Error: " . $ex->getMessage()];
                 }
 
             } else {
@@ -89,7 +89,7 @@ try {
                 try {
                     $events['members'] = $transfer->exportMembers($dbh, $post['ids']);
                 } catch (Exception $ex) {
-                    $events = ["error" => "Transfer Error: " . $ex->getMessage() . " Exception class: " . get_class($ex)];
+                    $events = ["error" => "Transfer Error: " . $ex->getMessage()];
                 }
 
             } else {

@@ -40,8 +40,6 @@ class ValueAddedTax {
     /**
      *
      * @param \PDO $dbh
-     * @param int $idVisit  must be NULL to use idRegistration.
-     * @param int $idRegistration
      * @throws RuntimeException
      */
     public function __construct(\PDO $dbh) {
@@ -57,9 +55,9 @@ class ValueAddedTax {
      * Get current taxes for a particular visit id.
      *
      * @param \PDO $dbh
-     * @return []
+     * @return array
      */
-    protected function loadTaxedItemList(\PDO $dbh) {
+    protected function loadTaxedItemList(\PDO $dbh): array {
 
         // Taxed items
         $tistmt = $dbh->query("select ii.idItem, ti.Percentage, ti.Description, ti.Timeout_Days as `Max_Days`, ti.idItem as `taxIdItem`, ti.Gl_Code, ti.First_Order_Id, ti.Last_Order_Id "
@@ -76,7 +74,7 @@ class ValueAddedTax {
      * @param int $numDays
      * @return array of each taxed item containing the sum (float) of all connected taxes filtered by days.
      */
-    public function getTaxedItemSums($idVisit, $numDays) {
+    public function getTaxedItemSums($idVisit, $numDays): array {
 
         $taxedItems = array();
 

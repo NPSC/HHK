@@ -20,7 +20,6 @@ use HHK\sec\{SecurityComponent, Session, SysConfig};
 use HHK\HTMLControls\{HTMLContainer, HTMLInput, HTMLSelector, HTMLTable};
 use HHK\Exception\{RuntimeException, PaymentException};
 use HHK\Payment\GatewayResponse\GatewayResponseInterface;
-use HHK\Payment\PaymentGateway\Vantiv\Response\CreditTokenResponse;
 use HHK\Tables\House\LocationRS;
 use HHK\TableLog\AbstractTableLog;
 use HHK\TableLog\HouseLog;

@@ -167,7 +167,7 @@ function getApplyDiscDiag(orderNumber, $diagBox) {
                         }
 
                         $diagBox.dialog('option', 'buttons', buttons);
-                        $diagBox.dialog('option', 'title', 'Adjust Fees');
+                        $diagBox.dialog('option', 'title', data.dialogTitle);
                         $diagBox.dialog('option', 'width', getDialogWidth(430));
                         $diagBox.dialog('open');
                     }

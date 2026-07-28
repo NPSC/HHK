@@ -481,6 +481,8 @@ p.label {
         $uS = Session::getInstance();
         $this->labels = Labels::getLabels();
         $guests = [];
+        $patient = NULL;
+        $hospRoom = '';
         $depDate = '';
         $reg = NULL;
         $primaryGuestId = 0;

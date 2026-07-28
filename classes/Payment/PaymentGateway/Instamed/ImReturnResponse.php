@@ -20,7 +20,7 @@ use HHK\SysConst\{PayType, PaymentMethod, PaymentStatusCode};
 class ImReturnResponse extends AbstractCreditResponse {
 
 
-	function __construct(GatewayResponseInterface $vcr, $idPayor, $idGroup, $invoiceNumber, $payNotes, $payDate, $isPartialApprovalAmount = FALSE) {
+	function __construct(GatewayResponseInterface $vcr, $idPayor, $idGroup, $invoiceNumber, $payNotes, $payDate) {
         $this->response = $vcr;
         $this->paymentType = PayType::Charge;
         $this->idPayor = $idPayor;

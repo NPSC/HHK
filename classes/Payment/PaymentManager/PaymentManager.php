@@ -92,12 +92,11 @@ class PaymentManager {
     /**
      *
      * @param \PDO $dbh
-     * @param PaymentManagerPayment $pmp
      * @param Visit $visit
      * @param int $idPayor
      * @param string $notes
      * @return Invoice
-     * @throws RuntimeException::
+     * @throws RuntimeException
      */
     public function createInvoice(\PDO $dbh, $visit, $idPayor, $notes = '') {
 

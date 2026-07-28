@@ -15,7 +15,7 @@ use HHK\ExcelHelper;
  */
 require ("homeIncludes.php");
 
-$wInit = new webInit();
+$wInit = new WebInit();
 
 $dbh = $wInit->dbh;
 
@@ -30,7 +30,7 @@ $refreshDate = NULL;
 $dataTable = '';
 $showTable = 'display:none;';
 
-function outputIt(array $gName, $excel, $reportRows, ExcelHelper $writer, $hdr, $tbl) {
+function outputIt(array $gName, bool $excel, int $reportRows, ExcelHelper $writer, ?array $hdr, HTMLTable $tbl) {
     // write last patient out
     foreach ($gName as $g) {
 
@@ -115,10 +115,12 @@ order by h.idPsg, na.Address_1, na.Address_2";
     $sml = NULL;
     $reportRows = 1;
     $file = 'GuestSurvey';
+    $writer = new ExcelHelper($file);
+    $hdr = array();
 
 
     if ($excel) {
-        $writer = new ExcelHelper("GuestSurvey");
+        
         $writer->setAuthor($uS->username);
         $writer->setTitle("Guest Survey");
 

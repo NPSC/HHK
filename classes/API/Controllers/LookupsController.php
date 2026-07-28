@@ -3,9 +3,6 @@ namespace HHK\API\Controllers;
 
 
 use DI\Container;
-use HHK\Common;
-use HHK\House\Room\Room;
-use HHK\sec\Session;
 use PDO;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;

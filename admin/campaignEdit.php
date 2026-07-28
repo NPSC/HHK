@@ -140,7 +140,7 @@ function saveCampaign(PDO $dbh, $campCode, $type, $post) {
 
 }
 
-$wInit = new webInit();
+$wInit = new WebInit();
 $dbh = $wInit->dbh;
 
 $pageTitle = $wInit->pageTitle;

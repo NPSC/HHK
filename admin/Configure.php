@@ -3,30 +3,11 @@
 use HHK\Common;
 use HHK\House\Distance\DistanceFactory;
 use HHK\House\Distance\GoogleDistance;
-use HHK\sec\{
-    SecurityComponent,
-    Session,
-    WebInit,
-    Labels,
-    SAML
-};
-use HHK\SysConst\{
-    WebRole,
-    CodeVersion
-};
-use HHK\Update\{
-    SiteConfig,
-    UpdateSite,
-    SiteLog,
-    Patch
-};
+use HHK\sec\{SecurityComponent, Session, WebInit, Labels, SAML};
+use HHK\SysConst\{WebRole, CodeVersion};
+use HHK\Update\{SiteConfig, UpdateSite, SiteLog, Patch};
 use HHK\CreateMarkupFromDB;
-use HHK\HTMLControls\{
-    HTMLContainer,
-    HTMLSelector,
-    HTMLTable
-};
-use HHK\Exception\UploadException;
+use HHK\HTMLControls\{HTMLContainer, HTMLSelector};
 use HHK\CrmExport\AbstractExportManager;
 
 /**
@@ -40,7 +21,7 @@ use HHK\CrmExport\AbstractExportManager;
 require "AdminIncludes.php";
 
 try {
-    $wInit = new webInit();
+    $wInit = new WebInit();
 } catch (\Exception $exw) {
     die($exw->getMessage());
 }
@@ -371,6 +352,7 @@ $authIdpList = SAML::getIdpList($dbh, false);
 <?php echo JQ_DT_CSS; ?>
 <?php echo NOTY_CSS; ?>
 <?php echo GRID_CSS; ?>
+<?php echo BOOTSTRAP_ICONS_CSS; ?>
 <?php echo NAVBAR_CSS; ?>
 
         <script type="text/javascript" src="<?php echo JQ_JS; ?>"></script>

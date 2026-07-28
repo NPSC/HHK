@@ -271,7 +271,7 @@ WHERE
     }
 
 
-    protected static function checkMatch(VehicleRs $carRs, $refVehicle) {
+    protected static function checkMatch(VehicleRS $carRs, $refVehicle) {
 
         if (isset($refVehicle['model']) && isset($refVehicle['license'])) {
 

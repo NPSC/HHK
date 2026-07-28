@@ -21,7 +21,6 @@ class CheckinCharges extends VisitCharges {
     
     /**
      *
-     * @param \PDO $dbh
      * @param int $idVisit
      * @param float $visitFeeCharged
      * @param float $depositCharged

@@ -1,7 +1,7 @@
 <?php
 
 use HHK\Debug\DebugBarSupport;
-use HHK\sec\{Session, Login};
+use HHK\sec\{Session};
 use HHK\sec\WebInit;
 
 /**

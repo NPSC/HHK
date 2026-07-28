@@ -57,8 +57,8 @@ class CheckingIn extends ActiveReservation {
     /**
      * Summary of reservationFactoy
      * @param \PDO $dbh
-     * @param mixed $post
-     * @throws \HHK\Exception\RuntimeException
+     * @param mixed $inputData
+     * @throws RuntimeException
      * @return ActiveReservation|CheckedoutReservation|DeletedReservation|StaticReservation|StayingReservation
      */
     public static function reservationFactoy(\PDO $dbh, $inputData) {
@@ -77,8 +77,8 @@ class CheckingIn extends ActiveReservation {
     /**
      * Summary of loadReservation
      * @param \PDO $dbh
-     * @param \HHK\House\ReserveData\ReserveData $rData
-     * @throws \HHK\Exception\NotFoundException
+     * @param ReserveData $rData
+     * @throws NotFoundException
      * @return ActiveReservation|CheckedoutReservation|CheckingIn|DeletedReservation|StaticReservation|StayingReservation
      */
     public static function loadReservation(\PDO $dbh, ReserveData $rData) {
@@ -322,7 +322,7 @@ FROM reservation r
     /**
      * Summary of saveCheckIn
      * @param \PDO $dbh
-     * @throws \HHK\Exception\RuntimeException
+     * @throws RuntimeException
      * @return void
      */
     protected function saveCheckIn(\PDO $dbh) {
@@ -571,7 +571,7 @@ FROM reservation r
     /**
      * Summary of savePayment
      * @param \PDO $dbh
-     * @param \HHK\House\Visit\Visit $visit
+     * @param Visit $visit
      * @param AbstractResource $resc
      * @param mixed $idRegistration
      * @return void

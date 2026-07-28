@@ -7,7 +7,7 @@ use HHK\sec\Session;
 class SearchResults extends SearchNameData
 {
 
-    public function setNameFirst($nameFirst) {
+    public function setNameFirst($nameFirst): static {
         $this->nameFirst = preg_replace_callback("/(&#[0-9]+;)/",
             function($m) {
                 return mb_convert_encoding($m[1], "UTF-8", "HTML-ENTITIES");
@@ -20,7 +20,7 @@ class SearchResults extends SearchNameData
     /**
      * @param string $nameMiddle
      */
-    public function setNameMiddle($nameMiddle) {
+    public function setNameMiddle($nameMiddle): static {
         $this->nameMiddle =  preg_replace_callback("/(&#[0-9]+;)/",
             function($m) {
                 return mb_convert_encoding($m[1], "UTF-8", "HTML-ENTITIES");
@@ -33,7 +33,7 @@ class SearchResults extends SearchNameData
     /**
      * @param string $nameLast
      */
-    public function setNameLast($nameLast) {
+    public function setNameLast($nameLast): static {
         $this->nameLast =  preg_replace_callback("/(&#[0-9]+;)/",
             function($m) {
                 return mb_convert_encoding($m[1], "UTF-8", "HTML-ENTITIES");
@@ -46,7 +46,7 @@ class SearchResults extends SearchNameData
     /**
      * @param string $nickname
      */
-    public function setNickname($nickname) {
+    public function setNickname($nickname): static {
         $this->nickname =  preg_replace_callback("/(&#[0-9]+;)/",
             function($m) {
                 return mb_convert_encoding($m[1], "UTF-8", "HTML-ENTITIES");
@@ -109,7 +109,7 @@ class SearchResults extends SearchNameData
 
     }
 
-    public function setEmrgFirst($nameFirst) {
+    public function setEmrgFirst($nameFirst): static {
         $this->emrgFirst = preg_replace_callback("/(&#[0-9]+;)/",
             function($m) {
                 return mb_convert_encoding($m[1], "UTF-8", "HTML-ENTITIES");
@@ -119,7 +119,7 @@ class SearchResults extends SearchNameData
         return $this;
     }
 
-    public function setEmrgLast($nameLast) {
+    public function setEmrgLast($nameLast): static {
         $this->emrgLast = preg_replace_callback("/(&#[0-9]+;)/",
             function($m) {
                 return mb_convert_encoding($m[1], "UTF-8", "HTML-ENTITIES");

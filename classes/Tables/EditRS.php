@@ -308,11 +308,11 @@ class EditRS {
      * Summary of delete
      * @param \PDO $dbh
      * @param \HHK\Tables\TableRSInterface $rs
-     * @param mixed $whereDbFieldArray
-     * @param mixed $combiner
+     * @param array $whereDbFieldArray
+     * @param string $combiner
      * @return bool
      */
-    public static function delete(\PDO $dbh, TableRSInterface $rs, array $whereDbFieldArray, $combiner = "and") {
+    public static function delete(\PDO $dbh, TableRSInterface $rs, array $whereDbFieldArray, string $combiner = "and") {
         $paramList = array();
         $query = "";
         $whClause = "";

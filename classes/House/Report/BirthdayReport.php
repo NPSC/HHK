@@ -190,15 +190,15 @@ where " . $whDates . $whResvStatus . $whStayStatus . $whPatient . $groupBy . " o
         $this->filterMkup .= $this->getColSelectorMkup();
     }
 
-    public function makeCFields(): array
+    public function makeFields(): array
     {
         $uS = Session::getInstance();
 
-        $cFields[] = array("First", 'Name_First', 'checked', '', 'string', '20');
-        $cFields[] = array("Middle", 'Name_Middle', '', '', 'string', '20');
-        $cFields[] = array("Last", 'Name_Last', 'checked', '', 'string', '20');
-        $cFields[] = array("Birthday", 'BirthDay', 'checked', '', 'MM/DD', '15', array(), 'day');
-        $cFields[] = array("Birth Date", 'BirthDate', 'checked', '', 'MM/DD/YYYY', '15', array(), 'date');
+        $fields[] = array("First", 'Name_First', 'checked', '', 'string', '20');
+        $fields[] = array("Middle", 'Name_Middle', '', '', 'string', '20');
+        $fields[] = array("Last", 'Name_Last', 'checked', '', 'string', '20');
+        $fields[] = array("Birthday", 'BirthDay', 'checked', '', 'MM/DD', '15', array(), 'day');
+        $fields[] = array("Birth Date", 'BirthDate', 'checked', '', 'MM/DD/YYYY', '15', array(), 'date');
 
         // Address.
         $pFields = array('gAddr', 'gCity');
@@ -212,18 +212,18 @@ where " . $whDates . $whResvStatus . $whStayStatus . $whPatient . $groupBy . " o
         $pFields = array_merge($pFields, array('gState', 'gCountry', 'gZip'));
         $pTitles = array_merge($pTitles, array('State', 'Country', 'Zip'));
 
-        $cFields[] = array($pTitles, $pFields, '', '', 'string', '15', array());
+        $fields[] = array($pTitles, $pFields, '', '', 'string', '15', array());
 
-        $cFields[] = array("Room Phone", 'Phone', '', '', 'string', '20');
-        $cFields[] = array("Phone", 'Phone_Num', '', '', 'string', '20');
-        $cFields[] = array("Email", 'Email', '', '', 'string', '20');
-        $cFields[] = array(Labels::getString('MemberType', 'patient', 'Patient') . " Relationship", 'PatientRelation', '', '', 'string', '20');
-        $cFields[] = array("Room", 'Room', 'checked', '', 'string', '15');
-        $cFields[] = array("Arrive", 'Arrival', 'checked', '', 'MM/DD/YYYY', '15', array(), 'date');
-        $cFields[] = array("Depart", 'Departure', 'checked', '', 'MM/DD/YYYY', '15', array(), 'date');
-        $cFields[] = array("Status", 'Status_Title', 'checked', '', 'string', '15');
+        $fields[] = array("Room Phone", 'Phone', '', '', 'string', '20');
+        $fields[] = array("Phone", 'Phone_Num', '', '', 'string', '20');
+        $fields[] = array("Email", 'Email', '', '', 'string', '20');
+        $fields[] = array(Labels::getString('MemberType', 'patient', 'Patient') . " Relationship", 'PatientRelation', '', '', 'string', '20');
+        $fields[] = array("Room", 'Room', 'checked', '', 'string', '15');
+        $fields[] = array("Arrive", 'Arrival', 'checked', '', 'MM/DD/YYYY', '15', array(), 'date');
+        $fields[] = array("Depart", 'Departure', 'checked', '', 'MM/DD/YYYY', '15', array(), 'date');
+        $fields[] = array("Status", 'Status_Title', 'checked', '', 'string', '15');
 
-        return $cFields;
+        return $fields;
     }
 
     public function makeSummaryMkup(): string

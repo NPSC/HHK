@@ -126,6 +126,7 @@ class DirectoryReport
         }
 
         $txtreport = "";
+        $dirmarkup = "";
 
 
     // Directory
