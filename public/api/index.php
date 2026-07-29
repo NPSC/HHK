@@ -65,7 +65,7 @@ if(SysConfig::getKeyValue($dbh, "sys_config", "useAPI", false)){
     $app->group('/v1', function (RouteCollectorProxy $group) use ($dbh, $oAuthServer) {
 
         //public widgets protected by CORS
-        $group->group('/widget', function (RouteCollectorProxy $group) use ($dbh) {
+        $group->group('/widget', function (RouteCollectorProxy $group) {
                 
             //vacancy widget 
             // Endpoint: /api/v1/widget/vacancy
@@ -74,9 +74,9 @@ if(SysConfig::getKeyValue($dbh, "sys_config", "useAPI", false)){
         })->add(new AllowedOriginMiddleware($dbh))->add(new LogMiddleware($dbh));
 
         //OAuth protected routes
-        $group->group("", function (RouteCollectorProxy $group) use ($dbh) {
+        $group->group("", function (RouteCollectorProxy $group) {
 
-            $group->group('/reports', function (RouteCollectorProxy $group) use ($dbh) {
+            $group->group('/reports', function (RouteCollectorProxy $group) {
 
                 // Occupancy Today
                 // Endpoint: /api/v1/reports/occupancy/today
