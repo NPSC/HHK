@@ -16,11 +16,11 @@ use HHK\SysConst\Mode;
  * @link      https://github.com/ecrane57/Hospitality-HouseKeeper
  */
 define('DS', DIRECTORY_SEPARATOR);
-define('P_ROOT', dirname(__FILE__) . DS);
+define('P_ROOT', dirname(__FILE__) . DS . '..' . DS);
 date_default_timezone_set('America/Chicago');
 
-if (file_exists('vendor/autoload.php')) {
-    require('vendor/autoload.php');
+if (file_exists('../vendor/autoload.php')) {
+    require('../vendor/autoload.php');
 } else {
     exit("Unable to laod dependancies, be sure to run 'composer install'");
 }

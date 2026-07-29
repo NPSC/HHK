@@ -11,7 +11,7 @@
 /**
  * Includes
  */
-require('../functions/commonDefines.php');
+require('../../functions/commonDefines.php');
 
 define('HOUSE_CSS', "<link href='css/house.css" . JSV . "' rel='stylesheet' type='text/css' />");
 define('INVOICE_CSS', "<link href='css/invoice.css" . JSV . "' rel='stylesheet' type='text/css' />");

@@ -99,12 +99,7 @@ final class DebugBarSupport {
 
         $uS = Session::getInstance();
 
-        $scriptName = $_SERVER['SCRIPT_NAME'] ?? '/';
-        $scriptDir = trim((string) dirname($scriptName), '/');
-        $depth = ($scriptDir === '' || $scriptDir === '.') ? 0 : substr_count($scriptDir, '/') + 1;
-        $prefix = str_repeat('../', $depth);
-
-        return $uS->resourceURL . '/vendor/php-debugbar/php-debugbar/resources';
+        return rtrim($uS->resourceURL, '/') . '/debugbar-assets';
     }
 
     public static function injectIntoHtml(string $buffer): string {
@@ -121,13 +116,13 @@ final class DebugBarSupport {
         $bodyMarkup = self::$renderer->render();
 
         if (stripos($buffer, '</head>') !== false) {
-            $buffer = preg_replace('/<\/head>/i', $headMarkup . "\n</head>", $buffer, 1) ?? $buffer;
+            $buffer = preg_replace_callback('/<\/head>/i', static fn() => $headMarkup . "\n</head>", $buffer, 1) ?? $buffer;
         } else {
             $buffer = $headMarkup . "\n" . $buffer;
         }
 
         if (stripos($buffer, '</body>') !== false) {
-            $buffer = preg_replace('/<\/body>/i', $bodyMarkup . "\n</body>", $buffer, 1) ?? $buffer;
+            $buffer = preg_replace_callback('/<\/body>/i', static fn() => $bodyMarkup . "\n</body>", $buffer, 1) ?? $buffer;
         } else {
             $buffer .= "\n" . $bodyMarkup;
         }
