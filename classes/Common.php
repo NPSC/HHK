@@ -49,17 +49,8 @@ class Common {
         $dbName = $ssn->databaseName;
 
         if ($roleCode >= WebRole::Guest && $override === FALSE) {
-            // Get the site configuration object
-            try {
-                //$config = parse_ini_file(ciCFG_FILE, true);
-                $config = parse_ini_file(CONF_PATH . ciCFG_FILE, true);
-            } catch (\Exception $ex) {
-                $ssn->destroy();
-                throw new RuntimeException("<p>Missing Database Session Initialization: " . $ex->getMessage() . "</p>");
-            }
-
-            $dbuName = (!empty($config['db'][ 'ReadonlyUser']) ? $config['db'][ 'ReadonlyUser'] : '');
-            $dbPw = Crypto::decryptMessage((!empty($config['db']['ReadonlyPassword']) ? $config['db']['ReadonlyPassword'] : ''));
+            $dbuName = (!empty($_ENV['DB_READONLY_USER']) ? $_ENV['DB_READONLY_USER'] : '');
+            $dbPw = Crypto::decryptMessage((!empty($_ENV['DB_READONLY_PASSWORD']) ? $_ENV['DB_READONLY_PASSWORD'] : ''));
         }
 
         try {

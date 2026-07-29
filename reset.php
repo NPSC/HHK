@@ -33,8 +33,6 @@ use HHK\SysConst\CodeVersion;
 
 define('DS', DIRECTORY_SEPARATOR);
 define('P_ROOT', dirname(__FILE__) . DS);
-define('CONF_PATH',  P_ROOT . 'conf' . DS);
-define('ciCFG_FILE', 'site.cfg');
 
 if (file_exists('vendor/autoload.php')) {
     require('vendor/autoload.php');
@@ -42,6 +40,7 @@ if (file_exists('vendor/autoload.php')) {
     exit("Unable to laod dependancies, be sure to run 'composer install'");
 }
 
+HHK\Config\Env::load(P_ROOT);
 
 function testdb($ssn) {
 
@@ -68,31 +67,29 @@ function testdb($ssn) {
     return '';
 }
 
-// Get the site configuration object
-$config = parse_ini_file(CONF_PATH.ciCFG_FILE, true);
-
 // get session instance
 $ssn = Session::getInstance();
 $secureComp = new SecurityComponent();
 
-if(isset($config['db'])){
-    $dbConfig = $config['db'];
+if(isset($_ENV['DB_URL'], $_ENV['DB_USER'], $_ENV['DB_PASSWORD'], $_ENV['DB_SCHEMA'], $_ENV['DBMS'])){
+    $dbConfig = [
+        'DBMS' => $_ENV['DBMS'],
+        'URL' => $_ENV['DB_URL'],
+        'User' => $_ENV['DB_USER'],
+        'Password' => $_ENV['DB_PASSWORD'],
+        'Schema' => $_ENV['DB_SCHEMA'],
+    ];
 }else{
     $ssn->destroy();
-    exit("Database configuration section (db) is missing");
+    exit("Database configuration is missing from .env");
 }
 
 
-if (is_array($dbConfig)) {
-    $ssn->databaseURL = $dbConfig['URL'];
-    $ssn->databaseUName = $dbConfig['User'];
-    $ssn->databasePWord = Crypto::decryptMessage($dbConfig['Password']);
-    $ssn->databaseName = $dbConfig['Schema'];
-    $ssn->dbms = $dbConfig['DBMS'];
-} else {
-    $ssn->destroy(TRUE);
-    exit("Bad Database Configuration Section (db)");
-}
+$ssn->databaseURL = $dbConfig['URL'];
+$ssn->databaseUName = $dbConfig['User'];
+$ssn->databasePWord = Crypto::decryptMessage($dbConfig['Password']);
+$ssn->databaseName = $dbConfig['Schema'];
+$ssn->dbms = $dbConfig['DBMS'];
 
 
 // Check database
@@ -107,21 +104,6 @@ if ($result == '') {
 //
 // Database credentials are wrong past here.
 //
-
-
-if (isset($_POST['btnSave'])) {
-
-    try {
-        SiteConfig::saveConfig(NULL, $config, $_POST, 'admin');
-
-        $ssn->destroy(TRUE);
-        header('location: ' . $secureComp->getRootURL());
-        exit();
-
-    } catch (Exception $ex) {
-        $result = $ex->getMessage();
-    }
-}
 
 if (isset($_GET['r'])) {
     $result = filter_var($_GET['r'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
@@ -154,12 +136,9 @@ $tbl = SiteConfig::createCliteMarkup($dbConfig);
 
                 <div class="row justify-content-md-center mb-3">
 
-                    <form method="post" action="reset.php" name="form1" id="form1">
-                        <h2>Set up database connection credentials</h2>
-                        <?php echo $tbl->generateMarkup(array('class'=>'hhk-tdbox')); ?>
-
-                        <input type="submit" name="btnSave" id="btnSave" value="Save" style="margin-left:700px;margin-top:20px;"/>
-                    </form>
+                    <h2>Database connection credentials</h2>
+                    <?php echo $tbl->generateMarkup(array('class'=>'hhk-tdbox')); ?>
+                    <p>These values come from the <code>.env</code> file in the site root. Edit it there and reload this page.</p>
                     <p style="color:red;margin:10px;"><?php echo $result; ?></p>
                 </div>
                 <?php echo Login::getFooterMarkup(); ?>

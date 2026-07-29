@@ -341,7 +341,7 @@ if (isset($_POST["btnDoBackup"])) {
     $bkupAlert = new alertMessage("bkupAlert");
     $bkupAlert->set_Context(alertMessage::Notice);
 
-    $dbBack = new SiteDbBackup(sys_get_temp_dir() . DS, CONF_PATH.ciCFG_FILE);
+    $dbBack = new SiteDbBackup(sys_get_temp_dir() . DS);
 
     if ($dbBack->backupSchema($igtables)) {
         // success

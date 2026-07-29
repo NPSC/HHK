@@ -26,7 +26,7 @@ require 'homeIncludes.php';
 try {
 
 	$login = new Login();
-	$login->initHhkSession(CONF_PATH, ciCFG_FILE);
+	$login->initHhkSession();
 
 } catch (\Exception $ex) {
 	exit ($ex->getMessage());

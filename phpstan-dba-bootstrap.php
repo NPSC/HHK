@@ -2,20 +2,11 @@
 
 use HHK\Common;
 use HHK\sec\Login;
-use staabm\PHPStanDba\DbSchema\SchemaHasherMysql;
 use staabm\PHPStanDba\QueryReflection\PdoMysqlQueryReflector;
 use staabm\PHPStanDba\QueryReflection\RuntimeConfiguration;
-use staabm\PHPStanDba\QueryReflection\MysqliQueryReflector;
 use staabm\PHPStanDba\QueryReflection\QueryReflection;
-use staabm\PHPStanDba\QueryReflection\ReplayAndRecordingQueryReflector;
-use staabm\PHPStanDba\QueryReflection\ReplayQueryReflector;
-use staabm\PHPStanDba\QueryReflection\ReflectionCache;
 
 require_once __DIR__ . '/vendor/autoload.php';
-
-
-define('ciCFG_FILE', 'site.cfg' );
-define('CONF_PATH', 'conf/');
 
 if (file_exists('vendor/autoload.php')) {
     require('vendor/autoload.php');
@@ -23,9 +14,11 @@ if (file_exists('vendor/autoload.php')) {
     exit("Unable to laod dependancies, be sure to run 'composer install'");
 }
 
+HHK\Config\Env::load(__DIR__);
+
 try {
     $login = new Login();
-    $login->initHhkSession('conf/', 'site.cfg');
+    $login->initHhkSession();
 
 } catch (\Exception $ex) {
     session_unset();

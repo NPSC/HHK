@@ -1,3 +1,4 @@
+/.env
 /patch/soapLog.xml
 .project
 vendor

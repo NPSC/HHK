@@ -1,7 +1,6 @@
 <?php
 
 use HHK\sec\{Login, Labels, SecurityComponent, ScriptAuthClass, SysConfig, Session};
-use HHK\Exception\RuntimeException;
 use HHK\SysConst\CodeVersion;
 use HHK\HTMLControls\HTMLContainer;
 use HHK\SysConst\Mode;
@@ -18,8 +17,6 @@ use HHK\SysConst\Mode;
  */
 define('DS', DIRECTORY_SEPARATOR);
 define('P_ROOT', dirname(__FILE__) . DS);
-define('CONF_PATH', P_ROOT . 'conf' . DS);
-define('ciCFG_FILE', 'site.cfg');
 date_default_timezone_set('America/Chicago');
 
 if (file_exists('vendor/autoload.php')) {
@@ -28,9 +25,10 @@ if (file_exists('vendor/autoload.php')) {
     exit("Unable to laod dependancies, be sure to run 'composer install'");
 }
 
+HHK\Config\Env::load(P_ROOT);
 
 try {
-    $dbh = Login::initHhkSession(CONF_PATH, ciCFG_FILE);
+    $dbh = Login::initHhkSession();
     $uS = Session::getInstance();
 }catch (\Exception $e){
     exit($e->getMessage());

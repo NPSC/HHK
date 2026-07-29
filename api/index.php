@@ -34,7 +34,7 @@ use Slim\Routing\RouteCollectorProxy;
 require ("../house/homeIncludes.php");
 
 $login = new Login();
-$login->initHhkSession(CONF_PATH, ciCFG_FILE);
+$login->initHhkSession();
 $uS = Session::getInstance();
 $dbh = Common::initPDO(TRUE);
 $oAuthServer = new OAuthServer($dbh);

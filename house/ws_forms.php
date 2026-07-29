@@ -25,7 +25,7 @@ require ("homeIncludes.php");
 try {
 
     $login = new Login();
-    $dbh = $login->initHhkSession(CONF_PATH, ciCFG_FILE);
+    $dbh = $login->initHhkSession();
 
 } catch (InvalidArgumentException $pex) {
     exit ("<h3>Database Access Error.   <a href='index.php'>Continue</a></h3>");

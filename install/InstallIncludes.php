@@ -17,8 +17,6 @@ define('P_ROOT', __DIR__ . DS );
 
 define('REL_BASE_DIR', P_ROOT .".." . DS);
 define('REL_BASE_SITE', P_ROOT.".." . DS);
-define('CONF_PATH', REL_BASE_DIR . 'conf' . DS);
-define('ciCFG_FILE', 'site.cfg' );
 
 define('JQ_UI_JS', 'js/jquery-ui.min.js');
 define('JQ_JS', 'js/jquery-min.js');
@@ -34,3 +32,5 @@ if (file_exists(REL_BASE_SITE . 'vendor'.DS.'autoload.php')) {
 } else {
     exit("Unable to load dependancies, be sure to run 'composer install'");
 }
+
+HHK\Config\Env::load(REL_BASE_DIR);

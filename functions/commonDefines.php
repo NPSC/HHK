@@ -25,13 +25,10 @@ if (file_exists(REL_BASE_DIR . $dirxx) === FALSE) {
 
 define('THIRD_PARTY', REL_BASE_DIR . $dirxx . DS);
 
-// Configuration filename and paths
-define('CONF_PATH', REL_BASE_DIR . 'conf' . DS);
-define('ciCFG_FILE', 'site.cfg' );
-
 
 require(REL_BASE_DIR . 'functions' . DS . 'errorHandler.php');
 require (THIRD_PARTY . 'autoload.php');
+HHK\Config\Env::load(REL_BASE_DIR);
 HHK\Debug\DebugBarSupport::bootstrap();
 
 define('JSV', '?v=' . HHK\SysConst\CodeVersion::BUILD);

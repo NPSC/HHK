@@ -33,23 +33,15 @@ class Login {
     protected $validateMsg = '';
 
 
-    public static function initHhkSession(string $confPath = '', string $confFile = '') {
+    public static function initHhkSession() {
 
         // get session instance
-    	$ssn = Session::getInstance($confPath, $confFile);
+    	$ssn = Session::getInstance();
 
-        // Get the site configuration object
-        try {
-            $config = parse_ini_file($confPath . $confFile, true);
-        } catch (\Exception $ex) {
-            $ssn->destroy();
-            throw new RuntimeException("Configurtion file is missing, path=".$confFile, 999, $ex);
-        }
-
-        $ssn->sitePepper = (isset($config["site"]["sitePepper"]) ? $config["site"]["sitePepper"]:'');
+        $ssn->sitePepper = $_ENV['SITE_PEPPER'] ?? '';
 
         try {
-            self::dbParmsToSession($confPath, $confFile);
+            self::dbParmsToSession();
         	$dbh = Common::initPDO(TRUE);
         } catch (RuntimeException $hex) {
         	exit('<h3>' . $hex->getMessage() . '; <a href="index.php">Continue</a></h3>');
@@ -92,24 +84,17 @@ class Login {
         return $dbh;
     }
 
-    public static function dbParmsToSession(string $confPath, string $confFile) {
+    public static function dbParmsToSession() {
 
         // get session instance
         $ssn = Session::getInstance();
 
-        try {
-            $config = parse_ini_file($confPath . $confFile, true);
-        } catch (\Exception $e) {
-            $ssn->destroy();
-            throw new RuntimeException("Database configuration parameters are missing.", 1, $e);
-        }
-
-        if (isset($config["db"]["URL"], $config["db"]["User"], $config["db"]["Password"], $config["db"]["Schema"], $config["db"]["DBMS"])) {
-            $ssn->databaseURL = $config["db"]['URL'];
-            $ssn->databaseUName = $config["db"]['User'];
-            $ssn->databasePWord = Crypto::decryptMessage($config["db"]['Password']);
-            $ssn->databaseName = $config["db"]['Schema'];
-            $ssn->dbms = $config["db"]['DBMS'];
+        if (isset($_ENV['DB_URL'], $_ENV['DB_USER'], $_ENV['DB_PASSWORD'], $_ENV['DB_SCHEMA'], $_ENV['DBMS'])) {
+            $ssn->databaseURL = $_ENV['DB_URL'];
+            $ssn->databaseUName = $_ENV['DB_USER'];
+            $ssn->databasePWord = Crypto::decryptMessage($_ENV['DB_PASSWORD']);
+            $ssn->databaseName = $_ENV['DB_SCHEMA'];
+            $ssn->dbms = $_ENV['DBMS'];
         } else {
             $ssn->destroy();
             throw new RuntimeException("Bad Database Configuration");

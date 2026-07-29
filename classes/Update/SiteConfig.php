@@ -544,10 +544,16 @@ class SiteConfig {
 
         }
 
-        $config = parse_ini_file(CONF_PATH . ciCFG_FILE, true);
-        if(SecurityComponent::is_TheAdmin() && $category == NULL && isset($config['db'])){
-            // site.cfg entries
-            $tblMkup = self::createCliteMarkup($config['db'])->generateMarkup();
+        if(SecurityComponent::is_TheAdmin() && $category == NULL){
+            // .env db entries
+            $dbConfig = [
+                'DBMS' => $_ENV['DBMS'] ?? '',
+                'URL' => $_ENV['DB_URL'] ?? '',
+                'User' => $_ENV['DB_USER'] ?? '',
+                'Password' => $_ENV['DB_PASSWORD'] ?? '',
+                'Schema' => $_ENV['DB_SCHEMA'] ?? '',
+            ];
+            $tblMkup = self::createCliteMarkup($dbConfig)->generateMarkup();
         }else{
             $tblMkup = '';
         }

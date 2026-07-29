@@ -18,20 +18,19 @@ use HHK\Payment\PaymentSvcs;
  * @link      https://github.com/NPSC/HHK
  */
 
-// Configuration filename and paths
-define('ciCFG_FILE', 'site.cfg' );
-define('CONF_PATH', 'conf/');
-
 if (file_exists('vendor/autoload.php')) {
     require('vendor/autoload.php');
 } else {
     exit("Unable to laod dependancies, be sure to run 'composer install'");
 }
+
+HHK\Config\Env::load(__DIR__);
+
 $sequence = Common::getRandomString();
 
 try {
     $login = new Login();
-    $login->initHhkSession('conf/', 'site.cfg');
+    $login->initHhkSession();
 
 } catch (\Exception $ex) {
     session_unset();

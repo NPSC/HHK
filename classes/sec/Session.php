@@ -36,14 +36,14 @@ class Session
     *
     *    @return Session
     **/
-    public static function getInstance(string $confPath = CONF_PATH, string $confFile = ciCFG_FILE): Session
+    public static function getInstance(): Session
     {
         if (!isset(self::$instance))
         {
             self::$instance = new self;
         }
 
-        self::$instance->startSession($confPath, $confFile);
+        self::$instance->startSession();
 
         return self::$instance;
     }
@@ -55,12 +55,12 @@ class Session
     *    @return    bool    TRUE if the session has been initialized, else FALSE.
     **/
 
-    public function startSession(string $confPath = '', string $confFile = ''): bool
+    public function startSession(): bool
     {
         if ( $this->sessionState == self::SESSION_NOT_STARTED || session_status() !== PHP_SESSION_ACTIVE)
         {
             ini_set( 'session.cookie_httponly', 1 );
-            session_name($this->getSessionName($confPath, $confFile));
+            session_name($this->getSessionName());
             $this->sessionState = session_start();
         }
 
@@ -149,21 +149,10 @@ class Session
 
     /**
      * Summary of getSessionName
-     * @param string $confPath
-     * @param string $confFile
      * @return string
      */
-    private function getSessionName(string $confPath, string $confFile): string
+    private function getSessionName(): string
     {
-        if(!empty($confPath) && !empty($confFile)){
-            try{
-                $config = parse_ini_file($confPath . $confFile, true);
-                return strtoupper((isset($config["db"]["Schema"])? $config["db"]["Schema"]: '')) . 'HHKSESSION';
-            }catch(\Exception $ex){
-                return 'HHKSESSION';
-            }
-        }else{
-            return 'HHKSESSION';
-        }
+        return strtoupper($_ENV['DB_SCHEMA'] ?? '') . 'HHKSESSION';
     }
 }

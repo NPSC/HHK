@@ -2,6 +2,7 @@
 
 namespace HHK\Admin;
 
+use HHK\Crypto;
 use HHK\sec\Session;
 
 
@@ -58,20 +59,10 @@ class SiteDbBackup {
      */
     protected $dbBkUpFlag;
     /**
-     * Summary of config
-     * @var
-     */
-    protected $config;
-
-
-    /**
      * Summary of __construct
      * @param mixed $filePath
-     * @param mixed $configFileName
      */
-    function __construct($filePath, $configFileName) {
-
-        $this->config = parse_ini_file($configFileName, true);
+    function __construct($filePath) {
 
         $this->filePath = $filePath;
         $this->clrFileSize = 0;
@@ -93,19 +84,19 @@ class SiteDbBackup {
         $this->bkupMessage = '';
         $zipPipe = '';
 
-        if (strtoupper($this->config['db']['DBMS']) != 'MYSQL') {
+        if (strtoupper($_ENV['DBMS'] ?? '') != 'MYSQL') {
             $this->bkupMessage = 'This backup only works for MySQL/Maria Databases.  ';
             return FALSE;
         }
 
-        $dbuser = $this->config['backup']["BackupUser"];
-        $dbpwd = $this->decrypt($this->config['backup']["BackupPassword"]);
+        $dbuser = $_ENV['BACKUP_USER'] ?? '';
+        $dbpwd = Crypto::decryptMessage($_ENV['BACKUP_PASSWORD'] ?? '');
 
-        $dbUrl = $this->config['db']['URL'];
-        $dbname = $this->config['db']['Schema'];
+        $dbUrl = $_ENV['DB_URL'] ?? '';
+        $dbname = $_ENV['DB_SCHEMA'] ?? '';
 
         if ($dbuser == '' || $dbpwd == '' || $dbname == '' || $dbUrl == '' || $this->filePath == '') {
-            $this->bkupMessage = 'Database Backup parameters are not set in site.cfg.  ';
+            $this->bkupMessage = 'Database Backup parameters are not set in .env.  ';
             return FALSE;
         }
 
@@ -231,25 +222,6 @@ class SiteDbBackup {
 
     //     return $fileListMessage;
     // }
-
-    /**
-     * Summary of decrypt
-     * @param mixed $string
-     * @return bool|string
-     */
-    protected function decrypt($string) {
-
-        $encrypt_method = "AES-256-CBC";
-        // hash
-        $key = hash('sha256', "017d609a4b2d8910685595C8df");
-
-        // iv - encrypt method AES-256-CBC expects 16 bytes - else you will get a warning
-        $iv = substr(hash('sha256', "fYfhHeDmf j98UUy4"), 0, 16);
-
-        $output = openssl_decrypt(base64_decode($string), $encrypt_method, $key, 0, $iv);
-
-        return $output;
-    }
 
     /**
      * Summary of collectConfigSection
