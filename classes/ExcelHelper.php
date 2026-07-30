@@ -93,12 +93,14 @@ class ExcelHelper extends \XLSXWriter{
      */
     public static function doExcelDownLoad(array $rows, string $fileName):void
     {
+        $writer = new ExcelHelper($fileName);
+
         if (count($rows) === 0) {
-            return;
+            $writer->writeSheetRow("Sheet1", ['No records found']);
+            $writer->download();
         }
 
         $reportRows = 1;
-        $writer = new ExcelHelper($fileName);
 
         // build header
         $hdr = array();

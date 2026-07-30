@@ -842,6 +842,7 @@ $(document).ready(function () {
 
             if(showCityOnRegister){
                 rvCols.push({data: 'City', title: visitorLabel+' City'});
+				rvCols.push({data: 'State_Province', title: 'State'});
 				rvCols.push({data: 'Miles_From_House', title: 'Miles away'});
             }
 
@@ -881,6 +882,7 @@ $(document).ready(function () {
 
             if(showCityOnRegister){
                 wlCols.push({data: 'City', title: visitorLabel+' City'});
+				wlCols.push({data: 'State_Province', title: 'State'});
 				wlCols.push({data: 'Miles_From_House', title: 'Miles away'});
             }
 
