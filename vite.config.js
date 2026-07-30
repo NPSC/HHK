@@ -53,7 +53,11 @@ export default defineConfig({
 			input: {
 				// Opt pages in incrementally by adding entries here and calling
 				// HHK\Vite\Vite::asset('resources/js/<entry>.js') from the page.
-				app: 'resources/js/app.js',
+				// house.js/admin.js both import the shared vendor.js bundle
+				// (jquery, jquery-ui, bootstrap, toastr) plus their site's
+				// jQuery UI theme; Rollup splits vendor.js into a shared chunk.
+				house: 'resources/js/house.js',
+				admin: 'resources/js/admin.js',
 			},
 		},
 	},
