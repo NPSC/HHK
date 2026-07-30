@@ -91,7 +91,7 @@ class History {
      * @param \PDO $dbh
      * @param string $view
      * @param string $page
-     * @throws \HHK\Exception\InvalidArgumentException
+     * @throws InvalidArgumentException
      * @return string
      */
     public static function getHistoryMarkup(\PDO $dbh, $view, $page) {
@@ -180,6 +180,51 @@ class History {
 
 
     /**
+     * Number of active, visible hospitals - the single source of truth for whether
+     * the Hospital column/label should be shown, matching house/register.php's own
+     * hospital dropdown query.
+     * @param \PDO $dbh
+     * @return int
+     */
+    public static function activeHospitalCount(\PDO $dbh): int {
+        $stmt = $dbh->query("select count(*) from hospital where Status = 'a' and Title != '(None)' and Hide = 0");
+        return (int) $stmt->fetchColumn();
+    }
+
+    /**
+     * Column-visibility gates shared by the reservation DataTable (ws_resc.php) and
+     * the Excel export (register.php), so both agree on which optional columns show.
+     * @param \PDO $dbh
+     * @return array
+     */
+    protected static function buildColGates(\PDO $dbh): array {
+        return [
+            'hospital' => self::activeHospitalCount($dbh) > 1,
+            'location' => count(Common::readGenLookupsPDO($dbh, 'Location')) > 0,
+            'diagnosis' => count(Common::readGenLookupsPDO($dbh, 'Diagnosis')) > 0,
+        ];
+    }
+
+    /**
+     * Rename row keys for Excel export using a literal-key => display-label map,
+     * preserving row order and leaving unmapped keys untouched.
+     * @param array $rows
+     * @param array $keyMap
+     * @return array
+     */
+    public static function relabelExportKeys(array $rows, array $keyMap): array {
+        $out = [];
+        foreach ($rows as $r) {
+            $newRow = [];
+            foreach ($r as $k => $v) {
+                $newRow[$keyMap[$k] ?? $k] = $v;
+            }
+            $out[] = $newRow;
+        }
+        return $out;
+    }
+
+    /**
      * Summary of getReservedGuestsMarkup
      * @param \PDO $dbh
      * @param string $status
@@ -224,8 +269,9 @@ class History {
         }
 
         $reservStatuses = Common::readLookups($dbh, "reservStatus", "Code");
+        $colGates = self::buildColGates($dbh);
 
-        return $this->createMarkup($status, $page, $includeAction, $reservStatuses, $static);
+        return $this->createMarkup($status, $page, $includeAction, $reservStatuses, $static, $colGates);
     }
 
     public function getReservedGuestsDataTable(\PDO $dbh, $status = ReservationStatus::Committed, $includeAction = TRUE, $start = '', $days = 1, $static = FALSE, $orderBy = '')
@@ -274,11 +320,13 @@ class History {
                 , array('class'=>'ui-state-default ui-corner-all m-0', 'style'=>'padding:1px;', 'title'=>"$patientTitle Planning to stay"))
             , array('class'=>'ui-widget hhk-ui-icons ml-2'));
 
+        $colGates = self::buildColGates($dbh);
+
         $rowCache = array();
-        $buildRow = function ($row) use (&$rowCache, $status, $page, $includeAction, $reservStatuses, $static, $uS, $labels, $patientTitle, $addr_icon, $patientStayingIcon) {
+        $buildRow = function ($row) use (&$rowCache, $status, $page, $includeAction, $reservStatuses, $static, $uS, $labels, $patientTitle, $addr_icon, $patientStayingIcon, $colGates) {
             $id = (isset($row['idReservation']) ? $row['idReservation'] : 0);
             if (!isset($rowCache[$id])) {
-                $rowCache[$id] = $this->buildReservedGuestRow($row, $status, $page, $includeAction, $reservStatuses, $static, $uS, $labels, $patientTitle, $addr_icon, $patientStayingIcon);
+                $rowCache[$id] = $this->buildReservedGuestRow($row, $status, $page, $includeAction, $reservStatuses, $static, $uS, $labels, $patientTitle, $addr_icon, $patientStayingIcon, $colGates);
             }
             return $rowCache[$id];
         };
@@ -316,8 +364,8 @@ class History {
             array('db' => 'Room Title', 'dt' => 'Room Title'),
             array('db' => 'Patient Name', 'dt' => 'Patient Name'),
             array('db' => 'Number_Guests', 'dt' => 'Number_Guests'),
-            array('db' => 'City', 'dt' => 'City', 'formatter' => function ($d, $row) use ($buildRow) { $r = $buildRow($row); return implode(', ', array_filter([$r["City"], $r["State_Province"]]));}),
-            array('db' => 'State_Province', 'dt'=> 'State_Province'),
+            array('db' => 'City', 'dt' => 'City', 'formatter' => function ($d, $row) use ($buildRow) { $r = $buildRow($row); return (isset($r['City']) ? $r['City'] : ''); }),
+            array('db' => 'State_Province', 'dt' => 'State_Province', 'formatter' => function ($d, $row) use ($buildRow) { $r = $buildRow($row); return (isset($r['State_Province']) ? $r['State_Province'] : ''); }),
             array('db' => 'Meters_From_House', 'dt' => 'Miles_From_House', 'formatter' => function ($d, $row) use ($dist) { return $d > 0 ? $dist->meters2miles((float) $d):''; }),
         );
 
@@ -354,9 +402,10 @@ class History {
      * @param bool $includeAction
      * @param array $reservStatuses
      * @param bool $static
+     * @param array $colGates
      * @return array<array>
      */
-    protected function createMarkup($status, $page, $includeAction, $reservStatuses, $static = FALSE) {
+    protected function createMarkup($status, $page, $includeAction, $reservStatuses, $static = FALSE, array $colGates = []) {
 
         $uS = Session::getInstance();
         // Get labels
@@ -381,7 +430,7 @@ class History {
 
         foreach ($this->resvEvents as $r) {
 
-            $returnRows[] = $this->buildReservedGuestRow($r, $status, $page, $includeAction, $reservStatuses, $static, $uS, $labels, $patientTitle, $addr_icon, $patientStayingIcon);
+            $returnRows[] = $this->buildReservedGuestRow($r, $status, $page, $includeAction, $reservStatuses, $static, $uS, $labels, $patientTitle, $addr_icon, $patientStayingIcon, $colGates);
 
         }
 
@@ -389,7 +438,7 @@ class History {
 
     }
 
-    protected function buildReservedGuestRow(array $r, $status, $page, $includeAction, $reservStatuses, $static, Session $uS, Labels $labels, $patientTitle, $addr_icon, $patientStayingIcon) {
+    protected function buildReservedGuestRow(array $r, $status, $page, $includeAction, $reservStatuses, $static, Session $uS, Labels $labels, $patientTitle, $addr_icon, $patientStayingIcon, array $colGates = []) {
 
         $fixedRows = array();
 
@@ -429,7 +478,7 @@ class History {
             $bDay = new \DateTime($r['Timestamp']);
 
             if ($static) {
-                $fixedRows['Timestamp'] = $bDay->format('Y-m-d');
+                $fixedRows['Timestamp'] = $bDay->format('Y-m-d H:i:s');
             } else {
                 $fixedRows['Timestamp'] = $bDay->format('c');
             }
@@ -469,17 +518,14 @@ class History {
             $fixedRows['Expected Departure'] = '';
         }
 
-        // Room name?
-        $fixedRows["Room"] = $r["Room Title"];
-
-        // Phone?
-        if ($status == ReservationStatus::Waitlist) {
-            $fixedRows["Phone"] = $r["Phone"];
+        // Room name? - not shown for Waitlist (no room assigned yet)
+        if ($status != ReservationStatus::Waitlist) {
+            $fixedRows["Room"] = $r["Room Title"];
         }
 
         // Rate
-        if ($status != ReservationStatus::Waitlist) {
-            if ($uS->RoomPriceModel != ItemPriceCode::None && isset($this->roomRates[$r['idRoom_rate']])) {
+        if ($status != ReservationStatus::Waitlist && $uS->RoomPriceModel != ItemPriceCode::None) {
+            if (isset($this->roomRates[$r['idRoom_rate']])) {
 
                 $fixedRows['Rate'] = $this->roomRates[$r['idRoom_rate']];
 
@@ -494,6 +540,14 @@ class History {
         // Number of guests
         $fixedRows["Occupants"] = $r["Number_Guests"];
 
+        // City / State / Distance from house
+        if ($uS->showCityOnRegister) {
+            $fixedRows['City'] = $r['City'];
+            $fixedRows['State_Province'] = $r['State_Province'];
+
+            $dist = DistanceFactory::make();
+            $fixedRows['Miles_From_House'] = ($r['Meters_From_House'] > 0 ? $dist->meters2miles((float) $r['Meters_From_House']) : '');
+        }
 
         // Pre-payments
         if ($uS->AcceptResvPaymt && isset($r['PrePaymt'])) {
@@ -504,19 +558,8 @@ class History {
             }
         }
 
-
-
-        // Patient Name
-
-        $fixedRows['Patient'] = $r['Patient Name'];
-
-        if ($r['Patient_Staying'] > 0 && ! $static) {
-            $fixedRows['Patient'] = HTMLContainer::generateMarkup("div", $fixedRows['Patient'] . $patientStayingIcon, array("class"=>"hhk-flex", "style"=>"justify-content: space-between")); //HTMLContainer::generateMarkup('span', '', array('class'=>'ui-icon ui-icon-suitcase', 'style'=>'float:right;', 'title'=>"$patientTitle Planning to stay"));
-        }
-
-
         // Hospital
-        if (count($uS->guestLookups[GLTableNames::Hospital]) > 1) {
+        if (!empty($colGates['hospital'])) {
             $hospital = '';
             if ($r['idAssociation'] > 0 && isset($uS->guestLookups[GLTableNames::Hospital][$r['idAssociation']]) && $uS->guestLookups[GLTableNames::Hospital][$r['idAssociation']][1] != '(None)') {
                 $hospital .= $uS->guestLookups[GLTableNames::Hospital][$r['idAssociation']][1] . ' / ';
@@ -529,27 +572,25 @@ class History {
         }
 
         // Hospital Location
-        $fixedRows['Location'] = $r['Location'];
+        if (!empty($colGates['location'])) {
+            $fixedRows['Location'] = $r['Location'];
+        }
 
         // Diagnosis
-        $fixedRows['Diagnosis'] = $r['Diagnosis'];
+        if (!empty($colGates['diagnosis'])) {
+            $fixedRows['Diagnosis'] = $r['Diagnosis'];
+        }
+
+        // Patient Name
+        $fixedRows['Patient'] = $r['Patient Name'];
+
+        if ($r['Patient_Staying'] > 0 && ! $static) {
+            $fixedRows['Patient'] = HTMLContainer::generateMarkup("div", $fixedRows['Patient'] . $patientStayingIcon, array("class"=>"hhk-flex", "style"=>"justify-content: space-between")); //HTMLContainer::generateMarkup('span', '', array('class'=>'ui-icon ui-icon-suitcase', 'style'=>'float:right;', 'title'=>"$patientTitle Planning to stay"));
+        }
 
         if ($status == ReservationStatus::Waitlist && $uS->UseWLnotes) {
             $fixedRows['WL Notes'] = $r['Checkin_Notes'];
         }
-
-        if ($status == ReservationStatus::Waitlist && $static && $uS->UseWLnotes) {
-
-            unset($fixedRows['Patient']);
-            $fixedRows = array('Patient' => $r['Patient Name']) + $fixedRows;
-
-//                if ($r['Patient_Staying'] > 0) {
-//                    $fixedRows['Patient'] .= HTMLContainer::generateMarkup('span', '', array('class'=>'ui-icon ui-icon-suitcase', 'style'=>'float:right;', 'title'=>"$patientTitle Planning to stay"));
-//                }
-        }
-
-        $fixedRows['City'] = $r['City'];
-        $fixedRows['State_Province'] = $r['State_Province'];
 
         return $fixedRows;
     }
@@ -630,6 +671,7 @@ class History {
         // Show adjust button?
         $hdArry = Common::readGenLookupsPDO($dbh, "House_Discount");
         $roomStatuses = Common::readGenLookupsPDO($dbh, 'Room_Status');
+        $showHospital = self::activeHospitalCount($dbh) > 1;
 
         $immobilityIcon = HTMLContainer::generateMarkup('ul'
             , HTMLContainer::generateMarkup('li',
@@ -697,11 +739,11 @@ class History {
 
                     if ($now > $stDay) {
                         // Past Due
-                        $fixedRows[Labels::getString('memberType', 'Visitor', 'Guest') . ' Last'] = HTMLContainer::generateMarkup('a', $r['Guest Last'], array('href'=>"$page?id=" . $r["Id"] . '&psg=' . $r['idPsg'], 'class'=>'ui-state-error','title'=>'On Leave - past due!'));
+                        $fixedRows[Labels::getString('memberType', 'visitor', 'Guest') . ' Last'] = HTMLContainer::generateMarkup('a', $r['Guest Last'], array('href'=>"$page?id=" . $r["Id"] . '&psg=' . $r['idPsg'], 'class'=>'ui-state-error','title'=>'On Leave - past due!'));
 
                     } else {
                         // on leave
-                        $fixedRows[Labels::getString('memberType', 'Visitor', 'Guest') . ' Last'] = HTMLContainer::generateMarkup('a', $r['Guest Last'], array('href'=>"$page?id=" . $r["Id"] . '&psg=' . $r['idPsg'], 'class'=>'ui-state-highlight','title'=>'On Leave until ' . $stDay->format('M j')));
+                        $fixedRows[Labels::getString('memberType', 'visitor', 'Guest') . ' Last'] = HTMLContainer::generateMarkup('a', $r['Guest Last'], array('href'=>"$page?id=" . $r["Id"] . '&psg=' . $r['idPsg'], 'class'=>'ui-state-highlight','title'=>'On Leave until ' . $stDay->format('M j')));
                     }
                 } else {
 
@@ -786,7 +828,7 @@ class History {
 
 
             // Hospital
-            if (count($hospitals) > 1) {
+            if ($showHospital) {
                 $hospital = '';
                 if ($r['idAssociation'] > 0 && isset($hospitals[$r['idAssociation']]) && $hospitals[$r['idAssociation']][1] != '(None)') {
                     $hospital .= $hospitals[$r['idAssociation']][1] . ' / ';

@@ -107,26 +107,43 @@ try {
 // Page Return
 if (isset($_POST['btnDlCurGuests'])) {
     // Current guests
-    $rows = History::getCheckedInGuestMarkup($dbh, '', FALSE);
+    $rows = History::getCheckedInGuestMarkup($dbh, '', FALSE, FALSE, $labels->getString('MemberType', 'patient', 'Patient'), $labels->getString('hospital', 'hospital', 'Hospital'));
     ExcelHelper::doExcelDownLoad($rows, 'CurrentGuests');
 }
+
+// Site labels used to match the on-screen DataTable headers for reservation/waitlist exports
+$exportLabels = [
+    'Guest First' => $labels->getString('MemberType', 'visitor', 'Guest') . ' First',
+    'Guest Last' => $labels->getString('MemberType', 'visitor', 'Guest') . ' Last',
+    'Patient' => $labels->getString('MemberType', 'patient', 'Patient'),
+    'Hospital' => $labels->getString('hospital', 'hospital', 'Hospital'),
+    'Location' => $labels->getString('hospital', 'location', 'Location'),
+    'Diagnosis' => $labels->getString('hospital', 'diagnosis', 'Diagnosis'),
+    'PrePaymt' => 'Pre-Paymt',
+    'State_Province' => 'State',
+    'Miles_From_House' => 'Miles away',
+    'WL Notes' => $labels->getString('referral', 'waitlistNotesLabel', 'WL Notes'),
+    'Timestamp' => 'Created On',
+    'Updated_By' => 'Updated By',
+];
+
 if (isset($_POST['btnDlConfRes'])) {
     // Confirmed Reservations
     $history = new History();
     $rows = $history->getReservedGuestsMarkup($dbh, ReservationStatus::Committed, FALSE, '', 1, TRUE);
-    ExcelHelper::doExcelDownLoad($rows, 'ConfirmedResv');
+    ExcelHelper::doExcelDownLoad(History::relabelExportKeys($rows, $exportLabels), 'ConfirmedResv');
 }
 if (isset($_POST['btnDlUcRes'])) {
     // Unconfirmed Reservations
     $history = new History();
     $rows = $history->getReservedGuestsMarkup($dbh, ReservationStatus::UnCommitted, FALSE, '', 1, TRUE);
-    ExcelHelper::doExcelDownLoad($rows, 'UnconfirmedResv');
+    ExcelHelper::doExcelDownLoad(History::relabelExportKeys($rows, $exportLabels), 'UnconfirmedResv');
 }
 if (isset($_POST['btnDlWlist'])) {
     // Waitlist
     $history = new History();
-    $rows = $history->getReservedGuestsMarkup($dbh, ReservationStatus::Waitlist, FALSE, '', 1, TRUE);
-    ExcelHelper::doExcelDownLoad($rows, 'Waitlist');
+    $rows = $history->getReservedGuestsMarkup($dbh, ReservationStatus::Waitlist, FALSE, '', 1, TRUE, 'order by Expected_Arrival asc');
+    ExcelHelper::doExcelDownLoad(History::relabelExportKeys($rows, $exportLabels), 'Waitlist');
 }
 if (isset($_POST['btnFeesDl'])) {
     // Dailey report
