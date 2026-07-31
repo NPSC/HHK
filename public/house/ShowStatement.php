@@ -12,6 +12,7 @@ use HHK\Note\Note;
 use HHK\Note\LinkNote;
 use HHK\House\Registration;
 use HHK\TableLog\HouseLog;
+use HHK\Vite\Vite;
 use PHPMailer\PHPMailer\PHPMailer;
 
 /**
@@ -283,71 +284,66 @@ if ($msg != '') {
     <head>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
         <title><?php echo $pageTitle; ?></title>
-        <?php echo JQ_UI_CSS; ?>
-        <?php echo HOUSE_CSS; ?>
+
+        <?php echo Vite::asset('resources/js/house.js'); ?>
+        
         <?php echo FAVICON; ?>
         <?php echo CSSVARS; ?>
-        <?php echo NOTY_CSS; ?>
         <?php echo GRID_CSS; ?>
         <?php echo STATEMENT_CSS; ?>
-        <?php echo BOOTSTRAP_ICONS_CSS; ?>
 
-        <script type="text/javascript" src="<?php echo JQ_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo JQ_UI_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo PRINT_AREA_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo NOTY_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo NOTY_SETTINGS_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo PRINT_AREA_JS; ?>" defer></script>
+
         <script type='text/javascript'>
-$(document).ready(function() {
-    "use strict";
-    $('#btnPrint, #btnEmail, #btnWord').button();
-    $('#btnEmail').click(function () {
-        if ($('#btnEmail').val() == 'Sending...') {
-            return;
-        }
-        if ($('#txtEmail').val() === '') {
-            flagAlertMessage('Enter an Email Address.', 'error');
-            return;
-        }
-        if ($('#txtSubject').val() === '') {
-            flagAlertMessage('Enter a Subject line', 'error');
-            return;
-        }
-        $('#btnEmail').val('Sending...');
-        $.post('ShowStatement.php', $('#formEm').serialize() + '&cmd=email' + '&reg=' + $(this).data('reg') + '&vid=' + $(this).data('vid'), function(data) {
-            $('#btnEmail').val('Send Email');
-            try {
-                data = $.parseJSON(data);
-            } catch (err) {
-                flagAlertMessage('Bad JSON Encoding', 'error');
-                return;
-            }
-            if (data.error) {
-                if (data.gotopage) {
-                    window.open(data.gotopage, '_self');
-                }
-                flagAlertMessage(data.error, "error");
-            }
-            if (data.msg) {
-                flagAlertMessage(data.msg, 'success');
-            }
-        });
-    });
+            document.addEventListener("DOMContentLoaded", () => {
+                "use strict";
+                $('#btnPrint, #btnEmail, #btnWord').button();
+                $('#btnEmail').click(function () {
+                    if ($('#btnEmail').val() == 'Sending...') {
+                        return;
+                    }
+                    if ($('#txtEmail').val() === '') {
+                        flagAlertMessage('Enter an Email Address.', 'error');
+                        return;
+                    }
+                    if ($('#txtSubject').val() === '') {
+                        flagAlertMessage('Enter a Subject line', 'error');
+                        return;
+                    }
+                    $('#btnEmail').val('Sending...');
+                    $.post('ShowStatement.php', $('#formEm').serialize() + '&cmd=email' + '&reg=' + $(this).data('reg') + '&vid=' + $(this).data('vid'), function(data) {
+                        $('#btnEmail').val('Send Email');
+                        try {
+                            data = $.parseJSON(data);
+                        } catch (err) {
+                            flagAlertMessage('Bad JSON Encoding', 'error');
+                            return;
+                        }
+                        if (data.error) {
+                            if (data.gotopage) {
+                                window.open(data.gotopage, '_self');
+                            }
+                            flagAlertMessage(data.error, "error");
+                        }
+                        if (data.msg) {
+                            flagAlertMessage(data.msg, 'success');
+                        }
+                    });
+                });
 
-    var opt = {mode: 'popup',
-        popClose: true,
-        popHt      : $('#divStmt').height(),
-        popWd      : $('#divStmt').width(),
-        popX       : 20,
-        popY       : 20,
-        popTitle   : '<?php echo $labels->getString('MemberType', 'guest', 'Guest'); ?>'+' Statement'};
+                var opt = {mode: 'popup',
+                    popClose: true,
+                    popHt      : $('#divStmt').height(),
+                    popWd      : $('#divStmt').width(),
+                    popX       : 20,
+                    popY       : 20,
+                    popTitle   : '<?php echo $labels->getString('MemberType', 'guest', 'Guest'); ?>'+' Statement'};
 
-    $('#btnPrint').click(function() {
-        $('div.PrintArea').printArea(opt);
-    });
-});
-</script>
+                $('#btnPrint').click(function() {
+                    $('div.PrintArea').printArea(opt);
+                });
+            });
+        </script>
     </head>
     <body>
         <div id="contentDiv">

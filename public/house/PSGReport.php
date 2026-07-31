@@ -1,7 +1,6 @@
 <?php
 
 use HHK\Common;
-use HHK\House\Distance\ZipDistance;
 use HHK\sec\{Session, WebInit};
 use HHK\SysConst\GLTableNames;
 use HHK\HTMLControls\HTMLContainer;
@@ -14,6 +13,7 @@ use HHK\sec\Labels;
 use HHK\House\Report\ReportFilter;
 use HHK\House\Distance\DistanceFactory;
 use HHK\TableLog\HouseLog;
+use HHK\Vite\Vite;
 
 /**
  * PSG_Report.php
@@ -1279,91 +1279,82 @@ if ($uS->UseIncidentReports) {
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
         <title><?php echo $pageTitle; ?></title>
+
+        <?php echo Vite::asset('resources/js/house.js'); ?>
+        
         <?php echo FAVICON; ?>
-        <?php echo JQ_UI_CSS; ?>
-        <?php echo HOUSE_CSS; ?>
-        <?php echo JQ_DT_CSS ?>
         <?php echo GRID_CSS; ?>
-        <?php echo NOTY_CSS; ?>
         <?php echo NAVBAR_CSS; ?>
         <?php echo CSSVARS; ?>
 
-        <script type="text/javascript" src="<?php echo JQ_JS ?>"></script>
-        <script type="text/javascript" src="<?php echo JQ_UI_JS ?>"></script>
-        <script type="text/javascript" src="<?php echo JQ_DT_JS ?>"></script>
-        <script type="text/javascript" src="<?php echo PRINT_AREA_JS ?>"></script>
-        <script type="text/javascript" src="<?php echo STATE_COUNTRY_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo MOMENT_JS ?>"></script>
-        <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo PRINT_AREA_JS ?>" defer></script>
+        <script type="text/javascript" src="<?php echo STATE_COUNTRY_JS; ?>" defer></script>
 
-        <script type="text/javascript" src="<?php echo NOTY_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo NOTY_SETTINGS_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo BOOTSTRAP_JS; ?>"></script>
-<script type="text/javascript">
-    $(document).ready(function() {
+        <script type="text/javascript">
+            document.addEventListener("DOMContentLoaded", () => {
 
-        var makeTable = '<?php echo $mkTable; ?>';
-        $('#btnHere, #btnExcel').button();
-        if (makeTable >= 1) {
-            $('div#printArea').addClass("d-block");
-            $('#divPrintButton').show();
+                var makeTable = '<?php echo $mkTable; ?>';
+                $('#btnHere, #btnExcel').button();
+                if (makeTable >= 1) {
+                    $('div#printArea').addClass("d-block");
+                    $('#divPrintButton').show();
 
-            if (makeTable == 1) {
-                try{
-                $('#tblrpt').dataTable({
-	                "displayLength": 50,
-	                "lengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]],
-	                "dom": "<\"top ui-toolbar ui-helper-clearfix\"if><\"hhk-overflow-x\"rt><\"bottom ui-toolbar ui-helper-clearfix\"lp>",
-	                "order": [[1, 'asc']]
-            	});
-                } catch (error) {}
-            }
-            $('#printButton').button().click(function() {
-                $("div#printArea").printArea();
+                    if (makeTable == 1) {
+                        try{
+                        $('#tblrpt').dataTable({
+                            "displayLength": 50,
+                            "lengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]],
+                            "dom": "<\"top ui-toolbar ui-helper-clearfix\"if><\"hhk-overflow-x\"rt><\"bottom ui-toolbar ui-helper-clearfix\"lp>",
+                            "order": [[1, 'asc']]
+                        });
+                        } catch (error) {}
+                    }
+                    $('#printButton').button().click(function() {
+                        $("div#printArea").printArea();
+                    });
+                }
+
+                <?php echo $filter->getTimePeriodScript(); ?>;
+
+                $('input[name="rbReport"]').change(function () {
+                    $('.hhk-IncdtRpt').hide();
+                    if ($('#rbpsg').prop('checked')) {
+                        $('.psgsel').hide();
+                        $('.filters').show();
+                        $('.checkboxesShow').hide();
+                        $('.showStateCountry').hide();
+                    } else if($('#nrp').prop('checked')) {
+                        $('.filters').hide();
+                        $('.checkboxesShow').hide();
+                        $('.showStateCountry').hide();
+                    } else if($('#incdt').prop('checked')) {
+                        $('.filters').hide();
+                        $('.hhk-IncdtRpt').show();
+                        $('.checkboxesShow').hide();
+                        $('.showStateCountry').hide();
+                    } else {
+                        $('.filters').show();
+                        $('.psgsel').show();
+                        $('.checkboxesShow').show();
+                        $('.showStateCountry').show();
+                }
+                });
+
+                $(document).on('change', '#cbUnique', function(){
+                    if($('#cbUnique').prop('checked')){
+                        $('#visitStatusFilter select').val('');
+                        $('#visitStatusFilter').hide();
+                    }else{
+                        $('#visitStatusFilter').show();
+                    }
+                });
+
+                $('#cbUnique').change();
+                $('input[name="rbReport"]').change();
+                $('#adrstate').change();
+
             });
-        }
-
-        <?php echo $filter->getTimePeriodScript(); ?>;
-
-        $('input[name="rbReport"]').change(function () {
-        	$('.hhk-IncdtRpt').hide();
-            if ($('#rbpsg').prop('checked')) {
-                $('.psgsel').hide();
-                $('.filters').show();
-                $('.checkboxesShow').hide();
-                $('.showStateCountry').hide();
-            } else if($('#nrp').prop('checked')) {
-                $('.filters').hide();
-                $('.checkboxesShow').hide();
-                $('.showStateCountry').hide();
-            } else if($('#incdt').prop('checked')) {
-                $('.filters').hide();
-                $('.hhk-IncdtRpt').show();
-                $('.checkboxesShow').hide();
-                $('.showStateCountry').hide();
-            } else {
-                $('.filters').show();
-                $('.psgsel').show();
-                $('.checkboxesShow').show();
-                $('.showStateCountry').show();
-        }
-        });
-
-        $(document).on('change', '#cbUnique', function(){
-        	if($('#cbUnique').prop('checked')){
-        		$('#visitStatusFilter select').val('');
-        		$('#visitStatusFilter').hide();
-        	}else{
-        		$('#visitStatusFilter').show();
-        	}
-        });
-
-        $('#cbUnique').change();
-        $('input[name="rbReport"]').change();
-        $('#adrstate').change();
-
-    });
- </script>
+        </script>
     </head>
     <body <?php if ($wInit->testVersion) echo "class='testbody'"; ?>>
         <?php echo $menuMarkup; ?>

@@ -1,13 +1,12 @@
 <?php
 
-use HHK\HTMLControls\{HTMLContainer, HTMLTable, HTMLInput, HTMLSelector};
+use HHK\HTMLControls\{HTMLContainer, HTMLTable};
 use HHK\sec\{Session, WebInit};
 use HHK\ColumnSelectors;
-use HHK\SysConst\GLTableNames;
-use HHK\ExcelHelper;
 use HHK\sec\Labels;
 use HHK\House\Report\ReportFilter;
 use HHK\House\Report\NewGuest;
+use HHK\Vite\Vite;
 
 /**
  * NewGuest.php
@@ -235,63 +234,57 @@ $columSelector = $colSelector->makeSelectorTable(TRUE)->generateMarkup(array('st
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
         <title><?php echo $wInit->pageTitle; ?></title>
-        <?php echo JQ_UI_CSS; ?>
-        <?php echo HOUSE_CSS; ?>
-        <?php echo JQ_DT_CSS ?>
+
+        <?php echo Vite::asset('resources/js/house.js'); ?>
+
         <?php echo FAVICON; ?>
         <?php echo GRID_CSS; ?>
         <?php echo NAVBAR_CSS; ?>
         <?php echo CSSVARS; ?>
 
-        <script type="text/javascript" src="<?php echo JQ_JS ?>"></script>
-        <script type="text/javascript" src="<?php echo JQ_UI_JS ?>"></script>
-        <script type="text/javascript" src="<?php echo JQ_DT_JS ?>"></script>
-        <script type="text/javascript" src="<?php echo PRINT_AREA_JS ?>"></script>
-        <script type="text/javascript" src="<?php echo MOMENT_JS ?>"></script>
-        <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo BOOTSTRAP_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo PRINT_AREA_JS ?>" defer></script>
 
-<script type="text/javascript">
-    $(document).ready(function() {
-        var dateFormat = '<?php echo $labels->getString("momentFormats", "report", "MMM D, YYYY"); ?>';
-        var columnDefs = $.parseJSON('<?php echo json_encode($colSelector->getColumnDefs()); ?>');
-        var makeTable = '<?php echo $mkTable; ?>';
-        <?php echo $filter->getTimePeriodScript(); ?>
-        $('#btnHere, #btnExcel, #cbColClearAll, #cbColSelAll').button();
+        <script type="text/javascript">
+            document.addEventListener("DOMContentLoaded", () => {
+                var dateFormat = '<?php echo $labels->getString("momentFormats", "report", "MMM D, YYYY"); ?>';
+                var columnDefs = $.parseJSON('<?php echo json_encode($colSelector->getColumnDefs()); ?>');
+                var makeTable = '<?php echo $mkTable; ?>';
+                <?php echo $filter->getTimePeriodScript(); ?>
+                $('#btnHere, #btnExcel, #cbColClearAll, #cbColSelAll').button();
 
-        $('#cbColClearAll').click(function () {
-            $('#selFld option').each(function () {
-                $(this).prop('selected', false);
+                $('#cbColClearAll').click(function () {
+                    $('#selFld option').each(function () {
+                        $(this).prop('selected', false);
+                    });
+                });
+
+                $('#cbColSelAll').click(function () {
+                    $('#selFld option').each(function () {
+                        $(this).prop('selected', true);
+                    });
+                });
+
+                if (makeTable === '1') {
+                    $('div#printArea, div#stats').css('display', 'block');
+
+                    $('#tblrpt').dataTable({
+                        'columnDefs': [
+                            {'targets': columnDefs,
+                            'type': 'date',
+                            'render': function ( data, type, row ) {return dateRender(data, type, dateFormat);}
+                            }
+                        ],
+                        "displayLength": 50,
+                        "lengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]],
+                        "dom": '<"top ui-toolbar ui-helper-clearfix"ilf><\"hhk-overflow-x\"rt><"bottom ui-toolbar ui-helper-clearfix"lp><"clear">',
+                    });
+
+                    $('#printButton').button().click(function() {
+                        $("div#printArea").printArea();
+                    });
+                }
             });
-        });
-
-        $('#cbColSelAll').click(function () {
-            $('#selFld option').each(function () {
-                $(this).prop('selected', true);
-            });
-        });
-
-        if (makeTable === '1') {
-            $('div#printArea, div#stats').css('display', 'block');
-
-            $('#tblrpt').dataTable({
-                'columnDefs': [
-                    {'targets': columnDefs,
-                     'type': 'date',
-                     'render': function ( data, type, row ) {return dateRender(data, type, dateFormat);}
-                    }
-                 ],
-                "displayLength": 50,
-                "lengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]],
-                "dom": '<"top ui-toolbar ui-helper-clearfix"ilf><\"hhk-overflow-x\"rt><"bottom ui-toolbar ui-helper-clearfix"lp><"clear">',
-            });
-
-            $('#printButton').button().click(function() {
-                $("div#printArea").printArea();
-            });
-        }
-    });
- </script>
+        </script>
     </head>
     <body <?php if ($wInit->testVersion) {echo "class='testbody'";} ?>>
         <?php echo $wInit->generatePageMenu(); ?>

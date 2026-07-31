@@ -5,6 +5,7 @@ use HHK\HTMLControls\HTMLContainer;
 use HHK\HTMLControls\{HTMLInput, HTMLSelector, HTMLTable};
 use HHK\Tables\EditRS;
 use HHK\Tables\WebSec\{W_groupsRS, W_auth_ipRS};
+use HHK\Vite\Vite;
 
 /**
  * AuthGroupEdit.php
@@ -189,26 +190,27 @@ $ip_tbl->addHeaderTr(HTMLTable::makeTh('Name') . HTMLTable::makeTh('IP Address')
         <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
         <title><?php echo $pageTitle; ?></title>
 
-		<?php echo JQ_UI_CSS; ?>
-		<?php echo DEFAULT_CSS; ?>
+        <?php echo Vite::asset('resources/js/admin.js'); ?>
+
+
 		<?php echo FAVICON; ?>
 		<?php echo MULTISELECT_CSS; ?>
-		<?php echo NOTY_CSS; ?>
 		<?php echo GRID_CSS; ?>
 		<?php echo NAVBAR_CSS; ?>
 
-        <script type="text/javascript" src="<?php echo JQ_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo JQ_UI_JS ?>"></script>
-        <script type="text/javascript" src="<?php echo BOOTSTRAP_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo MULTISELECT_JS; ?>"></script>
 
-        <script type="text/javascript" src="<?php echo NOTY_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo NOTY_SETTINGS_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo MULTISELECT_JS; ?>" defer></script>
+
         <script type="text/javascript">
             var table, accordIndex;
-            $(document).ready(function () {
+            document.addEventListener("DOMContentLoaded",  () => {
                 $('input:submit').button();
+
+                $('select.hhk-multisel').each(function () {
+                    $(this).multiselect({
+                        selectedList: 3
+                    });
+                });
             });
 
         </script>
@@ -247,15 +249,6 @@ $ip_tbl->addHeaderTr(HTMLTable::makeTh('Name') . HTMLTable::makeTh('IP Address')
                 </form>
             </div>
         </div>
-        <script type="text/javascript">
-            $(document).ready(function () {
-                $('select.hhk-multisel').each(function () {
-                    $(this).multiselect({
-                        selectedList: 3
-                    });
-                });
-            });
-        </script>
     </body>
 </html>
 

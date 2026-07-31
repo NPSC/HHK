@@ -5,6 +5,7 @@ use HHK\sec\Labels;
 use HHK\House\Report\CurrentGuestReport;
 use HHK\House\Report\VehiclesReport;
 use HHK\House\Report\BirthdayReport;
+use HHK\Vite\Vite;
 
 /**
  * GuestView.php
@@ -80,81 +81,72 @@ $emtableMarkupv = '';
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
         <title><?php echo $pageTitle; ?></title>
-        <?php echo JQ_UI_CSS; ?>
-        <?php echo HOUSE_CSS; ?>
-        <?php echo JQ_DT_CSS ?>
+
+        <?php echo Vite::asset('resources/js/house.js'); ?>
+        
         <?php echo FAVICON; ?>
         <?php echo GRID_CSS; ?>
-        <?php echo NOTY_CSS; ?>
         <?php echo NAVBAR_CSS; ?>
         <?php echo CSSVARS; ?>
 
-        <script type="text/javascript" src="<?php echo JQ_JS ?>"></script>
-        <script type="text/javascript" src="<?php echo JQ_UI_JS ?>"></script>
-        <script type="text/javascript" src="<?php echo JQ_DT_JS ?>"></script>
-        <script type="text/javascript" src="<?php echo CREATE_AUTO_COMPLETE_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo PRINT_AREA_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo MOMENT_JS ?>"></script>
-        <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
-
-        <script type="text/javascript" src="<?php echo REPORTFIELDSETS_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo NOTY_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo NOTY_SETTINGS_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo BOOTSTRAP_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo CREATE_AUTO_COMPLETE_JS; ?>" defer></script>
+        <script type="text/javascript" src="<?php echo PRINT_AREA_JS; ?>" defer></script>
+        <script type="text/javascript" src="<?php echo REPORTFIELDSETS_JS; ?>" defer></script>
+        
         <script type="text/javascript">
-    $(document).ready(function () {
-        "use strict";
+            document.addEventListener("DOMContentLoaded", () => {
+                "use strict";
 
 
-        var dateFormat = '<?php echo $labels->getString("momentFormats", "report", "MMM d, YYYY"); ?>';
-        var tabReturn = '<?php echo $tab; ?>';
+                var dateFormat = '<?php echo $labels->getString("momentFormats", "report", "MMM d, YYYY"); ?>';
+                var tabReturn = '<?php echo $tab; ?>';
 
-        $('#btnEmail, #btnPrint, #btnEmailv, #btnPrintv').button();
+                $('#btnEmail, #btnPrint, #btnEmailv, #btnPrintv').button();
 
-        <?php echo $currentGuestReport->generateReportScript() .
-                $birthdayReport->generateReportScript() .
-                $vehicleReport->generateReportScript() ?>
+                <?php echo $currentGuestReport->generateReportScript() .
+                        $birthdayReport->generateReportScript() .
+                        $vehicleReport->generateReportScript() ?>
 
-        function dispVehicle(item) {
+                function dispVehicle(item) {
 
-            if (item.id > 0) {
+                    if (item.id > 0) {
 
-                var $tr = $('<tr />');
+                        var $tr = $('<tr />');
 
-                $tr.append($('<td>' + item.License_Number + '</td>'))
-                    .append($('<td>' + item.Make + '</td>'))
-                    .append($('<td>' + item.Model + '</td>'))
-                    .append($('<td>' + item.Color + '</td>'))
-                    .append($('<td>' + item.State_Reg + '</td>'))
-                    .append($('<td><a href="GuestEdit.php?id=' + item.id + '">' + item.Patient + '</a></td>'))
-                    .append($('<td>' + item.Room + '</td>'));
+                        $tr.append($('<td>' + item.License_Number + '</td>'))
+                            .append($('<td>' + item.Make + '</td>'))
+                            .append($('<td>' + item.Model + '</td>'))
+                            .append($('<td>' + item.Color + '</td>'))
+                            .append($('<td>' + item.State_Reg + '</td>'))
+                            .append($('<td><a href="GuestEdit.php?id=' + item.id + '">' + item.Patient + '</a></td>'))
+                            .append($('<td>' + item.Room + '</td>'));
 
-                $('#tbl').append($tr);
+                        $('#tbl').append($tr);
 
-            }
-        }
+                    }
+                }
 
-        $.widget( "ui.autocomplete", $.ui.autocomplete, {
-            _resizeMenu: function() {
-		var ul = this.menu.element;
-		ul.outerWidth( Math.max(
+                $.widget( "ui.autocomplete", $.ui.autocomplete, {
+                    _resizeMenu: function() {
+                var ul = this.menu.element;
+                ul.outerWidth( Math.max(
 
-			// Firefox wraps long text (possibly a rounding bug)
-			// so we add 1px to avoid the wrapping (#7513)
-			ul.width( "" ).outerWidth() + 1,
-			this.element.outerWidth()
-		) * 1.1 );
-            }
-        });
-        createAutoComplete($('#schTag'), 3, {cmd: 'vehsch'},
-            dispVehicle,
-            false, 'ws_resc.php'
-        );
+                    // Firefox wraps long text (possibly a rounding bug)
+                    // so we add 1px to avoid the wrapping (#7513)
+                    ul.width( "" ).outerWidth() + 1,
+                    this.element.outerWidth()
+                ) * 1.1 );
+                    }
+                });
+                createAutoComplete($('#schTag'), 3, {cmd: 'vehsch'},
+                    dispVehicle,
+                    false, 'ws_resc.php'
+                );
 
-        $('#mainTabs').tabs();
-        $('#mainTabs').tabs("option", "active", tabReturn);
-        $('#mainTabs').show();
-    });
+                $('#mainTabs').tabs();
+                $('#mainTabs').tabs("option", "active", tabReturn);
+                $('#mainTabs').show();
+            });
         </script>
     </head>
     <body <?php if ($wInit->testVersion) echo "class='testbody'"; ?>>

@@ -23,8 +23,6 @@ define('CUSTOM_REGFORM_CSS', "<link href='css/customRegForm.css" . JSV . "' rel=
 define('RESV_MANAGER_JS', 'js/resvManager-min.js' . JSV);
 define('PAYMENT_JS', "js/payments-min.js" . JSV);
 define('VISIT_DIALOG_JS', "js/visitDialog-min.js" . JSV);
-define('SMS_DIALOG_JS', "js/smsDialog-min.js" . JSV);
-define('INCIDENT_REP_JS', 'js/incidentReports.min.js' . JSV);
 define('GUESTLOAD_JS', 'js/guestload-min.js' . JSV);
 define('DOC_UPLOAD_JS', 'js/documentUpload.min.js' . JSV);
 define('REGISTER_JS', 'js/register-min.js' . JSV);
@@ -41,7 +39,6 @@ define('FORMBUILDER_JS', "js/formBuilder.js" . JSV);
 define('RESERVE_JS', 'js/reserve.js' . JSV);
 define('CHECKIN_JS', 'js/checkin.js' . JSV);
 define('CHECKINGIN_JS', 'js/checkingIn.js' . JSV);
-define('SERIALIZEJSON', 'js/jquery.serializejson.js' . JSV);
 define('RESCBUILDER_JS', 'js/rescBuilder.js' . JSV);
 define('MISSINGDEMOG_JS', 'js/missingDemog.js' . JSV);
 define('GUESTTRANSFER_JS', 'js/guestTransfer.js' . JSV);

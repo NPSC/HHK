@@ -9,6 +9,7 @@ use HHK\sec\{Session, WebInit};
 use HHK\sec\Labels;
 use HHK\SysConst\Mode;
 use HHK\SysConst\RoomRateCategories;
+use HHK\Vite\Vite;
 
 /**
  * BillingAgentReport.php
@@ -100,36 +101,20 @@ if (isset($_POST['btnExcel-' . $report->getInputSetReportName()])) {
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
         <title><?php echo $pageTitle; ?></title>
-        <?php echo JQ_UI_CSS; ?>
-        <?php echo HOUSE_CSS; ?>
-        <?php echo JQ_DT_CSS ?>
+
+        <?php echo Vite::asset('resources/js/house.js'); ?>
+        
         <?php echo FAVICON; ?>
         <?php echo GRID_CSS; ?>
-        <?php echo BOOTSTRAP_ICONS_CSS; ?>
-        <?php echo NOTY_CSS; ?>
         <?php echo NAVBAR_CSS; ?>
         <?php echo CSSVARS; ?>
 
-        <script type="text/javascript" src="<?php echo JQ_JS ?>"></script>
-        <script type="text/javascript" src="<?php echo JQ_UI_JS ?>"></script>
-        <script type="text/javascript" src="<?php echo JQ_DT_JS ?>"></script>
-        <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo MOMENT_JS; ?>"></script>
-
-        <script type="text/javascript" src="<?php echo SMS_DIALOG_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo RESV_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo PAYMENT_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo VISIT_DIALOG_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo BUFFER_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo HTMLENTITIES_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo DOMPURIFY_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo NOTES_VIEWER_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo CREATE_AUTO_COMPLETE_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo NOTY_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo NOTY_SETTINGS_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo INVOICE_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo REPORTFIELDSETS_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo BOOTSTRAP_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo RESV_JS; ?>" defer></script>
+        <script type="text/javascript" src="<?php echo PAYMENT_JS; ?>" defer></script>
+        <script type="text/javascript" src="<?php echo VISIT_DIALOG_JS; ?>" defer></script>
+        <script type="text/javascript" src="<?php echo CREATE_AUTO_COMPLETE_JS; ?>" defer></script>
+        <script type="text/javascript" src="<?php echo INVOICE_JS; ?>" defer></script>
+        <script type="text/javascript" src="<?php echo REPORTFIELDSETS_JS; ?>" defer></script>
         <?php if ($uS->PaymentGateway == AbstractPaymentGateway::INSTAMED) {echo INS_EMBED_JS;} ?>
         <?php 
             if ($uS->PaymentGateway == AbstractPaymentGateway::DELUXE) {
@@ -142,12 +127,12 @@ if (isset($_POST['btnExcel-' . $report->getInputSetReportName()])) {
         ?>
 
         <script type="text/javascript">
-            var dateFormat = '<?php echo $labels->getString("momentFormats", "report", "MMM D, YYYY"); ?>';
-            var columnDefs = $.parseJSON('<?php echo json_encode($report->colSelector->getColumnDefs()); ?>');
-            var fixedRate = '<?php echo RoomRateCategories::Fixed_Rate_Category; ?>';
-            var rctMkup, pmtMkup, receiptBilledToEmail, receiptPaymentId;
-            $(document).ready(function() {
-
+            document.addEventListener("DOMContentLoaded", () => {
+                var dateFormat = '<?php echo $labels->getString("momentFormats", "report", "MMM D, YYYY"); ?>';
+                var columnDefs = $.parseJSON('<?php echo json_encode($report->colSelector->getColumnDefs()); ?>');
+                var fixedRate = '<?php echo RoomRateCategories::Fixed_Rate_Category; ?>';
+                var rctMkup, pmtMkup, receiptBilledToEmail, receiptPaymentId;
+            
                 var drawCallback = function (settings) {
                     $('.hhk-viewVisit').button();
                     $('.hhk-viewVisit').click(function () {

@@ -4,6 +4,7 @@ use HHK\AlertControl\AlertMessage;
 use HHK\HTMLControls\HTMLSelector;
 use HHK\sec\Pages;
 use HHK\sec\{SecurityComponent, WebInit};
+use HHK\Vite\Vite;
 
 /**
  * PageEdit.php
@@ -115,130 +116,119 @@ $resultMessage = $alertMsg->createMarkup();
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
         <title><?php echo $pageTitle; ?></title>
-        <?php echo JQ_UI_CSS; ?>
-        <?php echo DEFAULT_CSS; ?>
-        <?php echo JQ_DT_CSS ?>
+
+        <?php echo Vite::asset('resources/js/admin.js'); ?>
+        
         <?php echo MULTISELECT_CSS; ?>
-        <?php echo NOTY_CSS; ?>
         <?php echo FAVICON; ?>
         <?php echo GRID_CSS; ?>
         <?php echo NAVBAR_CSS; ?>
 
-        <script type="text/javascript" src="<?php echo JQ_JS ?>"></script>
-        <script type="text/javascript" src="<?php echo JQ_UI_JS ?>"></script>
-        <script type="text/javascript" src="<?php echo BOOTSTRAP_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo JQ_DT_JS ?>"></script>
-        <script type="text/javascript" src="<?php echo MULTISELECT_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo NOTY_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo NOTY_SETTINGS_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
-
+        <script type="text/javascript" src="<?php echo MULTISELECT_JS; ?>" defer></script>
 
         <script type="text/javascript">
 
-    function getPages(site) {
-        "use strict";
+            function getPages(site) {
+                "use strict";
 
-        $.getJSON("ws_gen.php", {page: site, cmd: 'gpage'})
-            .done(function(data, status, xhr) {
+                $.getJSON("ws_gen.php", {page: site, cmd: 'gpage'})
+                    .done(function(data, status, xhr) {
 
-                if (data && data.error) {
+                        if (data && data.error) {
 
-                    if (data.gotopage) {
-                        window.open(data.gotopage);
-                    }
-
-                    flagAlertMessage(data.error, true);
-                    return;
-                }
-
-                $('#sitepages').children().remove().end().append($(data.success));
-                $('#frmPages').show();
-
-                $('select.hhk-multisel').each( function () {
-                    $(this).multiselect({
-                        selectedList: 3
-                    });
-                });
-
-                $('#tblPages').dataTable({
-                    columns: [
-                        { orderable: false },
-                        { orderable: true },
-                        { orderable: true },
-                        { orderable: false },
-                        { orderable: true },
-                        { orderable: false },
-                        { orderable: false },
-                        { orderable: false }
-                    ],
-                    "displayLength": 100,
-                    "lengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]]
-                    , "Dom": '<"top"ilf>rt<"bottom"ip>'
-                });
-
-            })
-            .fail();
-
-    }
-    // Init j-query and the page blocker.
-    $(document).ready(function() {
-
-        let website = '<?php echo $webSite; ?>';
-
-        $('.editSite, .loadPages, #btnReset, #btnSubmit').button();
-
-        $('#siteDialog').dialog({
-            autoOpen: false,
-            width: 550,
-            resizable: true,
-            modal: true,
-            buttons: {
-                "Save Site": function() {
-                    var dialog = $(this);
-                    var parms = new Object();
-                    $('.spd').each(function(index) {
-                        parms[$(this).attr("id")] = $(this).val();
-                    });
-
-                    $.post("ws_gen.php", {cmd: 'edsite',parms: parms},
-                        function (data) {
-                            console.log(data);
-                            if(data.success){
-                                flagAlertMessage(data.success, false);
-                                dialog.dialog('close');
-                            } else if (data.error){
-                                flagAlertMessage(data.error, true);
+                            if (data.gotopage) {
+                                window.open(data.gotopage);
                             }
-                    }, "json");
-                },
-                "Exit": function() {
-                    $('body').css('cursor', "auto");
-                    $( "#siteContainer" ).hide();
-                    $( this ).dialog( "close" );
-                }
+
+                            flagAlertMessage(data.error, true);
+                            return;
+                        }
+
+                        $('#sitepages').children().remove().end().append($(data.success));
+                        $('#frmPages').show();
+
+                        $('select.hhk-multisel').each( function () {
+                            $(this).multiselect({
+                                selectedList: 3
+                            });
+                        });
+
+                        $('#tblPages').dataTable({
+                            columns: [
+                                { orderable: false },
+                                { orderable: true },
+                                { orderable: true },
+                                { orderable: false },
+                                { orderable: true },
+                                { orderable: false },
+                                { orderable: false },
+                                { orderable: false }
+                            ],
+                            "displayLength": 100,
+                            "lengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]]
+                            , "Dom": '<"top"ilf>rt<"bottom"ip>'
+                        });
+
+                    })
+                    .fail();
+
             }
-        });
 
-        $('input.loadPages').click(function() {
-            $("#divAlert1").hide();
-            getPages($(this).attr("name"));
-        });
+            document.addEventListener("DOMContentLoaded", () => {
 
-        if (website != '') {
-            getPages(website);
-        }
+                let website = '<?php echo $webSite; ?>';
 
-        $('input.editSite').click(function() {
-            // input control is in a td in a tr.
+                $('.editSite, .loadPages, #btnReset, #btnSubmit').button();
+
+                $('#siteDialog').dialog({
+                    autoOpen: false,
+                    width: 550,
+                    resizable: true,
+                    modal: true,
+                    buttons: {
+                        "Save Site": function() {
+                            var dialog = $(this);
+                            var parms = new Object();
+                            $('.spd').each(function(index) {
+                                parms[$(this).attr("id")] = $(this).val();
+                            });
+
+                            $.post("ws_gen.php", {cmd: 'edsite',parms: parms},
+                                function (data) {
+                                    console.log(data);
+                                    if(data.success){
+                                        flagAlertMessage(data.success, false);
+                                        dialog.dialog('close');
+                                    } else if (data.error){
+                                        flagAlertMessage(data.error, true);
+                                    }
+                            }, "json");
+                        },
+                        "Exit": function() {
+                            $('body').css('cursor', "auto");
+                            $( "#siteContainer" ).hide();
+                            $( this ).dialog( "close" );
+                        }
+                    }
+                });
+
+                $('input.loadPages').click(function() {
+                    $("#divAlert1").hide();
+                    getPages($(this).attr("name"));
+                });
+
+                if (website != '') {
+                    getPages(website);
+                }
+
+                $('input.editSite').click(function() {
+                    // input control is in a td in a tr.
                     var tds = $(this).parent().parent().children('td');
 
                     $('#inDescription').val(tds[1].innerHTML);
                     $('#inSiteCode').val(tds[3].innerHTML);
-//                    $('#inHostAddr').val(tds[4].innerHTML);
                     $('#inRelAddr').val(tds[4].innerHTML);
                     $('#inCss').val(tds[6].innerHTML);
-                    //$('#inJs').val(tds[8].innerHTML);
                     $('#inDefault').val(tds[7].innerHTML);
                     $('#inIndex').val(tds[8].innerHTML);
                     $('#inUpBy').val(tds[9].innerHTML);
@@ -255,9 +245,9 @@ $resultMessage = $alertMsg->createMarkup();
 
                     $('#siteDialog').dialog( "option", "title", "Edit Web Site: " +tds[1].innerHTML);
                     $('#siteDialog').dialog( 'open' );
-        });
+                });
 
-    }); // end of doc load
+            }); // end of doc load
         </script>
         <style>
             #divSubmitButtons {

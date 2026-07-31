@@ -9,6 +9,7 @@ use HHK\Tables\EditRS;
 use HHK\Tables\Donate\CampaignRS;
 use HHK\sec\WebInit;
 use HHK\HTMLControls\selCtrl;
+use HHK\Vite\Vite;
 
 /**
  * campaignEdit.php
@@ -218,43 +219,36 @@ $selType->set_value(TRUE, $campaign->get_type());
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
         <title><?php echo $pageTitle; ?></title>
-        <?php echo JQ_UI_CSS; ?>
-        <?php echo DEFAULT_CSS; ?>
+        
+        <?php echo Vite::asset('resources/js/admin.js'); ?>
+
         <?php echo FAVICON; ?>
-        <?php echo NOTY_CSS; ?>
         <?php echo GRID_CSS; ?>
         <?php echo NAVBAR_CSS; ?>
 
-        <script type="text/javascript" src="<?php echo JQ_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo JQ_UI_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo BOOTSTRAP_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
-
-        <script type="text/javascript" src="<?php echo NOTY_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo NOTY_SETTINGS_JS; ?>"></script>
-
         <script type="text/javascript">
-    function hidePercent(ctrl) {
-        if (ctrl.val() != 'pct') {
-            // Hide the percent text box
-            $('.hhk-hide-percent').css("display", "none");
-        } else {
-            $('.hhk-hide-percent').css("display", "table-cell");
-        }
-    }
-    $(document).ready(function() {
-        $( ".ckdate" ).datepicker({
-            changeMonth: true,
-            changeYear: true
-        });
-        $('#selType').change( function () {
-            hidePercent($(this));
-        });
-        hidePercent($('#selType'));
-        $('#selCamp').change(function () {
-            window.location = "campaignEdit.php?cp=" + $(this).val();
-        });
-    });
+            function hidePercent(ctrl) {
+                if (ctrl.val() != 'pct') {
+                    // Hide the percent text box
+                    $('.hhk-hide-percent').css("display", "none");
+                } else {
+                    $('.hhk-hide-percent').css("display", "table-cell");
+                }
+            }
+
+            document.addEventListener("DOMContentLoaded", () => {
+                $( ".ckdate" ).datepicker({
+                    changeMonth: true,
+                    changeYear: true
+                });
+                $('#selType').change( function () {
+                    hidePercent($(this));
+                });
+                hidePercent($('#selType'));
+                $('#selCamp').change(function () {
+                    window.location = "campaignEdit.php?cp=" + $(this).val();
+                });
+            });
         </script>
     </head>
     <body <?php if ($testVersion) echo "class='testbody'"; ?>>
@@ -367,7 +361,7 @@ $selType->set_value(TRUE, $campaign->get_type());
                 </form>
             </div>
 
-            <DIV ID="testdiv1" STYLE="position:absolute;visibility:hidden;background-color:white;"></DIV>
+            <div id="testdiv1" style="position:absolute;visibility:hidden;background-color:white;"></DIV>
         </div>
     </body>
 </html>

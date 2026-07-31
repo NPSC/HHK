@@ -2,7 +2,6 @@
 use HHK\Common;
 use HHK\Notification\Mail\HHKMailer;
 use HHK\sec\Login;
-use HHK\Exception\InvalidArgumentException;
 use HHK\Exception\RuntimeException;
 use HHK\sec\UserClass;
 use HHK\House\GLCodes\GLParameters;

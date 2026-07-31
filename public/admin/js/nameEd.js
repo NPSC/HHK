@@ -1,5 +1,4 @@
-// Init j-query.
-$(document).ready(function () {
+document.addEventListener("DOMContentLoaded", () => {
     "use strict";
 
     var memData = $.parseJSON('<?php echo $memDataJSON; ?>');

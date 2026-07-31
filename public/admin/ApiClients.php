@@ -4,6 +4,7 @@ use HHK\Common;
 use HHK\HTMLControls\HTMLSelector;
 use HHK\sec\{Session, WebInit, SecurityComponent};
 use HHK\sec\Labels;
+use HHK\Vite\Vite;
 
 /**
  * APIClients.php
@@ -43,28 +44,15 @@ $availableScopes = Common::readGenLookupsPDO($dbh, "Oauth_Scopes");
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
         <title><?php echo $pageTitle; ?></title>
-        <?php echo JQ_UI_CSS; ?>
+        <?php echo Vite::asset('resources/js/admin.js'); ?>
 
-        <?php echo DEFAULT_CSS; ?>
         <?php echo FAVICON; ?>
-        <?php echo NOTY_CSS; ?>
         <?php echo GRID_CSS; ?>
         <?php echo NAVBAR_CSS; ?>
-        <link href="../css/datatables.min.css" rel="stylesheet">
-
-        <script type="text/javascript" src="<?php echo JQ_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo JQ_UI_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo BOOTSTRAP_JS; ?>"></script>
-        <script src="../js/datatables2.min.js"></script>
-        <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo MOMENT_JS; ?>"></script>
-
-        <script type="text/javascript" src="<?php echo NOTY_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo NOTY_SETTINGS_JS; ?>"></script>
 
         <script type="text/javascript">
 
-    $(document).ready(function() {
+            document.addEventListener('DOMContentLoaded', () => {
 
         let isAdmin = $('#isAdmin').val(),
             dateFormat = $('#dateFormat').val(),

@@ -3,6 +3,7 @@
 use HHK\sec\{Session, WebInit};
 use HHK\HTMLControls\HTMLTable;
 use HHK\ExcelHelper;
+use HHK\Vite\Vite;
 
 
 /**
@@ -215,18 +216,13 @@ order by h.idPsg, na.Address_1, na.Address_2";
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
         <title><?php echo $pageTitle; ?></title>
-        <?php echo JQ_UI_CSS; ?>
-        <?php echo HOUSE_CSS; ?>
-        <?php echo GRID_CSS; ?>
-        <?php echo NOTY_CSS; ?>
-        <?php echo NAVBAR_CSS; ?>
 
+        <?php echo Vite::asset('resources/js/house.js'); ?>
+        
+        <?php echo GRID_CSS; ?>
+        <?php echo NAVBAR_CSS; ?>
         <?php echo FAVICON; ?>
-        <script type="text/javascript" src="<?php echo JQ_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo JQ_UI_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo NOTY_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo NOTY_SETTINGS_JS; ?>"></script>
+
     </head>
     <body <?php if ($testVersion) echo "class='testbody'"; ?> >
             <?php echo $menuMarkup; ?>

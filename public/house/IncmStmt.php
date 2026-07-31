@@ -2,7 +2,6 @@
 
 use HHK\House\Report\ReportFilter;
 use HHK\Payment\PaymentGateway\Deluxe\DeluxeGateway;
-use HHK\Payment\PaymentResult\PaymentResult;
 use HHK\sec\WebInit;
 use HHK\sec\Session;
 use HHK\SysConst\Mode;
@@ -16,6 +15,7 @@ use HHK\Payment\PaymentSvcs;
 use HHK\Payment\PaymentGateway\AbstractPaymentGateway;
 use HHK\sec\Labels;
 use HHK\SysConst\RoomRateCategories;
+use HHK\Vite\Vite;
 
 
 /**
@@ -439,35 +439,22 @@ $glBa = $tbl->generateMarkup(array('style'=>'float:left;margin-right:1.5em;'));
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
         <title><?php echo $wInit->pageTitle; ?></title>
-        <?php echo JQ_UI_CSS; ?>
-        <?php echo HOUSE_CSS; ?>
-        <?php echo JQ_DT_CSS ?>
-        <?php echo NOTY_CSS; ?>
+
+		<?php echo Vite::asset('resources/js/house.js'); ?>
+		
         <?php echo FAVICON; ?>
         <?php echo GRID_CSS; ?>
         <?php echo NAVBAR_CSS; ?>
 		<?php echo CSSVARS; ?>
 
-        <script type="text/javascript" src="<?php echo JQ_JS ?>"></script>
-        <script type="text/javascript" src="<?php echo JQ_UI_JS ?>"></script>
-        <script type="text/javascript" src="<?php echo MOMENT_JS ?>"></script>
-        <script type="text/javascript" src="<?php echo JQ_DT_JS ?>"></script>
-        <script type="text/javascript" src="<?php echo PRINT_AREA_JS ?>"></script>
-        <script type="text/javascript" src="<?php echo RESV_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo CREATE_AUTO_COMPLETE_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo VISIT_DIALOG_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo RESV_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo PAYMENT_JS; ?>"></script>
-		<script type="text/javascript" src="<?php echo BUFFER_JS; ?>"></script>
-		<script type="text/javascript" src="<?php echo HTMLENTITIES_JS; ?>"></script>
-		<script type="text/javascript" src="<?php echo DOMPURIFY_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo NOTES_VIEWER_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo PRINT_AREA_JS ?>" defer></script>
+        <script type="text/javascript" src="<?php echo RESV_JS; ?>" defer></script>
+        <script type="text/javascript" src="<?php echo CREATE_AUTO_COMPLETE_JS; ?>" defer></script>
+        <script type="text/javascript" src="<?php echo VISIT_DIALOG_JS; ?>" defer></script>
+        <script type="text/javascript" src="<?php echo RESV_JS; ?>" defer></script>
+        <script type="text/javascript" src="<?php echo PAYMENT_JS; ?>" defer></script>
+        <script type="text/javascript" src="<?php echo INVOICE_JS; ?>" defer></script>
 
-        <script type="text/javascript" src="<?php echo NOTY_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo NOTY_SETTINGS_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo INVOICE_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo BOOTSTRAP_JS; ?>"></script>
         <?php if ($uS->PaymentGateway == AbstractPaymentGateway::INSTAMED) {echo INS_EMBED_JS;} ?>
 		<?php 
             if ($uS->PaymentGateway == AbstractPaymentGateway::DELUXE) {
@@ -479,131 +466,131 @@ $glBa = $tbl->generateMarkup(array('style'=>'float:left;margin-right:1.5em;'));
             }
         ?>
 
-<script type="text/javascript">
-function displayVids(vids) {
+		<script type="text/javascript">
+			function displayVids(vids) {
 
-	var select = $("<select size='3'></select>");
-    var contr = $('<div id="unVids" style="font-size:0.9em;position: absolute; z-index: 1; display: block;" />');
-    contr.addClass('ui-widget ui-widget-content ui-helper-clearfix ui-corner-all');
+				var select = $("<select size='3'></select>");
+				var contr = $('<div id="unVids" style="font-size:0.9em;position: absolute; z-index: 1; display: block;" />');
+				contr.addClass('ui-widget ui-widget-content ui-helper-clearfix ui-corner-all');
 
-	$.each(vids, function (ii, vv) {
-		var vid = parseInt((ii / 100), 10);
-		select.append('<option value=' + ii + '>' + 'Visit Id: ' + vid + ' ' + vv + '</option>');
-	});
+				$.each(vids, function (ii, vv) {
+					var vid = parseInt((ii / 100), 10);
+					select.append('<option value=' + ii + '>' + 'Visit Id: ' + vid + ' ' + vv + '</option>');
+				});
 
-	contr.append(select);
-    $('body').append(contr);
+				contr.append(select);
+				$('body').append(contr);
 
-    select.change(function() {
-		if (select.val() != '') {
-			var vid = parseInt((select.val() / 100), 10);
-			var span = select.val() % 100;
-		    var buttons = {
-		            "Show Statement": function() {
-		                window.open('ShowStatement.php?vid=' + vid, '_blank');
-		            },
-		            "Show Registration Form": function() {
-		                window.open('ShowRegForm.php?vid=' + vid + '&span=' + span, '_blank');
-		            },
-		            "Save": function() {
-		                saveFees(0, vid, span, true, 'IncmStmt.php');
-		            },
-		            "Cancel": function() {
-		                $(this).dialog("close");
-		            }
-		        };
-		        viewVisit(0, vid, buttons, 'Edit Visit #' + vid + '-' + span, '', span);
-		}
-    });
+				select.change(function() {
+					if (select.val() != '') {
+						var vid = parseInt((select.val() / 100), 10);
+						var span = select.val() % 100;
+						var buttons = {
+								"Show Statement": function() {
+									window.open('ShowStatement.php?vid=' + vid, '_blank');
+								},
+								"Show Registration Form": function() {
+									window.open('ShowRegForm.php?vid=' + vid + '&span=' + span, '_blank');
+								},
+								"Save": function() {
+									saveFees(0, vid, span, true, 'IncmStmt.php');
+								},
+								"Cancel": function() {
+									$(this).dialog("close");
+								}
+							};
+							viewVisit(0, vid, buttons, 'Edit Visit #' + vid + '-' + span, '', span);
+					}
+				});
 
-    contr.position({
-        my: 'top',
-        at: 'bottom',
-        of: '#unallocVisits'
-    });
-}
+				contr.position({
+					my: 'top',
+					at: 'bottom',
+					of: '#unallocVisits'
+				});
+			}
 
-var pmtMkup,
-	rctMkup,
-	receiptPaymentId,
-	receiptBilledToEmail,
-	dateFormat,
-	fixedRate;
+			var pmtMkup,
+				rctMkup,
+				receiptPaymentId,
+				receiptBilledToEmail,
+				dateFormat,
+				fixedRate;
 
-    $(document).ready(function() {
+			document.addEventListener("DOMContentLoaded", () => {
 
-        pmtMkup = $('#pmtMkup').val();
-		rctMkup = '<?php echo $receiptMarkup; ?>';
-        receiptPaymentId = '<?php echo $receiptPaymentId; ?>';
-        receiptBilledToEmail = '<?php echo $receiptBilledToEmail; ?>';
+				pmtMkup = $('#pmtMkup').val();
+				rctMkup = '<?php echo $receiptMarkup; ?>';
+				receiptPaymentId = '<?php echo $receiptPaymentId; ?>';
+				receiptBilledToEmail = '<?php echo $receiptBilledToEmail; ?>';
 
-        dateFormat = $('#dateFormat').val();
-        fixedRate = $('#fixedRate').val();
+				dateFormat = $('#dateFormat').val();
+				fixedRate = $('#fixedRate').val();
 
-        if (pmtMkup !== '') {
-            $('#paymentMessage').html(pmtMkup).show("pulsate", {}, 400);
-        }
+				if (pmtMkup !== '') {
+					$('#paymentMessage').html(pmtMkup).show("pulsate", {}, 400);
+				}
 
-        $('#btnHere, #btnGlGo, #btnSaveGlParms, #btnInv').button();
-        $('div#printArea').css('display', 'block');
-        $('#printButton').button().click(function() {
-            $("div#printArea").printArea();
-        });
+				$('#btnHere, #btnGlGo, #btnSaveGlParms, #btnInv').button();
+				$('div#printArea').css('display', 'block');
+				$('#printButton').button().click(function() {
+					$("div#printArea").printArea();
+				});
 
-        $('.hhk-matchlgt').hover(function() {
-			$('.hhk-matchlgt').toggleClass('ui-state-highlight');
-        });
-        $('.hhk-matchinc').hover(function() {
-			$('.hhk-matchinc').toggleClass('ui-state-highlight');
-        });
-        $('.hhk-itempmt').hover(function() {
-			$('.hhk-itempmt').toggleClass('ui-state-highlight');
-        });
-        $('#unallocVisits').click(function() {
+				$('.hhk-matchlgt').hover(function() {
+					$('.hhk-matchlgt').toggleClass('ui-state-highlight');
+				});
+				$('.hhk-matchinc').hover(function() {
+					$('.hhk-matchinc').toggleClass('ui-state-highlight');
+				});
+				$('.hhk-itempmt').hover(function() {
+					$('.hhk-itempmt').toggleClass('ui-state-highlight');
+				});
+				$('#unallocVisits').click(function() {
 
-            $.post('IncmStmt.php', {cmd: 'unallocVisits'}, function(data) {
-                try {
-                    data = $.parseJSON(data);
-                } catch (err) {
-                    alert("Parser error - " + err.message);
-                    return false;
-                }
-                if (data.error) {
-                    if (data.gotopage) {
-                        window.location.assign(data.gotopage);
-                    }
-                    flagAlertMessage(data.error, 'error');
-                    return false;
-                }
-                if (data.vids && data.vids !== '') {
-                    displayVids(data.vids);
-                }
-            });
-        });
+					$.post('IncmStmt.php', {cmd: 'unallocVisits'}, function(data) {
+						try {
+							data = $.parseJSON(data);
+						} catch (err) {
+							alert("Parser error - " + err.message);
+							return false;
+						}
+						if (data.error) {
+							if (data.gotopage) {
+								window.location.assign(data.gotopage);
+							}
+							flagAlertMessage(data.error, 'error');
+							return false;
+						}
+						if (data.vids && data.vids !== '') {
+							displayVids(data.vids);
+						}
+					});
+				});
 
-        $('#keysfees').dialog({
-            autoOpen: false,
-            resizable: true,
-            modal: true
-        });
+				$('#keysfees').dialog({
+					autoOpen: false,
+					resizable: true,
+					modal: true
+				});
 
-        $('#pmtRcpt').dialog({
-            autoOpen: false,
-            resizable: true,
-            width: getDialogWidth(530),
-            modal: true,
-            title: 'Payment Receipt'
-        });
+				$('#pmtRcpt').dialog({
+					autoOpen: false,
+					resizable: true,
+					width: getDialogWidth(530),
+					modal: true,
+					title: 'Payment Receipt'
+				});
 
-        $(document).mousedown(function (event) {
-            var target = $(event.target);
-            if ( target[0].id !== 'unVids' && target.parents("#" + 'unVids').length === 0) {
-                $('div#unVids').remove();
-            }
-        });
+				$(document).mousedown(function (event) {
+					var target = $(event.target);
+					if ( target[0].id !== 'unVids' && target.parents("#" + 'unVids').length === 0) {
+						$('div#unVids').remove();
+					}
+				});
 
-    });
- </script>
+			});
+		</script>
     </head>
     <body <?php if ($wInit->testVersion) echo "class='testbody'"; ?>>
         <?php echo $wInit->generatePageMenu(); ?>

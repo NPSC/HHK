@@ -13,6 +13,7 @@ use HHK\sec\WebInit;
 use HHK\SysConst\RoomRateCategories;
 use HHK\SysConst\VisitStatus;
 use HHK\SysConst\Mode;
+use HHK\Vite\Vite;
 
 
 /**
@@ -191,11 +192,11 @@ $resvManagerOptionsEncoded = json_encode($resvManagerOptions);
         <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
         <title><?php echo $wInit->pageTitle; ?></title>
         <meta http-equiv="x-ua-compatible" content="IE=edge">
-        <?php echo JQ_UI_CSS; ?>
-        <?php echo HOUSE_CSS; ?>
+
+        <?php echo Vite::asset('resources/js/house.js'); ?>
+        
+
         <?php echo DR_PICKER_CSS ?>
-        <?php echo JQ_DT_CSS; ?>
-        <?php echo NOTY_CSS; ?>
         <?php echo MULTISELECT_CSS; ?>
         <?php echo NAVBAR_CSS; ?>
 		<?php echo UPPLOAD_CSS; ?>
@@ -204,42 +205,23 @@ $resvManagerOptionsEncoded = json_encode($resvManagerOptions);
 		<?php echo GRID_CSS; ?>
         <?php echo FAVICON; ?>
         <?php echo CSSVARS; ?>
-        <?php echo BOOTSTRAP_ICONS_CSS; ?>
-        <?php echo BOOTSTRAP_ICONS_CSS; ?>
 
 <!--        Fix the ugly checkboxes-->
         <style>
             .ui-icon-background, .ui-state-active .ui-icon-background {background-color:#fff;}
         </style>
 
-        <script type="text/javascript" src="<?php echo JQ_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo JQ_UI_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo MOMENT_JS ?>"></script>
-        <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo STATE_COUNTRY_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo PRINT_AREA_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo LIBPHONENUMBER_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo ADDR_PREFS_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo MULTISELECT_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo CREATE_AUTO_COMPLETE_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo PAYMENT_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo RESV_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo DR_PICKER_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo VISIT_DIALOG_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo JQ_DT_JS ?>"></script>
-        <script type="text/javascript" src="<?php echo NOTY_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo NOTY_SETTINGS_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo BUFFER_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo BUFFER_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo HTMLENTITIES_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo DOMPURIFY_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo NOTES_VIEWER_JS ?>"></script>
-        <script type="text/javascript" src="<?php echo RESV_MANAGER_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo JSIGNATURE_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo INCIDENT_REP_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo BOOTSTRAP_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo SMS_DIALOG_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo SMS_DIALOG_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo STATE_COUNTRY_JS; ?>" defer></script>
+        <script type="text/javascript" src="<?php echo PRINT_AREA_JS; ?>" defer></script>
+        <script type="text/javascript" src="<?php echo ADDR_PREFS_JS; ?>" defer></script>
+        <script type="text/javascript" src="<?php echo MULTISELECT_JS; ?>" defer></script>
+        <script type="text/javascript" src="<?php echo CREATE_AUTO_COMPLETE_JS; ?>" defer></script>
+        <script type="text/javascript" src="<?php echo PAYMENT_JS; ?>" defer></script>
+        <script type="text/javascript" src="<?php echo RESV_JS; ?>" defer></script>
+        <script type="text/javascript" src="<?php echo DR_PICKER_JS; ?>" defer></script>
+        <script type="text/javascript" src="<?php echo VISIT_DIALOG_JS; ?>" defer></script>
+        <script type="text/javascript" src="<?php echo RESV_MANAGER_JS; ?>" defer></script>
+        <script type="text/javascript" src="<?php echo JSIGNATURE_JS; ?>" defer></script>
         <?php if ($uS->PaymentGateway == AbstractPaymentGateway::INSTAMED) {echo INS_EMBED_JS;} ?>
         <?php
             if ($uS->PaymentGateway == AbstractPaymentGateway::DELUXE) {
@@ -250,15 +232,15 @@ $resvManagerOptionsEncoded = json_encode($resvManagerOptions);
                 }
             }
         ?>
-		<?php if ($uS->UseDocumentUpload) { echo '<script type="text/javascript" src="' . UPPLOAD_JS . '"></script>';
+		<?php if ($uS->UseDocumentUpload) { echo '<script type="text/javascript" src="' . UPPLOAD_JS . '" defer></script>';
         ?>
         	<script>
-        		$(document).ready(function(){
+        		document.addEventListener("DOMContentLoaded", () => {
         			window.uploader = new Upploader.Uppload({lang: Upploader.en});
         		});
         	</script>
         <?php
-            echo '<script type="text/javascript" src="' . DOC_UPLOAD_JS . '"></script>';
+            echo '<script type="text/javascript" src="' . DOC_UPLOAD_JS . '" defer></script>';
         }?>
 
 
@@ -312,7 +294,7 @@ $resvManagerOptionsEncoded = json_encode($resvManagerOptions);
         <input type="hidden" value='<?php echo $resvManagerOptionsEncoded; ?>' id="resvManagerOptions"/>
         <?php if ($uS->PaymentGateway == AbstractPaymentGateway::DELUXE) { echo DeluxeGateway::getIframeMkup(); } ?>
 
-        <script type="text/javascript" src='<?php echo CHECKINGIN_JS; ?>'></script>
+        <script type="text/javascript" src='<?php echo CHECKINGIN_JS; ?>' defer></script>
 
         <form name="xform" id="xform" method="post"><input type="hidden" name="CardID" id="CardID" value=""/></form>
     </body>

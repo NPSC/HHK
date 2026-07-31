@@ -2,6 +2,7 @@
 
 use HHK\sec\{WebInit, UserClass};
 use HHK\Common;
+use HHK\Vite\Vite;
 
 /**
  * AccessLog.php
@@ -41,26 +42,15 @@ if ($stmt->rowCount() > 0) {
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
         <title><?php echo $wInit->pageTitle; ?></title>
-        <?php echo JQ_UI_CSS; ?>
-        <?php echo DEFAULT_CSS; ?>
-        <?php echo NOTY_CSS; ?>
+        <?php echo Vite::asset('resources/js/admin.js'); ?>
+
         <?php echo GRID_CSS; ?>
-        <?php echo JQ_DT_CSS; ?>
         <?php echo MULTISELECT_CSS; ?>
         <?php echo FAVICON; ?>
         <?php echo NAVBAR_CSS; ?>
 
-        <script type="text/javascript" src="<?php echo JQ_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo JQ_UI_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo BOOTSTRAP_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo MOMENT_JS ?>"></script>
-        <script type="text/javascript" src="<?php echo NOTY_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo NOTY_SETTINGS_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
-
-        <script type="text/javascript" src="<?php echo JQ_DT_JS ?>"></script>
-        <script type="text/javascript" src="<?php echo MULTISELECT_JS; ?>"></script>
-        <script type="text/javascript" src="js/accessLog.js"></script>
+        <script type="text/javascript" src="<?php echo MULTISELECT_JS; ?>" defer></script>
+        <script type="text/javascript" src="js/accessLog.js" defer></script>
     </head>
     <body <?php if ($wInit->testVersion) {echo "class='testbody'";} ?>>
 <?php echo $menuMarkup; ?>

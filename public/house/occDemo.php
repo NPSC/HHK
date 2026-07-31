@@ -6,6 +6,7 @@ use HHK\sec\{Session, WebInit};
 use HHK\House\Report\ReportFilter;
 use HHK\House\Report\GuestDemogReport;
 use HHK\sec\Labels;
+use HHK\Vite\Vite;
 
 /**
  * occDemo.php
@@ -155,103 +156,97 @@ $diagnosisMarkup = $filter->diagnosisMarkup()->generateMarkup();
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
         <title><?php echo $pageTitle; ?></title>
-        <?php echo JQ_UI_CSS; ?>
-        <?php echo HOUSE_CSS; ?>
-        <?php echo NOTY_CSS; ?>
+
+        <?php echo Vite::asset('resources/js/house.js'); ?>
+        
+        <?php echo FAVICON; ?>
+        <?php echo GRID_CSS; ?>
         <?php echo NAVBAR_CSS; ?>
         <?php echo CSSVARS; ?>
+
         <style>
             .hhk-tdTitle {
                 background-color: #F2F2F2;
             }
         </style>
-        <?php echo FAVICON; ?>
-        <?php echo GRID_CSS; ?>
 
-        <script type="text/javascript" src="<?php echo JQ_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo JQ_UI_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo PRINT_AREA_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo PRINT_AREA_JS; ?>" defer></script>
 
-        <script type="text/javascript" src="<?php echo NOTY_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo NOTY_SETTINGS_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo BOOTSTRAP_JS; ?>"></script>
         <script type="text/javascript">
-    // Init jQuery and the page blocker.
-    $(document).ready(function() {
-        $('#btnSmt, #btnCkZip').button();
-        $('#btnCkZip').click(function() {
-            var zipf = $('#txtZipFrom').val();
-            if (!zipf || zipf.length !== 5) {
-                return;
-            }
-            var zipt = $('#txtZipTo').val();
-            if (!zipt || zipt.length !== 5) {
-                return;
-            }
-            $.post('../admin/ws_gen.php', {cmd: 'zipd', 'zipf': zipf, 'zipt': zipt},
-            function(data) {
-                try {
-                    data = $.parseJSON(data);
-                } catch (err) {
-                    alert('Bad JSON Encoding');
-                    return;
-                }
-                if (data.error) {
-                    $('#zipDistAnswer').text('Zip Code not found.').closest('tr').show();
-                    return;
-                } else if (data.success) {
-                    $('#zipDistAnswer').text(data.success + ' nautical miles').closest('tr').show();
-                }
-            });
-        });
-
-        // disappear the pop-up nameDetails.
-        $(document).mousedown(function (event) {
-            var target = $(event.target);
-            if ($('div#nameDetails').length > 0 && target[0].id !== 'nameDetails' && target.parents("#" + 'nameDetails').length === 0) {
-                $('div#nameDetails').remove();
-            }
-        });
-
-        $('.getNameDetails').click(function(){
-            var detailsbtn = $(this);
-            let idNames = $(this).data('idnames');
-            let title = $(this).data('title');
-            $.ajax({
-                url: 'ws_resc.php',
-                method: 'post',
-                data: {
-                    cmd: "getNameDetails",
-                    idNames: idNames,
-                    title: title
-                },
-                dataType: "json",
-                success: function(data){
-                    if (data.error) {
-                        if (data.gotopage) {
-                            window.location.assign(data.gotopage);
-                        }
-                        flagAlertMessage(data.error, 'error');
+            document.addEventListener("DOMContentLoaded", () => {
+                $('#btnSmt, #btnCkZip').button();
+                $('#btnCkZip').click(function() {
+                    var zipf = $('#txtZipFrom').val();
+                    if (!zipf || zipf.length !== 5) {
                         return;
                     }
-                    if(data.resultMkup){
-                        var contr = $(data.resultMkup).addClass('nameDetails');
-
-                        $('body').append(contr);
-                        contr.position({
-                            my: 'left top',
-                            at: 'left bottom',
-                            of: detailsbtn
-                        });
+                    var zipt = $('#txtZipTo').val();
+                    if (!zipt || zipt.length !== 5) {
+                        return;
                     }
-                }
+                    $.post('../admin/ws_gen.php', {cmd: 'zipd', 'zipf': zipf, 'zipt': zipt},
+                    function(data) {
+                        try {
+                            data = $.parseJSON(data);
+                        } catch (err) {
+                            alert('Bad JSON Encoding');
+                            return;
+                        }
+                        if (data.error) {
+                            $('#zipDistAnswer').text('Zip Code not found.').closest('tr').show();
+                            return;
+                        } else if (data.success) {
+                            $('#zipDistAnswer').text(data.success + ' nautical miles').closest('tr').show();
+                        }
+                    });
+                });
 
+                // disappear the pop-up nameDetails.
+                $(document).mousedown(function (event) {
+                    var target = $(event.target);
+                    if ($('div#nameDetails').length > 0 && target[0].id !== 'nameDetails' && target.parents("#" + 'nameDetails').length === 0) {
+                        $('div#nameDetails').remove();
+                    }
+                });
+
+                $('.getNameDetails').click(function(){
+                    var detailsbtn = $(this);
+                    let idNames = $(this).data('idnames');
+                    let title = $(this).data('title');
+                    $.ajax({
+                        url: 'ws_resc.php',
+                        method: 'post',
+                        data: {
+                            cmd: "getNameDetails",
+                            idNames: idNames,
+                            title: title
+                        },
+                        dataType: "json",
+                        success: function(data){
+                            if (data.error) {
+                                if (data.gotopage) {
+                                    window.location.assign(data.gotopage);
+                                }
+                                flagAlertMessage(data.error, 'error');
+                                return;
+                            }
+                            if(data.resultMkup){
+                                var contr = $(data.resultMkup).addClass('nameDetails');
+
+                                $('body').append(contr);
+                                contr.position({
+                                    my: 'left top',
+                                    at: 'left bottom',
+                                    of: detailsbtn
+                                });
+                            }
+                        }
+
+                    });
+                });
+
+                <?php echo $filter->getTimePeriodScript(); ?>;
             });
-        });
-
-        <?php echo $filter->getTimePeriodScript(); ?>;
-    });
         </script>
     </head>
     <body <?php if ($testVersion) echo "class='testbody'"; ?> >

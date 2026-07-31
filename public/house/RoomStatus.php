@@ -7,6 +7,7 @@ use HHK\House\ResourceView;
 use HHK\SysConst\RoomState;
 use HHK\House\Room\Room;
 use HHK\sec\Labels;
+use HHK\Vite\Vite;
 
 /**
  * RoomStatus.php
@@ -170,14 +171,12 @@ if (isset($rescGroups[$uS->CalResourceGroupBy])) {
         <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
         <meta name="mobile-web-app-capable" content="yes">
         <meta name="theme-color" content="#5c9ccc">
-        
         <title><?php echo $pageTitle; ?></title>
 
-        <?php echo JQ_UI_CSS; ?>
+        <?php echo Vite::asset('resources/js/house.js'); ?>
+
         <?php echo FAVICON; ?>
-        <?php echo HOUSE_CSS; ?>
         <?php echo GRID_CSS; ?>
-        <?php echo NOTY_CSS; ?>
         <?php echo NAVBAR_CSS; ?>
         <?php echo CSSVARS; ?>
 
@@ -186,23 +185,8 @@ if (isset($rescGroups[$uS->CalResourceGroupBy])) {
             @page { margin: 1cm; }
         </style>
 
-        <?php echo JQ_DT_CSS ?>
-
-        <script type="text/javascript" src="<?php echo JQ_JS ?>"></script>
-        <script type="text/javascript" src="<?php echo JQ_UI_JS ?>"></script>
-        <script type="text/javascript" src="<?php echo JQ_DT_JS ?>"></script>
-        <script type="text/javascript" src="<?php echo PRINT_AREA_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo MOMENT_JS ?>"></script>
-        <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
-
-        <script type="text/javascript" src="<?php echo NOTY_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo NOTY_SETTINGS_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo BOOTSTRAP_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo HTMLENTITIES_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo DOMPURIFY_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo NOTES_VIEWER_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo BUFFER_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo HOUSEKEEPING_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo PRINT_AREA_JS; ?>" defer></script>
+        <script type="text/javascript" src="<?php echo HOUSEKEEPING_JS; ?>" defer></script>
 
         <script type="text/javascript">
             window.labels = {

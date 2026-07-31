@@ -9,5 +9,8 @@ window.logoutTimer = logoutTimer;
 window.getDialogWidth = getDialogWidth;
 window.hhkReportError = hhkReportError;
 
-//notesViewer.js - attaches $.fn.notesViewer as a side effect, no exports needed
+//notesViewer.js - attaches $.fn.notesViewer
 import './common/notesViewer.js';
+
+//smsDialog.js - attaches $.fn.smsDialog
+import './common/smsDialog.js';

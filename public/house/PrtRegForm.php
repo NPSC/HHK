@@ -5,6 +5,7 @@ use HHK\HTMLControls\{HTMLContainer, HTMLInput};
 use HHK\SysConst\WebPageCode;
 use HHK\SysConst\ReservationStatus;
 use HHK\House\Reservation\ReservationSvcs;
+use HHK\Vite\Vite;
 
 /**
  * PrtRegForm.php
@@ -70,23 +71,21 @@ if ($checkinDate == '') {
     <head>
         <meta charset="UTF-8">
         <title><?php echo $pageTitle; ?></title>
-        <?php echo JQ_UI_CSS; ?>
-        <?php echo HOUSE_CSS; ?>
+
+        <?php echo Vite::asset('resources/js/house.js'); ?>
+        
         <?php echo FAVICON; ?>
         <?php echo GRID_CSS; ?>
         <?php echo CSSVARS; ?>
         
         <?php echo $sty; ?>
-        <script type="text/javascript" src="<?php echo JQ_JS ?>"></script>
-        <script type="text/javascript" src="<?php echo JQ_UI_JS ?>"></script>
-        <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
 
         <script type="text/javascript">
-    $(document).ready(function () {
-    "use strict";
-    $('#btnPrintRegForm').button();
-    $('.ckdate').datepicker();
-     });
+            document.addEventListener("DOMContentLoaded", () => {
+                "use strict";
+                $('#btnPrintRegForm').button();
+                $('.ckdate').datepicker();
+            });
         </script>
     </head>
     <body>

@@ -12,6 +12,7 @@ use HHK\Tables\GenLookupsRS;
 use HHK\Tables\EditRS;
 use HHK\TableLog\HouseLog;
 use HHK\sec\Labels;
+use HHK\Vite\Vite;
 
 /**
  * ResourceBuilder.php
@@ -249,77 +250,70 @@ $selLookups = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($lkups, '
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
         <title><?php echo $wInit->pageTitle; ?></title>
-        <?php echo JQ_UI_CSS; ?>
-        <?php echo HOUSE_CSS; ?>
+
+        <?php echo Vite::asset('resources/js/house.js'); ?>
+        
         <?php echo FAVICON; ?>
         <?php echo GRID_CSS; ?>
-        <?php echo NOTY_CSS; ?>
-        <?php echo NAVBAR_CSS; ?>
 
-        <script type="text/javascript" src="<?php echo JQ_JS ?>"></script>
-        <script type="text/javascript" src="<?php echo JQ_UI_JS ?>"></script>
-        <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo NOTY_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo NOTY_SETTINGS_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo BOOTSTRAP_JS; ?>"></script>
         <script type="text/javascript">
-    $(document).ready(function () {
-        "use strict";
+            document.addEventListener("DOMContentLoaded", () => {
+                "use strict";
 
-        $('#selLookup').change(function () {
-            var table = $(this).find("option:selected").text(),
-                type = $(this).val();
+                $('#selLookup').change(function () {
+                    var table = $(this).find("option:selected").text(),
+                        type = $(this).val();
 
-            $('#saveMsg').hide();
-            $('#divlk').empty().text('Loading...');
-            $.post('DiagnosisBuilder.php', {table: table, cmd: "load", tp: type},
-                function (data) {
-                    $('#divlk').empty();
-                    if (data) {
-                        $('#divlk').append(data);
-                    }
+                    $('#saveMsg').hide();
+                    $('#divlk').empty().text('Loading...');
+                    $.post('DiagnosisBuilder.php', {table: table, cmd: "load", tp: type},
+                        function (data) {
+                            $('#divlk').empty();
+                            if (data) {
+                                $('#divlk').append(data);
+                            }
+                        });
                 });
-        });
 
-        $('#btnlkSave').click(function () {
+                $('#btnlkSave').click(function () {
 
-            var sel = $('#selLookup');
-            var table = sel.find('option:selected').text(),
-                type = $('#selLookup').val(),
-                $btn = $(this);
+                    var sel = $('#selLookup');
+                    var table = sel.find('option:selected').text(),
+                        type = $('#selLookup').val(),
+                        $btn = $(this);
 
-            $('#saveMsg').hide();
+                    $('#saveMsg').hide();
 
-            if ($btn.val() === 'Saving...') {
-                return;
-            }
-
-            $btn.val('Saving...');
-
-            $.post('DiagnosisBuilder.php', $('#formlk').serialize() + '&cmd=save' + '&table=' + table + '&tp=' + type,
-                function(data) {
-                    $btn.val('Save');
-                    $('#divlk').empty();
-                    if (data) {
-                        $('#divlk').append(data);
-                        $('#saveMsg').text(table + ' saved').show();
+                    if ($btn.val() === 'Saving...') {
+                        return;
                     }
-                });
-        }).button();
 
-        // Add diagnosis and locations
-        if ($('#btnAddDiags').length > 0) {
-            $('#btnAddDiags').button();
-        }
-        if ($('#btnAddLocs').length > 0) {
-            $('#btnAddLocs').button();
-        }
+                    $btn.val('Saving...');
 
-    });
+                    $.post('DiagnosisBuilder.php', $('#formlk').serialize() + '&cmd=save' + '&table=' + table + '&tp=' + type,
+                        function(data) {
+                            $btn.val('Save');
+                            $('#divlk').empty();
+                            if (data) {
+                                $('#divlk').append(data);
+                                $('#saveMsg').text(table + ' saved').show();
+                            }
+                        });
+                }).button();
+
+                // Add diagnosis and locations
+                if ($('#btnAddDiags').length > 0) {
+                    $('#btnAddDiags').button();
+                }
+                if ($('#btnAddLocs').length > 0) {
+                    $('#btnAddLocs').button();
+                }
+
+            });
         </script>
     </head>
     <body <?php if ($wInit->testVersion) {echo "class='testbody'";} ?>>
-<?php echo $menuMarkup; ?>
+        <?php echo $menuMarkup; ?>
         <div id="contentDiv">
             <div style="float:left; margin-right: 100px; margin-top:10px;">
                 <h1><?php echo $wInit->pageHeading; ?></h1>

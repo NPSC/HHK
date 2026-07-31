@@ -41,6 +41,7 @@ use HHK\SysConst\VisitStatus;
 use HHK\SysConst\VolMemberType;
 use HHK\Tables\EditRS;
 use HHK\Tables\Reservation\ReservationRS;
+use HHK\Vite\Vite;
 
 /**
  * GuestEdit.php
@@ -734,59 +735,42 @@ $uS->guestId = $id;
         <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
         <title><?php echo $wInit->pageTitle; ?></title>
         <meta http-equiv="x-ua-compatible" content="IE=edge">
-        <?php echo JQ_UI_CSS; ?>
+        <?php echo Vite::asset('resources/js/house.js'); ?>
+        
         <?php echo MULTISELECT_CSS; ?>
-        <?php echo HOUSE_CSS; ?>
-        <?php echo JQ_DT_CSS; ?>
-        <?php echo NOTY_CSS; ?>
         <?php echo INCIDENT_CSS; ?>
         <?php echo UPPLOAD_CSS; ?>
         <?php echo FAVICON; ?>
         <?php echo GRID_CSS; ?>
         <?php echo NAVBAR_CSS; ?>
-        <?php echo BOOTSTRAP_ICONS_CSS; ?>
         <?php echo CSSVARS; ?>
         <?php echo STATEMENT_CSS; ?>
 
-        <script type="text/javascript" src="<?php echo JQ_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo BOOTSTRAP_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo JQ_UI_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo MOMENT_JS ?>"></script>
-        <script type="text/javascript" src="<?php echo JQ_DT_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo PRINT_AREA_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo STATE_COUNTRY_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo CREATE_AUTO_COMPLETE_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo ADDR_PREFS_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo MULTISELECT_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo INVOICE_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo PAYMENT_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo RESV_JS; ?>"></script>
-		<script type="text/javascript" src="<?php echo RESV_MANAGER_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo BUFFER_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo HTMLENTITIES_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo DOMPURIFY_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo NOTES_VIEWER_JS ?>"></script>
-        <script type="text/javascript" src="<?php echo NOTY_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo NOTY_SETTINGS_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo VISIT_DIALOG_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo DIRRTY_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo JSIGNATURE_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo INCIDENT_REP_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo SMS_DIALOG_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo LIBPHONENUMBER_JS; ?>"></script>
-        <script type="text/javascript" src="js/statement.js"></script>
+
+        <script type="text/javascript" src="<?php echo PRINT_AREA_JS; ?>" defer></script>
+        <script type="text/javascript" src="<?php echo STATE_COUNTRY_JS; ?>" defer></script>
+        <script type="text/javascript" src="<?php echo CREATE_AUTO_COMPLETE_JS; ?>" defer></script>
+        <script type="text/javascript" src="<?php echo ADDR_PREFS_JS; ?>" defer></script>
+        <script type="text/javascript" src="<?php echo MULTISELECT_JS; ?>" defer></script>
+        <script type="text/javascript" src="<?php echo INVOICE_JS; ?>" defer></script>
+        <script type="text/javascript" src="<?php echo PAYMENT_JS; ?>" defer></script>
+        <script type="text/javascript" src="<?php echo RESV_JS; ?>" defer></script>
+		<script type="text/javascript" src="<?php echo RESV_MANAGER_JS; ?>" defer></script>
+        <script type="text/javascript" src="<?php echo VISIT_DIALOG_JS; ?>" defer></script>
+        <script type="text/javascript" src="<?php echo DIRRTY_JS; ?>" defer></script>
+        <script type="text/javascript" src="<?php echo JSIGNATURE_JS; ?>" defer></script>
+        <script type="text/javascript" src="js/statement.js" defer></script>
 
         <?php if ($uS->UseDocumentUpload || $uS->ShowGuestPhoto) {
-            echo '<script type="text/javascript" src="' . UPPLOAD_JS . '"></script>';
+            echo '<script type="text/javascript" src="' . UPPLOAD_JS . '" defer></script>';
         ?>
         	<script>
-        		$(document).ready(function(){
+        		document.addEventListener('DOMContentLoaded', () => {
         			window.uploader = new Upploader.Uppload({lang: Upploader.en});
         		});
         	</script>
         <?php
-            echo '<script type="text/javascript" src="' . DOC_UPLOAD_JS . '"></script>';
+            echo '<script type="text/javascript" src="' . DOC_UPLOAD_JS . '" defer></script>';
         }
 
         if ($uS->PaymentGateway == AbstractPaymentGateway::INSTAMED) {echo INS_EMBED_JS;} ?>
@@ -1041,7 +1025,7 @@ $uS->guestId = $id;
             var showGuestPhoto = '<?php echo $uS->ShowGuestPhoto; ?>';
             var useDocUpload = '<?php echo $uS->UseDocumentUpload; ?>';
         </script>
-        <script type="text/javascript" src="<?php echo GUESTLOAD_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo GUESTLOAD_JS; ?>" defer></script>
     </body>
 </html>
 

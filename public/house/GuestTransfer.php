@@ -1,14 +1,12 @@
 <?php
 use HHK\Common;
 use HHK\CrmExport\Neon\NeonManager;
-use HHK\CrmExport\Salesforce\SalesforceManager;
 use HHK\House\Report\ReportFilter;
 use HHK\sec\SecurityComponent;
 use HHK\SysConst\WebPageCode;
 use HHK\SysConst\MemStatus;
 use HHK\sec\WebInit;
 use HHK\sec\Session;
-
 use HHK\HTMLControls\HTMLContainer;
 use HHK\CreateMarkupFromDB;
 use HHK\HTMLControls\HTMLTable;
@@ -18,6 +16,7 @@ use HHK\sec\Labels;
 use HHK\CrmExport\RelationshipMapper;
 use HHK\CrmExport\AbstractExportManager;
 use HHK\CrmExport\ExportManagerInterface;
+use HHK\Vite\Vite;
 
 /**
  * GuestTransfer.php
@@ -563,30 +562,23 @@ $btnGetRecords = HTMLInput::generateMarkup('Get HHK ' . Labels::getString('membe
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
         <title><?php echo $pageTitle; ?></title>
+
+        <?php echo Vite::asset('resources/js/house.js'); ?>
+        
         <?php echo FAVICON; ?>
-        <?php echo JQ_UI_CSS; ?>
-        <?php echo JQ_DT_CSS; ?>
-        <?php echo HOUSE_CSS; ?>
-        <?php echo NOTY_CSS; ?>
         <?php echo GRID_CSS; ?>
         <?php echo NAVBAR_CSS; ?>
+
         <style>
             #aLoginLink:hover {background-color: #337a8e; }
         </style>
-        <script type="text/javascript" src="<?php echo JQ_JS ?>"></script>
-        <script type="text/javascript" src="<?php echo JQ_UI_JS ?>"></script>
-        <script type="text/javascript" src="<?php echo JQ_DT_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo MOMENT_JS ?>"></script>
-        <script type="text/javascript" src="<?php echo CREATE_AUTO_COMPLETE_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo PRINT_AREA_JS ?>"></script>
-        <script type="text/javascript" src="<?php echo NOTY_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo NOTY_SETTINGS_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo GUESTTRANSFER_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo BOOTSTRAP_JS; ?>"></script>
+
+        <script type="text/javascript" src="<?php echo CREATE_AUTO_COMPLETE_JS; ?>" defer></script>
+        <script type="text/javascript" src="<?php echo PRINT_AREA_JS ?>" defer></script>
+        <script type="text/javascript" src="<?php echo GUESTTRANSFER_JS; ?> defer"></script>
 
         <script stype="text/javascript">
-            $(document).ready(function(){
+            document.addEventListener("DOMContentLoaded", () => {
                 <?php echo $filter->getTimePeriodScript(); ?>
             });
         </script>

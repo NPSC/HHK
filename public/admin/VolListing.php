@@ -2,6 +2,7 @@
 
 use HHK\sec\{Session, UserClass, WebInit, SecurityComponent};
 use HHK\sec\Labels;
+use HHK\Vite\Vite;
 
 /**
  * VolListing.php
@@ -129,111 +130,99 @@ if (count($rows) > 0) {
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
         <title><?php echo $pageTitle; ?></title>
-        <?php echo JQ_UI_CSS; ?>
 
-        <?php echo DEFAULT_CSS; ?>
+        <?php echo Vite::asset('resources/js/admin.js'); ?>
+        
         <?php echo FAVICON; ?>
-        <?php echo NOTY_CSS; ?>
         <?php echo GRID_CSS; ?>
         <?php echo NAVBAR_CSS; ?>
-        <link href="../css/datatables.min.css" rel="stylesheet">
-
-        <script type="text/javascript" src="<?php echo JQ_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo JQ_UI_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo BOOTSTRAP_JS; ?>"></script>
-        <script src="../js/datatables2.min.js"></script>
-        <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo MOMENT_JS; ?>"></script>
-
-        <script type="text/javascript" src="<?php echo NOTY_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo NOTY_SETTINGS_JS; ?>"></script>
 
         <script type="text/javascript">
 
-    $(document).ready(function() {
+            document.addEventListener("DOMContentLoaded", () => {
 
-        let isAdmin = $('#isAdmin').val(),
-            dateFormat = $('#dateFormat').val(),
-            dateTimeFormat = $('#dateTimeFormat').val(),
-            wUserCols;
+                let isAdmin = $('#isAdmin').val(),
+                    dateFormat = $('#dateFormat').val(),
+                    dateTimeFormat = $('#dateTimeFormat').val(),
+                    wUserCols;
 
-        wUserCols = [
-            {data: 'Id', title: 'id', sortable: false},
-            {data: 'Name', title: 'Name'},
-            {data: 'Username', title: 'Username'},
-            {data: 'Type', title: 'Type'},
-            {data: 'Status', title: 'Status'},
-            {data: 'Role', title: 'Role'},
-            {data: 'Default Page', title: 'Default Page'},
-            {data: 'Authorization Code', title: 'Authorization Code', sortable: false},
-            {data: 'Last Login', title: 'Last Login', render: function (data, type) {return dateRender(data, type, dateTimeFormat);}},
-            {data: 'Password Changed', title: 'Password Changed', render: function (data, type) {return dateRender(data, type, dateTimeFormat);}},
-            {data: 'Password Expires', title: 'Password Expires', render: function (data, type) {return dateRender(data, type, dateTimeFormat);}},
-            {data: 'Two Factor Enabled', title: 'Two Factor Enabled'},
-            {data: 'Updated By', title: 'Updated By'},
-            {data: 'Last Updated', title: 'Last Updated', render: function (data, type) {return dateRender(data, type, dateFormat);}},
-        ];
+                wUserCols = [
+                    {data: 'Id', title: 'id', sortable: false},
+                    {data: 'Name', title: 'Name'},
+                    {data: 'Username', title: 'Username'},
+                    {data: 'Type', title: 'Type'},
+                    {data: 'Status', title: 'Status'},
+                    {data: 'Role', title: 'Role'},
+                    {data: 'Default Page', title: 'Default Page'},
+                    {data: 'Authorization Code', title: 'Authorization Code', sortable: false},
+                    {data: 'Last Login', title: 'Last Login', render: function (data, type) {return dateRender(data, type, dateTimeFormat);}},
+                    {data: 'Password Changed', title: 'Password Changed', render: function (data, type) {return dateRender(data, type, dateTimeFormat);}},
+                    {data: 'Password Expires', title: 'Password Expires', render: function (data, type) {return dateRender(data, type, dateTimeFormat);}},
+                    {data: 'Two Factor Enabled', title: 'Two Factor Enabled'},
+                    {data: 'Updated By', title: 'Updated By'},
+                    {data: 'Last Updated', title: 'Last Updated', render: function (data, type) {return dateRender(data, type, dateFormat);}},
+                ];
 
-        if (isAdmin) {
-            // Add to beginning of the array
-            wUserCols.unshift( {data: 'x',  title: 'x', sortable:false} );
-        }
-
-
-        $('#dataTbl').dataTable({
-            "displayLength": 25,
-            order: false,
-            "lengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]],
-            columns: wUserCols,
-            layout: {
-                topStart: 'info',
-                bottom: 'paging',
-                bottomStart: null,
-                bottomEnd: null
-            }
-        });
-
-        $('div#vollisting').on('change', 'input.delCkBox', function() {
-            if ($(this).prop('checked')) {
-                var rep = confirm("Delete this record?");
-                if (!rep) {
-                    $(this).prop('checked', false);
-                    return;
+                if (isAdmin) {
+                    // Add to beginning of the array
+                    wUserCols.unshift( {data: 'x',  title: 'x', sortable:false} );
                 }
 
-                var usr = $(this).attr('name');
-                deletewu(usr);
-            }
-        });
-        function deletewu(usr) {
-            $.get("liveNameSearch.php",
-                    {cmd: "delwu", id: usr},
-            function(data) {
-                if (data != null && data != "") {
-                    var names = $.parseJSON(data);
-                    if (names[0])
-                        names = names[0];
 
-                    if (names && names.success) {
-                        // all ok
-                        $('tr.trClass' + usr).css({'display': 'none'});
+                $('#dataTbl').dataTable({
+                    "displayLength": 25,
+                    order: false,
+                    "lengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]],
+                    columns: wUserCols,
+                    layout: {
+                        topStart: 'info',
+                        bottom: 'paging',
+                        bottomStart: null,
+                        bottomEnd: null
                     }
-                    else if (names.error) {
-                        alert("Web Server error: " + names.error);
-                    }
-                    else {
-                        alert("Empty data returned from the web server");
-                    }
-                }
-                else {
-                    alert('Nothing was returned from the web server');
+                });
 
+                $('div#vollisting').on('change', 'input.delCkBox', function() {
+                    if ($(this).prop('checked')) {
+                        var rep = confirm("Delete this record?");
+                        if (!rep) {
+                            $(this).prop('checked', false);
+                            return;
+                        }
+
+                        var usr = $(this).attr('name');
+                        deletewu(usr);
+                    }
+                });
+                function deletewu(usr) {
+                    $.get("liveNameSearch.php",
+                            {cmd: "delwu", id: usr},
+                    function(data) {
+                        if (data != null && data != "") {
+                            var names = $.parseJSON(data);
+                            if (names[0])
+                                names = names[0];
+
+                            if (names && names.success) {
+                                // all ok
+                                $('tr.trClass' + usr).css({'display': 'none'});
+                            }
+                            else if (names.error) {
+                                alert("Web Server error: " + names.error);
+                            }
+                            else {
+                                alert("Empty data returned from the web server");
+                            }
+                        }
+                        else {
+                            alert('Nothing was returned from the web server');
+
+                        }
+                    }
+                    );
                 }
-            }
-            );
-        }
-    });
-</script>
+            });
+        </script>
     </head>
     <body <?php if ($testVersion) echo "class='testbody'"; ?>>
 <?php echo $menuMarkup; ?>

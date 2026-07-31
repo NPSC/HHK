@@ -3,6 +3,7 @@ use HHK\sec\WebInit;
 use HHK\sec\Session;
 use HHK\HTMLControls\HTMLContainer;
 use HHK\sec\Labels;
+use HHK\Vite\Vite;
 
 /**
  * DailyReport.php
@@ -40,74 +41,66 @@ $dailyLog = HTMLContainer::generateMarkup('h3', $uS->siteName . ' Daily Log'
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
         <title><?php echo $wInit->pageTitle; ?></title>
-        <?php echo JQ_UI_CSS; ?>
-        <?php echo HOUSE_CSS; ?>
-        <?php echo JQ_DT_CSS ?>
+
+        <?php echo Vite::asset('resources/js/house.js'); ?>
+        
         <?php echo FAVICON; ?>
         <?php echo GRID_CSS; ?>
-        <?php echo NOTY_CSS; ?>
         <?php echo NAVBAR_CSS; ?>
         <?php echo CSSVARS; ?>
 
-        <script type="text/javascript" src="<?php echo JQ_JS ?>"></script>
-        <script type="text/javascript" src="<?php echo JQ_UI_JS ?>"></script>
-        <script type="text/javascript" src="<?php echo JQ_DT_JS ?>"></script>
-        <script type="text/javascript" src="<?php echo PRINT_AREA_JS ?>"></script>
-        <script type="text/javascript" src="<?php echo MOMENT_JS ?>"></script>
-        <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
 
-        <script type="text/javascript" src="<?php echo NOTY_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo NOTY_SETTINGS_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo BOOTSTRAP_JS; ?>"></script>
-<script type="text/javascript">
-    $(document).ready(function() {
-        var patientLabel = '<?php echo $labels->getString('MemberType', 'patient', 'Patient'); ?>';
-        var dailyCols = [
-            {data: 'titleSort', 'visible': false },
-            {data: 'Title', title: 'Room', 'orderData': [0, 1], sortable: true, searchable:true},
-            {
-            'data': 'Status',
-            'title': 'Status',
-            'searchable': false,
-            'sortable': true,
-            'createdCell': function(td, cellData, rowData, col){
-                if(rowData.StatusColor){
-                    $(td).css("background-color", rowData.StatusColor);
-                }
-            }
+        <script type="text/javascript" src="<?php echo PRINT_AREA_JS ?>" defer></script>
 
-        },
-            {data: 'Guests', title: '<?php echo $labels->getString("MemberType", "visitor", "Guest"); ?>'+'s'},
-            {data: 'Patient_Name', title: patientLabel},
-            {data: 'Unpaid', title: 'Unpaid', className: 'hhk-justify-r'},
-            {data: 'Visit_Notes', title: 'Last Visit Note'},
-            {data: 'Notes', title: 'Room Notes'}
-        ];
+        <script type="text/javascript">
+            document.addEventListener("DOMContentLoaded", () => {
+                var patientLabel = '<?php echo $labels->getString('MemberType', 'patient', 'Patient'); ?>';
+                var dailyCols = [
+                    {data: 'titleSort', 'visible': false },
+                    {data: 'Title', title: 'Room', 'orderData': [0, 1], sortable: true, searchable:true},
+                    {
+                    'data': 'Status',
+                    'title': 'Status',
+                    'searchable': false,
+                    'sortable': true,
+                    'createdCell': function(td, cellData, rowData, col){
+                        if(rowData.StatusColor){
+                            $(td).css("background-color", rowData.StatusColor);
+                        }
+                    }
 
-        $('#btnHere').button();
+                },
+                    {data: 'Guests', title: '<?php echo $labels->getString("MemberType", "visitor", "Guest"); ?>'+'s'},
+                    {data: 'Patient_Name', title: patientLabel},
+                    {data: 'Unpaid', title: 'Unpaid', className: 'hhk-justify-r'},
+                    {data: 'Visit_Notes', title: 'Last Visit Note'},
+                    {data: 'Notes', title: 'Room Notes'}
+                ];
 
-        $('#daily').DataTable({
-            "dom": '<"top"if><\"hhk-overflow-x hhk-tbl-wrap\"rt><"bottom ui-toolbar ui-helper-clearfix"lp>',
-            "displayLength": 50,
-            "lengthMenu": [[25, 50, -1], [25, 50, "All"]],
-            "order": [[ 0, 'asc' ]],
-            "processing": true,
-            "deferRender": true,
-           ajax: {
-               url: 'ws_resc.php?cmd=getHist&tbl=daily',
-               dataSrc: 'daily'
-           },
-           "columns": dailyCols,
-           "infoCallback": function( settings, start, end, max, total, pre ) {
-                return "Prepared: " + dateRender(new Date().toISOString(), 'display', 'ddd, MMM D YYYY, h:mm a');
-            }
-        });
+                $('#btnHere').button();
 
-        $('#printButton').button().click(function() {
-            $("#divdaily").printArea();
-        });
-    });
- </script>
+                $('#daily').DataTable({
+                    "dom": '<"top"if><\"hhk-overflow-x hhk-tbl-wrap\"rt><"bottom ui-toolbar ui-helper-clearfix"lp>',
+                    "displayLength": 50,
+                    "lengthMenu": [[25, 50, -1], [25, 50, "All"]],
+                    "order": [[ 0, 'asc' ]],
+                    "processing": true,
+                    "deferRender": true,
+                    ajax: {
+                        url: 'ws_resc.php?cmd=getHist&tbl=daily',
+                        dataSrc: 'daily'
+                    },
+                    "columns": dailyCols,
+                    "infoCallback": function( settings, start, end, max, total, pre ) {
+                        return "Prepared: " + dateRender(new Date().toISOString(), 'display', 'ddd, MMM D YYYY, h:mm a');
+                    }
+                });
+
+                $('#printButton').button().click(function() {
+                    $("#divdaily").printArea();
+                });
+            });
+        </script>
     </head>
     <body <?php if ($wInit->testVersion) {echo "class='testbody'";} ?>>
         <?php echo $wInit->generatePageMenu(); ?>

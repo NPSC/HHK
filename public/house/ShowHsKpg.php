@@ -6,6 +6,7 @@ use HHK\CreateMarkupFromDB;
 use HHK\House\ResourceView;
 use HHK\SysConst\RoomState;
 use HHK\HTMLControls\HTMLContainer;
+use HHK\Vite\Vite;
 
 /**
  * ShowHsKpg.php
@@ -49,8 +50,9 @@ if(isset($_GET['tbl'])){
     <head>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
         <title><?php echo $pageTitle; ?></title>
-        <?php echo JQ_UI_CSS; ?>
-        <?php echo HOUSE_CSS; ?>
+
+        <?php echo Vite::asset('resources/js/house.js'); ?>
+        
         <?php echo FAVICON; ?>
         <?php echo CSSVARS; ?>
 
@@ -58,10 +60,9 @@ if(isset($_GET['tbl'])){
             body {margin:0; padding:0; line-height: 1.4em; word-spacing:1px; letter-spacing:0.2px; font: 13px Arial, Helvetica,"Lucida Grande", serif; color: #000;}
             div#divBody table {width: 100%};
         </style>
-        <script type="text/javascript" src="<?php echo JQ_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo JQ_UI_JS; ?>"></script>
+
         <script type="text/javascript">
-        	$(document).ready(function(){
+        	document.addEventListener("DOMContentLoaded", () => {
         		window.print();
         	});
         </script>

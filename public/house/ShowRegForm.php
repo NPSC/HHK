@@ -10,6 +10,7 @@ use HHK\House\Reservation\ReservationSvcs;
 use HHK\HTMLControls\HTMLInput;
 use HHK\Document\Document;
 use HHK\House\RegistrationForm\CustomRegisterForm;
+use HHK\Vite\Vite;
 
 
 /**
@@ -258,7 +259,6 @@ $regMessage = HTMLContainer::generateMarkup('div', '', array('id'=>'mesgReg', 's
 
 $contrls = HTMLContainer::generateMarkup('div', $shoRegBtn . $shoStmtBtn . $regMessage, array('class'=>'my-2'));
 
-//unset($reservArray);
 
 ?>
 <!DOCTYPE html>
@@ -267,37 +267,32 @@ $contrls = HTMLContainer::generateMarkup('div', $shoRegBtn . $shoStmtBtn . $regM
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
         <title><?php echo $pageTitle; ?></title>
-        <?php echo JQ_UI_CSS; ?>
-        <?php echo HOUSE_CSS; ?>
+
+        <?php echo Vite::asset('resources/js/house.js'); ?>
+        
         <?php echo FAVICON; ?>
         <?php echo GRID_CSS; ?>
         <?php echo NAVBAR_CSS; ?>
-        <?php echo NOTY_CSS; ?>
         <?php echo CSSVARS; ?>
-        <?php echo BOOTSTRAP_ICONS_CSS; ?>
         <?php echo ($uS->RegForm == 3 ? CUSTOM_REGFORM_CSS : ""); ?>
 
         <style type="text/css" media="print">
             .PrintArea {margin:0; padding:0; font: 12px Arial, Helvetica,"Lucida Grande", serif; color: #000;}
             @page { margin: .5cm; }
         </style>
+
         <?php echo $sty; ?>
-        <script type="text/javascript" src="<?php echo JQ_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo JQ_UI_JS; ?>"></script>
+
         <script type="text/javascript" src="<?php echo PRINT_AREA_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo RESV_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo PAYMENT_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo BOOTSTRAP_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo JSIGNATURE_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo NOTY_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo NOTY_SETTINGS_JS; ?>"></script>
         <?php echo ($isTopazRequired ? '<script type="text/javascript" src="' . TOPAZ_SIGWEB_JS . '"></script>': ''); ?>
         <script type="text/javascript" src="<?php echo REG_FORM_JS; ?>"></script>
 
         <script type='text/javascript'>
 
-            $(document).ready(function(){
+            document.addEventListener("DOMContentLoaded", () => {
                 let idReg = '<?php echo $idRegistration; ?>';
                 let rctMkup = '<?php echo $receiptMarkup; ?>';
                 let receiptBilledToEmail = '<?php echo $receiptBilledToEmail; ?>';

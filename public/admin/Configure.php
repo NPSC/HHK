@@ -9,6 +9,7 @@ use HHK\Update\{SiteConfig, UpdateSite, SiteLog, Patch};
 use HHK\CreateMarkupFromDB;
 use HHK\HTMLControls\{HTMLContainer, HTMLSelector};
 use HHK\CrmExport\AbstractExportManager;
+use HHK\Vite\Vite;
 
 /**
  * Configure.php
@@ -346,31 +347,17 @@ $authIdpList = SAML::getIdpList($dbh, false);
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
         <title><?php echo $wInit->pageTitle; ?></title>
-<?php echo JQ_UI_CSS; ?>
-<?php echo FAVICON; ?>
-<?php echo DEFAULT_CSS; ?>
-<?php echo JQ_DT_CSS; ?>
-<?php echo NOTY_CSS; ?>
-<?php echo GRID_CSS; ?>
-<?php echo BOOTSTRAP_ICONS_CSS; ?>
-<?php echo NAVBAR_CSS; ?>
 
-        <script type="text/javascript" src="<?php echo JQ_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo JQ_UI_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo BOOTSTRAP_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo MOMENT_JS ?>"></script>
-        <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo JQ_DT_JS ?>"></script>
+        <?php echo Vite::asset('resources/js/admin.js'); ?>
+        
+        <?php echo FAVICON; ?>
+        <?php echo GRID_CSS; ?>
+        <?php echo NAVBAR_CSS; ?>
 
-        <script type="text/javascript" src="<?php echo NOTY_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo NOTY_SETTINGS_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo BUFFER_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo CONFIGURE_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo CONFIGURE_JS; ?>" defer></script>
     </head>
-    <body <?php if ($wInit->testVersion) {
-                echo "class='testbody'";
-            } ?>>
-<?php echo $wInit->generatePageMenu(); ?>
+    <body <?php echo ($wInit->testVersion ? "class='testbody'": "") ?>>
+        <?php echo $wInit->generatePageMenu(); ?>
         <div id="contentDiv">
             <h1><?php echo $wInit->pageHeading; ?></h1>
             <div id="tabs" style="display:none;" class="hhk-widget-content">
@@ -384,9 +371,9 @@ $authIdpList = SAML::getIdpList($dbh, false);
                     <li><a href="#loadZip">Load Zip Codes</a></li>
                     <li><a href="#labels">Labels &#38; Prompts</a></li>
                     <li id="liLogs"><a href="#logs">Site Logs</a></li>
-<?php if ($uS->ContactManager != '') {
-    echo '<li id="liService"><a href="#external">' . $CmsManager->getServiceTitle() . '</a></li>';
-} ?>
+                    <?php if ($uS->ContactManager != '') {
+                        echo '<li id="liService"><a href="#external">' . $CmsManager->getServiceTitle() . '</a></li>';
+                    } ?>
                 </ul>
                 <div id="config" class="ui-tabs-hide" >
                     <div style="color:#347201;font-size:1.3em;"><?php echo $confError; ?></div>

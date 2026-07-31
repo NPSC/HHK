@@ -20,6 +20,7 @@ use HHK\ExcelHelper;
 use HHK\sec\Labels;
 use HHK\House\Report\ReportFilter;
 use HHK\TableLog\HouseLog;
+use HHK\Vite\Vite;
 
 require ("homeIncludes.php");
 
@@ -365,58 +366,52 @@ $hospitalMarkup = $filter->hospitalMarkup()->generateMarkup(array('style'=>'disp
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
         <title><?php echo $pageTitle; ?></title>
-        <?php echo JQ_UI_CSS; ?>
-        <?php echo HOUSE_CSS; ?>
+
+        <?php echo Vite::asset('resources/js/house.js'); ?>
+        
         <?php echo FAVICON; ?>
         <?php echo GRID_CSS; ?>
-        <?php echo NOTY_CSS; ?>
         <?php echo NAVBAR_CSS; ?>
         <?php echo CSSVARS; ?>
 
-        <script type="text/javascript" src="<?php echo JQ_JS ?>"></script>
-        <script type="text/javascript" src="<?php echo JQ_UI_JS ?>"></script>
-        <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo PRINT_AREA_JS ?>"></script>
+        <script type="text/javascript" src="<?php echo PRINT_AREA_JS ?>" defer></script>
 
-        <script type="text/javascript" src="<?php echo NOTY_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo NOTY_SETTINGS_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo BOOTSTRAP_JS; ?>"></script>
 
-<script type="text/javascript">
-    $(document).ready(function() {
-        var makeTable = '<?php echo $mkTable; ?>';
+        <script type="text/javascript">
+            document.addEventListener("DOMContentLoaded", () => {
+                var makeTable = '<?php echo $mkTable; ?>';
 
-        $('#btnHere, #btnExcel').button();
+                $('#btnHere, #btnExcel').button();
 
-        if (makeTable === '1') {
-            $('div#printArea').show();
-            $('#divPrintButton').show();
+                if (makeTable === '1') {
+                    $('div#printArea').show();
+                    $('#divPrintButton').show();
 
-            $('#printButton').button().click(function() {
-                $("div#printArea").printArea();
+                    $('#printButton').button().click(function() {
+                        $("div#printArea").printArea();
+                    });
+
+                }
+
+                $('#cbBlanksOnly').click(function () {
+                    if ($(this).prop('checked') === true) {
+                        $('#btnExcel').hide();
+
+                    } else {
+                        $('#btnExcel').show();
+
+                    }
+                });
+
+                if ($('#cbBlanksOnly').prop('checked') === true) {
+                    $('#btnExcel').hide();
+                } else {
+                    $('#btnExcel').show();
+                }
+
+                <?php echo $filter->getTimePeriodScript(); ?>
             });
-
-        }
-
-        $('#cbBlanksOnly').click(function () {
-            if ($(this).prop('checked') === true) {
-                $('#btnExcel').hide();
-
-            } else {
-                $('#btnExcel').show();
-
-            }
-        });
-
-        if ($('#cbBlanksOnly').prop('checked') === true) {
-            $('#btnExcel').hide();
-        } else {
-            $('#btnExcel').show();
-        }
-
-        <?php echo $filter->getTimePeriodScript(); ?>
-    });
- </script>
+        </script>
     </head>
     <body <?php if ($wInit->testVersion) { echo "class='testbody'";} ?>>
         <?php echo $menuMarkup; ?>

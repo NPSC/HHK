@@ -1,13 +1,12 @@
 <?php
 
-use HHK\AlertControl\AlertMessage;
 use HHK\Common;
 use HHK\sec\{Session, WebInit};
-use HHK\SysConst\GLTableNames;
 use HHK\House\Report\RoomReport;
 use HHK\HTMLControls\HTMLSelector;
 use HHK\sec\Labels;
 use HHK\House\Report\ReportFilter;
+use HHK\Vite\Vite;
 
 /**
  * RoomUtilization.php
@@ -121,47 +120,37 @@ $roomGrouping = HTMLSelector::generateMarkup(
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
         <title><?php echo $pageTitle; ?></title>
-        <?php echo JQ_UI_CSS; ?>
-        <?php echo HOUSE_CSS; ?>
-        <?php echo JQ_DT_CSS ?>
+
+        <?php echo Vite::asset('resources/js/house.js'); ?>
+        
         <?php echo FAVICON; ?>
         <?php echo GRID_CSS; ?>
-        <?php echo NOTY_CSS; ?>
         <?php echo NAVBAR_CSS; ?>
         <?php echo CSSVARS; ?>
 
-        <script type="text/javascript" src="<?php echo JQ_JS ?>"></script>
-        <script type="text/javascript" src="<?php echo JQ_UI_JS ?>"></script>
-        <script type="text/javascript" src="<?php echo JQ_DT_JS ?>"></script>
-        <script type="text/javascript" src="<?php echo PRINT_AREA_JS ?>"></script>
-        <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo MOMENT_JS ?>"></script>
-
-        <script type="text/javascript" src="<?php echo NOTY_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo NOTY_SETTINGS_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo BOOTSTRAP_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo PRINT_AREA_JS ?>" defer></script>
 
         <script type="text/javascript">
-$(document).ready(function() {
-    "use strict";
-    var dateFormat = '<?php echo $labels->getString("momentFormats", "report", "MMM D, YYYY"); ?>';
-    var makeTable = '<?php echo $mkTable; ?>';
-    $('#btnHere, #btnExcel, #cbColClearAll, #cbColSelAll').button();
+            document.addEventListener("DOMContentLoaded", () => {
+                "use strict";
+                var dateFormat = '<?php echo $labels->getString("momentFormats", "report", "MMM D, YYYY"); ?>';
+                var makeTable = '<?php echo $mkTable; ?>';
+                $('#btnHere, #btnExcel, #cbColClearAll, #cbColSelAll').button();
 
-    <?php echo $filter->getTimePeriodScript(); ?>
+                <?php echo $filter->getTimePeriodScript(); ?>
 
-    $('#btnByGuest, #btnByRoom').button();
+                $('#btnByGuest, #btnByRoom').button();
 
-    if (makeTable === '1') {
+                if (makeTable === '1') {
 
-        $('div#printArea').css('display', 'block');
+                    $('div#printArea').css('display', 'block');
 
-        $('#printButton').button().click(function() {
-            $("div#printArea").printArea();
-        });
-    }
+                    $('#printButton').button().click(function() {
+                        $("div#printArea").printArea();
+                    });
+                }
 
-});
+            });
         </script>
     </head>
     <body <?php if ($wInit->testVersion) {echo "class='testbody'";} ?>>

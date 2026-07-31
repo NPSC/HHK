@@ -2,9 +2,9 @@
 
 use HHK\House\Report\DailyOccupancyReport;
 use HHK\House\Report\QuarterlyOccupancyReport;
-use HHK\House\Report\RoomReport;
 use HHK\sec\{Session, WebInit};
 use HHK\sec\Labels;
+use HHK\Vite\Vite;
 
 /**
  * ReservReport.php
@@ -94,26 +94,16 @@ if (filter_has_var(INPUT_POST, 'cmd')) {
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
         <title><?php echo $pageTitle; ?></title>
-        <?php echo JQ_UI_CSS; ?>
-        <?php echo HOUSE_CSS; ?>
-        <?php echo JQ_DT_CSS ?>
+
+        <?php echo Vite::asset('resources/js/house.js'); ?>
+        
         <?php echo FAVICON; ?>
         <?php echo GRID_CSS; ?>
-        <?php echo NOTY_CSS; ?>
         <?php echo NAVBAR_CSS; ?>
         <?php echo CSSVARS; ?>
 
-        <script type="text/javascript" src="<?php echo JQ_JS ?>"></script>
-        <script type="text/javascript" src="<?php echo JQ_UI_JS ?>"></script>
-        <script type="text/javascript" src="<?php echo JQ_DT_JS ?>"></script>
-        <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo MOMENT_JS ?>"></script>
-
-        <script type="text/javascript" src="<?php echo NOTY_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo NOTY_SETTINGS_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo REPORTFIELDSETS_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo BOOTSTRAP_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo PRINT_AREA_JS ?>"></script>
+        <script type="text/javascript" src="<?php echo REPORTFIELDSETS_JS; ?>" defer></script>
+        <script type="text/javascript" src="<?php echo PRINT_AREA_JS ?>" defer></script>
 
         <script src="https://www.gstatic.com/charts/loader.js"></script>
 
@@ -174,7 +164,7 @@ if (filter_has_var(INPUT_POST, 'cmd')) {
         </script>
 
         <script type="text/javascript">
-            $(document).ready(function() {
+            document.addEventListener("DOMContentLoaded", () => {
                 let activeTab = <?php echo $activeTab; ?>
 
             	$("#occupancyTabs").tabs({

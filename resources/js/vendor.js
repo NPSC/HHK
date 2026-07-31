@@ -2,6 +2,9 @@
 import './common/jquery.js';
 import 'jquery-ui-dist/jquery-ui.js';
 
+import 'jquery-serializejson';
+import 'jquery-dirty';
+
 //moment.js
 import moment from 'moment';
 window.moment = moment;

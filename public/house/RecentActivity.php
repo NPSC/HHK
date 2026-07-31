@@ -1,7 +1,7 @@
 <?php
-use HHK\sec\{SecurityComponent, Session, WebInit};
-use HHK\HTMLControls\{HTMLContainer, HTMLInput, HTMLSelector};
+use HHK\sec\{Session, WebInit};
 use HHK\sec\Labels;
+use HHK\Vite\Vite;
 
 
 /**
@@ -35,109 +35,96 @@ $labels = Labels::getLabels();
         <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
         <title><?php echo $wInit->pageTitle; ?></title>
         <meta http-equiv="x-ua-compatible" content="IE=edge">
-        <?php echo JQ_UI_CSS; ?>
-        <?php echo HOUSE_CSS; ?>
-        <?php echo JQ_DT_CSS; ?>
-        <?php echo NOTY_CSS; ?>
+
+        <?php echo Vite::asset('resources/js/house.js'); ?>
+        
         <?php echo FAVICON; ?>
         <?php echo GRID_CSS; ?>
         <?php echo NAVBAR_CSS; ?>
         <?php echo CSSVARS; ?>
 
-		<script type="text/javascript" src="<?php echo JQ_JS; ?>"></script>
-		<script type="text/javascript" src="<?php echo BOOTSTRAP_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo JQ_UI_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo MOMENT_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo JQ_DT_JS ?>"></script>
-        <script type="text/javascript" src="<?php echo STATE_COUNTRY_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo PRINT_AREA_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo CREATE_AUTO_COMPLETE_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo RESV_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo LIBPHONENUMBER_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo ADDR_PREFS_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo BUFFER_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo HTMLENTITIES_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo DOMPURIFY_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo NOTES_VIEWER_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo NOTY_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo NOTY_SETTINGS_JS; ?>"></script>
-        <script type="text/javascript">
-$(document).ready(function () {
-    "use strict";
-    $('.ckdate').datepicker();
-    $('input[type="button"], input[type="submit"]').button();
-    $('#btnActvtyGo').click(function () {
-        $(".hhk-alert").hide();
-        let stDate = $('#txtactstart').datepicker("getDate");
-        if (stDate === null) {
-            $('#txtactstart').addClass('ui-state-highlight');
-            flagAlertMessage('Enter start date', 'alert');
-            return;
-        } else {
-            $('#txtactstart').removeClass('ui-state-highlight');
-        }
-        let edDate = $('#txtactend').datepicker("getDate");
-        if (edDate === null) {
-            edDate = new Date();
-        }
-        let parms = {
-            cmd: 'actrpt',
-            start: stDate.toLocaleDateString(),
-            end: edDate.toLocaleDateString()
-        };
-        if ($('#cbVisits').prop('checked')) {
-            parms.visit = 'on';
-        }
-        if ($('#cbReserv').prop('checked')) {
-            parms.resv = 'on';
-        }
-        if ($('#cbHospStay').prop('checked')) {
-            parms.hstay = 'on';
-        }
-        $.post('ws_resc.php', parms,
-            function (data) {
-                if (data) {
-                    try {
-                        data = $.parseJSON(data);
-                    } catch (err) {
-                        alert("Parser error - " + err.message);
-                        return;
-                    }
-                    if (data.error) {
-                        if (data.gotopage) {
-                            window.open(data.gotopage, '_self');
-                        }
-                        flagAlertMessage(data.error, 'error');
+        <script type="text/javascript" src="<?php echo STATE_COUNTRY_JS; ?>" defer></script>
+        <script type="text/javascript" src="<?php echo PRINT_AREA_JS; ?>" defer></script>
+        <script type="text/javascript" src="<?php echo CREATE_AUTO_COMPLETE_JS; ?>" defer></script>
+        <script type="text/javascript" src="<?php echo RESV_JS; ?>" defer></script>
+        <script type="text/javascript" src="<?php echo ADDR_PREFS_JS; ?>" defer></script>
 
-                    } else if (data.success) {
-                        $('#rptdiv').remove();
-                        $('#vactivity').append($('<div id="rptdiv"/>').append($(data.success)));
-                        $('.hhk-viewvisit').css('cursor', 'pointer');
-                        $('#rptdiv').on('click', '.hhk-viewvisit', function () {
-                            if ($(this).data('visitid')) {
-                                let parts = $(this).data('visitid').split('_');
-                                if (parts.length !== 2)
+        <script type="text/javascript">
+            document.addEventListener("DOMContentLoaded", () => {
+                "use strict";
+                $('.ckdate').datepicker();
+                $('input[type="button"], input[type="submit"]').button();
+                $('#btnActvtyGo').click(function () {
+                    $(".hhk-alert").hide();
+                    let stDate = $('#txtactstart').datepicker("getDate");
+                    if (stDate === null) {
+                        $('#txtactstart').addClass('ui-state-highlight');
+                        flagAlertMessage('Enter start date', 'alert');
+                        return;
+                    } else {
+                        $('#txtactstart').removeClass('ui-state-highlight');
+                    }
+                    let edDate = $('#txtactend').datepicker("getDate");
+                    if (edDate === null) {
+                        edDate = new Date();
+                    }
+                    let parms = {
+                        cmd: 'actrpt',
+                        start: stDate.toLocaleDateString(),
+                        end: edDate.toLocaleDateString()
+                    };
+                    if ($('#cbVisits').prop('checked')) {
+                        parms.visit = 'on';
+                    }
+                    if ($('#cbReserv').prop('checked')) {
+                        parms.resv = 'on';
+                    }
+                    if ($('#cbHospStay').prop('checked')) {
+                        parms.hstay = 'on';
+                    }
+                    $.post('ws_resc.php', parms,
+                        function (data) {
+                            if (data) {
+                                try {
+                                    data = $.parseJSON(data);
+                                } catch (err) {
+                                    alert("Parser error - " + err.message);
                                     return;
-                                var buttons = {
-                                    "Save": function () {
-                                        saveFees(0, parts[0], parts[1]);
-                                    },
-                                    "Cancel": function () {
-                                        $(this).dialog("close");
+                                }
+                                if (data.error) {
+                                    if (data.gotopage) {
+                                        window.open(data.gotopage, '_self');
                                     }
-                                };
-                                viewVisit(0, parts[0], buttons, 'View Visit', 'n', parts[1]);
-                            } else if ($(this).data('reservid')) {
-                                window.location.assign('Reserve.php?rid=' + $(this).data('reservid'));
+                                    flagAlertMessage(data.error, 'error');
+
+                                } else if (data.success) {
+                                    $('#rptdiv').remove();
+                                    $('#vactivity').append($('<div id="rptdiv"/>').append($(data.success)));
+                                    $('.hhk-viewvisit').css('cursor', 'pointer');
+                                    $('#rptdiv').on('click', '.hhk-viewvisit', function () {
+                                        if ($(this).data('visitid')) {
+                                            let parts = $(this).data('visitid').split('_');
+                                            if (parts.length !== 2)
+                                                return;
+                                            var buttons = {
+                                                "Save": function () {
+                                                    saveFees(0, parts[0], parts[1]);
+                                                },
+                                                "Cancel": function () {
+                                                    $(this).dialog("close");
+                                                }
+                                            };
+                                            viewVisit(0, parts[0], buttons, 'View Visit', 'n', parts[1]);
+                                        } else if ($(this).data('reservid')) {
+                                            window.location.assign('Reserve.php?rid=' + $(this).data('reservid'));
+                                        }
+                                    });
+                                }
                             }
                         });
-                    }
-                }
+                });
             });
-    });
-});
-    </script>
+        </script>
     </head>
     <body <?php if ($wInit->testVersion) {echo "class='testbody'";}?> >
         <?php echo $wInit->generatePageMenu(); ?>

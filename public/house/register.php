@@ -357,17 +357,12 @@ if($uS->useOnlineReferral){
         <meta http-equiv="x-ua-compatible" content="IE=edge">
         <?php echo Vite::asset('resources/js/house.js'); ?>
 
-        <?php echo JQ_DT_CSS; ?>
-
         <?php echo FAVICON; ?>
         <?php echo GRID_CSS; ?>
         <?php echo NAVBAR_CSS; ?>
         <?php echo CSSVARS; ?>
 
         <script type="text/javascript" src="<?php echo FULLCALENDAR_JS; ?>" defer></script>
-
-       <!-- <script type="text/javascript" src="<?php echo JQ_DT_JS ?>" defer></script>
-        <script type="text/javascript" src="<?php echo JQ_DT_SETTINGS ?>" defer></script> -->
         <script type="text/javascript" src="<?php echo STATE_COUNTRY_JS; ?>" defer></script>
         <script type="text/javascript" src="<?php echo PRINT_AREA_JS; ?>" defer></script>
         <script type="text/javascript" src="<?php echo CREATE_AUTO_COMPLETE_JS; ?>" defer></script>
@@ -377,7 +372,6 @@ if($uS->useOnlineReferral){
         <script type="text/javascript" src="<?php echo VISIT_DIALOG_JS; ?>" defer></script>
         
         <script type="text/javascript" src="<?php echo REFERRAL_VIEWER_JS; ?>" defer></script>
-        <script type="text/javascript" src="<?php echo SMS_DIALOG_JS; ?>" defer></script>
 
         <script type="text/javascript" src="<?php echo INVOICE_JS; ?>" defer></script>
         <?php if ($uS->PaymentGateway == AbstractPaymentGateway::INSTAMED) {echo INS_EMBED_JS;} ?>

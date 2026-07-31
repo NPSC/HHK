@@ -5,6 +5,7 @@ use HHK\SysConst\WebPageCode;
 use HHK\Payment\Invoice\Invoice;
 use HHK\HTMLControls\HTMLContainer;
 use HHK\TableLog\HouseLog;
+use HHK\Vite\Vite;
 use PHPMailer\PHPMailer\PHPMailer;
 
 /**
@@ -195,20 +196,18 @@ if ($msg != '') {
     <head>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
         <title><?php echo $pageTitle; ?></title>
-        <?php echo JQ_UI_CSS; ?>
-        <?php echo HOUSE_CSS; ?>
+
+        <?php echo Vite::asset('resources/js/house.js'); ?>
+        
         <?php echo INVOICE_CSS; ?>
         <?php echo CSSVARS; ?>
         <?php echo FAVICON; ?>
         <?php echo GRID_CSS; ?>
-        <?php echo BOOTSTRAP_ICONS_CSS; ?>
 
-        <script type="text/javascript" src="<?php echo JQ_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo JQ_UI_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo PRINT_AREA_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo PRINT_AREA_JS; ?>" defer></script>
+
         <script type='text/javascript'>
-            $(document).ready(function () {
+            document.addEventListener("DOMContentLoaded", () => {
                 "use strict";
                 $('#btnPrint, #btnEmail, #btnWord').button();
                 var opt = {mode: 'popup',

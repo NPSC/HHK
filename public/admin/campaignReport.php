@@ -2,6 +2,7 @@
 
 use HHK\sec\{Session, WebInit};
 use HHK\House\Report\ReportFilter;
+use HHK\Vite\Vite;
 
 /**
  * campaignReport.php
@@ -44,25 +45,17 @@ $selYearOptions = ReportFilter::getYearOptionsMarkup($yearSelected, $startYear, 
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
         <title><?php echo $pageTitle; ?></title>
-        <?php echo JQ_UI_CSS; ?>
-        <?php echo DEFAULT_CSS; ?>
+
+        <?php echo Vite::asset('resources/js/admin.js'); ?>
+        
         <?php echo FAVICON; ?>
-        <?php echo NOTY_CSS; ?>
         <?php echo GRID_CSS; ?>
         <?php echo NAVBAR_CSS; ?>
 
-        <script type="text/javascript" src="<?php echo JQ_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo JQ_UI_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo BOOTSTRAP_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo PRINT_AREA_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
-
-        <script type="text/javascript" src="<?php echo NOTY_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo NOTY_SETTINGS_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo PRINT_AREA_JS; ?>" defer></script>
 
         <script type="text/javascript">
-            // Init j-query
-            $(document).ready(function() {
+            document.addEventListener("DOMContentLoaded", () => {
 
             	$("input[type=submit], input[type=button]").button();
 

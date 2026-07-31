@@ -27,7 +27,6 @@ use HHK\SysConst\HospitalType;
 use HHK\SysConst\ItemId;
 use HHK\SysConst\ItemPriceCode;
 use HHK\SysConst\ItemType;
-use HHK\SysConst\Mode;
 use HHK\SysConst\PayType;
 use HHK\SysConst\PaymentMethod;
 use HHK\SysConst\RateStatus;
@@ -42,6 +41,7 @@ use HHK\Tables\House\Rate_BreakpointRS;
 use HHK\Tables\House\Room_RateRS;
 use HHK\Tables\Item\ItemRS;
 use HHK\Tables\Registration\HospitalRS;
+use HHK\Vite\Vite;
 
 /**
  * ResourceBuilder.php
@@ -2593,34 +2593,18 @@ $formBuilderOptions = [
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <title>
-        <?php echo $wInit->pageTitle; ?>
-    </title>
-    <?php echo JQ_UI_CSS; ?>
-    <?php echo JQ_DT_CSS; ?>
-    <?php echo HOUSE_CSS; ?>
-    <?php echo NOTY_CSS; ?>
+    <title><?php echo $wInit->pageTitle; ?></title>
+
+    <?php echo Vite::asset('resources/js/house.js'); ?>
+    
     <?php echo GRID_CSS; ?>
-    <?php echo BOOTSTRAP_ICONS_CSS; ?>
     <?php echo FAVICON; ?>
     <?php echo NAVBAR_CSS; ?>
     <?php echo CSSVARS; ?>
 
-    <script type="text/javascript" src="<?php echo JQ_JS ?>"></script>
-    <script type="text/javascript" src="<?php echo JQ_UI_JS ?>"></script>
-    <script type="text/javascript" src="<?php echo JQ_DT_JS ?>"></script>
-    <script type="text/javascript" src="<?php echo MOMENT_JS ?>"></script>
-    <script type="text/javascript" src="<?php echo NOTY_JS; ?>"></script>
-    <script type="text/javascript" src="<?php echo NOTY_SETTINGS_JS; ?>"></script>
-    <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
-    <script type="text/javascript" src="<?php echo BUFFER_JS; ?>"></script>
-    <script type="text/javascript" src="<?php echo HTMLENTITIES_JS; ?>"></script>
-    <script type="text/javascript" src="../js/formBuilder/form-builder.min.js"></script>
-    <script type="text/javascript" src="<?php echo FORMBUILDER_JS; ?>"></script>
-    <script type="text/javascript" src="<?php echo SERIALIZEJSON; ?>"></script>
-    <script type="text/javascript" src="<?php echo RESCBUILDER_JS; ?>"></script>
-    <script type="text/javascript" src="<?php echo BOOTSTRAP_JS; ?>"></script>
-    <script type="text/javascript" src="js/bootstrap-icons.js"></script>
+    <script type="text/javascript" src="../js/formBuilder/form-builder.min.js" defer></script>
+    <script type="text/javascript" src="<?php echo FORMBUILDER_JS; ?>" defer></script>
+    <script type="text/javascript" src="<?php echo RESCBUILDER_JS; ?>" defer></script>
 </head>
 
 <body <?php if ($wInit->testVersion) {

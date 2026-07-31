@@ -15,7 +15,6 @@ use HHK\HTMLControls\HTMLSelector;
 use HHK\HTMLControls\HTMLTable;
 use HHK\Payment\PaymentGateway\AbstractPaymentGateway;
 use HHK\Payment\PaymentGateway\Deluxe\DeluxeGateway;
-use HHK\Payment\PaymentResult\PaymentResult;
 use HHK\Payment\PaymentSvcs;
 use HHK\sec\Labels;
 use HHK\sec\Session;
@@ -27,6 +26,7 @@ use HHK\SysConst\Mode;
 use HHK\SysConst\VolMemberType;
 use HHK\SysConst\WebPageCode;
 use HHK\TableLog\HouseLog;
+use HHK\Vite\Vite;
 
 /**
  * InvoiceReport.php
@@ -878,29 +878,20 @@ $columSelector = $colSelector->makeSelectorTable(TRUE)->generateMarkup(array('st
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
         <title><?php echo $pageTitle; ?></title>
-        <?php echo JQ_UI_CSS; ?>
-        <?php echo HOUSE_CSS; ?>
-        <?php echo JQ_DT_CSS ?>
-        <?php echo NOTY_CSS; ?>
+
+        <?php echo Vite::asset('resources/js/house.js'); ?>
+        
         <?php echo FAVICON; ?>
         <?php echo GRID_CSS; ?>
-        <?php echo BOOTSTRAP_ICONS_CSS; ?>
         <?php echo NAVBAR_CSS; ?>
         <?php echo CSSVARS; ?>
 
-        <script type="text/javascript" src="<?php echo JQ_JS ?>"></script>
-        <script type="text/javascript" src="<?php echo JQ_UI_JS ?>"></script>
-        <script type="text/javascript" src="<?php echo JQ_DT_JS ?>"></script>
-        <script type="text/javascript" src="<?php echo PRINT_AREA_JS ?>"></script>
-        <script type="text/javascript" src="<?php echo MOMENT_JS ?>"></script>
-        <script type="text/javascript" src="<?php echo PAYMENT_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo VISIT_DIALOG_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo NOTY_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo NOTY_SETTINGS_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo INVOICE_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo REPORTFIELDSETS_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo BOOTSTRAP_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo PRINT_AREA_JS ?>" defer></script>
+        <script type="text/javascript" src="<?php echo PAYMENT_JS; ?>" defer></script>
+        <script type="text/javascript" src="<?php echo VISIT_DIALOG_JS; ?>" defer></script>
+        <script type="text/javascript" src="<?php echo INVOICE_JS; ?>" defer></script>
+        <script type="text/javascript" src="<?php echo REPORTFIELDSETS_JS; ?>" defer></script>
+
         <?php if ($uS->PaymentGateway == AbstractPaymentGateway::INSTAMED) {echo INS_EMBED_JS;} ?>
         <?php 
             if ($uS->PaymentGateway == AbstractPaymentGateway::DELUXE) {
@@ -912,210 +903,210 @@ $columSelector = $colSelector->makeSelectorTable(TRUE)->generateMarkup(array('st
             }
         ?>
 
-<script type="text/javascript">
-$(document).ready(function() {
-    var dateFormat = '<?php echo $labels->getString("momentFormats", "report", "MMM D, YYYY"); ?>';
-    var makeTable = '<?php echo $mkTable; ?>';
-    var columnDefs = $.parseJSON('<?php echo json_encode($colSelector->getColumnDefs()); ?>');
-    var pmtMkup = '<?php echo $paymentMarkup; ?>';
-    var rctMkup = '<?php echo $receiptMarkup; ?>';
-    var receiptPaymentId = '<?php echo $receiptPaymentId; ?>';
-    var receiptBilledToEmail = '<?php echo $receiptBilledToEmail; ?>';
-    var tabReturn = '<?php echo $tabReturn; ?>';
+        <script type="text/javascript">
+            document.addEventListener("DOMContentLoaded", () => {
+                var dateFormat = '<?php echo $labels->getString("momentFormats", "report", "MMM D, YYYY"); ?>';
+                var makeTable = '<?php echo $mkTable; ?>';
+                var columnDefs = $.parseJSON('<?php echo json_encode($colSelector->getColumnDefs()); ?>');
+                var pmtMkup = '<?php echo $paymentMarkup; ?>';
+                var rctMkup = '<?php echo $receiptMarkup; ?>';
+                var receiptPaymentId = '<?php echo $receiptPaymentId; ?>';
+                var receiptBilledToEmail = '<?php echo $receiptBilledToEmail; ?>';
+                var tabReturn = '<?php echo $tabReturn; ?>';
 
-    $('#btnHere, #btnExcel,  #cbColClearAll, #cbColSelAll, #btnInvGo, #btnSaveGlParms, #btnGlGo, #btnGlTx, #btnGlcsv').button();
+                $('#btnHere, #btnExcel,  #cbColClearAll, #cbColSelAll, #btnInvGo, #btnSaveGlParms, #btnGlGo, #btnGlTx, #btnGlcsv').button();
 
-    $( "form[name=glform] input[type=checkbox]" ).checkboxradio({
-      icon: true
-    });
+                $( "form[name=glform] input[type=checkbox]" ).checkboxradio({
+                icon: true
+                });
 
-    $("form[name=glform] .ui-checkboxradio-icon").removeClass('ui-state-hover');
+                $("form[name=glform] .ui-checkboxradio-icon").removeClass('ui-state-hover');
 
-    <?php echo $filter->getTimePeriodScript(); ?>
-    
-    $("#setBillDate").dialog({
-        autoOpen: false,
-        resizable: true,
-        modal: true,
-        title: 'Set Invoice Billing Date'
-    });
-    $('#pmtRcpt').dialog({
-        autoOpen: false,
-        resizable: true,
-        width: getDialogWidth(530),
-        modal: true,
-        title: 'Payment Receipt'
-    });
-    $('#keysfees').dialog({
-        autoOpen: false,
-        resizable: true,
-        modal: true,
-        close: function (event, ui) {
-            $('div#submitButtons').show();
-        },
-        open: function (event, ui) {
-            $('div#submitButtons').hide();
-        }
-    });
-
-    $('#cbColClearAll').click(function () {
-        $('#selFld option').each(function () {
-            $(this).prop('selected', false);
-        });
-    });
-    $('#cbColSelAll').click(function () {
-        $('#selFld option').each(function () {
-            $(this).prop('selected', true);
-        });
-    });
-
-
-    // disappear the pop-ups.
-    $(document).mousedown(function (event) {
-        var target = $(event.target);
-        if ($('div#pudiv').length > 0 && target[0].id !== 'pudiv' && target.parents("#" + 'pudiv').length === 0) {
-            $('div#pudiv').remove();
-        }
-    });
-
-    $('#mainTabs').tabs({
-        beforeActivate: function (event, ui) {
-            if (ui.newTab.prop('id') === 'liInvoice') {
-                $('#btnInvGo').click();
-            }
-        }
-    });
-
-    $('#mainTabs').tabs("option", "active", tabReturn);
-
-
-    $('#btnInvGo').click(function () {
-        var statuses = ['up'];
-        var parms = {
-            cmd: 'actrpt',
-            st: statuses,
-            inv: 'on'
-        };
-
-        $.post('ws_resc.php', parms,
-            function (data) {
-
-                if (data) {
-
-                    try {
-                        data = $.parseJSON(data);
-                    } catch (err) {
-                        alert("Parser error - " + err.message);
-                        return;
+                <?php echo $filter->getTimePeriodScript(); ?>
+                
+                $("#setBillDate").dialog({
+                    autoOpen: false,
+                    resizable: true,
+                    modal: true,
+                    title: 'Set Invoice Billing Date'
+                });
+                $('#pmtRcpt').dialog({
+                    autoOpen: false,
+                    resizable: true,
+                    width: getDialogWidth(530),
+                    modal: true,
+                    title: 'Payment Receipt'
+                });
+                $('#keysfees').dialog({
+                    autoOpen: false,
+                    resizable: true,
+                    modal: true,
+                    close: function (event, ui) {
+                        $('div#submitButtons').show();
+                    },
+                    open: function (event, ui) {
+                        $('div#submitButtons').hide();
                     }
+                });
 
-                    if (data.error) {
+                $('#cbColClearAll').click(function () {
+                    $('#selFld option').each(function () {
+                        $(this).prop('selected', false);
+                    });
+                });
+                $('#cbColSelAll').click(function () {
+                    $('#selFld option').each(function () {
+                        $(this).prop('selected', true);
+                    });
+                });
 
-                        if (data.gotopage) {
-                            window.open(data.gotopage, '_self');
+
+                // disappear the pop-ups.
+                $(document).mousedown(function (event) {
+                    var target = $(event.target);
+                    if ($('div#pudiv').length > 0 && target[0].id !== 'pudiv' && target.parents("#" + 'pudiv').length === 0) {
+                        $('div#pudiv').remove();
+                    }
+                });
+
+                $('#mainTabs').tabs({
+                    beforeActivate: function (event, ui) {
+                        if (ui.newTab.prop('id') === 'liInvoice') {
+                            $('#btnInvGo').click();
                         }
-                        flagAlertMessage(data.error, 'error');
+                    }
+                });
 
-                    } else if (data.success) {
+                $('#mainTabs').tabs("option", "active", tabReturn);
 
-                        $('#rptInvdiv').remove();
-                        $('#vInv').append($('<form autocomplete="off"/>').append($('<div id="rptInvdiv" class="hhk-visitdialog"/>').append($(data.success))));
-                        $('#rptInvdiv .gmenu').menu();
 
-                        $('#rptInvdiv').on('click', '.invLoadPc', function (event) {
-                            event.preventDefault();
-                            $("#divAlert1, #paymentMessage").hide();
-                            invLoadPc($(this).data('name'), $(this).data('id'), $(this).data('iid'));
-                        });
+                $('#btnInvGo').click(function () {
+                    var statuses = ['up'];
+                    var parms = {
+                        cmd: 'actrpt',
+                        st: statuses,
+                        inv: 'on'
+                    };
 
-                        $('#rptInvdiv').on('click', '.invSetBill', function (event) {
-                            event.preventDefault();
-                            $(".hhk-alert").hide();
-                            invSetBill($(this).data('inb'), $(this).data('name'), 'div#setBillDate', '#trBillDate' + $(this).data('inb'), $('#trBillDate' + $(this).data('inb')).text(), $('#divInvNotes' + $(this).data('inb')).text(), '#divInvNotes' + $(this).data('inb'));
-                        });
+                    $.post('ws_resc.php', parms,
+                        function (data) {
 
-                        $('#rptInvdiv').on('click', '.invAction', function (event) {
-                            event.preventDefault();
-                            $(".hhk-alert").hide();
+                            if (data) {
 
-                            if ($(this).data('stat') == 'del') {
-                                if (!confirm('Delete Invoice ' + $(this).data('inb') + ($(this).data('payor') != '' ? ' for ' + $(this).data('payor') : '') + '?')) {
-                                //if (!confirm('Delete this Invoice?')) {
+                                try {
+                                    data = $.parseJSON(data);
+                                } catch (err) {
+                                    alert("Parser error - " + err.message);
                                     return;
                                 }
-                            }
 
-                            // Check for email
-                            if ($(this).data('stat') === 'vem') {
-                                    window.open('ShowInvoice.php?invnum=' + $(this).data('inb'));
-                                    return;
-                            }
+                                if (data.error) {
 
-                            invoiceAction($(this).data('iid'), $(this).data('stat'), event.target.id, '', true);
-                            $('#rptInvdiv .gmenu').menu("collapse");
+                                    if (data.gotopage) {
+                                        window.open(data.gotopage, '_self');
+                                    }
+                                    flagAlertMessage(data.error, 'error');
+
+                                } else if (data.success) {
+
+                                    $('#rptInvdiv').remove();
+                                    $('#vInv').append($('<form autocomplete="off"/>').append($('<div id="rptInvdiv" class="hhk-visitdialog"/>').append($(data.success))));
+                                    $('#rptInvdiv .gmenu').menu();
+
+                                    $('#rptInvdiv').on('click', '.invLoadPc', function (event) {
+                                        event.preventDefault();
+                                        $("#divAlert1, #paymentMessage").hide();
+                                        invLoadPc($(this).data('name'), $(this).data('id'), $(this).data('iid'));
+                                    });
+
+                                    $('#rptInvdiv').on('click', '.invSetBill', function (event) {
+                                        event.preventDefault();
+                                        $(".hhk-alert").hide();
+                                        invSetBill($(this).data('inb'), $(this).data('name'), 'div#setBillDate', '#trBillDate' + $(this).data('inb'), $('#trBillDate' + $(this).data('inb')).text(), $('#divInvNotes' + $(this).data('inb')).text(), '#divInvNotes' + $(this).data('inb'));
+                                    });
+
+                                    $('#rptInvdiv').on('click', '.invAction', function (event) {
+                                        event.preventDefault();
+                                        $(".hhk-alert").hide();
+
+                                        if ($(this).data('stat') == 'del') {
+                                            if (!confirm('Delete Invoice ' + $(this).data('inb') + ($(this).data('payor') != '' ? ' for ' + $(this).data('payor') : '') + '?')) {
+                                            //if (!confirm('Delete this Invoice?')) {
+                                                return;
+                                            }
+                                        }
+
+                                        // Check for email
+                                        if ($(this).data('stat') === 'vem') {
+                                                window.open('ShowInvoice.php?invnum=' + $(this).data('inb'));
+                                                return;
+                                        }
+
+                                        invoiceAction($(this).data('iid'), $(this).data('stat'), event.target.id, '', true);
+                                        $('#rptInvdiv .gmenu').menu("collapse");
+                                    });
+
+                                    $('#InvTable').dataTable({
+                                        'columnDefs': [
+                                            {'targets': [2,4],
+                                            'type': 'date',
+                                            'render': function ( data, type, row ) {return dateRender(data, type);}
+                                            }
+                                        ],
+                                        "dom": '<"top ui-toolbar ui-helper-clearfix"if><\"hhk-overflow-x\"rt><"bottom ui-toolbar ui-helper-clearfix"lp><"clear">',
+                                        "displayLength": 50,
+                                        "lengthMenu": [[20, 50, 100, -1], [20, 50, 100, "All"]],
+                                        "order": [[ 1, 'asc' ]]
+                                    });
+                                }
+                            }
                         });
+                });
 
-                        $('#InvTable').dataTable({
+                if (pmtMkup !== '') {
+                    $('#paymentMessage').html(pmtMkup).show("pulsate", {}, 400);
+                }
+
+                if (rctMkup !== '') {
+                    showReceipt('#pmtRcpt', rctMkup, 'Payment Receipt', 550, receiptPaymentId, receiptBilledToEmail);
+                }
+
+                if (makeTable === '1') {
+                    $('div#printArea').css('display', 'block');
+
+                    $('#tblrpt').dataTable({
                             'columnDefs': [
-                                {'targets': [2,4],
-                                 'type': 'date',
-                                 'render': function ( data, type, row ) {return dateRender(data, type);}
+                                {'targets': columnDefs,
+                                'type': 'date',
+                                'render': function ( data, type, row ) {return dateRender(data, type, dateFormat);}
                                 }
-                             ],
-                            "dom": '<"top ui-toolbar ui-helper-clearfix"if><\"hhk-overflow-x\"rt><"bottom ui-toolbar ui-helper-clearfix"lp><"clear">',
-                            "displayLength": 50,
-                            "lengthMenu": [[20, 50, 100, -1], [20, 50, 100, "All"]],
-                            "order": [[ 1, 'asc' ]]
-                        });
-                    }
+                            ],
+                        "displayLength": 50,
+                        "lengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]],
+                        "dom": '<"top ui-toolbar ui-helper-clearfix"if><\"hhk-overflow-x\"rt><"bottom ui-toolbar ui-helper-clearfix"lp><"clear">',
+                    });
+
+                    $('#printButton').button().click(function() {
+                        $("div#printArea").printArea();
+                    });
+                    $('#tblrpt').on('click', '.invAction', function (event) {
+                        if ($(this).data('stat') === 'del') {
+                            if (!confirm('Delete Invoice #' + $(this).data('inv') + '?')) {
+                                return;
+                            }
+                        }
+                        invoiceAction($(this).data('iid'), $(this).data('stat'), event.target.id);
+                    });
+                    $('#tblrpt').on('click', '.invSetBill', function (event) {
+                        event.preventDefault();
+                        invSetBill($(this).data('inb'), $(this).data('name'), 'div#setBillDate', '#trBillDate' + $(this).data('inb'), $('#trBillDate' + $(this).data('inb')).text(), $('#divInvNotes' + $(this).data('inb')).text(), '#divInvNotes' + $(this).data('inb'));
+                    });
+
                 }
+
+                $('#includeFields').fieldSets({'reportName': 'invoice', 'defaultFields': <?php echo json_encode($defaultFields); ?>});
             });
-    });
-
-    if (pmtMkup !== '') {
-        $('#paymentMessage').html(pmtMkup).show("pulsate", {}, 400);
-    }
-
-    if (rctMkup !== '') {
-        showReceipt('#pmtRcpt', rctMkup, 'Payment Receipt', 550, receiptPaymentId, receiptBilledToEmail);
-    }
-
-    if (makeTable === '1') {
-        $('div#printArea').css('display', 'block');
-
-        $('#tblrpt').dataTable({
-                'columnDefs': [
-                    {'targets': columnDefs,
-                     'type': 'date',
-                     'render': function ( data, type, row ) {return dateRender(data, type, dateFormat);}
-                    }
-                 ],
-            "displayLength": 50,
-            "lengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]],
-            "dom": '<"top ui-toolbar ui-helper-clearfix"if><\"hhk-overflow-x\"rt><"bottom ui-toolbar ui-helper-clearfix"lp><"clear">',
-        });
-
-        $('#printButton').button().click(function() {
-            $("div#printArea").printArea();
-        });
-        $('#tblrpt').on('click', '.invAction', function (event) {
-            if ($(this).data('stat') === 'del') {
-                if (!confirm('Delete Invoice #' + $(this).data('inv') + '?')) {
-                    return;
-                }
-            }
-            invoiceAction($(this).data('iid'), $(this).data('stat'), event.target.id);
-        });
-        $('#tblrpt').on('click', '.invSetBill', function (event) {
-            event.preventDefault();
-            invSetBill($(this).data('inb'), $(this).data('name'), 'div#setBillDate', '#trBillDate' + $(this).data('inb'), $('#trBillDate' + $(this).data('inb')).text(), $('#divInvNotes' + $(this).data('inb')).text(), '#divInvNotes' + $(this).data('inb'));
-        });
-
-    }
-
-    $('#includeFields').fieldSets({'reportName': 'invoice', 'defaultFields': <?php echo json_encode($defaultFields); ?>});
-});
- </script>
+        </script>
     </head>
     <body <?php if ($wInit->testVersion) echo "class='testbody'"; ?>>
         <?php echo $menuMarkup; ?>

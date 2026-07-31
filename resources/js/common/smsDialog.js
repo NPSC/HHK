@@ -1,3 +1,5 @@
+import $ from './jquery.js';
+
 (function ($) {
 
     $.fn.smsDialog = function (options) {
@@ -574,4 +576,4 @@
 		$dialog.off('click', '*');
     }
 
-}(jQuery));
+}($));

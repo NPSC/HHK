@@ -4,6 +4,7 @@ use HHK\sec\{Session, Labels};
 use HHK\sec\Login;
 use HHK\sec\ScriptAuthClass;
 use HHK\sec\Recaptcha;
+use HHK\Vite\Vite;
 
 /**
  * shwoReferral.php
@@ -83,11 +84,10 @@ if(isset($_GET['template'])){
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <title>Referral Form</title>
 
+        <?php echo Vite::asset('resources/js/house.js'); ?>
+
 		<style id="fontImport"></style>
 
-        <?php echo JQ_UI_CSS; ?>
-        <?php echo HOUSE_CSS; ?>
-        <?php echo BOOTSTRAP_CSS; ?>
         <?php echo FAVICON; ?>
 
         <style id="mainStyle">
@@ -114,15 +114,9 @@ if(isset($_GET['template'])){
 
     	</style>
 
-        <script type="text/javascript" src="<?php echo JQ_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo JQ_UI_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo BOOTSTRAP_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo STATE_COUNTRY_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo CREATE_AUTO_COMPLETE_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo LIBPHONENUMBER_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo ADDR_PREFS_JS; ?>"></script>
-		<script type="text/javascript" src="<?php echo HTMLENTITIES_JS; ?>"></script>
-		<script type="text/javascript" src="<?php echo BUFFER_JS; ?>"></script>
         <script type="text/javascript" src="../js/formBuilder/form-render.min.js"></script>
 		<script type="text/javascript" src="<?php echo REFERRAL_FORM_JS; ?>"></script>
 

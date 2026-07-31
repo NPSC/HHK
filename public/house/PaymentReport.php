@@ -19,6 +19,7 @@ use HHK\Payment\CreditToken;
 use HHK\House\Report\ReportFieldSet;
 use HHK\House\Report\ReportFilter;
 use HHK\TableLog\HouseLog;
+use HHK\Vite\Vite;
 
 
 /**
@@ -529,76 +530,24 @@ $columSelector = $colSelector->makeSelectorTable(TRUE)->generateMarkup(array('cl
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
         <title><?php echo $pageTitle; ?></title>
-        <?php echo JQ_UI_CSS; ?>
-        <?php echo HOUSE_CSS; ?>
-        <?php echo JQ_DT_CSS ?>
+
+        <?php echo Vite::asset('resources/js/house.js'); ?>
+        
         <?php echo FAVICON; ?>
         <?php echo GRID_CSS; ?>
-        <?php echo NOTY_CSS; ?>
         <?php echo NAVBAR_CSS; ?>
         <?php echo CSSVARS; ?>
 
-        <script type="text/javascript" src="<?php echo JQ_JS ?>"></script>
-        <script type="text/javascript" src="<?php echo JQ_UI_JS ?>"></script>
-        <script type="text/javascript" src="<?php echo JQ_DT_JS ?>"></script>
-        <script type="text/javascript" src="<?php echo PRINT_AREA_JS ?>"></script>
-        <script type="text/javascript" src="<?php echo MOMENT_JS ?>"></script>
-        <script type="text/javascript" src="<?php echo NOTY_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo NOTY_SETTINGS_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo INVOICE_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo REPORTFIELDSETS_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo BOOTSTRAP_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo PRINT_AREA_JS ?>" defer></script>
+        <script type="text/javascript" src="<?php echo INVOICE_JS; ?>" defer></script>
+        <script type="text/javascript" src="<?php echo REPORTFIELDSETS_JS; ?>" defer></script>
 
-<script type="text/javascript">
-	var deleteThisTr;
+        <script type="text/javascript">
+            var deleteThisTr;
 
-	function delCofEntry(gtId) {
-        $.post('PaymentReport.php', {cmd: 'delcof', 'gtId':gtId},
-            function (data) {
-
-                if (data) {
-
-                    try {
-                        data = $.parseJSON(data);
-                    } catch (err) {
-                        alert("Parser error - " + err.message);
-                        return;
-                    }
-
-                    if (data.error) {
-
-                        if (data.gotopage) {
-                            window.open(data.gotopage, '_self');
-                        }
-                        flagAlertMessage(data.error, 'error');
-
-                    } else if (data.message && data.message == 'true') {
-						deleteThisTr.remove();
-						flagAlertMessage('The Card on file entry is deleted.', 'success');
-                    }
-                }
-            }
-        );
-	}
-
-    $(document).ready(function() {
-        var dateFormat = '<?php echo $labels->getString("momentFormats", "report", "MMM D, YYYY"); ?>';
-        var makeTable = '<?php echo $mkTable; ?>';
-        var columnDefs = $.parseJSON('<?php echo json_encode($colSelector->getColumnDefs()); ?>');
-        var tabReturn = '<?php echo $tabReturn; ?>';
-        var delCofClass = '<?php echo $delCofListClass; ?>';
-
-        $('#btnHere, #btnExcel, #cbColClearAll, #cbColSelAll').button();
-        
-        <?php echo $filter->getTimePeriodScript(); ?>
-
-        $('#mainTabs').tabs({
-        	beforeActivate: function (event, ui) {
-                if (ui.newTab.prop('id') === 'licof') {
-
-                    $.post('PaymentReport.php', {cmd: 'cof'},
-                        function (data) {
+            function delCofEntry(gtId) {
+                $.post('PaymentReport.php', {cmd: 'delcof', 'gtId':gtId},
+                    function (data) {
 
                         if (data) {
 
@@ -616,70 +565,113 @@ $columSelector = $colSelector->makeSelectorTable(TRUE)->generateMarkup(array('cl
                                 }
                                 flagAlertMessage(data.error, 'error');
 
-                            } else if (data.coflist) {
-								$('#cofDiv').empty().append($(data.coflist));
-
-								$('#cofDiv').on('change', '.'+delCofClass, function (){
-									var gid = $(this).val();
-									deleteThisTr = $(this).parents('tr');
-									delCofEntry(gid);
-								});
+                            } else if (data.message && data.message == 'true') {
+                                deleteThisTr.remove();
+                                flagAlertMessage('The Card on file entry is deleted.', 'success');
                             }
                         }
+                    }
+                );
+            }
+
+            document.addEventListener("DOMContentLoaded", () => {
+                var dateFormat = '<?php echo $labels->getString("momentFormats", "report", "MMM D, YYYY"); ?>';
+                var makeTable = '<?php echo $mkTable; ?>';
+                var columnDefs = $.parseJSON('<?php echo json_encode($colSelector->getColumnDefs()); ?>');
+                var tabReturn = '<?php echo $tabReturn; ?>';
+                var delCofClass = '<?php echo $delCofListClass; ?>';
+
+                $('#btnHere, #btnExcel, #cbColClearAll, #cbColSelAll').button();
+                
+                <?php echo $filter->getTimePeriodScript(); ?>
+
+                $('#mainTabs').tabs({
+                    beforeActivate: function (event, ui) {
+                        if (ui.newTab.prop('id') === 'licof') {
+
+                            $.post('PaymentReport.php', {cmd: 'cof'},
+                                function (data) {
+
+                                if (data) {
+
+                                    try {
+                                        data = $.parseJSON(data);
+                                    } catch (err) {
+                                        alert("Parser error - " + err.message);
+                                        return;
+                                    }
+
+                                    if (data.error) {
+
+                                        if (data.gotopage) {
+                                            window.open(data.gotopage, '_self');
+                                        }
+                                        flagAlertMessage(data.error, 'error');
+
+                                    } else if (data.coflist) {
+                                        $('#cofDiv').empty().append($(data.coflist));
+
+                                        $('#cofDiv').on('change', '.'+delCofClass, function (){
+                                            var gid = $(this).val();
+                                            deleteThisTr = $(this).parents('tr');
+                                            delCofEntry(gid);
+                                        });
+                                    }
+                                }
+                            });
+
+                        }
+                    }
+                });
+                $('#mainTabs').tabs("option", "active", tabReturn);
+
+                // disappear the pop-up room chooser.
+                $(document).mousedown(function (event) {
+                    var target = $(event.target);
+                    if ($('div#pudiv').length > 0 && target[0].id !== 'pudiv' && target.parents("#" + 'pudiv').length === 0) {
+                        $('div#pudiv').remove();
+                    }
+                });
+                $('#cbColClearAll').click(function () {
+                    $('#selFld option').each(function () {
+                        $(this).prop('selected', false);
+                    });
+                });
+                $('#cbColSelAll').click(function () {
+                    $('#selFld option').each(function () {
+                        $(this).prop('selected', true);
+                    });
+                });
+                $('#btnHere').click(function () {
+                    $('#rptFeeLoading').show();
+                });
+                if (makeTable === '1') {
+                    $('#rptFeeLoading').hide();
+                    $('div#hhk-reportWrapper').css('display', 'block');
+                    $('#tblrpt').dataTable({
+                        'columnDefs': [
+                            {'targets': columnDefs,
+                            'type': 'date',
+                            'render': function ( data, type, row ) {return dateRender(data, type, dateFormat);}
+                            }
+                        ],
+                        "displayLength": 50,
+                        "lengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]],
+                        //"dom": '<"top ui-toolbar ui-helper-clearfix"ilf><\"hhk-overflow-x\"rt><"bottom ui-toolbar ui-helper-clearfix"lp><"clear">',
+                        "dom": '<\"top ui-toolbar ui-helper-clearfix\"if><\"hhk-overflow-x\"rt><\"bottom ui-toolbar ui-helper-clearfix\"lp>',
                     });
 
+                    $('#printButton').button().click(function() {
+                        $("div#hhk-reportWrapper").printArea();
+                    });
+                    $('#tblrpt').on('click', '.invAction', function (event) {
+                        invoiceAction($(this).data('iid'), 'view', event.target.id, '', true);
+                    });
                 }
-        	}
-        });
-        $('#mainTabs').tabs("option", "active", tabReturn);
 
-        // disappear the pop-up room chooser.
-        $(document).mousedown(function (event) {
-            var target = $(event.target);
-            if ($('div#pudiv').length > 0 && target[0].id !== 'pudiv' && target.parents("#" + 'pudiv').length === 0) {
-                $('div#pudiv').remove();
-            }
-        });
-        $('#cbColClearAll').click(function () {
-            $('#selFld option').each(function () {
-                $(this).prop('selected', false);
+                $('#includeFields').fieldSets({'reportName': 'payment', 'defaultFields': <?php echo json_encode($defaultFields); ?>});
             });
-        });
-        $('#cbColSelAll').click(function () {
-            $('#selFld option').each(function () {
-                $(this).prop('selected', true);
-            });
-        });
-        $('#btnHere').click(function () {
-            $('#rptFeeLoading').show();
-        });
-        if (makeTable === '1') {
-            $('#rptFeeLoading').hide();
-            $('div#hhk-reportWrapper').css('display', 'block');
-            $('#tblrpt').dataTable({
-                'columnDefs': [
-                    {'targets': columnDefs,
-                     'type': 'date',
-                     'render': function ( data, type, row ) {return dateRender(data, type, dateFormat);}
-                    }
-                 ],
-                "displayLength": 50,
-                "lengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]],
-                //"dom": '<"top ui-toolbar ui-helper-clearfix"ilf><\"hhk-overflow-x\"rt><"bottom ui-toolbar ui-helper-clearfix"lp><"clear">',
-                "dom": '<\"top ui-toolbar ui-helper-clearfix\"if><\"hhk-overflow-x\"rt><\"bottom ui-toolbar ui-helper-clearfix\"lp>',
-            });
-
-            $('#printButton').button().click(function() {
-                $("div#hhk-reportWrapper").printArea();
-            });
-            $('#tblrpt').on('click', '.invAction', function (event) {
-                invoiceAction($(this).data('iid'), 'view', event.target.id, '', true);
-            });
-        }
-
-        $('#includeFields').fieldSets({'reportName': 'payment', 'defaultFields': <?php echo json_encode($defaultFields); ?>});
-    });
- </script>
+        </script>
     </head>
     <body <?php if ($wInit->testVersion) echo "class='testbody'"; ?>>
         <?php echo $menuMarkup; ?>

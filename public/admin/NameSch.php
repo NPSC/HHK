@@ -4,6 +4,7 @@ use HHK\CreateMarkupFromDB;
 use HHK\History;
 use HHK\sec\{Session, WebInit};
 use HHK\SysConst\{WebSiteCode};
+use HHK\Vite\Vite;
 
 /**
  * NameSch.php
@@ -62,29 +63,21 @@ try {
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
         <title><?php echo $pageTitle; ?></title>
-        <?php echo JQ_UI_CSS; ?>
 
-        <?php echo DEFAULT_CSS; ?>
+        <?php echo Vite::asset('resources/js/admin.js'); ?>
+
         <?php echo FAVICON; ?>
-        <?php echo NOTY_CSS; ?>
         <?php echo GRID_CSS; ?>
         <?php echo NAVBAR_CSS; ?>
 
-        <script type="text/javascript" src="<?php echo JQ_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo JQ_UI_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo BOOTSTRAP_JS; ?>"></script>
-
-        <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo CREATE_AUTO_COMPLETE_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo NOTY_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo NOTY_SETTINGS_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo CREATE_AUTO_COMPLETE_JS; ?>" defer></script>
 
         <script type="text/javascript">
             function isNumber(n) {
                 "use strict";
                 return !isNaN(parseFloat(n)) && isFinite(n);
             }
-            $(document).ready(function() {
+            document.addEventListener("DOMContentLoaded", () => {
 
                 $.widget( "ui.autocomplete", $.ui.autocomplete, {
                     _resizeMenu: function() {
