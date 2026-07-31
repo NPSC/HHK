@@ -219,8 +219,6 @@ order by h.idPsg, na.Address_1, na.Address_2";
 
         <?php echo Vite::asset('resources/js/house.js'); ?>
         
-        <?php echo GRID_CSS; ?>
-        <?php echo NAVBAR_CSS; ?>
         <?php echo FAVICON; ?>
 
     </head>

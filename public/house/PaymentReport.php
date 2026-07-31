@@ -514,14 +514,14 @@ where lp.idPayment > 0
 }
 
 // Setups for the page.
-$statusSelector = $filter->payStatusMarkup()->generateMarkup(array('class' => 'mb-2 mr-2'));
-$payTypeSelector = $filter->payTypesMarkup()->generateMarkup(array('class' => 'mb-2 mr-2'));
-$gwSelector = $filter->paymentGatewaysMarkup()->generateMarkup(array('class' => 'mb-2 mr-2'));
-$timePeriodMarkup = $filter->timePeriodMarkup('Payment')->generateMarkup(array('class'=>'mb-2 mr-2'));
-$hospitalMarkup = $filter->hospitalMarkup()->generateMarkup(array('class'=>'mb-2 mr-2'));
-$baSelector = $filter->billingAgentMarkup()->generateMarkup(array('class'=>'mb-2 mr-2'));
+$statusSelector = $filter->payStatusMarkup()->generateMarkup(array('class' => 'mb-2 me-2'));
+$payTypeSelector = $filter->payTypesMarkup()->generateMarkup(array('class' => 'mb-2 me-2'));
+$gwSelector = $filter->paymentGatewaysMarkup()->generateMarkup(array('class' => 'mb-2 me-2'));
+$timePeriodMarkup = $filter->timePeriodMarkup('Payment')->generateMarkup(array('class'=>'mb-2 me-2'));
+$hospitalMarkup = $filter->hospitalMarkup()->generateMarkup(array('class'=>'mb-2 me-2'));
+$baSelector = $filter->billingAgentMarkup()->generateMarkup(array('class'=>'mb-2 me-2'));
 
-$columSelector = $colSelector->makeSelectorTable(TRUE)->generateMarkup(array('class'=>'mb-2 mr-2', 'id'=>'includeFields'));
+$columSelector = $colSelector->makeSelectorTable(TRUE)->generateMarkup(array('class'=>'mb-2 me-2', 'id'=>'includeFields'));
 
 ?>
 <!DOCTYPE html>
@@ -534,8 +534,6 @@ $columSelector = $colSelector->makeSelectorTable(TRUE)->generateMarkup(array('cl
         <?php echo Vite::asset('resources/js/house.js'); ?>
         
         <?php echo FAVICON; ?>
-        <?php echo GRID_CSS; ?>
-        <?php echo NAVBAR_CSS; ?>
         <?php echo CSSVARS; ?>
 
         <script type="text/javascript" src="<?php echo PRINT_AREA_JS ?>" defer></script>

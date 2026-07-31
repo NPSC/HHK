@@ -236,9 +236,6 @@ $resvObjEncoded = json_encode($resvAr);
         <?php echo DR_PICKER_CSS ?>
         <?php echo MULTISELECT_CSS; ?>
         <?php echo INCIDENT_CSS; ?>
-        <?php echo UPPLOAD_CSS; ?>
-        <?php echo GRID_CSS; ?>
-        <?php echo NAVBAR_CSS; ?>
         <?php echo CSSVARS; ?>
         <?php echo FAVICON; ?>
 
@@ -264,16 +261,6 @@ $resvObjEncoded = json_encode($resvAr);
                 }
             }
         ?>
-        <?php if ($uS->UseDocumentUpload) { echo '<script type="text/javascript" src="' . UPPLOAD_JS . '" defer></script>';
-        ?>
-        	<script>
-        		$(document).ready(function(){
-        			window.uploader = new Upploader.Uppload({lang: Upploader.en});
-        		});
-        	</script>
-        <?php
-            echo '<script type="text/javascript" src="' . DOC_UPLOAD_JS . '" defer></script>';
-        }?>
 
     </head>
     <body <?php if ($wInit->testVersion) {echo "class='testbody'";} ?>>

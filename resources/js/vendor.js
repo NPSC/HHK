@@ -3,6 +3,8 @@ import './common/jquery.js';
 import 'jquery-ui-dist/jquery-ui.js';
 
 import 'jquery-serializejson';
+import 'jquery-boot';
+import 'jquery-search';
 import 'jquery-dirty';
 
 //moment.js
@@ -12,8 +14,12 @@ window.moment = moment;
 //bootstrap + icons - only Collapse (navbar-toggler) and Dropdown (nav menus)
 import Collapse from 'bootstrap/js/dist/collapse';
 import Dropdown from 'bootstrap/js/dist/dropdown';
+import 'bootstrap/dist/css/bootstrap-grid.min.css';
+import '../css/bootstrapNavbar.css';
 import 'bootstrap-icons/font/bootstrap-icons.css';
 window.bootstrap = { Collapse, Dropdown };
+
+
 
 //htmlentities
 import he from 'he';

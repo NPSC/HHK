@@ -125,8 +125,6 @@ $filterCBs = HTMLContainer::generateMarkup("div",
 
         <?php echo Vite::asset('resources/js/admin.js'); ?>
         
-        <?php echo GRID_CSS; ?>
-        <?php echo NAVBAR_CSS; ?>
         <?php echo FAVICON; ?>
 
         <script type="text/javascript" src="js/duplicate.js" defer></script>
@@ -165,7 +163,7 @@ $filterCBs = HTMLContainer::generateMarkup("div",
                 </div>
             </div>
             <div class="hhk-flex mb-3">
-            	<div id="divList" class="ui-widget ui-widget-content ui-corner-all hhk-widget-content mr-3" style="display: none; font-size:.85em;"></div>
+            	<div id="divList" class="ui-widget ui-widget-content ui-corner-all hhk-widget-content me-3" style="display: none; font-size:.85em;"></div>
             	<div id="divExpansion" style="display:none;font-size:.85em;text-align:center;" class="ui-widget ui-widget-content ui-corner-all hhk-widget-content"></div>
         	</div>
         </div>

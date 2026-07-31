@@ -44,10 +44,8 @@ if ($stmt->rowCount() > 0) {
         <title><?php echo $wInit->pageTitle; ?></title>
         <?php echo Vite::asset('resources/js/admin.js'); ?>
 
-        <?php echo GRID_CSS; ?>
         <?php echo MULTISELECT_CSS; ?>
         <?php echo FAVICON; ?>
-        <?php echo NAVBAR_CSS; ?>
 
         <script type="text/javascript" src="<?php echo MULTISELECT_JS; ?>" defer></script>
         <script type="text/javascript" src="js/accessLog.js" defer></script>

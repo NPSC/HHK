@@ -98,8 +98,6 @@ if (filter_has_var(INPUT_POST, 'cmd')) {
         <?php echo Vite::asset('resources/js/house.js'); ?>
         
         <?php echo FAVICON; ?>
-        <?php echo GRID_CSS; ?>
-        <?php echo NAVBAR_CSS; ?>
         <?php echo CSSVARS; ?>
 
         <script type="text/javascript" src="<?php echo REPORTFIELDSETS_JS; ?>" defer></script>

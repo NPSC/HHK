@@ -174,7 +174,7 @@ try {
 
         // create send email table
         if ($invoice->isDeleted() === FALSE) {
-            $emtableMarkup = $invoice->makeEmailTbl("<strong class='mr-2'>" . $uS->siteName . "</strong><small>&lt;" . $uS->FromAddress . "&gt;</small>", $emSubject, $emAddrs, $emBody, $invNum);
+            $emtableMarkup = $invoice->makeEmailTbl("<strong class='me-2'>" . $uS->siteName . "</strong><small>&lt;" . $uS->FromAddress . "&gt;</small>", $emSubject, $emAddrs, $emBody, $invNum);
         }
 
 
@@ -188,7 +188,7 @@ try {
 
 
 if ($msg != '') {
-    $msg = HTMLContainer::generateMarkup('div', $msg, array('class' => 'ui-state-highlight ui-widget ui-widget-content ui-corner-all d-inline-block p-2 ml-3'));
+    $msg = HTMLContainer::generateMarkup('div', $msg, array('class' => 'ui-state-highlight ui-widget ui-widget-content ui-corner-all d-inline-block p-2 ms-3'));
 }
 ?>
 <!DOCTYPE html>
@@ -202,7 +202,6 @@ if ($msg != '') {
         <?php echo INVOICE_CSS; ?>
         <?php echo CSSVARS; ?>
         <?php echo FAVICON; ?>
-        <?php echo GRID_CSS; ?>
 
         <script type="text/javascript" src="<?php echo PRINT_AREA_JS; ?>" defer></script>
 

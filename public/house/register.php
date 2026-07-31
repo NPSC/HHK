@@ -180,36 +180,36 @@ $diags = Common::readGenLookupsPDO($dbh, 'Diagnosis');
 
 // Daily Log
 $dailyLog = HTMLContainer::generateMarkup('h3', 'Daily Log'
-    . HTMLInput::generateMarkup('Print', ['type' => 'button', 'id' => 'btnPrtDaily', 'style' => 'font-size:.8em;', 'class' => 'ml-5'])
-        . HTMLInput::generateMarkup('Refresh', ['type' => 'button', 'id' => 'btnRefreshDaily', 'style' => 'font-size:.8em;', 'class' => 'ml-5'])
+    . HTMLInput::generateMarkup('Print', ['type' => 'button', 'id' => 'btnPrtDaily', 'style' => 'font-size:.8em;', 'class' => 'ms-5'])
+        . HTMLInput::generateMarkup('Refresh', ['type' => 'button', 'id' => 'btnRefreshDaily', 'style' => 'font-size:.8em;', 'class' => 'ms-5'])
         ,
     ['style' => 'background-color:#D3D3D3;', 'class' => 'p-2'])
         . HTMLContainer::generateMarkup('div', "<table id='daily' class='display' style='width:100%;' cellpadding='0' cellspacing='0' border='0'></table>", ['id' => 'divdaily']);
 
 // Currently Checked In guests
-        $currentCheckedIn = HTMLContainer::generateMarkup('h3', '<span>Current '.$labels->getString('MemberType', 'visitor', 'Guest').'s</span>' . HTMLInput::generateMarkup('Excel Download', ['type' => 'submit', 'name' => 'btnDlCurGuests', 'class' => 'ml-5', 'style' => 'font-size:.9em;']) . ($uS->smsProvider ? HTMLContainer::generateMarkup('button', 'Text ' . $labels->getString('MemberType', 'visitor', 'Guest') . 's', ['role' => 'button', 'id' => "btnTextCurGuests", 'class' => 'ml-5', 'style' => 'font-size:.9em;']) :"") . HTMLContainer::generateMarkup('button', 'View all Notes', ['role' => 'button', 'class' => 'ml-5 btnRegNotes', 'data-title'=>'All Notes for Current Guests','data-linktype'=>'curguests', 'style' => 'font-size:.9em;']), ['style' => 'background-color:#D3D3D3;', 'class' => 'p-2'])
+        $currentCheckedIn = HTMLContainer::generateMarkup('h3', '<span>Current '.$labels->getString('MemberType', 'visitor', 'Guest').'s</span>' . HTMLInput::generateMarkup('Excel Download', ['type' => 'submit', 'name' => 'btnDlCurGuests', 'class' => 'ms-5', 'style' => 'font-size:.9em;']) . ($uS->smsProvider ? HTMLContainer::generateMarkup('button', 'Text ' . $labels->getString('MemberType', 'visitor', 'Guest') . 's', ['role' => 'button', 'id' => "btnTextCurGuests", 'class' => 'ms-5', 'style' => 'font-size:.9em;']) :"") . HTMLContainer::generateMarkup('button', 'View all Notes', ['role' => 'button', 'class' => 'ms-5 btnRegNotes', 'data-title'=>'All Notes for Current Guests','data-linktype'=>'curguests', 'style' => 'font-size:.9em;']), ['style' => 'background-color:#D3D3D3;', 'class' => 'p-2'])
         . HTMLContainer::generateMarkup('div', "<table id='curres' class='display' style='width:100%;' cellpadding='0' cellspacing='0' border='0'></table>", ['id' => 'divcurres']);
 
 // make registration form print button
-$regButton = HTMLContainer::generateMarkup('span', 'Check-in Date: ' . HTMLInput::generateMarkup('', ['id' => 'regckindate', 'class' => 'ckdate hhk-prtRegForm ml-2 mr-3'])
+$regButton = HTMLContainer::generateMarkup('span', 'Check-in Date: ' . HTMLInput::generateMarkup('', ['id' => 'regckindate', 'class' => 'ckdate hhk-prtRegForm ms-2 me-3'])
         . HTMLInput::generateMarkup('Print Default Registration Forms', ['id' => 'btnPrintRegForm', 'type' => 'button', 'data-page' => 'PrtRegForm.php', 'class' => 'hhk-prtRegForm mt-3 mt-md-0', 'style' => 'font-size:0.86em;'])
         ,
-    ['style' => 'padding:9px;border:solid 1px #62A0CE;background-color:#E8E5E5; align-items:baseline;', "class" => "hhk-flex hhk-flex-wrap my-3 my-lg-0 ml-lg-5"]);
+    ['style' => 'padding:9px;border:solid 1px #62A0CE;background-color:#E8E5E5; align-items:baseline;', "class" => "hhk-flex hhk-flex-wrap my-3 my-lg-0 ms-lg-5"]);
 
 $currentReservations = HTMLContainer::generateMarkup('h3',
         '<span>' . $labels->getString('register', 'reservationTab', 'Confirmed Reservations') . '</span>' .
-        HTMLInput::generateMarkup('Excel Download', ['type' => 'submit', 'name' => 'btnDlConfRes', 'style' => 'font-size:.9em;', 'class' => "ml-5"]) . ($uS->smsProvider ? HTMLContainer::generateMarkup('button', 'Text ' . $labels->getString('MemberType', 'visitor', 'Guest') . 's', ['role' => 'button', 'id' => "btnTextConfResvGuests", 'class' => 'ml-5', 'style' => 'font-size:.9em;']): "") . HTMLContainer::generateMarkup('button', 'View all Notes', ['role' => 'button', 'class' => 'ml-5 btnRegNotes', 'data-title'=>'All Notes for Confirmed Reservations','data-linktype'=>'confirmed', 'style' => 'font-size:.9em;']) . $regButton
+        HTMLInput::generateMarkup('Excel Download', ['type' => 'submit', 'name' => 'btnDlConfRes', 'style' => 'font-size:.9em;', 'class' => "ms-5"]) . ($uS->smsProvider ? HTMLContainer::generateMarkup('button', 'Text ' . $labels->getString('MemberType', 'visitor', 'Guest') . 's', ['role' => 'button', 'id' => "btnTextConfResvGuests", 'class' => 'ms-5', 'style' => 'font-size:.9em;']): "") . HTMLContainer::generateMarkup('button', 'View all Notes', ['role' => 'button', 'class' => 'ms-5 btnRegNotes', 'data-title'=>'All Notes for Confirmed Reservations','data-linktype'=>'confirmed', 'style' => 'font-size:.9em;']) . $regButton
         ,
     ['style' => 'background-color:#D3D3D3; align-items:baseline;', "class" => "hhk-flex hhk-flex-wrap p-3"])
         . HTMLContainer::generateMarkup('div', "<table id='reservs' class='display' style='width:100%; 'cellpadding='0' cellspacing='0' border='0'></table>", ['id' => 'divreservs']);
 
 if ($uS->ShowUncfrmdStatusTab) {
-    $uncommittedReservations = HTMLContainer::generateMarkup('h3', '<span>' . $labels->getString('register', 'unconfirmedTab', 'UnConfirmed Reservations') . '</span>' . HTMLInput::generateMarkup('Excel Download', ['type' => 'submit', 'name' => 'btnDlUcRes', 'style' => 'font-size:.9em;', 'class' => 'ml-5']) . ($uS->smsProvider ? HTMLContainer::generateMarkup('button', 'Text ' . $labels->getString('MemberType', 'visitor', 'Guest') . 's', ['role' => 'button', 'id' => "btnTextUnConfResvGuests", 'class' => 'ml-5', 'style' => 'font-size:.9em;']): "") . HTMLContainer::generateMarkup('button', 'View all Notes', ['role' => 'button', 'class' => 'ml-5 btnRegNotes', 'data-title'=>'All Notes for Unconfirmed Reservations','data-linktype'=>'unconfirmed', 'style' => 'font-size:.9em;']), ['style' => 'background-color:#D3D3D3;', 'class' => 'p-2'])
+    $uncommittedReservations = HTMLContainer::generateMarkup('h3', '<span>' . $labels->getString('register', 'unconfirmedTab', 'UnConfirmed Reservations') . '</span>' . HTMLInput::generateMarkup('Excel Download', ['type' => 'submit', 'name' => 'btnDlUcRes', 'style' => 'font-size:.9em;', 'class' => 'ms-5']) . ($uS->smsProvider ? HTMLContainer::generateMarkup('button', 'Text ' . $labels->getString('MemberType', 'visitor', 'Guest') . 's', ['role' => 'button', 'id' => "btnTextUnConfResvGuests", 'class' => 'ms-5', 'style' => 'font-size:.9em;']): "") . HTMLContainer::generateMarkup('button', 'View all Notes', ['role' => 'button', 'class' => 'ms-5 btnRegNotes', 'data-title'=>'All Notes for Unconfirmed Reservations','data-linktype'=>'unconfirmed', 'style' => 'font-size:.9em;']), ['style' => 'background-color:#D3D3D3;', 'class' => 'p-2'])
         . HTMLContainer::generateMarkup('div', "<table id='unreserv' class='display' style='width:100%;'cellpadding='0' cellspacing='0' border='0'></table>", ['id' => 'divunreserv']);
 }
 
 $waitlist = HTMLContainer::generateMarkup('h3', '<span>' . $labels->getString('register', 'waitlistTab', 'Wait List') . '</span>' .
-        HTMLInput::generateMarkup('Excel Download', ['type' => 'submit', 'name' => 'btnDlWlist', 'style' => 'font-size:.9em;', "class" => "ml-5"]) . ($uS->smsProvider ? HTMLContainer::generateMarkup('button', 'Text ' . $labels->getString('MemberType', 'visitor', 'Guest') . 's', ['role' => 'button', 'id' => "btnTextWaitlistGuests", 'class' => 'ml-5', 'style' => 'font-size:.9em;']): "") . HTMLContainer::generateMarkup('button', 'View all Notes', ['role' => 'button', 'class' => 'ml-5 btnRegNotes', 'data-title'=>'All Notes for Waitlist Reservations','data-linktype'=>'waitlist', 'style' => 'font-size:.9em;'])
+        HTMLInput::generateMarkup('Excel Download', ['type' => 'submit', 'name' => 'btnDlWlist', 'style' => 'font-size:.9em;', "class" => "ms-5"]) . ($uS->smsProvider ? HTMLContainer::generateMarkup('button', 'Text ' . $labels->getString('MemberType', 'visitor', 'Guest') . 's', ['role' => 'button', 'id' => "btnTextWaitlistGuests", 'class' => 'ms-5', 'style' => 'font-size:.9em;']): "") . HTMLContainer::generateMarkup('button', 'View all Notes', ['role' => 'button', 'class' => 'ms-5 btnRegNotes', 'data-title'=>'All Notes for Waitlist Reservations','data-linktype'=>'waitlist', 'style' => 'font-size:.9em;'])
         //.$wlButton
         ,
     ['style' => 'background-color:#D3D3D3; align-items:baseline;', 'class' => 'hhk-flex hhk-flex-wrap p-2'])
@@ -322,7 +322,7 @@ if ($uS->RoomPriceModel == ItemPriceCode::None && count($addnl) == 0 && $uS->Vis
     // Prepare controls
     $feeFilter = new ReportFilter();
     $feeFilter->createPayStatuses($dbh)->createPayTypes($dbh);
-    $statusSelector = $feeFilter->payStatusMarkup()->generateMarkup(['class' => 'mb-2 mr-2']);
+    $statusSelector = $feeFilter->payStatusMarkup()->generateMarkup(['class' => 'mb-2 me-2']);
     $payTypeSelector = $feeFilter->payTypesMarkup()->generateMarkup(['class' => 'mb-2']);
 
     // Count unpaid invoices
@@ -358,8 +358,6 @@ if($uS->useOnlineReferral){
         <?php echo Vite::asset('resources/js/house.js'); ?>
 
         <?php echo FAVICON; ?>
-        <?php echo GRID_CSS; ?>
-        <?php echo NAVBAR_CSS; ?>
         <?php echo CSSVARS; ?>
 
         <script type="text/javascript" src="<?php echo FULLCALENDAR_JS; ?>" defer></script>
@@ -512,7 +510,7 @@ if($uS->useOnlineReferral){
                 <div id="vfees" class="hhk-tdbox hhk-visitdialog" style="display:none; ">
                     <div style="max-width: fit-content;" class="ui-widget ui-widget-content ui-corner-all p-2 mb-2">
                         <div class="hhk-flex hhk-flex-wrap">
-                            <table class="mb-2 mr-2">
+                            <table class="mb-2 me-2">
                                 <thead><tr><th>Date Range</th></tr></thead>
                                 <tbody>
                                     <tr><td>Starting: <input type="text" id="txtfeestart" name="stDate" class="ckdate" value="" /></td></tr>
@@ -523,11 +521,11 @@ if($uS->useOnlineReferral){
                             <?php echo $payTypeSelector; ?>
                         </div>
                         <div class="mt-3 hhk-flex justify-content-between align-items-baseline">
-                            <div class="ml-1">
+                            <div class="ms-1">
                                 <input type='checkbox' id='fcbdinv' name="fcbdinv"/>
                                 <label for="fcbdinv">Show Deleted Invoices</label>
                             </div>
-                            <div><input type="submit" name="btnFeesDl" value="Excel Download" class="mr-3"/><input type="button" id="btnFeesGo" value="Run"/></div>
+                            <div><input type="submit" name="btnFeesDl" value="Excel Download" class="me-3"/><input type="button" id="btnFeesGo" value="Run"/></div>
                         </div>
                         <div id="rptfeediv" class="hhk-visitdialog"><p id="rptFeeLoading" class="ui-state-active" style="font-size: 1.1em; display:none; margin:20px; padding: 5px;">Loading Payment Report...</p></div>
                     </div>

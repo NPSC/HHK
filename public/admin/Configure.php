@@ -351,8 +351,6 @@ $authIdpList = SAML::getIdpList($dbh, false);
         <?php echo Vite::asset('resources/js/admin.js'); ?>
         
         <?php echo FAVICON; ?>
-        <?php echo GRID_CSS; ?>
-        <?php echo NAVBAR_CSS; ?>
 
         <script type="text/javascript" src="<?php echo CONFIGURE_JS; ?>" defer></script>
     </head>
@@ -393,7 +391,7 @@ $authIdpList = SAML::getIdpList($dbh, false);
 <?php foreach ($authIdpList as $idp) { ?>
                                 <li><a href="#<?php echo $idp['idIdp']; ?>Auth"><?php echo $idp["Name"]; ?></a></li>
                         <?php } ?>
-                            <li><a href="#newAuth"><span class="ui-icon ui-icon-plusthick mr-2"></span>New Identity Provider</a></li>
+                            <li><a href="#newAuth"><span class="ui-icon ui-icon-plusthick me-2"></span>New Identity Provider</a></li>
                         </ul>
 
                         <div id="localAuth" class="ui-tabs-hide">
@@ -426,7 +424,7 @@ echo $newsaml->getEditMarkup();
 <?php if (SecurityComponent::is_TheAdmin()) { ?>
                                 <div id="newJob" class="ui-widget ui-widget-content ui-corner-all p-2 d-inline-block">
                                     <label for="newJobType"><strong>Add New Job:</strong></label>
-                                    <select id="newJobType" class="mr-2">
+                                    <select id="newJobType" class="me-2">
                                         <option value="" selected disabled>Select Job Type</option>
     <?php echo HTMLSelector::doOptionsMkup(Common::readGenLookupsPDO($dbh, "cronJobTypes", "Description"), '', false); ?>
                                     </select>

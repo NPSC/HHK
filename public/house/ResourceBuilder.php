@@ -2597,9 +2597,7 @@ $formBuilderOptions = [
 
     <?php echo Vite::asset('resources/js/house.js'); ?>
     
-    <?php echo GRID_CSS; ?>
     <?php echo FAVICON; ?>
-    <?php echo NAVBAR_CSS; ?>
     <?php echo CSSVARS; ?>
 
     <script type="text/javascript" src="../js/formBuilder/form-builder.min.js" defer></script>
@@ -2613,7 +2611,7 @@ $formBuilderOptions = [
     <?php echo $wInit->generatePageMenu(); ?>
     <div id="contentDiv">
         <div class="my-1 d-flex hhk-flex-wrap align-items-center" id="rescBuilderTitle">
-            <h1 class="mr-3"><?php echo $wInit->pageHeading; ?></h1>
+            <h1 class="me-3"><?php echo $wInit->pageHeading; ?></h1>
             <span class="p-1 ui-corner-all ui-state-highlight">Changes won't take effect until the next login</span>
         </div>
 
@@ -2688,7 +2686,7 @@ $formBuilderOptions = [
 
                 <div class="hhk-flex hhk-flex-wrap">
                     <div id="demosSection"
-                        class="ui-widget ui-widget-content ui-corner-all hhk-flex hhk-flex-wrap mr-3 mb-3">
+                        class="ui-widget ui-widget-content ui-corner-all hhk-flex hhk-flex-wrap me-3 mb-3">
                         <div class="m-2">
                             <h3>Demographic Categories</h3>
                             <form id="formdemo">

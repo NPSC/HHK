@@ -187,10 +187,10 @@ if($idVisit || $idResv){
 
             $tabContent .= HTMLContainer::generateMarkup('div',
                 HTMLContainer::generateMarkup('button', 'Print', array('class'=>'btnPrint mb-3', 'data-tab'=>$r['tabIndex'], 'data-title'=>(!empty($r["pageTitle"]) ? $r["pageTitle"] : $labels->getString('MemberType', 'guest', 'Guest') . ' Registration Form')))
-                . (isset($r['allowSave']) && $r['allowSave'] ? HTMLContainer::generateMarkup('button', 'Save', array('class'=>'btnSave mb-3 ml-3', 'data-tab'=>$r['tabIndex'], 'data-uuid'=>$uuid)) : '')
+                . (isset($r['allowSave']) && $r['allowSave'] ? HTMLContainer::generateMarkup('button', 'Save', array('class'=>'btnSave mb-3 ms-3', 'data-tab'=>$r['tabIndex'], 'data-uuid'=>$uuid)) : '')
                 .HTMLContainer::generateMarkup('div', $r['doc'], array('class'=>'PrintArea'))
                 .HTMLContainer::generateMarkup('button', 'Print', array('class'=>'btnPrint mt-4', 'data-tab'=>$r['tabIndex'], 'data-title'=>(!empty($r["pageTitle"]) ? $r["pageTitle"] : $labels->getString('MemberType', 'guest', 'Guest') . ' Registration Form')))
-                . (isset($r['allowSave']) && $r['allowSave'] ? HTMLContainer::generateMarkup('button', 'Save', array('class'=>'btnSave mt-4 ml-3', 'data-tab'=>$r['tabIndex'],  'data-uuid'=>$uuid)): ''),
+                . (isset($r['allowSave']) && $r['allowSave'] ? HTMLContainer::generateMarkup('button', 'Save', array('class'=>'btnSave mt-4 ms-3', 'data-tab'=>$r['tabIndex'],  'data-uuid'=>$uuid)): ''),
                 array('id'=>$r['tabIndex']));
 
             $sty = $r['style'];
@@ -271,8 +271,6 @@ $contrls = HTMLContainer::generateMarkup('div', $shoRegBtn . $shoStmtBtn . $regM
         <?php echo Vite::asset('resources/js/house.js'); ?>
         
         <?php echo FAVICON; ?>
-        <?php echo GRID_CSS; ?>
-        <?php echo NAVBAR_CSS; ?>
         <?php echo CSSVARS; ?>
         <?php echo ($uS->RegForm == 3 ? CUSTOM_REGFORM_CSS : ""); ?>
 

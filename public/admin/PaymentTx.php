@@ -204,8 +204,6 @@ $txSelector = HTMLSelector::generateMarkup(
         <?php echo Vite::asset('resources/js/admin.js'); ?>
         
         <?php echo FAVICON; ?>
-        <?php echo GRID_CSS; ?>
-        <?php echo NAVBAR_CSS; ?>
 
         <script type="text/javascript">
             document.addEventListener("DOMContentLoaded", () => {
@@ -243,8 +241,8 @@ $txSelector = HTMLSelector::generateMarkup(
                 </table>
                 <input type='submit' value='Go' name='btnGo' class="ui-button ui-corner-all"/>
                 <?php if ($showLog) { ?>
-                <button type="button" id="btnShowLog" class="ui-button ui-corner-all ml-2">Show Detailed Log</button>
-                <?php if ($isTheAdmin && $isDeluxe){ ?><button type="button" id="btnSearchPayment" class="ui-button ui-corner-all ml-2">Search Payment</button><?php } ?>
+                <button type="button" id="btnShowLog" class="ui-button ui-corner-all ms-2">Show Detailed Log</button>
+                <?php if ($isTheAdmin && $isDeluxe){ ?><button type="button" id="btnSearchPayment" class="ui-button ui-corner-all ms-2">Search Payment</button><?php } ?>
                 <?php } ?>
                 </form>
             </div>
@@ -260,8 +258,8 @@ $txSelector = HTMLSelector::generateMarkup(
         <div id="searchPaymentDialog" style="display:none; font-size: .9em;">
             <div class="mb-3">
                 <label for="txtPaymentId"><strong>Payment ID:</strong></label>
-                <input type="text" id="txtPaymentId" class="ml-2" style="width:320px;" placeholder="Enter Deluxe Payment ID" />
-                <button type="button" id="btnSearchPaymentGo" class="ui-button ui-corner-all ml-2">Search</button>
+                <input type="text" id="txtPaymentId" class="ms-2" style="width:320px;" placeholder="Enter Deluxe Payment ID" />
+                <button type="button" id="btnSearchPaymentGo" class="ui-button ui-corner-all ms-2">Search</button>
             </div>
             <div id="searchPaymentResults" style="display:none;">
                 <div id="searchPaymentDetails" class="ui-widget ui-widget-content ui-corner-all p-3 mb-3"></div>

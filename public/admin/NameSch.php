@@ -67,8 +67,6 @@ try {
         <?php echo Vite::asset('resources/js/admin.js'); ?>
 
         <?php echo FAVICON; ?>
-        <?php echo GRID_CSS; ?>
-        <?php echo NAVBAR_CSS; ?>
 
         <script type="text/javascript" src="<?php echo CREATE_AUTO_COMPLETE_JS; ?>" defer></script>
 
@@ -148,7 +146,7 @@ try {
                     <form autocomplete="off">
                     <span>Search: </span>
                     <span style="margin: 0 10px;">
-                        <input type="radio" name="msearch" checked="checked" id="rbmemName" value="m" class="mr-1"/><label for="rbmemName">Name</label>
+                        <input type="radio" name="msearch" checked="checked" id="rbmemName" value="m" class="me-1"/><label for="rbmemName">Name</label>
                         <input type="radio" name="msearch" id="rbmemEmail" value="e" class="mx-1"/><label for="rbmemEmail">Email</label>
                     </span><input type="hidden" id="txtBasis" value="m"/>
                     <input type="search" id="txtsearch" size="20" autocomplete="off" title="Enter at least 3 characters to invoke search" />

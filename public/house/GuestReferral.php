@@ -185,8 +185,6 @@ if ($idDoc > 0) {
 
         <?php echo Vite::asset('resources/js/house.js'); ?>
         
-        <?php echo GRID_CSS; ?>
-        <?php echo NAVBAR_CSS; ?>
         <?php echo CSSVARS; ?>
         <?php echo FAVICON; ?>
 

@@ -40,8 +40,6 @@ $uS = Session::getInstance();
         <?php echo Vite::asset('resources/js/admin.js'); ?>
         
         <?php echo FAVICON; ?>
-        <?php echo GRID_CSS; ?>
-        <?php echo NAVBAR_CSS; ?>
 
         <script type="text/javascript" src="<?php echo PRINT_AREA_JS; ?>" defer></script>
 

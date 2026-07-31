@@ -96,7 +96,7 @@ function doMarkupRow(array $fltrdFields, array $r, bool $isLocal, $hospital, $st
         }
 
         $invoiceNumber = HTMLContainer::generateMarkup('a', $invoiceNumber, $invAttr)
-            .HTMLContainer::generateMarkup('span','', ['class' => 'ui-icon ui-icon-comment invAction ml-2', 'id' => 'invicon' . $r['idInvoice'], 'data-iid' => $r['idInvoice'], 'data-stat' => 'view', 'style' => 'cursor:pointer;', 'title' => 'View Items']);
+            .HTMLContainer::generateMarkup('span','', ['class' => 'ui-icon ui-icon-comment invAction ms-2', 'id' => 'invicon' . $r['idInvoice'], 'data-iid' => $r['idInvoice'], 'data-stat' => 'view', 'style' => 'cursor:pointer;', 'title' => 'View Items']);
     }
 
     //$g['invoiceMkup'] = HTMLContainer::generateMarkup('span', $invoiceNumber, ["style" => 'white-space:nowrap;']);
@@ -882,8 +882,6 @@ $columSelector = $colSelector->makeSelectorTable(TRUE)->generateMarkup(array('st
         <?php echo Vite::asset('resources/js/house.js'); ?>
         
         <?php echo FAVICON; ?>
-        <?php echo GRID_CSS; ?>
-        <?php echo NAVBAR_CSS; ?>
         <?php echo CSSVARS; ?>
 
         <script type="text/javascript" src="<?php echo PRINT_AREA_JS ?>" defer></script>

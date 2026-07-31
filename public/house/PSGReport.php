@@ -361,7 +361,7 @@ where  DATE(ifnull(s.Span_End_Date, now())) >= DATE('$start') and DATE(s.Span_St
             if (isset($r['Bad_Address']) && $r['Bad_Address'] == 'true' && isset($r['Address'])) {
                 $r['Address'] = HTMLContainer::generateMarkup(
                     'div',
-                    HTMLContainer::generateMarkup("span", $r["Address"], ['title'=>'Bad Address']) . HTMLContainer::generateMarkup("span", "", array("class" => 'ui-icon ui-icon-notice ml-2')),
+                    HTMLContainer::generateMarkup("span", $r["Address"], ['title'=>'Bad Address']) . HTMLContainer::generateMarkup("span", "", array("class" => 'ui-icon ui-icon-notice ms-2')),
                     array('class' => 'hhk-flex', 'style' => 'justify-content: space-between;', 'title' => 'Bad Address')
                 );
             }
@@ -1283,8 +1283,6 @@ if ($uS->UseIncidentReports) {
         <?php echo Vite::asset('resources/js/house.js'); ?>
         
         <?php echo FAVICON; ?>
-        <?php echo GRID_CSS; ?>
-        <?php echo NAVBAR_CSS; ?>
         <?php echo CSSVARS; ?>
 
         <script type="text/javascript" src="<?php echo PRINT_AREA_JS ?>" defer></script>
@@ -1360,7 +1358,7 @@ if ($uS->UseIncidentReports) {
         <?php echo $menuMarkup; ?>
         <div id="contentDiv">
         	<div class="title mb-3">
-            	<h2 class="d-inline-block"><?php echo $wInit->pageHeading; ?></h2><span class="ml-3">This report shows people who stayed in the time frame selected below</span>
+            	<h2 class="d-inline-block"><?php echo $wInit->pageHeading; ?></h2><span class="ms-3">This report shows people who stayed in the time frame selected below</span>
             </div>
             <div id="vcategory" class="ui-widget ui-widget-content ui-corner-all hhk-tdbox hhk-visitdialog p-2" style="font-size:0.9em; max-width:fit-content;">
                 <form id="fcat" action="PSGReport.php" method="post">

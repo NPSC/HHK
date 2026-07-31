@@ -254,7 +254,6 @@ $selLookups = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($lkups, '
         <?php echo Vite::asset('resources/js/house.js'); ?>
         
         <?php echo FAVICON; ?>
-        <?php echo GRID_CSS; ?>
 
         <script type="text/javascript">
             document.addEventListener("DOMContentLoaded", () => {

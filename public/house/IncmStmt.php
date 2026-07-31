@@ -443,8 +443,6 @@ $glBa = $tbl->generateMarkup(array('style'=>'float:left;margin-right:1.5em;'));
 		<?php echo Vite::asset('resources/js/house.js'); ?>
 		
         <?php echo FAVICON; ?>
-        <?php echo GRID_CSS; ?>
-        <?php echo NAVBAR_CSS; ?>
 		<?php echo CSSVARS; ?>
 
         <script type="text/javascript" src="<?php echo PRINT_AREA_JS ?>" defer></script>

@@ -206,9 +206,7 @@ if ($cmd){
         <?php echo Vite::asset('resources/js/house.js'); ?>
         
         <?php echo FAVICON; ?>
-        <?php echo GRID_CSS; ?>
 		<?php echo MULTISELECT_CSS; ?>
-		<?php echo NAVBAR_CSS; ?>
         <?php echo CSSVARS; ?>
 
 		<style>

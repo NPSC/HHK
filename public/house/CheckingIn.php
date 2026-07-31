@@ -198,11 +198,8 @@ $resvManagerOptionsEncoded = json_encode($resvManagerOptions);
 
         <?php echo DR_PICKER_CSS ?>
         <?php echo MULTISELECT_CSS; ?>
-        <?php echo NAVBAR_CSS; ?>
-		<?php echo UPPLOAD_CSS; ?>
 
 		<?php echo INCIDENT_CSS; ?>
-		<?php echo GRID_CSS; ?>
         <?php echo FAVICON; ?>
         <?php echo CSSVARS; ?>
 
@@ -232,17 +229,6 @@ $resvManagerOptionsEncoded = json_encode($resvManagerOptions);
                 }
             }
         ?>
-		<?php if ($uS->UseDocumentUpload) { echo '<script type="text/javascript" src="' . UPPLOAD_JS . '" defer></script>';
-        ?>
-        	<script>
-        		document.addEventListener("DOMContentLoaded", () => {
-        			window.uploader = new Upploader.Uppload({lang: Upploader.en});
-        		});
-        	</script>
-        <?php
-            echo '<script type="text/javascript" src="' . DOC_UPLOAD_JS . '" defer></script>';
-        }?>
-
 
     </head>
     <body <?php if ($wInit->testVersion) {echo "class='testbody'";} ?>>

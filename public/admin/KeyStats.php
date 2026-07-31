@@ -282,8 +282,6 @@ function getPieChartMarkup($title, $chartId, $width = "335", $height = "120") {
         <?php echo Vite::asset('resources/js/admin.js'); ?>
         
         <?php echo FAVICON; ?>
-        <?php echo GRID_CSS; ?>
-        <?php echo NAVBAR_CSS; ?>
 
         <script type="text/javascript">
             document.addEventListener("DOMContentLoaded", () => {

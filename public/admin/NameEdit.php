@@ -416,9 +416,6 @@ $alertMessage = $alertMsg->createMarkup();
 
         <?php echo FAVICON; ?>
         <?php echo MULTISELECT_CSS; ?>
-        <?php echo GRID_CSS; ?>
-        <?php echo NAVBAR_CSS; ?>
-        <?php echo UPPLOAD_CSS; ?>
         <link href="css/volCtrl.css" rel="stylesheet" type="text/css" />
 
         <script type="text/javascript" src="<?php echo STATE_COUNTRY_JS; ?>" defer></script>
@@ -435,12 +432,12 @@ $alertMessage = $alertMsg->createMarkup();
 
             <div class="hhk-flex my-3">
                 <?php echo $NiceName; ?>
-                <div class="ui-widget ui-widget-content ui-corner-all hhk-widget-content p-2 ml-3" style="background:#EFDBC2;">
+                <div class="ui-widget ui-widget-content ui-corner-all hhk-widget-content p-2 ms-3" style="background:#EFDBC2;">
                     <form autocomplete="off">
                         <div style="border-width: 1px; border-color: gray; border-style: ridge; padding: 2px;">
                             <span>Search: </span>
                             <span style="margin: 0 10px;">
-                                <input type="radio" name="msearch" checked="checked" id="rbmemName" class="mr-1"/><label for="rbmemName">Name</label>
+                                <input type="radio" name="msearch" checked="checked" id="rbmemName" class="me-1"/><label for="rbmemName">Name</label>
                                 <input type="radio" name="msearch" id="rbmemEmail" class="mx-1"/><label for="rbmemEmail">Email</label>
                             </span>
                             <input type="text" id='hdnblank' value='' style='display:none;'/>
@@ -458,7 +455,7 @@ $alertMessage = $alertMsg->createMarkup();
                         <?php echo $relationsMarkup; ?>
                 </div>
                 <div id="divaddrTabs" class="hhk-showonload hhk-flex hhk-flex-wrap" style="display:none;">
-                    <div id="phEmlTabs" class="hhk-member-detail mr-2 mb-2">
+                    <div id="phEmlTabs" class="hhk-member-detail me-2 mb-2">
                         <ul>
                             <li><a href="#prefTab" title="Show only preferred phone and Email">Summary</a></li>
                             <li><a href="#phonesTab" title="Edit the Phone Numbers and designate the preferred number">Phone</a></li>
@@ -474,10 +471,10 @@ $alertMessage = $alertMsg->createMarkup();
                             <?php echo $emailMkup; ?>
                         </div>
                     </div>
-                    <div id="addrsTabs" class="hhk-member-detail mr-2 mb-2">
+                    <div id="addrsTabs" class="hhk-member-detail me-2 mb-2">
                         <?php echo $addrPanelMkup; ?>
                     </div>
-                    <div id="demographicTabs" class="hhk-member-detail mr-2 mb-2">
+                    <div id="demographicTabs" class="hhk-member-detail me-2 mb-2">
                         <?php echo $miscTabs; ?>
                     </div>
                 </div>
@@ -558,15 +555,6 @@ $alertMessage = $alertMsg->createMarkup();
                 <?php echo $webUserDialogMarkup; ?>
             </div>
         </div>  <!-- div id="page"-->
-        <?php if ($uS->ShowGuestPhoto) {
-            echo '<script type="text/javascript" src="' . UPPLOAD_JS . '" defer></script>';
-        ?>
-        	<script>
-        		document.addEventListener("DOMContentLoaded", () => {
-        			window.uploader = new Upploader.Uppload({lang: Upploader.en});
-        		});
-        	</script>
-        <?php } ?>
         <script type="text/javascript"><?php include_once("js/nameEd.js") ?></script>
     </body>
 </html>

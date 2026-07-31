@@ -183,7 +183,7 @@ if (is_null($guest) === FALSE && $emAddr == '') {
 //echo Statement::createEmailStmtWrapper($stmtMarkup);
 //exit;
 $emtableMarkup = HTMLContainer::generateMarkup("form",
-    Statement::makeEmailTbl("<strong class='mr-2'>" . $uS->siteName . "</strong><small>&lt;" . $uS->FromAddress . "&gt;</small>",$emSubject, $emAddr, $emBody, $idRegistration, $idVisit)
+    Statement::makeEmailTbl("<strong class='me-2'>" . $uS->siteName . "</strong><small>&lt;" . $uS->FromAddress . "&gt;</small>",$emSubject, $emAddr, $emBody, $idRegistration, $idVisit)
 , ['id' => 'formEm', 'name' => 'formEm', 'method' => "POST", 'action' => 'ShowStatement.php', 'class' => 'hhk-noprint']);
 
 if(isset($_GET['pdfDownload']) && $stmtMarkup != ''){
@@ -289,7 +289,6 @@ if ($msg != '') {
         
         <?php echo FAVICON; ?>
         <?php echo CSSVARS; ?>
-        <?php echo GRID_CSS; ?>
         <?php echo STATEMENT_CSS; ?>
 
         <script type="text/javascript" src="<?php echo PRINT_AREA_JS; ?>" defer></script>

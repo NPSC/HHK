@@ -324,9 +324,9 @@ function searchVisits(\PDO $dbh, string $start, string $end, int $maxGuests, Abs
                 $first = FALSE;
                 $td = HTMLTable::makeTd(
                     HTMLContainer::generateMarkup('div',
-                        HTMLInput::generateMarkup($idp, array('type'=>'checkbox', 'class'=>'hhk-txPsgs mr-1', 'name'=>'cbIdPSG'.$idp, 'checked'=>'checked', 'data-idpsg'=>$idp, 'title'=>'Check to include in the transfer.'))
-                        .HTMLContainer::generateMarkup('label', $idp, array('for'=>'cbIdPSG'.$idp, 'class'=>'mr-3'))
-                        .HTMLInput::generateMarkup($idp, array('type'=>'checkbox', 'class'=>'hhk-exPsg mr-1', 'name'=>'cbExPSG'.$idp, 'data-idpsg'=>$idp, 'title'=>'Check to permanently exclude from Neon.'))
+                        HTMLInput::generateMarkup($idp, array('type'=>'checkbox', 'class'=>'hhk-txPsgs me-1', 'name'=>'cbIdPSG'.$idp, 'checked'=>'checked', 'data-idpsg'=>$idp, 'title'=>'Check to include in the transfer.'))
+                        .HTMLContainer::generateMarkup('label', $idp, array('for'=>'cbIdPSG'.$idp, 'class'=>'me-3'))
+                        .HTMLInput::generateMarkup($idp, array('type'=>'checkbox', 'class'=>'hhk-exPsg me-1', 'name'=>'cbExPSG'.$idp, 'data-idpsg'=>$idp, 'title'=>'Check to permanently exclude from Neon.'))
                         .HTMLContainer::generateMarkup('label', 'Excld', array('for'=>'cbExPSG'.$idp))
                     , ['class'=>'hhk-flex align-items-center'])
                     , array('rowspan'=>count($rows[$idp]), 'style'=>'vertical-align:top;', 'class'=>'psgCBs'));
@@ -354,7 +354,7 @@ function searchVisits(\PDO $dbh, string $start, string $end, int $maxGuests, Abs
                     HTMLSelector::generateMarkup(
                         HTMLSelector::doOptionsMkup($neonRelList, $g['Guest to PG'], TRUE),
                         array('name'=>'selNeonRel' . $g['HHK Id'], 'data-idname'=>$g['HHK Id'], 'class'=>'hhk-selRel'.$idp))
-                    . (count($neonRelList) == 0 ? HTMLContainer::generateMarkup('span', 'No Neon relationships have been mapped.', array('class'=>'ml-2 ui-corner-all ui-state-highlight')) : ''))
+                    . (count($neonRelList) == 0 ? HTMLContainer::generateMarkup('span', 'No Neon relationships have been mapped.', array('class'=>'ms-2 ui-corner-all ui-state-highlight')) : ''))
                 , array('class'=>'hhk-'.$idp, 'style'=>$rowStyle));
         }
 
@@ -419,7 +419,7 @@ function createKeyMap(\PDO $dbh): string {
         $diagKeyTable->addBodyTr(HTMLTable::makeTd($d[0]).HTMLTable::makeTd($d[1]));
     }
 
-    $hdiv = HTMLContainer::generateMarkup('div', $hospitalKeyTable->generateMarkup(), array('class'=>'ml-2'));
+    $hdiv = HTMLContainer::generateMarkup('div', $hospitalKeyTable->generateMarkup(), array('class'=>'ms-2'));
     $ddiv = HTMLContainer::generateMarkup('div', $diagKeyTable->generateMarkup());
 
     $infoDiv = HTMLContainer::generateMarkup('div', 
@@ -493,7 +493,7 @@ if (filter_has_var(INPUT_POST, 'btnHere') || filter_has_var(INPUT_POST, 'btnGetP
             $scTbl = new HTMLTable();
             $scTbl->addHeaderTr(HTMLTable::makeTh($CmsManager->getServiceTitle() . ' Search Criteria', ['colspan' => count($searchCriteria)]));
             $scTbl->addBodyTr($tr);
-            $searchTable = $scTbl->generateMarkup(['class' => 'ml-4']);
+            $searchTable = $scTbl->generateMarkup(['class' => 'ms-4']);
 
             // Call different js routines by CMS manager name.
              if ($CmsManager->getServiceName() == AbstractExportManager::CMS_SF) {
@@ -566,8 +566,6 @@ $btnGetRecords = HTMLInput::generateMarkup('Get HHK ' . Labels::getString('membe
         <?php echo Vite::asset('resources/js/house.js'); ?>
         
         <?php echo FAVICON; ?>
-        <?php echo GRID_CSS; ?>
-        <?php echo NAVBAR_CSS; ?>
 
         <style>
             #aLoginLink:hover {background-color: #337a8e; }
@@ -592,7 +590,7 @@ $btnGetRecords = HTMLInput::generateMarkup('Get HHK ' . Labels::getString('membe
                 <form id="fcat" action="GuestTransfer.php" method="post">
                     <div class="hhk-flex mb-3">
                         <?php echo $timePeriodMarkup; ?>
-                        <table class="ml-3">
+                        <table class="ms-3">
                             <tr>
                                 <th><?php echo $CmsManager->getServiceTitle(); ?> Last Name Search</th>
                                 <td><input id="txtRSearch" type="text" /></td>
@@ -631,7 +629,7 @@ $btnGetRecords = HTMLInput::generateMarkup('Get HHK ' . Labels::getString('membe
                     <div id="loadingIcon" class="ui-widget ui-widget-content ui-corner-all ui-autocomplete-loading" style="width:140px; clear:left; display:none; font-size:1em; padding:5px; margin-left: 2em;">
                         <p id="loadingText" style="margin-left:20px;">Transfering </p>
                     </div>
-                    <span style="display: none;" id="cbTraceWrapper" class="ml-3"><input id="cbTrace" type="checkbox" class="mr-1"><label for="cbTrace">Print debug info</label></span>
+                    <span style="display: none;" id="cbTraceWrapper" class="ms-3"><input id="cbTrace" type="checkbox" class="me-1"><label for="cbTrace">Print debug info</label></span>
                 </div>
             </div>
         </div>

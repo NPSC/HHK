@@ -195,8 +195,6 @@ $ip_tbl->addHeaderTr(HTMLTable::makeTh('Name') . HTMLTable::makeTh('IP Address')
 
 		<?php echo FAVICON; ?>
 		<?php echo MULTISELECT_CSS; ?>
-		<?php echo GRID_CSS; ?>
-		<?php echo NAVBAR_CSS; ?>
 
 
         <script type="text/javascript" src="<?php echo MULTISELECT_JS; ?>" defer></script>

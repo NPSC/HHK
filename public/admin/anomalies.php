@@ -345,8 +345,6 @@ function doReports(PDO $dbh, chkBoxCtrl $cbMemStatus, chkBoxCtrl $cbRptType, $is
         <title><?php echo $pageTitle; ?></title>
         <?php echo Vite::asset('resources/js/admin.js'); ?>
         
-        <?php echo GRID_CSS; ?>
-        <?php echo NAVBAR_CSS; ?>
 
         <script type="text/javascript" src="<?php echo PRINT_AREA_JS; ?>" defer></script>
 

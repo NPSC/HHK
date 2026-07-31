@@ -47,8 +47,6 @@ $availableScopes = Common::readGenLookupsPDO($dbh, "Oauth_Scopes");
         <?php echo Vite::asset('resources/js/admin.js'); ?>
 
         <?php echo FAVICON; ?>
-        <?php echo GRID_CSS; ?>
-        <?php echo NAVBAR_CSS; ?>
 
         <script type="text/javascript">
 
@@ -117,7 +115,7 @@ $availableScopes = Common::readGenLookupsPDO($dbh, "Oauth_Scopes");
                     title: '', 
                     sortable:false,
                     render(data, type){
-                        return '<div class="hhk-flex"><button type="button" class="view-client ui-button ui-corner-all mr-2" data-client-id="' + data + '">View</button><button type="button" class="edit-client ui-button ui-corner-all" data-client-id="' + data + '">Edit</button></div>';
+                        return '<div class="hhk-flex"><button type="button" class="view-client ui-button ui-corner-all me-2" data-client-id="' + data + '">View</button><button type="button" class="edit-client ui-button ui-corner-all" data-client-id="' + data + '">Edit</button></div>';
                     }
                 } 
             );

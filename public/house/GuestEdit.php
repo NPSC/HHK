@@ -510,7 +510,7 @@ if ($psg->getIdPsg() > 0) {
             . HouseServices::guestEditCreditTable($dbh, $registration->getIdRegistration(), $id, 'g')
             . HTMLInput::generateMarkup('Update Credit', ['type' => 'button', 'id' => 'btnCred', 'data-indx' => 'g', 'data-id' => $id, 'data-idreg' => $registration->getIdRegistration(), 'style' => 'margin:5px;float:right;'])
         ,
-            ['id' => 'upCreditfs', 'class' => 'hhk-panel ignrSave mb-3 mr-3']));
+            ['id' => 'upCreditfs', 'class' => 'hhk-panel ignrSave mb-3 me-3']));
 
 
     // Registration markup
@@ -518,7 +518,7 @@ if ($psg->getIdPsg() > 0) {
             HTMLContainer::generateMarkup('legend', 'Registration', ['style' => 'font-weight:bold;'])
             . $registration->createRegMarkup($dbh, $memberFlag)
             ,
-            ['class' => 'hhk-panel mb-3 mr-3'])) . $ccMarkup;
+            ['class' => 'hhk-panel mb-3 me-3'])) . $ccMarkup;
 
     if ($uS->TrackAuto) {
         $vehicleTabMarkup = Vehicle::createVehicleMarkup($dbh, $registration->getIdRegistration(), 0, 0);
@@ -739,10 +739,7 @@ $uS->guestId = $id;
         
         <?php echo MULTISELECT_CSS; ?>
         <?php echo INCIDENT_CSS; ?>
-        <?php echo UPPLOAD_CSS; ?>
         <?php echo FAVICON; ?>
-        <?php echo GRID_CSS; ?>
-        <?php echo NAVBAR_CSS; ?>
         <?php echo CSSVARS; ?>
         <?php echo STATEMENT_CSS; ?>
 
@@ -760,20 +757,9 @@ $uS->guestId = $id;
         <script type="text/javascript" src="<?php echo JSIGNATURE_JS; ?>" defer></script>
         <script type="text/javascript" src="js/statement.js" defer></script>
 
-        <?php if ($uS->UseDocumentUpload || $uS->ShowGuestPhoto) {
-            echo '<script type="text/javascript" src="' . UPPLOAD_JS . '" defer></script>';
-        ?>
-        	<script>
-        		document.addEventListener('DOMContentLoaded', () => {
-        			window.uploader = new Upploader.Uppload({lang: Upploader.en});
-        		});
-        	</script>
         <?php
-            echo '<script type="text/javascript" src="' . DOC_UPLOAD_JS . '" defer></script>';
-        }
-
-        if ($uS->PaymentGateway == AbstractPaymentGateway::INSTAMED) {echo INS_EMBED_JS;} ?>
-        <?php
+            if ($uS->PaymentGateway == AbstractPaymentGateway::INSTAMED) {echo INS_EMBED_JS;}
+                
             if ($uS->PaymentGateway == AbstractPaymentGateway::DELUXE) {
                 if ($uS->mode == Mode::Live) {
                     echo DELUXE_EMBED_JS;
@@ -794,17 +780,17 @@ $uS->guestId = $id;
                 <form autocomplete="off">
                 <div class="ui-widget ui-widget-content ui-corner-all row" style="font-size:.9em;background:#EFDBC2; margin:10px; padding:5px;">
                     <div class="col-12 col-md mb-2 mb-md-0 hhk-flex">
-                    	<label for="txtsearch" style="min-width:fit-content" class="mr-2">Name Search </label>
+                    	<label for="txtsearch" style="min-width:fit-content" class="me-2">Name Search </label>
                     	<input type="search" class="allSearch" id="txtsearch" size="20" title="Enter at least 3 characters to invoke search" style="width: 100%" />
                     </div>
                     <?php if($uS->searchMRN){ ?>
                     <div class="col-12 col-md mb-2 mb-md-0 hhk-flex">
-                    	<label for="txtMRNsearch" style="min-width:fit-content" class="mr-2"><?php echo Labels::getString("hospital", "MRN", "MRN"); ?> Search </label>
+                    	<label for="txtMRNsearch" style="min-width:fit-content" class="me-2"><?php echo Labels::getString("hospital", "MRN", "MRN"); ?> Search </label>
                     	<input type="search" class="allSearch" id="txtMRNsearch" size="15" title="Enter at least 3 characters to invoke search" style="width: 100%" />
                     </div>
                     <?php } ?>
                     <div class="col-12 col-md mb-2 mb-md-0 hhk-flex">
-                    	<label for="txtPhsearch" style="min-width:fit-content" class="mr-2">Phone Search </label>
+                    	<label for="txtPhsearch" style="min-width:fit-content" class="me-2">Phone Search </label>
                     	<input type="search" class="allSearch" id="txtPhsearch" size="15" title="Enter at least 5 numerals to invoke search" style="width: 100%" />
                 	</div>
                 </div>
@@ -873,7 +859,7 @@ $uS->guestId = $id;
                     <?php } ?>
                     <div id="nameTab"  class="ui-tabs-hide  hhk-visitdialog" style="display:none;">
                         <div class="hhk-showonload hhk-tdbox hhk-flex hhk-flex-wrap" style="display:none;" >
-                            <div id="phEmlTabs" class="mr-3">
+                            <div id="phEmlTabs" class="me-3">
                                     <ul class="hhk-flex">
                                         <li><a href="#prefTab" title="Show only preferred phone and Email">Summary</a></li>
                                         <li><a href="#phonesTab" title="Edit the Phone Numbers and designate the preferred number">Phone</a></li>
@@ -889,7 +875,7 @@ $uS->guestId = $id;
                                         <?php echo $emailMkup; ?>
                                     </div>
                             </div>
-                            <div id="addrsTabs" class="ui-tabs-hide ignrSave mr-3">
+                            <div id="addrsTabs" class="ui-tabs-hide ignrSave me-3">
                                 <?php echo $addrPanelMkup; ?>
                             </div>
                             <div id="emergTabs" class="ui-tabs-hide" >

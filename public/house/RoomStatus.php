@@ -176,8 +176,6 @@ if (isset($rescGroups[$uS->CalResourceGroupBy])) {
         <?php echo Vite::asset('resources/js/house.js'); ?>
 
         <?php echo FAVICON; ?>
-        <?php echo GRID_CSS; ?>
-        <?php echo NAVBAR_CSS; ?>
         <?php echo CSSVARS; ?>
 
         <style type="text/css"  media="print">

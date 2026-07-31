@@ -1,3 +1,5 @@
+import $ from '../common/jquery.js';
+
 (function ($) {
 
     $.fn.incidentViewer = function (options) {
@@ -626,4 +628,4 @@
         }
     }
 
-}(jQuery));
+}($));

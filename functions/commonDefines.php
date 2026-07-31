@@ -43,7 +43,6 @@ define('FULLC_CSS', '<link href="css/fullcalendar.min.css' . JSV . '" rel="style
 define('SELECT2_CSS', '<link href="css/select2.min.css' . JSV . '" rel="stylesheet" type="text/css" />');
 define('NOTY_CSS', "<link href='../css/toastr.css" . JSV . "' rel='stylesheet' type='text/css' />");
 define('INCIDENT_CSS', '<link href="css/incidentReports.css' . JSV . '" rel="stylesheet" type="text/css" />');
-define('UPPLOAD_CSS', '<link rel="stylesheet" href="../js/uppload/uppload.css' . JSV . '"><link rel="stylesheet" href="../js/uppload/light.css' . JSV . '">');
 
 define('JQ_UI_JS', '../js/jquery-ui.min.js' . JSV);
 define('JQ_JS', '../js/jquery-min.js' . JSV);
