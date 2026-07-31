@@ -620,11 +620,11 @@ class Family
             'div',
             HTMLContainer::generateMarkup(
                 'fieldset',
-                HTMLContainer::generateMarkup('legend', 'Emergency Contact for ' . Labels::getString('MemberType', 'visitor', 'Guest') . HTMLContainer::generateMarkup("ul", $copy . $ecSearch, array("class" => "ui-widget ui-helper-clearfix hhk-ui-icons ml-2")), array('class' => "hhk-flex align-items-center", 'style' => 'font-weight:bold;'))
+                HTMLContainer::generateMarkup('legend', 'Emergency Contact for ' . Labels::getString('MemberType', 'visitor', 'Guest') . HTMLContainer::generateMarkup("ul", $copy . $ecSearch, array("class" => "ui-widget ui-helper-clearfix hhk-ui-icons ms-2")), array('class' => "hhk-flex align-items-center", 'style' => 'font-weight:bold;'))
                 . $ec->createMarkup($uS->guestLookups[GLTableNames::PatientRel], $role->getRoleMember()->getIdPrefix(), $role->getIncompleteEmContact(), $emergUserData),
                 array('class' => 'hhk-panel')
             ),
-            array('class' => 'mr-1', 'style' => 'font-size: 0.9em;')
+            array('class' => 'me-1', 'style' => 'font-size: 0.9em;')
         );
 
     }

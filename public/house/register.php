@@ -369,8 +369,6 @@ if($uS->useOnlineReferral){
         <script type="text/javascript" src="<?php echo ADDR_PREFS_JS; ?>" defer></script>
         <script type="text/javascript" src="<?php echo VISIT_DIALOG_JS; ?>" defer></script>
         
-        <script type="text/javascript" src="<?php echo REFERRAL_VIEWER_JS; ?>" defer></script>
-
         <script type="text/javascript" src="<?php echo INVOICE_JS; ?>" defer></script>
         <?php if ($uS->PaymentGateway == AbstractPaymentGateway::INSTAMED) {echo INS_EMBED_JS;} ?>
         <?php

@@ -1427,7 +1427,7 @@ $(document).ready(function () {
         eventContent: function (info) {
             let titleEl = document.createElement('span');
             titleEl.appendChild(document.createTextNode(info.event.title));
-            titleEl.classList.add("ml-1");
+            titleEl.classList.add("ms-1");
 
 			if (info.event.extendedProps.idReservation !== undefined) {
 
@@ -1903,6 +1903,6 @@ $(document).ready(function () {
 
     //move datatable buttons to title row
     $("#vstays, #vresvs, #vuncon, #vdaily, #vwls").each(function(){
-    	$(this).find('h3 span:first').after($(this).find(".dt-buttons button").css("font-size", "0.9em").addClass("ml-5"));
+    	$(this).find('h3 span:first').after($(this).find(".dt-buttons button").css("font-size", "0.9em").addClass("ms-5"));
 	});
 });

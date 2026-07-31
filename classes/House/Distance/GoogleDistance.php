@@ -104,7 +104,7 @@ class GoogleDistance extends AbstractDistance {
 
         $tbl->addBodyTr( 
             HTMLTable::makeTd(
-                HTMLContainer::generateMarkup("button", "Calculate Addresses", array("role"=>"button", "class"=>"ui-button mr-3", "id"=>"btnCalcAddresses")) . 
+                HTMLContainer::generateMarkup("button", "Calculate Addresses", array("role"=>"button", "class"=>"ui-button me-3", "id"=>"btnCalcAddresses")) . 
                 HTMLContainer::generateMarkup("button", "List Uncalculated Addresses", array("role"=>"button", "class"=>"ui-button", "id"=>"btnLoadUncalcAddrTbl"))
                 )
         , array("colspan"=>"2"));

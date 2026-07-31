@@ -99,7 +99,7 @@ abstract class AbstractReport {
         $descriptionMkup = "";
 
         if($this->filterOptsMkup != ""){
-            $filterOptsMkup = HTMLContainer::generateMarkup("div","<strong>Filter Options:</strong>". $this->filterOptsMkup, array("class"=>"ui-widget-content ui-corner-all hhk-flex mr-5", "id"=>"filterOpts"));
+            $filterOptsMkup = HTMLContainer::generateMarkup("div","<strong>Filter Options:</strong>". $this->filterOptsMkup, array("class"=>"ui-widget-content ui-corner-all hhk-flex me-5", "id"=>"filterOpts"));
         }
 
         if($this->description != ""){
@@ -194,7 +194,7 @@ abstract class AbstractReport {
         $statsMkup = $this->statsMkup;
 
         $titleMkup = HTMLContainer::generateMarkup('h3', $this->reportTitle, array('class'=>'mt-2'));
-        $bodyMkup = HTMLContainer::generateMarkup("div", HTMLContainer::generateMarkup("div", $summaryMkup, array('class'=>'ml-2')) . HTMLContainer::generateMarkup("img", "", array('src'=> $uS->resourceURL . "conf/" . $uS->statementLogoFile, "width"=>$uS->statementLogoWidth)), array('id'=>'repSummary', 'class'=>'hhk-flex mb-3', 'style'=>'justify-content: space-between'));
+        $bodyMkup = HTMLContainer::generateMarkup("div", HTMLContainer::generateMarkup("div", $summaryMkup, array('class'=>'ms-2')) . HTMLContainer::generateMarkup("img", "", array('src'=> $uS->resourceURL . "conf/" . $uS->statementLogoFile, "width"=>$uS->statementLogoWidth)), array('id'=>'repSummary', 'class'=>'hhk-flex mb-3', 'style'=>'justify-content: space-between'));
         return $titleMkup . $bodyMkup . $statsMkup;
 
     }

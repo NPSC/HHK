@@ -54,6 +54,10 @@ export default defineConfig({
 				// common.js bundles plus their site's jQuery UI theme.
 				house: 'resources/js/house.js',
 				admin: 'resources/js/admin.js',
+				root: 'resources/js/root.js',
+				loginHouse: 'resources/js/login/house.js',
+				loginAdmin: 'resources/js/login/admin.js'
+
 			},
 			output: {
 				manualChunks(id) {

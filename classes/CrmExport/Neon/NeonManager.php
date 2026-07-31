@@ -1882,7 +1882,7 @@ where n.External_Id != '" . self::EXCLUDE_TERM . "' AND n.Member_Status = '" . M
                         );
                     }
 
-                    $markup .= HTMLContainer::generateMarkup('div', $nTbl->generateMarkup([], ucfirst($list['List_Name'])), ['class'=>'ui-widget ui-widget-content ui-corner-all p-2 mb-3 mr-2']);
+                    $markup .= HTMLContainer::generateMarkup('div', $nTbl->generateMarkup([], ucfirst($list['List_Name'])), ['class'=>'ui-widget ui-widget-content ui-corner-all p-2 mb-3 me-2']);
                 }
 
                 // Custom fields
@@ -1905,7 +1905,7 @@ where n.External_Id != '" . self::EXCLUDE_TERM . "' AND n.Member_Status = '" . M
                     }
                 }
 
-                $markup .= HTMLContainer::generateMarkup('div', $cfTbl->generateMarkup([], 'Custom Fields'), ['class'=>'ui-widget ui-widget-content ui-corner-all p-2 mb-3 mr-2']);
+                $markup .= HTMLContainer::generateMarkup('div', $cfTbl->generateMarkup([], 'Custom Fields'), ['class'=>'ui-widget ui-widget-content ui-corner-all p-2 mb-3 me-2']);
 
                 // Sources
                 $stmt = $dbh->query("Select * from neon_type_map where List_Name = 'sources' and Neon_Type_Name = '" . self::SOURCE . "'");
@@ -1934,7 +1934,7 @@ where n.External_Id != '" . self::EXCLUDE_TERM . "' AND n.Member_Status = '" . M
                     $sTbl->addBodyTr(HTMLTable::makeTd(self::SOURCE) . HTMLTable::makeTd($neonSourceId));
                 }
 
-                $markup .= HTMLContainer::generateMarkup('div', $sTbl->generateMarkup([], 'Sources'), ['class'=>'ui-widget ui-widget-content ui-corner-all p-2 mb-3 mr-2']);
+                $markup .= HTMLContainer::generateMarkup('div', $sTbl->generateMarkup([], 'Sources'), ['class'=>'ui-widget ui-widget-content ui-corner-all p-2 mb-3 me-2']);
 
             } catch (\Exception $pe) {
                 $markup .= HTMLContainer::generateMarkup('h4', "Transfer Error: " .$pe->getMessage(), array('style'=>'margin-left:200px;color:red;'));

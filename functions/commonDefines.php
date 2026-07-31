@@ -51,9 +51,6 @@ define('NOTY_JS', '../js/toastr.min.js' . JSV);
 define('NOTY_SETTINGS_JS', '../js/toastrSettings.js' . JSV);  //These are local
 define('JQ_DT_SETTINGS', '../js/datatablesSettings.js' . JSV);
 define('JSIGNATURE_JS', '../js/jSignature.min.js' . JSV);
-define('BOOTSTRAP_JS', '../js/bootstrap.min.js' . JSV);
-define('HTMLENTITIES_JS', '../js/he.js'. JSV);
-define('DOMPURIFY_JS', '../js/purify.min.js'. JSV);
 
 define('PRINT_AREA_JS', '../js/jquery.PrintArea.js' . JSV);
 define('CREATE_AUTO_COMPLETE_JS', '../js/createAutoComplete.js' . JSV);

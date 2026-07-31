@@ -36,7 +36,7 @@ body.testbody {
 
 .pageHeader {
     width: 100%;
-    background-color: #459e00;
+    background-color: #459e00 !important;
     color: white;
     position:sticky;
     margin-bottom:0.5em;
@@ -153,7 +153,7 @@ div#contentDiv {
 .ui-autocomplete-loading { background: white url('../../images/ui-anim_basic_16x16.gif') right center no-repeat; }
 .ui-menu-item .ui-autocomplete {width:250px;font-size:.8em;}
 .hhk-date-sel {
-    background: url("jqui/images/ui-bg_highlight-hard_100_fafaf4_1x100.png") repeat-x scroll 50% 50% #FAFAF4;
+    background: url("../jqui-admin/images/ui-bg_highlight-hard_100_fafaf4_1x100.png") repeat-x scroll 50% 50% #FAFAF4;
     border: 1px solid #D4CCB0;
     color: #459E00;
     font-weight: bold;
@@ -279,10 +279,10 @@ outline: none;
 
 /* use white ui-icons on tabs */
 ul.ui-tabs-nav .ui-icon {
-    background-image: url(jqui/images/ui-icons_ffffff_256x240.png);
+    background-image: url(../jqui-admin/images/ui-icons_ffffff_256x240.png);
 }
 ul.ui-tabs-nav .ui-state-active .ui-icon {
-	background-image: url(jqui/images/ui-icons_8DC262_256x240.png);
+	background-image: url(../jqui-admin/images/ui-icons_8DC262_256x240.png);
 }
 
 /* Add flexbox support */

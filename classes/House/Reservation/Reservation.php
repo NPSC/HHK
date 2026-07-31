@@ -624,14 +624,14 @@ WHERE r.idReservation = " . $rData->getIdResv());
 
         $mkup = HTMLContainer::generateMarkup('div',
                 HTMLContainer::generateMarkup('span', 'Arrival: '.
-                    HTMLInput::generateMarkup(($this->reserveData->getArrivalDateStr()), $cidAttr), array("class"=>"mb-2 mb-md-0 mr-3"))
+                    HTMLInput::generateMarkup(($this->reserveData->getArrivalDateStr()), $cidAttr), array("class"=>"mb-2 mb-md-0 me-3"))
                 .HTMLContainer::generateMarkup('span', 'Expected Departure: '.
                     HTMLInput::generateMarkup(($this->reserveData->getDepartureDateStr()), array('name'=>$prefix.'gstCoDate', 'readonly'=>'readonly', 'size'=>'14'))
-                    , array('class'=>'mb-2 mb-md-0 mr-3'))
+                    , array('class'=>'mb-2 mb-md-0 me-3'))
                 .HTMLContainer::generateMarkup('span', 'Expected Days: '.
                     HTMLInput::generateMarkup($days, array('name'=>$prefix.'gstDays', 'readonly'=>'readonly', 'size'=>'4', "style"=>"outline: none; border: none; background:none; font-weight:bold; color:#2e6e9e;"))
                     . HTMLContainer::generateMarkup("span", "Stay length is less than " . $uS->minResvDays . " days", ["class"=>"ui-state-highlight ui-corner-all p-1", "style"=>"font-size: 0.8em;" . (!is_int($days) || $days >= $uS->minResvDays ? "display: none;": ""), "id"=>$prefix."gstDaysErr"])
-                    , array('class'=>'mb-2 mb-md-0 mr-3'))
+                    , array('class'=>'mb-2 mb-md-0 me-3'))
         		.HTMLContainer::generateMarkup('span', $lastVisitMU, array('style'=>'font-size:.8em;'))
         		, array('style'=>'font-size:.9em; align-items: center;', 'id'=>$prefix.'spnRangePicker', "class"=>"hhk-flex hhk-flex-wrap"))
         		.$repetr;
@@ -729,7 +729,7 @@ WHERE r.idReservation = " . $rData->getIdResv());
                     HTMLContainer::generateMarkup('legend', 'Credit Cards on File', array('style'=>'font-weight:bold;'))
                     . HouseServices::guestEditCreditTable($dbh, $reg->getIdRegistration(), $resv->getIdGuest(), 'g')
                     . HTMLInput::generateMarkup('Update Credit', array('type'=>'button','id'=>'btnUpdtCred', 'data-indx'=>'g', 'data-id'=>$resv->getIdGuest(), 'data-idreg'=>$reg->getIdRegistration(), 'style'=>'margin:5px;float:right;'))
-                ,array('id'=>'upCreditfs', 'class'=>'hhk-panel ignrSave')), array('style'=>'display: inline-block', 'class'=>'mr-3'));
+                ,array('id'=>'upCreditfs', 'class'=>'hhk-panel ignrSave')), array('style'=>'display: inline-block', 'class'=>'me-3'));
 
 
             }
@@ -758,7 +758,7 @@ WHERE r.idReservation = " . $rData->getIdResv());
             if ($uS->useChecklists) {
                 $checklistMkup = Checklist::createChecklistMkup($dbh, $this->reserveData->getIdPsg(), ChecklistType::PSG);
                 if($checklistMkup != ""){
-                    $checklistMkup = HTMLContainer::generateMarkup("div", $checklistMkup, ["class" => "mr-3 d-inline-block"]);
+                    $checklistMkup = HTMLContainer::generateMarkup("div", $checklistMkup, ["class" => "me-3 d-inline-block"]);
                 }
             }else{
                 $checklistMkup = "";
@@ -799,7 +799,7 @@ WHERE r.idReservation = " . $rData->getIdResv());
             if ($uS->useChecklists) {
                 $checklistMkup = Checklist::createChecklistMkup($dbh, $this->reserveData->getIdPsg(), ChecklistType::PSG);
                 if($checklistMkup != ""){
-                    $checklistMkup = HTMLContainer::generateMarkup("div", $checklistMkup, ["class" => "mr-3 d-inline-block"]);
+                    $checklistMkup = HTMLContainer::generateMarkup("div", $checklistMkup, ["class" => "me-3 d-inline-block"]);
                 }
             }else{
                 $checklistMkup = "";
@@ -1019,7 +1019,7 @@ where rg.idReservation =" . $r['idReservation']);
             .($moaBalance > 0 ? HTMLTable::makeTd('$'.number_format($moaBalance, 2), ['style'=>'text-align:center;']) : '')
             .($resv->isActive($allResvStatuses) ? HTMLTable::makeTd(HTMLInput::generateMarkup('', $attr), ['style'=>'text-align:center;']) : HTMLTable::makeTd(''))
                 .HTMLTable::makeTd(
-                        HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($resvStatuses, $resv->getStatus(), FALSE), ['name'=>'selResvStatus', 'class'=>'mr-1'])
+                        HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($resvStatuses, $resv->getStatus(), FALSE), ['name'=>'selResvStatus', 'class'=>'me-1'])
                         .HTMLContainer::generateMarkup('span', '', ['class'=>'ui-icon ui-icon-comment hhk-viewResvActivity', 'data-rid'=>$resv->getIdReservation(), 'title'=>'View Activity Log', 'style'=>'cursor:pointer;']))
                 );
 
@@ -1029,7 +1029,7 @@ where rg.idReservation =" . $r['idReservation']);
         }
 
         if($uS->UseRebook && Reservation_1::isActiveStatus($resv->getStatus(), $resvStatuses)) {
-            $tbl2->addBodyTr(HTMLTable::makeTd(HTMLInput::generateMarkup("", array("type"=>"checkbox", "name"=>"cbRebook", "id"=>"cbRebook", "class"=>"mr-1")) . HTMLContainer::generateMarkup("label", "Rebook for:", array("for"=>"cbRebook")), array('class'=>'tdlabel')) . HTMLTable::makeTd(HTMLInput::generateMarkup("", array('name'=>"newGstDate", "size"=>"14", "class"=>"mr-3")), array("colspan"=>"3")), array("id"=>"rebookRow", "style"=>"display:none;"));
+            $tbl2->addBodyTr(HTMLTable::makeTd(HTMLInput::generateMarkup("", array("type"=>"checkbox", "name"=>"cbRebook", "id"=>"cbRebook", "class"=>"me-1")) . HTMLContainer::generateMarkup("label", "Rebook for:", array("for"=>"cbRebook")), array('class'=>'tdlabel')) . HTMLTable::makeTd(HTMLInput::generateMarkup("", array('name'=>"newGstDate", "size"=>"14", "class"=>"me-3")), array("colspan"=>"3")), array("id"=>"rebookRow", "style"=>"display:none;"));
         }
 
         //Ribbon Note
@@ -1052,7 +1052,7 @@ where rg.idReservation =" . $r['idReservation']);
                     HTMLContainer::generateMarkup('legend', $labels->getString('referral', 'statusLabel', 'Reservation Status'), array('style'=>'font-weight:bold;'))
                     . $tbl2->generateMarkup() . $mk2,
                     ['class'=>'hhk-panel'])
-            , ['class'=>'mr-3 d-inline-block']) . $psgChecboxes;
+            , ['class'=>'me-3 d-inline-block']) . $psgChecboxes;
 
     }
 

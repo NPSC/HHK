@@ -89,7 +89,6 @@ $emtableMarkupv = '';
 
         <script type="text/javascript" src="<?php echo CREATE_AUTO_COMPLETE_JS; ?>" defer></script>
         <script type="text/javascript" src="<?php echo PRINT_AREA_JS; ?>" defer></script>
-        <script type="text/javascript" src="<?php echo REPORTFIELDSETS_JS; ?>" defer></script>
         
         <script type="text/javascript">
             document.addEventListener("DOMContentLoaded", () => {

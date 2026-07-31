@@ -83,7 +83,7 @@ class Hospital
 
         $table->addHeaderTr(
             (count($aList) > 0 && $hstay->getHospitalId() != $assocNoneId ? HTMLTable::makeTh(HTMLContainer::generateMarkup('label', $labels->getString('hospital', 'association', 'Association'), ['for' => 'selAssoc'])) : '')
-            . HTMLTable::makeTh(HTMLContainer::generateMarkup("label", $labels->getString('hospital', 'hospital', 'Hospital'), ['for' => "selHospital"]) . HTMLContainer::generateMarkup('span', "*", ['class' => 'hhk-text-red ml-1']))
+            . HTMLTable::makeTh(HTMLContainer::generateMarkup("label", $labels->getString('hospital', 'hospital', 'Hospital'), ['for' => "selHospital"]) . HTMLContainer::generateMarkup('span', "*", ['class' => 'hhk-text-red ms-1']))
             . HTMLTable::makeTh(HTMLContainer::generateMarkup('label', $labels->getString('hospital', 'roomNumber', 'Room'), ['for' => 'psgRoom']))
             . ($mrn == '' ? '' : HTMLTable::makeTh(HTMLContainer::generateMarkup('label', $mrn, ['for' => 'psgMrn'])))
         );
@@ -183,7 +183,7 @@ class Hospital
         $doctorMarkup = '';
         $labels = Labels::getLabels();
 
-        $requiredLabel = HTMLContainer::generateMarkup('span', "*", ['class' => 'hhk-text-red ml-1']);
+        $requiredLabel = HTMLContainer::generateMarkup('span', "*", ['class' => 'hhk-text-red ms-1']);
 
 
         if ($uS->ReferralAgent) {
@@ -322,7 +322,7 @@ class Hospital
                 . HTMLTable::makeTd(
                     HTMLContainer::generateMarkup(
                         "div",
-                        HTMLContainer::generateMarkup("span", $uS->nameLookups['Phone_Type'][PhonePurpose::Cell][1] . ': ', ["class" => "mr-1"]) .
+                        HTMLContainer::generateMarkup("span", $uS->nameLookups['Phone_Type'][PhonePurpose::Cell][1] . ': ', ["class" => "me-1"]) .
                         HTMLInput::generateMarkup(
                             $cPhone,
                             ['id' => 'a_txtPhone' . PhonePurpose::Cell, 'name' => 'a_txtPhone[' . PhonePurpose::Cell . ']', 'size' => '16', 'class' => 'hhk-phoneInput hhk-agentInfo hospital-stay']
@@ -334,7 +334,7 @@ class Hospital
                 . HTMLTable::makeTd(
                     HTMLContainer::generateMarkup(
                         "div",
-                        HTMLContainer::generateMarkup("span", $uS->nameLookups['Phone_Type'][PhonePurpose::Work][1] . ': ', ["class" => "mr-1"]) .
+                        HTMLContainer::generateMarkup("span", $uS->nameLookups['Phone_Type'][PhonePurpose::Work][1] . ': ', ["class" => "me-1"]) .
                         HTMLInput::generateMarkup(
                             $wPhone,
                             ['id' => 'a_txtPhone' . PhonePurpose::Work, 'name' => 'a_txtPhone[' . PhonePurpose::Work . ']', 'size' => '16', 'class' => 'hhk-phoneInput hhk-agentInfo hospital-stay']

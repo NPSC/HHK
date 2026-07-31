@@ -46,7 +46,7 @@ class InvoiceReport
             }
 
             $invoiceNumber = HTMLContainer::generateMarkup('a', $invoiceNumber, $invAttr)
-                .HTMLContainer::generateMarkup('span','', ['class' => 'ui-icon ui-icon-comment invAction ml-2', 'id' => 'invicon' . $r['idInvoice'], 'data-iid' => $r['idInvoice'], 'data-stat' => 'view', 'style' => 'cursor:pointer;', 'title' => 'View Items']);
+                .HTMLContainer::generateMarkup('span','', ['class' => 'ui-icon ui-icon-comment invAction ms-2', 'id' => 'invicon' . $r['idInvoice'], 'data-iid' => $r['idInvoice'], 'data-stat' => 'view', 'style' => 'cursor:pointer;', 'title' => 'View Items']);
         }
 
         //$g['invoiceMkup'] = HTMLContainer::generateMarkup('span', $invoiceNumber, ["style" => 'white-space:nowrap;']);

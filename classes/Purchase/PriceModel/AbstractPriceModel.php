@@ -288,8 +288,8 @@ abstract class AbstractPriceModel {
             $uS = Session::getInstance();
             
             if($uS->stmtShowRateTitle){
-                $rateColumn = HTMLTable::makeTd($t["title"], ["class"=>"pr-3", "style"=>"border-right: none;"]) .
-                    HTMLTable::makeTd(number_format($t['rate'], 2), ["class"=>"pl-3 align-right", "style"=>"border-left: none;"]);
+                $rateColumn = HTMLTable::makeTd($t["title"], ["class"=>"pe-3", "style"=>"border-right: none;"]) .
+                    HTMLTable::makeTd(number_format($t['rate'], 2), ["class"=>"ps-3 align-right", "style"=>"border-left: none;"]);
             }else{
                 $rateColumn = HTMLTable::makeTd(number_format($t['rate'], 2), array('class'=>'align-right'));
             }

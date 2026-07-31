@@ -193,7 +193,7 @@ ORDER BY g.`Order`;";
                 HTMLTable::makeTh($label . HTMLInput::generateMarkup('', $cbAttr), ['class' => 'tdlabel'])
 
                 . HTMLTable::makeTd(HTMLContainer::generateMarkup('div', 'Date: ' .
-                    HTMLInput::generateMarkup($strDate, ['name' => 'checklistDate[' . $checklistType . '][' . $r['Code'] .']', 'class' => 'ckdate ml-1', 'readonly'=>'readonly']), $bcdateAttr)
+                    HTMLInput::generateMarkup($strDate, ['name' => 'checklistDate[' . $checklistType . '][' . $r['Code'] .']', 'class' => 'ckdate ms-1', 'readonly'=>'readonly']), $bcdateAttr)
                     , ['class'=>'tdChecklistDate'])
 
             );

@@ -487,7 +487,7 @@ class GuestDemogReport {
 
         $btnSubmit = HTMLInput::generateMarkup("Run Report", ["type"=>"submit", "id"=>"btnSmt", "name"=>"btnSmt", "class"=>"ui-button ui-corner-all ui-widget"]);
 
-        return HTMLContainer::generateMarkup("div", HTMLContainer::generateMarkup("div","<strong>Filter Options:</strong>". $filterOptsMkup, array("class"=>"ui-widget-content ui-corner-all hhk-flex mr-5", "id"=>"filterOpts", "style"=>"align-items: initial")) . $btnSubmit, ["id"=>"filterBtns", "class"=>"mt-3"]);
+        return HTMLContainer::generateMarkup("div", HTMLContainer::generateMarkup("div","<strong>Filter Options:</strong>". $filterOptsMkup, array("class"=>"ui-widget-content ui-corner-all hhk-flex me-5", "id"=>"filterOpts", "style"=>"align-items: initial")) . $btnSubmit, ["id"=>"filterBtns", "class"=>"mt-3"]);
     }
 
     public static function calcZipDistance(\PDO $dbh, $sourceZip, $destZip) {

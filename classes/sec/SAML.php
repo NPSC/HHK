@@ -106,7 +106,7 @@ class SAML {
 
         if (!$this->auth->isAuthenticated()) {
             $ex = $this->auth->getLastErrorException();
-            $error = 'Authentication Failed <span class="hhk-help ml-2 px-1"><span class="ui-icon ui-icon-help hhk-tooltip" title="' . $ex->getMessage() . '"></span></span>';
+            $error = 'Authentication Failed <span class="hhk-help ms-2 px-1"><span class="ui-icon ui-icon-help hhk-tooltip" title="' . $ex->getMessage() . '"></span></span>';
         }else{
             //auth success
             $u = new UserClass();

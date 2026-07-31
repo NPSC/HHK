@@ -708,7 +708,7 @@ class PaymentChooser {
                         ['id'=> $i['Invoice_Number']. 'unpaidCb', 'name'=>'unpaidCb['.$i['Invoice_Number'].']', 'type'=>'checkbox', 'data-invnum'=>$i['Invoice_Number'], 'data-invamt'=>$i['Balance'], 'class'=>'hhk-feeskeys hhk-payInvCb', 'style'=>'margin-right:.4em;', 'title'=>'Check to pay this invoice.'])
                     .HTMLContainer::generateMarkup('span', '($'. number_format($i['Balance'], 2) . ')', ['style'=>'font-style: italic;']))
                 .HTMLTable::makeTd('$'.
-                    HTMLInput::generateMarkup('', ['type'=>'number', 'min'=>'0', 'step'=>'0.01', 'id' => $i['Invoice_Number'] . 'invPayAmt', 'name'=>'invPayAmt['.$i['Invoice_Number'].']', 'class'=>'hhk-feeskeys hhk-payInvAmt ml-1','style'=>'text-align:right;width:80px;', 'disabled'=>true]), ['style'=>'text-align:right;']);
+                    HTMLInput::generateMarkup('', ['type'=>'number', 'min'=>'0', 'step'=>'0.01', 'id' => $i['Invoice_Number'] . 'invPayAmt', 'name'=>'invPayAmt['.$i['Invoice_Number'].']', 'class'=>'hhk-feeskeys hhk-payInvAmt ms-1','style'=>'text-align:right;width:80px;', 'disabled'=>true]), ['style'=>'text-align:right;']);
 
             $trs[] = $unpaid;
         }
@@ -768,18 +768,18 @@ class PaymentChooser {
 
         $feesTbl->addBodyTr(
                 HTMLTable::makeTd('Amount:', array('class'=>'tdlabel'))
-                .HTMLTable::makeTd('$'.HTMLInput::generateMarkup('', array('name'=>'housePayment', 'size'=>'9', 'data-vid'=>$idVisit, 'style'=>'text-align:right;', 'class'=>'ml-2'))));
+                .HTMLTable::makeTd('$'.HTMLInput::generateMarkup('', array('name'=>'housePayment', 'size'=>'9', 'data-vid'=>$idVisit, 'style'=>'text-align:right;', 'class'=>'ms-2'))));
 
         if (isset($itemTaxSums[ItemId::AddnlCharge])) {
 
             $feesTbl->addBodyTr(
                 HTMLTable::makeTd('Tax ('. TaxedItem::suppressTrailingZeros($itemTaxSums[ItemId::AddnlCharge]*100).'):', array('class'=>'tdlabel'))
-                .HTMLTable::makeTd('$'.HTMLInput::generateMarkup('', array('name'=>'houseTax', 'size'=>'9', 'data-tax'=>$itemTaxSums[ItemId::AddnlCharge], 'readonly'=>'readonly', 'style'=>'text-align:right;', 'class'=>'ml-2')))
+                .HTMLTable::makeTd('$'.HTMLInput::generateMarkup('', array('name'=>'houseTax', 'size'=>'9', 'data-tax'=>$itemTaxSums[ItemId::AddnlCharge], 'readonly'=>'readonly', 'style'=>'text-align:right;', 'class'=>'ms-2')))
                     , array('class'=>'addnlChg', 'style'=>'display:none;'));
 
             $feesTbl->addBodyTr(
                 HTMLTable::makeTd('Total:', array('class'=>'tdlabel'))
-                .HTMLTable::makeTd('$'.HTMLInput::generateMarkup('', array('name'=>'totalHousePayment', 'size'=>'9', 'readonly'=>'readonly', 'style'=>'text-align:right;', 'class'=>'ml-2')))
+                .HTMLTable::makeTd('$'.HTMLInput::generateMarkup('', array('name'=>'totalHousePayment', 'size'=>'9', 'readonly'=>'readonly', 'style'=>'text-align:right;', 'class'=>'ms-2')))
                     , array('class'=>'addnlChg', 'style'=>'display:none;'));
         }
 
@@ -1094,7 +1094,7 @@ ORDER BY v.idVisit , v.Span;");
         	$feesTbl->addBodyTr(HTMLTable::makeTd($labels->getString('PaymentChooser', 'PayRmFees', 'Pay Room Fees').':', ['class'=>'tdlabel'])
                 .HTMLTable::makeTd($td, ["style"=>"text-align: center;min-width: 62px;"])
                 .HTMLTable::makeTd('$'.
-                    HTMLInput::generateMarkup('', ['type'=>'number', 'min'=>'0', 'step'=>'0.01', 'name'=>'feesPayment', 'class'=>'hhk-feeskeys ml-1','style'=>'text-align:right; width: 80px;'])
+                    HTMLInput::generateMarkup('', ['type'=>'number', 'min'=>'0', 'step'=>'0.01', 'name'=>'feesPayment', 'class'=>'hhk-feeskeys ms-1','style'=>'text-align:right; width: 80px;'])
                     , ['style'=>'text-align:right;', 'class'=>'hhk-feesPay']
                 )
                 , ['class'=>'hhk-RoomFees']
@@ -1232,7 +1232,7 @@ ORDER BY v.idVisit , v.Span;");
         // Cash Amt Tendered
         $payTbl->addBodyTr(
              HTMLTable::makeTd($labels->getString('PaymentChooser', 'amtTenderedPrompt', 'Amount Tendered') . ': ', ['colspan'=>'2', 'style'=>'text-align:right;', 'class'=>'tdlabel'])
-                     .HTMLTable::makeTd("$" . HTMLInput::generateMarkup('', ['type'=>'number', 'min'=>'0', 'step'=>'0.01', 'name'=>'txtCashTendered', 'style'=>'text-align:right; width:70px;', 'class'=>'hhk-feeskeys ml-1']), array('style'=>'text-align:right;'))
+                     .HTMLTable::makeTd("$" . HTMLInput::generateMarkup('', ['type'=>'number', 'min'=>'0', 'step'=>'0.01', 'name'=>'txtCashTendered', 'style'=>'text-align:right; width:70px;', 'class'=>'hhk-feeskeys ms-1']), array('style'=>'text-align:right;'))
                      , ['style'=>'display:none;', 'class'=>'hhk-cashTndrd']);
 
         $payTbl->addBodyTr(

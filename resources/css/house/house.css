@@ -84,7 +84,7 @@ div.hhk-pWarningMsg {
 }
 .hhk-view-visit:hover {
     background-color: #d0e5f5;
-    background-image: url("jqui/images/ui-bg_glass_75_d0e5f5_1x400.png");
+    background-image: url("../jqui-house/images/ui-bg_glass_75_d0e5f5_1x400.png");
     background-repeat: repeat-x;
     background-attachment: scroll;
     background-position: 50% 50%;
@@ -619,10 +619,10 @@ div#global-title {
 
 /* ui icon tab fix */
 div#referralTabs ul>li>a>span.ui-icon {
-	background-image: url(jqui/images/ui-icons_217bc0_256x240.png) !important;
+	background-image: url(../jqui-house/images/ui-icons_217bc0_256x240.png) !important;
 }
 div#referralTabs ul>li.ui-state-active .ui-icon {
-	background-image: url(jqui/images/ui-icons_f9bd01_256x240.png) !important;
+	background-image: url(../jqui-house/images/ui-icons_f9bd01_256x240.png) !important;
 }
 .hhkrefguestsel {
 	margin-top:0;
@@ -869,7 +869,7 @@ div.dt-buttons .dt-button:hover>span {
 }
 
 
-.ui-widget-content.hhk-widget-mobile, .hhk-mobile-tabs .ui-widget-content:not("ul") {
+.ui-widget-content.hhk-widget-mobile, .hhk-mobile-tabs .ui-widget-content:not(ul) {
 	overflow-x: auto;
 	overflow-y: auto
 }

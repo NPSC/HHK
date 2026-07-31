@@ -77,7 +77,7 @@ function upsert(transferIds, trace) {
             }
 
             //flagAlertMessage(data.error, true);
-            $('#divError').html($('<div class="ui-state-highlight ui-corner-all m-3 p-2"><h4>Error</h4><div class="ml-2">' + errorMsg + '</div></div>'));
+            $('#divError').html($('<div class="ui-state-highlight ui-corner-all m-3 p-2"><h4>Error</h4><div class="ms-2">' + errorMsg + '</div></div>'));
             $('#TxButton').prop('disabled', false);
 
         }

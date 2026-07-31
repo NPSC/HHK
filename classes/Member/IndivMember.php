@@ -104,7 +104,7 @@ class IndivMember extends AbstractMember
 
         $memPhotoMarkup = "";
         if ($uS->ShowGuestPhoto) {
-            $memPhotoMarkup = HTMLContainer::generateMarkup("div", Photo::showGuestPicture($this->get_idName(), $uS->MemberImageSizePx), array("class" => "mr-2"));
+            $memPhotoMarkup = HTMLContainer::generateMarkup("div", Photo::showGuestPicture($this->get_idName(), $uS->MemberImageSizePx), array("class" => "me-2"));
         }
 
         $table = new HTMLTable();

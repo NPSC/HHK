@@ -700,7 +700,7 @@ function bsIconAutocomplete(container) {
                 }
             }).autocomplete("instance")._renderItem = function (ul, item) {
                 return $( "<li>" )
-                .append( '<div><i style="font-size: 1.1em" class="mr-2 '+ item.value + '"></i>' + item.label + "</div>" )
+                .append( '<div><i style="font-size: 1.1em" class="me-2 '+ item.value + '"></i>' + item.label + "</div>" )
                 .appendTo( ul );
             };
         });

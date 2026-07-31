@@ -32,8 +32,6 @@ define('REG_FORM_JS', 'js/regForm-min.js' . JSV);
 /* page mins */
 define('RESV_JS', "js/resv.js" . JSV);
 define('INVOICE_JS', "js/invoice.js" . JSV);
-define('REPORTFIELDSETS_JS', "js/reportfieldSets.js" . JSV);
-define('REFERRAL_VIEWER_JS', "js/referralViewer.js" . JSV);
 define('FORMBUILDER_JS', "js/formBuilder.js" . JSV);
 define('RESERVE_JS', 'js/reserve.js' . JSV);
 define('CHECKIN_JS', 'js/checkin.js' . JSV);

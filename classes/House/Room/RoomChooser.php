@@ -480,7 +480,7 @@ class RoomChooser {
                         . $guestsRoom
                         . HTMLContainer::generateMarkup('div', $constraintMkup, array('style'=>'clear:left; float:left;')),
                         array('class'=>'hhk-panel'))
-                    , array('style'=>'display: inline-block', 'class'=>'mr-3')
+                    , array('style'=>'display: inline-block', 'class'=>'me-3')
                 );
         }
 
@@ -521,7 +521,7 @@ class RoomChooser {
                 HTMLContainer::generateMarkup('legend', 'Room Info', array('style'=>'font-weight:bold;'))
                 //.HTMLContainer::generateMarkup('div', $this->resv->getStatusIcon(), array('style'=>'float:right;'))
                 . $ttbl->generateMarkup() . $constraintMkup . $roomSelectedMsg, array('class'=>'hhk-panel')),
-                array('style'=>'display: inline-block', 'class'=>'mr-3'));
+                array('style'=>'display: inline-block', 'class'=>'me-3'));
 
     }
 

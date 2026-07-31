@@ -603,8 +603,8 @@ where
         }
 
 
-        $changeRoomIcon = HTMLContainer::generateMarkup('span', '', array('class' => 'ui-icon ui-icon-info mr-2', 'title' => 'Changed Rooms'));
-        $changeRateIcon = HTMLContainer::generateMarkup('span', '', array('class' => 'ui-icon ui-icon-info mr-2', 'title' => 'Room Rate Changed'));
+        $changeRoomIcon = HTMLContainer::generateMarkup('span', '', array('class' => 'ui-icon ui-icon-info me-2', 'title' => 'Changed Rooms'));
+        $changeRateIcon = HTMLContainer::generateMarkup('span', '', array('class' => 'ui-icon ui-icon-info me-2', 'title' => 'Room Rate Changed'));
         $insInfoIcon = HTMLContainer::generateMarkup('span', '', array('class' => 'ui-icon ui-icon-comment insAction', 'style' => 'cursor:pointer;', 'data-idName' => $r['idPatient'], 'id' => 'insAction' . $r['idPatient'], 'title' => 'View Insurance'));
 
         if ($local) {

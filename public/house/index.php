@@ -9,6 +9,7 @@ use HHK\SysConst\CodeVersion;
 use HHK\HTMLControls\HTMLContainer;
 use HHK\sec\SecurityComponent;
 use HHK\sec\SAML;
+use HHK\Vite\Vite;
 
 /**
  * Index.php
@@ -113,14 +114,11 @@ if (SecurityComponent::isHTTPS()) {
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
         <title><?php echo $uS->siteName; ?></title>
-        <?php echo JQ_UI_CSS; ?>
-        <?php echo ROOT_CSS; ?>
-        <?php echo HOUSE_CSS; ?>
-        <?php echo GRID_CSS; ?>
+        <?php echo Vite::asset('resources/js/login/house.js'); ?>
+
         <?php echo FAVICON; ?>
-        <script type="text/javascript" src="<?php echo JQ_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo JQ_UI_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo LOGIN_JS; ?>"></script>
+
+        <script type="text/javascript" src="<?php echo LOGIN_JS; ?>" defer></script>
 
     </head>
     <body <?php if ($uS->testVersion) { echo "class='testbody'"; } ?>>

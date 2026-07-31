@@ -159,7 +159,7 @@ class ReservationSvcs
             $intervalStr = "";
 
             $li .= HTMLContainer::generateMarkup('li',
-                HTMLContainer::generateMarkup('a', $r['tabTitle'] . ($r["cronJobs"] ? '<i class="ml-2 bi bi-watch"></i>':'') , array('href'=>'#'.$r['tabIndex'])), array('data-docId'=>$r['docId']));
+                HTMLContainer::generateMarkup('a', $r['tabTitle'] . ($r["cronJobs"] ? '<i class="ms-2 bi bi-watch"></i>':'') , array('href'=>'#'.$r['tabIndex'])), array('data-docId'=>$r['docId']));
 
             if(count($r["cronJobs"]) > 0){
                 foreach($r["cronJobs"] as $job){
@@ -189,7 +189,7 @@ class ReservationSvcs
                     
                     $cronAlert .= ($intervalStr != '' ? "This email is sent automatically " . $intervalStr . $job["Params"]["solicitBuffer"] . " days before</strong> (" . $jobTime->format("M j, Y") . ") the expected arrival date " . (isset($reservStatuses[$job["Params"]["ResvStatus"]]) ? "of <strong>" . $reservStatuses[$job["Params"]["ResvStatus"]]["Title"] . " Reservations</strong> " : ""):""); 
                 }
-                $cronAlert = HTMLContainer::generateMarkup("div", '<i class="mr-3 bi bi-info-circle-fill"></i>' . $cronAlert, ['class' => 'mb-4 p-2 ui-corner-all ui-state-highlight']);
+                $cronAlert = HTMLContainer::generateMarkup("div", '<i class="me-3 bi bi-info-circle-fill"></i>' . $cronAlert, ['class' => 'mb-4 p-2 ui-corner-all ui-state-highlight']);
             }
 
             $tabContent .= HTMLContainer::generateMarkup('div', $cronAlert .

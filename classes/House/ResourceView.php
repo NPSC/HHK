@@ -803,7 +803,7 @@ WHERE
 
         $cls = 'rmSave' . $room->getIdRoom();
 
-        $saveBtn = HTMLInput::generateMarkup('Save', array('id' => 'savebtn', 'class' => 'mr-2', 'data-id' => $room->getIdRoom(), 'data-type' => 'room', 'data-cls' => $cls, 'type' => 'button'));
+        $saveBtn = HTMLInput::generateMarkup('Save', array('id' => 'savebtn', 'class' => 'me-2', 'data-id' => $room->getIdRoom(), 'data-type' => 'room', 'data-cls' => $cls, 'type' => 'button'));
         $saveBtn .= HTMLInput::generateMarkup('Cancel', array('id' => 'cancelbtn', 'style' => 'margin-top:.2em;', 'data-id' => $room->getIdRoom(), 'data-type' => 'room', 'data-cls' => $cls, 'type' => 'button'));
 
         $tr = HTMLTable::makeTd($saveBtn) . HTMLTable::makeTd($room->getIdRoom())
@@ -894,7 +894,7 @@ WHERE
 
         $cls = 'reDiag' . $resc->getIdResource();
 
-        $saveBtn = HTMLInput::generateMarkup('Save', array('id' => 'savebtn', 'class' => 'mr-2', 'data-id' => $resc->getIdResource(), 'data-type' => 'resc', 'data-cls' => $cls, 'type' => 'button'));
+        $saveBtn = HTMLInput::generateMarkup('Save', array('id' => 'savebtn', 'class' => 'me-2', 'data-id' => $resc->getIdResource(), 'data-type' => 'resc', 'data-cls' => $cls, 'type' => 'button'));
         $saveBtn .= HTMLInput::generateMarkup('Cancel', array('id' => 'cancelbtn', 'style' => 'margin-top:.2em;', 'type' => 'button'));
 
         // New Resource?
@@ -1163,7 +1163,7 @@ ORDER BY $orderBy;");
             } else {
                 $notes = HTMLContainer::generateMarkup(
                     "div",
-                    HTMLContainer::generateMarkup("div", (strlen($r["Notes"]) > 0 ? "<strong>" . $r["noteDate"] . "</strong> - " . $r["Notes"] : ""), ["class" => "p-2 mr-3", "style" => "width: 100%; text-wrap: auto;"])
+                    HTMLContainer::generateMarkup("div", (strlen($r["Notes"]) > 0 ? "<strong>" . $r["noteDate"] . "</strong> - " . $r["Notes"] : ""), ["class" => "p-2 me-3", "style" => "width: 100%; text-wrap: auto;"])
                     . HTMLContainer::generateMarkup("button", "View Room Notes", ['type' => 'button', 'class' => "roomDetails ui-button ui-corner-all hhk-noprint", "data-idRoom" => $r['idRoom'], "data-title" => "Housekeeping Details for Room " . $r["Title"]])
                     ,
                     ["class" => "hhk-flex align-items-center"]

@@ -58,13 +58,13 @@ class Addresses {
             $phoneMkup = 'No Phone';
         } else if($phData["Phone_Num"] !== "" && $validPhone["isValid"] === false) { //if phone is invalid, add a triangle
             $phTdAttrs["class"] = "ui-state-error";
-            $phoneMkup = HTMLContainer::generateMarkup("div", HTMLContainer::generateMarkup("span", $phData["Phone_Num"] . ($phData["Phone_Extension"] == "" ? "" : " x" . $phData["Phone_Extension"])) . HTMLContainer::generateMarkup('i', '', ["class"=>"bi bi-exclamation-triangle-fill ml-2"]), ['class'=>'hhk-flex justify-content-between', "title"=>"Phone number is invalid"]);
+            $phoneMkup = HTMLContainer::generateMarkup("div", HTMLContainer::generateMarkup("span", $phData["Phone_Num"] . ($phData["Phone_Extension"] == "" ? "" : " x" . $phData["Phone_Extension"])) . HTMLContainer::generateMarkup('i', '', ["class"=>"bi bi-exclamation-triangle-fill ms-2"]), ['class'=>'hhk-flex justify-content-between', "title"=>"Phone number is invalid"]);
         }else {
             $phoneMkup = $phData["Phone_Num"] . ($phData["Phone_Extension"] == "" ? "" : " x" . $phData["Phone_Extension"]);
 
             //sms dialog
             if($uS->smsProvider && $phData["Preferred_Phone"] == PhonePurpose::Cell && $phData["Unformatted_Phone"] != "" && $phData["SMS_opt_in"] == "opt_in" && $validPhone["isValid"] == true && $validPhone["smsSupported"]){
-                $phoneMkup .= HTMLContainer::generateMarkup("button", HTMLContainer::generateMarkup("i", "", ['class'=>'bi bi-chat-dots-fill']), ['class'=>"ui-button ui-corner-all hhk-btn-small ml-2 btnTextGuest", "data-idname" => $phone->getIdName()]);
+                $phoneMkup .= HTMLContainer::generateMarkup("button", HTMLContainer::generateMarkup("i", "", ['class'=>'bi bi-chat-dots-fill']), ['class'=>"ui-button ui-corner-all hhk-btn-small ms-2 btnTextGuest", "data-idname" => $phone->getIdName()]);
             }
 
         }
@@ -84,7 +84,7 @@ class Addresses {
             $emMkup = 'No Email';
         } else if ($emData["Email"] !=="" && filter_var($emData["Email"], FILTER_VALIDATE_EMAIL) === false){ //if email is invalid, add a triangle
             $emTdAttrs["class"] = "ui-state-error";
-            $emMkup = HTMLContainer::generateMarkup("div", HTMLContainer::generateMarkup("span", $emData["Email"]) . HTMLContainer::generateMarkup('i', '', ["class"=>"bi bi-exclamation-triangle-fill ml-2"]), ['class'=>'hhk-flex justify-content-between', "title"=>"Email address is invalid"]);
+            $emMkup = HTMLContainer::generateMarkup("div", HTMLContainer::generateMarkup("span", $emData["Email"]) . HTMLContainer::generateMarkup('i', '', ["class"=>"bi bi-exclamation-triangle-fill ms-2"]), ['class'=>'hhk-flex justify-content-between', "title"=>"Email address is invalid"]);
         } else {
             $emMkup = $emData["Email"];
         }

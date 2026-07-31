@@ -59,8 +59,6 @@ if (isset($_POST['btnExcel-' . $report->getInputSetReportName()])) {
         <?php echo FAVICON; ?>
         <?php echo CSSVARS; ?>
 
-        <script type="text/javascript" src="<?php echo REPORTFIELDSETS_JS; ?>" defer></script>
-
         <script type="text/javascript">
             function invoiceAction(idInvoice, action, eid, container, show) {
                 $.post('ws_resc.php', {cmd: 'invAct', iid: idInvoice, x:eid, action: action, 'sbt':show},

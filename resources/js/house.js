@@ -6,3 +6,5 @@ import '../css/house/house.css';
 
 import './house/incidentReports.js';
 import './house/documentUpload.js';
+import './house/reportfieldSets.js';
+import './house/referralViewer.js';

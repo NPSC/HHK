@@ -1389,9 +1389,9 @@ function verifyAmtTendrd() {
 function showReceipt(dialogId, markup, title, width, paymentId = false, billToEmail = '') {
 
     var pRecpt = $(dialogId);
-    const printBtn = $("<div class='ml-3'><i class='bi bi-printer-fill mr-3'></i>Print</div>");
-    const emailBtn = $("<div class='ml-3'><i class='bi bi-send-fill mr-3'></i>Email</div>");
-    const downloadBtn = $("<a href='ws_ckin.php?cmd=downloadReceipt&paymentId="+ paymentId +"' class='ml-3'><i class='bi bi-cloud-arrow-down-fill mr-3'></i>Download</a>");
+    const printBtn = $("<div class='ms-3'><i class='bi bi-printer-fill me-3'></i>Print</div>");
+    const emailBtn = $("<div class='ms-3'><i class='bi bi-send-fill me-3'></i>Email</div>");
+    const downloadBtn = $("<a href='ws_ckin.php?cmd=downloadReceipt&paymentId="+ paymentId +"' class='ms-3'><i class='bi bi-cloud-arrow-down-fill me-3'></i>Download</a>");
 
     var opt = {
         mode: "popup",

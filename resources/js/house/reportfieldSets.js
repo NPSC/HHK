@@ -10,6 +10,8 @@
  * @link      https://github.com/NPSC/HHK
  */
 
+import $ from 'jquery';
+
 (function ($) {
 
   $.fn.fieldSets = function (options) {
@@ -241,4 +243,4 @@
 			
 		});
 	}
-}(jQuery));
+}($));

@@ -538,7 +538,6 @@ $columSelector = $colSelector->makeSelectorTable(TRUE)->generateMarkup(array('cl
 
         <script type="text/javascript" src="<?php echo PRINT_AREA_JS ?>" defer></script>
         <script type="text/javascript" src="<?php echo INVOICE_JS; ?>" defer></script>
-        <script type="text/javascript" src="<?php echo REPORTFIELDSETS_JS; ?>" defer></script>
 
         <script type="text/javascript">
             var deleteThisTr;

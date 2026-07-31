@@ -100,7 +100,6 @@ if (filter_has_var(INPUT_POST, 'cmd')) {
         <?php echo FAVICON; ?>
         <?php echo CSSVARS; ?>
 
-        <script type="text/javascript" src="<?php echo REPORTFIELDSETS_JS; ?>" defer></script>
         <script type="text/javascript" src="<?php echo PRINT_AREA_JS ?>" defer></script>
 
         <script src="https://www.gstatic.com/charts/loader.js"></script>

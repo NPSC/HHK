@@ -348,12 +348,12 @@ class VisitViewer {
             $addnlChargeLabel = strtolower((new Item($dbh, ItemId::AddnlCharge))->getDescription()) . 's';
             $discountLabel = strtolower((new Item($dbh, ItemId::Discount))->getDescription()) . 's';
 
-            $visitBoxLabel .= HTMLInput::generateMarkup(Labels::getString('visit', 'adjustFees', 'Adjust Fees') . '...', array('name'=>'paymentAdjust', 'type'=>'button', 'style'=>'font-size:.8em;', 'title'=>'Create one-time ' . $addnlChargeLabel . ' or ' . $discountLabel . '.', 'class'=>'ml-3'));
+            $visitBoxLabel .= HTMLInput::generateMarkup(Labels::getString('visit', 'adjustFees', 'Adjust Fees') . '...', array('name'=>'paymentAdjust', 'type'=>'button', 'style'=>'font-size:.8em;', 'title'=>'Create one-time ' . $addnlChargeLabel . ' or ' . $discountLabel . '.', 'class'=>'ms-3'));
         }
 
         if ($r['Status'] == VisitStatus::CheckedIn && $action != 'ref' && $uS->TrackAuto) {
 
-            $visitBoxLabel .= HTMLInput::generateMarkup('Edit Vehicles...', array('name'=>'vehAdjust', 'type'=>'button', 'style'=>'font-size:.8em;', 'title'=>'Edit vehicles for this visit.', 'class'=>'ui-button ui-corner-all ui-widget ml-2', 'role'=>'button'));
+            $visitBoxLabel .= HTMLInput::generateMarkup('Edit Vehicles...', array('name'=>'vehAdjust', 'type'=>'button', 'style'=>'font-size:.8em;', 'title'=>'Edit vehicles for this visit.', 'class'=>'ui-button ui-corner-all ui-widget ms-2', 'role'=>'button'));
         }
 
 
@@ -840,7 +840,7 @@ class VisitViewer {
             $currFees = HTMLContainer::generateMarkup('fieldset',
                     HTMLContainer::generateMarkup('legend', ($r['Status'] == VisitStatus::CheckedIn ? 'To-Date Fees & Balance Due' : 'Final Fees & Balance Due'), ['style'=>'font-weight:bold;'])
                     . HTMLContainer::generateMarkup('div', self::createCurrentFees($dbh, $r['Status'], $visitCharge, $vat, $includeVisitFee, $showRoomFees, $showGuestNights), ['id'=>'divCurrFees'])
-                        , ['class'=>'hhk-panel mr-2','style'=>'min-width: max-content;']);
+                        , ['class'=>'hhk-panel me-2','style'=>'min-width: max-content;']);
 
             // Enable Final payment?
             $enableFinalPayment = FALSE;

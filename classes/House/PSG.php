@@ -237,7 +237,7 @@ where r.idPsg = :idPsg and s.idName = :idGuest and DATEDIFF(s.Span_End_Date, s.S
                         HTMLContainer::generateMarkup('legend','Members', array('style'=>'font-weight:bold;'))
                         . $mTable->generateMarkup(),
                         array('class'=>'hhk-panel')),
-                ["class"=>"mr-3 mb-3"]);
+                ["class"=>"me-3 mb-3"]);
 
         $lastConfDate = $this->psgRS->Info_Last_Confirmed->getStoredVal();
         if ($lastConfDate != '') {
@@ -256,13 +256,13 @@ where r.idPsg = :idPsg and s.idName = :idGuest and DATEDIFF(s.Span_End_Date, s.S
         );
 
         // Wrap last confirmed
-        $memMkup .= HTMLContainer::generateMarkup('div', $lastConfirmed, ["class"=>"mr-3 mb-3"]);
+        $memMkup .= HTMLContainer::generateMarkup('div', $lastConfirmed, ["class"=>"me-3 mb-3"]);
 
         $uS = Session::getInstance();
         if ($uS->useChecklists) {
             // Checklist
             $cheklistMkup = Checklist::createChecklistMkup($dbh, $this->getIdPsg(), ChecklistType::PSG);
-            $memMkup .= HTMLContainer::generateMarkup("div", $cheklistMkup, ["class" => "mr-3 mb-3"]);
+            $memMkup .= HTMLContainer::generateMarkup("div", $cheklistMkup, ["class" => "me-3 mb-3"]);
         }
 
         // Change log

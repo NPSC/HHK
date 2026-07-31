@@ -1302,7 +1302,7 @@ WHERE
         if ($includeLogo && $logoUrl != '') {
 
             $header .= HTMLTable::makeTd(
-                HTMLContainer::generateMarkup('img', '', array('src'=>$logoUrl, 'id'=>'hhkrcpt', 'alt'=>$uS->siteName, 'width'=>$uS->statementLogoWidth, "class"=>"mr-5")),
+                HTMLContainer::generateMarkup('img', '', array('src'=>$logoUrl, 'id'=>'hhkrcpt', 'alt'=>$uS->siteName, 'width'=>$uS->statementLogoWidth, "class"=>"me-5")),
             array("style"=>"vertical-align: middle; width: " . $uS->statementLogoWidth ."px"));
         }
 
@@ -1337,18 +1337,18 @@ WHERE
 		);
 		$emTbl->addBodyTr(
 			HTMLTable::makeTd('Attachment', ['class'=>"tdlabel"]) . 
-			HTMLTable::makeTd(HTMLContainer::generateMarkup("a", 'Statement.pdf <i class="ml-1 bi bi-cloud-arrow-down-fill"></i>', array('href' => 'ShowStatement.php?vid=' . $idVisit . '&reg=' . $idRegistration . '&pdfDownload', 'class' => 'hhk-autosize')))
+			HTMLTable::makeTd(HTMLContainer::generateMarkup("a", 'Statement.pdf <i class="ms-1 bi bi-cloud-arrow-down-fill"></i>', array('href' => 'ShowStatement.php?vid=' . $idVisit . '&reg=' . $idRegistration . '&pdfDownload', 'class' => 'hhk-autosize')))
 		);
 
         $emtableMarkup .= HTMLContainer::generateMarkup("div", HTMLContainer::generateMarkup("h4", 'Email ' . Labels::getString('MemberType', 'visitor', 'Guest') . ' Statement'), ['class' => "ui-widget ui-widget-header align-center ui-corner-top"]);
         
         $emtableMarkup .= HTMLContainer::generateMarkup("div", 
 			$emTbl->generateMarkup(array("class"=>"emTbl mb-2"), ) . 
-			HTMLContainer::generateMarkup('div', HTMLContainer::generateMarkup('button', '&nbsp;<span>Send</span> <i class="ml-2 bi bi-send-fill"></i>', array('style'=>'font-size: 0.9em;', 'type'=>"button", "id"=>"btnEmail", 'class'=> 'ui-button ui-corner-all ui-widget', 'data-reg'=>$idRegistration, 'data-vid'=>$idVisit)), ["class"=>'align-center']), ["class"=>"p-2 hhk-tdbox mb-3 ui-widget ui-widget-content ui-corner-bottom hhk-visitdialog"]);
+			HTMLContainer::generateMarkup('div', HTMLContainer::generateMarkup('button', '&nbsp;<span>Send</span> <i class="ms-2 bi bi-send-fill"></i>', array('style'=>'font-size: 0.9em;', 'type'=>"button", "id"=>"btnEmail", 'class'=> 'ui-button ui-corner-all ui-widget', 'data-reg'=>$idRegistration, 'data-vid'=>$idVisit)), ["class"=>'align-center']), ["class"=>"p-2 hhk-tdbox mb-3 ui-widget ui-widget-content ui-corner-bottom hhk-visitdialog"]);
 
         $emtableMarkup .= HTMLContainer::generateMarkup("div",
-			HTMLInput::generateMarkup('Print', ["type" => "button", "id" => "btnPrint", "class" => "ui-button ui-corner-all ui-widget mr-3"])
-            //. HTMLInput::generateMarkup("Download MS Word", ["type"=>"submit", "name"=>"btnWord", "id"=>"btnWord", "class"=>"ui-button ui-corner-all ui-widget mr-3"])
+			HTMLInput::generateMarkup('Print', ["type" => "button", "id" => "btnPrint", "class" => "ui-button ui-corner-all ui-widget me-3"])
+            //. HTMLInput::generateMarkup("Download MS Word", ["type"=>"submit", "name"=>"btnWord", "id"=>"btnWord", "class"=>"ui-button ui-corner-all ui-widget me-3"])
             ,
 		["class"=>'mb-3']);
 
@@ -1372,18 +1372,18 @@ WHERE
     public static function makeEmailTblOLD($emSubject = "", $emAddrs = "", $emBody = "", $idRegistration = 0, $idVisit = 0){
         // create send email table
         $emTbl = new HTMLTable();
-        $emTbl->addBodyTr(HTMLTable::makeTd('Subject: ' . HTMLInput::generateMarkup($emSubject, array('name'=>'txtSubject', 'class'=>'ignrSave ml-2')), array("class"=>"hhk-flex")));
+        $emTbl->addBodyTr(HTMLTable::makeTd('Subject: ' . HTMLInput::generateMarkup($emSubject, array('name'=>'txtSubject', 'class'=>'ignrSave ms-2')), array("class"=>"hhk-flex")));
         $emTbl->addBodyTr(HTMLTable::makeTd(
                 'Email: '
-                . HTMLInput::generateMarkup($emAddrs, array('name'=>'txtEmail', 'class'=>'ignrSave ml-2')), array("class"=>"hhk-flex")));
+                . HTMLInput::generateMarkup($emAddrs, array('name'=>'txtEmail', 'class'=>'ignrSave ms-2')), array("class"=>"hhk-flex")));
         $emTbl->addBodyTr(HTMLTable::makeTd(HTMLInput::generateMarkup('Send Email', array('class'=> 'ui-button ui-corner-all ui-widget', 'name'=>'btnEmail', 'type'=>'button', 'data-reg'=>$idRegistration, 'data-vid'=>$idVisit))));
 
         $emtableMarkup = HTMLContainer::generateMarkup('div', HTMLContainer::generateMarkup('form',
                 $emTbl->generateMarkup(array('class'=>'emTbl'), 'Email '.Labels::getString('MemberType', 'visitor', 'Guest') . ' Statement'), array('id'=>'formEm'))
 
                 .HTMLContainer::generateMarkup('form',
-                        HTMLInput::generateMarkup('Print', array('type'=>'button', 'id'=>'btnPrint', 'class'=>'ui-button ui-corner-all ui-widget mr-3 mt-2'))
-                        .HTMLInput::generateMarkup('Download to MS Word', array('name'=>'btnWord', 'type'=>'submit', 'class'=>'ui-button ui-corner-all ui-widget mr-3 mt-2'))
+                        HTMLInput::generateMarkup('Print', array('type'=>'button', 'id'=>'btnPrint', 'class'=>'ui-button ui-corner-all ui-widget me-3 mt-2'))
+                        .HTMLInput::generateMarkup('Download to MS Word', array('name'=>'btnWord', 'type'=>'submit', 'class'=>'ui-button ui-corner-all ui-widget me-3 mt-2'))
                         .HTMLInput::generateMarkup($idRegistration, array('name'=>'hdnIdReg', 'type'=>'hidden'))
                         .HTMLInput::generateMarkup($idVisit, array('name'=>'hdnIdVisit', 'type'=>'hidden'))
                         , array('name'=>'formWord','action'=>'ShowStatement.php', 'method'=>'post'))

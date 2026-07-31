@@ -710,7 +710,7 @@ where
 		);
 		$emTbl->addBodyTr(
 			HTMLTable::makeTd('Attachment', ['class'=>"tdlabel"]) . 
-			HTMLTable::makeTd(HTMLContainer::generateMarkup("a", 'Invoice.pdf <i class="ml-1 bi bi-cloud-arrow-down-fill"></i>', array('href' => 'ShowInvoice.php?invnum='.$invNum.'&pdfDownload', 'class' => 'hhk-autosize')))
+			HTMLTable::makeTd(HTMLContainer::generateMarkup("a", 'Invoice.pdf <i class="ms-1 bi bi-cloud-arrow-down-fill"></i>', array('href' => 'ShowInvoice.php?invnum='.$invNum.'&pdfDownload', 'class' => 'hhk-autosize')))
 		);
 
 		if($this->invRs->EmailDate->getStoredVal()){
@@ -726,11 +726,11 @@ where
         $emtableMarkup .= HTMLContainer::generateMarkup("div", 
 			$emTbl->generateMarkup(array("class"=>"emTbl mb-2")) . 
 			HTMLContainer::generateMarkup("div", 
-				HTMLContainer::generateMarkup('button', 'Send <i class="ml-2 bi bi-send-fill"></i>', array('style'=>'font-size: 0.9em;', 'class'=>'ui-button ui-corner-all ui-widget', 'name' => 'btnEmail', 'type' => 'submit')), ['class'=>'align-center']), ["class"=>"p-2 hhk-tdbox mb-3 ui-widget ui-widget-content ui-corner-bottom hhk-visitdialog"]);
+				HTMLContainer::generateMarkup('button', 'Send <i class="ms-2 bi bi-send-fill"></i>', array('style'=>'font-size: 0.9em;', 'class'=>'ui-button ui-corner-all ui-widget', 'name' => 'btnEmail', 'type' => 'submit')), ['class'=>'align-center']), ["class"=>"p-2 hhk-tdbox mb-3 ui-widget ui-widget-content ui-corner-bottom hhk-visitdialog"]);
 
         $emtableMarkup .= HTMLContainer::generateMarkup("div",
-			HTMLInput::generateMarkup('Print', ["type" => "button", "id" => "btnPrint", "class" => "ui-button ui-corner-all ui-widget mr-3"])
-        	//. HTMLInput::generateMarkup("Download MS Word", ["type"=>"submit", "name"=>"btnWord", "id"=>"btnWord", "class"=>"ui-button ui-corner-all ui-widget mr-3"])
+			HTMLInput::generateMarkup('Print', ["type" => "button", "id" => "btnPrint", "class" => "ui-button ui-corner-all ui-widget me-3"])
+        	//. HTMLInput::generateMarkup("Download MS Word", ["type"=>"submit", "name"=>"btnWord", "id"=>"btnWord", "class"=>"ui-button ui-corner-all ui-widget me-3"])
 			,
 		["class"=>'mb-3']);
 

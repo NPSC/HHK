@@ -2471,8 +2471,8 @@ function resvManager(initData, options) {
                         $("#frmConfirm").children().remove();
                         $("#frmConfirm").html(data.confrv);
 
-                        var emailMkup = '<div class="col-md-6 my-2 hhk-flex"><label for="confEmail" class="pr-2" style="min-width:fit-content;">To Address</label><input type="text" style="width:100%" id="confEmail" value="' + data.email + '"></div>';
-                        emailMkup += '<div class="col-md-6 my-2 hhk-flex"><label for="ccConfEmail" class="pr-2" style="min-width:fit-content;">CC Address</label><input type="text" style="width:100%" id="ccConfEmail" value="' + data.ccemail + '"></div>';
+                        var emailMkup = '<div class="col-md-6 my-2 hhk-flex"><label for="confEmail" class="pe-2" style="min-width:fit-content;">To Address</label><input type="text" style="width:100%" id="confEmail" value="' + data.email + '"></div>';
+                        emailMkup += '<div class="col-md-6 my-2 hhk-flex"><label for="ccConfEmail" class="pe-2" style="min-width:fit-content;">CC Address</label><input type="text" style="width:100%" id="ccConfEmail" value="' + data.ccemail + '"></div>';
                         ;
 
                         $("#frmConfirm").append($('<div class="ui-dialog-buttonpane ui-widget-content ui-helper-clearfix hhk-flex hhk-flex-wrap">' + emailMkup + '</div>'));

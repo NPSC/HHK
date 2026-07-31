@@ -58,8 +58,6 @@ if (isset($_POST['btnExcel-' . $reservationReport->getInputSetReportName()])) {
         <?php echo FAVICON; ?>
         <?php echo CSSVARS; ?>
 
-        <script type="text/javascript" src="<?php echo REPORTFIELDSETS_JS; ?>"></script>
-
         <script type="text/javascript">
             document.addEventListener("DOMContentLoaded", () => {
                 var dateFormat = '<?php echo $labels->getString("momentFormats", "report", "MMM D, YYYY"); ?>';

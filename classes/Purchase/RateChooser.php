@@ -126,8 +126,8 @@ class RateChooser {
      */
     public function createChangeRateMarkup(\PDO $dbh, VisitRS $vRs) {
 
-        $attrFixed = array('class'=>'hhk-fxFixed ml-2', 'style'=>'');
-        $attrAdj = array('class'=>'hhk-fxAdj ml-2', 'style'=>'');
+        $attrFixed = array('class'=>'hhk-fxFixed ms-2', 'style'=>'');
+        $attrAdj = array('class'=>'hhk-fxAdj ms-2', 'style'=>'');
         $fixedRate = '';
         $rateTbl = new HTMLTable();
 
@@ -434,7 +434,7 @@ class RateChooser {
 
         return HTMLContainer::generateMarkup('div', HTMLContainer::generateMarkup('fieldset',
                 HTMLContainer::generateMarkup('legend', 'Rate Chooser', array('style'=>'font-weight:bold;'))
-                . $markup, array('class'=>'hhk-panel')), array('style'=> 'display: inline-block', 'class'=>'mr-3'));
+                . $markup, array('class'=>'hhk-panel')), array('style'=> 'display: inline-block', 'class'=>'me-3'));
 
     }
 
@@ -462,7 +462,7 @@ class RateChooser {
 
             return HTMLContainer::generateMarkup('fieldset',
                     HTMLContainer::generateMarkup('legend', 'Rate Chooser', array('style'=>'font-weight:bold;'))
-                    . $markup, array('style'=>'display: inline-block;', 'class'=>'hhk-panel mr-3'));
+                    . $markup, array('style'=>'display: inline-block;', 'class'=>'hhk-panel me-3'));
 
         } else {
             return $this->createStaticMarkup($dbh, $resv, $visitFeeTitle);
@@ -686,7 +686,7 @@ class RateChooser {
             }
         }
 
-        $attrFixed = array('class'=>'hhk-fxFixed ml-2');
+        $attrFixed = array('class'=>'hhk-fxFixed ms-2');
         $attrFixedInput = array("name"=>"txtFixedRate", "size"=>"8");
         if($uS->RoomPriceModel == ItemPriceCode::None){
             $attrAdj = array('style'=>'display:none;');

@@ -439,11 +439,11 @@ class CustomRegisterForm {
                     $mkup .= (!empty($veh->Note->getStoredVal()) ? '<div class="col-12"><strong>' . Labels::getString('referral', 'vehicleNotes', 'Notes') . ': </strong>' . $veh->Note->getStoredVal() . '</div>':'');
                 }else if($uS->showRegEmptyFields){
                     //show empty row
-                    $mkup .= '<div class="col mt-3 hhk-flex align-items-end"><strong class="mr-1">Make: </strong><span class="col hhk-line"></span></div>';
-                    $mkup .= '<div class="col mt-3 hhk-flex align-items-end"><strong class="mr-1">Model: </strong><span class="col hhk-line"></span></div>';
-                    $mkup .= '<div class="col mt-3 hhk-flex align-items-end"><strong class="mr-1">Color: </strong><span class="col hhk-line"></span></div>';
-                    $mkup .= '<div class="col-2 mt-3 hhk-flex align-items-end"><strong class="mr-1">State: </strong><span class="col hhk-line"></span></div>';
-                    $mkup .= '<div class="col-6 mt-3 hhk-flex align-items-end"><strong class="mr-1">' . Labels::getString('referral', 'licensePlate', 'License') . ': </strong><span class="col hhk-line"></span></div>';
+                    $mkup .= '<div class="col mt-3 hhk-flex align-items-end"><strong class="me-1">Make: </strong><span class="col hhk-line"></span></div>';
+                    $mkup .= '<div class="col mt-3 hhk-flex align-items-end"><strong class="me-1">Model: </strong><span class="col hhk-line"></span></div>';
+                    $mkup .= '<div class="col mt-3 hhk-flex align-items-end"><strong class="me-1">Color: </strong><span class="col hhk-line"></span></div>';
+                    $mkup .= '<div class="col-2 mt-3 hhk-flex align-items-end"><strong class="me-1">State: </strong><span class="col hhk-line"></span></div>';
+                    $mkup .= '<div class="col-6 mt-3 hhk-flex align-items-end"><strong class="me-1">' . Labels::getString('referral', 'licensePlate', 'License') . ': </strong><span class="col hhk-line"></span></div>';
                 }
 
                 $mkup .= '</div>';
@@ -499,13 +499,13 @@ class CustomRegisterForm {
             if (!isset($usedNames[$g->getIdName()])) {
                 $sigMkup = '<div class="row mt-4 signWrapper" ' . ($insideAgreement == false ? 'data-idname="' . $g->getIdName() . '"' : '') . '>
                                 <div class="col-8 row" style="align-items:flex-end;">
-                                    <div class="col pr-0 printName" style="max-width: fit-content;">' . $g->getRoleMember()->get_fullName() . '</div>
+                                    <div class="col pe-0 printName" style="max-width: fit-content;">' . $g->getRoleMember()->get_fullName() . '</div>
                                     <i class="bi bi-arrow-right-circle-fill px-2 hhk-line"></i>
                                     <div class="col sigLine hhk-line" style="justify-content:end;">' . (!empty($this->settings["Signatures"]["eSign"]) && ($this->settings["Signatures"]["eSign"] == 'jSign' || $this->settings["Signatures"]["eSign"] == 'topaz') ? '<img src="" style="display:none; width:100%">' . ($insideAgreement ? '<input type="hidden" class="regFormInput" data-inputtype="signature">' : '') . '</div>
-                                    <button class="ui-button ui-corner-all mb-1 ml-2 btnSign" data-eSign="' . $this->settings["Signatures"]["eSign"] . '">Sign</button>' : '</div>') . '
+                                    <button class="ui-button ui-corner-all mb-1 ms-2 btnSign" data-eSign="' . $this->settings["Signatures"]["eSign"] . '">Sign</button>' : '</div>') . '
                                 </div>
                                 <div class="col-4 row" style="align-items:flex-end;">
-                                    <div class="col pr-0" style="max-width: fit-content;">Date</div>
+                                    <div class="col pe-0" style="max-width: fit-content;">Date</div>
                                     <div class="col hhk-line" style="text-align:center;"><span class="signDate" style="display:none;">' . (new \DateTime())->format('M j, Y') . '</span></div>
                                 </div>
                             </div>';
@@ -544,13 +544,13 @@ class CustomRegisterForm {
     public function BlankSignatureLineMkup(): string{
         return '<div class="row mt-4 signWrapper">
         <div class="col-8 row" style="align-items:flex-end;">
-            <div class="col pr-0" style="max-width: fit-content;">Signature</div>
+            <div class="col pe-0" style="max-width: fit-content;">Signature</div>
             <i class="bi bi-arrow-right-circle-fill px-2 hhk-line"></i>
             <div class="col sigLine hhk-line" style="justify-content:end;">' . (!empty($this->settings["Signatures"]["eSign"]) && ($this->settings["Signatures"]["eSign"] == 'jSign' || $this->settings["Signatures"]["eSign"] == 'topaz') ? '<img src="" style="display:none; width:100%"><input type="hidden" class="regFormInput" data-inputtype="signature"></div>
-            <button class="ui-button ui-corner-all mb-1 ml-2 btnSign" data-eSign="' . $this->settings["Signatures"]["eSign"] . '">Sign</button>' : '</div>') . '
+            <button class="ui-button ui-corner-all mb-1 ms-2 btnSign" data-eSign="' . $this->settings["Signatures"]["eSign"] . '">Sign</button>' : '</div>') . '
         </div>
         <div class="col-4 row" style="align-items:flex-end;">
-            <div class="col pr-0" style="max-width: fit-content;">Date</div>
+            <div class="col pe-0" style="max-width: fit-content;">Date</div>
             <div class="col hhk-line" style="text-align:center;"><span class="signDate" style="display:none;">' . (new \DateTime())->format('M j, Y') . '</span></div>
         </div>
     </div>';
@@ -558,29 +558,29 @@ class CustomRegisterForm {
 
     public function InitialsLineMkup(): string{
         return '<span class="signWrapper" data-idbtn="">
-                            <i class="bi bi-arrow-right-circle-fill pr-2"></i>
+                            <i class="bi bi-arrow-right-circle-fill pe-2"></i>
                             <span class="sigLine hhk-line" style="justify-content:end; width: 50px; display: inline-block;">' . (!empty($this->settings["Signatures"]["eSign"]) && ($this->settings["Signatures"]["eSign"] == 'jSign' || $this->settings["Signatures"]["eSign"] == 'topaz') ? '<img src="" style="display:none; width:100%"><input type="hidden" class="regFormInput" data-inputtype="signature"></span>
-                            <button class="ui-button ui-corner-all mb-1 ml-2 btnInitial" data-eSign="' . $this->settings["Signatures"]["eSign"] . '">Initial</button>' : '</span>') . '
+                            <button class="ui-button ui-corner-all mb-1 ms-2 btnInitial" data-eSign="' . $this->settings["Signatures"]["eSign"] . '">Initial</button>' : '</span>') . '
                     </span>';
     }
 
     public function BlankTextBox(): string{
         return '<span class="textboxWrapper hhk-flex">
-                    <i class="bi bi-arrow-right-circle-fill pr-2"></i>
+                    <i class="bi bi-arrow-right-circle-fill pe-2"></i>
                     <input type="text" class="regFormInput ui-state-highlight">
                 </span>';
     }
 
     public function BlankInlineTextBox(): string{
         return '<span class="textboxWrapper hhk-flex d-inline-flex">
-                    <i class="bi bi-arrow-right-circle-fill pr-2"></i>
+                    <i class="bi bi-arrow-right-circle-fill pe-2"></i>
                     <input type="text" class="regFormInput ui-state-highlight">
                 </span>';
     }
 
     public function BlankTextarea(): string{
         return '<span class="textboxWrapper hhk-flex">
-                    <i class="bi bi-arrow-right-circle-fill pr-2"></i>
+                    <i class="bi bi-arrow-right-circle-fill pe-2"></i>
                     <textarea class="regFormInput ui-state-highlight" data-inputtype="textarea"></textarea>
                 </span>';
     }
@@ -663,7 +663,7 @@ class CustomRegisterForm {
             $mkup .= '<div class="row">';
             $mkup .= '<div class="col">'; //start left guest col
             $mkup .= '<strong>' . ($guest->getIdName() == $primaryGuestId ? Labels::getString('MemberType', 'primaryGuest', 'Primary Guest'): "Name") . ': </strong>' . $name->get_fullName() . $bd . '<br>';
-            $mkup .= (!empty($addr['Preferred_Address']) || $uS->showRegEmptyFields ? '<div class="hhk-flex"><div class="mr-2"><strong>Address: </strong></div><div>' . $addr["Address_1"] . " " .  $addr["Address_2"] . '&nbsp; <br>' . $addr["City"] . ($addr["City"] == "" ? "" : ", ") . $addr["State_Province"] . "  ". $addr["Postal_Code"] . '&nbsp;</div></div>':'');
+            $mkup .= (!empty($addr['Preferred_Address']) || $uS->showRegEmptyFields ? '<div class="hhk-flex"><div class="me-2"><strong>Address: </strong></div><div>' . $addr["Address_1"] . " " .  $addr["Address_2"] . '&nbsp; <br>' . $addr["City"] . ($addr["City"] == "" ? "" : ", ") . $addr["State_Province"] . "  ". $addr["Postal_Code"] . '&nbsp;</div></div>':'');
             $mkup .= (!empty($phone["Phone_Num"]) || $uS->showRegEmptyFields ? '<strong>Phone: </strong>' . $phone["Phone_Num"] . '<br>':'');
 
             if(!empty($this->settings['Guests']["emerg"]) && ($uS->showRegEmptyFields || !empty($emrg->getEcNameFirst() . $emrg->getEcNameLast() . $emrg->getEcPhone() . $emrg->getEcRelationship()))){
@@ -671,7 +671,7 @@ class CustomRegisterForm {
                 $mkup .= '<strong>Relationship to ' . $this->labels->getString('MemberType', 'patient', 'Patient') . ': </strong>' . (isset($relationText[$guest->getPatientRelationshipCode()]) ? $relationText[$guest->getPatientRelationshipCode()][1] : '');
                 $mkup .='</div>';//end left guest col
                 $mkup .='<div class="col">'; //start right guest col
-                $mkup .= '<div class="row mr-0">';
+                $mkup .= '<div class="row me-0">';
                 $mkup .= '<div class="col-12 ui-widget-content ui-corner-all py-2 mb-2">';
                 $mkup .= '<strong>Emergency Contact: </strong>' . (!empty($emrg->getEcNameFirst()) || $uS->showRegEmptyFields ? $emrg->getEcNameFirst() . ' ':'') . (!empty($emrg->getEcNameLast() || $uS->showRegEmptyFields) ? $emrg->getEcNameLast():'') . '<br>';
                 $mkup .= (!empty($emrg->getEcPhone()) || $uS->showRegEmptyFields ? '<strong>Phone: </strong>' . $emrg->getEcPhone() . '<br>':'');
@@ -1112,23 +1112,23 @@ class CustomRegisterForm {
 
         foreach($this->settingTemplate as $group=>$inputs){
             $mkup .= '<div class="ui-widget mb-3">';
-            $mkup .= HTMLContainer::generateMarkup("h3", $group, ["class"=>"ui-widget-header ui-corner-top pl-2"]);
+            $mkup .= HTMLContainer::generateMarkup("h3", $group, ["class"=>"ui-widget-header ui-corner-top ps-2"]);
             $mkup .= '<div class="ui-widget-content ui-corner-bottom p-2">';
 
             foreach($inputs as $key=>$input){
                 switch($input["type"]){
                     case "string":
-                        $inputMkup = HTMLContainer::generateMarkup("label", $input['label'], ["for"=>"regForm[" . $this->docCode . "][" . $group . "][" . $key . "]", "class"=>"mr-2"]) . HTMLInput::generateMarkup((!empty($this->settings[$group][$key]) ? $this->settings[$group][$key] : ''), ["name"=>"regForm[" . $this->docCode . "][" . $group . "][" . $key . "]"]);
+                        $inputMkup = HTMLContainer::generateMarkup("label", $input['label'], ["for"=>"regForm[" . $this->docCode . "][" . $group . "][" . $key . "]", "class"=>"me-2"]) . HTMLInput::generateMarkup((!empty($this->settings[$group][$key]) ? $this->settings[$group][$key] : ''), ["name"=>"regForm[" . $this->docCode . "][" . $group . "][" . $key . "]"]);
                         break;
                     case "bool":
-                        $cbAttr = ["type"=>"checkbox", "name"=>"regForm[" . $this->docCode . "][" . $group . "][" . $key . "]", "class"=>"mr-2"];
+                        $cbAttr = ["type"=>"checkbox", "name"=>"regForm[" . $this->docCode . "][" . $group . "][" . $key . "]", "class"=>"me-2"];
                         if(!empty($this->settings[$group][$key])){
                             $cbAttr['checked'] = 'checked';
                         };
                         $inputMkup = HTMLInput::generateMarkup("", $cbAttr) . HTMLContainer::generateMarkup("label", $input['label'], ["for"=>"regForm[" . $this->docCode . "][" . $group . "][" . $key . "]"]);
                         break;
                     case "select":
-                        $inputMkup = HTMLContainer::generateMarkup("label", $input['label'], ["for"=>"regForm[" . $this->docCode . "][" . $group . "][" . $key . "]", "class"=>"mr-2"]) . HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($input['values'], (!empty($this->settings[$group][$key]) ? $this->settings[$group][$key] : ''), false), ["name"=>"regForm[" . $this->docCode . "][" . $group . "][" . $key . "]"]);
+                        $inputMkup = HTMLContainer::generateMarkup("label", $input['label'], ["for"=>"regForm[" . $this->docCode . "][" . $group . "][" . $key . "]", "class"=>"me-2"]) . HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($input['values'], (!empty($this->settings[$group][$key]) ? $this->settings[$group][$key] : ''), false), ["name"=>"regForm[" . $this->docCode . "][" . $group . "][" . $key . "]"]);
                         break;
                     default:
                         $inputMkup = '';
@@ -1141,10 +1141,10 @@ class CustomRegisterForm {
 
         //misc settings
         $mkup .= '<div class="ui-widget mb-3">';
-        $mkup .= HTMLContainer::generateMarkup("h3", "Miscellaneous", ["class"=>"ui-widget-header ui-corner-top pl-2"]);
+        $mkup .= HTMLContainer::generateMarkup("h3", "Miscellaneous", ["class"=>"ui-widget-header ui-corner-top ps-2"]);
         $mkup .= '<div class="ui-widget-content ui-corner-bottom p-2">';
 
-        $cbAttr = ["type"=>"checkbox", "name"=>"regForm[misc][applyAll]", "class"=>"mr-2"];
+        $cbAttr = ["type"=>"checkbox", "name"=>"regForm[misc][applyAll]", "class"=>"me-2"];
         $inputMkup = HTMLInput::generateMarkup("", $cbAttr) . HTMLContainer::generateMarkup("label", "Apply layout options to all forms", ["for"=>"regForm[misc][applyAll]"]);
 
         $mkup .= HTMLContainer::generateMarkup("div",$inputMkup, ["class"=>"mb-2"]);

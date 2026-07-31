@@ -336,7 +336,7 @@ $(document).on('change', "#numAddrCalc", function(){
                             value = filterOptValue;
                         }
                     }
-                    mkup += '<div class="hhk-flex"><span class="mr-2"><strong>' + key.charAt(0).toUpperCase() + key.slice(1) + "</strong>: </span><span>" + value + "</span></div>";
+                    mkup += '<div class="hhk-flex"><span class="me-2"><strong>' + key.charAt(0).toUpperCase() + key.slice(1) + "</strong>: </span><span>" + value + "</span></div>";
                 });
                 return mkup;
             }

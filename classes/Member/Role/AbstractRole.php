@@ -131,7 +131,7 @@ abstract class AbstractRole {
         $phoneWidth = "col-lg-5";
 
         if ($showMRNSearch) {
-            $MRNSearchMkup = HTMLContainer::generateMarkup("div", HTMLContainer::generateMarkup('label', Labels::getString("hospital", "MRN", "MRN") . ' Search: ', array('for'=>$prefix.'MRNSearch', 'style'=>"min-width: fit-content", "class"=>"mr-2"))
+            $MRNSearchMkup = HTMLContainer::generateMarkup("div", HTMLContainer::generateMarkup('label', Labels::getString("hospital", "MRN", "MRN") . ' Search: ', array('for'=>$prefix.'MRNSearch', 'style'=>"min-width: fit-content", "class"=>"me-2"))
                 .HTMLInput::generateMarkup('', array('type'=>'search', 'id'=>$prefix.'MRNSearch', 'size'=>'14', 'title'=>'Enter at least 3 characters to invoke search', "style"=>"width: 100%")), array("class"=>"col-12 col-lg mb-2 mb-lg-0 hhk-flex"));
             $outerwidth = 'col-xl-10';
             $gstwidth = 'col-lg-6';
@@ -139,11 +139,11 @@ abstract class AbstractRole {
         }
 
         if ($showPhoneSearch) {
-            $phoneSearchMkup = HTMLContainer::generateMarkup("div", HTMLContainer::generateMarkup('label', 'Phone # Search: ', array('for'=>$prefix.'phSearch', "style"=>"min-width: fit-content", "class"=>"mr-2"))
+            $phoneSearchMkup = HTMLContainer::generateMarkup("div", HTMLContainer::generateMarkup('label', 'Phone # Search: ', array('for'=>$prefix.'phSearch', "style"=>"min-width: fit-content", "class"=>"me-2"))
                 .HTMLInput::generateMarkup('', array('type'=>'search', 'id'=>$prefix.'phSearch', 'size'=>'20', 'title'=>'Enter at least 5 numbers to invoke search', "style"=>"width:100%")), array("class"=>"col-12 mb-2 mb-lg-0 hhk-flex " . $phoneWidth));
         }
 
-        $gstSearch = HTMLContainer::generateMarkup('div', HTMLContainer::generateMarkup('label', $title, array('for'=>$prefix.'Search', 'style'=>"min-width:fit-content", "class"=>"mr-2"))
+        $gstSearch = HTMLContainer::generateMarkup('div', HTMLContainer::generateMarkup('label', $title, array('for'=>$prefix.'Search', 'style'=>"min-width:fit-content", "class"=>"me-2"))
             .HTMLInput::generateMarkup('', array('type'=>'search', 'id'=>$prefix.'Search', 'title'=>'Enter at least 3 characters to invoke search', "style"=>"width: 100%")), array("class"=>"col-12 mb-2 mb-lg-0 hhk-flex " . $gstwidth));
 
         $full = HTMLContainer::generateMarkup('span', 'Room Full', array('id'=>$prefix.'fullspan', 'style'=>'display:none;'));
@@ -177,7 +177,7 @@ abstract class AbstractRole {
                  HTMLContainer::generateMarkup('li',
                         HTMLContainer::generateMarkup('span', '', array('class'=>'ui-icon ui-icon-trash'))
                     , array('class'=>'ui-state-default ui-corner-all hhk-addrErase', 'data-prefix'=>$idPrefix, 'title'=>'Erase'))
-                , array('class'=>'ui-widget ui-helper-clearfix hhk-ui-icons ml-2'));
+                , array('class'=>'ui-widget ui-helper-clearfix hhk-ui-icons ms-2'));
 
         // Incomplete address
         $attr = array('type'=>'checkbox', 'name'=>$idPrefix.'incomplete', 'class'=>'hhk-incompleteAddr', 'data-prefix'=>$idPrefix);

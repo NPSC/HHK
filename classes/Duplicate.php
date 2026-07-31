@@ -271,7 +271,7 @@ order by count(distinct n.idName) DESC, LOWER(n.Name_Last), LOWER(n.Name_First);
                             HTMLContainer::generateMarkup("div",
                                 HTMLContainer::generateMarkup("h4", "PSG Members", array('class'=>'pb-2')).
                                 CreateMarkupFromDB::generateHTML_Table($psgMembers, 'psgMembers')
-                            , array('class'=>'ui-widget ui-widget-content ui-corner-all p-2 mr-3')) .
+                            , array('class'=>'ui-widget ui-widget-content ui-corner-all p-2 me-3')) .
                             HTMLContainer::generateMarkup("div",
                                 HTMLContainer::generateMarkup("h4", "Stays", array('class'=>'pb-2')).
                                 CreateMarkupFromDB::generateHTML_Table($stmt->fetchAll(\PDO::FETCH_ASSOC), 'idPsg')

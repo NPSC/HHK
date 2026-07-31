@@ -9,6 +9,9 @@
  * @license   GPL and MIT
  * @link      https://github.com/NPSC/HHK
  */
+
+import $ from 'jquery';
+
 (function ($) {
 
   $.fn.referralViewer = function (options) {
@@ -350,4 +353,4 @@
 		});
 		
 	}
-}(jQuery));
+}($));

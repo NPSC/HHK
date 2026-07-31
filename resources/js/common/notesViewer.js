@@ -20,7 +20,7 @@ import $ from './jquery.js';
                 id: 'noteText',
                 style: 'width: 100%;',
                 rows: 2,
-                class: 'mr-3 p-2 hhk-autosize ui-widget-content ui-corner-all'
+                class: 'me-3 p-2 hhk-autosize ui-widget-content ui-corner-all'
             },
             newNoteLocation: 'bottom',
             
@@ -351,7 +351,7 @@ import $ from './jquery.js';
             noteText = DOMPurify.sanitize(noteText, {ALLOWED_TAGS:[]});
             var selectedCategory = $(this).closest('tr').find('.noteCategory span[data-cat]').data('cat');
             $(this).closest('tr').find('.noteCategory').html(categorySelector(settings, selectedCategory));
-            $(this).closest('tr').find('.noteText').html('<div class="hhk-flex align-items-center"><textarea class="p-2 hhk-autosize ui-widget-content ui-corner-all" style="width: 100%; height: ' + $(this).closest('tr').find('.noteText').height() +'px;" id="editNoteText">' + noteText + '</textarea><button type="button" class="note-done ui-button ui-corner-all ml-2" style="min-width: fit-content">Save Note</button></div>');
+            $(this).closest('tr').find('.noteText').html('<div class="hhk-flex align-items-center"><textarea class="p-2 hhk-autosize ui-widget-content ui-corner-all" style="width: 100%; height: ' + $(this).closest('tr').find('.noteText').height() +'px;" id="editNoteText">' + noteText + '</textarea><button type="button" class="note-done ui-button ui-corner-all ms-2" style="min-width: fit-content">Save Note</button></div>');
             $(this).closest('td').find('.note-action').show();
             $(this).closest('td').find('.note-delete').hide();
             $(this).hide();
@@ -632,7 +632,7 @@ import $ from './jquery.js';
     
     function categorySelector(settings, selected = false){
     
-    	$catSelect = $('<select name="noteCategory" id="noteCategory" class="mt-2 mt-md-0 mr-3"><option disabled ' + (selected == false ? 'selected': '') + '>-- Select Category --</option><option></option></select>');
+    	let $catSelect = $('<select name="noteCategory" id="noteCategory" class="mt-2 mt-md-0 me-3"><option disabled ' + (selected == false ? 'selected': '') + '>-- Select Category --</option><option></option></select>');
         
         for(var k in settings.staffNoteCats){
         	if(k == selected){
@@ -646,14 +646,14 @@ import $ from './jquery.js';
 
     function memberSearch(settings, selected = false){
     
-    	$guestSearch = $('<input type="search" name="noteGuest" id="noteGuest" class="mt-2 mt-md-0 mr-3" placeholder="Name Search...">');
+    	$guestSearch = $('<input type="search" name="noteGuest" id="noteGuest" class="mt-2 mt-md-0 me-3" placeholder="Name Search...">');
         
         return $guestSearch;
     }
     
     function categoryFilter(settings){
-    	$filterWrapper = $('<div class="d-flex mt-2"><div class="d-md-none d-flex" style="align-items:center"><span class="ui-icon ui-icon-triangle-1-w"></span></div><div id="noteCatBtns"></div><div class="d-md-none d-flex" style="align-items:center"><span class="ui-icon ui-icon-triangle-1-e"></span></div></div>');
-    	$noteCatBtns = $filterWrapper.find('#noteCatBtns');
+    	let $filterWrapper = $('<div class="d-flex mt-2"><div class="d-md-none d-flex" style="align-items:center"><span class="ui-icon ui-icon-triangle-1-w"></span></div><div id="noteCatBtns"></div><div class="d-md-none d-flex" style="align-items:center"><span class="ui-icon ui-icon-triangle-1-e"></span></div></div>');
+    	let $noteCatBtns = $filterWrapper.find('#noteCatBtns');
     	$noteCatBtns.append('<button class="btnCat catActive" data-id="0">All</button>');
     	for(var k in settings.staffNoteCats){
         	$noteCatBtns.append('<button class="btnCat" data-id="' + k + '">' + settings.staffNoteCats[k].Description + '</button>');

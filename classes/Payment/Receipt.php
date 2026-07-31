@@ -425,7 +425,7 @@ class Receipt {
 
             $rec .= HTMLContainer::generateMarkup('div',
                 HTMLContainer::generateMarkup('img', '', array('src'=>$logoUrl, 'id'=>'hhkrcpt', 'alt'=>$uS->siteName, 'width'=>$uS->receiptLogoWidth)),
-                array('class'=>'mr-2'));
+                array('class'=>'me-2'));
         }
 
         return $rec;
@@ -613,7 +613,7 @@ WHERE
                     }
                 }
 
-                $mkup = $adrTbl->generateMarkup(['class'=>'ml-2']);
+                $mkup = $adrTbl->generateMarkup(['class'=>'ms-2']);
             }
         }
 

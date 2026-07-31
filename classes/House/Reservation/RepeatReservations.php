@@ -130,7 +130,7 @@ class RepeatReservations {
             HTMLContainer::generateMarkup('legend', 'Multiple Reservations', ['style'=>'font-weight:bold;'])
             . HTMLContainer::generateMarkup('p', '', ['id'=>'multiResvValidate', 'style'=>'color:red;'])
             . $markup, ['class'=>'hhk-panel']),
-            ['style'=>'display: inline-block', 'class'=>'mr-3']);
+            ['style'=>'display: inline-block', 'class'=>'me-3']);
 
         return $mk1;
     }

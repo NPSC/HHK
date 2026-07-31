@@ -311,14 +311,14 @@ class History {
             , HTMLContainer::generateMarkup('li',
                 HTMLContainer::generateMarkup('span', '', array('class'=>'ui-icon ui-icon-mail-closed'))
                 , array('class'=>'ui-state-highlight ui-corner-all m-0', 'style'=>'padding:1px;', 'title'=>"Incomplete Address"))
-            , array('class'=>'ui-widget hhk-ui-icons ml-2'));
+            , array('class'=>'ui-widget hhk-ui-icons ms-2'));
 
 
         $patientStayingIcon = HTMLContainer::generateMarkup('ul'
             , HTMLContainer::generateMarkup('li',
                 HTMLContainer::generateMarkup('span', '', array('class'=>'ui-icon ui-icon-suitcase'))
                 , array('class'=>'ui-state-default ui-corner-all m-0', 'style'=>'padding:1px;', 'title'=>"$patientTitle Planning to stay"))
-            , array('class'=>'ui-widget hhk-ui-icons ml-2'));
+            , array('class'=>'ui-widget hhk-ui-icons ms-2'));
 
         $colGates = self::buildColGates($dbh);
 
@@ -417,14 +417,14 @@ class History {
             , HTMLContainer::generateMarkup('li',
                 HTMLContainer::generateMarkup('span', '', array('class'=>'ui-icon ui-icon-mail-closed'))
                 , array('class'=>'ui-state-highlight ui-corner-all m-0', 'style'=>'padding:1px;', 'title'=>"Incomplete Address"))
-            , array('class'=>'ui-widget hhk-ui-icons ml-2'));
+            , array('class'=>'ui-widget hhk-ui-icons ms-2'));
 
 
         $patientStayingIcon = HTMLContainer::generateMarkup('ul'
             , HTMLContainer::generateMarkup('li',
                 HTMLContainer::generateMarkup('span', '', array('class'=>'ui-icon ui-icon-suitcase'))
                 , array('class'=>'ui-state-default ui-corner-all m-0', 'style'=>'padding:1px;', 'title'=>"$patientTitle Planning to stay"))
-            , array('class'=>'ui-widget hhk-ui-icons ml-2'));
+            , array('class'=>'ui-widget hhk-ui-icons ms-2'));
 
         $returnRows = array();
 
@@ -677,13 +677,13 @@ class History {
             , HTMLContainer::generateMarkup('li',
                 HTMLContainer::generateMarkup('span', '', array('class'=>'ui-icon', 'style'=>"background-image: url('../images/whlchr.jpg');"))
                 , array('class'=>'ui-state-default ui-corner-all m-0', 'style'=>'padding:1px;', 'title'=>"Immobile"))
-            , array('class'=>'ui-widget hhk-ui-icons ml-2'));
+            , array('class'=>'ui-widget hhk-ui-icons ms-2'));
 
         $blindIcon = HTMLContainer::generateMarkup('ul'
             , HTMLContainer::generateMarkup('li',
                 HTMLContainer::generateMarkup('span', '', array('class'=>'ui-icon', 'style'=>"background-image: url('../images/whtcne.jpg');"))
                 , array('class'=>'ui-state-default ui-corner-all m-0', 'style'=>'padding:1px;', 'title'=>"Vision Impaired"))
-            , array('class'=>'ui-widget hhk-ui-icons ml-2'));
+            , array('class'=>'ui-widget hhk-ui-icons ms-2'));
 
 
 
@@ -710,7 +710,7 @@ class History {
             }
 
             // Guest first name
-            $fixedRows[Labels::getString('memberType', 'visitor', 'Guest') . ' First'] = ((isset($r['demogIcon']) && $r['demogIcon'] != "") ? HTMLContainer::generateMarkup("div", $r['Guest First'] . HTMLContainer::generateMarkup("i", "", ["class"=>"ml-3 " . $r["demogIcon"],"title"=>$r["demogTitle"], "style"=>"font-size: 1.3em"]), array("class"=>"hhk-flex", "style"=>"justify-content: space-between")) : $r['Guest First']);
+            $fixedRows[Labels::getString('memberType', 'visitor', 'Guest') . ' First'] = ((isset($r['demogIcon']) && $r['demogIcon'] != "") ? HTMLContainer::generateMarkup("div", $r['Guest First'] . HTMLContainer::generateMarkup("i", "", ["class"=>"ms-3 " . $r["demogIcon"],"title"=>$r["demogTitle"], "style"=>"font-size: 1.3em"]), array("class"=>"hhk-flex", "style"=>"justify-content: space-between")) : $r['Guest First']);
 
             /*
             if (isset($r['ADA']) && $r['ADA'] == 'im') {

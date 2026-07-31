@@ -1668,7 +1668,7 @@ class SalesforceManager extends AbstractExportManager {
         $content = HTMLContainer::generateMarkup('div',
             HTMLContainer::generateMarkup('h4', 'Custom Fields')
             . $tbl->generateMarkup([], ''),
-            ['class' => 'ui-widget ui-widget-content ui-corner-all p-2 mb-3 mr-2']
+            ['class' => 'ui-widget ui-widget-content ui-corner-all p-2 mb-3 me-2']
         );
 
         return HTMLContainer::generateMarkup('div',
@@ -1735,7 +1735,7 @@ class SalesforceManager extends AbstractExportManager {
                 HTMLTable::makeTh('Maintenance', ['style' => 'border-top:2px solid black;'])
                 . HTMLTable::makeTd(
                     HTMLInput::generateMarkup('Fix Inverse Relationships', ['type' => 'submit', 'name' => '_fixInverseRelations', 'class' => 'ui-button ui-corner-all'])
-                    . HTMLContainer::generateMarkup('span', ' Corrects existing relationship records where Contact and Related Contact are swapped. Run once after initial sync.', ['class' => 'ml-2']),
+                    . HTMLContainer::generateMarkup('span', ' Corrects existing relationship records where Contact and Related Contact are swapped. Run once after initial sync.', ['class' => 'ms-2']),
                     ['style' => 'border-top:2px solid black;']
                 )
             );
@@ -1869,7 +1869,7 @@ JS;
 
         $tbl->addBodyTr(
             HTMLTable::makeTh('Maximum PSGs per batch', array())
-            . HTMLTable::makeTd(HTMLInput::generateMarkup($this->getMaxPSGsPerBatch(), array('name' => '_txtmaxPSGsPerBatch', 'size' => '10')) . "<span class='ml-2'>Salesforce enforced limit: " . self::MAX_PAYLOAD_GRAPHS . "</span>")
+            . HTMLTable::makeTd(HTMLInput::generateMarkup($this->getMaxPSGsPerBatch(), array('name' => '_txtmaxPSGsPerBatch', 'size' => '10')) . "<span class='ms-2'>Salesforce enforced limit: " . self::MAX_PAYLOAD_GRAPHS . "</span>")
             );
 
         $linkRelAttrs = ['type' => 'checkbox', 'name' => '_cbLinkRelatives', 'id' => '_cbLinkRelatives'];
@@ -1880,7 +1880,7 @@ JS;
             HTMLTable::makeTh('Link Households & Relationships', array())
             . HTMLTable::makeTd(
                 HTMLInput::generateMarkup('1', $linkRelAttrs)
-                . HTMLContainer::generateMarkup('label', ' Group contacts into Household Accounts and create Relationship records between guests and patients', ['for' => '_cbLinkRelatives', 'class' => 'ml-1'])
+                . HTMLContainer::generateMarkup('label', ' Group contacts into Household Accounts and create Relationship records between guests and patients', ['for' => '_cbLinkRelatives', 'class' => 'ms-1'])
             )
         );
 
@@ -2210,13 +2210,13 @@ JS;
                 'id'             => "fldmap_add_{$domId}",
             ]);
 
-            $connected = !empty($sfFields) ? '' : HTMLContainer::generateMarkup('small', ' (Connect to Salesforce to enable field lookup)', ['class' => 'text-muted ml-2']);
+            $connected = !empty($sfFields) ? '' : HTMLContainer::generateMarkup('small', ' (Connect to Salesforce to enable field lookup)', ['class' => 'text-muted ms-2']);
 
             $markup .= HTMLContainer::generateMarkup('div',
                 HTMLContainer::generateMarkup('h4', "{$label}{$connected}")
                 . HTMLContainer::generateMarkup('div', $tbl->generateMarkup(['class' => 'sortable'], ''), ['id' => "fldmap_tbl_{$domId}"])
                 . $addBtn,
-                ['class' => 'ui-widget ui-widget-content ui-corner-all p-2 mb-3 mr-2']
+                ['class' => 'ui-widget ui-widget-content ui-corner-all p-2 mb-3 me-2']
             );
         }
 
@@ -2229,7 +2229,7 @@ JS;
 
         $resetBtn = HTMLInput::generateMarkup('Reset to Defaults', [
             'type'  => 'button',
-            'class' => 'ui-button ui-corner-all ui-widget hhk-fldmap-reset ml-2',
+            'class' => 'ui-button ui-corner-all ui-widget hhk-fldmap-reset ms-2',
             'title' => 'Discard all current field mappings and reseed the default Salesforce mapping.',
         ]);
 
@@ -2801,7 +2801,7 @@ JS;
                     $first = false;
                     $psgCb = HTMLInput::generateMarkup('', [
                         'type' => 'checkbox',
-                        'class' => 'hhk-txPsg mr-1',
+                        'class' => 'hhk-txPsg me-1',
                         'data-psg' => $psgId,
                         'checked' => 'checked',
                     ]);

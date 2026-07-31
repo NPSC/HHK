@@ -285,7 +285,7 @@ class Login {
             ($uS->rememberTwoFA != '' ?
             HTMLContainer::generateMarkup("div",
                 HTMLInput::generateMarkup(false, array("type"=>"checkbox", "name"=>"rememberMe")) .
-                HTMLContainer::generateMarkup("label", "Remember this device for " . $uS->rememberTwoFA . " days", array("for"=>"rememberMe", "class"=>"ml-1"))
+                HTMLContainer::generateMarkup("label", "Remember this device for " . $uS->rememberTwoFA . " days", array("for"=>"rememberMe", "class"=>"ms-1"))
                 , array("class"=>"col-12 my-3"))
                 : '') .
             HTMLContainer::generateMarkup("div",

@@ -4,6 +4,7 @@ use HHK\sec\{Login, Labels, SecurityComponent, ScriptAuthClass, SysConfig, Sessi
 use HHK\SysConst\CodeVersion;
 use HHK\HTMLControls\HTMLContainer;
 use HHK\SysConst\Mode;
+use HHK\Vite\Vite;
 
 /**
  * index.php
@@ -84,6 +85,7 @@ if (SecurityComponent::isHTTPS()) {
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 		<meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title><?php echo $pageTitle; ?></title>
+        <?php echo Vite::asset('resources/js/root.js'); ?>
         <link rel="icon" type="image/svg+xml" href="favicon.svg" />
         <link href="house/css/jqui/jquery-ui.min.css" rel="stylesheet" type="text/css" />
         <link href='css/bootstrap-grid.min.css' rel='stylesheet' type='text/css' />

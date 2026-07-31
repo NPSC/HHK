@@ -40,7 +40,7 @@ class DailyOccupancyReport extends AbstractReport implements ReportInterface
             $summaryTbl->addBodyTr($summaryTbl->makeTd($key . (isset($summaryData[1][$key]) ? '<span class="hhk-tooltip ui-icon ui-icon-help" title="' . $summaryData[1][$key] . '"></span>' : ''), array("class" => "tdlabel")) . $summaryTbl->makeTd($val));
         }
 
-        return HTMLContainer::generateMarkup("div", $summaryTbl->generateMarkup(array("class" => "mr-3 mb-3", "style" => "min-width: fit-content")), array("class" => "hhk-flex hhk-flex-wrap hhk-visitdialog"));
+        return HTMLContainer::generateMarkup("div", $summaryTbl->generateMarkup(array("class" => "me-3 mb-3", "style" => "min-width: fit-content")), array("class" => "hhk-flex hhk-flex-wrap hhk-visitdialog"));
 
     }
 

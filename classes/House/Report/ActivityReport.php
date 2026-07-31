@@ -878,14 +878,14 @@ where `lp`.`idPayment` > 0
             }
 
             // build summary block
-            $summary = HTMLContainer::generateMarkup('div', $summ->generateMarkup(), ['class'=>'mb-3 mr-3'])
+            $summary = HTMLContainer::generateMarkup('div', $summ->generateMarkup(), ['class'=>'mb-3 me-3'])
                 . HTMLContainer::generateMarkup('div', $pType->generateMarkup(), ['class'=>'mb-3']);
         }
 
         $summary = HTMLContainer::generateMarkup('div', 
-            $sumTbl->generateMarkup(['class' => 'mb-3 mr-3'])
+            $sumTbl->generateMarkup(['class' => 'mb-3 me-3'])
             . $summary 
-            . HTMLInput::generateMarkup("Refresh", ['type' => 'button', 'id' => 'btnPayHistRef', 'class'=>'ml-auto mt-3 mr-2'])
+            . HTMLInput::generateMarkup("Refresh", ['type' => 'button', 'id' => 'btnPayHistRef', 'class'=>'ms-auto mt-3 me-2'])
         , ['class' => 'hhk-flex hhk-flex-wrap']);
 
         $content = HTMLContainer::generateMarkup('div', "$summary $listing");
