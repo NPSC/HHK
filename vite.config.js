@@ -40,10 +40,7 @@ function hotFilePlugin() {
 
 export default defineConfig({
 	plugins: [hotFilePlugin()],
-	// public/ is the PHP webserver docroot, not a Vite static-assets source —
-	// disable publicDir so Vite doesn't try to copy it into itself.
 	publicDir: false,
-	// Built assets are served from /build/... within that docroot.
 	base: '/build/',
 	build: {
 		manifest: true,
@@ -53,11 +50,17 @@ export default defineConfig({
 			input: {
 				// Opt pages in incrementally by adding entries here and calling
 				// HHK\Vite\Vite::asset('resources/js/<entry>.js') from the page.
-				// house.js/admin.js both import the shared vendor.js bundle
-				// (jquery, jquery-ui, bootstrap, toastr) plus their site's
-				// jQuery UI theme; Rollup splits vendor.js into a shared chunk.
+				// house.js/admin.js both import the shared vendor.js and
+				// common.js bundles plus their site's jQuery UI theme.
 				house: 'resources/js/house.js',
 				admin: 'resources/js/admin.js',
+			},
+			output: {
+				manualChunks(id) {
+					if (id.includes('/node_modules/') || id.includes('/resources/js/common/jquery.js')) {
+						return 'vendor';
+					}
+				},
 			},
 		},
 	},

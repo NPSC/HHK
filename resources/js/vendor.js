@@ -1,16 +1,36 @@
-import $ from 'jquery';
-
-// Legacy, non-module scripts across the site (public/js/*.js) expect jQuery
-// as a global. Set it before importing jquery-ui-dist, which itself looks
-// for a global jQuery to attach to rather than importing the module.
-window.$ = window.jQuery = $;
-
+//jquery
+import './common/jquery.js';
 import 'jquery-ui-dist/jquery-ui.js';
 
-import * as bootstrap from 'bootstrap';
-window.bootstrap = bootstrap;
+//moment.js
+import moment from 'moment';
+window.moment = moment;
 
-import toastr from 'toastr';
-window.toastr = toastr;
+//bootstrap + icons - only Collapse (navbar-toggler) and Dropdown (nav menus)
+import Collapse from 'bootstrap/js/dist/collapse';
+import Dropdown from 'bootstrap/js/dist/dropdown';
+import 'bootstrap-icons/font/bootstrap-icons.css';
+window.bootstrap = { Collapse, Dropdown };
 
-import '../css/toastr.css';
+//htmlentities
+import he from 'he';
+window.he = he;
+
+//DOMPurify
+import DOMPurify from 'dompurify';
+window.DOMPurify = DOMPurify;
+
+//buffer.js
+import Buffer from 'buffer';
+window.buffer = Buffer;
+
+//google-libphonenumber
+import * as libphonenumber from 'google-libphonenumber';
+window.libphonenumber = libphonenumber;
+
+//datatables v3, core only - no Buttons/RowGroup/Responsive/FixedHeader
+//extensions, since no currently-migrated page uses them. jQuery UI styling
+//integration.
+import DataTable from 'datatables.net-jqui';
+import 'datatables.net-jqui/css/dataTables.jqueryui.css';
+window.DataTable = DataTable;
