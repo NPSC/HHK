@@ -51,7 +51,6 @@ define('JQ_DT_JS', '../js/datatables.min.js' . JSV);
 define('NOTY_JS', '../js/toastr.min.js' . JSV);
 define('NOTY_SETTINGS_JS', '../js/toastrSettings.js' . JSV);  //These are local
 define('JQ_DT_SETTINGS', '../js/datatablesSettings.js' . JSV);
-define('DIRRTY_JS', '../js/jquery.dirrty.js' . JSV);
 define('JSIGNATURE_JS', '../js/jSignature.min.js' . JSV);
 define('BOOTSTRAP_JS', '../js/bootstrap.min.js' . JSV);
 define('HTMLENTITIES_JS', '../js/he.js'. JSV);
@@ -67,8 +66,5 @@ define('MOMENT_JS', '../js/moment.min.js' . JSV);
 define('MULTISELECT_JS', '../js/jquery.multiselect.min.js' . JSV);
 define('DR_PICKER_JS', '../js/daterangepicker.hhk.min.js' . JSV);
 define('FULLC_JS', 'js/fullcalendarold.min.js' . JSV);
-define('NOTES_VIEWER_JS', '../js/notesViewer.js' . JSV);
 define('SELECT2_JS', '../js/select2.min.js' . JSV);
 define('UPPLOAD_JS', '../js/uppload/uppload-3.2.1.min.js' . JSV);
-define('BUFFER_JS', '../js/buffer.min.js' . JSV);
-define('LIBPHONENUMBER_JS', '../js/libphonenumber.min.js' . JSV);

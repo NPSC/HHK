@@ -587,16 +587,6 @@ $(document).ready(function () {
 
     $('#txtsearch').focus();
 
-    // Unsaved changes on form are caught here.
-    // Set Dirrty initial value manually for bfh
-    $(document).find("bfh-states").each(function(){
-	$(this).data("dirrty-initial-value", $(this).data('state'));
-    });
-
-    $(document).find("bfh-country").each(function(){
-	$(this).data("dirrty-initial-value", $(this).data('country'));
-    });
-
     $('#btnCred').click(function () {
         cardOnFile($(this).data('id'), $(this).data('idreg'), 'GuestEdit.php?id=' + $(this).data('id') + '&psg=' + memData.idPsg, $(this).data('indx'));
     });
@@ -610,8 +600,15 @@ $(document).ready(function () {
         }
     });
 
-    // init dirrty
-    $("#form1").dirrty();
+    // Warn when leaving the page with unsaved changes.
+    $('#form1').on('submit', function () {
+        $(this).data('submitting', true);
+    });
+    $(window).on('beforeunload', function () {
+        if (!$('#form1').data('submitting') && $('#form1').dirty()) {
+            return 'You have unsaved changes';
+        }
+    });
 
 
 

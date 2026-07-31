@@ -628,19 +628,16 @@ document.addEventListener("DOMContentLoaded", () => {
             }
     );
 
-    // Unsaved changes on form are caught here.
-    // Set Dirrty initial value manually for bfh
-    $(document).find("bfh-states").each(function(){
-	$(this).data("dirrty-initial-value", $(this).data('state'));
+    // Warn when leaving the page with unsaved changes.
+    $('#form1').on('submit', function () {
+        $(this).data('submitting', true);
     });
-    
-    $(document).find("bfh-country").each(function(){
-	$(this).data("dirrty-initial-value", $(this).data('country'));
+    $(window).on('beforeunload', function () {
+        if (!$('#form1').data('submitting') && $('#form1').dirty()) {
+            return 'You have unsaved changes';
+        }
     });
-    
-    // init dirrty
-    $("#form1").dirrty();
-    
+
     //member photo
     if(showGuestPhoto){
 		var guestPhoto = window.uploader;

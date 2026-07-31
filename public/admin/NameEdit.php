@@ -426,7 +426,6 @@ $alertMessage = $alertMsg->createMarkup();
         <script type="text/javascript" src="<?php echo MULTISELECT_JS; ?>" defer></script>
         <script type="text/javascript" src="<?php echo ADDR_PREFS_JS; ?>" defer></script>
         <script type="text/javascript" src="<?php echo PRINT_AREA_JS; ?>" defer></script>
-        <script type="text/javascript" src="<?php echo DIRRTY_JS; ?>" defer></script>
         <script type="text/javascript" src="js/genfunc.js" defer></script>
 
     </head>
