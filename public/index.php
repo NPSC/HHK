@@ -18,6 +18,7 @@ use HHK\Vite\Vite;
  */
 define('DS', DIRECTORY_SEPARATOR);
 define('P_ROOT', dirname(__FILE__) . DS . '..' . DS);
+define('REL_BASE_DIR', P_ROOT);
 date_default_timezone_set('America/Chicago');
 
 if (file_exists('../vendor/autoload.php')) {
@@ -87,12 +88,7 @@ if (SecurityComponent::isHTTPS()) {
         <title><?php echo $pageTitle; ?></title>
         <?php echo Vite::asset('resources/js/root.js'); ?>
         <link rel="icon" type="image/svg+xml" href="favicon.svg" />
-        <link href="house/css/jqui/jquery-ui.min.css" rel="stylesheet" type="text/css" />
-        <link href='css/bootstrap-grid.min.css' rel='stylesheet' type='text/css' />
-        <link href='css/root.css' rel='stylesheet' type='text/css' />
-        <script type="text/javascript" src="js/jquery-min.js"></script>
-        <script type="text/javascript" src="js/jquery-ui.min.js"></script>
-        <script type="text/javascript" src="js/login.js?eG=94"></script>
+        <script type="text/javascript" src="js/login.js?eG=94" defer></script>
 
     </head>
     <body <?php if ($uS->testVersion) {echo "class='testbody'";} ?> >
