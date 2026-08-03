@@ -9,6 +9,7 @@ composer.phar
 .settings/org.eclipse.php.ui.prefs
 .settings/org.eclipse.php.ui.prefs
 node_modules
+/public/build
 nbproject/private/config.properties
 nbproject/private/private.properties
 nbproject/private/private.xml
