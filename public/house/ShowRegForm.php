@@ -281,12 +281,12 @@ $contrls = HTMLContainer::generateMarkup('div', $shoRegBtn . $shoStmtBtn . $regM
 
         <?php echo $sty; ?>
 
-        <script type="text/javascript" src="<?php echo PRINT_AREA_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo RESV_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo PAYMENT_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo JSIGNATURE_JS; ?>"></script>
-        <?php echo ($isTopazRequired ? '<script type="text/javascript" src="' . TOPAZ_SIGWEB_JS . '"></script>': ''); ?>
-        <script type="text/javascript" src="<?php echo REG_FORM_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo PRINT_AREA_JS; ?>" defer></script>
+        <script type="text/javascript" src="<?php echo RESV_JS; ?>" defer></script>
+        <script type="text/javascript" src="<?php echo PAYMENT_JS; ?>" defer></script>
+        <script type="text/javascript" src="<?php echo JSIGNATURE_JS; ?>" defer></script>
+        <?php echo ($isTopazRequired ? '<script type="text/javascript" src="' . TOPAZ_SIGWEB_JS . '" defer></script>': ''); ?>
+        <script type="text/javascript" src="<?php echo REG_FORM_JS; ?>" defer></script>
 
         <script type='text/javascript'>
 
