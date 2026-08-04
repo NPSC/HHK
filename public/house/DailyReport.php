@@ -78,7 +78,6 @@ $dailyLog = HTMLContainer::generateMarkup('h3', $uS->siteName . ' Daily Log'
                 $('#btnHere').button();
 
                 $('#daily').DataTable({
-                    "dom": '<"top"if><\"hhk-overflow-x hhk-tbl-wrap\"rt><"bottom ui-toolbar ui-helper-clearfix"lp>',
                     "displayLength": 50,
                     "lengthMenu": [[25, 50, -1], [25, 50, "All"]],
                     "order": [[ 0, 'asc' ]],

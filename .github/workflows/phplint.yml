@@ -15,7 +15,7 @@ jobs:
       - name: PHP Lint 8.4
         uses: dbfx/github-phplint/8.4@master
         with:
-          folder-to-exclude: "! -path \"./vendor/*\""
+          folder-to-exclude: '! -path "./vendor/*"'
 
   compposer-validate:
     name: Validate composer.json
@@ -23,11 +23,11 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v6
-        
+
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: '8.4'
+          php-version: "8.4"
           coverage: none
 
       - name: Composer validate
@@ -39,11 +39,11 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v6
-        
+
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: '8.4'
+          php-version: "8.4"
           coverage: none
 
       - name: Composer install
@@ -57,11 +57,11 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v6
-        
+
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: '8.4'
+          php-version: "8.4"
           coverage: none
 
       - name: Composer install
@@ -75,11 +75,11 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v6
-        
+
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: '8.5'
+          php-version: "8.5"
           coverage: none
 
       - name: Composer install

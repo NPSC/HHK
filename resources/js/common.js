@@ -1,5 +1,14 @@
 //pag.js - attach functions to window globally
-import { flagAlertMessage, dateRender, dayRender, isIE, openiframe, logoutTimer, getDialogWidth, hhkReportError } from './common/pag.js';
+import {
+  flagAlertMessage,
+  dateRender,
+  dayRender,
+  isIE,
+  openiframe,
+  logoutTimer,
+  getDialogWidth,
+  hhkReportError,
+} from "./common/pag.js";
 window.flagAlertMessage = flagAlertMessage;
 window.dateRender = dateRender;
 window.dayRender = dayRender;
@@ -10,7 +19,7 @@ window.getDialogWidth = getDialogWidth;
 window.hhkReportError = hhkReportError;
 
 //notesViewer.js - attaches $.fn.notesViewer
-import './common/notesViewer.js';
+import "./common/notesViewer.js";
 
 //smsDialog.js - attaches $.fn.smsDialog
-import './common/smsDialog.js';
+import "./common/smsDialog.js";

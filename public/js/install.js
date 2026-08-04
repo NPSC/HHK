@@ -1,4 +1,4 @@
-/* 
+/*
  * The MIT License
  *
  * Copyright 2017 Eric Crane <ecrane at nonprofitsoftwarecorp.org>.
@@ -22,32 +22,28 @@
  * THE SOFTWARE.
  */
 
-
 function testDb(parms) {
-    $.post('ws_install.php',
-        parms,
-        function(data) {
-            if (!data) {
-                alert('Bad Reply from Web Server');
-                return;
-            }
-            try {
-                data = $.parseJSON(data);
-            } catch (err) {
-                alert('Bad JSON Encoding');
-                return;
-            }
+  $.post("ws_install.php", parms, function (data) {
+    if (!data) {
+      alert("Bad Reply from Web Server");
+      return;
+    }
+    try {
+      data = $.parseJSON(data);
+    } catch (err) {
+      alert("Bad JSON Encoding");
+      return;
+    }
 
-            if (data.error) {
-                $('#dbResult').text(data.error);
-            } else if (data.success) {
-                $('#dbResult').text(data.success);
-            }
-        }
-    );
+    if (data.error) {
+      $("#dbResult").text(data.error);
+    } else if (data.success) {
+      $("#dbResult").text(data.success);
+    }
+  });
 }
 
 function checkStrength(pwStr) {
-	const strongRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*\W).{8,}$/;
-	return strongRegex.test(pwStr)
+  const strongRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*\W).{8,}$/;
+  return strongRegex.test(pwStr);
 }

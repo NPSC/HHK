@@ -1,47 +1,55 @@
 #incidentDialog {
-	font-size:.8em;
+  font-size: 0.8em;
 }
 
-#incidentDialog table, #incidentDialog select {
-	width: 100%;
+#incidentDialog table,
+#incidentDialog select {
+  width: 100%;
 }
 
 #incidentDialog .tdLabel {
-	width: 25%;
+  width: 25%;
 }
 
-#incidentDialog input,textarea {
-	width: 100%;
-	padding:0.3em;
-	-moz-box-sizing: border-box;
-    -webkit-box-sizing: border-box;
-    box-sizing: border-box;
+#incidentDialog input,
+textarea {
+  width: 100%;
+  padding: 0.3em;
+  -moz-box-sizing: border-box;
+  -webkit-box-sizing: border-box;
+  box-sizing: border-box;
 }
 
 #incidentDialog input:read-only,
-#incidentDialog textarea:read-only, 
+#incidentDialog textarea:read-only,
 #incidentDialog input:read-only:focus-visible,
 #incidentDialog textarea:read-only:focus-visible {
-	border: none;
-	outline: none;
-	cursor: default;
+  border: none;
+  outline: none;
+  cursor: default;
 }
 
 #incidentPrint {
-	margin: 1em;
+  margin: 1em;
 }
 
 #incidentPrint table {
-	border: 1pt solid black;
-	border-bottom: 0;
-	border-collapse:collapse;
+  border: 1pt solid black;
+  border-bottom: 0;
+  border-collapse: collapse;
 }
 
 #incidentReport.PrintArea {
-	margin:0; 
-	padding:0; 
-	font: 12px Arial, Helvetica,"Lucida Grande", serif; 
-	color: #000;
+  margin: 0;
+  padding: 0;
+  font:
+    12px Arial,
+    Helvetica,
+    "Lucida Grande",
+    serif;
+  color: #000;
 }
 
-@page { margin: 1cm; }
+@page {
+  margin: 1cm;
+}

@@ -1,22 +1,22 @@
 //toastr
-import toastr from 'toastr';
-import '../../css/toastr.css';
+import toastr from "toastr";
+import "../../css/toastr.css";
 toastr.options = {
-	closeButton: true,
-	debug: false,
-	newestOnTop: false,
-	progressBar: true,
-	positionClass: 'toast-top-full-width mt-3',
-	preventDuplicates: false,
-	onclick: null,
-	showDuration: '300',
-	hideDuration: '1000',
-	timeOut: '5000',
-	extendedTimeOut: '5000',
-	showEasing: 'swing',
-	hideEasing: 'linear',
-	showMethod: 'slideDown',
-	hideMethod: 'slideUp',
+  closeButton: true,
+  debug: false,
+  newestOnTop: false,
+  progressBar: true,
+  positionClass: "toast-top-full-width mt-3",
+  preventDuplicates: false,
+  onclick: null,
+  showDuration: "300",
+  hideDuration: "1000",
+  timeOut: "5000",
+  extendedTimeOut: "5000",
+  showEasing: "swing",
+  hideEasing: "linear",
+  showMethod: "slideDown",
+  hideMethod: "slideUp",
 };
 
 /**
@@ -29,565 +29,577 @@ toastr.options = {
  *            $txtCtrl
  * @returns {undefined}
  */
-export function flagAlertMessage(mess, wasError, $txtCtrl, title = '') {
-	// Types: alert, success, warning, error, info/information
-	var type = 'info';
+export function flagAlertMessage(mess, wasError, $txtCtrl, title = "") {
+  // Types: alert, success, warning, error, info/information
+  var type = "info";
 
-	if (!mess || mess == '') {
-		return;
-	}
+  if (!mess || mess == "") {
+    return;
+  }
 
-	if (typeof wasError === 'boolean') {
-		type = (wasError ? 'error' : 'success');
-	} else if (typeof wasError === 'string') {
-		type = wasError;
-	}
+  if (typeof wasError === "boolean") {
+    type = wasError ? "error" : "success";
+  } else if (typeof wasError === "string") {
+    type = wasError;
+  }
 
-	try {
+  try {
+    if (type == "error") {
+      toastr.error(mess, title);
+    } else if (type == "success") {
+      toastr.success(mess, title);
+    } else if (type == "warning") {
+      toastr.warning(mess, title);
+    } else {
+      toastr.info(mess, title);
+    }
+  } catch {
+    // do nothing for now.
+  }
 
-		if(type == 'error'){
-			toastr.error(mess, title);
-		}else if(type == 'success'){
-			toastr.success(mess, title);
-		}else if(type == 'warning'){
-			toastr.warning(mess, title);
-		}else{
-			toastr.info(mess, title);
-		}
+  // Show message in a given container.
+  if ($txtCtrl === undefined || $txtCtrl === null) {
+    return;
+  }
 
-	} catch (err) {
-		// do nothing for now.
-	}
-
-	// Show message in a given container.
-	if ($txtCtrl === undefined || $txtCtrl === null) {
-		return;
-	}
-
-	$txtCtrl.html(mess).show();
+  $txtCtrl.html(mess).show();
 }
 export function dateRender(data, type, format) {
-	// If display or filter data is requested, format the date
-	if (type === 'display' || type === 'filter' || type === 'print') {
+  // If display or filter data is requested, format the date
+  if (type === "display" || type === "filter" || type === "print") {
+    if (data === undefined || data === null || data === "") {
+      return "";
+    }
 
-		if (data === undefined || data === null || data === '') {
-			return '';
-		}
+    data = data.trim();
 
-		data = data.trim();
+    if (data === null || data === "") {
+      return "";
+    }
 
-		if (data === null || data === '') {
-			return '';
-		}
+    if (moment(data, "YYYY-MM-DD HH:mm:ss.SSSS Z").isValid() === false) {
+      return data;
+    }
 
-		if (moment(data, 'YYYY-MM-DD HH:mm:ss.SSSS Z').isValid()===false) {
-			return data;
-		}
+    if (!format || format === "") {
+      format = "MMM D, YYYY";
+    }
 
-		if (!format || format === '') {
-			format = 'MMM D, YYYY';
-		}
+    return moment(data, "YYYY-MM-DD HH:mm:ss.SSSS Z").format(format);
+  }
 
-		return moment(data, 'YYYY-MM-DD HH:mm:ss.SSSS Z').format(format);
-	}
-
-	// Otherwise the data type requested (`type`) is type detection or
-	// sorting data, for which we want to use the integer, so just return
-	// that, unaltered
-	return data;
+  // Otherwise the data type requested (`type`) is type detection or
+  // sorting data, for which we want to use the integer, so just return
+  // that, unaltered
+  return data;
 }
 
 export function dayRender(data, type, format) {
-	// If display or filter data is requested, format the date
-	if (type === 'display' || type === 'filter' || type === 'print') {
+  // If display or filter data is requested, format the date
+  if (type === "display" || type === "filter" || type === "print") {
+    if (data === undefined || data === null || data === "") {
+      return "";
+    }
 
-		if (data === undefined || data === null || data === '') {
-			return '';
-		}
+    data = data.trim();
 
-		data = data.trim();
+    if (data === null || data === "") {
+      return "";
+    }
 
-		if (data === null || data === '') {
-			return '';
-		}
+    if (moment(data, "MM-DD").isValid() === false) {
+      return data;
+    }
 
-		if (moment(data, 'MM-DD').isValid()===false) {
-			return data;
-		}
+    if (!format || format === "") {
+      format = "MMM D";
+    }
 
-		if (!format || format === '') {
-			format = 'MMM D';
-		}
+    return moment(data, "MM-DD").format(format);
+  }
 
-		return moment(data, 'MM-DD').format(format);
-	}
-
-	// Otherwise the data type requested (`type`) is type detection or
-	// sorting data, for which we want to use the integer, so just return
-	// that, unaltered
-	return data;
+  // Otherwise the data type requested (`type`) is type detection or
+  // sorting data, for which we want to use the integer, so just return
+  // that, unaltered
+  return data;
 }
 
 export function isIE() {
-	var ua = window.navigator.userAgent;
-	return /MSIE|Trident/.test(ua);
+  var ua = window.navigator.userAgent;
+  return /MSIE|Trident/.test(ua);
 }
 
 export function openiframe(src, width, height, title, buttons) {
-	var $dialog = $('<div id="iframeDialog" style="overflow:hidden"><div class="hhk-loading-spinner" style="width: 100%; height: 100%; margin-top: 100px; text-align: center"><img src="../images/ui-anim_basic_16x16.gif"><p>Loading...</p></div><iframe id="hhk-iframe" src="'
-			+ src
-			+ '" style="border: none; height: 95%; width: 100%"></iframe></div>');
-	$("#contentDiv").append($dialog);
+  var $dialog = $(
+    '<div id="iframeDialog" style="overflow:hidden"><div class="hhk-loading-spinner" style="width: 100%; height: 100%; margin-top: 100px; text-align: center"><img src="../images/ui-anim_basic_16x16.gif"><p>Loading...</p></div><iframe id="hhk-iframe" src="' +
+      src +
+      '" style="border: none; height: 95%; width: 100%"></iframe></div>',
+  );
+  $("#contentDiv").append($dialog);
 
-	$dialog.dialog({
-		width : getDialogWidth(width),
-		height : height,
-		modal : true,
-		title : title,
-		buttons : buttons,
-		close : function(event, ui) {
-			$dialog.dialog("destroy").remove();
-		}
-	});
+  $dialog.dialog({
+    width: getDialogWidth(width),
+    height: height,
+    modal: true,
+    title: title,
+    buttons: buttons,
+    close: function () {
+      $dialog.dialog("destroy").remove();
+    },
+  });
 
-	$dialog.find("#hhk-iframe").on("load", function() {
-		$dialog.find(".hhk-loading-spinner").hide();
-	});
-
+  $dialog.find("#hhk-iframe").on("load", function () {
+    $dialog.find(".hhk-loading-spinner").hide();
+  });
 }
 
-export function logoutTimer(){
-	var timerID;
-	var intervalID;
-	var expiresIn;
+export function logoutTimer() {
+  var timerID;
+  var intervalID;
+  var expiresIn;
 
-	function resetTimer(){
-		$.ajax({
-			url: '../admin/ws_session.php',
-			dataType: 'json',
-			success: function(data){
-				clearTimeout(timerID);
-				clearInterval(intervalID);
-				if(data.ExpiresIn > 60){
-					timerID = setTimeout(resetTimer, (data.ExpiresIn-60)*1000);
-					$dialog.dialog('close');
-				}else{
-					$("#expiresIn").text(data.ExpiresIn);
-					expiresIn = data.ExpiresIn;
-					intervalID = setInterval(countdown, 1000);
-					$dialog.dialog('open');
-					timerID = setTimeout(function(){location.reload();}, (data.ExpiresIn+1)*1000);
-				}
-			}
-		});
-	}
+  function resetTimer() {
+    $.ajax({
+      url: "../admin/ws_session.php",
+      dataType: "json",
+      success: function (data) {
+        clearTimeout(timerID);
+        clearInterval(intervalID);
+        if (data.ExpiresIn > 60) {
+          timerID = setTimeout(resetTimer, (data.ExpiresIn - 60) * 1000);
+          $dialog.dialog("close");
+        } else {
+          $("#expiresIn").text(data.ExpiresIn);
+          expiresIn = data.ExpiresIn;
+          intervalID = setInterval(countdown, 1000);
+          $dialog.dialog("open");
+          timerID = setTimeout(
+            function () {
+              location.reload();
+            },
+            (data.ExpiresIn + 1) * 1000,
+          );
+        }
+      },
+    });
+  }
 
-	function countdown(){
-		if(expiresIn > 0){
-			expiresIn--;
-			$("#expiresIn").text(expiresIn);
-		}
-	}
+  function countdown() {
+    if (expiresIn > 0) {
+      expiresIn--;
+      $("#expiresIn").text(expiresIn);
+    }
+  }
 
-	var $dialog = $('<div id="logoutTimer" style="display:none; text-align: center;"><h3>You will be logged out in</h3><h2><span id="expiresIn"></span> Seconds</h2></div>');
-	$('#contentDiv').append($dialog);
+  var $dialog = $(
+    '<div id="logoutTimer" style="display:none; text-align: center;"><h3>You will be logged out in</h3><h2><span id="expiresIn"></span> Seconds</h2></div>',
+  );
+  $("#contentDiv").append($dialog);
 
-	$dialog.dialog({
-		width : getDialogWidth(400),
-		height : 230,
-		modal : true,
-		autoOpen: false,
-		title : "Stay Logged In?",
-		closeOnEscape: false,
-		buttons : {
-			"Stay Logged In" : function(){
-				$.ajax({
-					url: '../admin/ws_session.php?cmd=extend',
-					dataType: 'json',
-					success: function(data){
-						clearTimeout(timerID);
-						clearInterval(intervalID);
-						if(data.ExpiresIn > 60){
-							timerID = setTimeout(resetTimer, (data.ExpiresIn-60)*1000);
-							$dialog.dialog('close');
-						}
-					}
-				});
-			}
-		}
-	});
+  $dialog.dialog({
+    width: getDialogWidth(400),
+    height: 230,
+    modal: true,
+    autoOpen: false,
+    title: "Stay Logged In?",
+    closeOnEscape: false,
+    buttons: {
+      "Stay Logged In": function () {
+        $.ajax({
+          url: "../admin/ws_session.php?cmd=extend",
+          dataType: "json",
+          success: function (data) {
+            clearTimeout(timerID);
+            clearInterval(intervalID);
+            if (data.ExpiresIn > 60) {
+              timerID = setTimeout(resetTimer, (data.ExpiresIn - 60) * 1000);
+              $dialog.dialog("close");
+            }
+          },
+        });
+      },
+    },
+  });
 
-	resetTimer();
+  resetTimer();
 }
 
 /* set dialog width based on screen size */
-export function getDialogWidth(defaultWidth){
-	var winWidth = $(window).width();
-	var dialogWidth = defaultWidth;
+export function getDialogWidth(defaultWidth) {
+  var winWidth = $(window).width();
+  var dialogWidth = defaultWidth;
 
-	if(typeof defaultWidth == "number" && winWidth < defaultWidth - 30){
-		dialogWidth = winWidth - 30;
-	}
-	return dialogWidth;
+  if (typeof defaultWidth == "number" && winWidth < defaultWidth - 30) {
+    dialogWidth = winWidth - 30;
+  }
+  return dialogWidth;
 }
 
-export function hhkReportError(message, infoArray){
-	$.ajax({
-		url: "../house/ws_admin.php",
-		dataType: 'JSON',
-		type: 'post',
-		data: {
-			cmd: 'reportError',
-			message: message,
-			info: infoArray
-		},
-		success: function( data ){
-			
-		}
-	});
+export function hhkReportError(message, infoArray) {
+  $.ajax({
+    url: "../house/ws_admin.php",
+    dataType: "JSON",
+    type: "post",
+    data: {
+      cmd: "reportError",
+      message: message,
+      info: infoArray,
+    },
+    success: function () {},
+  });
 }
 
-$(document).ready(
-	function() {
-		"use strict";
-		// Hover states on the nav bar left icons.
-		$("ul.hhk-ui-icons li").hover(function() {
-			$(this).addClass("ui-state-hover");
-		}, function() {
-			$(this).removeClass("ui-state-hover");
-		});
+$(document).ready(function () {
+  "use strict";
+  // Hover states on the nav bar left icons.
+  $("ul.hhk-ui-icons li").hover(
+    function () {
+      $(this).addClass("ui-state-hover");
+    },
+    function () {
+      $(this).removeClass("ui-state-hover");
+    },
+  );
 
-		//hover on bootstrap nav dropdowns
-		$('.navbar-nav .dropdown').hover(function(){
-			$(this).find(".dropdown-toggle").dropdown('show');
-		}, function(){
-			$(this).find(".dropdown-toggle").dropdown('hide');
-		});
+  //hover on bootstrap nav dropdowns
+  $(".navbar-nav .dropdown").hover(
+    function () {
+      $(this).find(".dropdown-toggle").dropdown("show");
+    },
+    function () {
+      $(this).find(".dropdown-toggle").dropdown("hide");
+    },
+  );
 
-		//$('#contentDiv').css('margin-top',
-		//		$('#global-nav').css('height'));
+  //$('#contentDiv').css('margin-top',
+  //		$('#global-nav').css('height'));
 
-		if ($('#dchgPw').length > 0) {
-			var chPwButtons = {
-				"Save" : function() {
+  if ($("#dchgPw").length > 0) {
+    var chPwButtons = {
+      Save: function () {
+        var oldpw = $("#utxtOldPw"),
+          pw1 = $("#utxtNewPw1"),
+          pw2 = $("#utxtNewPw2"),
+          msg = $("#pwChangeErrMsg");
+        $("div#chgPassword").find("input").prop("type", "password");
+        $("div#chgPassword").find("button.showPw").text("Show");
+        msg.empty();
 
-					var oldpw = $('#utxtOldPw'), pw1 = $('#utxtNewPw1'), pw2 = $('#utxtNewPw2'), oldpwMD5, newpwMD5, challVar = $(
-							"#challVar").val(), msg = $('#pwChangeErrMsg'), qmsg = $('#SecQuestionErrMsg'), success = false;
-					$('div#chgPassword').find("input").prop("type",
-							"password");
-					$('div#chgPassword').find("button.showPw").text(
-							"Show");
-					var errors = false;
-					msg.empty();
+        if (oldpw.val() == "" && (pw1.val() != "" || pw2.val() != "")) {
+          msg.text("Old password is required");
+          return;
+        }
 
-					if (oldpw.val() == "" && (pw1.val() != "" || pw2.val() != "")) {
-						msg.text("Old password is required");
-						return;
-					}
+        // if intent is to change password
+        if (oldpw.val() != "") {
+          if (pw1.val() !== pw2.val()) {
+            msg.text("New passwords do not match");
+            return;
+          }
 
-					// if intent is to change password
-					if (oldpw.val() != "") {
+          if (oldpw.val() == pw1.val()) {
+            pw1.addClass("ui-state-error");
+            msg.text("The new password must be different from the old password");
+            pw1.focus();
+            pw2.val("");
+            return;
+          }
 
-						if (pw1.val() !== pw2.val()) {
-							msg.text("New passwords do not match");
-							return;
-						}
+          pw1.removeClass("ui-state-error");
 
-						if (oldpw.val() == pw1.val()) {
-							pw1.addClass("ui-state-error");
-							msg.text("The new password must be different from the old password");
-							pw1.focus();
-							pw2.val('');
-							return;
-						}
+          var oldpwval = oldpw.val();
+          var newpwval = pw1.val();
+          oldpw.val("");
+          pw1.val("");
+          pw2.val("");
 
-						pw1.removeClass("ui-state-error");
+          $.post(
+            "../house/ws_admin.php",
+            {
+              cmd: "chgpw",
+              old: oldpwval,
+              newer: newpwval,
+            },
+            function (data) {
+              if (data) {
+                try {
+                  data = $.parseJSON(data);
+                } catch (err) {
+                  alert("Parser error - " + err.message);
+                  return;
+                }
+                if (data.error) {
+                  if (data.gotopage) {
+                    window.open(data.gotopage, "_self");
+                  }
+                  flagAlertMessage(data.error, "error");
+                } else if (data.success) {
+                  flagAlertMessage(data.success, "success");
+                  $("#dchgPw").dialog("close");
+                } else if (data.warning) {
+                  $("#pwChangeErrMsg").html(data.warning);
+                }
+              }
+            },
+          );
+        }
+        //$("#dchgPw").dialog('close');
+      },
+    };
+    //two factor Auth
+    $("div#dchgPw #mfaTabs").tabs();
+    $("div#dchgPw button, div#dchgPw input[type=submit]").button();
 
-						var oldpwval = oldpw.val();
-						var newpwval = pw1.val();
-						oldpw.val('');
-						pw1.val('');
-						pw2.val('');
+    $("div#dchgPw #mfaEmail tbody tbody").addClass("hhk-flex");
 
-						$.post("../house/ws_admin.php", {
-							cmd : 'chgpw',
-							old : oldpwval,
-							newer : newpwval
-						}, function(data) {
-							if (data) {
-								try {
-									data = $.parseJSON(data);
-								} catch (err) {
-									alert("Parser error - "
-											+ err.message);
-									return;
-								}
-								if (data.error) {
+    //delete saved evices
+    $("div#dchgPw").on("click", "button#clearDevices", function () {
+      $.post(
+        "../house/ws_admin.php",
+        {
+          cmd: "clear2faTokens",
+        },
+        function (data) {
+          if (data) {
+            try {
+              data = $.parseJSON(data);
+            } catch (err) {
+              alert("Parser error - " + err.message);
+              return;
+            }
+            if (data.error) {
+              flagAlertMessage(data.error, "error");
+            } else if (data.success) {
+              flagAlertMessage("Saved devices cleared successfully", "success");
+              $("div#dchgPw #savedDevices").hide();
+            }
+          }
+        },
+      );
+    });
 
-									if (data.gotopage) {
-										window.open(data.gotopage,
-												'_self');
-									}
-									flagAlertMessage(data.error, 'error');
+    //generate new Authenticator secret and QR code
+    $("div#dchgPw").on("click", "#mfaAuthenticator button#genTOTPSecret", function () {
+      $.post(
+        "../house/ws_admin.php",
+        {
+          cmd: "gen2fa",
+          method: "authenticator",
+        },
+        function (data) {
+          if (data) {
+            try {
+              data = $.parseJSON(data);
+            } catch (err) {
+              alert("Parser error - " + err.message);
+              return;
+            }
+            if (data.error) {
+              flagAlertMessage(data.error, "error");
+            } else if (data.success) {
+              $("#mfaAuthenticator input[name=secret]").val(data.secret);
+              $("div#qrcode")
+                .html('<img src="' + data.url + '">')
+                .show();
+              $("#mfaAuthenticator .otpForm").show();
+              $("#mfaAuthenticator #showqrhelp").hide();
+              $("button#genTOTPSecret").hide();
+            }
+          }
+        },
+      );
+    });
 
-								} else if (data.success) {
+    //show existing Authenticator QR code
+    $("div#dchgPw").on("click", "#mfaAuthenticator button#getTOTPSecret", function () {
+      $.post(
+        "../house/ws_admin.php",
+        {
+          cmd: "get2fa",
+        },
+        function (data) {
+          if (data) {
+            try {
+              data = $.parseJSON(data);
+            } catch (err) {
+              alert("Parser error - " + err.message);
+              return;
+            }
+            if (data.error) {
+              flagAlertMessage(data.error, "error");
+            } else if (data.success) {
+              $("div#qrcode").html('<img src="' + data.url + '">');
+              $("#mfaAuthenticator .otpForm").hide();
+              $("#mfaAuthenticator #showqrhelp").show();
+            }
+          }
+        },
+      );
+    });
 
-									flagAlertMessage(data.success,
-											'success');
-									$("#dchgPw").dialog('close');
+    $("div#dchgPw").on("click", "button#genEmailSecret", function () {
+      var $target = $(this);
+      var inputdata = $("#userSettingsEmail").serialize();
+      inputdata += "&method=email&cmd=gen2fa";
+      $.post("../house/ws_admin.php", inputdata, function (data) {
+        if (data) {
+          try {
+            data = $.parseJSON(data);
+          } catch (err) {
+            alert("Parser error - " + err.message);
+            return;
+          }
+          if (data.error) {
+            flagAlertMessage(data.error, "error");
+          } else if (data.success) {
+            $target.parents(".mfaContent").find("button").button();
+            $target.parents(".mfaContent").find(".otpForm input[name=secret]").val(data.secret);
+            $target.parents(".mfaContent").find(".otpForm").show();
+            $target.hide();
+          }
+        }
+      });
+    });
 
-								} else if (data.warning) {
-									$('#pwChangeErrMsg').html(
-											data.warning);
-								}
-							}
-						});
-					}
-					//$("#dchgPw").dialog('close');
-				}
-			}
-						//two factor Auth
-						$('div#dchgPw #mfaTabs').tabs();
-						$('div#dchgPw button, div#dchgPw input[type=submit]').button();
+    $("div#dchgPw").on("click", "button.disableMFA", function () {
+      var $target = $(this);
 
+      $.post(
+        "../house/ws_admin.php",
+        {
+          cmd: "disable2fa",
+          method: $(this).data("method"),
+        },
+        function (data) {
+          if (data) {
+            try {
+              data = $.parseJSON(data);
+            } catch (err) {
+              alert("Parser error - " + err.message);
+              return;
+            }
+            if (data.error) {
+              flagAlertMessage(data.error, "error");
+            } else if (data.success) {
+              flagAlertMessage("Two step verification method disabled.", "success");
+              $target
+                .parents(".mfaContent")
+                .html(data.mkup)
+                .find("button, input[type=submit]")
+                .button();
+              $("div#dchgPw #mfaEmail tbody tbody").addClass("hhk-flex");
+            }
+          }
+        },
+      );
+    });
 
-						$('div#dchgPw #mfaEmail tbody tbody').addClass('hhk-flex');
+    //submit + verify OTP
+    $("div#dchgPw").on("submit", ".otpForm", function (e) {
+      e.preventDefault();
+      var $this = $(this);
 
-						//delete saved evices
-						$('div#dchgPw').on('click', 'button#clearDevices', function(){
-							$.post("../house/ws_admin.php", {
-								cmd : 'clear2faTokens'
-							}, function(data) {
-								if (data) {
-									try {
-										data = $.parseJSON(data);
-									} catch (err) {
-										alert("Parser error - "
-												+ err.message);
-										return;
-									}
-									if (data.error) {
-										flagAlertMessage(data.error,'error');
-									} else if (data.success) {
-										flagAlertMessage("Saved devices cleared successfully", "success");
-										$('div#dchgPw #savedDevices').hide();
-									}
-								}
-							});
-						});
+      $.post("../house/ws_admin.php", $(this).serialize(), function (data) {
+        if (data) {
+          try {
+            data = $.parseJSON(data);
+          } catch (err) {
+            alert("Parser error - " + err.message);
+            return;
+          }
+          if (data.error) {
+            flagAlertMessage(data.error, "error");
+          } else if (data.success) {
+            $(".otpForm").hide();
+            $("#qrcode").empty().hide();
+            if (data.backupCodes) {
+              $("p#backupCodes").html("<br>" + data.backupCodes.join("<br><br>"));
+              $("div#backupCodeDiv").show();
+            }
+            flagAlertMessage("Two Step Verification enabled successfully", "success");
+            if ($this.find("input[name=method]").val() == "email") {
+              $("#dchgPw").dialog("close");
+            }
+          }
+        }
+      });
+    });
 
-						//generate new Authenticator secret and QR code
-						$('div#dchgPw').on('click', '#mfaAuthenticator button#genTOTPSecret', function(){
-							$.post("../house/ws_admin.php", {
-								cmd : 'gen2fa',
-								method : 'authenticator'
-							}, function(data) {
-								if (data) {
-									try {
-										data = $.parseJSON(data);
-									} catch (err) {
-										alert("Parser error - "
-												+ err.message);
-										return;
-									}
-									if (data.error) {
-										flagAlertMessage(data.error,'error');
-									} else if (data.success) {
-										$('#mfaAuthenticator input[name=secret]').val(data.secret);
-										$('div#qrcode').html('<img src="'+ data.url + '">').show();
-										$('#mfaAuthenticator .otpForm').show();
-										$('#mfaAuthenticator #showqrhelp').hide();
-										$('button#genTOTPSecret').hide();
-									}
-								}
-							});
-						});
+    $(".hhk-tooltip").tooltip({
+      classes: {
+        "ui-tooltip": "ui-corner-all",
+      },
+    });
 
-						//show existing Authenticator QR code
-						$('div#dchgPw').on('click', '#mfaAuthenticator button#getTOTPSecret', function(){
-							$.post("../house/ws_admin.php", {
-								cmd : 'get2fa'
-							}, function(data) {
-								if (data) {
-									try {
-										data = $.parseJSON(data);
-									} catch (err) {
-										alert("Parser error - "
-												+ err.message);
-										return;
-									}
-									if (data.error) {
-										flagAlertMessage(data.error,'error');
-									} else if (data.success) {
-										$('div#qrcode').html('<img src="'+ data.url + '">');
-										$('#mfaAuthenticator .otpForm').hide();
-										$('#mfaAuthenticator #showqrhelp').show();
-									}
-								}
-							});
-						});
+    $("#userSettingsBtn")
+      .button()
+      .click(function () {
+        chPwButtons["Cancel"] = function () {
+          $(this).dialog("close");
+        };
+        $(".PassExpDesc").hide();
+        $("div#dchgPw #chgPassword").find("input").removeClass("ui-state-error").val("");
+        $("#pwChangeErrMsg").text("");
 
-						$('div#dchgPw').on('click', 'button#genEmailSecret', function(){
-							var $target = $(this);
-							var method = 'email';
-							var inputdata = $('#userSettingsEmail').serialize();
-							inputdata += "&method=email&cmd=gen2fa";
-							$.post("../house/ws_admin.php", inputdata, function(data) {
-								if (data) {
-									try {
-										data = $.parseJSON(data);
-									} catch (err) {
-										alert("Parser error - "
-												+ err.message);
-										return;
-									}
-									if (data.error) {
-										flagAlertMessage(data.error,'error');
-									} else if (data.success) {
-										$target.parents('.mfaContent').find('button').button();
-										$target.parents('.mfaContent').find('.otpForm input[name=secret]').val(data.secret);
-										$target.parents('.mfaContent').find('.otpForm').show();
-										$target.hide();
-									}
-								}
-							});
-						});
+        $("div#dchgPw").find("button, input[type=submit]").button();
+        $("div#dchgPw").find("#qrcode").empty();
+        $("div#dchgPw").find("#otpForm").hide();
+        $("#dchgPw").dialog("option", "title", "User Settings");
+        $("#dchgPw").dialog("option", "closeOnEscape", true);
+        $("#dchgPw").dialog("option", "dialogClass", "");
+        $("#dchgPw").dialog("option", "buttons", chPwButtons);
+        $("#dchgPw").dialog("open");
+        $("#txtOldPw").focus();
+      });
 
-						$('div#dchgPw').on('click', 'button.disableMFA', function(){
-							var $target = $(this);
+    $(document).on("click", ".showPw", function () {
+      var input = $(this).parent().find("input");
+      if (input.prop("type") == "password") {
+        input.prop("type", "text");
+        $(this).text("Hide");
+      } else {
+        input.prop("type", "password");
+        $(this).text("Show");
+      }
+    });
 
-							$.post("../house/ws_admin.php", {
-								cmd : 'disable2fa',
-								method : $(this).data("method")
-							}, function(data) {
-								if (data) {
-									try {
-										data = $.parseJSON(data);
-									} catch (err) {
-										alert("Parser error - "
-												+ err.message);
-										return;
-									}
-									if (data.error) {
-										flagAlertMessage(data.error,'error');
-									} else if (data.success) {
-										flagAlertMessage("Two step verification method disabled.",'success');
-										$target.parents('.mfaContent').html(data.mkup).find('button, input[type=submit]').button();
-										$('div#dchgPw #mfaEmail tbody tbody').addClass('hhk-flex');
-									}
-								}
-							});
-						});
+    var chgPW = $("input#showUserSettings").val();
+    if (chgPW) {
+      var autoOpen = true;
+    } else {
+      var autoOpen = false;
+      chPwButtons["Cancel"] = function () {
+        $(this).dialog("close");
+      };
+      $(".PassExpDesc").hide();
+    }
 
+    $("div#dchgPw").find("button").button();
 
-						//submit + verify OTP
-						$('div#dchgPw').on('submit', '.otpForm', function(e){
-							e.preventDefault();
-							var $this = $(this);
+    $("div#dchgPw").on("change", "input", function () {
+      $(this).removeClass("ui-state-error");
+      $(".hhk-alert").hide();
+      $("#pwChangeErrMsg").text("");
+    });
 
-							$.post("../house/ws_admin.php", $(this).serialize(),
-								function(data) {
-								if (data) {
-									try {
-										data = $.parseJSON(data);
-									} catch (err) {
-										alert("Parser error - "
-												+ err.message);
-										return;
-									}
-									if (data.error) {
-										flagAlertMessage(data.error,'error');
-									} else if (data.success) {
-										$(".otpForm").hide();
-										$("#qrcode").empty().hide();
-										if(data.backupCodes){
-											$("p#backupCodes").html("<br>" + data.backupCodes.join("<br><br>"));
-											$("div#backupCodeDiv").show();
-										}
-										flagAlertMessage("Two Step Verification enabled successfully", 'success');
-										if($this.find("input[name=method]").val() == "email"){
-											$("#dchgPw").dialog('close');
-										}
-									}
-								}
-							});
-						});
+    $("#dchgPw").dialog({
+      autoOpen: autoOpen,
+      width: getDialogWidth(1000),
+      autoResize: true,
+      resizable: true,
+      modal: true,
+      title: "Welcome",
+      buttons: chPwButtons,
+    });
+  }
 
-			$('.hhk-tooltip').tooltip({
-				classes : {
-					"ui-tooltip" : "ui-corner-all"
-				}
-			});
+  //Logout after inactivity
+  logoutTimer();
 
-			$('#userSettingsBtn').button().click(
-					function() {
-						chPwButtons["Cancel"] = function() {
-							$(this).dialog("close");
-						};
-						$(".PassExpDesc").hide();
-						$('div#dchgPw #chgPassword').find('input').removeClass("ui-state-error").val('');
-						$('#pwChangeErrMsg').text('');
-
-						$('div#dchgPw').find('button, input[type=submit]').button();
-						$('div#dchgPw').find("#qrcode").empty();
-						$('div#dchgPw').find("#otpForm").hide();
-						$('#dchgPw').dialog("option", "title", "User Settings");
-						$('#dchgPw').dialog("option", "closeOnEscape", true);
-						$('#dchgPw').dialog("option", "dialogClass", '');
-						$('#dchgPw').dialog("option", "buttons", chPwButtons);
-						$('#dchgPw').dialog('open');
-						$('#txtOldPw').focus();
-					});
-
-			$(document).on('click', '.showPw', function(e) {
-				var input = $(this).parent().find("input");
-				if(input.prop("type") == "password"){
-					input.prop("type", "text");
-					$(this).text("Hide");
-				}else{
-					input.prop("type", "password");
-					$(this).text("Show");
-				}
-			});
-
-			var chgPW = $("input#showUserSettings").val();
-			if (chgPW) {
-				var autoOpen = true;
-			} else {
-				var autoOpen = false;
-				chPwButtons["Cancel"] = function() {
-					$(this).dialog("close");
-				};
-				$(".PassExpDesc").hide();
-			}
-
-			$('div#dchgPw').find('button').button();
-
-			$('div#dchgPw').on('change', 'input', function() {
-				$(this).removeClass("ui-state-error");
-				$(".hhk-alert").hide();
-				$('#pwChangeErrMsg').text('');
-			});
-
-
-			$('#dchgPw').dialog({
-				autoOpen : autoOpen,
-				width : getDialogWidth(1000),
-				autoResize : true,
-				resizable : true,
-				modal : true,
-				title : "Welcome",
-				buttons : chPwButtons
-			});
-		}
-
-		//Logout after inactivity
-		logoutTimer();
-
-		//autosize textarea based on content
-		$(document).on("input", "textarea.hhk-autosize", function () {
-            this.style.height = 'auto';
-            this.style.height = (this.scrollHeight + 3) + 'px';
-		});
-		$(document).find("textarea.hhk-autosize").trigger("input");
+  //autosize textarea based on content
+  $(document).on("input", "textarea.hhk-autosize", function () {
+    this.style.height = "auto";
+    this.style.height = this.scrollHeight + 3 + "px";
+  });
+  $(document).find("textarea.hhk-autosize").trigger("input");
 });

@@ -1,58 +1,59 @@
 {
-	"name" : "npsc/hhk",
-	"description" : "Healthcare Hospitality Houses Guest Tracking and Reservations",
-	"type" : "project",
-	"homepage" : "https://nonprofitsoftwarecorp.org",
-	"license" : "MIT",
-	"authors" : [{
-			"name" : "Eric Crane",
-			"email" : "ecrane@nonprofitsoftwarecorp.org"
-		}, {
-			"name" : "Will Ireland",
-			"email" : "wireland@nonprofitsoftwarecorp.org"
-		}
-	],
-	"autoload" : {
-		"psr-4" : {
-			"HHK\\" : "classes/"
-		}
-	},
-	"config" : {
-		"optimize-autoloader": true,
-		"platform": {
-    		"php": "8.4"
-		}
-	},
-	"require" : {
-        "php" : "^8.4",
-        "ext-xml": "*",
-		"ext-json": "*",
-		"ext-gd": "*",
-		"mk-j/php_xlsxwriter" :"~0.39",
-		"phpmailer/phpmailer" : "~6.1",
-		"phelium/recaptcha" : "~1.0",
-		"chillerlan/php-qrcode" : "~4.3",
-		"onelogin/php-saml" : "~4.0",
-		"cerdic/css-tidy" : "~2.0",
-		"adamz01h/php-cron-scheduler" : "~3.0",
-		"guzzlehttp/guzzle" : "~7.5",
-		"mpdf/mpdf": "^8.2",
-		"league/oauth2-server": "^9.0",
-		"slim/slim": "^4.14",
-		"php-di/slim-bridge": "^3.4",
-		"giggsey/libphonenumber-for-php": "^9.0",
-		"donatj/phpuseragentparser": "^1.10",
-		"vlucas/phpdotenv": "^5.6"
-
-	},
-	"scripts" : {
-		"stan" : "vendor/bin/phpstan analyse"
-	},
-	"require-dev": {
-		"phpstan/phpstan": "^2.1",
-		"phpunit/phpunit": "^11.5",
-		"php-debugbar/php-debugbar": "^3.4",
-		"staabm/phpstan-dba": "^0.4.3",
-		"squizlabs/php_codesniffer": "^4.0"
-	}
+  "name": "npsc/hhk",
+  "description": "Healthcare Hospitality Houses Guest Tracking and Reservations",
+  "type": "project",
+  "homepage": "https://nonprofitsoftwarecorp.org",
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "Eric Crane",
+      "email": "ecrane@nonprofitsoftwarecorp.org"
+    },
+    {
+      "name": "Will Ireland",
+      "email": "wireland@nonprofitsoftwarecorp.org"
+    }
+  ],
+  "autoload": {
+    "psr-4": {
+      "HHK\\": "classes/"
+    }
+  },
+  "config": {
+    "optimize-autoloader": true,
+    "platform": {
+      "php": "8.4"
+    }
+  },
+  "require": {
+    "php": "^8.4",
+    "ext-xml": "*",
+    "ext-json": "*",
+    "ext-gd": "*",
+    "mk-j/php_xlsxwriter": "~0.39",
+    "phpmailer/phpmailer": "~6.1",
+    "phelium/recaptcha": "~1.0",
+    "chillerlan/php-qrcode": "~4.3",
+    "onelogin/php-saml": "~4.0",
+    "cerdic/css-tidy": "~2.0",
+    "adamz01h/php-cron-scheduler": "~3.0",
+    "guzzlehttp/guzzle": "~7.5",
+    "mpdf/mpdf": "^8.2",
+    "league/oauth2-server": "^9.0",
+    "slim/slim": "^4.14",
+    "php-di/slim-bridge": "^3.4",
+    "giggsey/libphonenumber-for-php": "^9.0",
+    "donatj/phpuseragentparser": "^1.10",
+    "vlucas/phpdotenv": "^5.6"
+  },
+  "scripts": {
+    "stan": "vendor/bin/phpstan analyse"
+  },
+  "require-dev": {
+    "phpstan/phpstan": "^2.1",
+    "phpunit/phpunit": "^11.5",
+    "php-debugbar/php-debugbar": "^3.4",
+    "staabm/phpstan-dba": "^0.4.3",
+    "squizlabs/php_codesniffer": "^4.0"
+  }
 }

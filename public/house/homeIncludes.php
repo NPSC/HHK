@@ -24,7 +24,7 @@ define('RESV_MANAGER_JS', 'js/resvManager-min.js' . JSV);
 define('PAYMENT_JS', "js/payments-min.js" . JSV);
 define('VISIT_DIALOG_JS', "js/visitDialog-min.js" . JSV);
 define('GUESTLOAD_JS', 'js/guestload-min.js' . JSV);
-define('REGISTER_JS', 'js/register-min.js' . JSV);
+define('REGISTER_JS', 'js/register.js' . JSV);
 define('FULLCALENDAR_JS', "../js/fullcalendar6.1.min.js" . JSV);
 define('REG_FORM_JS', 'js/regForm-min.js' . JSV);
 /* end mins */

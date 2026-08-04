@@ -137,7 +137,6 @@ $reportTypeSelMarkup = $typeCtrl->createMarkup(3);
                         listTable = $('#tblCategory').dataTable({
                             "iDisplayLength": 50,
                             "aLengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]],
-                            "dom": '<"top"lf><"hhk-overflow-x"rt><"bottom"ip>'
                         });
                     }
                     catch (err) {

@@ -134,8 +134,7 @@ $CampOpt = Campaign::CampaignSelOptionMarkup($dbh, '', FALSE);
 
                 listTable = $('#tblDonor').dataTable({
                     "displayLength": 50,
-                    "lengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]]
-                    , "dom": '<"top"lf><"hhk-overflow-x"rt><"bottom"p>',
+                    "lengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]],
                     "order": [[2,'asc'], [3,'asc']]
                 });
 

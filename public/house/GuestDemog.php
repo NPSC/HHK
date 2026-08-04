@@ -250,7 +250,7 @@ if ($cmd){
                 </form>
             </div>
             <form autocomplete="off">
-            <div class="ui-widget ui-widget-content ui-corner-all hhk-tdbox mt-3 p-2" style="font-size:.8em; max-width: fit-content;">
+            <div class="ui-widget ui-widget-content ui-corner-all hhk-tdbox mt-3 p-2" style="font-size:.8em;">
                 <table id="dataTbl"></table>
             </div>
             </form>

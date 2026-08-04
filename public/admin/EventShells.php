@@ -291,7 +291,6 @@ $evtShellMarkup = $tbl->generateMarkup(array('id'=>'dataTbl'));
         $('#dataTbl').dataTable({
             "displayLength": 50,
             "lengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]],
-            "dom": '<"top"lf><"hhk-overflow-x"rt><"bottom"p>',
         });
 
         $( "input.ckdate" ).datepicker({

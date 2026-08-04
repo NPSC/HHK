@@ -274,7 +274,6 @@ $columSelector = $colSelector->makeSelectorTable(TRUE)->generateMarkup(array('st
                         ],
                         "displayLength": 50,
                         "lengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]],
-                        "dom": '<"top ui-toolbar ui-helper-clearfix"ilf><\"hhk-overflow-x\"rt><"bottom ui-toolbar ui-helper-clearfix"lp><"clear">',
                     });
 
                     $('#printButton').button().click(function() {

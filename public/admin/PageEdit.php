@@ -164,7 +164,6 @@ $resultMessage = $alertMsg->createMarkup();
                             ],
                             "displayLength": 100,
                             "lengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]]
-                            , "Dom": '<"top"ilf>rt<"bottom"ip>'
                         });
 
                     })

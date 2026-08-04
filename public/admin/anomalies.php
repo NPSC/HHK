@@ -359,7 +359,6 @@ function doReports(PDO $dbh, chkBoxCtrl $cbMemStatus, chkBoxCtrl $cbRptType, $is
                         listTable = $('#tblCategory').dataTable({
                             "displayLength": 50,
                             "lengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]],
-                            "Dom": '<"top"ilfp>rt<"bottom"p>'
                         });
                     }
                     catch (err) { console.log(err)}

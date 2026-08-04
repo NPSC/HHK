@@ -1,1210 +1,1172 @@
 // guestTransfer.js
 //
 var stopTransfer,
-    $visitButton,
-    $memberButton,
-    $upsertButton,
-    $psgCBs,
-    $excCBs,
-    $relSels,
-    cmsTitle,
-    username;
-
+  $visitButton,
+  $memberButton,
+  $upsertButton,
+  $psgCBs,
+  $excCBs,
+  $relSels,
+  cmsTitle,
+  username;
 
 function updateLocal(id) {
-    var postUpdate = $.post('ws_tran.php', {cmd: 'rmvAcctId', id: id});
+  var postUpdate = $.post("ws_tran.php", { cmd: "rmvAcctId", id: id });
 
-    postUpdate.done(function (incmg) {
-        $('div#retrieve').empty();
+  postUpdate.done(function (incmg) {
+    $("div#retrieve").empty();
 
-        if (!incmg) {
-            alert('Bad Reply from Server');
-            return;
-        }
+    if (!incmg) {
+      alert("Bad Reply from Server");
+      return;
+    }
 
-        if (incmg.error) {
-            if (incmg.gotopage) {
-                window.open(incmg.gotopage, '_self');
-            }
-            // Stop Processing and return.
-            flagAlertMessage(incmg.error, true);
-            return;
-        }
+    if (incmg.error) {
+      if (incmg.gotopage) {
+        window.open(incmg.gotopage, "_self");
+      }
+      // Stop Processing and return.
+      flagAlertMessage(incmg.error, true);
+      return;
+    }
 
-        if (incmg.result) {
-            flagAlertMessage(incmg.result, false);
-
-        }
-    });
+    if (incmg.result) {
+      flagAlertMessage(incmg.result, false);
+    }
+  });
 }
 
 function upsert(transferIds, trace) {
-    const parms = {
-        cmd: 'upsert',
-        trace: trace,
-        ids: transferIds
-    };
-    
-    $('#divError').empty();
-    $('#loadingIcon').show();
+  const parms = {
+    cmd: "upsert",
+    trace: trace,
+    ids: transferIds,
+  };
 
-    var posting = $.post('ws_tran.php', parms);
-    posting.done(function (incmg) {
+  $("#divError").empty();
+  $("#loadingIcon").show();
 
-        $('#loadingIcon').hide();
+  var posting = $.post("ws_tran.php", parms);
+  posting.done(function (incmg) {
+    $("#loadingIcon").hide();
 
-        if (!incmg) {
-            alert('Error: Bad Reply from HHK Web Server');
-            return;
-        }
+    if (!incmg) {
+      alert("Error: Bad Reply from HHK Web Server");
+      return;
+    }
 
-        var data = incmg;
+    var data = incmg;
 
-        if (data.error || data.errors) {
-            if (data.gotopage) {
-                window.open(data.gotopage, '_self');
-            }
+    if (data.error || data.errors) {
+      if (data.gotopage) {
+        window.open(data.gotopage, "_self");
+      }
 
-            let errorMsg = "";
-            if(data.error){
-                errorMsg += "<p>"+data.error+"</p>";
-            }
+      let errorMsg = "";
+      if (data.error) {
+        errorMsg += "<p>" + data.error + "</p>";
+      }
 
-            if(data.errors){
-                data.errors.forEach(element => {
-                    errorMsg += "<p>"+element+"</p>"
-                });
-            }
+      if (data.errors) {
+        data.errors.forEach((element) => {
+          errorMsg += "<p>" + element + "</p>";
+        });
+      }
 
-            //flagAlertMessage(data.error, true);
-            $('#divError').html($('<div class="ui-state-highlight ui-corner-all m-3 p-2"><h4>Error</h4><div class="ms-2">' + errorMsg + '</div></div>'));
-            $('#TxButton').prop('disabled', false);
+      //flagAlertMessage(data.error, true);
+      $("#divError").html(
+        $(
+          '<div class="ui-state-highlight ui-corner-all m-3 p-2"><h4>Error</h4><div class="ms-2">' +
+            errorMsg +
+            "</div></div>",
+        ),
+      );
+      $("#TxButton").prop("disabled", false);
+    }
 
-        }
-        
-        if (data.table) {
-            $('#TxButton').hide();
-            $('#divMembers').html(data.table);
-            $('#divMembers').prepend($('<p style="font-weight: bold;">Transfer Results</p>'));
-        }
+    if (data.table) {
+      $("#TxButton").hide();
+      $("#divMembers").html(data.table);
+      $("#divMembers").prepend($('<p style="font-weight: bold;">Transfer Results</p>'));
+    }
 
-        if (data.trace) {
-            $('#divMembers').append(data.trace);
-        }
-
-    });
+    if (data.trace) {
+      $("#divMembers").append(data.trace);
+    }
+  });
 }
 
 function updateRemote(id, accountId, useFlagAlert) {
+  var postUpdate = $.post("ws_tran.php", { cmd: "update", accountId: accountId, id: id });
 
-    var postUpdate = $.post('ws_tran.php', {cmd: 'update', accountId: accountId, id: id});
+  postUpdate.done(function (incmg) {
+    $("#btnUpdate").remove();
+    if (!incmg) {
+      alert("Bad Reply from Server");
+      return;
+    }
 
-    postUpdate.done(function (incmg) {
-        $('#btnUpdate').remove();
-        if (!incmg) {
-            alert('Bad Reply from Server');
-            return;
-        }
+    if (incmg.error) {
+      if (incmg.gotopage) {
+        window.open(incmg.gotopage, "_self");
+      }
+      // Stop Processing and return.
+      flagAlertMessage(incmg.error, true);
+      return;
+    }
 
-        if (incmg.error) {
-            if (incmg.gotopage) {
-                window.open(incmg.gotopage, '_self');
-            }
-            // Stop Processing and return.
-            flagAlertMessage(incmg.error, true);
-            return;
-        }
+    if (incmg.warning) {
+      flagAlertMessage(incmg.warning, true);
+    } else if (incmg.result) {
+      if (useFlagAlert) {
+        flagAlertMessage(incmg.result, false);
+      } else {
+        let tr = '<tr style="border-top: 2px solid #2E99DD;">';
+        tr += '<td colspan="10">' + incmg.result + "</td>";
+        $("#mTbl").find("tbody").append(tr);
+      }
+    }
 
-        if (incmg.warning) {
-
-            flagAlertMessage(incmg.warning, true);
-
-        } else if (incmg.result) {
-
-            if (useFlagAlert) {
-                flagAlertMessage(incmg.result, false);
-            } else {
-                let tr = '<tr style="border-top: 2px solid #2E99DD;">';
-                tr += '<td colspan="10">' + incmg.result + '</td>';
-                $('#mTbl').find('tbody').append(tr);
-            }
-        }
-
-        if (! useFlagAlert) {
-            throttleMembers();
-        }
-
-    });
+    if (!useFlagAlert) {
+      throttleMembers();
+    }
+  });
 }
 
 function fillTable(incmg, $mTbl) {
+  let tr = "";
 
-    let tr = '';
+  if (incmg) {
+    if ($mTbl.length === 0) {
+      // Create header row
+      $mTbl = $('<table id="mTbl" style="margin-top:2px;"/>');
 
-    if (incmg) {
-
-        if ($mTbl.length === 0) {
-
-            // Create header row
-            $mTbl = $('<table id="mTbl" style="margin-top:2px;"/>');
-
-            tr = '<thead><tr>';
-            for (let id in incmg) {
-                for (let key in incmg[id]) {
-                    tr += '<th>' + key + '</th>';
-                }
-                tr += '</tr></thead><tbody></tbody>';
-                break;
-            }
-
-            $mTbl.append(tr);
-            let title = $('<h3 style="margin-top:10px;">Processed ' + cmsTitle + ' Members</h3>');
-            $('#divMembers').append(title).append($mTbl).show();
+      tr = "<thead><tr>";
+      for (let id in incmg) {
+        for (let key in incmg[id]) {
+          tr += "<th>" + key + "</th>";
         }
+        tr += "</tr></thead><tbody></tbody>";
+        break;
+      }
 
-
-        let first = 'style="border-top: 2px solid #2E99DD;"';
-        for (let id in incmg) {
-
-            tr = '<tr ' + first + '>';
-            first = '';
-
-            for (let key in incmg[id]) {
-                tr += '<td>' + incmg[id][key] + '</td>';
-            }
-            tr += '</tr>';
-        }
-
-        $mTbl.find('tbody').append(tr);
-        $('div#retrieve').empty().hide();
-
-        $('div#printArea').show();
+      $mTbl.append(tr);
+      let title = $('<h3 style="margin-top:10px;">Processed ' + cmsTitle + " Members</h3>");
+      $("#divMembers").append(title).append($mTbl).show();
     }
+
+    let first = 'style="border-top: 2px solid #2E99DD;"';
+    for (let id in incmg) {
+      tr = "<tr " + first + ">";
+      first = "";
+
+      for (let key in incmg[id]) {
+        tr += "<td>" + incmg[id][key] + "</td>";
+      }
+      tr += "</tr>";
+    }
+
+    $mTbl.find("tbody").append(tr);
+    $("div#retrieve").empty().hide();
+
+    $("div#printArea").show();
+  }
 }
 
 function transferRemote(transferIds) {
-    var parms = {
-        cmd: 'members',
-        ids: transferIds
-    };
+  var parms = {
+    cmd: "members",
+    ids: transferIds,
+  };
 
-    var posting = $.post('ws_tran.php', parms);
-    posting.done(function (incmg) {
-        $('#btnUpdate').remove();
+  var posting = $.post("ws_tran.php", parms);
+  posting.done(function (incmg) {
+    $("#btnUpdate").remove();
 
-        if (!incmg) {
-            alert('Error: Bad Reply from HHK Web Server');
-            return;
+    if (!incmg) {
+      alert("Error: Bad Reply from HHK Web Server");
+      return;
+    }
+
+    if (incmg.error) {
+      if (incmg.gotopage) {
+        window.open(incmg.gotopage, "_self");
+      }
+      // Stop Processing and return.
+      flagAlertMessage(incmg.error, true);
+
+      return;
+    }
+
+    let tr = "";
+    let $mTbl = $("#mTbl");
+
+    if (incmg.members) {
+      if ($mTbl.length === 0) {
+        // Create header row
+        $mTbl = $('<table id="mTbl" style="margin-top:2px;"/>');
+
+        tr = "<thead><tr>";
+        for (let id in incmg.members) {
+          for (let key in incmg.members[id]) {
+            tr += "<th>" + key + "</th>";
+          }
+          tr += "</tr></thead><tbody></tbody>";
+          break;
         }
 
-        if (incmg.error) {
-            if (incmg.gotopage) {
-                window.open(incmg.gotopage, '_self');
-            }
-            // Stop Processing and return.
-            flagAlertMessage(incmg.error, true);
+        $mTbl.append(tr);
+        let title = $('<h3 style="margin-top:10px;">Processed ' + cmsTitle + " Members</h3>");
+        $("#divMembers").append(title).append($mTbl).show();
+      }
 
-            return;
+      let first = 'style="border-top: 2px solid #2E99DD;"';
+      for (let id in incmg.members) {
+        tr = "<tr " + first + ">";
+        first = "";
+
+        for (let key in incmg.members[id]) {
+          tr += "<td>" + incmg.members[id][key] + "</td>";
         }
+        tr += "</tr>";
+      }
 
-        let tr = '';
-        let $mTbl = $('#mTbl');
+      $mTbl.find("tbody").append(tr);
+      $("div#retrieve").empty().hide();
 
+      $("div#printArea").show();
+    }
 
-        if (incmg.members) {
-
-            if ($mTbl.length === 0) {
-
-                // Create header row
-                $mTbl = $('<table id="mTbl" style="margin-top:2px;"/>');
-
-                tr = '<thead><tr>';
-                for (let id in incmg.members) {
-                    for (let key in incmg.members[id]) {
-                        tr += '<th>' + key + '</th>';
-                    }
-                    tr += '</tr></thead><tbody></tbody>';
-                    break;
-                }
-
-                $mTbl.append(tr);
-                let title = $('<h3 style="margin-top:10px;">Processed ' + cmsTitle + ' Members</h3>');
-                $('#divMembers').append(title).append($mTbl).show();
-            }
-
-
-            let first = 'style="border-top: 2px solid #2E99DD;"';
-            for (let id in incmg.members) {
-
-                tr = '<tr ' + first + '>';
-                first = '';
-
-                for (let key in incmg.members[id]) {
-                    tr += '<td>' + incmg.members[id][key] + '</td>';
-                }
-                tr += '</tr>';
-            }
-
-            $mTbl.find('tbody').append(tr);
-            $('div#retrieve').empty().hide();
-
-            $('div#printArea').show();
-        }
-
-        if ($memberButton !== null) {
-            throttleMembers();
-        }
-    });
-
+    if ($memberButton !== null) {
+      throttleMembers();
+    }
+  });
 }
 
 function throttleVisits() {
+  if (stopTransfer) {
+    $visitButton.val("Resume Visit Transfers");
+    return;
+  }
 
-    if (stopTransfer) {
-        $visitButton.val('Resume Visit Transfers');
-        return;
+  let psgs = [];
+
+  // do the excludes
+  $excCBs.each(function () {
+    if ($(this).prop("checked")) {
+      psgs.push($(this).data("idpsg"));
+
+      $(".hhk-" + $(this).data("idpsg")).css("background-color", "lightgray");
+
+      $(this).prop({ checked: false, disabled: true });
     }
+  });
 
-    let psgs = [];
+  if (psgs.length > 0) {
+    transferExcludes(psgs);
+  }
 
-    // do the excludes
-    $excCBs.each(function () {
+  let donut = true;
 
-        if ($(this).prop('checked')) {
+  // Do one at a time.
+  $psgCBs.each(function () {
+    if ($(this).prop("checked")) {
+      donut = false;
+      const props = { checked: false, disabled: true };
+      const rels = [];
 
-            psgs.push($(this).data('idpsg'));
+      $(".hhk-" + $(this).data("idpsg"))
+        .css("background-color", "lightgray")
+        .find("td.psgCBs")
+        .addClass("hhk-loading")
+        .css("background-color", "lightgray");
 
-            $('.hhk-' + $(this).data('idpsg')).css('background-color', 'lightgray');
+      $(this).prop(props).end();
 
-            $(this).prop({'checked': false, 'disabled': true});
+      // Prepare relationship assignments.
+      $(".hhk-selRel" + $(this).data("idpsg")).each(function () {
+        const rel = { id: $(this).data("idname"), rel: $(this).val() };
+        rels.push(rel);
+      });
 
-        }
-    });
+      transferVisits($(this).data("idpsg"), rels);
 
-    if (psgs.length > 0) {
-        transferExcludes(psgs);
+      return false;
     }
+  });
 
-    let donut = true;
-
-    // Do one at a time.
-    $psgCBs.each(function () {
-
-        if ($(this).prop('checked')) {
-
-            donut = false;
-            const props = {'checked': false, 'disabled': true};
-            const rels = [];
-
-            $('.hhk-' + $(this).data('idpsg')).css('background-color', 'lightgray').find('td.psgCBs').addClass('hhk-loading').css('background-color', 'lightgray');
-
-            $(this).prop(props).end();
-
-            // Prepare relationship assignments.
-            $('.hhk-selRel' + $(this).data('idpsg')).each(function () {
-                const rel = {'id': $(this).data('idname'), 'rel': $(this).val()};
-                rels.push(rel);
-            });
-
-            transferVisits($(this).data('idpsg'), rels);
-
-            return false;
-        }
-    });
-
-    if (donut) {
-        stopTransfer = true;
-        $visitButton.val('Start PSG Transfers');
-    }
+  if (donut) {
+    stopTransfer = true;
+    $visitButton.val("Start PSG Transfers");
+  }
 }
 
 function throttleMembers() {
+  if (stopTransfer) {
+    $("#TxButton").val("Resume Member Transfers");
+    return;
+  }
 
-    if (stopTransfer) {
-        $('#TxButton').val('Resume Member Transfers');
-        return;
+  let donut = true;
+
+  // Do one at a time.
+  $("input.hhk-tfmem").each(function () {
+    if ($(this).prop("checked")) {
+      donut = false;
+      const props = { checked: false, disabled: true };
+
+      $(this).parents("tr").css("background-color", "lightgray");
+
+      $(this).prop(props).end();
+
+      transferRemote($(this).data("txid"));
+
+      return false;
+    }
+  });
+
+  if (donut) {
+    let upnut = true;
+
+    if ($("input.hhk-updatemem").length == 0) {
+      stopTransfer = true;
+      $("#TxButton").val("Start Member Transfers");
+      return;
     }
 
-    let donut = true;
+    $("input.hhk-updatemem").each(function () {
+      if ($(this).prop("checked")) {
+        upnut = false;
+        const props = { checked: false, disabled: true };
 
-    // Do one at a time.
-     $('input.hhk-tfmem').each(function () {
+        $(this).parents("tr").css("background-color", "lightgray");
 
-        if ($(this).prop('checked')) {
+        $(this).prop(props).end();
 
-            donut = false;
-            const props = {'checked': false, 'disabled': true};
+        updateRemote($(this).data("txid"), $(this).data("txacct"), false);
 
-            $(this).parents('tr').css('background-color', 'lightgray');
-
-            $(this).prop(props).end();
-
-            transferRemote($(this).data('txid'));
-
-            return false;
-        }
+        return false;
+      }
     });
 
-    if (donut) {
-
-        let upnut = true;
-
-        if ($('input.hhk-updatemem').length == 0) {
-            stopTransfer = true;
-            $('#TxButton').val('Start Member Transfers');
-            return;
-        }
-
-        $('input.hhk-updatemem').each(function() {
-            if ($(this).prop('checked')) {
-
-                upnut = false;
-                const props = { 'checked': false, 'disabled': true };
-
-                $(this).parents('tr').css('background-color', 'lightgray');
-
-                $(this).prop(props).end();
-
-
-                updateRemote($(this).data('txid'), $(this).data('txacct'), false);
-
-                return false;
-
-            }
-        });
-
-        if (upnut) {
-            // Done
-            stopTransfer = true;
-            $('#TxButton').val('Start Updates');
-            let tr = '<tr style="border-top: 2px solid #2E99DD;">';
-            tr += '<th colspan="10" class="hhk-visitdialog">Updates</th>';
-            $('#mTbl').find('tbody').append(tr);
-
-        }
+    if (upnut) {
+      // Done
+      stopTransfer = true;
+      $("#TxButton").val("Start Updates");
+      let tr = '<tr style="border-top: 2px solid #2E99DD;">';
+      tr += '<th colspan="10" class="hhk-visitdialog">Updates</th>';
+      $("#mTbl").find("tbody").append(tr);
     }
+  }
 }
 
 function transferExcludes(psgs) {
+  let parms = {
+    cmd: "excludes",
+    psgIds: psgs,
+  };
 
-    let parms = {
-        cmd: 'excludes',
-        psgIds: psgs
-    };
+  let posting = $.post("ws_tran.php", parms);
 
-    let posting = $.post('ws_tran.php', parms);
+  posting.done(function (incmg) {
+    if (!incmg) {
+      alert("Bad Reply from HHK Web Server");
+      return;
+    }
 
-    posting.done(function (incmg) {
+    if (incmg.error) {
+      if (incmg.gotopage) {
+        window.open(incmg.gotopage, "_self");
+      }
+      // Stop Processing and return.
+      flagAlertMessage(incmg.error, true);
+      return;
+    }
 
-        if (!incmg) {
-            alert('Bad Reply from HHK Web Server');
-            return;
+    let tr = "";
+    let $eTbl = $("#eTbl");
+
+    if (incmg.excludes) {
+      if ($eTbl.length === 0) {
+        // Create header row
+        $eTbl = $('<table id="mTbl" style="margin-top:2px;"/>');
+
+        tr = "<thead><tr>";
+        for (let key in incmg.excludes[0]) {
+          tr += "<th>" + key + "</th>";
         }
+        tr += "</tr></thead><tbody></tbody>";
 
-        if (incmg.error) {
-            if (incmg.gotopage) {
-                window.open(incmg.gotopage, '_self');
-            }
-            // Stop Processing and return.
-            flagAlertMessage(incmg.error, true);
-            return;
+        $eTbl.append(tr);
+        let title = $('<h3 style="margin-top:7px;">Members Excluded from Neon</h3>');
+        $("#divMembers").append(title).append($eTbl).show();
+      }
+
+      tr = "";
+      for (let i = 0; i < incmg.excludes.length; i++) {
+        tr += "<tr>";
+        for (let key in incmg.excludes[i]) {
+          tr += "<td>" + incmg.excludes[i][key] + "</td>";
         }
+        tr += "</tr>";
+      }
 
-        let tr = '';
-        let $eTbl = $('#eTbl');
-
-        if (incmg.excludes) {
-
-            if ($eTbl.length === 0) {
-
-                // Create header row
-                $eTbl = $('<table id="mTbl" style="margin-top:2px;"/>');
-
-                tr = '<thead><tr>';
-                for (let key in incmg.excludes[0]) {
-                    tr += '<th>' + key + '</th>';
-                }
-                tr += '</tr></thead><tbody></tbody>';
-
-                $eTbl.append(tr);
-                let title = $('<h3 style="margin-top:7px;">Members Excluded from Neon</h3>');
-                $('#divMembers').append(title).append($eTbl).show();
-            }
-
-            tr = '';
-            for (let i = 0; i < incmg.excludes.length; i++) {
-
-                tr += '<tr>';
-                for (let key in incmg.excludes[i]) {
-                    tr += '<td>' + incmg.excludes[i][key] + '</td>';
-                }
-                tr += '</tr>';
-            }
-
-            $eTbl.find('tbody').append(tr);
-        }
-
-    });
+      $eTbl.find("tbody").append(tr);
+    }
+  });
 }
 
 function transferVisits(idPsg, rels) {
+  let parms = {
+    cmd: "visits",
+    psgId: idPsg,
+    rels: rels,
+  };
 
-    let parms = {
-        cmd: 'visits',
-        psgId: idPsg,
-        rels: rels
-    };
+  let posting = $.post("ws_tran.php", parms);
 
-    let posting = $.post('ws_tran.php', parms);
+  posting.done(function (incmg) {
+    if (!incmg) {
+      alert("Bad Reply from HHK Web Server");
+      return;
+    }
 
-    posting.done(function (incmg) {
+    if (incmg.error) {
+      if (incmg.gotopage) {
+        window.open(incmg.gotopage, "_self");
+      }
+      // Stop Processing and return.
+      flagAlertMessage(incmg.error, true);
+      return;
+    }
 
-        if (!incmg) {
-            alert('Bad Reply from HHK Web Server');
-            return;
+    let tr = "";
+    let $vTbl = $("#vTbl");
+    let $mTbl = $("#mTbl");
+    let $hTbl = $("#hTbl");
+    let first = true;
+
+    if (incmg.members) {
+      if ($mTbl.length === 0) {
+        // Create header row
+        $mTbl = $('<table id="mTbl" style="margin-top:2px;"/>');
+
+        tr = "<thead><tr>";
+        for (let id in incmg.members) {
+          for (let key in incmg.members[id]) {
+            tr += "<th>" + key + "</th>";
+          }
+          tr += "</tr></thead><tbody></tbody>";
+          break;
         }
 
+        $mTbl.append(tr);
+        let title = $('<h3 style="margin-top:7px;">New ' + cmsTitle + " Members</h3>");
+        $("#divMembers").append(title).append($mTbl).show();
+      }
 
-        if (incmg.error) {
-            if (incmg.gotopage) {
-                window.open(incmg.gotopage, '_self');
-            }
-            // Stop Processing and return.
-            flagAlertMessage(incmg.error, true);
-            return;
+      tr = "";
+      first = 'style="border-top: 2px solid #2E99DD;"';
+      for (let id in incmg.members) {
+        tr = "<tr " + first + ">";
+        first = "";
+
+        for (let key in incmg.members[id]) {
+          tr += "<td>" + incmg.members[id][key] + "</td>";
+        }
+        tr += "</tr>";
+      }
+
+      $mTbl.find("tbody").append(tr);
+    }
+
+    if (incmg.visits) {
+      $(".hhk-" + idPsg + " td.psgCBs").removeClass("hhk-loading");
+
+      if ($vTbl.length === 0) {
+        // Create header row
+        $vTbl = $('<table id="vTbl" style="margin-top:2px;"/>');
+
+        tr = "<thead><tr>";
+        for (let key in incmg.visits[0]) {
+          tr += "<th>" + key + "</th>";
+        }
+        tr += "</tr></thead><tbody></tbody>";
+
+        $vTbl.append(tr);
+        let title = $('<h3 style="margin-top:7px;">Visit Information</h3>');
+        $("#divMembers").append(title).append($vTbl).show();
+      }
+
+      tr = "";
+      first = true;
+      for (let i = 0; i < incmg.visits.length; i++) {
+        if (first) {
+          first = false;
+          tr += '<tr style="border-top: 2px solid #2E99DD;">';
+        } else {
+          tr += "<tr>";
         }
 
-        let tr = '';
-        let $vTbl = $('#vTbl');
-        let $mTbl = $('#mTbl');
-        let $hTbl = $('#hTbl');
-        let first = true;
+        for (let key in incmg.visits[i]) {
+          tr += "<td>" + incmg.visits[i][key] + "</td>";
+        }
+        tr += "</tr>";
+      }
 
-        if (incmg.members) {
+      $vTbl.find("tbody").append(tr);
+    }
 
-            if ($mTbl.length === 0) {
+    if (incmg.households) {
+      if ($hTbl.length === 0) {
+        // Create header row
+        $hTbl = $('<table id="hTbl" style="margin-top:2px;"/>');
 
-                // Create header row
-                $mTbl = $('<table id="mTbl" style="margin-top:2px;"/>');
+        tr = "<thead><tr>";
+        for (let key in incmg.households[0]) {
+          tr += "<th>" + key + "</th>";
+        }
+        tr += "</tr></thead><tbody></tbody>";
 
-                tr = '<thead><tr>';
-                for (let id in incmg.members) {
-                    for (let key in incmg.members[id]) {
-                        tr += '<th>' + key + '</th>';
-                    }
-                    tr += '</tr></thead><tbody></tbody>';
-                    break;
-                }
+        $hTbl.append(tr);
+        let title = $('<h3 style="margin-top:7px;">Households</h3>');
+        $("#divMembers").append(title).append($hTbl).show();
+      }
 
-                $mTbl.append(tr);
-                let title = $('<h3 style="margin-top:7px;">New ' + cmsTitle + ' Members</h3>');
-                $('#divMembers').append(title).append($mTbl).show();
-            }
-
-            tr = '';
-            first = 'style="border-top: 2px solid #2E99DD;"';
-            for (let id in incmg.members) {
-
-                tr = '<tr ' + first + '>';
-                first = '';
-
-                for (let key in incmg.members[id]) {
-                    tr += '<td>' + incmg.members[id][key] + '</td>';
-                }
-                tr += '</tr>';
-
-            }
-
-            $mTbl.find('tbody').append(tr);
+      tr = "";
+      first = true;
+      for (let i = 0; i < incmg.households.length; i++) {
+        if (first) {
+          first = false;
+          tr += '<tr style="border-top: 2px solid #2E99DD;">';
+        } else {
+          tr += "<tr>";
         }
 
-        if (incmg.visits) {
-
-            $('.hhk-' + idPsg + ' td.psgCBs').removeClass('hhk-loading');
-
-            if ($vTbl.length === 0) {
-
-                // Create header row
-                $vTbl = $('<table id="vTbl" style="margin-top:2px;"/>');
-
-                tr = '<thead><tr>';
-                for (let key in incmg.visits[0]) {
-                    tr += '<th>' + key + '</th>';
-                }
-                tr += '</tr></thead><tbody></tbody>';
-
-                $vTbl.append(tr);
-                let title = $('<h3 style="margin-top:7px;">Visit Information</h3>');
-                $('#divMembers').append(title).append($vTbl).show();
-            }
-
-            tr = '';
-            first = true;
-            for (let i = 0; i < incmg.visits.length; i++) {
-
-                if (first) {
-                    first = false;
-                    tr += '<tr style="border-top: 2px solid #2E99DD;">';
-                } else {
-                    tr += '<tr>';
-                }
-
-                for (let key in incmg.visits[i]) {
-                    tr += '<td>' + incmg.visits[i][key] + '</td>';
-                }
-                tr += '</tr>';
-            }
-
-            $vTbl.find('tbody').append(tr);
+        for (let key in incmg.households[i]) {
+          tr += "<td>" + incmg.households[i][key] + "</td>";
         }
+        tr += "</tr>";
+      }
 
-        if (incmg.households) {
+      $hTbl.find("tbody").append(tr);
+    }
 
-            if ($hTbl.length === 0) {
+    throttleVisits();
+  });
 
-                // Create header row
-                $hTbl = $('<table id="hTbl" style="margin-top:2px;"/>');
-
-                tr = '<thead><tr>';
-                for (let key in incmg.households[0]) {
-                    tr += '<th>' + key + '</th>';
-                }
-                tr += '</tr></thead><tbody></tbody>';
-
-                $hTbl.append(tr);
-                let title = $('<h3 style="margin-top:7px;">Households</h3>');
-                $('#divMembers').append(title).append($hTbl).show();
-            }
-
-            tr = '';
-            first = true;
-            for (let i = 0; i < incmg.households.length; i++) {
-
-                if (first) {
-                    first = false;
-                    tr += '<tr style="border-top: 2px solid #2E99DD;">';
-                } else {
-                    tr += '<tr>';
-                }
-
-                for (let key in incmg.households[i]) {
-                    tr += '<td>' + incmg.households[i][key] + '</td>';
-                }
-                tr += '</tr>';
-            }
-
-            $hTbl.find('tbody').append(tr);
-        }
-
-        throttleVisits();
-    });
-
-    return;
+  return;
 }
 
-
 function transferPayments($btn, start, end) {
+  var parms = {
+    cmd: "payments",
+    st: start,
+    en: end,
+  };
 
-    var parms = {
-        cmd: 'payments',
-        st: start,
-        en: end
-    };
+  var posting = $.post("ws_tran.php", parms);
 
-    var posting = $.post('ws_tran.php', parms);
+  posting.done(function (incmg) {
+    $btn.hide();
 
-    posting.done(function (incmg) {
-        $btn.hide();
+    if (!incmg) {
+      alert("Bad Reply from HHK Web Server");
+      return;
+    }
 
-        if (!incmg) {
-            alert('Bad Reply from HHK Web Server');
-            return;
-        }
+    if (incmg.error) {
+      if (incmg.gotopage) {
+        window.open(incmg.gotopage, "_self");
+      }
+      // Stop Processing and return.
+      flagAlertMessage(incmg.error, true);
+      return;
+    }
 
-        if (incmg.error) {
-            if (incmg.gotopage) {
-                window.open(incmg.gotopage, '_self');
-            }
-            // Stop Processing and return.
-            flagAlertMessage(incmg.error, true);
-            return;
-        }
+    $("div#retrieve").empty();
 
-        $('div#retrieve').empty();
+    if (incmg.data) {
+      $("#divTable").empty().append($(incmg.data)).show();
+    }
 
-        if (incmg.data) {
-            $('#divTable').empty().append($(incmg.data)).show();
-        }
-
-        if (incmg.members) {
-            $('#divMembers').empty().append($(incmg.members)).show();
-        }
-
-    });
+    if (incmg.members) {
+      $("#divMembers").empty().append($(incmg.members)).show();
+    }
+  });
 }
 
 function getRemote(item, source) {
-    $('div#printArea').hide();
-    $('#divPrintButton').hide();
+  $("div#printArea").hide();
+  $("#divPrintButton").hide();
 
-    var posting = $.post('ws_tran.php', {cmd: 'getAcct', src: source, accountId: item.id, 'url': item.url});
+  var posting = $.post("ws_tran.php", {
+    cmd: "getAcct",
+    src: source,
+    accountId: item.id,
+    url: item.url,
+  });
 
-    posting.done(function (incmg) {
-        if (!incmg) {
-            alert('Bad Reply from HHK Web Server');
-            return;
+  posting.done(function (incmg) {
+    if (!incmg) {
+      alert("Bad Reply from HHK Web Server");
+      return;
+    }
+
+    if (incmg.error) {
+      if (incmg.gotopage) {
+        window.open(incmg.gotopage, "_self");
+      }
+      // Stop Processing and return.
+      flagAlertMessage(incmg.error, true);
+      return;
+    }
+
+    if (incmg.data) {
+      $("div#retrieve").children().remove();
+      $("div#retrieve").html(incmg.data);
+
+      if (incmg.accountId == "error") {
+        return;
+      }
+
+      if (source === "remote") {
+        $("div#retrieve").prepend($("<h3>Remote Data</h3>")).show();
+        $("#txtRSearch").val("");
+      } else {
+        var updteRemote = $(
+          '<input type="button" id="btnUpdate" value="" style="margin-left:.3em;" />',
+        );
+
+        if (incmg.accountId === "") {
+          updteRemote.val("Transfer to Remote");
+          updteRemote.button().click(function () {
+            if ($(this).val() === "Working...") {
+              return;
+            }
+            $(this).val("Working...");
+
+            transferRemote([item.id]);
+            $("div#localrecords").hide();
+          });
+        } else if (incmg.accountId) {
+          updteRemote.val("Update Remote");
+          updteRemote.button().click(function () {
+            if ($(this).val() === "Working...") {
+              return;
+            }
+            $(this).val("Working...");
+            updateRemote(item.id, incmg.accountId, true);
+          });
+        } else {
+          updteRemote.remove();
         }
 
-        if (incmg.error) {
-            if (incmg.gotopage) {
-                window.open(incmg.gotopage, '_self');
-            }
-            // Stop Processing and return.
-            flagAlertMessage(incmg.error, true);
-            return;
-        }
-
-        if (incmg.data) {
-            $('div#retrieve').children().remove();
-            $('div#retrieve').html(incmg.data);
-
-            if (incmg.accountId == 'error') {
-                return;
-            }
-
-            if (source === 'remote') {
-                $('div#retrieve').prepend($('<h3>Remote Data</h3>')).show();
-                $('#txtRSearch').val('');
-
-            } else {
-
-                var updteRemote = $('<input type="button" id="btnUpdate" value="" style="margin-left:.3em;" />');
-
-                if (incmg.accountId === '') {
-                    updteRemote.val('Transfer to Remote');
-                    updteRemote.button().click(function () {
-
-                        if ($(this).val() === 'Working...') {
-                            return;
-                        }
-                        $(this).val('Working...');
-
-                        transferRemote([item.id]);
-                        $('div#localrecords').hide();
-                    });
-                } else if (incmg.accountId) {
-                    updteRemote.val('Update Remote');
-                    updteRemote.button().click(function () {
-
-                        if ($(this).val() === 'Working...') {
-                            return;
-                        }
-                        $(this).val('Working...');
-                        updateRemote(item.id, incmg.accountId, true);
-                    });
-                } else {
-                    updteRemote.remove();
-                }
-
-                $('div#retrieve').prepend($('<h3>Local (HHK) Data </h3>')).show();
-                $('#txtSearch').val('');
-            }
-        }
-    });
+        $("div#retrieve").prepend($("<h3>Local (HHK) Data </h3>")).show();
+        $("#txtSearch").val("");
+      }
+    }
+  });
 }
 
-function setupLogViewer(){
-    var dtTransferLogCols = [
-        {
-            targets: [0],
-            className: 'dt-control',
-            orderable: false,
-            data: null,
-            defaultContent: ''
-        },
-        {
-            "targets": [1],
-            "title": "Method",
-            "searchable": false,
-            "sortable": true,
-            "data": "requestMethod",
-        },
-        {
-            "targets": [2],
-            "title": "Type",
-            "searchable": false,
-            "sortable": true,
-            "data": "Type",
-        },
-        {
-            "targets": [3],
-            "title": "Request Endpoint",
-            "searchable": false,
-            "sortable": false,
-            "data": "endpoint",
-        },
-        {
-            "targets": [4],
-            "title": "Response Code",
-            "searchable": false,
-            "sortable": true,
-            "data": "responseCode",
-        },
-        {
-            "targets": [5],
-            "title": "Request",
-            "searchable": true,
-            "sortable": true,
-            "data": "request",
-            "visible": false,
-        },
-        {
-            "targets": [6],
-            "title": "Response",
-            "searchable": true,
-            "sortable": true,
-            "data": "response",
-            "visible": false,
-        },
-        {
-            "targets": [7],
-            "title": "User",
-            "searchable": true,
-            "sortable": true,
-            "data": "username",
-        },
-        {
-            "targets": [8],
-            "title": "Timestamp",
-            'data': 'Timestamp',
-            render: function (data, type) {
-                return dateRender(data, type, 'MMM D YYYY h:mm:ss a');
-            }
-        }
-    ];
+function setupLogViewer() {
+  var dtTransferLogCols = [
+    {
+      targets: [0],
+      className: "dt-control",
+      orderable: false,
+      data: null,
+      defaultContent: "",
+    },
+    {
+      targets: [1],
+      title: "Method",
+      searchable: false,
+      sortable: true,
+      data: "requestMethod",
+    },
+    {
+      targets: [2],
+      title: "Type",
+      searchable: false,
+      sortable: true,
+      data: "Type",
+    },
+    {
+      targets: [3],
+      title: "Request Endpoint",
+      searchable: false,
+      sortable: false,
+      data: "endpoint",
+    },
+    {
+      targets: [4],
+      title: "Response Code",
+      searchable: false,
+      sortable: true,
+      data: "responseCode",
+    },
+    {
+      targets: [5],
+      title: "Request",
+      searchable: true,
+      sortable: true,
+      data: "request",
+      visible: false,
+    },
+    {
+      targets: [6],
+      title: "Response",
+      searchable: true,
+      sortable: true,
+      data: "response",
+      visible: false,
+    },
+    {
+      targets: [7],
+      title: "User",
+      searchable: true,
+      sortable: true,
+      data: "username",
+    },
+    {
+      targets: [8],
+      title: "Timestamp",
+      data: "Timestamp",
+      render: function (data, type) {
+        return dateRender(data, type, "MMM D YYYY h:mm:ss a");
+      },
+    },
+  ];
 
-    
-    let logTable = $('#transferLog').dataTable({
-                        "columnDefs": dtTransferLogCols,
-                        "serverSide": true,
-                        "processing": true,
-                        //"deferRender": true,
-                        "language": { "sSearch": "Search Log:" },
-                        "sorting": [[8, 'desc']],
-                        "displayLength": 25,
-                        "lengthMenu": [[25, 50, 100], [25, 50, 100]],
-                        'dom': '<"top"if><"hhk-overflow-x hhk-tbl-wrap"rt><"bottom"lp><"clear">',
-                        'autoWidth':false,
-                        layout: {
-                            topStart: 'info',
-                            bottom: 'paging',
-                            bottomStart: null,
-                            bottomEnd: null
-                        },
-                        ajax: {
-                            url: 'ws_tran.php',
-                            data: function(d){
-                                d.cmd = 'viewLog',
-                                d.service = $("#cmsLogService").val()
-                            }
-                        },
-                        createdRow: function( row, data, dataIndex ) {
-                            if (data.responseCode >= 400) {
-                                $(row).addClass('ui-state-error');
-                            }
-                        }
-                    });
+  let logTable = $("#transferLog").dataTable({
+    columnDefs: dtTransferLogCols,
+    serverSide: true,
+    processing: true,
+    //"deferRender": true,
+    language: { sSearch: "Search Log:" },
+    sorting: [[8, "desc"]],
+    displayLength: 25,
+    lengthMenu: [
+      [25, 50, 100],
+      [25, 50, 100],
+    ],
+    dom: '<"top"if><"hhk-overflow-x hhk-tbl-wrap"rt><"bottom"lp><"clear">',
+    autoWidth: false,
+    layout: {
+      topStart: "info",
+      bottom: "paging",
+      bottomStart: null,
+      bottomEnd: null,
+    },
+    ajax: {
+      url: "ws_tran.php",
+      data: function (d) {
+        ((d.cmd = "viewLog"), (d.service = $("#cmsLogService").val()));
+      },
+    },
+    createdRow: function (row, data, dataIndex) {
+      if (data.responseCode >= 400) {
+        $(row).addClass("ui-state-error");
+      }
+    },
+  });
 
+  logTable.on("click", "td.dt-control", function (e) {
+    let tr = e.target.closest("tr");
+    let row = logTable.DataTable().row(tr);
 
-                    logTable.on('click', 'td.dt-control', function (e) {
-                        let tr = e.target.closest('tr');
-                        let row = logTable.DataTable().row(tr);
-                    
-                        if (row.child.isShown()) {
-                            // This row is already open - close it
-                            row.child.hide();
-                        }
-                        else {
-                            // Open this row
-                            row.child(formatAPIDetails(row.data())).show();
-                        }
-                    });
+    if (row.child.isShown()) {
+      // This row is already open - close it
+      row.child.hide();
+    } else {
+      // Open this row
+      row.child(formatAPIDetails(row.data())).show();
+    }
+  });
 
-                    function formatAPIDetails(row){
-        return `
+  function formatAPIDetails(row) {
+    return (
+      `
             <div class="d-flex">` +
-                (row.request != '' ? `<div class="mx-3 p-2 ui-widget ui-widget-content ui-corner-all">
+      (row.request != ""
+        ? `<div class="mx-3 p-2 ui-widget ui-widget-content ui-corner-all">
                     <strong>Request</strong>
-                    ${row.requestHeaders != '' ? `<details><summary>Headers</summary><pre style="white-space: pre-wrap;">${row.requestHeaders}</pre></details>` : ''}
+                    ${row.requestHeaders != "" ? `<details><summary>Headers</summary><pre style="white-space: pre-wrap;">${row.requestHeaders}</pre></details>` : ""}
                     <details open><summary>Body</summary><pre style="white-space: pre-wrap;">${row.request}</pre></details>
-                </div>`:``) +
-                `<div class="mx-3 p-2 ui-widget ui-widget-content ui-corner-all">
+                </div>`
+        : ``) +
+      `<div class="mx-3 p-2 ui-widget ui-widget-content ui-corner-all">
                     <strong>Response</strong>
                     <pre style="white-space: pre-wrap;">${row.response}</pre>
                 </div>
             </div>
-        `;
-    }
+        `
+    );
+  }
 }
 
-
 $(document).ready(function () {
+  var makeTable = $("#hmkTable").val();
+  var start = $("#hstart").val();
+  var end = $("#hend").val();
+  var dateFormat = $("#hdateFormat").val();
+  cmsTitle = $("#cmsTitle").val();
+  username = $("#username").val();
 
-    var makeTable = $('#hmkTable').val();
-    var start = $('#hstart').val();
-    var end = $('#hend').val();
-    var dateFormat = $('#hdateFormat').val();
-    cmsTitle = $('#cmsTitle').val();
-    username = $('#username').val();
+  $("#btnHere, #btnCustFields, #btnGetPayments, #btnGetVisits, #btnGetKey, #btnRequest").button();
 
-    $('#btnHere, #btnCustFields, #btnGetPayments, #btnGetVisits, #btnGetKey, #btnRequest').button();
-
-    $('#printButton').button().click(function () {
-        $("div#printArea").printArea();
+  $("#printButton")
+    .button()
+    .click(function () {
+      $("div#printArea").printArea();
     });
 
-    // PSG group checkbox helpers — safe to call when no PSG markup exists (Neon path)
-    var linkRel = $('#hlinkRel').val() === '1';
+  // PSG group checkbox helpers — safe to call when no PSG markup exists (Neon path)
+  var linkRel = $("#hlinkRel").val() === "1";
 
-    function syncPsgCheckbox(psgId) {
-        var $members = $('input.hhk-tfmem[data-psg="' + psgId + '"]');
-        var total = $members.length;
-        var checked = $members.filter(':checked').length;
-        var $psg = $('input.hhk-txPsg[data-psg="' + psgId + '"]');
-        $psg.prop('checked', checked > 0);
-        $psg.prop('indeterminate', checked > 0 && checked < total);
+  function syncPsgCheckbox(psgId) {
+    var $members = $('input.hhk-tfmem[data-psg="' + psgId + '"]');
+    var total = $members.length;
+    var checked = $members.filter(":checked").length;
+    var $psg = $('input.hhk-txPsg[data-psg="' + psgId + '"]');
+    $psg.prop("checked", checked > 0);
+    $psg.prop("indeterminate", checked > 0 && checked < total);
+  }
+
+  function syncPatientState(psgId) {
+    if (!linkRel) {
+      return;
+    }
+    var $patient = $('input.hhk-tfmem[data-psg="' + psgId + '"][data-patient="1"]');
+    if (!$patient.length) {
+      return;
+    }
+    var othersChecked = $('input.hhk-tfmem[data-psg="' + psgId + '"]')
+      .not($patient)
+      .filter(":checked").length;
+    if (othersChecked > 0) {
+      $patient.prop({ checked: true, disabled: true });
+    } else {
+      $patient.prop("disabled", false);
+    }
+  }
+
+  function syncAllPatientAndPsg() {
+    $("input.hhk-txPsg").each(function () {
+      var psg = $(this).data("psg");
+      if (psg) {
+        syncPatientState(psg);
+        syncPsgCheckbox(psg);
+      }
+    });
+  }
+
+  if (makeTable == 0) {
+    // Salesforce Transfer
+    $("div#printArea").show();
+    $("#divPrintButton").show();
+    $("#btnPay").hide();
+    $("#btnVisits").hide();
+    $("#divMembers").empty();
+
+    // Checkbutton to show server trace.
+    const $cbTrace = $("#cbTraceWrapper");
+    $cbTrace.hide();
+    if (username == "npscuser") {
+      $cbTrace.show();
     }
 
-    function syncPatientState(psgId) {
-        if (!linkRel) { return; }
-        var $patient = $('input.hhk-tfmem[data-psg="' + psgId + '"][data-patient="1"]');
-        if (!$patient.length) { return; }
-        var othersChecked = $('input.hhk-tfmem[data-psg="' + psgId + '"]').not($patient).filter(':checked').length;
-        if (othersChecked > 0) {
-            $patient.prop({'checked': true, 'disabled': true});
-        } else {
-            $patient.prop('disabled', false);
-        }
-    }
+    $(document).on("change", "input.hhk-txPsg", function () {
+      var psgId = $(this).data("psg");
+      var isChecked = $(this).prop("checked");
+      $(this).prop("indeterminate", false);
+      $('input.hhk-tfmem[data-psg="' + psgId + '"][data-patient="1"]').prop("disabled", false);
+      $('input.hhk-tfmem[data-psg="' + psgId + '"]').prop("checked", isChecked);
+      syncPatientState(psgId);
+      syncPsgCheckbox(psgId);
+    });
 
-    function syncAllPatientAndPsg() {
-        $('input.hhk-txPsg').each(function () {
-            var psg = $(this).data('psg');
-            if (psg) {
-                syncPatientState(psg);
-                syncPsgCheckbox(psg);
-            }
-        });
-    }
+    $(document).on("change", "input.hhk-tfmem", function () {
+      var psgId = $(this).data("psg");
+      syncPatientState(psgId);
+      syncPsgCheckbox(psgId);
+    });
 
-    if (makeTable == 0) {
-        // Salesforce Transfer
-        $('div#printArea').show();
-        $('#divPrintButton').show();
-        $('#btnPay').hide();
-        $('#btnVisits').hide();
-        $('#divMembers').empty();
+    syncAllPatientAndPsg();
 
-        // Checkbutton to show server trace.
-        const $cbTrace = $('#cbTraceWrapper');
-        $cbTrace.hide();
-        if (username == 'npscuser') {
-            $cbTrace.show();
-        }
+    $upsertButton = $("#TxButton");
 
-        $(document).on('change', 'input.hhk-txPsg', function () {
-            var psgId = $(this).data('psg');
-            var isChecked = $(this).prop('checked');
-            $(this).prop('indeterminate', false);
-            $('input.hhk-tfmem[data-psg="' + psgId + '"][data-patient="1"]').prop('disabled', false);
-            $('input.hhk-tfmem[data-psg="' + psgId + '"]').prop('checked', isChecked);
-            syncPatientState(psgId);
-            syncPsgCheckbox(psgId);
+    $upsertButton
+      .button()
+      .val("Transfer to " + cmsTitle)
+      .show()
+      // click event
+      .click(function () {
+        let ids = [];
+        let n = 0;
+
+        $(this).prop("disabled", true);
+
+        // Loop through the checked names
+        $("input.hhk-tfmem").each(function () {
+          if ($(this).prop("checked")) {
+            const props = { checked: false, disabled: true };
+
+            $(this).parents("tr").css("background-color", "lightgray");
+
+            $(this).prop(props).end();
+
+            ids[n++] = $(this).data("txid");
+          }
         });
 
-        $(document).on('change', 'input.hhk-tfmem', function () {
-            var psgId = $(this).data('psg');
-            syncPatientState(psgId);
-            syncPsgCheckbox(psgId);
-        });
+        upsert(ids, $cbTrace.find("input").prop("checked"));
+      });
+  } // end salesforce xfer.
 
-        syncAllPatientAndPsg();
+  // Retrieve HHK Records
+  if (makeTable === "1") {
+    $("div#printArea").show();
+    $("#divPrintButton").show();
+    $("#btnPay").hide();
+    $("#btnVisits").hide();
+    $("#divMembers").empty();
 
-        $upsertButton = $('#TxButton');
+    $memberButton = $("#TxButton");
 
-        $upsertButton
-            .button()
-            .val('Transfer to '+ cmsTitle)
-            .show()
-            // click event
-            .click(function () {
-                let ids = [];
-                let n = 0;
+    stopTransfer = true;
 
-                $(this).prop('disabled', true);
+    $memberButton.button().val("Start Member Transfers").show();
 
-                // Loop through the checked names
-                $('input.hhk-tfmem').each(function () {
-
-                    if ($(this).prop('checked')) {
-
-                        const props = { 'checked': false, 'disabled': true };
-
-                        $(this).parents('tr').css('background-color', 'lightgray');
-
-                        $(this).prop(props).end();
-
-                        ids[n++] = $(this).data('txid');
-
-                    }
-                });
-
-                upsert(ids, $cbTrace.find("input").prop('checked'));
-            });
-
-    } // end salesforce xfer.
-
-    // Retrieve HHK Records
-    if (makeTable === '1') {
-
-        $('div#printArea').show();
-        $('#divPrintButton').show();
-        $('#btnPay').hide();
-        $('#btnVisits').hide();
-        $('#divMembers').empty();
-
-
-        $memberButton = $('#TxButton');
-
+    $memberButton.click(function () {
+      // Switch the transfer control
+      if (stopTransfer) {
+        stopTransfer = false;
+      } else {
         stopTransfer = true;
+      }
 
-        $memberButton
-                .button()
-                .val('Start Member Transfers')
-                .show();
+      // Update the controls
+      if (stopTransfer) {
+        // Stop
+        $(this).val("Stopping ...");
+      } else {
+        // start
+        $(this).val("Stop Transfers");
+        throttleMembers();
+      }
+    });
 
-        $memberButton.click(function () {
+    // Retrieve HHK Payments
+  } else if (makeTable === "2") {
+    $("div#printArea").show();
+    $("#divPrintButton").show();
+    $("#TxButton").hide();
+    $("#btnVisits").hide();
+    $("#divMembers").empty();
 
-                    // Switch the transfer control
-                    if (stopTransfer) {
-                        stopTransfer = false;
-                    } else {
-                        stopTransfer = true;
-                    }
+    // $('#tblrpt').dataTable({
+    //     'columnDefs': [
+    //         {'targets': [4],
+    //             'type': 'date',
+    //             'render': function (data, type, row) {
+    //                 return dateRender(data, type, dateFormat);
+    //             }
+    //         }
+    //     ],
+    //     "displayLength": 50,
+    //     "lengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]],
+    // });
 
-                    // Update the controls
-                    if (stopTransfer) {
-                        // Stop
-                        $(this).val('Stopping ...');
-                    } else {
-                        // start
-                        $(this).val('Stop Transfers');
-                        throttleMembers();
-                    }
-        });
+    $("#btnPay")
+      .button()
+      .show()
+      .click(function () {
+        if ($(this).val() === "Transferring ...") {
+          return;
+        }
+        $(this).val("Transferring ...");
 
-        // Retrieve HHK Payments
-    } else if (makeTable === '2') {
+        transferPayments($(this), start, end);
+      });
 
-        $('div#printArea').show();
-        $('#divPrintButton').show();
-        $('#TxButton').hide();
-        $('#btnVisits').hide();
-        $('#divMembers').empty();
+    // Retrieve HHK Visits
+  } else if (makeTable === "3") {
+    $("div#printArea").show();
+    $("#divPrintButton").show();
+    $("#TxButton").hide();
+    $("#btnPay").hide();
+    $("#divMembers").empty();
 
-        // $('#tblrpt').dataTable({
-        //     'columnDefs': [
-        //         {'targets': [4],
-        //             'type': 'date',
-        //             'render': function (data, type, row) {
-        //                 return dateRender(data, type, dateFormat);
-        //             }
-        //         }
-        //     ],
-        //     "displayLength": 50,
-        //     "lengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]],
-        //     "dom": '<"top"ilf>rt<"bottom"lp><"clear">'
-        // });
+    stopTransfer = true;
 
-        $('#btnPay').button().show().click(function () {
+    $visitButton = $("#btnVisits");
+    $psgCBs = $(".hhk-txPsgs");
+    $excCBs = $(".hhk-exPsg");
+    $relSels = $(".hhk-selRel");
 
-            if ($(this).val() === 'Transferring ...') {
-                return;
-            }
-            $(this).val('Transferring ...');
+    $excCBs.change(function () {
+      let $cbPsg = $("#cbIdPSG" + $(this).data("idpsg"));
 
-            transferPayments($(this), start, end);
-        });
+      if ($(this).prop("checked")) {
+        let props = { checked: false, disabled: true };
+        $cbPsg.prop(props);
+        $(".hhk-" + $(this).data("idpsg")).css("background-color", "lightpink");
+      } else {
+        $cbPsg.prop("disabled", false);
+        $(".hhk-" + $(this).data("idpsg")).css("background-color", "transparent");
+      }
+    });
 
-        // Retrieve HHK Visits
-    } else if (makeTable === '3') {
+    $visitButton
+      .button()
+      .val("Start PSG Transfers")
+      .show()
+      .click(function () {
+        $("div#retrieve").empty();
 
-        $('div#printArea').show();
-        $('#divPrintButton').show();
-        $('#TxButton').hide();
-        $('#btnPay').hide();
-        $('#divMembers').empty();
+        // Switch transfer control
+        if (stopTransfer) {
+          stopTransfer = false;
+        } else {
+          stopTransfer = true;
+        }
 
-        stopTransfer = true;
+        // UPdate controls
+        if (stopTransfer) {
+          // Stop
+          $(this).val("Stopping ...");
+        } else {
+          // start
+          $(this).val("Stop Transfers");
+          throttleVisits();
+        }
+      });
+  }
 
-        $visitButton = $('#btnVisits');
-        $psgCBs = $('.hhk-txPsgs');
-        $excCBs = $('.hhk-exPsg');
-        $relSels = $('.hhk-selRel');
+  var $logDialog = $("#logDialog").dialog({
+    autoOpen: false,
+    modal: false,
+    minWidth: getDialogWidth(1500),
+    title: cmsTitle + " transfer log",
+    buttons: {
+      Close: function () {
+        $logDialog.dialog("close");
+      },
+    },
+    open: function () {
+      $("#transferLog").DataTable().ajax.reload();
+    },
+  });
 
-        $excCBs.change(function () {
+  setupLogViewer();
+  $(document).on("click", "#viewLog", function () {
+    $logDialog.dialog("open");
+  });
 
-            let $cbPsg = $('#cbIdPSG' + $(this).data('idpsg'));
+  var opt = {
+    mode: "popup",
+    popClose: true,
+    popHt: $("#keyMapDiagBox").height(),
+    popWd: $("#keyMapDiagBox").width(),
+    popX: 20,
+    popY: 20,
+    popTitle: "Print Visit Key",
+  };
 
-            if ($(this).prop('checked')) {
+  var kmd = $("#keyMapDiagBox").dialog({
+    autoOpen: false,
+    resizable: true,
+    modal: false,
+    minWidth: getDialogWidth(550),
+    title: cmsTitle + " Visit Transfer Keys",
+    buttons: {
+      Print: function () {
+        $("div#divPrintKeys").printArea(opt);
+      },
+      Close: function () {
+        kmd.dialog("close");
+      },
+    },
+  });
 
-                let props = {'checked': false, 'disabled': true};
-                $cbPsg.prop(props);
-                $('.hhk-' + $(this).data('idpsg')).css('background-color', 'lightpink');
+  $("#btnGetKey").click(function () {
+    kmd.dialog("open");
+  });
 
+  $("#hhkdgpallple")
+    .button()
+    .click(function () {
+      $('input.hhk-tfmem[data-patient="1"]').prop("disabled", false);
+      $(".hhk-tfmem").each(function () {
+        $(this).prop("checked", true);
+      });
+      syncAllPatientAndPsg();
+    });
 
-            } else {
-                $cbPsg.prop('disabled', false);
-                $('.hhk-' + $(this).data('idpsg')).css('background-color', 'transparent');
-            }
-        });
+  $("#hhkdgpnople")
+    .button()
+    .click(function () {
+      $('input.hhk-tfmem[data-patient="1"]').prop("disabled", false);
+      $(".hhk-tfmem").each(function () {
+        $(this).prop("checked", false);
+      });
+      syncAllPatientAndPsg();
+    });
 
-        $visitButton
-                .button()
-                .val('Start PSG Transfers')
-                .show()
-                .click(function () {
+  $("#hhkdgpback")
+    .button()
+    .click(function () {
+      $('input.hhk-tfmem[data-patient="1"]').prop("disabled", false);
+      $(".hhk-tfmem").each(function () {
+        $(this).prop("checked", $(this).prop("defaultChecked"));
+      });
+      syncAllPatientAndPsg();
+    });
 
-                    $('div#retrieve').empty();
+  $("#hhkdgpnew")
+    .button()
+    .click(function () {
+      $('input.hhk-tfmem[data-patient="1"]').prop("disabled", false);
+      $(".hhk-tf-update").prop("checked", false);
+      $(".hhk-tfmem").not(".hhk-tf-update").prop("checked", true);
+      syncAllPatientAndPsg();
+    });
 
-                    // Switch transfer control
-                    if (stopTransfer) {
-                        stopTransfer = false;
-                    } else {
-                        stopTransfer = true;
-                    }
+  $("#btnRelat").click(function () {
+    getRelate($("#txtRelat").val());
+  });
 
-                    // UPdate controls
-                    if (stopTransfer) {
-                        // Stop
-                        $(this).val('Stopping ...');
-                    } else {
-                        // start
-                        $(this).val('Stop Transfers');
-                        throttleVisits();
-                    }
-                });
+  $("#btnSoql").click(function () {
+    getSOQL($("#txtSoqls").val(), $("#txtSoqlf").val(), $("#txtSoqlw").val());
+  });
+
+  $("#selCalendar").change(function () {
+    if ($(this).val() && $(this).val() !== "19") {
+      $("#selIntMonth").hide();
+    } else {
+      $("#selIntMonth").show();
     }
+    if ($(this).val() && $(this).val() !== "18") {
+      $(".dates").hide();
+    } else {
+      $(".dates").show();
+    }
+  });
 
+  $("#selCalendar").change();
 
-    var $logDialog = $("#logDialog").dialog({
-        autoOpen: false,
-        modal: false,
-        minWidth: getDialogWidth(1500),
-        title: cmsTitle + ' transfer log',
-        buttons: {
-            "Close": function (){
-                $logDialog.dialog('close');
-            }
-        },
-        open: function (){
-            $('#transferLog').DataTable().ajax.reload();
-        }
+  createAutoComplete(
+    $("#txtRSearch"),
+    3,
+    { cmd: "sch", mode: "name" },
+    function (item) {
+      getRemote(item, "remote");
+    },
+    false,
+    "../house/ws_tran.php",
+  );
 
-    });
-
-    setupLogViewer();
-    $(document).on("click", "#viewLog", function (){
-        $logDialog.dialog('open');
-    });
-
-    var opt = {mode: 'popup',
-        popClose: true,
-        popHt: $('#keyMapDiagBox').height(),
-        popWd: $('#keyMapDiagBox').width(),
-        popX: 20,
-        popY: 20,
-        popTitle: 'Print Visit Key'};
-
-    var kmd = $('#keyMapDiagBox').dialog({
-        autoOpen: false,
-        resizable: true,
-        modal: false,
-        minWidth: getDialogWidth(550),
-        title: cmsTitle + ' Visit Transfer Keys',
-        buttons: {
-            "Print": function () {
-                $("div#divPrintKeys").printArea(opt);
-            },
-            "Close": function () {
-                kmd.dialog('close');
-            }
-        }
-    });
-
-    $('#btnGetKey').click(function () {
-        kmd.dialog('open');
-    });
-
-    $('#hhkdgpallple').button().click(function () {
-        $('input.hhk-tfmem[data-patient="1"]').prop('disabled', false);
-        $('.hhk-tfmem').each(function () {
-            $(this).prop('checked', true);
-        });
-        syncAllPatientAndPsg();
-    });
-
-    $('#hhkdgpnople').button().click(function () {
-        $('input.hhk-tfmem[data-patient="1"]').prop('disabled', false);
-        $('.hhk-tfmem').each(function () {
-            $(this).prop('checked', false);
-        });
-        syncAllPatientAndPsg();
-    });
-
-    $('#hhkdgpback').button().click(function () {
-        $('input.hhk-tfmem[data-patient="1"]').prop('disabled', false);
-        $('.hhk-tfmem').each(function () {
-            $(this).prop('checked', $(this).prop('defaultChecked'));
-        });
-        syncAllPatientAndPsg();
-    });
-
-    $('#hhkdgpnew').button().click(function () {
-        $('input.hhk-tfmem[data-patient="1"]').prop('disabled', false);
-        $('.hhk-tf-update').prop('checked', false);
-        $('.hhk-tfmem').not('.hhk-tf-update').prop('checked', true);
-        syncAllPatientAndPsg();
-    });
-
-
-    $('#btnRelat').click(function () {
-        getRelate($('#txtRelat').val());
-    });
-
-    $('#btnSoql').click(function () {
-        getSOQL($('#txtSoqls').val(), $('#txtSoqlf').val(), $('#txtSoqlw').val());
-    });
-
-    $('#selCalendar').change(function () {
-        if ($(this).val() && $(this).val() !== '19') {
-            $('#selIntMonth').hide();
-        } else {
-            $('#selIntMonth').show();
-        }
-        if ($(this).val() && $(this).val() !== '18') {
-            $('.dates').hide();
-        } else {
-            $('.dates').show();
-        }
-    });
-
-    $('#selCalendar').change();
-
-    createAutoComplete($('#txtRSearch'), 3, {cmd: 'sch', mode: 'name'}, function (item) {
-        getRemote(item, 'remote');
-    }, false, '../house/ws_tran.php');
-
-
-    $('#vcategory').show();
+  $("#vcategory").show();
 });
