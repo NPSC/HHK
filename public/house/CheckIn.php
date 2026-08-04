@@ -93,9 +93,6 @@ if ($stayingMarkup == '') {
         
         <?php echo FAVICON; ?>
         <?php echo CSSVARS; ?>
-
-        <script type="text/javascript" src="<?php echo CREATE_AUTO_COMPLETE_JS; ?>" defer></script>
-
     </head>
     <body <?php if ($wInit->testVersion) {echo "class='testbody'";} ?>>
         <?php echo $wInit->generatePageMenu(); ?>

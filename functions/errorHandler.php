@@ -94,10 +94,7 @@ function buildPage($error, $success = false) {
             <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
             <title>HHK - Error</title>
             <meta http-equiv="x-ua-compatible" content="IE=edge">
-            <?php echo JQ_UI_CSS; ?>
             <?php echo MULTISELECT_CSS; ?>
-            <?php echo JQ_DT_CSS; ?>
-            <?php echo NOTY_CSS; ?>
             <?php echo FAVICON; ?>
 
             <style>

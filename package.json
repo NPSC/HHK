@@ -20,7 +20,7 @@
     "dompurify": "^3.4.12",
     "fullcalendar": "^6.1",
     "globals": "^17.9.0",
-    "google-libphonenumber": "^3.2.44",
+    "google-libphonenumber": "^3.2",
     "he": "^1.2.0",
     "jquery": "3.6.0",
     "jquery-boot": "^1.0.1",

@@ -1,4 +1,4 @@
-//pag.js - attach functions to window globally
+// common app functions/jquery plugins used accross all pages.
 import {
   flagAlertMessage,
   dateRender,
@@ -9,6 +9,18 @@ import {
   getDialogWidth,
   hhkReportError,
 } from "./common/pag.js";
+import {
+  createAutoComplete,
+  createRoleAutoComplete,
+  createZipAutoComplete,
+} from "./common/createAutoComplete.js";
+import {
+  addrPrefs,
+  verifyAddrs,
+  validatePhoneNumber,
+  cleanPhoneNumber,
+} from "./common/addrPrefs.js";
+
 window.flagAlertMessage = flagAlertMessage;
 window.dateRender = dateRender;
 window.dayRender = dayRender;
@@ -17,6 +29,15 @@ window.openiframe = openiframe;
 window.logoutTimer = logoutTimer;
 window.getDialogWidth = getDialogWidth;
 window.hhkReportError = hhkReportError;
+
+window.createAutoComplete = createAutoComplete;
+window.createRoleAutoComplete = createRoleAutoComplete;
+window.createZipAutoComplete = createZipAutoComplete;
+
+window.addrPrefs = addrPrefs;
+window.verifyAddrs = verifyAddrs;
+window.validatePhoneNumber = validatePhoneNumber;
+window.cleanPhoneNumber = cleanPhoneNumber;
 
 //notesViewer.js - attaches $.fn.notesViewer
 import "./common/notesViewer.js";

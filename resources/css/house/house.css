@@ -672,7 +672,7 @@ div#global-title {
   justify-content: flex-end !important;
   margin-top: 10px !important;
 }
-.form-wrap.form-builder .form-actions > :first-childe {
+.form-wrap.form-builder .form-actions > :first-child {
   margin-left: 0;
 }
 .form-wrap.form-builder .form-actions > * {

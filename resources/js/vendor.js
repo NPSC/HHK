@@ -31,10 +31,6 @@ window.DOMPurify = DOMPurify;
 import Buffer from "buffer";
 window.buffer = Buffer;
 
-//google-libphonenumber
-import * as libphonenumber from "google-libphonenumber";
-window.libphonenumber = libphonenumber;
-
 //datatables v3, core + Responsive/Scroller/Buttons/FixedHeader/RowGroup.
 //jQuery UI styling integration.
 import DataTable from "datatables.net-jqui";
@@ -45,6 +41,9 @@ import "datatables.net-fixedheader-jqui";
 import "datatables.net-fixedheader-jqui/css/fixedHeader.jqueryui.css";
 import "datatables.net-rowgroup";
 
+DataTable.ext.errMode = function (settings, techNote, message) {
+  flagAlertMessage(message, "error");
+};
 DataTable.ext.classes.layout.tableCell += " hhk-overflow-x";
 DataTable.defaults.layout.topStart = "info";
 DataTable.defaults.layout.bottomStart = "pageLength";

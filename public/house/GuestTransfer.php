@@ -571,7 +571,6 @@ $btnGetRecords = HTMLInput::generateMarkup('Get HHK ' . Labels::getString('membe
             #aLoginLink:hover {background-color: #337a8e; }
         </style>
 
-        <script type="text/javascript" src="<?php echo CREATE_AUTO_COMPLETE_JS; ?>" defer></script>
         <script type="text/javascript" src="<?php echo PRINT_AREA_JS ?>" defer></script>
         <script type="text/javascript" src="<?php echo GUESTTRANSFER_JS; ?> defer"></script>
 

@@ -68,8 +68,6 @@ try {
 
         <?php echo FAVICON; ?>
 
-        <script type="text/javascript" src="<?php echo CREATE_AUTO_COMPLETE_JS; ?>" defer></script>
-
         <script type="text/javascript">
             function isNumber(n) {
                 "use strict";

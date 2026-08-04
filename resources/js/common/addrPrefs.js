@@ -1,4 +1,4 @@
-function addrPrefs(memData) {
+export function addrPrefs(memData) {
   "use strict";
   $("input.prefPhone").each(function () {
     if (this.checked) {
@@ -99,7 +99,7 @@ function addrPrefs(memData) {
   });
 }
 
-function verifyAddrs(container) {
+export function verifyAddrs(container) {
   "use strict";
   var $container;
   if (typeof container === "string") {
@@ -185,10 +185,12 @@ function verifyAddrs(container) {
 }
 
 // Use google's libphonenumber to validate and format international phone numbers
-function validatePhoneNumber(phone, defaultRegion = "US") {
+import { PhoneNumberUtil, PhoneNumberFormat } from "google-libphonenumber";
+
+export function validatePhoneNumber(phone, defaultRegion = "US") {
   try {
-    const phoneUtil = libphonenumber.PhoneNumberUtil.getInstance();
-    const PNF = libphonenumber.PhoneNumberFormat;
+    const phoneUtil = PhoneNumberUtil.getInstance();
+    const PNF = PhoneNumberFormat;
 
     const number = phoneUtil.parseAndKeepRawInput(phone, defaultRegion);
     const regionCode = phoneUtil.getRegionCodeForNumber(number);
@@ -198,12 +200,12 @@ function validatePhoneNumber(phone, defaultRegion = "US") {
     const formatType = regionCode === defaultRegion ? PNF.NATIONAL : PNF.INTERNATIONAL;
     const formatted = phoneUtil.format(number, formatType);
     return { isValid, formatted };
-  } catch (e) {
-    return { isValid: false, formatted: null };
+  } catch {
+    return { isValid: false, formatted: phone };
   }
 }
 
-function cleanPhoneNumber(input) {
+export function cleanPhoneNumber(input) {
   const cleaned = input.replace(/[^\d+]/g, "");
   return cleaned.startsWith("+")
     ? "+" + cleaned.slice(1).replace(/\+/g, "")

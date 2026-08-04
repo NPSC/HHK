@@ -115,8 +115,6 @@ if(isset($_GET['template'])){
     	</style>
 
         <script type="text/javascript" src="<?php echo STATE_COUNTRY_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo CREATE_AUTO_COMPLETE_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo ADDR_PREFS_JS; ?>"></script>
         <script type="text/javascript" src="../js/formBuilder/form-render.min.js"></script>
 		<script type="text/javascript" src="<?php echo REFERRAL_FORM_JS; ?>"></script>
 

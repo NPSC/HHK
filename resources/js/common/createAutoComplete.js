@@ -1,4 +1,6 @@
-function createZipAutoComplete(txtCtrl, wsUrl, lastXhr, selCallback, csrfToken) {
+//custom jquery autuocomplete functions for HHK
+
+export function createZipAutoComplete(txtCtrl, wsUrl, lastXhr, selCallback, csrfToken) {
   "use strict";
   txtCtrl.autocomplete({
     source: function (request, response) {
@@ -50,7 +52,7 @@ function createZipAutoComplete(txtCtrl, wsUrl, lastXhr, selCallback, csrfToken) 
   });
 }
 
-function createAutoComplete(
+export function createAutoComplete(
   txtCtrl,
   minChars,
   inputParms,
@@ -178,11 +180,11 @@ function createAutoComplete(
   });
 }
 
-function createRoleAutoComplete(txtCtrl, minChars, inputParms, selectFunction, shoNew) {
+export function createRoleAutoComplete(txtCtrl, minChars, inputParms, selectFunction, shoNew) {
   "use strict";
   var cache = {};
 
-  const _source = function (request, response, cache, shoNew, inputParms, minChars) {
+  const _source = function (request, response, cache, shoNew, inputParms) {
     let term = request.term.toString(); //.substr(0,minChars);
 
     //sanitize phone search
@@ -281,7 +283,7 @@ function createRoleAutoComplete(txtCtrl, minChars, inputParms, selectFunction, s
 
   txtCtrl.autocomplete({
     source: function (request, response) {
-      _source(request, response, cache, shoNew, inputParms, minChars);
+      _source(request, response, cache, shoNew, inputParms);
     },
     position: { my: "left top", at: "left bottom", collision: "flip" },
     minLength: minChars,
@@ -294,8 +296,7 @@ function createRoleAutoComplete(txtCtrl, minChars, inputParms, selectFunction, s
   });
   if (txtCtrl.autocomplete("instance") !== undefined) {
     txtCtrl.autocomplete("instance")._renderItem = function (ul, item) {
-      let firstRow = "",
-        detailsRow = "",
+      let detailsRow = "",
         rightContent = "",
         mrnRow = "";
       if (item.noReturn === undefined) {
@@ -353,7 +354,7 @@ function createRoleAutoComplete(txtCtrl, minChars, inputParms, selectFunction, s
         item.substitute = "<span>" + item.substitute + "</span>";
       }
 
-      firstRow =
+      let firstRow =
         "<div class='autocompleteItemTitle'>" +
         item.substitute +
         item.fullName +
