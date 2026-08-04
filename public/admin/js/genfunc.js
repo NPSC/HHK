@@ -7,9 +7,6 @@ function updateTips(tips, t, container = false) {
       container.hide();
     }
   }
-  //    setTimeout(function() {
-  //        tips.removeClass( "ui-state-highlight", 360000 );
-  //    }, 500 );
 }
 
 function errorOnZero(o, n, tips) {
@@ -62,6 +59,7 @@ function changeMemberStatus(sc, memData, savePressed) {
     sc.css("background", "WHITE");
   }
 }
+
 function getDonationMarkup(id) {
   "use strict";
   $.post(
@@ -94,6 +92,7 @@ function getDonationMarkup(id) {
     },
   );
 }
+
 function donateDeleteMarkup(dataTxt, id) {
   "use strict";
   var spn, data;

@@ -164,6 +164,24 @@ export default defineConfig({
           createAutoComplete: "readonly", // from public/js/createAutoComplete.js, loaded alongside these bundles
           createRoleAutoComplete: "readonly",
           createZipAutoComplete: "readonly",
+          dateFormat: "readonly", // page controller script reads #dateFormat into this, e.g. public/admin/js/Configure.js
+          // public/house/js/payments.js, loaded alongside visitDialog.js on CheckingIn.php/Reserve.php/VisitInterval.php
+          showReceipt: "readonly",
+          setupPayments: "readonly",
+          paymentRedirect: "readonly",
+          verifyAmtTendrd: "readonly",
+          verifyBalDisp: "readonly",
+          amtPaid: "readonly",
+          // set by public/house/js/checkingIn.js, reserve.js, register.js when present on the page
+          pageManager: "readonly",
+          calendar: "readonly",
+          fixedRate: "readonly",
+          refreshdTables: "readonly", // public/house/js/register.js
+          getIncomeDiag: "readonly", // public/house/js/resv.js
+          // public/house/js/resvManager.js and resv.js, loaded alongside hospitalStay.js
+          verifyDocAgent: "readonly",
+          getAgent: "readonly",
+          getDoc: "readonly",
         },
       },
       {

@@ -246,7 +246,6 @@ $resvObjEncoded = json_encode($resvAr);
         <script type="text/javascript" src="<?php echo INVOICE_JS; ?>" defer></script>
         <script type="text/javascript" src="<?php echo RESV_JS; ?>" defer></script>
         <script type="text/javascript" src="<?php echo DR_PICKER_JS; ?>" defer></script>
-        <script type="text/javascript" src="<?php echo VISIT_DIALOG_JS; ?>" defer></script>
         <script type="text/javascript" src="<?php echo RESV_MANAGER_JS; ?>" defer></script>
         <script type="text/javascript" src="<?php echo JSIGNATURE_JS; ?>" defer></script>
         <?php if ($uS->PaymentGateway == AbstractPaymentGateway::INSTAMED) {echo INS_EMBED_JS;} ?>

@@ -22,7 +22,6 @@ define('CUSTOM_REGFORM_CSS', "<link href='css/customRegForm.css" . JSV . "' rel=
 /* common mins */
 define('RESV_MANAGER_JS', 'js/resvManager-min.js' . JSV);
 define('PAYMENT_JS', "js/payments-min.js" . JSV);
-define('VISIT_DIALOG_JS', "js/visitDialog-min.js" . JSV);
 define('GUESTLOAD_JS', 'js/guestload-min.js' . JSV);
 define('REGISTER_JS', 'js/register.js' . JSV);
 define('FULLCALENDAR_JS', "../js/fullcalendar6.1.min.js" . JSV);
@@ -32,7 +31,6 @@ define('REG_FORM_JS', 'js/regForm-min.js' . JSV);
 /* page mins */
 define('RESV_JS', "js/resv.js" . JSV);
 define('INVOICE_JS', "js/invoice.js" . JSV);
-define('FORMBUILDER_JS', "js/formBuilder.js" . JSV);
 define('RESERVE_JS', 'js/reserve.js' . JSV);
 define('CHECKIN_JS', 'js/checkin.js' . JSV);
 define('CHECKINGIN_JS', 'js/checkingIn.js' . JSV);

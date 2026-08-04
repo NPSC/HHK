@@ -2321,18 +2321,12 @@ function resvManager(initData, options) {
           linkId: rid,
           linkType: "reservation",
           newNoteAttrs: { id: "taNewNote", name: "taNewNote" },
-          alertMessage: function (text, type) {
-            flagAlertMessage(text, type);
-          },
         });
       } else if (psgId > 0) {
         $container.notesViewer({
           linkId: psgId,
           linkType: "psg",
           newNoteAttrs: { id: "taNewNote", name: "taNewNote" },
-          alertMessage: function (text, type) {
-            flagAlertMessage(text, type);
-          },
         });
       }
 
@@ -2343,9 +2337,6 @@ function resvManager(initData, options) {
       $container.docUploader({
         visitorLabel: visitorLabel,
         psgId: psgid,
-        alertMessage: function (text, type) {
-          flagAlertMessage(text, type);
-        },
       });
 
       return $container;

@@ -120,9 +120,6 @@ import $ from "jquery";
             linkId: $("#formNotesDialog").data("iddocument"),
             linkType: "document",
             newNoteAttrs: { id: "docNewNote", name: "docNewNote" },
-            alertMessage: function (text, type) {
-              flagAlertMessage(text, type);
-            },
           });
         },
         Print: function () {

@@ -27,9 +27,6 @@ import $ from "./jquery.js";
         [5, 10, 25, -1],
         [5, 10, 25, "All"],
       ],
-
-      alertMessage: function (_text, _type) {},
-
       newTaLabel: "New note...",
 
       dtCols: [

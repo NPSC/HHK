@@ -2600,8 +2600,6 @@ $formBuilderOptions = [
     <?php echo FAVICON; ?>
     <?php echo CSSVARS; ?>
 
-    <script type="text/javascript" src="../js/formBuilder/form-builder.min.js" defer></script>
-    <script type="text/javascript" src="<?php echo FORMBUILDER_JS; ?>" defer></script>
     <script type="text/javascript" src="<?php echo RESCBUILDER_JS; ?>" defer></script>
 </head>
 

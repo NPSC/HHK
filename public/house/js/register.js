@@ -886,9 +886,6 @@ $(document).ready(function () {
         linkType: linkType,
         newNoteLocation: "hidden",
         defaultLength: 10,
-        alertMessage: function (text, type) {
-          flagAlertMessage(text, type);
-        },
       });
     });
 
@@ -1986,9 +1983,6 @@ $(document).ready(function () {
               [5, 10, 25, 50],
               ["5", "10", "25", "50"],
             ],
-            alertMessage: function (text, type) {
-              flagAlertMessage(text, type);
-            },
             staffNoteCats: staffNoteCats,
           });
       }

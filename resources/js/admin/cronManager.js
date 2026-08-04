@@ -27,7 +27,7 @@
           searchable: true,
           sortable: true,
           data: "Interval",
-          render: function (data, type) {
+          render: function (data, _type) {
             return data.charAt(0).toUpperCase() + data.slice(1);
           },
           width: 50,
@@ -46,7 +46,7 @@
           searchable: true,
           sortable: true,
           data: "Status",
-          render: function (data, type) {
+          render: function (data, _type) {
             switch (data) {
               case "a":
                 return "Active";
@@ -71,7 +71,7 @@
           targets: [6],
           title: "Actions",
           data: "ID",
-          render: function (data, type) {
+          render: function (data, _type, row) {
             return createActions(data, row);
           },
         },
@@ -82,10 +82,8 @@
 
     var $wrapper = $(this);
 
-    //set uid
     $wrapper.attr("id", "");
     $wrapper.uniqueId();
-    uid = $wrapper.attr("id");
 
     createViewer($wrapper, settings);
 

@@ -72,9 +72,6 @@ document.addEventListener("DOMContentLoaded", () => {
             linkType: "member",
             serviceURL: "../house/ws_resv.php",
             newNoteAttrs: { id: "memNewNote", name: "memNewNote" },
-            alertMessage: function (text, type) {
-              flagAlertMessage(text, type);
-            },
           });
         }
       }

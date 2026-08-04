@@ -339,9 +339,6 @@ $(document).ready(function () {
         linkId: $this.data("idroom"),
         linkType: "room",
         newNoteAttrs: { id: "taNewRNote", name: "taNewRNote" },
-        alertMessage: function (text, type) {
-          flagAlertMessage(text, type);
-        },
       });
 
     $("#roomDetailsDialog").dialog("option", "title", $this.data("title"));

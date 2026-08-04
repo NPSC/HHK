@@ -1,337 +1,16 @@
 /**
  * visitDialog.js
  *
- * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
- * @copyright 2010-2023 <nonprofitsoftwarecorp.org>
+ * @author    Will Ireland <wireland@nonprofitsoftwarecorp.org>
+ * @copyright 2010-2026 <nonprofitsoftwarecorp.org>
  * @license   GPL and MIT
  * @link      https://github.com/NPSC/HHK
  */
 
-/**
- *
- * @param {int} vid
- * @param {$} $container
- * @returns {$}
- */
-function setupVisitNotes(vid, $container) {
-  $container.notesViewer({
-    linkId: vid,
-    linkType: "visit",
-    newNoteAttrs: { id: "taNewVNote", name: "taNewVNote" },
-    alertMessage: function (text, type) {
-      flagAlertMessage(text, type);
-    },
-  });
+import { viewHospitalStay } from "./hospitalStay.js";
+import { viewVehicleDialog } from "./vehicles.js";
 
-  return $container;
-}
-
-function viewHospitalStay(idHs, idVisit, $hsDialog) {
-  $.post("ws_resv.php", { cmd: "viewHS", idhs: idHs }, function (data) {
-    if (!data) {
-      alert("Bad Reply from Server");
-      return;
-    }
-
-    try {
-      data = $.parseJSON(data);
-    } catch (err) {
-      alert("Bad JSON Encoding");
-      return;
-    }
-
-    if (data.error) {
-      if (data.gotopage) {
-        window.open(data.gotopage, "_self");
-      }
-      flagAlertMessage(data.error, "error");
-      return;
-    } else if (data.success) {
-      $hsDialog.empty();
-      $hsDialog.append($(data.success));
-      $hsDialog.dialog({
-        autoOpen: true,
-        width: getDialogWidth(1050),
-        resizable: true,
-        modal: true,
-        title: data.title ? data.title : "Hospital Details",
-        buttons: {
-          Cancel: function () {
-            $(".ckhsdate").datepicker("hide");
-            $(this).dialog("close");
-          },
-          Save: function () {
-            //verify doc and agent
-            let validationMsg = "";
-
-            const agentValid = verifyDocAgent("agentInfo");
-            const docValid = verifyDocAgent("docInfo");
-            if (agentValid === false || docValid === false) {
-              flagAlertMessage(
-                "Some or all of the indicated Hospital Information is missing",
-                "error",
-              );
-              return false;
-            }
-
-            $(".ckhsdate").datepicker("hide");
-            saveHospitalStay(idHs, idVisit);
-            $(this).dialog("close");
-          },
-        },
-      });
-
-      // add closer to visit dialog box
-      if ($("#keysfees").length > 0) {
-        $("#keysfees").on("dialogclose", function (event, ui) {
-          // Close hospital stay dialog
-          if ($hsDialog.dialog("isOpen")) {
-            $hsDialog.dialog("close");
-            $(".ckhsdate").datepicker("hide");
-          }
-        });
-      }
-
-      //Autocompletes for agent and doctor
-      createAutoComplete(
-        $(".hhk-hsdialog #txtAgentSch"),
-        3,
-        { cmd: "filter", add: "phone", basis: "ra" },
-        getAgent,
-      );
-      if ($(".hhk-hsdialog #a_txtLastName").val() === "") {
-        $(".hhk-hsdialog .hhk-agentInfo").hide();
-      }
-
-      $(document).on("click", "#a_delete", function () {
-        $(".hhk-hsdialog #a_idName").val("");
-        $(".hhk-hsdialog input.hhk-agentInfo").val("");
-        $(".hhk-hsdialog .hhk-agentInfo").hide();
-      });
-
-      if ($(".hhk-hsdialog #a_idName").val() !== "") {
-        $(".hhk-hsdialog input.hhk-agentInfo.name").attr("readonly", "readonly");
-      } else {
-        $(".hhk-hsdialog input.hhk-agentInfo.name").removeAttr("readonly");
-      }
-
-      createAutoComplete($(".hhk-hsdialog #txtDocSch"), 3, { cmd: "filter", basis: "doc" }, getDoc);
-      if ($(".hhk-hsdialog #d_txtLastName").val() === "") {
-        $(".hhk-hsdialog .hhk-docInfo").hide();
-      }
-
-      if ($(".hhk-hsdialog #d_idName").val() !== "") {
-        $(".hhk-hsdialog input.hhk-docInfo.name").attr("readonly", "readonly");
-      } else {
-        $(".hhk-hsdialog input.hhk-docInfo.name").removeAttr("readonly");
-      }
-
-      $(document).on("click", "#d_delete", function () {
-        $(".hhk-hsdialog #d_idName").val("");
-        $(".hhk-hsdialog input.hhk-docInfo").val("");
-        $(".hhk-hsdialog .hhk-docInfo").hide();
-      });
-
-      // Diagnosis Search
-      let diagSelect = function (item) {
-        if (item.id !== "n") {
-          $("#selDiagnosis").val(item.id);
-          $("#selectedDiag").text(item.label).closest("tr").removeClass("d-none");
-        }
-      };
-      createAutoComplete($("#diagSearch"), 3, { cmd: "diagnosis" }, diagSelect, false);
-
-      //Diagnosis delete button
-      $(document).on("click", "#delDiagnosis", function (e) {
-        $("#selDiagnosis").val("");
-        $("#diagSearch").val("");
-        $(this).closest("tr").addClass("d-none");
-      });
-
-      // Calendars for treatment start and end dates
-      $(".ckhsdate").datepicker({
-        yearRange: "-01:+01",
-        changeMonth: true,
-        changeYear: true,
-        autoSize: true,
-        numberOfMonths: 1,
-        dateFormat: "M d, yy",
-        showButtonPanel: true,
-        beforeShow: function (input) {
-          setTimeout(function () {
-            var buttonPane = $(input).datepicker("widget").find(".ui-datepicker-buttonpane");
-
-            buttonPane.empty();
-
-            $("<button>", {
-              text: "Clear",
-              click: function () {
-                //Code to clear your date field (text box, read only field etc.) I had to remove the line below and add custom code here
-                $.datepicker._clearDate(input);
-              },
-            })
-              .appendTo(buttonPane)
-              .addClass("ui-datepicker-clear ui-state-default ui-priority-primary ui-corner-all");
-          }, 1);
-        },
-        onChangeMonthYear: function (year, month, instance) {
-          setTimeout(function () {
-            var buttonPane = $(instance).datepicker("widget").find(".ui-datepicker-buttonpane");
-            buttonPane.empty();
-            $("<button>", {
-              text: "Clear",
-              click: function () {
-                //Code to clear your date field (text box, read only field etc.) I had to remove the line below and add custom code here
-                $.datepicker._clearDate(instance.input);
-              },
-            })
-              .appendTo(buttonPane)
-              .addClass("ui-datepicker-clear ui-state-default ui-priority-primary ui-corner-all");
-          }, 1);
-        },
-      });
-    }
-  });
-}
-
-function saveHospitalStay(idHs, idVisit) {
-  var parms = [
-    { name: "cmd", value: "saveHS" },
-    { name: "idhs", value: idHs },
-    { name: "idv", value: idVisit },
-  ];
-  var parms = parms.concat($(".hospital-stay:not(#txtDiagnosis)").serializeArray());
-
-  //diagnosis
-  let txtDiagnosis = $("#txtDiagnosis").val();
-  if (typeof txtDiagnosis == "string") {
-    txtDiagnosis = buffer.Buffer.from(txtDiagnosis).toString("base64");
-  }
-  parms.push({ name: "txtDiagnosis", value: txtDiagnosis });
-
-  $.post("ws_resv.php", parms, function (data) {
-    if (!data) {
-      alert("Bad Reply from Server");
-      return;
-    }
-
-    try {
-      data = $.parseJSON(data);
-    } catch (err) {
-      alert("Bad JSON Encoding");
-      return;
-    }
-
-    if (data.error) {
-      if (data.gotopage) {
-        window.open(data.gotopage, "_self");
-      }
-      flagAlertMessage(data.error, "error");
-      return;
-    } else if (data.success) {
-      flagAlertMessage(data.success, "success");
-      if (data.newHsId && data.newHsId > 0) {
-        $(".hhk-hospitalstay").each(function () {
-          $(this).data("idhs", data.newHsId);
-        });
-      }
-    }
-  });
-}
-
-function setupVehicle(veh) {
-  var nextVehId = 2;
-  var $cbVeh = veh.find("#cbNoVehicle");
-  var $nextVeh = veh.find("#btnNextVeh");
-  var $tblVeh = veh.find("#tblVehicle");
-
-  $cbVeh.change(function () {
-    if (this.checked) {
-      $tblVeh.hide("scale, horizontal");
-    } else {
-      $tblVeh.show("scale, horizontal");
-    }
-  });
-
-  $cbVeh.change();
-  $nextVeh.button();
-
-  $nextVeh.click(function () {
-    veh.find("#trVeh" + nextVehId).show("fade");
-    nextVehId++;
-    if (nextVehId > 4) {
-      $nextVeh.hide("fade");
-    }
-  });
-}
-
-function viewVehicleDialog(idVisit, $vehDialog) {
-  $.post(
-    "ws_resv.php",
-    { cmd: "viewVeh", idV: idVisit },
-    function (data) {
-      if (data.error) {
-        if (data.gotopage) {
-          window.open(data.gotopage, "_self");
-        }
-        flagAlertMessage(data.error, "error");
-        return;
-      } else if (data.success) {
-        $vehDialog.empty();
-        $vehDialog.append($(data.success));
-
-        setupVehicle($vehDialog);
-
-        $vehDialog.dialog({
-          autoOpen: true,
-          width: getDialogWidth(900),
-          resizable: true,
-          modal: true,
-          title: data.title ? data.title : "Vehicle Details",
-          buttons: {
-            Cancel: function () {
-              $(this).dialog("close");
-            },
-            Save: function () {
-              saveVehicles(idVisit, $vehDialog);
-              $(this).dialog("close");
-            },
-          },
-          close: function () {
-            $(this).dialog("destroy").empty();
-          },
-        });
-      }
-    },
-    "json",
-  );
-}
-
-function saveVehicles(idVisit, $vehDialog) {
-  let params = $vehDialog
-    .find("#tblVehicle input, #tblVehicle select, #cbNoVehicle")
-    .serializeArray();
-  params.push({ name: "cmd", value: "saveVeh" });
-  params.push({ name: "idV", value: idVisit });
-  $.post(
-    "ws_resv.php",
-    params,
-    function (data) {
-      if (data.error) {
-        if (data.gotopage) {
-          window.open(data.gotopage, "_self");
-        }
-        flagAlertMessage(data.error, "error");
-        return;
-      } else if (data.success) {
-        flagAlertMessage(data.success, "success");
-      }
-    },
-    "json",
-  );
-}
-
-var isCheckedOut = false;
+window.isCheckedOut = false;
 
 /**
  *
@@ -344,7 +23,7 @@ var isCheckedOut = false;
  * @param {string} ckoutDates
  * @returns {undefined}
  */
-function viewVisit(idGuest, idVisit, buttons, title, action, visitSpan, ckoutDates) {
+export function viewVisit(idGuest, idVisit, buttons, title, action, visitSpan, ckoutDates) {
   "use strict";
   $.post(
     "ws_ckin.php",
@@ -449,7 +128,7 @@ function viewVisit(idGuest, idVisit, buttons, title, action, visitSpan, ckoutDat
             $(".hhk-extendVisit").show("fade");
           } else {
             $(".hhk-extendVisit").hide("fade");
-            $("#rateChgCB").prop("disabled", isCheckedOut);
+            $("#rateChgCB").prop("disabled", window.isCheckedOut);
           }
         });
 
@@ -490,7 +169,7 @@ function viewVisit(idGuest, idVisit, buttons, title, action, visitSpan, ckoutDat
             $(".changeRateTd").show();
           } else {
             $(".changeRateTd").hide("fade");
-            $(".hhk-extVisitSw").prop("disabled", isCheckedOut);
+            $(".hhk-extVisitSw").prop("disabled", window.isCheckedOut);
           }
         });
 
@@ -509,7 +188,7 @@ function viewVisit(idGuest, idVisit, buttons, title, action, visitSpan, ckoutDat
       });
 
       $("#spnExPay").hide();
-      isCheckedOut = false;
+      window.isCheckedOut = false;
 
       let roomChgBal = 0.0;
       let vFeeChgBal = 0.0;
@@ -558,7 +237,7 @@ function viewVisit(idGuest, idVisit, buttons, title, action, visitSpan, ckoutDat
           if (ckout === true) {
             // Visit is ending
 
-            isCheckedOut = true;
+            window.isCheckedOut = true;
 
             let todayStr = today.getFullYear() + "-" + today.getMonth() + "-" + today.getDate();
             let coDate = new Date(coTime);
@@ -632,7 +311,7 @@ function viewVisit(idGuest, idVisit, buttons, title, action, visitSpan, ckoutDat
             viewVisit(idGuest, idVisit, buttons, title, "", visitSpan);
             return;
           } else {
-            isCheckedOut = false;
+            window.isCheckedOut = false;
 
             $("#feesCharges").val("");
             $("#guestCredit").val("");
@@ -686,7 +365,7 @@ function viewVisit(idGuest, idVisit, buttons, title, action, visitSpan, ckoutDat
 
         $("input.hhk-ckoutCB").change();
       } else {
-        isCheckedOut = true;
+        window.isCheckedOut = true;
 
         // hide deposit payment
         $(".hhk-kdrow").hide("fade");
@@ -786,7 +465,7 @@ function viewVisit(idGuest, idVisit, buttons, title, action, visitSpan, ckoutDat
  * @param {string} postbackPage
  * @returns {undefined}
  */
-function saveFees(idGuest, idVisit, visitSpan, rtnTbl, postbackPage) {
+export function saveFees(idGuest, idVisit, visitSpan, rtnTbl, postbackPage) {
   "use strict";
   let ckoutlist = [];
   let removeList = [];
@@ -829,7 +508,7 @@ function saveFees(idGuest, idVisit, visitSpan, rtnTbl, postbackPage) {
 
   // Overpayment disposition
   if (
-    isCheckedOut &&
+    window.isCheckedOut &&
     verifyBalDisp() === false &&
     undoCheckout === false &&
     undoRoomChg === false
@@ -1022,13 +701,16 @@ function saveFees(idGuest, idVisit, visitSpan, rtnTbl, postbackPage) {
 
 /**
  *
- * @param {string} header
- * @param {string} body
- * @returns {undefined}
+ * @param {int} vid
+ * @param {$} $container
+ * @returns {$}
  */
-function updateVisitMessage(header, body) {
-  //$('#visitMsg').toggle("clip");
-  $("#h3VisitMsgHdr").text(header);
-  $("#spnVisitMsg").text(body);
-  $("#visitMsg").effect("pulsate");
+function setupVisitNotes(vid, $container) {
+  $container.notesViewer({
+    linkId: vid,
+    linkType: "visit",
+    newNoteAttrs: { id: "taNewVNote", name: "taNewVNote" },
+  });
+
+  return $container;
 }

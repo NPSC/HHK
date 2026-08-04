@@ -80,9 +80,6 @@ function setupPsgNotes(rid, $container) {
     linkId: rid,
     linkType: "psg",
     newNoteAttrs: { id: "psgNewNote", name: "psgNewNote" },
-    alertMessage: function (text, type) {
-      flagAlertMessage(text, type);
-    },
   });
 
   return $container;

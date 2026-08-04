@@ -8,13 +8,17 @@
  * @license   GPL and MIT
  * @link      https://github.com/NPSC/HHK
  */
+import $ from "../common/jquery.js";
+import buffer from "buffer";
+import "formBuilder";
+
 (function ($) {
   $.fn.hhkFormBuilder = function (options) {
     setUpDemogFields(options);
     setUpDataSources(options);
     setUpInsuranceFields(options);
 
-    var defaults = {
+    let defaults = {
       serviceURL: "ws_resc.php",
       previewURL: "showReferral.php",
       formBuilder: null,
@@ -1243,7 +1247,7 @@ House Staff`,
       modal: true,
       buttons: {
         "Revert Changes": function () {
-          settingsDialog.find("textarea, input").each(function (i, element) {
+          settingsDialog.find("textarea, input").each(function (_i, _element) {
             if ($(this).prop("type") == "checkbox") {
               $(this).prop("checked", $(this).data("oldval"));
             } else {
@@ -1256,7 +1260,7 @@ House Staff`,
           settingsDialog.dialog("close");
         },
       },
-      create: function (event, ui) {
+      create: function (event, _ui) {
         $(event.target).find("#formSettingsTabs").tabs();
       },
     });
@@ -1283,8 +1287,8 @@ House Staff`,
           embedInfoDialog.dialog("close");
         },
       },
-      create: function (event, ui) {
-        //$(event.target).find("#embedAccordion").accordion();
+      create: function (_event, _ui) {
+        //$(_event.target).find("#embedAccordion").accordion();
       },
     });
 
@@ -1588,9 +1592,9 @@ House Staff`,
         cmd: "getformtemplates",
       },
       dataType: "json",
-      success: function (data, textStatus, jqXHR) {
+      success: function (data, _textStatus, _jqXHR) {
         if (data.forms) {
-          for (i in data.forms) {
+          for (let i in data.forms) {
             $wrapper
               .find("#selectform")
               .append(
@@ -1624,7 +1628,6 @@ House Staff`,
           layoutTemplates: settings.layoutTemplates,
           onSave: onSave,
           onAddFieldAfter: onAddField,
-          //onCloseFieldEdit:onCloseFieldEdit,
           stickyControls: settings.stickyControls,
           i18n: {
             location: "../js/formBuilder",
@@ -1668,12 +1671,13 @@ House Staff`,
             idDocument: idDocument,
           },
           dataType: "json",
-          success: function (data, textStatus, jqXHR) {
+          success: function (data, _textStatus, _jqXHR) {
+            let formData;
             if (data.status == "success") {
               try {
                 JSON.parse(data.formTemplate);
                 formData = data.formTemplate;
-              } catch (e) {
+              } catch {
                 formData = buffer.Buffer.from(data.formTemplate, "base64").toString("utf-8");
               }
               settings.formBuilder = $wrapper
@@ -1780,7 +1784,7 @@ House Staff`,
             idDocument: idDocument,
           },
           dataType: "json",
-          success: function (data, textStatus, jqXHR) {
+          success: function (data, _textStatus, _jqXHR) {
             if (data.status == "success") {
               $wrapper.find("#selectform option[value='" + idDocument + "']").remove();
               $wrapper.find("#selectform").val("").change();
@@ -1803,7 +1807,7 @@ House Staff`,
       embedInfoDialog.dialog("open");
     });
 
-    embedInfoDialog.on("change", "input#changeHeight", function (e) {
+    embedInfoDialog.on("change", "input#changeHeight", function (_e) {
       let val = $(this).val();
       let embedCode = embedInfoDialog.find("#embedCodeSnippet").text();
       embedCode = embedCode.replace(/(height=")([0-9]*)(")/gm, "$1" + val + "$3");
@@ -1846,10 +1850,7 @@ House Staff`,
     });
 
     var onAddField = function (fieldId, field) {
-      var formData =
-        settings.formBuilder.actions.getData instanceof Function
-          ? settings.formBuilder.actions.getData()
-          : [];
+      var formData = settings.formBuilder.promise ? [] : settings.formBuilder.actions.getData();
       var filtered = formData.filter((x) => x.name === field.name); //check for duplicate field
 
       if (filtered.length > 1 && field.name && field.label) {
@@ -1861,19 +1862,6 @@ House Staff`,
           ")</strong> already exists on the form, duplicate field removed";
         flagAlertMessage(msg, true);
         settings.formBuilder.actions.removeField(fieldId);
-      }
-    };
-
-    var onCloseFieldEdit = function (editPanel) {
-      var group = $(editPanel).find("select[name=group]").val();
-      var fieldType = $(editPanel).parent("li").prop("type");
-
-      if (group === "guest" && (fieldType === "checkbox-group" || fieldType === "radio-group")) {
-        flagAlertMessage(
-          'The "Guest" group does not support checkbox or radio buttons, the field has been removed from the "Guest" group',
-          true,
-        );
-        $(editPanel).find("select[name=group]").val("");
       }
     };
 
@@ -1947,12 +1935,12 @@ House Staff`,
         });
 
         //format font import
-        matches = fontImport.match(
+        let matches = fontImport.match(
           /.*@import url\('https:\/\/fonts.googleapis.com\/css2(\?.*)'\).*/,
         );
         if (Array.isArray(matches) && matches[1] != null) {
-          queryString = matches[1];
-          urlparams = new URLSearchParams(queryString);
+          let queryString = matches[1];
+          let urlparams = new URLSearchParams(queryString);
           fontImport = urlparams.getAll("family");
         } else {
           settingsDialog.find("textarea#fontImport").val("");
@@ -1981,7 +1969,7 @@ House Staff`,
               fontImport: fontImport,
             },
             dataType: "json",
-            success: function (data, textStatus, jqXHR) {
+            success: function (data, _textStatus, _jqXHR) {
               if (data.status == "success") {
                 flagAlertMessage(data.msg, false);
 
@@ -1997,9 +1985,9 @@ House Staff`,
                 $wrapper.find("#selectform").val(idDocument).change();
               } else if (data.status == "error" && data.errors) {
                 var errors = "<ul>";
-                for (i in data.errors) {
+                for (let i in data.errors) {
                   if (data.errors[i].errors) {
-                    for (k in data.errors[i].errors) {
+                    for (let k in data.errors[i].errors) {
                       errors +=
                         "<li>Styles: Line:" +
                         data.errors[i].errors[k].line[0] +
@@ -2037,4 +2025,4 @@ House Staff`,
       }
     };
   }
-})(jQuery);
+})($);
