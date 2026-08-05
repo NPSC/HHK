@@ -345,9 +345,6 @@ function doReports(PDO $dbh, chkBoxCtrl $cbMemStatus, chkBoxCtrl $cbRptType, $is
         <title><?php echo $pageTitle; ?></title>
         <?php echo Vite::asset('resources/js/admin.js'); ?>
         
-
-        <script type="text/javascript" src="<?php echo PRINT_AREA_JS; ?>" defer></script>
-
         <script type="text/javascript">
             document.addEventListener('DOMContentLoaded',  () => {
 

@@ -86,9 +86,7 @@ if (filter_has_var(INPUT_POST, "btnExcel") || filter_has_var(INPUT_POST, "btnHer
         <?php echo Vite::asset('resources/js/admin.js'); ?>
         
         <?php echo FAVICON; ?>
-
-        <script type="text/javascript" src="<?php echo PRINT_AREA_JS; ?>" defer></script>
-
+        
         <script type="text/javascript">
             function basisType(ctrl) {
                 if (ctrl.value == 'ai') {

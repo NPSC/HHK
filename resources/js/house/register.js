@@ -1,5 +1,3 @@
-/* global pmtMkup, rvCols, wlCols, roomCnt, viewDays, rctMkup, defaultTab, isGuestAdmin, moment, FullCalendar */
-
 /**
  * register.js
  *
@@ -8,6 +6,9 @@
  * @license   GPL and MIT
  * @link      https://github.com/NPSC/HHK
  */
+
+import { Calendar } from "fullcalendar";
+import resourceTimelinePlugin from "@fullcalendar/resource-timeline";
 
 /**
  *
@@ -18,49 +19,10 @@ function isNumber(n) {
   "use strict";
   return !isNaN(parseFloat(n)) && isFinite(n);
 }
-
-// Change reservation room.
-
-/**
- *
- * @param {int} idResv
- * @param {int} idResc
- * @returns {Boolean}
- */
-function setRoomTo(idResv, idResc) {
-  $.post("ws_resv.php", { cmd: "moveResvRoom", rid: idResv, idResc: idResc }, function (data) {
-    try {
-      data = $.parseJSON(data);
-    } catch (err) {
-      alert("Parser error - " + err.message);
-      return false;
-    }
-    if (data.error) {
-      if (data.gotopage) {
-        window.location.assign(data.gotopage);
-      }
-      flagAlertMessage(data.error, "error");
-      return false;
-    }
-    if (data.warning && data.warning !== "") {
-      flagAlertMessage(data.warning, "warning");
-      return false;
-    }
-    if (data.msg && data.msg !== "") {
-      flagAlertMessage(data.msg, "info");
-    }
-    if (data.success && data.success !== "") {
-      flagAlertMessage(data.msg, "success");
-    }
-    calendar.refetchResources();
-    calendar.refetchEvents();
-    refreshdTables(data);
-    return true;
-  });
-}
+window.isNumber = isNumber; // used by payments.js, loaded alongside register.js on this page
 
 var $dailyTbl;
-function refreshdTables(data) {
+export function refreshdTables(data) {
   "use strict";
 
   if (data.curres && $("#divcurres").length > 0) {
@@ -258,7 +220,7 @@ function getStatusEvent(idResc, type, title) {
           $(".ckdate").datepicker({
             autoSize: true,
             dateFormat: "M d, yy",
-            beforeShow: function (el, ui) {
+            beforeShow: function () {
               var startEl = $(this).closest("tr").find('[id^="txtstart"]');
               var endEl = $(this).closest("tr").find('[id^="txtend"]');
               if ($(this).attr("id").startsWith("txtstart") && endEl.val() != "") {
@@ -321,7 +283,7 @@ function saveStatusEvent(idResc, type) {
 function showChangeRoom(gname, id, idVisit, span) {
   // Get the change rooms dialog box
 
-  this.rooms = {};
+  let rooms = {};
 
   $.post(
     "ws_ckin.php",
@@ -580,8 +542,6 @@ function showChangeRoom(gname, id, idVisit, span) {
     $("#hhk-roomChsrtitle").addClass("hhk-loading");
     $("#rmDepMessage").text("").hide();
 
-    d = new Date();
-
     let parms = {
       cmd: "chgRoomList",
       idVisit: idVisit,
@@ -793,6 +753,8 @@ var hindx = 0,
   useOnlineReferral = $("#useOnlineReferral").val(),
   calendar;
 
+window.fixedRate = fixedRate; // used by resv.js and resvManager.js, loaded alongside register.js on this page
+
 $(document).ready(function () {
   "use strict";
 
@@ -861,7 +823,7 @@ $(document).ready(function () {
     minHeight: 800,
     width: getDialogWidth(1500),
     modal: true,
-    close: function (event, ui) {
+    close: function () {
       notesDialog.find("#note-newNote").trigger("click");
       notesDialog.find(".regNotesWrapper").empty();
     },
@@ -1012,7 +974,7 @@ $(document).ready(function () {
       title: "Status",
       searchable: false,
       sortable: true,
-      createdCell: function (td, cellData, rowData, col) {
+      createdCell: function (td, _cellData, rowData) {
         if (rowData.StatusColor) {
           $(td).css("background-color", rowData.StatusColor);
         }
@@ -1126,10 +1088,10 @@ $(document).ready(function () {
     autoOpen: false,
     resizable: true,
     modal: true,
-    close: function (event, ui) {
+    close: function () {
       $("div#submitButtons").show(); // Page submit buttons, hide when dialog is open, show when closed.
     },
-    open: function (event, ui) {
+    open: function () {
       $("div#submitButtons").hide();
     },
   });
@@ -1232,7 +1194,8 @@ $(document).ready(function () {
 
   let calendarEl = document.getElementById("calendar");
 
-  calendar = new FullCalendar.Calendar(calendarEl, {
+  calendar = new Calendar(calendarEl, {
+    plugins: [resourceTimelinePlugin],
     schedulerLicenseKey: "CC-Attribution-NonCommercial-NoDerivatives",
     height: winHieght - 187,
 
@@ -1818,7 +1781,7 @@ $(document).ready(function () {
           $("#rptInvdiv").remove();
           $("#vInv").append($('<div id="rptInvdiv"/>').append($(data.success)));
           $("#rptInvdiv .gmenu").menu({
-            focus: function (e, ui) {
+            focus: function () {
               $("#rptInvdiv .gmenu").not(this).menu("collapseAll", null, true);
             },
           });
@@ -1888,7 +1851,7 @@ $(document).ready(function () {
               {
                 targets: [2, 4],
                 type: "date",
-                render: function (data, type, row) {
+                render: function (data, type) {
                   return dateRender(data, type);
                 },
               },
@@ -1961,11 +1924,46 @@ $(document).ready(function () {
           },
           order: [[0, "asc"]],
           columns: dailyCols,
-          infoCallback: function (settings, start, end, max, total, pre) {
+          infoCallback: function () {
             return (
               "Prepared: " +
               dateRender(new Date().toISOString(), "display", "ddd, MMM D YYYY, h:mm a")
             );
+          },
+          layout: {
+            top1Start: {
+              buttons: [
+                {
+                  extend: "print",
+                  className: "ui-corner-all",
+                  autoPrint: true,
+                  paperSize: "letter",
+                  title: function () {
+                    return "Daily Log";
+                  },
+                  messageTop: function () {
+                    return (
+                      "Prepared: " +
+                      dateRender(new Date().toISOString(), "display", "ddd, MMM D YYYY, h:mm a")
+                    );
+                  },
+                  customize: function (win) {
+                    $(win.document.body).css("font-size", "0.9em");
+
+                    $(win.document.body)
+                      .find("table")
+                      //.addClass("compact")
+                      .css("font-size", "inherit");
+                  },
+                },
+                {
+                  text: "Refresh",
+                  action: function (_e, _dt, _node, _config) {
+                    $dailyTbl.ajax.reload();
+                  },
+                },
+              ],
+            },
           },
         });
       }
@@ -2038,7 +2036,7 @@ $(document).ready(function () {
       url: "ws_resc.php?cmd=getHist&tbl=curres",
       dataSrc: "curres",
     },
-    drawCallback: function (settings) {
+    drawCallback: function () {
       let ncur = this.api().table().page.info().recordsTotal;
       $("#spnNumCurrent").text(this.api().table().page.info().recordsTotal);
       $("#spnCurrentS").text("s");
@@ -2046,7 +2044,7 @@ $(document).ready(function () {
         $("#spnCurrentS").text("");
       }
       $("#curres .gmenu").menu({
-        focus: function (e, ui) {
+        focus: function (_e, _ui) {
           $("#curres .gmenu").not(this).menu("collapseAll", null, true);
         },
       });
@@ -2070,10 +2068,10 @@ $(document).ready(function () {
     ajax: {
       url: "ws_resc.php?cmd=getHist&tbl=reservs",
     },
-    drawCallback: function (settings) {
+    drawCallback: function () {
       $("#spnNumConfirmed").text(this.api().table().page.info().recordsTotal);
       $("#reservs .gmenu").menu({
-        focus: function (e, ui) {
+        focus: function (_e, _ui) {
           $("#reservs .gmenu").not(this).menu("collapseAll", null, true);
         },
       });
@@ -2094,10 +2092,10 @@ $(document).ready(function () {
       ajax: {
         url: "ws_resc.php?cmd=getHist&tbl=unreserv",
       },
-      drawCallback: function (settings) {
+      drawCallback: function () {
         $("#spnNumUnconfirmed").text(this.api().table().page.info().recordsTotal);
         $("#unreserv .gmenu").menu({
-          focus: function (e, ui) {
+          focus: function (_e, _ui) {
             $("#unreserv .gmenu").not(this).menu("collapseAll", null, true);
           },
         });
@@ -2122,7 +2120,7 @@ $(document).ready(function () {
     drawCallback: function () {
       $("#spnNumWaitlist").text(this.api().table().page.info().recordsTotal);
       $("#waitlist .gmenu").menu({
-        focus: function (e, ui) {
+        focus: function (_e, _ui) {
           $("#waitlist .gmenu").not(this).menu("collapseAll", null, true);
         },
       });

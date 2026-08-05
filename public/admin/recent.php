@@ -41,8 +41,6 @@ $uS = Session::getInstance();
         
         <?php echo FAVICON; ?>
 
-        <script type="text/javascript" src="<?php echo PRINT_AREA_JS; ?>" defer></script>
-
         <script type="text/javascript">
             function handleResponse(dataTxt, statusTxt, xhrObject) {
 

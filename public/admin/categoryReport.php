@@ -107,8 +107,6 @@ foreach ($catSelCtrls as $sel) {
         
         <?php echo FAVICON; ?>
 
-        <script type="text/javascript" src="<?php echo PRINT_AREA_JS; ?>" defer></script>
-
         <script type="text/javascript">
             document.addEventListener("DOMContentLoaded", () => {
             	$("input[type=submit], input[type=button]").button();

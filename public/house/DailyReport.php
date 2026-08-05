@@ -47,9 +47,6 @@ $dailyLog = HTMLContainer::generateMarkup('h3', $uS->siteName . ' Daily Log'
         <?php echo FAVICON; ?>
         <?php echo CSSVARS; ?>
 
-
-        <script type="text/javascript" src="<?php echo PRINT_AREA_JS ?>" defer></script>
-
         <script type="text/javascript">
             document.addEventListener("DOMContentLoaded", () => {
                 var patientLabel = '<?php echo $labels->getString('MemberType', 'patient', 'Patient'); ?>';
@@ -77,7 +74,7 @@ $dailyLog = HTMLContainer::generateMarkup('h3', $uS->siteName . ' Daily Log'
 
                 $('#btnHere').button();
 
-                $('#daily').DataTable({
+                let dailyTbl = $('#daily').DataTable({
                     "displayLength": 50,
                     "lengthMenu": [[25, 50, -1], [25, 50, "All"]],
                     "order": [[ 0, 'asc' ]],
@@ -90,11 +87,39 @@ $dailyLog = HTMLContainer::generateMarkup('h3', $uS->siteName . ' Daily Log'
                     "columns": dailyCols,
                     "infoCallback": function( settings, start, end, max, total, pre ) {
                         return "Prepared: " + dateRender(new Date().toISOString(), 'display', 'ddd, MMM D YYYY, h:mm a');
-                    }
-                });
+                    },
+                    layout: {
+                        top1Start: {
+                            "buttons": [
+                            {
+                                extend: "print",
+                                className: "ui-corner-all",
+                                autoPrint: true,
+                                paperSize: "letter",
+                                title: function(){
+                                    return "Daily Log";
+                                },
+                                messageTop: function(){
+                                    return "Prepared: " + dateRender(new Date().toISOString(), 'display', 'ddd, MMM D YYYY, h:mm a');
+                                },
+                                customize: function (win) {
+                                    $(win.document.body)
+                                        .css("font-size", "0.9em");
 
-                $('#printButton').button().click(function() {
-                    $("#divdaily").printArea();
+                                    $(win.document.body).find("table")
+                                        //.addClass("compact")
+                                        .css("font-size", "inherit");
+                                }
+                            },
+                            {
+                                text: 'Refresh',
+                                action: function ( e, dt, node, config ) {
+                                    dailyTbl.ajax.reload();
+                                }
+                            }
+                            ]
+                        }
+                    }
                 });
             });
         </script>
@@ -103,14 +128,6 @@ $dailyLog = HTMLContainer::generateMarkup('h3', $uS->siteName . ' Daily Log'
         <?php echo $wInit->generatePageMenu(); ?>
         <div id="contentDiv">
             <h2><?php echo $wInit->pageHeading; ?></h2>
-            <div id="vcategory" class="ui-widget ui-widget-content ui-corner-all hhk-member-detail hhk-tdbox hhk-visitdialog" style="clear:left;  padding:10px;">
-                <form id="fcat" action="DailyReport.php" method="post">
-                    <input type="submit" name="btnHere" id="btnHere" value="Reload"/>
-
-                    <input id="printButton" value="Print" type="button" style="margin-left:3em;"/>
-                </form>
-            </div>
-            <div style="clear:both;"></div>
             <div class="ui-widget ui-widget-content ui-corner-all hhk-tdbox" style="font-size: .9em; padding: 5px; padding-bottom:25px; margin: 10px 0;">
             <form autocomplete="off">
                 <?php echo $dailyLog; ?>

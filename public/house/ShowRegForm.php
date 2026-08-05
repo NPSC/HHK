@@ -281,7 +281,6 @@ $contrls = HTMLContainer::generateMarkup('div', $shoRegBtn . $shoStmtBtn . $regM
 
         <?php echo $sty; ?>
 
-        <script type="text/javascript" src="<?php echo PRINT_AREA_JS; ?>" defer></script>
         <script type="text/javascript" src="<?php echo RESV_JS; ?>" defer></script>
         <script type="text/javascript" src="<?php echo PAYMENT_JS; ?>" defer></script>
         <script type="text/javascript" src="<?php echo JSIGNATURE_JS; ?>" defer></script>

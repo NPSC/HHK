@@ -23,8 +23,6 @@ define('CUSTOM_REGFORM_CSS', "<link href='css/customRegForm.css" . JSV . "' rel=
 define('RESV_MANAGER_JS', 'js/resvManager-min.js' . JSV);
 define('PAYMENT_JS', "js/payments-min.js" . JSV);
 define('GUESTLOAD_JS', 'js/guestload-min.js' . JSV);
-define('REGISTER_JS', 'js/register.js' . JSV);
-define('FULLCALENDAR_JS', "../js/fullcalendar6.1.min.js" . JSV);
 define('REG_FORM_JS', 'js/regForm-min.js' . JSV);
 /* end mins */
 

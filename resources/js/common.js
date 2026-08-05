@@ -44,3 +44,5 @@ import "./common/notesViewer.js";
 
 //smsDialog.js - attaches $.fn.smsDialog
 import "./common/smsDialog.js";
+
+import "./common/jquery.PrintArea.js";

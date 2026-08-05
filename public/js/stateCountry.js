@@ -5129,7 +5129,7 @@ var BFHStatesList = {
   });
 })(window.jQuery);
 
-$(document).ready(function () {
+document.addEventListener("DOMContentLoaded", function () {
   $(document).on("change", "#adrstate", function () {
     var state = $("#adrstate.bfh-states").val();
     var county = $("#adrcounty.bfh-county").val();

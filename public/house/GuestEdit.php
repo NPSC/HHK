@@ -744,7 +744,6 @@ $uS->guestId = $id;
         <?php echo STATEMENT_CSS; ?>
 
 
-        <script type="text/javascript" src="<?php echo PRINT_AREA_JS; ?>" defer></script>
         <script type="text/javascript" src="<?php echo STATE_COUNTRY_JS; ?>" defer></script>
         <script type="text/javascript" src="<?php echo MULTISELECT_JS; ?>" defer></script>
         <script type="text/javascript" src="<?php echo INVOICE_JS; ?>" defer></script>

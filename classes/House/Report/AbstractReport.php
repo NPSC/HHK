@@ -33,7 +33,7 @@ abstract class AbstractReport {
     public array $filteredFields;
     public array $filteredTitles;
     public ColumnSelectors $colSelector;
-    protected $defaultFields;
+    protected array $defaultFields;
     protected array $fields;
     public array $fieldSets;
     public array $resultSet = [];
@@ -77,6 +77,7 @@ abstract class AbstractReport {
         $this->filteredFields = $this->colSelector->getFilteredFields();
 
         //default fields
+        $this->defaultFields = [];
         foreach($this->fields as $field){
             if($field[2] == 'checked'){
                 $this->defaultFields[] = $field[1];

@@ -73,8 +73,6 @@ $waitlist = HTMLContainer::generateMarkup('h3', $uS->siteName . ' Daily Waitlist
         <?php echo FAVICON; ?>
         <?php echo CSSVARS; ?>
 
-        <script type="text/javascript" src="<?php echo PRINT_AREA_JS ?>" defer></script>
-
         <script type="text/javascript">
             document.addEventListener("DOMContentLoaded", () => {
                 var patientLabel = '<?php echo $labels->getString('MemberType', 'patient', 'Patient'); ?>';

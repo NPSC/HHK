@@ -1285,7 +1285,6 @@ if ($uS->UseIncidentReports) {
         <?php echo FAVICON; ?>
         <?php echo CSSVARS; ?>
 
-        <script type="text/javascript" src="<?php echo PRINT_AREA_JS ?>" defer></script>
         <script type="text/javascript" src="<?php echo STATE_COUNTRY_JS; ?>" defer></script>
 
         <script type="text/javascript">

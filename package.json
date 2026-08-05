@@ -9,6 +9,7 @@
     "prepare": "vp config"
   },
   "devDependencies": {
+    "@fullcalendar/resource-timeline": "^6.1",
     "@popperjs/core": "^2.11.8",
     "bootstrap": "5.1.3",
     "bootstrap-icons": "^1.13.1",

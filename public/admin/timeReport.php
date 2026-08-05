@@ -104,8 +104,6 @@ $reportTypeSelMarkup = $typeCtrl->createMarkup(3);
 
         <?php echo FAVICON; ?>
 
-        <script type="text/javascript" src="<?php echo PRINT_AREA_JS; ?>" defer></script>
-
         <script type="text/javascript">
 
             document.addEventListener("DOMContentLoaded", () => {

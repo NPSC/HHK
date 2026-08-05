@@ -41,18 +41,11 @@ define('FULLC_CSS', '<link href="css/fullcalendar.min.css' . JSV . '" rel="style
 define('SELECT2_CSS', '<link href="css/select2.min.css' . JSV . '" rel="stylesheet" type="text/css" />');
 define('INCIDENT_CSS', '<link href="css/incidentReports.css' . JSV . '" rel="stylesheet" type="text/css" />');
 
-define('JQ_UI_JS', '../js/jquery-ui.min.js' . JSV);
 define('JQ_JS', '../js/jquery-min.js' . JSV);
-define('JQ_DT_JS', '../js/datatables.min.js' . JSV);
-define('NOTY_JS', '../js/toastr.min.js' . JSV);
-define('NOTY_SETTINGS_JS', '../js/toastrSettings.js' . JSV);  //These are local
 define('JSIGNATURE_JS', '../js/jSignature.min.js' . JSV);
 
-define('PRINT_AREA_JS', '../js/jquery.PrintArea.js' . JSV);
 define('STATE_COUNTRY_JS', '../js/stateCountry.js' . JSV);
-define('PAG_JS', '../js/pag.js' . JSV);
 define('LOGIN_JS', '../js/login.js' . JSV);
-define('MOMENT_JS', '../js/moment.min.js' . JSV);
 define('MULTISELECT_JS', '../js/jquery.multiselect.min.js' . JSV);
 define('DR_PICKER_JS', '../js/daterangepicker.hhk.min.js' . JSV);
 define('FULLC_JS', 'js/fullcalendarold.min.js' . JSV);

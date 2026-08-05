@@ -172,16 +172,25 @@ export default defineConfig({
           verifyAmtTendrd: "readonly",
           verifyBalDisp: "readonly",
           amtPaid: "readonly",
-          // set by public/house/js/checkingIn.js, reserve.js, register.js when present on the page
+          getApplyDiscDiag: "readonly",
+          paymentsTable: "readonly",
+          // public/house/js/invoice.js, loaded alongside resources/js/register.js on register.php
+          invLoadPc: "readonly",
+          invSetBill: "readonly",
+          invoiceAction: "readonly",
+          // set by public/house/js/checkingIn.js, reserve.js, resources/js/register.js when present on the page
           pageManager: "readonly",
           calendar: "readonly",
           fixedRate: "readonly",
-          refreshdTables: "readonly", // public/house/js/register.js
+          refreshdTables: "readonly", // resources/js/register.js
           getIncomeDiag: "readonly", // public/house/js/resv.js
           // public/house/js/resvManager.js and resv.js, loaded alongside hospitalStay.js
           verifyDocAgent: "readonly",
           getAgent: "readonly",
           getDoc: "readonly",
+          // resources/js/house.js exposes these from house/visitDialog.js; consumed by resources/js/register.js
+          viewVisit: "readonly",
+          saveFees: "readonly",
         },
       },
       {
@@ -229,6 +238,7 @@ export default defineConfig({
         // house.js/admin.js both import the shared vendor.js and
         // common.js bundles plus their site's jQuery UI theme.
         house: "resources/js/house.js",
+        register: "resources/js/house/register.js",
         admin: "resources/js/admin.js",
         root: "resources/js/root.js",
         loginHouse: "resources/js/login/house.js",

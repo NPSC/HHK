@@ -179,11 +179,7 @@ $diags = Common::readGenLookupsPDO($dbh, 'Diagnosis');
 
 
 // Daily Log
-$dailyLog = HTMLContainer::generateMarkup('h3', 'Daily Log'
-    . HTMLInput::generateMarkup('Print', ['type' => 'button', 'id' => 'btnPrtDaily', 'style' => 'font-size:.8em;', 'class' => 'ms-5'])
-        . HTMLInput::generateMarkup('Refresh', ['type' => 'button', 'id' => 'btnRefreshDaily', 'style' => 'font-size:.8em;', 'class' => 'ms-5'])
-        ,
-    ['style' => 'background-color:#D3D3D3;', 'class' => 'p-2'])
+$dailyLog = HTMLContainer::generateMarkup('h3', 'Daily Log',['style' => 'background-color:#D3D3D3;', 'class' => 'p-2'])
         . HTMLContainer::generateMarkup('div', "<table id='daily' class='display' style='width:100%;' cellpadding='0' cellspacing='0' border='0'></table>", ['id' => 'divdaily']);
 
 // Currently Checked In guests
@@ -360,9 +356,7 @@ if($uS->useOnlineReferral){
         <?php echo FAVICON; ?>
         <?php echo CSSVARS; ?>
 
-        <script type="text/javascript" src="<?php echo FULLCALENDAR_JS; ?>" defer></script>
         <script type="text/javascript" src="<?php echo STATE_COUNTRY_JS; ?>" defer></script>
-        <script type="text/javascript" src="<?php echo PRINT_AREA_JS; ?>" defer></script>
         <script type="text/javascript" src="<?php echo RESV_JS; ?>" defer></script>
         <script type="text/javascript" src="<?php echo PAYMENT_JS; ?>" defer></script>
         
@@ -612,7 +606,7 @@ if($uS->useOnlineReferral){
         <?php if ($uS->PaymentGateway == AbstractPaymentGateway::DELUXE) { echo DeluxeGateway::getIframeMkup(); } ?>
 
 		<script type="text/javascript" src="<?php echo RESV_MANAGER_JS; ?>" defer></script>
-        <script type="text/javascript" src="<?php echo REGISTER_JS; ?>" defer></script>
+        <?php echo Vite::asset('resources/js/register.js'); ?>
 
     </body>
 </html>

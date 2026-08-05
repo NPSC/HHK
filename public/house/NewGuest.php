@@ -240,8 +240,6 @@ $columSelector = $colSelector->makeSelectorTable(TRUE)->generateMarkup(array('st
         <?php echo FAVICON; ?>
         <?php echo CSSVARS; ?>
 
-        <script type="text/javascript" src="<?php echo PRINT_AREA_JS ?>" defer></script>
-
         <script type="text/javascript">
             document.addEventListener("DOMContentLoaded", () => {
                 var dateFormat = '<?php echo $labels->getString("momentFormats", "report", "MMM D, YYYY"); ?>';

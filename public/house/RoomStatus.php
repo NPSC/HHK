@@ -183,7 +183,6 @@ if (isset($rescGroups[$uS->CalResourceGroupBy])) {
             @page { margin: 1cm; }
         </style>
 
-        <script type="text/javascript" src="<?php echo PRINT_AREA_JS; ?>" defer></script>
         <script type="text/javascript" src="<?php echo HOUSEKEEPING_JS; ?>" defer></script>
 
         <script type="text/javascript">
