@@ -11,10 +11,9 @@ import "./house/incidentReports.js";
 import "./house/documentUpload.js";
 import "./house/reportfieldSets.js";
 import "./house/referralViewer.js";
-import "./house/formBuilder.js";
+import "./house/hhkFormBuilder.js";
 import "formBuilder";
 import "formBuilder/dist/form-render.min.js";
-import "./house/formBuilder.js";
 
 //visit dialog imports
 import { viewVisit, saveFees } from "./house/visitDialog.js";

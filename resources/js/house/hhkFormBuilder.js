@@ -1,5 +1,5 @@
 /**
- * formBuilder.js
+ * hhkFormBuilder.js
  *
  * @category  house
  * @package   Hospitality HouseKeeper
