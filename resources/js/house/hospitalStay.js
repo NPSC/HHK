@@ -15,7 +15,7 @@ export function viewHospitalStay(idHs, idVisit, $hsDialog) {
     }
 
     try {
-      data = $.parseJSON(data);
+      data = JSON.parse(data);
     } catch {
       alert("Bad JSON Encoding");
       return;
@@ -195,7 +195,7 @@ function saveHospitalStay(idHs, idVisit) {
     }
 
     try {
-      data = $.parseJSON(data);
+      data = JSON.parse(data);
     } catch {
       alert("Bad JSON Encoding");
       return;

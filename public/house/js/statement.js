@@ -22,7 +22,7 @@ $(document).ready(function () {
       function (data) {
         $("#btnEmail").attr("disabled", false).removeClass("loading");
         try {
-          data = $.parseJSON(data);
+          data = JSON.parse(data);
         } catch (err) {
           alert("Bad JSON Encoding");
           return;

@@ -175,7 +175,7 @@ if (isset($_POST['btnNext'])) {
                     $.post('ws_install.php', {cmd: 'loadmd', 'adminpw': pw1.val(), 'npscuserpw' : pw3.val()}, function (data) {
                         if (data) {
                             try {
-                                data = $.parseJSON(data);
+                                data = JSON.parse(data);
                             } catch (err) {
                                 alert("Parser error - " + err.message);
                                 return;

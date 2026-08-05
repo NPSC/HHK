@@ -124,7 +124,7 @@ if (isset($_POST['btnExcel-' . $report->getInputSetReportName()])) {
         <script type="text/javascript">
             document.addEventListener("DOMContentLoaded", () => {
                 var dateFormat = '<?php echo $labels->getString("momentFormats", "report", "MMM D, YYYY"); ?>';
-                var columnDefs = $.parseJSON('<?php echo json_encode($report->colSelector->getColumnDefs()); ?>');
+                var columnDefs = JSON.parse('<?php echo json_encode($report->colSelector->getColumnDefs()); ?>');
                 var fixedRate = '<?php echo RoomRateCategories::Fixed_Rate_Category; ?>';
                 var rctMkup, pmtMkup, receiptBilledToEmail, receiptPaymentId;
             

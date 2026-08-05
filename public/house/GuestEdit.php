@@ -737,14 +737,12 @@ $uS->guestId = $id;
         <meta http-equiv="x-ua-compatible" content="IE=edge">
         <?php echo Vite::asset('resources/js/house/guestload.js'); ?>
         
-        <?php echo MULTISELECT_CSS; ?>
         <?php echo INCIDENT_CSS; ?>
         <?php echo FAVICON; ?>
         <?php echo CSSVARS; ?>
         <?php echo STATEMENT_CSS; ?>
 
 
-        <script type="text/javascript" src="<?php echo MULTISELECT_JS; ?>" defer></script>
         <script type="text/javascript" src="<?php echo INVOICE_JS; ?>" defer></script>
         <script type="text/javascript" src="<?php echo PAYMENT_JS; ?>" defer></script>
         <script type="text/javascript" src="<?php echo RESV_JS; ?>" defer></script>

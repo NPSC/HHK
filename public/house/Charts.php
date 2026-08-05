@@ -275,7 +275,7 @@ if (filter_has_var(INPUT_POST, 'cmd')) {
 
                 $.post('Charts.php', {cmd: 'getRoomNights'}, function(data) {
                     try {
-                        data = $.parseJSON(data);
+                        data = JSON.parse(data);
                     } catch (err) {
                         alert("Parser error - " + err.message);
                         return false;

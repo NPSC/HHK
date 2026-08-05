@@ -1,12 +1,6 @@
-$(document).ready(function () {
+document.addEventListener("DOMContentLoaded", () => {
   var usernames = JSON.parse($("#usernames").val());
   var actions = JSON.parse($("#actions").val());
-  /*	var actions = [
-		{'id':"L", 'title':"Login"},
-		{'id':"PS", 'title':"Set Password"},
-		{'id':"PC", 'title':"Password Change"},
-		{'id':"PL", 'title':"Locked Out"}
-	];*/
 
   function getActionName(data) {
     for (action of actions) {
@@ -17,7 +11,7 @@ $(document).ready(function () {
     return data;
   }
 
-  var dtCols = [
+  const dtCols = [
     {
       targets: [0],
       title: "Username",
@@ -68,12 +62,12 @@ $(document).ready(function () {
     },
   ];
 
-  var tableAttrs = {
+  const tableAttrs = {
     class: "display compact",
     width: "100%",
   };
 
-  var dtTable = $("#dtLog").DataTable({
+  const dtTable = $("#dtLog").DataTable({
     columnDefs: dtCols,
     serverSide: true,
     processing: true,

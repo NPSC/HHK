@@ -1,4 +1,4 @@
-$(document).ready(function () {
+document.addEventListener("DOMContentLoaded", () => {
   var tabIndex = $("#tabIndex").val();
   var tbs;
   var authTabs;
@@ -11,7 +11,7 @@ $(document).ready(function () {
   var notyMsg = $("#notymsg").val();
   notyMsg = JSON.parse(notyMsg);
 
-  var dtCols = [
+  const dtCols = [
     {
       targets: [0],
       title: "Type",

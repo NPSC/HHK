@@ -3,8 +3,10 @@ import "./common.js";
 
 import "../css/jqui-house/jquery-ui.min.css";
 import "../css/house/house.css";
+import "daterangepicker/daterangepicker.css";
 
 // import jquery plugins - automatically attached to jQuery object
+import "daterangepicker";
 import "./house/incidentReports.js";
 import "./house/documentUpload.js";
 import "./house/reportfieldSets.js";

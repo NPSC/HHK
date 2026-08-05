@@ -63,7 +63,7 @@ $(document).ready(function () {
       alert("Server had a problem.  " + xhrObject.status + ", " + xhrObject.responseText);
 
     if (dataTxt.length > 0) {
-      table = $.parseJSON(dataTxt);
+      table = JSON.parse(dataTxt);
       showTable(table);
     }
   }

@@ -245,7 +245,7 @@ document.addEventListener("DOMContentLoaded", () => {
           function (data) {
             if (data) {
               try {
-                data = $.parseJSON(data);
+                data = JSON.parse(data);
               } catch (err) {
                 alert("Parser error - " + err.message);
                 return;
@@ -395,7 +395,7 @@ document.addEventListener("DOMContentLoaded", () => {
           var mess = "",
             data = {};
           try {
-            data = $.parseJSON(rdata);
+            data = JSON.parse(rdata);
           } catch (err) {
             data.error = err.message;
           }

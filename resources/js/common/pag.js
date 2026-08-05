@@ -323,7 +323,7 @@ $(document).ready(function () {
             function (data) {
               if (data) {
                 try {
-                  data = $.parseJSON(data);
+                  data = JSON.parse(data);
                 } catch (err) {
                   alert("Parser error - " + err.message);
                   return;
@@ -362,7 +362,7 @@ $(document).ready(function () {
         function (data) {
           if (data) {
             try {
-              data = $.parseJSON(data);
+              data = JSON.parse(data);
             } catch (err) {
               alert("Parser error - " + err.message);
               return;
@@ -389,7 +389,7 @@ $(document).ready(function () {
         function (data) {
           if (data) {
             try {
-              data = $.parseJSON(data);
+              data = JSON.parse(data);
             } catch (err) {
               alert("Parser error - " + err.message);
               return;
@@ -420,7 +420,7 @@ $(document).ready(function () {
         function (data) {
           if (data) {
             try {
-              data = $.parseJSON(data);
+              data = JSON.parse(data);
             } catch (err) {
               alert("Parser error - " + err.message);
               return;
@@ -444,7 +444,7 @@ $(document).ready(function () {
       $.post("../house/ws_admin.php", inputdata, function (data) {
         if (data) {
           try {
-            data = $.parseJSON(data);
+            data = JSON.parse(data);
           } catch (err) {
             alert("Parser error - " + err.message);
             return;
@@ -473,7 +473,7 @@ $(document).ready(function () {
         function (data) {
           if (data) {
             try {
-              data = $.parseJSON(data);
+              data = JSON.parse(data);
             } catch (err) {
               alert("Parser error - " + err.message);
               return;
@@ -502,7 +502,7 @@ $(document).ready(function () {
       $.post("../house/ws_admin.php", $(this).serialize(), function (data) {
         if (data) {
           try {
-            data = $.parseJSON(data);
+            data = JSON.parse(data);
           } catch (err) {
             alert("Parser error - " + err.message);
             return;

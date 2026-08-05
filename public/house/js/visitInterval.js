@@ -4,7 +4,7 @@ function viewInsurance(idName, eventTarget, detailDiv) {
   $.post("ws_resc.php", { cmd: "viewInsurance", idName: idName }, function (data) {
     if (data) {
       try {
-        data = $.parseJSON(data);
+        data = JSON.parse(data);
       } catch (err) {
         alert("Parser error - " + err.message);
         return;
@@ -35,7 +35,7 @@ var fixedRate; // used by VisitDialog.hs
 
 $(document).ready(function () {
   let startYear = $("#startYear").val(),
-    columnDefs = $.parseJSON($("#columnDefs").val()),
+    columnDefs = JSON.parse($("#columnDefs").val()),
     pmtMkup = $("#pmtMkup").val(),
     makeTable = $("#makeTable").val(),
     dateFormat = $("#dateFormat").val(),

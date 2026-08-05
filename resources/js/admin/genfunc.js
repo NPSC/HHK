@@ -71,7 +71,7 @@ export function getDonationMarkup(id) {
     },
     function (data) {
       var msg;
-      data = $.parseJSON(data);
+      data = JSON.parse(data);
 
       if (data.error) {
         if (data.gotopage) {
@@ -97,7 +97,7 @@ export function donateDeleteMarkup(dataTxt, id) {
   "use strict";
   var spn, data;
 
-  data = $.parseJSON(dataTxt);
+  data = JSON.parse(dataTxt);
   if (data.gotopage) {
     window.open(data.gotopage, "_self");
   }
@@ -127,7 +127,7 @@ export function donateResponse(dataTxt, id) {
   "use strict";
   var spn, cbox, data;
 
-  data = $.parseJSON(dataTxt);
+  data = JSON.parse(dataTxt);
   if (data.gotopage) {
     window.open(data.gotopage, "_self");
   }
@@ -165,7 +165,7 @@ export function getCampaign(code) {
 
   if (code != "") {
     $.post("liveGetCamp.php", { qc: code }, function (data) {
-      data = $.parseJSON(data);
+      data = JSON.parse(data);
       var amtLimit = $("#cLimits");
 
       if (data.error) {
@@ -195,7 +195,7 @@ export function getCampaign(code) {
 }
 
 export function relationReturn(data) {
-  data = $.parseJSON(data);
+  data = JSON.parse(data);
   if (data.error) {
     if (data.gotopage) {
       window.open(data.gotopage, "_self");

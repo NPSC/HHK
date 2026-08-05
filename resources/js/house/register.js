@@ -61,7 +61,7 @@ function cgResvStatus(rid, status) {
   $.post("ws_ckin.php", { cmd: "rvstat", rid: rid, stat: status }, function (data) {
     if (data) {
       try {
-        data = $.parseJSON(data);
+        data = JSON.parse(data);
       } catch (err) {
         alert("Parser error - " + err.message);
         return;
@@ -92,7 +92,7 @@ function chgRoomCleanStatus(idRoom, statusCode) {
       function (data) {
         if (data) {
           try {
-            data = $.parseJSON(data);
+            data = JSON.parse(data);
           } catch (err) {
             alert("Parser error - " + err.message);
             return;
@@ -131,7 +131,7 @@ function editPSG(psg) {
     function (data) {
       if (data) {
         try {
-          data = $.parseJSON(data);
+          data = JSON.parse(data);
         } catch (err) {
           alert("Parser error - " + err.message);
           return;
@@ -205,7 +205,7 @@ function getStatusEvent(idResc, type, title) {
     function (data) {
       if (data) {
         try {
-          data = $.parseJSON(data);
+          data = JSON.parse(data);
         } catch (err) {
           alert("Parser error - " + err.message);
           return;
@@ -255,7 +255,7 @@ function saveStatusEvent(idResc, type) {
     function (data) {
       if (data) {
         try {
-          data = $.parseJSON(data);
+          data = JSON.parse(data);
         } catch (err) {
           alert("Parser error - " + err.message);
           return;
@@ -298,7 +298,7 @@ function showChangeRoom(gname, id, idVisit, span) {
       "use strict";
       if (data) {
         try {
-          data = $.parseJSON(data);
+          data = JSON.parse(data);
         } catch (err) {
           alert("Parser error - " + err.message);
           return;
@@ -510,7 +510,7 @@ function showChangeRoom(gname, id, idVisit, span) {
 
     $.post("ws_ckin.php", parms, function (data) {
       try {
-        data = $.parseJSON(data);
+        data = JSON.parse(data);
       } catch (err) {
         alert("Parser error - " + err.message);
         return;
@@ -559,7 +559,7 @@ function showChangeRoom(gname, id, idVisit, span) {
       $("#hhk-roomChsrtitle").removeClass("hhk-loading");
 
       try {
-        data = $.parseJSON(data);
+        data = JSON.parse(data);
       } catch (err) {
         alert("Parser error - " + err.message);
         return;
@@ -605,7 +605,7 @@ function moveVisit(mode, idVisit, visitSpan, startDelta, endDelta, updateCal, id
   return $.post("ws_ckin.php", params, function (data) {
     if (data) {
       try {
-        data = $.parseJSON(data);
+        data = JSON.parse(data);
       } catch (err) {
         alert("Parser error - " + err.message);
         return;
@@ -634,7 +634,7 @@ function getRoomList(idResv, eid, targetEl) {
     // place "loading" icon
     $.post("ws_ckin.php", { cmd: "rmlist", rid: idResv, x: eid }, function (data) {
       try {
-        data = $.parseJSON(data);
+        data = JSON.parse(data);
       } catch (err) {
         alert("Parser error - " + err.message);
         return;
@@ -748,8 +748,8 @@ var hindx = 0,
   showCharges = $("#showCharges").val(),
   acceptResvPay = $("#acceptResvPay").val(),
   showCityOnRegister = $("#showCityOnRegister").val(),
-  holidays = $.parseJSON($("#holidays").val()),
-  closedDays = $.parseJSON($("#closedDays").val()),
+  holidays = JSON.parse($("#holidays").val()),
+  closedDays = JSON.parse($("#closedDays").val()),
   showCurrentGuestPhotos = $("#showCurrentGuestPhotos").val(),
   useOnlineReferral = $("#useOnlineReferral").val(),
   calendar;
@@ -1732,7 +1732,7 @@ $(document).ready(function () {
       $("#rptFeeLoading").hide();
       if (data) {
         try {
-          data = $.parseJSON(data);
+          data = JSON.parse(data);
         } catch (err) {
           alert("Parser error - " + err.message);
           return;
@@ -1767,7 +1767,7 @@ $(document).ready(function () {
     $.post("ws_resc.php", parms, function (data) {
       if (data) {
         try {
-          data = $.parseJSON(data);
+          data = JSON.parse(data);
         } catch (err) {
           alert("Parser error - " + err.message);
           return;

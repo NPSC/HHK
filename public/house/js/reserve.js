@@ -11,8 +11,8 @@ $(document).ready(function () {
   "use strict";
   var t = this;
   var $guestSearch = $("#gstSearch");
-  var resv = $.parseJSON($("#resv").val());
-  var pageManagerOptions = $.parseJSON($("#resvManagerOptions").val());
+  var resv = JSON.parse($("#resv").val());
+  var pageManagerOptions = JSON.parse($("#resvManagerOptions").val());
   let isRepeatReservHost = $("#isRepeatReservHost").val();
   fixedRate = $("#fixedRate").val();
   payFailPage = $("#payFailPage").val();
@@ -105,7 +105,7 @@ $(document).ready(function () {
             tabIndex: tabIndex,
           },
           function (data) {
-            data = $.parseJSON(data);
+            data = JSON.parse(data);
             if (data.gotopage) {
               window.open(data.gotopage, "_self");
             }

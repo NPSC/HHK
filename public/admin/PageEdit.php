@@ -119,10 +119,7 @@ $resultMessage = $alertMsg->createMarkup();
 
         <?php echo Vite::asset('resources/js/admin.js'); ?>
         
-        <?php echo MULTISELECT_CSS; ?>
         <?php echo FAVICON; ?>
-
-        <script type="text/javascript" src="<?php echo MULTISELECT_JS; ?>" defer></script>
 
         <script type="text/javascript">
 

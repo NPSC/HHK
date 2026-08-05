@@ -415,10 +415,7 @@ $alertMessage = $alertMsg->createMarkup();
         <?php echo Vite::asset('resources/js/admin/nameEdit.js'); ?>
 
         <?php echo FAVICON; ?>
-        <?php echo MULTISELECT_CSS; ?>
         <link href="css/volCtrl.css" rel="stylesheet" type="text/css" />
-
-        <script type="text/javascript" src="<?php echo MULTISELECT_JS; ?>" defer></script>
 
         <script type="text/javascript">
             document.addEventListener("DOMContentLoaded", () => {

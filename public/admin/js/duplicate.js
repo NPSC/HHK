@@ -12,7 +12,7 @@ $(document).ready(function () {
         return;
       }
       try {
-        data = $.parseJSON(data);
+        data = JSON.parse(data);
       } catch (err) {
         alert("Parser error - " + err.message);
         return;
@@ -46,7 +46,7 @@ $(document).ready(function () {
               return;
             }
             try {
-              data = $.parseJSON(data);
+              data = JSON.parse(data);
             } catch (err) {
               alert("Parser error - " + err.message);
               return;
@@ -75,7 +75,7 @@ $(document).ready(function () {
                     return;
                   }
                   try {
-                    data = $.parseJSON(data);
+                    data = JSON.parse(data);
                   } catch (err) {
                     alert("Parser error - " + err.message);
                     return;
@@ -113,7 +113,7 @@ $(document).ready(function () {
                   return;
                 }
                 try {
-                  data = $.parseJSON(data);
+                  data = JSON.parse(data);
                 } catch (err) {
                   alert("Parser error - " + err.message);
                   return;
@@ -161,7 +161,7 @@ $(document).ready(function () {
                     return;
                   }
                   try {
-                    data = $.parseJSON(data);
+                    data = JSON.parse(data);
                   } catch (err) {
                     alert("Parser error - " + err.message);
                     return;

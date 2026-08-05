@@ -545,7 +545,7 @@ $glBa = $tbl->generateMarkup(array('style'=>'float:left;margin-right:1.5em;'));
 
 					$.post('IncmStmt.php', {cmd: 'unallocVisits'}, function(data) {
 						try {
-							data = $.parseJSON(data);
+							data = JSON.parse(data);
 						} catch (err) {
 							alert("Parser error - " + err.message);
 							return false;

@@ -56,7 +56,7 @@ function gotIncomeDiag(idResv, idReg, data) {
           $("#formf").serialize() + "&cmd=savefap" + "&rid=" + idResv + "&rgId=" + idReg,
           function (data) {
             try {
-              data = $.parseJSON(data);
+              data = JSON.parse(data);
             } catch (err) {
               alert("Bad JSON Encoding");
               return;
@@ -131,7 +131,7 @@ function gotIncomeDiag(idResv, idReg, data) {
           nites: 0,
         },
         function (data) {
-          data = $.parseJSON(data);
+          data = JSON.parse(data);
           if (data.gotopage) {
             window.location.assign(data.gotopage);
           }
@@ -369,7 +369,7 @@ function getRegistrationDialog(idReg) {
       return;
     }
     try {
-      data = $.parseJSON(data);
+      data = JSON.parse(data);
     } catch (err) {
       alert("Bad JSON Encoding");
       return;
@@ -425,7 +425,7 @@ function showRegDialog(markup, idReg) {
             return;
           }
           try {
-            data = $.parseJSON(data);
+            data = JSON.parse(data);
           } catch (err) {
             alert("Bad JSON Encoding");
             return;

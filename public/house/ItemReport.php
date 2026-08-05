@@ -65,7 +65,7 @@ if (isset($_POST['btnExcel-' . $report->getInputSetReportName()])) {
                 function(data) {
                     if (data) {
                         try {
-                            data = $.parseJSON(data);
+                            data = JSON.parse(data);
                         } catch (err) {
                             alert("Parser error - " + err.message);
                             return;

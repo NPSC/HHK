@@ -199,7 +199,7 @@ $vCatOptions = HTMLSelector::doOptionsMkup($volCategories, '', false);
                     $.post('CategoryEdit.php',
                             {ql: $(this).val()},
                     function(data) {
-                        var codes = $.parseJSON(data);
+                        var codes = JSON.parse(data);
                         // remove any previous entries
                         $("#selCode")
                                 .find('option')

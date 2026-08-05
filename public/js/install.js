@@ -29,7 +29,7 @@ function testDb(parms) {
       return;
     }
     try {
-      data = $.parseJSON(data);
+      data = JSON.parse(data);
     } catch (err) {
       alert("Bad JSON Encoding");
       return;

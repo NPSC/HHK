@@ -44,10 +44,8 @@ if ($stmt->rowCount() > 0) {
         <title><?php echo $wInit->pageTitle; ?></title>
         <?php echo Vite::asset('resources/js/admin.js'); ?>
 
-        <?php echo MULTISELECT_CSS; ?>
         <?php echo FAVICON; ?>
 
-        <script type="text/javascript" src="<?php echo MULTISELECT_JS; ?>" defer></script>
         <script type="text/javascript" src="js/accessLog.js" defer></script>
     </head>
     <body <?php if ($wInit->testVersion) {echo "class='testbody'";} ?>>

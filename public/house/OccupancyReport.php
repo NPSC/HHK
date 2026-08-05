@@ -175,7 +175,7 @@ if (filter_has_var(INPUT_POST, 'cmd')) {
                 $("#historicalOcc #repSummary>img").remove();
 
                 var dateFormat = '<?php echo $labels->getString("momentFormats", "report", "MMM D, YYYY"); ?>';
-                var columnDefs = $.parseJSON('<?php echo json_encode($occupancyReport->colSelector->getColumnDefs()); ?>');
+                var columnDefs = JSON.parse('<?php echo json_encode($occupancyReport->colSelector->getColumnDefs()); ?>');
 
                 <?php echo $occupancyReport->filter->getTimePeriodScript(); ?>;
 

@@ -61,7 +61,7 @@ if (isset($_POST['btnExcel-' . $reservationReport->getInputSetReportName()])) {
         <script type="text/javascript">
             document.addEventListener("DOMContentLoaded", () => {
                 var dateFormat = '<?php echo $labels->getString("momentFormats", "report", "MMM D, YYYY"); ?>';
-                var columnDefs = $.parseJSON('<?php echo json_encode($reservationReport->colSelector->getColumnDefs()); ?>');
+                var columnDefs = JSON.parse('<?php echo json_encode($reservationReport->colSelector->getColumnDefs()); ?>');
 
                 <?php echo $reservationReport->generateReportScript(); ?>
 
@@ -72,7 +72,7 @@ if (isset($_POST['btnExcel-' . $reservationReport->getInputSetReportName()])) {
                         function (data) {
                             if (data) {
                                 try {
-                                    data = $.parseJSON(data);
+                                    data = JSON.parse(data);
                                 } catch (err) {
                                     alert("Parser error - " + err.message);
                                     return;

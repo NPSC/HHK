@@ -80,7 +80,7 @@ $labels = Labels::getLabels();
                         function (data) {
                             if (data) {
                                 try {
-                                    data = $.parseJSON(data);
+                                    data = JSON.parse(data);
                                 } catch (err) {
                                     alert("Parser error - " + err.message);
                                     return;

@@ -45,7 +45,6 @@ define('VISIT_INTERVAL_JS', "js/visitInterval.js" . JSV);
 define('HOUSEKEEPING_JS', 'js/housekeeping.js' . JSV);
 
 define('GRID_CSS', "<link href='../css/bootstrap-grid.min.css" . JSV . "' rel='stylesheet' type='text/css' />");
-define('BOOTSTRAP_CSS', "<link href='../css/bootstrap.min.css" . JSV . "' rel='stylesheet' type='text/css' /><link href='../css/bootstrap-print-fix.css" . JSV . "' rel='stylesheet' type='text/css' />");
 define('NAVBAR_CSS', "<link href='../css/bootstrapNavbar.css" . JSV . "' rel='stylesheet' type='text/css' />");
 define('CSSVARS', "<link href='ws_resc.php?cmd=getCssVars' rel='stylesheet' type='text/css' />");
 define('BOOTSTRAP_ICONS_CSS', "<link href='../css/bootstrap-icons.min.css" . JSV . "' rel='stylesheet' type='text/css' />");

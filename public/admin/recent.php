@@ -48,7 +48,7 @@ $uS = Session::getInstance();
                     alert('Server had a problem.  ' + xhrObject.status + ", "+ xhrObject.responseText);
                 }
                 else {
-                    data = $.parseJSON(dataTxt);
+                    data = JSON.parse(dataTxt);
                     if (data.error) {
                         // error message
                         flagAlertMessage(data.error, true);

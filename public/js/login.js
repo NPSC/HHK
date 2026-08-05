@@ -62,7 +62,7 @@ function sendHhkLogin() {
 
   $.post("index.php", parms, function (data) {
     try {
-      data = $.parseJSON(data);
+      data = JSON.parse(data);
     } catch (err) {
       alert(data);
       //$('#divLoginCtls').remove();
@@ -110,10 +110,10 @@ function sendHhkLogin() {
       .show();
   });
 }
-$(document).ready(function () {
+document.addEventListener("DOMContentLoaded", () => {
   //newsletter
-  var iframe = $('<iframe frameborder="0" marginwidth="0" marginheight="0"></iframe>');
-  var dialog = $('<div id="newsletterDialog"></div>')
+  const iframe = $('<iframe frameborder="0" marginwidth="0" marginheight="0"></iframe>');
+  const dialog = $('<div id="newsletterDialog"></div>')
     .append(iframe)
     .appendTo("body")
     .dialog({

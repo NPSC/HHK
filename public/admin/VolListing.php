@@ -197,7 +197,7 @@ if (count($rows) > 0) {
                             {cmd: "delwu", id: usr},
                     function(data) {
                         if (data != null && data != "") {
-                            var names = $.parseJSON(data);
+                            var names = JSON.parse(data);
                             if (names[0])
                                 names = names[0];
 

@@ -1577,72 +1577,79 @@ function resvManager(initData, options) {
         }
 
         if ($("#spnRangePicker").length > 0) {
-          drp = $("#spnRangePicker").dateRangePicker({
-            format: "MMM D, YYYY",
-            separator: " to ",
-            minDays: 1,
-            autoClose: true,
-            showShortcuts: true,
-            shortcuts: {
-              "next-days": [nextDays],
+          var drpOptions = {
+            locale: {
+              format: "MMM D, YYYY",
+              separator: " to ",
             },
-            getValue: function () {
-              if (gstDate.val() && gstCoDate.val()) {
-                return gstDate.val() + " to " + gstCoDate.val();
-              } else {
-                return "";
-              }
+            autoApply: true,
+            minDate: stDate || undefined,
+            maxDate: enDate || undefined,
+            ranges: {
+              ["Next " + nextDays + (nextDays === 1 ? " Day" : " Days")]: [
+                moment().add(1, "days"),
+                moment().add(1 + nextDays, "days"),
+              ],
             },
-            setValue: function (s, s1, s2) {
-              gstDate.val(s1);
-              gstCoDate.val(s2);
+            isCustomDate: function (date) {
+              var closed = closedDays.includes(date.day());
+              return closed ? "hhk-datepicker-closed" : "";
             },
-            startDate: stDate,
-            endDate: enDate,
-            beforeShowDay: function (t) {
-              var closed = closedDays.includes(t.getDay());
-              var _class = closed ? "hhk-datepicker-closed" : "";
-              return [true, _class];
-            },
-          });
+          };
 
-          if (data.updateOnChange) {
-            drp.bind("datepicker-change", function (event, dates) {
-              // Update the number of days display text.
-              var numDays = Math.ceil(
-                (dates["date2"].getTime() - dates["date1"].getTime()) / 86400000,
-              );
-
-              $("#" + data.daysEle).val(numDays);
-
-              if (data.mindays > 0 && numDays < data.mindays) {
-                $("#" + data.daysErrEle)
-                  .text("Stay length is less than " + data.mindays + " days")
-                  .show();
-              } else {
-                $("#" + data.daysErrEle)
-                  .empty()
-                  .hide();
-              }
-
-              if ($("#spnNites").length > 0) {
-                $("#spnNites").text(numDays);
-              }
-
-              $("#gstDate").removeClass("ui-state-error");
-              $("#gstCoDate").removeClass("ui-state-error");
-
-              // Refresh room availability immediately on date pick
-              // so #hhkroomMsg reflects conflicts right away.
-              if ($("#selResource").length > 0) {
-                updateRescChooser.go($("#gstDate").val(), $("#gstCoDate").val());
-              }
-
-              if ($.isFunction(doOnDatesChange)) {
-                doOnDatesChange(dates);
-              }
-            });
+          if (gstDate.val() && gstCoDate.val()) {
+            drpOptions.startDate = gstDate.val();
+            drpOptions.endDate = gstCoDate.val();
           }
+
+          drp = $("#spnRangePicker").daterangepicker(drpOptions);
+
+          drp.bind("apply.daterangepicker", function (event, picker) {
+            gstDate.val(picker.startDate.format("MMM D, YYYY"));
+            gstCoDate.val(picker.endDate.format("MMM D, YYYY"));
+            gstDate.removeClass("ui-state-error");
+            gstCoDate.removeClass("ui-state-error");
+
+            if (!data.updateOnChange) {
+              return;
+            }
+
+            var dates = {
+              date1: picker.startDate.toDate(),
+              date2: picker.endDate.toDate(),
+            };
+
+            // Update the number of days display text.
+            var numDays = Math.ceil(
+              (dates["date2"].getTime() - dates["date1"].getTime()) / 86400000,
+            );
+
+            $("#" + data.daysEle).val(numDays);
+
+            if (data.mindays > 0 && numDays < data.mindays) {
+              $("#" + data.daysErrEle)
+                .text("Stay length is less than " + data.mindays + " days")
+                .show();
+            } else {
+              $("#" + data.daysErrEle)
+                .empty()
+                .hide();
+            }
+
+            if ($("#spnNites").length > 0) {
+              $("#spnNites").text(numDays);
+            }
+
+            // Refresh room availability immediately on date pick
+            // so #hhkroomMsg reflects conflicts right away.
+            if ($("#selResource").length > 0) {
+              updateRescChooser.go($("#gstDate").val(), $("#gstCoDate").val());
+            }
+
+            if ($.isFunction(doOnDatesChange)) {
+              doOnDatesChange(dates);
+            }
+          });
         }
 
         $dateSection.show();
@@ -1757,7 +1764,7 @@ function resvManager(initData, options) {
         $(".hhk-stayIndicate").show().parent("td").removeClass("hhk-loading");
 
         try {
-          data = $.parseJSON(data);
+          data = JSON.parse(data);
         } catch (err) {
           flagAlertMessage(err.message, "error");
           return;
@@ -1871,7 +1878,7 @@ function resvManager(initData, options) {
           $("#hhk-roomChsrtitle").removeClass("hhk-loading");
 
           try {
-            data = $.parseJSON(data);
+            data = JSON.parse(data);
           } catch (err) {
             alert("Parser error - " + err.message);
             return;
@@ -2129,7 +2136,7 @@ function resvManager(initData, options) {
                 $("#formf").serialize() + "&cmd=savefap" + "&rid=" + data.rid,
                 function (rdata) {
                   try {
-                    rdata = $.parseJSON(rdata);
+                    rdata = JSON.parse(rdata);
                   } catch (err) {
                     alert("Bad JSON Encoding");
                     return;
@@ -2465,7 +2472,7 @@ function resvManager(initData, options) {
       if ($(".hhk-viewResvActivity").length > 0) {
         $(".hhk-viewResvActivity").click(function () {
           $.post("ws_ckin.php", { cmd: "viewActivity", rid: $(this).data("rid") }, function (data) {
-            data = $.parseJSON(data);
+            data = JSON.parse(data);
 
             if (data.error) {
               if (data.gotopage) {
@@ -2496,7 +2503,7 @@ function resvManager(initData, options) {
             "ws_ckin.php",
             { cmd: "confrv", rid: $(this).data("rid"), amt: amount, eml: "0" },
             function (d) {
-              data = $.parseJSON(d);
+              data = JSON.parse(d);
 
               if (data.error) {
                 if (data.gotopage) {
@@ -2882,7 +2889,7 @@ function resvManager(initData, options) {
 
     $.post("ws_resv.php", parms, function (data) {
       try {
-        data = $.parseJSON(data);
+        data = JSON.parse(data);
       } catch (err) {
         flagAlertMessage(err.message, "error");
         return;

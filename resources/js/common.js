@@ -51,3 +51,6 @@ import "./common/smsDialog.js";
 import "./common/jquery.PrintArea.js";
 
 import "./common/stateCountry.js";
+
+import "jquery-ui-multiselect-widget";
+import "jquery-ui-multiselect-widget/css/jquery.multiselect.css";

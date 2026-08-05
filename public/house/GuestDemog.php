@@ -206,7 +206,6 @@ if ($cmd){
         <?php echo Vite::asset('resources/js/house.js'); ?>
         
         <?php echo FAVICON; ?>
-		<?php echo MULTISELECT_CSS; ?>
         <?php echo CSSVARS; ?>
 
 		<style>
@@ -220,7 +219,6 @@ if ($cmd){
 		  }
 		</style>
 
-        <script type="text/javascript" src="<?php echo MULTISELECT_JS; ?>" defer></script>
         <script type="text/javascript" src="<?php echo MISSINGDEMOG_JS; ?>" defer></script>
 
         <script type="text/javascript">

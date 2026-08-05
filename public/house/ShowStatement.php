@@ -68,7 +68,7 @@ function createScript($guestLabel) {
         $.post('ShowStatement.php', $('#formEm').serialize() + '&cmd=email' + '&reg=' + $(this).data('reg') + '&vid=' + $(this).data('vid'), function(data) {
             $('#btnEmail').val('Send Email');
             try {
-                data = $.parseJSON(data);
+                data = JSON.parse(data);
             } catch (err) {
                 alert('Bad JSON Encoding');
                 return;
@@ -311,7 +311,7 @@ if ($msg != '') {
                     $.post('ShowStatement.php', $('#formEm').serialize() + '&cmd=email' + '&reg=' + $(this).data('reg') + '&vid=' + $(this).data('vid'), function(data) {
                         $('#btnEmail').val('Send Email');
                         try {
-                            data = $.parseJSON(data);
+                            data = JSON.parse(data);
                         } catch (err) {
                             flagAlertMessage('Bad JSON Encoding', 'error');
                             return;

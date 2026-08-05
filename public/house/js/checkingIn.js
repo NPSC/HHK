@@ -53,8 +53,8 @@ function ckedIn(data) {
 $(document).ready(function () {
   "use strict";
   var t = this;
-  var resv = $.parseJSON($("#resv").val());
-  var pageManagerOptions = $.parseJSON($("#resvManagerOptions").val());
+  var resv = JSON.parse($("#resv").val());
+  var pageManagerOptions = JSON.parse($("#resvManagerOptions").val());
   fixedRate = $("#fixedRate").val();
   payFailPage = $("#payFailPage").val();
   dateFormat = $("#dateFormat").val();

@@ -104,7 +104,7 @@ $selYearOptions = ReportFilter::getYearOptionsMarkup($yearSelected, $startYear, 
                     alert('Server had a problem.  ' + xhrObject.status + ", "+ xhrObject.responseText);
 
                 if (data) {
-                    data = $.parseJSON(data);
+                    data = JSON.parse(data);
                     if (data.error) {
                         alert('Application Error - ' + data.error);
                     }

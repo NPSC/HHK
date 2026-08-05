@@ -74,7 +74,7 @@ var dtCols = [
 ];
 
 function relationReturn(dat) {
-  var data = $.parseJSON(dat);
+  var data = JSON.parse(dat);
   if (data.error) {
     if (data.gotopage) {
       window.open(data.gotopage, "_self");
@@ -670,7 +670,7 @@ document.addEventListener("DOMContentLoaded", () => {
       $.post("ws_resc.php", parms, function (data) {
         if (data) {
           try {
-            data = $.parseJSON(data);
+            data = JSON.parse(data);
           } catch (err) {
             alert("Parser error - " + err.message);
             return;

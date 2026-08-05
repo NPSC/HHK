@@ -69,28 +69,21 @@ $finalPage = $houseUrl . $transferPageStr . (count($forwardPageParms) > 0 ? '?' 
         <meta charset="UTF-8">
         <title></title>
 
-        <script type="text/javascript" src="<?php echo JQ_JS ?>"></script>
+        <script type="text/javascript">
+            var forwardURL = '<?php echo $finalPage; ?>';
 
- <script type="text/javascript">
-    var forwardURL = '<?php echo $finalPage; ?>';
+            document.addEventListener("DOMContentLoaded", () => {
+                "use strict";
 
-$(document).ready(function () {
-    "use strict";
+                const w = opener;
 
-    var w = opener;
+                w = (!w ? parent.window : opener.window);
 
-    if (!w) {
-        w = parent.window;
-    }
-    else {
-        w = opener.window;
-    }
+                w.location = forwardURL;
 
-    w.location = forwardURL;
+            });
 
-});
-
-    </script>
+        </script>
     </head>
     <body>
 

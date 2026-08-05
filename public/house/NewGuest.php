@@ -243,7 +243,7 @@ $columSelector = $colSelector->makeSelectorTable(TRUE)->generateMarkup(array('st
         <script type="text/javascript">
             document.addEventListener("DOMContentLoaded", () => {
                 var dateFormat = '<?php echo $labels->getString("momentFormats", "report", "MMM D, YYYY"); ?>';
-                var columnDefs = $.parseJSON('<?php echo json_encode($colSelector->getColumnDefs()); ?>');
+                var columnDefs = JSON.parse('<?php echo json_encode($colSelector->getColumnDefs()); ?>');
                 var makeTable = '<?php echo $mkTable; ?>';
                 <?php echo $filter->getTimePeriodScript(); ?>
                 $('#btnHere, #btnExcel, #cbColClearAll, #cbColSelAll').button();

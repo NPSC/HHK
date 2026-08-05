@@ -38,7 +38,7 @@ function invPay(id, pbp, dialg) {
 
   $.post("ws_ckin.php", parms, function (data) {
     try {
-      data = $.parseJSON(data);
+      data = JSON.parse(data);
     } catch (err) {
       alert("Parser error - " + err.message);
       return;
@@ -94,7 +94,7 @@ function invLoadPc(nme, id, iid) {
       "use strict";
       if (data) {
         try {
-          data = $.parseJSON(data);
+          data = JSON.parse(data);
         } catch (err) {
           alert("Parser error - " + err.message);
           return;
@@ -155,7 +155,7 @@ function invSetBill(inb, name, idDiag, idElement, billDate, notes, notesElement)
         function (data) {
           if (data) {
             try {
-              data = $.parseJSON(data);
+              data = JSON.parse(data);
             } catch (err) {
               alert("Parser error - " + err.message);
               return;
@@ -208,7 +208,7 @@ function invoiceAction(idInvoice, action, eid, container, show) {
     function (data) {
       if (data) {
         try {
-          data = $.parseJSON(data);
+          data = JSON.parse(data);
         } catch (err) {
           alert("Parser error - " + err.message);
           return;

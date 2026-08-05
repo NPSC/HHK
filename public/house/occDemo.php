@@ -183,7 +183,7 @@ $diagnosisMarkup = $filter->diagnosisMarkup()->generateMarkup();
                     $.post('../admin/ws_gen.php', {cmd: 'zipd', 'zipf': zipf, 'zipt': zipt},
                     function(data) {
                         try {
-                            data = $.parseJSON(data);
+                            data = JSON.parse(data);
                         } catch (err) {
                             alert('Bad JSON Encoding');
                             return;

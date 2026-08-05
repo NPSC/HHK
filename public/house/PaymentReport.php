@@ -548,7 +548,7 @@ $columSelector = $colSelector->makeSelectorTable(TRUE)->generateMarkup(array('cl
                         if (data) {
 
                             try {
-                                data = $.parseJSON(data);
+                                data = JSON.parse(data);
                             } catch (err) {
                                 alert("Parser error - " + err.message);
                                 return;
@@ -573,7 +573,7 @@ $columSelector = $colSelector->makeSelectorTable(TRUE)->generateMarkup(array('cl
             document.addEventListener("DOMContentLoaded", () => {
                 var dateFormat = '<?php echo $labels->getString("momentFormats", "report", "MMM D, YYYY"); ?>';
                 var makeTable = '<?php echo $mkTable; ?>';
-                var columnDefs = $.parseJSON('<?php echo json_encode($colSelector->getColumnDefs()); ?>');
+                var columnDefs = JSON.parse('<?php echo json_encode($colSelector->getColumnDefs()); ?>');
                 var tabReturn = '<?php echo $tabReturn; ?>';
                 var delCofClass = '<?php echo $delCofListClass; ?>';
 
@@ -591,7 +591,7 @@ $columSelector = $colSelector->makeSelectorTable(TRUE)->generateMarkup(array('cl
                                 if (data) {
 
                                     try {
-                                        data = $.parseJSON(data);
+                                        data = JSON.parse(data);
                                     } catch (err) {
                                         alert("Parser error - " + err.message);
                                         return;

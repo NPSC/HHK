@@ -28,7 +28,7 @@ function getRoomFees(cat) {
       },
       function (data) {
         $("#spnAmount").text("").removeClass("ui-autocomplete-loading");
-        data = $.parseJSON(data);
+        data = JSON.parse(data);
         if (data.error) {
           if (data.gotopage) {
             window.open(data.gotopage, "_self");
@@ -92,7 +92,7 @@ function getResource(idResc, type, trow) {
     function (data) {
       if (data) {
         try {
-          data = $.parseJSON(data);
+          data = JSON.parse(data);
         } catch (err) {
           alert("Parser error - " + err.message);
           return;
@@ -143,7 +143,7 @@ function getStatusEvent(idResc, type, title) {
     function (data) {
       if (data) {
         try {
-          data = $.parseJSON(data);
+          data = JSON.parse(data);
         } catch (err) {
           alert("Parser error - " + err.message);
           return;
@@ -182,7 +182,7 @@ function saveStatusEvent(idResc, type) {
       $("#statEvents").dialog("close");
       if (data) {
         try {
-          data = $.parseJSON(data);
+          data = JSON.parse(data);
         } catch (err) {
           alert("Parser error - " + err.message);
           return;
@@ -225,7 +225,7 @@ function saveResource(idresc, type, clas) {
     function (data) {
       if (data) {
         try {
-          data = $.parseJSON(data);
+          data = JSON.parse(data);
         } catch (err) {
           alert("Parser error - " + err.message);
           return;
@@ -272,10 +272,10 @@ $(document).ready(function () {
   "use strict";
 
   $("#formBuilder").hhkFormBuilder({
-    labels: $.parseJSON($("#labels").val()),
-    fieldOptions: $.parseJSON($("#frmOptions").val()),
-    demogs: $.parseJSON($("#frmDemog").val()),
-    insTypes: $.parseJSON($("#insTypes").val()),
+    labels: JSON.parse($("#labels").val()),
+    fieldOptions: JSON.parse($("#frmOptions").val()),
+    demogs: JSON.parse($("#frmDemog").val()),
+    insTypes: JSON.parse($("#insTypes").val()),
   });
 
   var tabIndex = parseInt($("#tabIndex").val());
@@ -314,7 +314,7 @@ $(document).ready(function () {
         nites: 0,
       },
       function (data) {
-        data = $.parseJSON(data);
+        data = JSON.parse(data);
         if (data.catTitle) {
           $("#spnFaCatTitle").text(data.catTitle);
         }
@@ -390,7 +390,7 @@ $(document).ready(function () {
       $("#spnFrmLoading").hide();
 
       if (data) {
-        data = $.parseJSON(data);
+        data = JSON.parse(data);
 
         $("#divUploadForm").empty().append(data.mkup);
         $("#btnNewForm").show();

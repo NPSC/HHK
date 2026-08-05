@@ -43,7 +43,7 @@ export function viewVisit(idGuest, idVisit, buttons, title, action, visitSpan, c
 
       // Process data
       try {
-        data = $.parseJSON(data);
+        data = JSON.parse(data);
       } catch (err) {
         alert("Parser error - " + err.message);
         return;
@@ -635,7 +635,7 @@ export function saveFees(idGuest, idVisit, visitSpan, rtnTbl, postbackPage) {
 
   $.post("ws_ckin.php", parms, function (data) {
     try {
-      data = $.parseJSON(data);
+      data = JSON.parse(data);
     } catch (err) {
       alert("Parser error - " + err.message);
       return;

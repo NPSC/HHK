@@ -58,7 +58,7 @@ function getApplyDiscDiag(orderNumber, $diagBox) {
     function (data) {
       if (data) {
         try {
-          data = $.parseJSON(data);
+          data = JSON.parse(data);
         } catch (e) {
           alert("Parser error - " + e.message);
           return;
@@ -210,7 +210,7 @@ function saveDiscountPayment(orderNumber, item, amt, discount, addnlCharge, adjD
     function (data) {
       if (data) {
         try {
-          data = $.parseJSON(data);
+          data = JSON.parse(data);
         } catch (err) {
           alert("Parser error - " + err.message);
           return;
@@ -315,7 +315,7 @@ function sendVoidReturn(btn, vorr, idPayment, amt, refresh) {
     let revMessage = "";
     if (data) {
       try {
-        data = $.parseJSON(data);
+        data = JSON.parse(data);
       } catch (err) {
         alert("Parser error - " + err.message);
         return;
@@ -1254,7 +1254,7 @@ function daysCalculator(days, idRate, idVisit, fixedAmt, adjAmt, numGuests, idRe
         return;
       }
       try {
-        data = $.parseJSON(data);
+        data = JSON.parse(data);
       } catch (err) {
         alert("Parser error - " + err.message);
         return;
@@ -1479,7 +1479,7 @@ function reprintReceipt(pid, idDialg) {
     function (data) {
       if (data) {
         try {
-          data = $.parseJSON(data);
+          data = JSON.parse(data);
         } catch (e) {
           alert("Parser error - " + e.message);
           return;
@@ -1616,7 +1616,7 @@ function paymentRedirect(data, $xferForm, initialParams) {
               $.post(encodeURI(data.deluxehpf.pbp), submitData, function (data) {
                 if (data) {
                   try {
-                    data = $.parseJSON(data);
+                    data = JSON.parse(data);
                   } catch (e) {
                     alert("Parser error - " + e.message);
                     return;
@@ -1831,7 +1831,7 @@ function cardOnFile(id, idGroup, postBackPage, idx) {
   $.post("ws_ckin.php", parms, function (data) {
     if (data) {
       try {
-        data = $.parseJSON(data);
+        data = JSON.parse(data);
       } catch (err) {
         alert("Parser error - " + err.message);
         return;
