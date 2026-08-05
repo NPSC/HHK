@@ -41,7 +41,6 @@ $labels = Labels::getLabels();
         <?php echo FAVICON; ?>
         <?php echo CSSVARS; ?>
 
-        <script type="text/javascript" src="<?php echo STATE_COUNTRY_JS; ?>" defer></script>
         <script type="text/javascript" src="<?php echo RESV_JS; ?>" defer></script>
 
         <script type="text/javascript">

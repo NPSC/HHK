@@ -9,7 +9,6 @@
 
 import { viewHospitalStay } from "./hospitalStay.js";
 import { viewVehicleDialog } from "./vehicles.js";
-import { refreshdTables } from "./register.js";
 
 window.isCheckedOut = false;
 

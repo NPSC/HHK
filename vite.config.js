@@ -165,7 +165,8 @@ export default defineConfig({
           createRoleAutoComplete: "readonly",
           createZipAutoComplete: "readonly",
           dateFormat: "readonly", // page controller script reads #dateFormat into this, e.g. public/admin/js/Configure.js
-          // public/house/js/payments.js, loaded alongside visitDialog.js on CheckingIn.php/Reserve.php/VisitInterval.php
+          // public/house/js/payments.js, loaded alongside visitDialog.js on CheckingIn.php/Reserve.php/VisitInterval.php,
+          // and alongside regForm.js on ShowRegForm.php
           showReceipt: "readonly",
           setupPayments: "readonly",
           paymentRedirect: "readonly",
@@ -174,6 +175,9 @@ export default defineConfig({
           amtPaid: "readonly",
           getApplyDiscDiag: "readonly",
           paymentsTable: "readonly",
+          reprintReceipt: "readonly",
+          setupCOF: "readonly",
+          cardOnFile: "readonly",
           // public/house/js/invoice.js, loaded alongside resources/js/register.js on register.php
           invLoadPc: "readonly",
           invSetBill: "readonly",
@@ -182,8 +186,11 @@ export default defineConfig({
           pageManager: "readonly",
           calendar: "readonly",
           fixedRate: "readonly",
-          refreshdTables: "readonly", // resources/js/register.js
+          refreshdTables: "readonly",
           getIncomeDiag: "readonly", // public/house/js/resv.js
+          // public/house/js/resv.js, loaded alongside regForm.js on ShowRegForm.php
+          getRegistrationDialog: "readonly",
+          showRegDialog: "readonly",
           // public/house/js/resvManager.js and resv.js, loaded alongside hospitalStay.js
           verifyDocAgent: "readonly",
           getAgent: "readonly",
@@ -191,6 +198,17 @@ export default defineConfig({
           // resources/js/house.js exposes these from house/visitDialog.js; consumed by resources/js/register.js
           viewVisit: "readonly",
           saveFees: "readonly",
+          // public/house/js/SigWebTablet.js, loaded alongside regForm.js on ShowRegForm.php when a signature pad is required
+          IsSigWebInstalled: "readonly",
+          GetSigWebVersion: "readonly",
+          ClearTablet: "readonly",
+          SetDisplayXSize: "readonly",
+          SetDisplayYSize: "readonly",
+          SetTabletState: "readonly",
+          SetJustifyMode: "readonly",
+          GetTabletState: "readonly",
+          NumberOfTabletPoints: "readonly",
+          Reset: "readonly",
         },
       },
       {
@@ -239,7 +257,12 @@ export default defineConfig({
         // common.js bundles plus their site's jQuery UI theme.
         house: "resources/js/house.js",
         register: "resources/js/house/register.js",
+        guestLoad: "resources/js/house/guestload.js",
+        // self-contained: imports vendor.js/common.js itself instead of relying on house.js,
+        // so ShowRegForm.php loads this alone rather than alongside house.js
+        regForm: "resources/js/house/regForm.js",
         admin: "resources/js/admin.js",
+        nameEdit: "resources/js/admin/nameEdit.js",
         root: "resources/js/root.js",
         loginHouse: "resources/js/login/house.js",
         loginAdmin: "resources/js/login/admin.js",

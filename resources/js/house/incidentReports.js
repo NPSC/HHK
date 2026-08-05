@@ -1,4 +1,5 @@
 import $ from "../common/jquery.js";
+import SignaturePad from "signature_pad";
 
 (function ($) {
   $.fn.incidentViewer = function (options) {
@@ -55,7 +56,7 @@ import $ from "../common/jquery.js";
         '<div style="display: inline-block" class="hhk-clear-signature-btn hhk-report-button incident-edit ui-corner-all ui-state-default">Clear Signature</span></div>' +
         '<div style="display: inline-block" class="hhk-finish-signature-btn hhk-report-button incident-edit ui-corner-all ui-state-default">Finish Signature</span></div>' +
         "</div>" +
-        '<div style="height: 141px;" class="jsignature"></div>' +
+        '<canvas class="incident-signature ui-widget-content ui-corner-all" width="563" height="141"></canvas>' +
         "</td>" +
         "</tr>" +
         '<td class="tdlabel">Signature Date</td>' +
@@ -156,14 +157,9 @@ import $ from "../common/jquery.js";
     $wrapper.incidentdialog.find("textarea").val("").removeAttr("readonly");
     $wrapper.incidentdialog.find("option").removeAttr("selected");
     $wrapper.incidentdialog.find(".incidentStatus").val("a");
-    $wrapper.incidentdialog.find(".jsignature").empty();
-    $wrapper.incidentdialog.find(".jsignature").jSignature({ width: "563px", height: "141px" });
+    $wrapper.signaturePad.clear();
     $wrapper.incidentdialog.find(".hhk-clear-signature-btn").button();
     $wrapper.incidentdialog.find(".hhk-finish-signature-btn").button();
-    $wrapper.incidentdialog.on("click", ".hhk-clear-signature-btn", function () {
-      $wrapper.incidentdialog.find(".jsignature").jSignature("clear");
-      $wrapper.incidentdialog.find(".sigDate").datepicker("setDate", "");
-    });
     $wrapper.incidentdialog
       .find(".incdate")
       .datepicker({ autoSize: true, dateFormat: "M d, yy", yearRange: "c-5:c+3" })
@@ -235,9 +231,9 @@ import $ from "../common/jquery.js";
     } else {
       var repID = $wrapper.incidentdialog.find("input[name=reportId]").val();
       var data = $wrapper.incidentdialog.find("form").serialize();
-      var signature = encodeURIComponent(
-        $wrapper.incidentdialog.find(".jsignature").jSignature("getData"),
-      );
+      var signature = $wrapper.signaturePad.isEmpty()
+        ? ""
+        : encodeURIComponent($wrapper.signaturePad.toDataURL());
       data += "&signature=" + signature;
       if (repID > 0) {
         data += "&cmd=editIncident&repId=" + repID;
@@ -326,7 +322,7 @@ import $ from "../common/jquery.js";
             $wrapper.incidentdialog.find("textarea[name=incidentResolution]").val(data.resolution);
             $wrapper.incidentdialog.find("input[name=resolutionDate]").val(data.resolutionDate);
             if (data.signature) {
-              $wrapper.incidentdialog.find(".jsignature").jSignature("setData", data.signature);
+              $wrapper.signaturePad.fromDataURL(data.signature);
             }
             $wrapper.incidentdialog.find("input[name=signatureDate]").val(data.signatureDate);
             $wrapper.incidentdialog.dialog("open");
@@ -344,6 +340,12 @@ import $ from "../common/jquery.js";
       } else {
         $wrapper.incidentdialog.find(".resdate").datepicker("setDate", "");
       }
+    });
+
+    //Clear the signature pad
+    $wrapper.incidentdialog.on("click", ".hhk-clear-signature-btn", function () {
+      $wrapper.signaturePad.clear();
+      $wrapper.incidentdialog.find(".sigDate").datepicker("setDate", "");
     });
 
     //Set signature date to today if signature is captured
@@ -646,6 +648,9 @@ import $ from "../common/jquery.js";
 
       //add incident dialog
       $wrapper.append($wrapper.incidentdialog);
+      $wrapper.signaturePad = new SignaturePad(
+        $wrapper.incidentdialog.find(".incident-signature")[0],
+      );
       $wrapper.incidentdialog.dialog({
         autoOpen: false,
         modal: true,

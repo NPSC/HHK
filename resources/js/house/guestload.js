@@ -9,6 +9,22 @@
  * @license   GPL and MIT
  * @link      https://github.com/NPSC/HHK
  */
+
+import "../vendor.js";
+import "../common.js";
+
+import "../../css/jqui-house/jquery-ui.min.css";
+import "../../css/house/house.css";
+
+// import jquery plugins - automatically attached to jQuery object
+import "./incidentReports.js";
+import "./documentUpload.js";
+
+//visit dialog imports
+import { viewVisit, saveFees } from "./visitDialog.js";
+import { initGuestPhoto } from "../common/guestPhoto.js";
+import { addrPrefs, verifyAddrs } from "../common/addrPrefs.js";
+
 function isNumber(n) {
   "use strict";
   return !isNaN(parseFloat(n)) && isFinite(n);
@@ -94,23 +110,13 @@ function paymentRefresh() {
   $("#psgList").tabs("load", indx);
 }
 
-// Init j-query.
-$(document).ready(function () {
+document.addEventListener("DOMContentLoaded", () => {
   "use strict";
-  var memData = memberData;
+  var memData = window.memberData;
   var nextVeh = 1;
   var listJSON = "../admin/ws_gen.php?cmd=chglog&vw=vguest_audit_log&uid=" + memData.id;
   var listEvtTable;
   var setupNotes, $psgList;
-
-  //    $.widget( "ui.autocomplete", $.ui.autocomplete, {
-  //        _resizeMenu: function() {
-  //            this.menu.element.outerWidth( Math.max(
-  //                    ul.width( "" ).outerWidth() + 1,
-  //                    this.element.outerWidth()
-  //            ) * 1.1 );
-  //        }
-  //    });
 
   $("#divFuncTabs").tabs({
     collapsible: true,
@@ -124,7 +130,7 @@ $(document).ready(function () {
     psgId: memData.idPsg,
   });
 
-  if (useDocUpload) {
+  if (window.useDocUpload) {
     //doc uploader
     $("#vDocsContent").docUploader({
       visitorLabel: memData.visitorLabel,
@@ -177,12 +183,19 @@ $(document).ready(function () {
     title: "Income Chooser",
   });
 
-  if (rctMkup !== "") {
-    showReceipt("#pmtRcpt", rctMkup, "Payment Recipt", 550, receiptPaymentId, receiptBilledToEmail);
+  if (window.rctMkup !== "") {
+    showReceipt(
+      "#pmtRcpt",
+      window.rctMkup,
+      "Payment Recipt",
+      550,
+      window.receiptPaymentId,
+      window.receiptBilledToEmail,
+    );
   }
 
-  if (pmtMkup !== "") {
-    $("#paymentMessage").html(pmtMkup).show();
+  if (window.pmtMkup !== "") {
+    $("#paymentMessage").html(window.pmtMkup).show();
   }
 
   // Visits
@@ -323,8 +336,8 @@ $(document).ready(function () {
     $psgList.tabs("disable");
   }
 
-  $psgList.tabs("enable", psgTabIndex);
-  $psgList.tabs("option", "active", psgTabIndex);
+  $psgList.tabs("enable", window.psgTabIndex);
+  $psgList.tabs("option", "active", window.psgTabIndex);
 
   $("#cbnoReturn").change(function () {
     if (this.checked) {
@@ -471,9 +484,7 @@ $(document).ready(function () {
 
   addrPrefs(memData);
 
-  var zipXhr;
-
-  createZipAutoComplete($("input.hhk-zipsearch"), "ws_admin.php", zipXhr);
+  createZipAutoComplete($("input.hhk-zipsearch"), "ws_admin.php");
 
   // Main form submit button.  Disable page during POST
   $("#btnSubmit").click(function () {
@@ -578,8 +589,8 @@ $(document).ready(function () {
   );
 
   // Any results
-  if (resultMessage !== "") {
-    flagAlertMessage(resultMessage, "alert");
+  if (window.resultMessage !== "") {
+    flagAlertMessage(window.resultMessage, "alert");
   }
 
   // Excludes tab "Check-all" button
@@ -697,133 +708,15 @@ $(document).ready(function () {
     });
 
   //guest photo
-  if (showGuestPhoto || useDocUpload) {
-    var guestPhoto = window.uploader;
-    $(document).on("click", ".upload-guest-photo", function () {
-      $(guestPhoto.container).removeClass().addClass("uppload-container");
-      guestPhoto.updatePlugins((plugins) => []);
-      guestPhoto.updateSettings({
-        maxSize: [500, 500],
-        customClass: "guestPhotouploadContainer",
-        uploader: function uploadFunction(file) {
-          return new Promise(function (resolve, reject) {
-            var formData = new FormData();
-            formData.append("cmd", "putguestphoto");
-            formData.append("guestId", memData.id);
-            formData.append("guestPhoto", file);
-
-            $.ajax({
-              type: "POST",
-              url: "../house/ws_resc.php",
-              dataType: "json",
-              data: formData,
-              //use contentType, processData for sure.
-              contentType: false,
-              processData: false,
-              success: function (data) {
-                if (data.error) {
-                  reject(data.error);
-                } else {
-                  resolve("success");
-                  $("#hhk-guest-photo").css(
-                    "background-image",
-                    "url(../house/ws_resc.php?cmd=getguestphoto&guestId=" +
-                      memData.id +
-                      "r&x=" +
-                      new Date().getTime() +
-                      ")",
-                  );
-                  $(".delete-guest-photo").show();
-                }
-                guestPhoto.navigate("local");
-              },
-              error: function (error) {
-                reject(error);
-              },
-            });
-          });
-        },
-      });
-
-      var guestphotoLocal = new Upploader.Local({
-        maxFileSize: 5000000,
-        mimeTypes: ["image/jpeg", "image/png"],
-      });
-
-      window.camera = new Upploader.Camera();
-
-      guestPhoto.use([guestphotoLocal, new Upploader.Crop({ aspectRatio: 1 }), window.camera]);
-
-      guestPhoto.open();
-    });
-
-    guestPhoto.on("open", function () {
-      //hide effects if only one
-      if (guestPhoto.effects.length == 1) {
-        $(guestPhoto.container).find(".effects-tabs").hide();
-      } else {
-        $(guestPhoto.container).find(".effects-tabs").show();
-      }
-    });
-
-    guestPhoto.on("close", function () {
-      guestPhoto.navigate("local"); //trigger camera to stop
-      var camera = guestPhoto.services.filter((service) => service.name == "camera");
-      if (camera.length == 1) {
-        camera[0].stop();
-      }
-    });
-
-    $(document).on("click", "#hhk-guest-photo", function (e) {
-      e.preventDefault();
-    });
-
-    //toggle guest photo action buttons on hover
-    $(".hhk-visitdialog #hhk-guest-photo").on({
-      mouseenter: function () {
-        $(this).find("#hhk-guest-photo-actions").show();
-        $(this).find("#hhk-guest-photo img").fadeTo(100, 0.5);
+  if (window.showGuestPhoto || window.useDocUpload) {
+    initGuestPhoto({
+      endpoint: "ws_resc.php",
+      getGuestId: function () {
+        return memData.id;
       },
-      mouseleave: function () {
-        $(this).find("#hhk-guest-photo-actions").hide();
-        $(this).find("#hhk-guest-photo img").fadeTo(100, 1);
+      onError: function (message) {
+        flagAlertMessage(message, "error");
       },
-    });
-
-    $(".delete-guest-photo").on("click", function () {
-      if (confirm("Really Delete this photo?")) {
-        $.ajax({
-          type: "POST",
-          url: "../house/ws_resc.php",
-          dataType: "json",
-          data: {
-            cmd: "deleteguestphoto",
-            guestId: memData.id,
-          },
-          success: function (data) {
-            if (data.error) {
-              if (data.gotopage) {
-                window.location.assign(data.gotopage);
-              }
-
-              flagAlertMessage("Server error - " + data.error, "error");
-              return;
-            } else {
-              $("#hhk-guest-photo").css(
-                "background-image",
-                "url(../house/ws_resc.php?cmd=getguestphoto&guestId=" +
-                  memData.id +
-                  "&rx=" +
-                  new Date().getTime() +
-                  ")",
-              );
-            }
-          },
-          error: function (error) {
-            flagAlertMessage("AJAX error - " + error);
-          },
-        });
-      }
     });
   }
 });

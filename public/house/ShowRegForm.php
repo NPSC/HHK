@@ -268,7 +268,7 @@ $contrls = HTMLContainer::generateMarkup('div', $shoRegBtn . $shoStmtBtn . $regM
         <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
         <title><?php echo $pageTitle; ?></title>
 
-        <?php echo Vite::asset('resources/js/house.js'); ?>
+        <?php echo Vite::asset('resources/js/house/regForm.js'); ?>
         
         <?php echo FAVICON; ?>
         <?php echo CSSVARS; ?>
@@ -283,9 +283,7 @@ $contrls = HTMLContainer::generateMarkup('div', $shoRegBtn . $shoStmtBtn . $regM
 
         <script type="text/javascript" src="<?php echo RESV_JS; ?>" defer></script>
         <script type="text/javascript" src="<?php echo PAYMENT_JS; ?>" defer></script>
-        <script type="text/javascript" src="<?php echo JSIGNATURE_JS; ?>" defer></script>
         <?php echo ($isTopazRequired ? '<script type="text/javascript" src="' . TOPAZ_SIGWEB_JS . '" defer></script>': ''); ?>
-        <script type="text/javascript" src="<?php echo REG_FORM_JS; ?>" defer></script>
 
         <script type='text/javascript'>
 
@@ -342,7 +340,7 @@ $contrls = HTMLContainer::generateMarkup('div', $shoRegBtn . $shoStmtBtn . $regM
             	<input type="hidden" id="formCode">
                 <input type="hidden" id="idBtn">
             	<p style="text-align:center">Use your mouse, finger or touch pen to sign</p>
-            	<div class="signature ui-widget-content ui-corner-all"></div>
+            	<canvas class="signature ui-widget-content ui-corner-all" width="750" height="141"></canvas>
             </div>
             <div id="topazDialog" style="display:none; text-align:center;">
             	<input type="hidden" id="idName">

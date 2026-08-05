@@ -188,7 +188,6 @@ if ($idDoc > 0) {
         <?php echo CSSVARS; ?>
         <?php echo FAVICON; ?>
 
-        <script type="text/javascript" src="<?php echo STATE_COUNTRY_JS; ?>" defer></script>
         <script type="text/javascript" src="<?php echo RESV_JS; ?>" defer></script>
 
     </head>

@@ -20,6 +20,7 @@ import {
   validatePhoneNumber,
   cleanPhoneNumber,
 } from "./common/addrPrefs.js";
+import { initGuestPhoto } from "./common/guestPhoto.js";
 
 window.flagAlertMessage = flagAlertMessage;
 window.dateRender = dateRender;
@@ -39,6 +40,8 @@ window.verifyAddrs = verifyAddrs;
 window.validatePhoneNumber = validatePhoneNumber;
 window.cleanPhoneNumber = cleanPhoneNumber;
 
+window.initGuestPhoto = initGuestPhoto;
+
 //notesViewer.js - attaches $.fn.notesViewer
 import "./common/notesViewer.js";
 
@@ -46,3 +49,5 @@ import "./common/notesViewer.js";
 import "./common/smsDialog.js";
 
 import "./common/jquery.PrintArea.js";
+
+import "./common/stateCountry.js";

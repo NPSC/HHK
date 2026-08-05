@@ -184,21 +184,19 @@ export function verifyAddrs(container) {
   $container.find("input.ckzip, input.hhk-phoneInput, input.hhk-emailInput").trigger("change");
 }
 
-// Use google's libphonenumber to validate and format international phone numbers
-import { PhoneNumberUtil, PhoneNumberFormat } from "google-libphonenumber";
+// Use libphonenumber-js to validate and format international phone numbers
+import { parsePhoneNumberFromString } from "libphonenumber-js";
 
 export function validatePhoneNumber(phone, defaultRegion = "US") {
   try {
-    const phoneUtil = PhoneNumberUtil.getInstance();
-    const PNF = PhoneNumberFormat;
+    const number = parsePhoneNumberFromString(phone, defaultRegion);
+    if (!number) {
+      return { isValid: false, formatted: phone };
+    }
 
-    const number = phoneUtil.parseAndKeepRawInput(phone, defaultRegion);
-    const regionCode = phoneUtil.getRegionCodeForNumber(number);
-
-    const isValid = phoneUtil.isValidNumber(number);
-
-    const formatType = regionCode === defaultRegion ? PNF.NATIONAL : PNF.INTERNATIONAL;
-    const formatted = phoneUtil.format(number, formatType);
+    const isValid = number.isValid();
+    const formatted =
+      number.country === defaultRegion ? number.formatNational() : number.formatInternational();
     return { isValid, formatted };
   } catch {
     return { isValid: false, formatted: phone };

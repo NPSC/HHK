@@ -37,17 +37,12 @@ define('JSV', '?v=' . HHK\SysConst\CodeVersion::BUILD);
 define('MULTISELECT_CSS', '<link href="css/jquery.multiselect.css' . JSV . '" rel="stylesheet" type="text/css" />');
 define('FAVICON', '<link rel="icon" type="image/svg+xml" href="../favicon.svg' . JSV . '" />');
 define('DR_PICKER_CSS', '<link rel="stylesheet" href="css/daterangepicker.min.css' . JSV . '">');
-define('FULLC_CSS', '<link href="css/fullcalendar.min.css' . JSV . '" rel="stylesheet" type="text/css" />');
 define('SELECT2_CSS', '<link href="css/select2.min.css' . JSV . '" rel="stylesheet" type="text/css" />');
 define('INCIDENT_CSS', '<link href="css/incidentReports.css' . JSV . '" rel="stylesheet" type="text/css" />');
 
 define('JQ_JS', '../js/jquery-min.js' . JSV);
-define('JSIGNATURE_JS', '../js/jSignature.min.js' . JSV);
 
-define('STATE_COUNTRY_JS', '../js/stateCountry.js' . JSV);
 define('LOGIN_JS', '../js/login.js' . JSV);
 define('MULTISELECT_JS', '../js/jquery.multiselect.min.js' . JSV);
 define('DR_PICKER_JS', '../js/daterangepicker.hhk.min.js' . JSV);
-define('FULLC_JS', 'js/fullcalendarold.min.js' . JSV);
 define('SELECT2_JS', '../js/select2.min.js' . JSV);
-define('UPPLOAD_JS', '../js/uppload/uppload-3.2.1.min.js' . JSV);

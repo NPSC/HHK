@@ -1,14 +1,33 @@
+import "../vendor.js";
+import "../common.js";
+import "../../css/jqui-admin/jquery-ui.min.css";
+import "../../css/admin/admin.css";
+import { initGuestPhoto } from "../common/guestPhoto.js";
+import {
+  updateTips,
+  checkLength,
+  isNumber,
+  changeMemberStatus,
+  getDonationMarkup,
+  donateDeleteMarkup,
+  donateResponse,
+  getCampaign,
+  relationReturn,
+  manageRelation,
+  dtCols,
+} from "./genfunc.js";
+
+import { verifyAddrs, addrPrefs } from "../common/addrPrefs.js";
+
 document.addEventListener("DOMContentLoaded", () => {
   "use strict";
 
-  var memData = $.parseJSON("<?php echo $memDataJSON; ?>");
-  var userData = $.parseJSON("<?php echo $usrDataJSON; ?>");
+  var memData = window.memberData;
+  var userData = window.userData;
   var listJSON = "ws_gen.php?cmd=chglog&uid=" + memData.id;
   var donName;
-  var savePressed = false;
-  var forceNamePrefix =
-    '<?php echo isset($uS->ForceNamePrefix) ? $uS->ForceNamePrefix : "false"; ?>';
-  var showGuestPhoto = "<?php echo $uS->ShowGuestPhoto; ?>";
+  var forceNamePrefix = window.forceNamePrefix;
+  var showGuestPhoto = window.showGuestPhoto;
 
   $.widget("ui.autocomplete", $.ui.autocomplete, {
     _resizeMenu: function () {
@@ -161,8 +180,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
   $("#btnSubmit, #btnReset, #btnCopy, #chgPW").button();
-  var lastXhr;
-  createZipAutoComplete($("input.hhk-zipsearch"), "ws_gen.php", lastXhr);
+  createZipAutoComplete($("input.hhk-zipsearch"), "ws_gen.php");
 
   $("#dselCamp").change(function () {
     getCampaign($(this).val());
@@ -342,13 +360,13 @@ document.addEventListener("DOMContentLoaded", () => {
       filterDefaultPageOptions();
     },
     buttons: {
-      Save: function (event) {
+      Save: function () {
         var parms = {},
           tipmsg = $("#hhk-wuprompt");
 
         $("#webContainer").hide().parent().hide();
 
-        $(".grpSec").each(function (index) {
+        $(".grpSec").each(function () {
           if ($(this).prop("checked")) {
             parms[$(this).attr("id")] = "checked";
           } else {
@@ -460,7 +478,6 @@ document.addEventListener("DOMContentLoaded", () => {
       return false;
     }
 
-    savePressed = true;
     $(this).val("Saving>>>>");
   });
   // Notes search button click handler
@@ -537,26 +554,24 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
   if ($("#hdnidpsg").length > 0) {
-    var lstXhr;
     createAutoComplete(
       $("#txtAgentSch"),
       3,
       { cmd: "filter", add: "phone", basis: "ra" },
       getAgent,
-      lstXhr,
     );
     if ($("#a_txtLastName").val() === "") {
       $(".hhk-agentInfo").hide();
     }
-    createAutoComplete($("#txtDocSch"), 3, { cmd: "filter", basis: "doc" }, getDoc, lstXhr);
+    createAutoComplete($("#txtDocSch"), 3, { cmd: "filter", basis: "doc" }, getDoc);
     if ($("#d_txtLastName").val() === "") {
       $(".hhk-docInfo").hide();
     }
   }
-  changeMemberStatus($("#selStatus"), memData, savePressed);
+  changeMemberStatus($("#selStatus"));
   // Flag member status if not active
   $("#selStatus").change(function () {
-    changeMemberStatus($(this), memData, savePressed);
+    changeMemberStatus($(this));
   });
 
   // Date of death
@@ -600,7 +615,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
       theUl.parent().height(sumpx + 40);
     },
-    function (e) {
+    function () {
       var theUl = $(this).text("Hide details").parent().next("ul");
       var details = theUl.find("li > div:first-child").addClass("header-open");
       details.next().show();
@@ -656,132 +671,14 @@ document.addEventListener("DOMContentLoaded", () => {
 
   //member photo
   if (showGuestPhoto) {
-    var guestPhoto = window.uploader;
-    $(document).on("click", ".upload-guest-photo", function () {
-      $(guestPhoto.container).removeClass().addClass("uppload-container");
-      guestPhoto.updatePlugins((plugins) => []);
-      guestPhoto.updateSettings({
-        maxSize: [500, 500],
-        customClass: "guestPhotouploadContainer",
-        uploader: function uploadFunction(file) {
-          return new Promise(function (resolve, reject) {
-            var formData = new FormData();
-            formData.append("cmd", "putguestphoto");
-            formData.append("guestId", memData.id);
-            formData.append("guestPhoto", file);
-
-            $.ajax({
-              type: "POST",
-              url: "../house/ws_resc.php",
-              dataType: "json",
-              data: formData,
-              //use contentType, processData for sure.
-              contentType: false,
-              processData: false,
-              success: function (data) {
-                if (data.error) {
-                  reject(data.error);
-                } else {
-                  resolve("success");
-                  $("#hhk-guest-photo").css(
-                    "background-image",
-                    "url(../house/ws_resc.php?cmd=getguestphoto&guestId=" +
-                      memData.id +
-                      "r&x=" +
-                      new Date().getTime() +
-                      ")",
-                  );
-                  $(".delete-guest-photo").show();
-                }
-                guestPhoto.navigate("local");
-              },
-              error: function (error) {
-                reject(error);
-              },
-            });
-          });
-        },
-      });
-
-      var guestphotoLocal = new Upploader.Local({
-        maxFileSize: 5000000,
-        mimeTypes: ["image/jpeg", "image/png"],
-      });
-
-      window.camera = new Upploader.Camera();
-
-      guestPhoto.use([guestphotoLocal, new Upploader.Crop({ aspectRatio: 1 }), window.camera]);
-
-      guestPhoto.open();
-    });
-
-    guestPhoto.on("open", function () {
-      //hide effects if only one
-      if (guestPhoto.effects.length == 1) {
-        $(guestPhoto.container).find(".effects-tabs").hide();
-      } else {
-        $(guestPhoto.container).find(".effects-tabs").show();
-      }
-    });
-
-    guestPhoto.on("close", function () {
-      guestPhoto.navigate("local"); //trigger camera to stop
-      var camera = guestPhoto.services.filter((service) => service.name == "camera");
-      if (camera.length == 1) {
-        camera[0].stop();
-      }
-    });
-
-    $(document).on("click", "#hhk-guest-photo", function (e) {
-      e.preventDefault();
-    });
-
-    //toggle guest photo action buttons on hover
-    $("#hhk-guest-photo").on({
-      mouseenter: function () {
-        $("#hhk-guest-photo-actions").show();
-        $("#hhk-guest-photo img").fadeTo(100, 0.5);
+    initGuestPhoto({
+      endpoint: "../house/ws_resc.php",
+      getGuestId: function () {
+        return memData.id;
       },
-      mouseleave: function () {
-        $("#hhk-guest-photo-actions").hide();
-        $("#hhk-guest-photo img").fadeTo(100, 1);
+      onError: function (message) {
+        flagAlertMessage(message, "error");
       },
-    });
-
-    $(".delete-guest-photo").on("click", function () {
-      if (confirm("Really Delete this photo?")) {
-        $.ajax({
-          type: "POST",
-          url: "../house/ws_resc.php",
-          dataType: "json",
-          data: {
-            cmd: "deleteguestphoto",
-            guestId: memData.id,
-          },
-          success: function (data) {
-            if (data.error) {
-              if (data.gotopage) {
-                window.location.assign(data.gotopage);
-              }
-
-              flagAlertMessage("Server error - " + data.error, "error");
-              return;
-            } else {
-              $("#hhk-guest-photo").css(
-                "background-image",
-                "url(../house/ws_resc.php?cmd=getguestphoto&guestId=" +
-                  memData.id +
-                  "&rx=" +
-                  new Date().getTime() +
-                  ")",
-              );
-            }
-          },
-          error: function (error) {
-            flagAlertMessage("AJAX error - " + error);
-          },
-        });
-      }
     });
   }
 });

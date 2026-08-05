@@ -114,7 +114,6 @@ if(isset($_GET['template'])){
 
     	</style>
 
-        <script type="text/javascript" src="<?php echo STATE_COUNTRY_JS; ?>" defer></script>
 		<script type="text/javascript" src="<?php echo REFERRAL_FORM_JS; ?>" defer></script>
 
         <script type='text/javascript'>

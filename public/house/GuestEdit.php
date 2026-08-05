@@ -735,7 +735,7 @@ $uS->guestId = $id;
         <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
         <title><?php echo $wInit->pageTitle; ?></title>
         <meta http-equiv="x-ua-compatible" content="IE=edge">
-        <?php echo Vite::asset('resources/js/house.js'); ?>
+        <?php echo Vite::asset('resources/js/house/guestload.js'); ?>
         
         <?php echo MULTISELECT_CSS; ?>
         <?php echo INCIDENT_CSS; ?>
@@ -744,13 +744,11 @@ $uS->guestId = $id;
         <?php echo STATEMENT_CSS; ?>
 
 
-        <script type="text/javascript" src="<?php echo STATE_COUNTRY_JS; ?>" defer></script>
         <script type="text/javascript" src="<?php echo MULTISELECT_JS; ?>" defer></script>
         <script type="text/javascript" src="<?php echo INVOICE_JS; ?>" defer></script>
         <script type="text/javascript" src="<?php echo PAYMENT_JS; ?>" defer></script>
         <script type="text/javascript" src="<?php echo RESV_JS; ?>" defer></script>
 		<script type="text/javascript" src="<?php echo RESV_MANAGER_JS; ?>" defer></script>
-        <script type="text/javascript" src="<?php echo JSIGNATURE_JS; ?>" defer></script>
         <script type="text/javascript" src="js/statement.js" defer></script>
 
         <?php
@@ -994,19 +992,18 @@ $uS->guestId = $id;
         <table id="feesTable" style="display:none;"></table>
         <?php if ($uS->PaymentGateway == AbstractPaymentGateway::DELUXE) { echo DeluxeGateway::getIframeMkup();} ?>
         <script type="text/javascript">
-            var memberData = <?php echo json_encode($memberData); ?>;
-            var psgTabIndex = parseInt('<?php echo $guestTabIndex; ?>', 10);
-            var rctMkup = '<?php echo $receiptMarkup; ?>';
-            var receiptPaymentId = '<?php echo $receiptPaymentId; ?>';
-            var receiptBilledToEmail = '<?php echo $receiptBilledToEmail; ?>';
-            var pmtMkup = '<?php echo $paymentMarkup; ?>';
-            var dateFormat = '<?php echo $labels->getString("momentFormats", "report", "MMM d, YYYY"); ?>';
-            var fixedRate = '<?php echo RoomRateCategories::Fixed_Rate_Category; ?>';
-            var resultMessage = "<?php echo $resultMessage; ?>";
-            var showGuestPhoto = '<?php echo $uS->ShowGuestPhoto; ?>';
-            var useDocUpload = '<?php echo $uS->UseDocumentUpload; ?>';
+            window.memberData = <?php echo json_encode($memberData); ?>;
+            window.psgTabIndex = parseInt('<?php echo $guestTabIndex; ?>', 10);
+            window.rctMkup = '<?php echo $receiptMarkup; ?>';
+            window.receiptPaymentId = '<?php echo $receiptPaymentId; ?>';
+            window.receiptBilledToEmail = '<?php echo $receiptBilledToEmail; ?>';
+            window.pmtMkup = '<?php echo $paymentMarkup; ?>';
+            window.dateFormat = '<?php echo $labels->getString("momentFormats", "report", "MMM d, YYYY"); ?>';
+            window.fixedRate = '<?php echo RoomRateCategories::Fixed_Rate_Category; ?>';
+            window.resultMessage = "<?php echo $resultMessage; ?>";
+            window.showGuestPhoto = '<?php echo $uS->ShowGuestPhoto; ?>';
+            window.useDocUpload = '<?php echo $uS->UseDocumentUpload; ?>';
         </script>
-        <script type="text/javascript" src="<?php echo GUESTLOAD_JS; ?>" defer></script>
     </body>
 </html>
 

@@ -412,15 +412,23 @@ $alertMessage = $alertMsg->createMarkup();
         <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
         <title><?php echo $pageTitle; ?></title>
 
-        <?php echo Vite::asset('resources/js/admin.js'); ?>
+        <?php echo Vite::asset('resources/js/admin/nameEdit.js'); ?>
 
         <?php echo FAVICON; ?>
         <?php echo MULTISELECT_CSS; ?>
         <link href="css/volCtrl.css" rel="stylesheet" type="text/css" />
 
-        <script type="text/javascript" src="<?php echo STATE_COUNTRY_JS; ?>" defer></script>
         <script type="text/javascript" src="<?php echo MULTISELECT_JS; ?>" defer></script>
-        <script type="text/javascript" src="js/genfunc.js" defer></script>
+
+        <script type="text/javascript">
+            document.addEventListener("DOMContentLoaded", () => {
+                "use strict";
+                window.memberData = <?php echo $memDataJSON; ?>;
+                window.userData = <?php echo $usrDataJSON; ?>;
+                window.forceNamePrefix = '<?php echo isset($uS->ForceNamePrefix) ? $uS->ForceNamePrefix : "false"; ?>';
+                window.showGuestPhoto = "<?php echo $uS->ShowGuestPhoto; ?>";
+            });
+        </script>
 
     </head>
     <body <?php if ($testVersion) echo "class='testbody'"; ?>>
@@ -552,6 +560,5 @@ $alertMessage = $alertMsg->createMarkup();
                 <?php echo $webUserDialogMarkup; ?>
             </div>
         </div>  <!-- div id="page"-->
-        <script type="text/javascript"><?php include_once("js/nameEd.js") ?></script>
     </body>
 </html>

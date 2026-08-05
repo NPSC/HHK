@@ -1,5 +1,13 @@
+import "../vendor.js";
+import "../common.js";
+
+import "../../css/jqui-house/jquery-ui.min.css";
+import "../../css/house/house.css";
+
+import SignaturePad from "signature_pad";
+
 // page setup
-function setupRegForm(
+export function setupRegForm(
   idReg,
   rctMkup,
   receiptBilledToEmail,
@@ -49,7 +57,7 @@ function setupRegForm(
       $(this)
         .parent(".ui-tabs-panel")
         .find(".regFormInput")
-        .each(function (i, element) {
+        .each(function (i) {
           var val = $(this).val();
           var field = { class: "regFormInput", uniqId: i, val: val };
 
@@ -103,7 +111,7 @@ function setupRegForm(
               $(".btnSave").prop("disabled", false).text("Save");
             }
           },
-          error: function (xhr, errorText, errorThrown) {
+          error: function (xhr, errorText) {
             flagAlertMessage(
               "<strong>Error:</strong> A server error has occurred - " + errorText,
               true,
@@ -177,11 +185,11 @@ function setupRegForm(
   $("#regTabDiv, #signedRegTabDiv").tabs();
 }
 
-function loadSignatures(signatures) {
+export function loadSignatures(signatures) {
   $("#vsignedReg .btnSign, #vsignedReg .btnInitial").hide();
 
   try {
-    for (docId in signatures) {
+    for (let docId in signatures) {
       //move signTimestamp
       var docEl = docId == "vreg" ? $("#vreg") : $("#vsignedReg #" + docId);
       var signTimestamp = docEl.find(".signTimestamp");
@@ -227,8 +235,23 @@ function loadSignatures(signatures) {
 }
 
 // esign JS
-function setupEsign() {
+export function setupEsign() {
   window.regFormSignatures = [];
+
+  const sigCanvas = document.querySelector("#jSignDialog .signature");
+  const signaturePad = new SignaturePad(sigCanvas);
+
+  function resizeSignaturePad(width, height) {
+    const ratio = Math.max(window.devicePixelRatio || 1, 1);
+    sigCanvas.style.width = width + "px";
+    sigCanvas.style.height = height + "px";
+    sigCanvas.width = width * ratio;
+    sigCanvas.height = height * ratio;
+    sigCanvas.getContext("2d").scale(ratio, ratio);
+    signaturePad.clear();
+  }
+
+  resizeSignaturePad(750, 141);
 
   $("#jSignDialog").dialog({
     autoOpen: false,
@@ -239,7 +262,7 @@ function setupEsign() {
         var idName = $(this).find("input#idName").val();
         var formCode = $(this).find("input#formCode").val();
         var uniqId = $(this).find("input#idBtn").val();
-        $(this).find(".signature").jSignature("clear");
+        signaturePad.clear();
         window.regFormSignatures.some((sig, i) => {
           if (sig.formCode == formCode && sig.idName == idName && sig.uniqId == uniqId) {
             window.regFormSignatures.splice(i, 1);
@@ -255,10 +278,14 @@ function setupEsign() {
         $("#" + formCode + " .signWrapper[data-uniqid=" + uniqId + "] .signDate").hide();
       },
       Sign: function () {
+        if (signaturePad.isEmpty()) {
+          flagAlertMessage("<strong>Error:</strong> Please sign before continuing", true);
+          return;
+        }
+
         var idName = $(this).find("input#idName").val();
         var formCode = $(this).find("input#formCode").val();
-        var signature =
-          "data:" + $(this).find(".signature").jSignature("getData", "svgbase64").join(",");
+        var signature = signaturePad.toDataURL("image/svg+xml");
         var uniqId = $(this).find("input#idBtn").val();
         if (idName > 0) {
           window.regFormSignatures.push({
@@ -280,8 +307,6 @@ function setupEsign() {
       },
     },
   });
-
-  $("#jSignDialog .signature").jSignature({ width: "175px", height: "141px" });
 
   $("#topazDialog").dialog({
     autoOpen: false,
@@ -360,15 +385,14 @@ function setupEsign() {
         $("#jSignDialog input#idName").val($(this).closest(".signWrapper").data("idname"));
         $("#jSignDialog input#formCode").val($(this).closest(".ui-tabs-panel").attr("id"));
         $("#jSignDialog input#idBtn").val(uniqId);
-        $("#jSignDialog").find(".signature").jSignature("clear");
         if ($(this).hasClass("btnInitial")) {
-          $("#jSignDialog .signature").empty().jSignature({ width: "175px", height: "141px" });
+          resizeSignaturePad(175, 141);
           $("#jSignDialog")
             .dialog("option", "title", "Initial")
             .dialog("option", "width", getDialogWidth(240))
             .dialog("open");
         } else {
-          $("#jSignDialog .signature").empty().jSignature({ width: "750px", height: "141px" });
+          resizeSignaturePad(750, 141);
           $("#jSignDialog")
             .dialog("option", "title", "Signature: " + name)
             .dialog("option", "width", getDialogWidth(800))
@@ -581,13 +605,20 @@ function setupEsign() {
 
   document.addEventListener(
     "beforeunload",
-    function (evt) {
+    function () {
       try {
         close();
         clearInterval(tmr);
-      } catch (e) {}
+      } catch {
+        // ignore errors tearing down the tablet during unload
+      }
     },
     false,
   );
   //end Topaz code
 }
+
+//called from the inline script in ShowRegForm.php
+window.setupRegForm = setupRegForm;
+window.setupEsign = setupEsign;
+window.loadSignatures = loadSignatures;

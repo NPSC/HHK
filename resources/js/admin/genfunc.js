@@ -1,4 +1,4 @@
-function updateTips(tips, t, container = false) {
+export function updateTips(tips, t, container = false) {
   tips.text(t).addClass("ui-state-highlight");
   if (container instanceof jQuery) {
     if (t.length > 0) {
@@ -9,7 +9,7 @@ function updateTips(tips, t, container = false) {
   }
 }
 
-function errorOnZero(o, n, tips) {
+export function errorOnZero(o, n, tips) {
   "use strict";
   if (o.val() == "" || o.val() == "0" || o.val() == "00") {
     o.addClass("ui-state-error");
@@ -20,7 +20,7 @@ function errorOnZero(o, n, tips) {
   }
 }
 
-function checkLength(o, n, min, max, tips, container = false) {
+export function checkLength(o, n, min, max, tips, container = false) {
   if (o.val().length > max || o.val().length < min) {
     o.addClass("ui-state-error");
     if (o.val().length == 0) {
@@ -42,12 +42,12 @@ function checkLength(o, n, min, max, tips, container = false) {
   }
 }
 
-function isNumber(n) {
+export function isNumber(n) {
   "use strict";
   return !isNaN(parseFloat(n)) && isFinite(n);
 }
 
-function changeMemberStatus(sc, memData, savePressed) {
+export function changeMemberStatus(sc) {
   "use strict";
 
   // Set background color for user emphasis
@@ -60,7 +60,7 @@ function changeMemberStatus(sc, memData, savePressed) {
   }
 }
 
-function getDonationMarkup(id) {
+export function getDonationMarkup(id) {
   "use strict";
   $.post(
     "donate.php",
@@ -86,14 +86,14 @@ function getDonationMarkup(id) {
       $("#divListDonation").append($(msg));
 
       $(".hhk-edit-donation").on("click", function () {
-        var idDonation = $(this).data("idDonation");
+        //var idDonation = $(this).data("idDonation");
         alert("Not implemented yet.");
       });
     },
   );
 }
 
-function donateDeleteMarkup(dataTxt, id) {
+export function donateDeleteMarkup(dataTxt, id) {
   "use strict";
   var spn, data;
 
@@ -123,7 +123,7 @@ function donateDeleteMarkup(dataTxt, id) {
   }
 }
 
-function donateResponse(dataTxt, id) {
+export function donateResponse(dataTxt, id) {
   "use strict";
   var spn, cbox, data;
 
@@ -160,7 +160,7 @@ function donateResponse(dataTxt, id) {
   }
 }
 
-function getCampaign(code) {
+export function getCampaign(code) {
   "use strict";
 
   if (code != "") {
@@ -194,7 +194,7 @@ function getCampaign(code) {
   }
 }
 
-function relationReturn(data) {
+export function relationReturn(data) {
   data = $.parseJSON(data);
   if (data.error) {
     if (data.gotopage) {
@@ -212,11 +212,11 @@ function relationReturn(data) {
   }
 }
 
-function manageRelation(id, rId, relCode, cmd) {
+export function manageRelation(id, rId, relCode, cmd) {
   $.post("ws_gen.php", { id: id, rId: rId, rc: relCode, cmd: cmd }, relationReturn);
 }
 
-var dtCols = [
+export var dtCols = [
   {
     targets: [0],
     title: "Date",

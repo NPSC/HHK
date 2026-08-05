@@ -356,7 +356,6 @@ if($uS->useOnlineReferral){
         <?php echo FAVICON; ?>
         <?php echo CSSVARS; ?>
 
-        <script type="text/javascript" src="<?php echo STATE_COUNTRY_JS; ?>" defer></script>
         <script type="text/javascript" src="<?php echo RESV_JS; ?>" defer></script>
         <script type="text/javascript" src="<?php echo PAYMENT_JS; ?>" defer></script>
         
@@ -606,7 +605,7 @@ if($uS->useOnlineReferral){
         <?php if ($uS->PaymentGateway == AbstractPaymentGateway::DELUXE) { echo DeluxeGateway::getIframeMkup(); } ?>
 
 		<script type="text/javascript" src="<?php echo RESV_MANAGER_JS; ?>" defer></script>
-        <?php echo Vite::asset('resources/js/register.js'); ?>
+        <?php echo Vite::asset('resources/js/house/register.js'); ?>
 
     </body>
 </html>

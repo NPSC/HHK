@@ -1,4 +1,4 @@
-var BFHCountriesList = {
+const BFHCountriesList = {
   US: "United States",
   AF: "Afghanistan",
   AL: "Albania",
@@ -134,7 +134,7 @@ var BFHCountriesList = {
   MQ: "Martinique",
   MR: "Mauritania",
   MU: "Mauritius",
-  MT: "Mayotte",
+  YT: "Mayotte",
   MX: "Mexico",
   FM: "Micronesia",
   MD: "Moldova",
@@ -241,7 +241,7 @@ var BFHCountriesList = {
   ZW: "Zimbabwe",
 };
 
-var BFHStatesList = {
+const BFHStatesList = {
   AF: {
     1: { code: "BAL", name: "Balkh" },
     2: { code: "BAM", name: "Bamian" },

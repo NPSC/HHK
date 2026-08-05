@@ -22,8 +22,6 @@ define('CUSTOM_REGFORM_CSS', "<link href='css/customRegForm.css" . JSV . "' rel=
 /* common mins */
 define('RESV_MANAGER_JS', 'js/resvManager-min.js' . JSV);
 define('PAYMENT_JS', "js/payments-min.js" . JSV);
-define('GUESTLOAD_JS', 'js/guestload-min.js' . JSV);
-define('REG_FORM_JS', 'js/regForm-min.js' . JSV);
 /* end mins */
 
 /* page mins */
@@ -46,7 +44,6 @@ define('TOPAZ_SIGWEB_JS', 'js/SigWebTablet.js' . JSV);
 define('VISIT_INTERVAL_JS', "js/visitInterval.js" . JSV);
 define('HOUSEKEEPING_JS', 'js/housekeeping.js' . JSV);
 
-//define('FULLCALENDAR_CSS', '<link href="css/fullcalendar5.11.0.min.css' . JSV . '"  rel="stylesheet" type="text/css" />');
 define('GRID_CSS', "<link href='../css/bootstrap-grid.min.css" . JSV . "' rel='stylesheet' type='text/css' />");
 define('BOOTSTRAP_CSS', "<link href='../css/bootstrap.min.css" . JSV . "' rel='stylesheet' type='text/css' /><link href='../css/bootstrap-print-fix.css" . JSV . "' rel='stylesheet' type='text/css' />");
 define('NAVBAR_CSS', "<link href='../css/bootstrapNavbar.css" . JSV . "' rel='stylesheet' type='text/css' />");

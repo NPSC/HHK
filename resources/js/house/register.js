@@ -22,7 +22,7 @@ function isNumber(n) {
 window.isNumber = isNumber; // used by payments.js, loaded alongside register.js on this page
 
 var $dailyTbl;
-export function refreshdTables(data) {
+function refreshdTables(data) {
   "use strict";
 
   if (data.curres && $("#divcurres").length > 0) {
@@ -49,6 +49,7 @@ export function refreshdTables(data) {
     $dailyTbl.ajax.reload();
   }
 }
+window.refreshdTables = refreshdTables; // used by visitDialog.js, loaded alongside register.js on this page
 
 /**
  *

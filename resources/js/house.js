@@ -12,6 +12,7 @@ import "./house/referralViewer.js";
 import "./house/formBuilder.js";
 import "formBuilder";
 import "formBuilder/dist/form-render.min.js";
+import "./house/formBuilder.js";
 
 //visit dialog imports
 import { viewVisit, saveFees } from "./house/visitDialog.js";
