@@ -1,0 +1,59 @@
+name: Build and Package Release
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  build-and-zip:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. Checkout the source code at the release tag
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # 2. Set up PHP environment for Composer
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.2" # Change to your required PHP version
+          tools: composer
+
+      # 3. Set up Node.js environment for Vite
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20" # Change to your required Node version
+
+      # 4. Install production PHP dependencies
+      - name: Install Composer dependencies
+        run: composer install --no-dev --optimize-autoloader
+
+      # 5. Install Node dependencies and compile Vite assets
+      - name: Build Vite assets
+        run: |
+          npm ci
+          npm run build
+
+      # 6. Package production files into a ZIP archive
+      # This excludes development files, node_modules, and raw assets
+      - name: Create Zip Archive
+        run: |
+          zip -r release-${{ github.event.release.tag_name }}.zip . \
+          -x ".claude/" "*.git*" ".vite-hooks" ".vscode/" "node_modules/*" "tests/*" ".github/*" "composer.json" "composer.lock" "package.json" "package-lock.json" "vite.config.js" "phpstan*"
+
+      # 7. Upload the ZIP archive as an action artifact (optional)
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: production-build
+          path: release-${{ github.event.release.tag_name }}.zip
+
+      # 8. Automatically attach the ZIP file directly to the GitHub Release page
+      - name: Upload Asset to GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: release-${{ github.event.release.tag_name }}.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
