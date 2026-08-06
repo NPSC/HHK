@@ -84,7 +84,7 @@ if(isset($_GET['template'])){
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <title>Referral Form</title>
 
-        <?php echo Vite::asset('resources/js/house.js'); ?>
+        <?php echo Vite::asset('resources/js/house/referralform.js'); ?>
 
 		<style id="fontImport"></style>
 

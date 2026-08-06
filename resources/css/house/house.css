@@ -129,6 +129,10 @@ div.hhk-pWarningMsg {
 .dataTables_info {
   padding-right: 1em;
 }
+
+table.dataTable tr.dtrg-group th {
+  text-align: left;
+}
 .ui-autocomplete {
   max-height: 500px;
   overflow-y: auto;

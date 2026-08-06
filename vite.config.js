@@ -257,6 +257,7 @@ export default defineConfig({
         register: "resources/js/house/register.js",
         guestLoad: "resources/js/house/guestload.js",
         regForm: "resources/js/house/regForm.js",
+        referralform: "resources/js/house/referralform.js",
         admin: "resources/js/admin.js",
         nameEdit: "resources/js/admin/nameEdit.js",
         root: "resources/js/root.js",
@@ -264,6 +265,10 @@ export default defineConfig({
       },
       output: {
         manualChunks(id) {
+          //split bootstrap
+          if (id.includes("/node_modules/bootstrap/dist/css/bootstrap.min.css")) {
+            return "bootstrap-full";
+          }
           // pack all vendor modules together
           if (id.includes("/node_modules/") || id.includes("/resources/js/common/jquery.js")) {
             return "vendor";

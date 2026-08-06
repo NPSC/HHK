@@ -2056,11 +2056,15 @@ $(document).ready(function () {
       });
     },
     columns: cgCols,
-    buttons: getDtBtns(
-      "Current " + visitorLabel + "s - " + moment().format("MMM D, YYYY"),
-      false,
-      "hhk-strip-links",
-    ),
+    layout: {
+      top1Start: {
+        buttons: getDtBtns(
+          "Current " + visitorLabel + "s - " + moment().format("MMM D, YYYY"),
+          false,
+          "hhk-strip-links",
+        ),
+      },
+    },
   });
 
   $("#reservs").DataTable({
@@ -2083,7 +2087,11 @@ $(document).ready(function () {
       });
     },
     columns: rvCols,
-    buttons: getDtBtns(reservationTabLabel + " - " + moment().format("MMM D, YYYY")),
+    layout: {
+      top1Start: {
+        buttons: getDtBtns(reservationTabLabel + " - " + moment().format("MMM D, YYYY")),
+      },
+    },
   });
 
   if ($("#unreserv").length > 0) {
@@ -2107,7 +2115,11 @@ $(document).ready(function () {
         });
       },
       columns: rvCols,
-      buttons: getDtBtns(unconfirmedResvTabLabel + " - " + moment().format("MMM D, YYYY")),
+      layout: {
+        top1Start: {
+          buttons: getDtBtns(unconfirmedResvTabLabel + " - " + moment().format("MMM D, YYYY")),
+        },
+      },
     });
   }
 
@@ -2132,7 +2144,11 @@ $(document).ready(function () {
       });
     },
     columns: wlCols,
-    buttons: getDtBtns("Waitlist - " + moment().format("MMM D, YYYY")),
+    layout: {
+      top1Start: {
+        buttons: getDtBtns("Waitlist - " + moment().format("MMM D, YYYY")),
+      },
+    },
   });
 
   //move datatable buttons to title row

@@ -18,6 +18,46 @@ import "formBuilder";
     setUpDataSources(options);
     setUpInsuranceFields(options);
 
+    // Shared across (almost) every field type, so they're registered under the
+    // "*" typeUserAttrs key below. formBuilder looks up typeUserAttrs by
+    // "type" alone when a field has no subtype, but by "type-subtype" (e.g.
+    // "text-tel", "text-email") when it does, so anything keyed only by type
+    // silently disappears for fields carrying one of those subtypes.
+    const fieldWidthAttr = {
+      label: "Field Width",
+      multiple: false,
+      options: {
+        "col-md-12": "12 of 12 Columns (100%)",
+        "col-md-11": "11 of 12 Columns (91%)",
+        "col-md-10": "10 of 12 Columns (83%)",
+        "col-md-9": "9 of 12 Columns (75%)",
+        "col-md-8": "8 of 12 Columns (66%)",
+        "col-md-7": "7 of 12 Columns (58%)",
+        "col-md-6": "6 of 12 Columns (50%)",
+        "col-md-5": "5 of 12 Columns (41%)",
+        "col-md-4": "4 of 12 Columns (33%)",
+        "col-md-3": "3 of 12 Columns (25%)",
+        "col-md-2": "2 of 12 Columns (16%)",
+        "col-md-1": "1 of 12 Column (8%)",
+      },
+      value: "col-md-12",
+    };
+    const fieldGroupAttr = {
+      label: "Group",
+      multiple: false,
+      options: {
+        "": "",
+        guest: "Guest (used with Add Guest button)",
+      },
+    };
+    const hhkFieldAttr = {
+      label: "HHK Field",
+      className: "hhk-formbuilder-readonly",
+      value: "",
+      readonly: "readonly",
+      description: "Data entered into this field correspond to this field in HHK",
+    };
+
     let defaults = {
       serviceURL: "ws_resc.php",
       previewURL: "showReferral.php",
@@ -864,205 +904,35 @@ import "formBuilder";
       ],
       disabledAttrs: ["access", "name"],
       typeUserAttrs: {
-        header: {
-          width: {
-            label: "Field Width",
-            multiple: false,
-            options: {
-              "col-md-12": "12 of 12 Columns (100%)",
-              "col-md-11": "11 of 12 Columns (91%)",
-              "col-md-10": "10 of 12 Columns (83%)",
-              "col-md-9": "9 of 12 Columns (75%)",
-              "col-md-8": "8 of 12 Columns (66%)",
-              "col-md-7": "7 of 12 Columns (58%)",
-              "col-md-6": "6 of 12 Columns (50%)",
-              "col-md-5": "5 of 12 Columns (41%)",
-              "col-md-4": "4 of 12 Columns (33%)",
-              "col-md-3": "3 of 12 Columns (25%)",
-              "col-md-2": "2 of 12 Columns (16%)",
-              "col-md-1": "1 of 12 Column (8%)",
-            },
-            value: "col-md-12",
-          },
-          group: {
-            label: "Group",
-            multiple: false,
-            options: {
-              "": "",
-              guest: "Guest (used with Add Guest button)",
-            },
-          },
-        },
-        button: {
-          width: {
-            label: "Field Width",
-            multiple: false,
-            options: {
-              "col-md-12": "12 of 12 Columns (100%)",
-              "col-md-11": "11 of 12 Columns (91%)",
-              "col-md-10": "10 of 12 Columns (83%)",
-              "col-md-9": "9 of 12 Columns (75%)",
-              "col-md-8": "8 of 12 Columns (66%)",
-              "col-md-7": "7 of 12 Columns (58%)",
-              "col-md-6": "6 of 12 Columns (50%)",
-              "col-md-5": "5 of 12 Columns (41%)",
-              "col-md-4": "4 of 12 Columns (33%)",
-              "col-md-3": "3 of 12 Columns (25%)",
-              "col-md-2": "2 of 12 Columns (16%)",
-              "col-md-1": "1 of 12 Column (8%)",
-            },
-            value: "col-md-12",
-          },
-          group: {
-            label: "Group",
-            multiple: false,
-            options: {
-              "": "",
-              guest: "Guest (used with Add Guest button)",
-            },
-          },
+        // formBuilder always merges "*" in first, regardless of the field's
+        // type/subtype, so width/group survive even for fields whose lookup
+        // key is "type-subtype" (e.g. text-tel, text-email, button-submit,
+        // header-h3) rather than plain "type".
+        "*": {
+          width: fieldWidthAttr,
+          group: fieldGroupAttr,
         },
         text: {
-          width: {
-            label: "Field Width",
-            multiple: false,
-            options: {
-              "col-md-12": "12 of 12 Columns (100%)",
-              "col-md-11": "11 of 12 Columns (91%)",
-              "col-md-10": "10 of 12 Columns (83%)",
-              "col-md-9": "9 of 12 Columns (75%)",
-              "col-md-8": "8 of 12 Columns (66%)",
-              "col-md-7": "7 of 12 Columns (58%)",
-              "col-md-6": "6 of 12 Columns (50%)",
-              "col-md-5": "5 of 12 Columns (41%)",
-              "col-md-4": "4 of 12 Columns (33%)",
-              "col-md-3": "3 of 12 Columns (25%)",
-              "col-md-2": "2 of 12 Columns (16%)",
-              "col-md-1": "1 of 12 Column (8%)",
-            },
-            value: "col-md-12",
-          },
-          group: {
-            label: "Group",
-            multiple: false,
-            options: {
-              "": "",
-              guest: "Guest (used with Add Guest button)",
-            },
-          },
-          hhkField: {
-            label: "HHK Field",
-            className: "hhk-formbuilder-readonly",
-            value: "",
-            readonly: "readonly",
-            description: "Data entered into this field correspond to this field in HHK",
-          },
+          hhkField: hhkFieldAttr,
+        },
+        "text-tel": {
+          hhkField: hhkFieldAttr,
+        },
+        "text-email": {
+          hhkField: hhkFieldAttr,
         },
         number: {
-          width: {
-            label: "Field Width",
-            multiple: false,
-            options: {
-              "col-md-12": "12 of 12 Columns (100%)",
-              "col-md-11": "11 of 12 Columns (91%)",
-              "col-md-10": "10 of 12 Columns (83%)",
-              "col-md-9": "9 of 12 Columns (75%)",
-              "col-md-8": "8 of 12 Columns (66%)",
-              "col-md-7": "7 of 12 Columns (58%)",
-              "col-md-6": "6 of 12 Columns (50%)",
-              "col-md-5": "5 of 12 Columns (41%)",
-              "col-md-4": "4 of 12 Columns (33%)",
-              "col-md-3": "3 of 12 Columns (25%)",
-              "col-md-2": "2 of 12 Columns (16%)",
-              "col-md-1": "1 of 12 Column (8%)",
-            },
-            value: "col-md-12",
-          },
-          group: {
-            label: "Group",
-            multiple: false,
-            options: {
-              "": "",
-              guest: "Guest (used with Add Guest button)",
-            },
-          },
-          hhkField: {
-            label: "HHK Field",
-            className: "hhk-formbuilder-readonly",
-            value: "",
-            readonly: "readonly",
-            description: "Data entered into this field correspond to this field in HHK",
-          },
+          hhkField: hhkFieldAttr,
         },
         select: {
-          width: {
-            label: "Field Width",
-            multiple: false,
-            options: {
-              "col-md-12": "12 of 12 Columns (100%)",
-              "col-md-11": "11 of 12 Columns (91%)",
-              "col-md-10": "10 of 12 Columns (83%)",
-              "col-md-9": "9 of 12 Columns (75%)",
-              "col-md-8": "8 of 12 Columns (66%)",
-              "col-md-7": "7 of 12 Columns (58%)",
-              "col-md-6": "6 of 12 Columns (50%)",
-              "col-md-5": "5 of 12 Columns (41%)",
-              "col-md-4": "4 of 12 Columns (33%)",
-              "col-md-3": "3 of 12 Columns (25%)",
-              "col-md-2": "2 of 12 Columns (16%)",
-              "col-md-1": "1 of 12 Column (8%)",
-            },
-            value: "col-md-12",
-          },
           dataSource: {
             label: "Data Source",
             multiple: false,
             options: options.dataSources,
           },
-          group: {
-            label: "Group",
-            multiple: false,
-            options: {
-              "": "",
-              guest: "Guest (used with Add Guest button)",
-            },
-          },
-          hhkField: {
-            label: "HHK Field",
-            className: "hhk-formbuilder-readonly",
-            value: "",
-            readonly: "readonly",
-            description: "Data entered into this field correspond to this field in HHK",
-          },
+          hhkField: hhkFieldAttr,
         },
         date: {
-          width: {
-            label: "Field Width",
-            multiple: false,
-            options: {
-              "col-md-12": "12 of 12 Columns (100%)",
-              "col-md-11": "11 of 12 Columns (91%)",
-              "col-md-10": "10 of 12 Columns (83%)",
-              "col-md-9": "9 of 12 Columns (75%)",
-              "col-md-8": "8 of 12 Columns (66%)",
-              "col-md-7": "7 of 12 Columns (58%)",
-              "col-md-6": "6 of 12 Columns (50%)",
-              "col-md-5": "5 of 12 Columns (41%)",
-              "col-md-4": "4 of 12 Columns (33%)",
-              "col-md-3": "3 of 12 Columns (25%)",
-              "col-md-2": "2 of 12 Columns (16%)",
-              "col-md-1": "1 of 12 Column (8%)",
-            },
-            value: "col-md-12",
-          },
-          group: {
-            label: "Group",
-            multiple: false,
-            options: {
-              "": "",
-              guest: "Guest (used with Add Guest button)",
-            },
-          },
           validation: {
             label: "Validation Rule",
             multiple: false,
@@ -1072,136 +942,10 @@ import "formBuilder";
               greaterThanToday: "Date must be in the future",
             },
           },
-          hhkField: {
-            label: "HHK Field",
-            className: "hhk-formbuilder-readonly",
-            value: "",
-            readonly: "readonly",
-            description: "Data entered into this field correspond to this field in HHK",
-          },
-        },
-        paragraph: {
-          width: {
-            label: "Field Width",
-            multiple: false,
-            options: {
-              "col-md-12": "12 of 12 Columns (100%)",
-              "col-md-11": "11 of 12 Columns (91%)",
-              "col-md-10": "10 of 12 Columns (83%)",
-              "col-md-9": "9 of 12 Columns (75%)",
-              "col-md-8": "8 of 12 Columns (66%)",
-              "col-md-7": "7 of 12 Columns (58%)",
-              "col-md-6": "6 of 12 Columns (50%)",
-              "col-md-5": "5 of 12 Columns (41%)",
-              "col-md-4": "4 of 12 Columns (33%)",
-              "col-md-3": "3 of 12 Columns (25%)",
-              "col-md-2": "2 of 12 Columns (16%)",
-              "col-md-1": "1 of 12 Column (8%)",
-            },
-            value: "col-md-12",
-          },
-          group: {
-            label: "Group",
-            multiple: false,
-            options: {
-              "": "",
-              guest: "Guest (used with Add Guest button)",
-            },
-          },
+          hhkField: hhkFieldAttr,
         },
         textarea: {
-          width: {
-            label: "Field Width",
-            multiple: false,
-            options: {
-              "col-md-12": "12 of 12 Columns (100%)",
-              "col-md-11": "11 of 12 Columns (91%)",
-              "col-md-10": "10 of 12 Columns (83%)",
-              "col-md-9": "9 of 12 Columns (75%)",
-              "col-md-8": "8 of 12 Columns (66%)",
-              "col-md-7": "7 of 12 Columns (58%)",
-              "col-md-6": "6 of 12 Columns (50%)",
-              "col-md-5": "5 of 12 Columns (41%)",
-              "col-md-4": "4 of 12 Columns (33%)",
-              "col-md-3": "3 of 12 Columns (25%)",
-              "col-md-2": "2 of 12 Columns (16%)",
-              "col-md-1": "1 of 12 Column (8%)",
-            },
-            value: "col-md-12",
-          },
-          group: {
-            label: "Group",
-            multiple: false,
-            options: {
-              "": "",
-              guest: "Guest (used with Add Guest button)",
-            },
-          },
-          hhkField: {
-            label: "HHK Field",
-            className: "hhk-formbuilder-readonly",
-            value: "",
-            readonly: "readonly",
-            description: "Data entered into this field correspond to this field in HHK",
-          },
-        },
-        "radio-group": {
-          width: {
-            label: "Field Width",
-            multiple: false,
-            options: {
-              "col-md-12": "12 of 12 Columns (100%)",
-              "col-md-11": "11 of 12 Columns (91%)",
-              "col-md-10": "10 of 12 Columns (83%)",
-              "col-md-9": "9 of 12 Columns (75%)",
-              "col-md-8": "8 of 12 Columns (66%)",
-              "col-md-7": "7 of 12 Columns (58%)",
-              "col-md-6": "6 of 12 Columns (50%)",
-              "col-md-5": "5 of 12 Columns (41%)",
-              "col-md-4": "4 of 12 Columns (33%)",
-              "col-md-3": "3 of 12 Columns (25%)",
-              "col-md-2": "2 of 12 Columns (16%)",
-              "col-md-1": "1 of 12 Column (8%)",
-            },
-            value: "col-md-12",
-          },
-          group: {
-            label: "Group",
-            multiple: false,
-            options: {
-              "": "",
-              guest: "Guest (used with Add Guest button)",
-            },
-          },
-        },
-        "checkbox-group": {
-          width: {
-            label: "Field Width",
-            multiple: false,
-            options: {
-              "col-md-12": "12 of 12 Columns (100%)",
-              "col-md-11": "11 of 12 Columns (91%)",
-              "col-md-10": "10 of 12 Columns (83%)",
-              "col-md-9": "9 of 12 Columns (75%)",
-              "col-md-8": "8 of 12 Columns (66%)",
-              "col-md-7": "7 of 12 Columns (58%)",
-              "col-md-6": "6 of 12 Columns (50%)",
-              "col-md-5": "5 of 12 Columns (41%)",
-              "col-md-4": "4 of 12 Columns (33%)",
-              "col-md-3": "3 of 12 Columns (25%)",
-              "col-md-2": "2 of 12 Columns (16%)",
-              "col-md-1": "1 of 12 Column (8%)",
-            },
-            value: "col-md-12",
-          },
-          group: {
-            label: "Group",
-            multiple: false,
-            options: {
-              "": "",
-              guest: "Guest (used with Add Guest button)",
-            },
-          },
+          hhkField: hhkFieldAttr,
         },
       },
       disabledActionButtons: ["data", "save", "clear"],
