@@ -2,7 +2,7 @@
 
 use HHK\sec\Session;
 use HHK\sec\Login;
-use HHK\sec\ScriptAuthClass;
+use HHK\sec\SitePage;
 use HHK\Exception\CsrfException;
 use HHK\Document\FormTemplate;
 use HHK\Document\FormDocument;
@@ -38,7 +38,7 @@ try {
 
 // Load the page information
 try {
-    $page = new ScriptAuthClass($dbh);
+    $page = new SitePage($dbh);
 } catch (Exception $ex) {
     $uS = Session::getInstance();
     $uS->destroy(true);

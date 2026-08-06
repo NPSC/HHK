@@ -23,7 +23,7 @@ class WebInit {
 
     /**
      * Summary of page
-     * @var ScriptAuthClass
+     * @var SitePage
      */
     public $page;
 
@@ -100,7 +100,7 @@ class WebInit {
         }
 
         // Page authorization check
-        $this->page = new ScriptAuthClass($this->dbh);
+        $this->page = new SitePage($this->dbh);
 
         $this->page->Authorize_Or_Die();
 

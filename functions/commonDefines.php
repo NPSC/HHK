@@ -36,5 +36,3 @@ define('JSV', '?v=' . HHK\SysConst\CodeVersion::BUILD);
 // Page header links and scripts
 define('FAVICON', '<link rel="icon" type="image/svg+xml" href="../favicon.svg' . JSV . '" />');
 define('INCIDENT_CSS', '<link href="css/incidentReports.css' . JSV . '" rel="stylesheet" type="text/css" />');
-
-define('LOGIN_JS', '../js/login.js' . JSV);

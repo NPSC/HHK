@@ -253,22 +253,18 @@ export default defineConfig({
       input: {
         // Opt pages in incrementally by adding entries here and calling
         // HHK\Vite\Vite::asset('resources/js/<entry>.js') from the page.
-        // house.js/admin.js both import the shared vendor.js and
-        // common.js bundles plus their site's jQuery UI theme.
         house: "resources/js/house.js",
         register: "resources/js/house/register.js",
         guestLoad: "resources/js/house/guestload.js",
-        // self-contained: imports vendor.js/common.js itself instead of relying on house.js,
-        // so ShowRegForm.php loads this alone rather than alongside house.js
         regForm: "resources/js/house/regForm.js",
         admin: "resources/js/admin.js",
         nameEdit: "resources/js/admin/nameEdit.js",
         root: "resources/js/root.js",
-        loginHouse: "resources/js/login/house.js",
-        loginAdmin: "resources/js/login/admin.js",
+        login: "resources/js/login.js",
       },
       output: {
         manualChunks(id) {
+          // pack all vendor modules together
           if (id.includes("/node_modules/") || id.includes("/resources/js/common/jquery.js")) {
             return "vendor";
           }

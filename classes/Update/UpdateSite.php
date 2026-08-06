@@ -34,7 +34,7 @@ class UpdateSite {
             $patch = new Patch();
 
             // Update Tables
-            $this->resultAccumulator .= $patch->updateWithSqlStmts($dbh, '../sql/CreateAllTables.sql', "Tables");
+            $this->resultAccumulator .= $patch->updateWithSqlStmts($dbh, '../../sql/CreateAllTables.sql', "Tables");
 
             foreach ($patch->results as $err) {
 
@@ -47,7 +47,7 @@ class UpdateSite {
 
 
             // Update SPs
-            $this->resultAccumulator .= $patch->updateWithSqlStmts($dbh, '../sql/CreateAllRoutines.sql', 'Stored Procedures', '$$', '-- ;');
+            $this->resultAccumulator .= $patch->updateWithSqlStmts($dbh, '../../sql/CreateAllRoutines.sql', 'Stored Procedures', '$$', '-- ;');
 
             foreach ($patch->results as $err) {
                 $this->errorMsg .= 'Update Stored Procedures Error: ' . $err['error'] . ', ' . $err['errno'] . '; Query=' . $err['query'] . '<br/>';
@@ -55,9 +55,9 @@ class UpdateSite {
 
 
             // Run SQL patches
-            if (file_exists('../patch/patchSQL.sql')) {
+            if (file_exists('../../patch/patchSQL.sql')) {
 
-                $this->resultAccumulator .= $patch->updateWithSqlStmts($dbh, '../patch/patchSQL.sql', "Updates");
+                $this->resultAccumulator .= $patch->updateWithSqlStmts($dbh, '../../patch/patchSQL.sql', "Updates");
 
                 foreach ($patch->results as $err) {
 
@@ -74,7 +74,7 @@ class UpdateSite {
             // Update views
             if ($errorCount < 1) {
 
-                $this->resultAccumulator .= $patch->updateWithSqlStmts($dbh, '../sql/CreateAllViews.sql', 'Views');
+                $this->resultAccumulator .= $patch->updateWithSqlStmts($dbh, '../../sql/CreateAllViews.sql', 'Views');
 
                 foreach ($patch->results as $err) {
 

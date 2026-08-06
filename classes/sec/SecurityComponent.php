@@ -213,6 +213,36 @@ class SecurityComponent {
     }
 
     /**
+     * Picks a landing page for a just-authenticated user out of all configured sites
+     * (the shared login lives at the site root, so it can't rely on a single site's
+     * own page list the way a site-scoped login page can). House takes priority;
+     * any other non-root site the user is authorized for is used as a fallback.
+     * @return string relative path (e.g. "house/register.php"), or "" if the user
+     *  isn't authorized for any site.
+     */
+    public static function getAuthorizedDefaultPage(): string {
+
+        $uS = Session::getInstance();
+        $siteList = $uS->siteList ?? [];
+        $siteCodes = array_unique(array_merge(['h'], array_keys($siteList)));
+
+        foreach ($siteCodes as $siteCode) {
+
+            if ($siteCode == 'r' || !isset($siteList[$siteCode])) {
+                continue;
+            }
+
+            $site = $siteList[$siteCode];
+
+            if (self::is_Admin() || self::does_User_Code_Match($site['Groups'] ?? [])) {
+                return $site['Relative_Address'] . $site['Default_Page'];
+            }
+        }
+
+        return '';
+    }
+
+    /**
      * Summary of isHTTPS
      * @return bool
      */

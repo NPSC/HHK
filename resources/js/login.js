@@ -1,38 +1,19 @@
-/*
- * The MIT License
- *
- * Copyright 2017 Eric Crane <ecrane at nonprofitsoftwarecorp.org>.
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
- * THE SOFTWARE.
- */
+import "./vendor.js";
+
+import "../css/jqui-house/jquery-ui.min.css";
+import "../css/house/house.css";
+import "../css/root/root.css";
 
 function sendHhkLogin() {
-  var parms = {},
-    $uname = $("#txtUname"),
+  var $uname = $("#txtUname"),
     $psw = $("#txtPW"),
     $btn = $("#btnLogn"),
-    $chall = $("#challenge");
-  $xf = $("#xf");
-  $otp = $("#txtOTP");
-  $otpMethod = $("#otpMethod");
-  $changeMethod = $("#changeMethod");
-  $rememberMe = $("input[name=rememberMe]");
+    $chall = $("#challenge"),
+    $xf = $("#xf"),
+    $otp = $("#txtOTP"),
+    $otpMethod = $("#otpMethod"),
+    $changeMethod = $("#changeMethod"),
+    $rememberMe = $("input[name=rememberMe]");
 
   $(".hhk-logerrmsg").hide();
   $("#valMsg").text("");
@@ -49,7 +30,7 @@ function sendHhkLogin() {
     return;
   }
 
-  parms = {
+  const parms = {
     //challenge: hex_md5(hex_md5($psw.val()) + $chall.val()),
     txtUname: $uname.val(),
     txtPass: $psw.val(),
@@ -63,7 +44,7 @@ function sendHhkLogin() {
   $.post("index.php", parms, function (data) {
     try {
       data = JSON.parse(data);
-    } catch (err) {
+    } catch {
       alert(data);
       //$('#divLoginCtls').remove();
       return;
@@ -104,7 +85,7 @@ function sendHhkLogin() {
     if (data.stop) {
       $btn.css("disable", true);
     }
-  }).fail(function (data, textStatus, xhr) {
+  }).fail(function () {
     $("#valMsg")
       .text("A server error occurred, please check your username/password and try again")
       .show();
@@ -188,7 +169,7 @@ document.addEventListener("DOMContentLoaded", () => {
     e.stopImmediatePropagation();
   });
 
-  $(".hhk-tooltip").on("click", function (e) {
+  $(".hhk-tooltip").on("click", function () {
     $(".hhk-tooltip").tooltip("open");
   });
 
@@ -228,7 +209,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   $("button, input[type=submit]").button();
 
-  $(document).on("click", ".showPw", function (e) {
+  $(document).on("click", ".showPw", function () {
     var input = $(this).parent().find("input");
     if (input.prop("type") == "password") {
       input.prop("type", "text");

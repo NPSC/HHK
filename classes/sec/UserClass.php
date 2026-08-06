@@ -788,7 +788,7 @@ class UserClass
             		<div class="ui-corner-bottom hhk-tdbox ui-widget-content" style="padding: 5px;">
 
                         <table style="width: 100%"><tr>
-                                <td class="tdlabel">User Name:</td><td style="background-color: white;"><span id="utxtUserName">' . $uS->username . '</span></td>
+                                <td class="tdlabel">Username:</td><td style="background-color: white;"><span id="utxtUserName">' . $uS->username . '</span></td>
                             </tr><tr>
                                 <td class="tdlabel">Enter Old Password:</td><td class="hhk-flex"><input style="width: 100%" id="utxtOldPw" type="password" value=""  /><button class="showPw" style="font-size: .75em; margin-left: 1em;" tabindex="-1">Show</button></td>
                             </tr><tr>

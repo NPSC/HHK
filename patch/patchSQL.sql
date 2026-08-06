@@ -217,3 +217,7 @@ VALUES ('adjustFees','Adjust Fees','s','vi','','');
 
 INSERT IGNORE INTO `labels` (`Key`,`Value`,`Type`,`Category`,`Header`,`Description`)
 SELECT 'hospitals', CONCAT(`Value`, 's'), 's', 'h', '', '' FROM `labels` WHERE `Key` = 'hospital';
+
+UPDATE page
+SET File_Name = '_../index.php?log=lo'
+WHERE File_Name = '_index.php?log=lo';

@@ -525,7 +525,7 @@ $alertMessage = $alertMsg->createMarkup();
             	<div style="margin: 0.5em 0 0.5em 0;">The user's password will be reset to a random temporary password. <br>They will be required to change their password when they log in.</div>
                 <table>
                     <tr>
-                        <td class="tdlabel">User Name</td><td><input id="txtUserName" type="text" value="<?php echo $userName; ?>" class="ro ignrSave" readonly="readonly" style="width: 100%" /></td>
+                        <td class="tdlabel">Username</td><td><input id="txtUserName" type="text" value="<?php echo $userName; ?>" class="ro ignrSave" readonly="readonly" style="width: 100%" /></td>
                     </tr><tr>
                         <td class="tdlabel">Admin Password</td><td style="display: flex"><input id="txtOldPw" type="password" value="" title="Enter your password, not the users old password." /><button class="showPw" style="font-size: .75em; margin-left: 1em;" tabindex="-1">Show</button></td>
                     </tr><tr>

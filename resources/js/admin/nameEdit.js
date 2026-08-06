@@ -374,7 +374,7 @@ document.addEventListener("DOMContentLoaded", () => {
           }
         });
         if ($("#txtwUserName").length > 0) {
-          if (!checkLength($("#txtwUserName"), "User Name", 6, 35, tipmsg, tipmsg.parent())) {
+          if (!checkLength($("#txtwUserName"), "Username", 6, 35, tipmsg, tipmsg.parent())) {
             return;
           }
           parms["wuname"] = $("#txtwUserName").val();

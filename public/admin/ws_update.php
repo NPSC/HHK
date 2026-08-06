@@ -1,6 +1,6 @@
 <?php
 
-use HHK\sec\{Session, Login, ScriptAuthClass, UserClass};
+use HHK\sec\{Session, Login, SitePage, UserClass};
 use HHK\Update\UpdateSite;
 /*
  * The MIT License
@@ -88,7 +88,7 @@ try {
     $dbh = $login->initHhkSession();
 
     // Load the page information
-    $page = new ScriptAuthClass($dbh);
+    $page = new SitePage($dbh);
 
 } catch (Exception $ex) {
 

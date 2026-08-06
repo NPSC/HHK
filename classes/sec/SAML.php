@@ -1,7 +1,6 @@
 <?php
 namespace HHK\sec;
 
-use HHK\Exception\AuthException;
 use OneLogin\Saml2\Auth;
 use OneLogin\Saml2\Error;
 use OneLogin\Saml2\IdPMetadataParser;
@@ -118,19 +117,17 @@ class SAML {
             }
 
             if($u->doLogin($this->dbh, $userAr)){
-                $pge = (!empty($uS->webSite['Default_Page']) ? $uS->webSite['Default_Page'] : "");
-                if ($u->getDefaultPage() != '') {
-                    $pge = $u->getDefaultPage();
+                $pge = SecurityComponent::getAuthorizedDefaultPage();
+
+                // Per-user override of the landing page within house.
+                if (str_starts_with($pge, 'house/') && $u->getDefaultPage() != '') {
+                    $pge = 'house/' . $u->getDefaultPage();
                 }
 
-                try {
-                    if (SecurityComponent::is_Authorized($pge, true)) {
-                        header('location:../' . (!empty($uS->webSite['Relative_Address']) ? $uS->webSite['Relative_Address'] : "") . $pge);
-                    } else {
-                        $error = "Unauthorized for page: " . $pge;
-                    }
-                }catch(AuthException $e){
-                    $error = $e->getMessage();
+                if ($pge != '') {
+                    header('location:../' . $pge);
+                } else {
+                    $error = "Unauthorized: no site available for this user";
                 }
             }
         }

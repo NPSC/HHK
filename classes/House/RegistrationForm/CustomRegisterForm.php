@@ -498,10 +498,10 @@ class CustomRegisterForm {
 
             if (!isset($usedNames[$g->getIdName()])) {
                 $sigMkup = '<div class="row mt-4 signWrapper" ' . ($insideAgreement == false ? 'data-idname="' . $g->getIdName() . '"' : '') . '>
-                                <div class="col-8 row" style="align-items:flex-end;">
-                                    <div class="col pe-0 printName" style="max-width: fit-content;">' . $g->getRoleMember()->get_fullName() . '</div>
+                                <div class="col-8 d-flex" style="align-items:flex-end;">
+                                    <div class="pe-0 printName" style="min-width: fit-content;">' . $g->getRoleMember()->get_fullName() . '</div>
                                     <i class="bi bi-arrow-right-circle-fill px-2 hhk-line"></i>
-                                    <div class="col sigLine hhk-line" style="justify-content:end;">' . (!empty($this->settings["Signatures"]["eSign"]) && ($this->settings["Signatures"]["eSign"] == 'jSign' || $this->settings["Signatures"]["eSign"] == 'topaz') ? '<img src="" style="display:none; width:100%">' . ($insideAgreement ? '<input type="hidden" class="regFormInput" data-inputtype="signature">' : '') . '</div>
+                                    <div class="sigLine hhk-line" style="justify-content:end; width: 100%;">' . (!empty($this->settings["Signatures"]["eSign"]) && ($this->settings["Signatures"]["eSign"] == 'jSign' || $this->settings["Signatures"]["eSign"] == 'topaz') ? '<img src="" style="display:none; width:100%">' . ($insideAgreement ? '<input type="hidden" class="regFormInput" data-inputtype="signature">' : '') . '</div>
                                     <button class="ui-button ui-corner-all mb-1 ms-2 btnSign" data-eSign="' . $this->settings["Signatures"]["eSign"] . '">Sign</button>' : '</div>') . '
                                 </div>
                                 <div class="col-4 row" style="align-items:flex-end;">
@@ -543,10 +543,10 @@ class CustomRegisterForm {
 
     public function BlankSignatureLineMkup(): string{
         return '<div class="row mt-4 signWrapper">
-        <div class="col-8 row" style="align-items:flex-end;">
-            <div class="col pe-0" style="max-width: fit-content;">Signature</div>
+        <div class="col-8 d-flex" style="align-items:flex-end;">
+            <div class="pe-0" style="min-width: fit-content;">Signature</div>
             <i class="bi bi-arrow-right-circle-fill px-2 hhk-line"></i>
-            <div class="col sigLine hhk-line" style="justify-content:end;">' . (!empty($this->settings["Signatures"]["eSign"]) && ($this->settings["Signatures"]["eSign"] == 'jSign' || $this->settings["Signatures"]["eSign"] == 'topaz') ? '<img src="" style="display:none; width:100%"><input type="hidden" class="regFormInput" data-inputtype="signature"></div>
+            <div class="sigLine hhk-line" style="justify-content:end; width: 100%">' . (!empty($this->settings["Signatures"]["eSign"]) && ($this->settings["Signatures"]["eSign"] == 'jSign' || $this->settings["Signatures"]["eSign"] == 'topaz') ? '<img src="" style="display:none; width:100%"><input type="hidden" class="regFormInput" data-inputtype="signature"></div>
             <button class="ui-button ui-corner-all mb-1 ms-2 btnSign" data-eSign="' . $this->settings["Signatures"]["eSign"] . '">Sign</button>' : '</div>') . '
         </div>
         <div class="col-4 row" style="align-items:flex-end;">

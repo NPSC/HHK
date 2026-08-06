@@ -18,9 +18,6 @@ define('P_ROOT', __DIR__ . DS );
 define('REL_BASE_DIR', P_ROOT . ".." . DS . ".." . DS);
 define('REL_BASE_SITE', P_ROOT . ".." . DS . ".." . DS);
 
-define('JQ_UI_JS', 'js/jquery-ui.min.js');
-define('JQ_JS', 'js/jquery-min.js');
-
 date_default_timezone_set('America/Chicago');
 
 /*

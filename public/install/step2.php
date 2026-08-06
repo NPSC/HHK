@@ -76,18 +76,18 @@ if (isset($_POST['btnSave'])) {
         $patch = new Patch();
 
         // Update Tables
-        $resultAccumulator .= $patch->updateWithSqlStmts($dbh, '../sql/CreateAllTables.sql', "Tables");
+        $resultAccumulator .= $patch->updateWithSqlStmts($dbh, '../../sql/CreateAllTables.sql', "Tables");
         foreach ($patch->results as $err) {
             $errorMsg .= 'Create Table Error: ' . $err['error'] . ', ' . $err['errno'] . '; Query=' . $err['query'] . '<br/>';
         }
 
 
-        $resultAccumulator .= $patch->updateWithSqlStmts($dbh, '../sql/CreateAllViews.sql', 'Views');
+        $resultAccumulator .= $patch->updateWithSqlStmts($dbh, '../../sql/CreateAllViews.sql', 'Views');
         foreach ($patch->results as $err) {
             $errorMsg .= 'Create View Error: ' . $err['error'] . ', ' . $err['errno'] . '; Query=' . $err['query'] . '<br/>';
         }
 
-        $resultAccumulator .= $patch->updateWithSqlStmts($dbh, '../sql/CreateAllRoutines.sql', 'Stored Procedures', '$$', '-- ;');
+        $resultAccumulator .= $patch->updateWithSqlStmts($dbh, '../../sql/CreateAllRoutines.sql', 'Stored Procedures', '$$', '-- ;');
         foreach ($patch->results as $err) {
             $errorMsg .= 'Create Stored Procedures Error: ' . $err['error'] . ', ' . $err['errno'] . '; Query=' . $err['query'] . '<br/>';
         }
@@ -130,72 +130,90 @@ if (isset($_POST['btnNext'])) {
     <head>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
         <title><?php echo $pageTitle; ?></title>
-        <script type="text/javascript" src="../<?php echo JQ_JS; ?>"></script>
-        <script type="text/javascript" src="../js/install.js"></script>
+        
         <script type="text/javascript">
-            $(document).ready(function () {
+            function checkStrength(pwStr) {
+                const strongRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*\W).{8,}$/;
+                return strongRegex.test(pwStr);
+            }
+
+            document.addEventListener("DOMContentLoaded", () => {
                 "use strict";
 
-                $('#btnMeta').click(function () {
+                const btnMeta = document.getElementById('btnMeta');
 
-                    var pw1 = $('#txtpw1'),
-                        pw2 = $('#txtpw2'),
-                        pw3 = $('#txtpw3'),
-                        pw4 = $('#txtpw4');
+                btnMeta.addEventListener('click', function () {
 
-                    $('#spanpwerror, #spanpw3error').text('');
+                    const pw1 = document.getElementById('txtpw1'),
+                        pw2 = document.getElementById('txtpw2'),
+                        pw3 = document.getElementById('txtpw3'),
+                        pw4 = document.getElementById('txtpw4'),
+                        spanPwError = document.getElementById('spanpwerror'),
+                        spanPw3Error = document.getElementById('spanpw3error'),
+                        spanDone = document.getElementById('spanDone');
 
-                    if (checkStrength(pw1.val())) {
+                    spanPwError.textContent = '';
+                    spanPw3Error.textContent = '';
+
+                    if (checkStrength(pw1.value)) {
 
                         // Strength ok, check second copy
-                        if (pw1.val() !== pw2.val()) {
-                            $('#spanpwerror').text('Passwords are not the same.');
+                        if (pw1.value !== pw2.value) {
+                            spanPwError.textContent = 'Passwords are not the same.';
                             return;
                         }
 
                     } else {
-                        $('#spanpwerror').text("Password must have 8 or more characters including at least one uppercase and one lower case alphabetical character and one number and one of ! @ # $ % ^ & * ( ) - = _ + ~ . , \" < > / ? ; : ' | [ ] { }");
+                        spanPwError.textContent = "Password must have 8 or more characters including at least one uppercase and one lower case alphabetical character and one number and one of ! @ # $ % ^ & * ( ) - = _ + ~ . , \" < > / ? ; : ' | [ ] { }";
                         return;
                     }
 
-                    if (checkStrength(pw3.val())) {
+                    if (checkStrength(pw3.value)) {
 
                         // Strength ok, check second copy
 
-                        if (pw3.val() !== pw4.val()) {
-                            $('#spanpw3error').text('Passwords are not the same.');
+                        if (pw3.value !== pw4.value) {
+                            spanPw3Error.textContent = 'Passwords are not the same.';
                             return;
                         }
 
                     } else {
-                        $('#spanpw3error').text("Password must have 8 or more characters including at least one uppercase and one lower case alphabetical character and one number and one of ! @ # $ % ^ & * ( ) - = _ + ~ . , \" < > / ? ; : ' | [ ] { }");
+                        spanPw3Error.textContent = "Password must have 8 or more characters including at least one uppercase and one lower case alphabetical character and one number and one of ! @ # $ % ^ & * ( ) - = _ + ~ . , \" < > / ? ; : ' | [ ] { }";
                         return;
                     }
 
-                    $.post('ws_install.php', {cmd: 'loadmd', 'adminpw': pw1.val(), 'npscuserpw' : pw3.val()}, function (data) {
-                        if (data) {
-                            try {
-                                data = JSON.parse(data);
-                            } catch (err) {
-                                alert("Parser error - " + err.message);
-                                return;
-                            }
+                    const params = new URLSearchParams({cmd: 'loadmd', adminpw: pw1.value, npscuserpw: pw3.value});
 
-                            if (data.result) {
-                                $('#spanDone').text(data.result);
-                                $(this).prop('disabled', true);
-                            }
+                    fetch('ws_install.php', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+                        body: params.toString()
+                    })
+                        .then(response => response.text())
+                        .then(data => {
+                            if (data) {
+                                try {
+                                    data = JSON.parse(data);
+                                } catch (err) {
+                                    alert("Parser error - " + err.message);
+                                    return;
+                                }
 
-                            if (data.error) {
-                                $('#spanpwerror').text(data.error);
-                            }
-                        }
-                    });
+                                if (data.result) {
+                                    spanDone.textContent = data.result;
+                                    btnMeta.disabled = true;
+                                }
 
-                    pw1.val('');
-                    pw2.val('');
-                    pw3.val('');
-                    pw4.val('');
+                                if (data.error) {
+                                    spanPwError.textContent = data.error;
+                                }
+                            }
+                        });
+
+                    pw1.value = '';
+                    pw2.value = '';
+                    pw3.value = '';
+                    pw4.value = '';
 
                 });
             });
