@@ -64,13 +64,18 @@ if (filter_has_var(INPUT_POST, 'txtUname')) {
     // or the user has a per-user default page configured.
     $events = $login->checkPost($dbh, $_POST, 'index.php');
 
-    if (($events['page'] ?? '') === 'index.php') {
-        // No explicit redirect target - land the user on the best site they're
-        // authorized for, house taking priority over the others.
+    // Login succeeded but the resolved target either fell through to the
+    // 'index.php' stand-in, or was rejected because it was checked against the
+    // root's own (unrelated) page list - e.g. a per-user default page saved from
+    // before this site was unified. Either way, fall back to the best site the
+    // user is authorized for, house taking priority over the others.
+    $pageRejected = isset($events['mess']) && str_starts_with($events['mess'], 'Unauthorized for page:');
+
+    if ($pageRejected || ($events['page'] ?? '') === 'index.php') {
         $defaultPage = SecurityComponent::getAuthorizedDefaultPage();
 
         if ($defaultPage != '') {
-            $events['page'] = $defaultPage;
+            $events = ['page' => $defaultPage];
         }
     }
 
