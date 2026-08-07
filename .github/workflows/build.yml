@@ -17,14 +17,17 @@ jobs:
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: "8.2"
+          php-version: "8.4"
           tools: composer
 
       # 3. Set up Node.js environment for Vite
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - name: Set up Vite+ and JS runtime
+        uses: voidzero-dev/setup-vp@v1
         with:
-          node-version: "22"
+          node-version: "24"
+          cache: true
+          sfw: true
+          run-install: true
 
       # 4. Install production PHP dependencies
       - name: Install Composer dependencies
@@ -33,15 +36,33 @@ jobs:
       # 5. Install Node dependencies and compile Vite assets
       - name: Build Vite assets
         run: |
-          npm ci
-          npm run build
+          vp build
 
       # 6. Package production files into a ZIP archive
       # This excludes development files, node_modules, and raw assets
       - name: Create Zip Archive
         run: |
-          zip -r release-${{ github.event.release.tag_name }}.zip . \
-          -x ".claude/" "*.git*" ".vite-hooks" ".vscode/" "node_modules/*" "tests/*" ".github/*" "composer.json" "composer.lock" "package.json" "package-lock.json" "vite.config.js" "phpstan*"
+          FOLDER_NAME="hhk"
+          ZIP_NAME="release-${{ github.event.release.tag_name }}.zip"
+
+          rsync -ar . "$FOLDER_NAME" \
+            --exclude=".claude/" \
+            --exclude=".git*" \
+            --exclude=".vite-hooks" \
+            --exclude=".vscode/" \
+            --exclude="node_modules/" \
+            --exclude="tests/" \
+            --exclude=".github/" \
+            --exclude="composer.json" \
+            --exclude="composer.lock" \
+            --exclude="package.json" \
+            --exclude="package-lock.json" \
+            --exclude="vite.config.js" \
+            --exclude="phpstan*"
+
+          zip -r "$ZIP_NAME" "$FOLDER_NAME"
+
+          rm -rf "$FOLDER_NAME"
 
       # 7. Upload the ZIP archive as an action artifact (optional)
       - name: Upload Artifact

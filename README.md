@@ -1,4 +1,4 @@
-[![PHP Linting](https://github.com/NPSC/HHK/actions/workflows/phplint.yml/badge.svg)](https://github.com/NPSC/HHK/actions/workflows/phplint.yml)
+[![Code Quality](https://github.com/NPSC/HHK/actions/workflows/code-quality.yml/badge.svg)](https://github.com/NPSC/HHK/actions/workflows/code-quality.yml)
 
 # Hospitality Housekeeper
 

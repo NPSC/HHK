@@ -1,0 +1,47 @@
+name: CI
+
+on: push
+
+jobs:
+  code-quality:
+    name: Linting, Vite+ check, PHP stan
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.4"
+          coverage: none
+
+      - name: Set up Vite+ and JS runtime
+        uses: voidzero-dev/setup-vp@v1
+        with:
+          node-version: "24"
+          cache: true,
+          run-install: true
+
+      - name: PHP Lint 8.4
+        uses: dbfx/github-phplint/8.4@master
+        with:
+          folder-to-exclude: '! -path "./vendor/*"'
+
+      - name: Composer validate
+        run: composer validate --strict
+
+      - name: Composer install
+        uses: ramsey/composer-install@v3
+
+      - name: Check namespaces
+        run: composer dump-autoload --optimize --strict-psr
+
+      - name: PHPStan
+        run: composer stan
+
+      - name: Run Vite+ Check
+        run: vp check
