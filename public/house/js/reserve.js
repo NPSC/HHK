@@ -7,7 +7,7 @@ var receiptMarkup;
 var receiptBilledToEmail;
 var receiptPaymentId;
 
-$(document).ready(function () {
+document.addEventListener("DOMContentLoaded", () => {
   "use strict";
   var t = this;
   var $guestSearch = $("#gstSearch");

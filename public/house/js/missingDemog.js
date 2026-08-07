@@ -1,4 +1,4 @@
-$(document).ready(function () {
+document.addEventListener("DOMContentLoaded", () => {
   "use strict";
 
   var columns = JSON.parse($("#columns").val());

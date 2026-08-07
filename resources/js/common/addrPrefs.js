@@ -209,3 +209,27 @@ export function cleanPhoneNumber(input) {
     ? "+" + cleaned.slice(1).replace(/\+/g, "")
     : cleaned.replace(/\+/g, "");
 }
+
+export function verifyDocAgent(prefix) {
+  const inputs = $(`input.hhk-${prefix}`);
+
+  // Clear error class
+  inputs.removeClass("ui-state-error");
+
+  if (inputs.is((i, e) => $(e).val().trim() !== "")) {
+    //if at least one agent field is filled
+
+    const emptyNameFields = inputs.filter(
+      (i, e) => $(e).val().trim() === "" && $(e).hasClass("name"),
+    );
+
+    if (emptyNameFields.length > 0) {
+      //if any of the name fields are empty
+      emptyNameFields.addClass("ui-state-error");
+      $("#divhospDetail").show("blind");
+      return false;
+    }
+  }
+
+  return true;
+}

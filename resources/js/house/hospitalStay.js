@@ -7,6 +7,8 @@
  * @link      https://github.com/NPSC/HHK
  */
 
+import { verifyDocAgent } from "../common/addrPrefs";
+
 export function viewHospitalStay(idHs, idVisit, $hsDialog) {
   $.post("ws_resv.php", { cmd: "viewHS", idhs: idHs }, function (data) {
     if (!data) {

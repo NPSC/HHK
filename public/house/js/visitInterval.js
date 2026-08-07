@@ -33,7 +33,7 @@ function viewInsurance(idName, eventTarget, detailDiv) {
 
 var fixedRate; // used by VisitDialog.hs
 
-$(document).ready(function () {
+document.addEventListener("DOMContentLoaded", () => {
   let startYear = $("#startYear").val(),
     columnDefs = JSON.parse($("#columnDefs").val()),
     pmtMkup = $("#pmtMkup").val(),

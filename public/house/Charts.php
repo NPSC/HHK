@@ -303,7 +303,7 @@ if (filter_has_var(INPUT_POST, 'cmd')) {
                 });
             }
 
-            $(document).ready(function() {
+            document.addEventListener("DOMContentLoaded", ()=>{
                 let activeTab = <?php echo $activeTab; ?>
 
             	$("#occupancyTabs").tabs({

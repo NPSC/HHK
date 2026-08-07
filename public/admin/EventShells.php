@@ -287,20 +287,20 @@ $evtShellMarkup = $tbl->generateMarkup(array('id'=>'dataTbl'));
         <?php echo FAVICON; ?>
 
         <script type="text/javascript">
-    $(document).ready(function() {
-        $('#dataTbl').dataTable({
-            "displayLength": 50,
-            "lengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]],
-        });
+            document.addEventListener("DOMContentLoaded", ()=>{
+                $('#dataTbl').dataTable({
+                    "displayLength": 50,
+                    "lengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]],
+                });
 
-        $( "input.ckdate" ).datepicker({
-            changeMonth: true,
-            changeYear: true,
-            autoSize: true,
-            dateFormat: 'M d, yy'
-        });
-        $('#btnSubmit').button();
-    });
+                $( "input.ckdate" ).datepicker({
+                    changeMonth: true,
+                    changeYear: true,
+                    autoSize: true,
+                    dateFormat: 'M d, yy'
+                });
+                $('#btnSubmit').button();
+            });
         </script>
     </head>
     <body <?php if ($testVersion) echo "class='testbody'"; ?> >

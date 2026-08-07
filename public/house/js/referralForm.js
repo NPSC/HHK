@@ -1,4 +1,4 @@
-$(document).ready(function () {
+document.addEventListener("DOMContentLoaded", () => {
   var previewFormData = buffer.Buffer.from(referralFormVars.formDataStr).toString("base64");
 
   var guestGroup = [];

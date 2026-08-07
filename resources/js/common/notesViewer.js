@@ -1,4 +1,5 @@
 import $ from "./jquery.js";
+import DOMPurify from "dompurify";
 
 (function ($) {
   var uid;

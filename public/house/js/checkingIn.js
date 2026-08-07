@@ -50,7 +50,7 @@ function ckedIn(data) {
   }
 }
 
-$(document).ready(function () {
+document.addEventListener("DOMContentLoaded", () => {
   "use strict";
   var t = this;
   var resv = JSON.parse($("#resv").val());

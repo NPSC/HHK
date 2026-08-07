@@ -634,7 +634,7 @@ class Hospital
                 )
                 . HTMLContainer::generateMarkup('div', '', array('style' => 'margin-top:.3em;padding:5px;display:none;', 'id' => 'hhk-viewhsLog'))
                 . '<script type="text/javascript">
-$(document).ready(function () {
+document.addEventListener("DOMContentLoaded", ()=>{
     "use strict";
     $(".hhk-showhsLog").click(function () {
         if ($("#spnhsctrl").text() == "View ' . $labels->getString('hospital', 'hospital', 'Hospital') . ' Log") {

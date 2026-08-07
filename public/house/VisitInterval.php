@@ -432,7 +432,7 @@ if ($uS->CoTod) {
         <?php echo CSSVARS; ?>
 
         <script type="text/javascript" src="<?php echo RESV_JS; ?>" defer></script>
-        <script type="text/javascript" src="<?php echo RESV_MANAGER_JS; ?>" defer></script>
+        <?php echo Vite::asset('resources/js/house/resvManager.js'); ?>
         <script type="text/javascript" src="<?php echo PAYMENT_JS; ?>" defer></script>
         <script type="text/javascript" src="<?php echo INVOICE_JS; ?>" defer></script>
         <script type="text/javascript" src="<?php echo VISIT_INTERVAL_JS; ?>" defer></script>

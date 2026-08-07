@@ -1,7 +1,7 @@
 /* global dateFormat */
 
 /**
- * rcheckin.js
+ * checkin.js
  *
  *
  * @category  house
@@ -11,7 +11,7 @@
  * @license   GPL and MIT
  * @link      https://github.com/NPSC/HHK
  */
-$(document).ready(function () {
+document.addEventListener("DOMContentLoaded", () => {
   "use strict";
   var dateFormat = $("dateFormat").val();
   $('input[type="button"]').button();

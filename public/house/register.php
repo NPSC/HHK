@@ -604,7 +604,7 @@ if($uS->useOnlineReferral){
 
         <?php if ($uS->PaymentGateway == AbstractPaymentGateway::DELUXE) { echo DeluxeGateway::getIframeMkup(); } ?>
 
-		<script type="text/javascript" src="<?php echo RESV_MANAGER_JS; ?>" defer></script>
+		<?php echo Vite::asset('resources/js/house/resvManager.js'); ?>
         <?php echo Vite::asset('resources/js/house/register.js'); ?>
 
     </body>

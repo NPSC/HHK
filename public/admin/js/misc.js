@@ -1,4 +1,4 @@
-$(document).ready(function () {
+document.addEventListener("DOMContentLoaded", () => {
   var table = new Object(),
     accordIndex = $("#accordIndex").val();
 

@@ -806,7 +806,7 @@ function setupLogViewer() {
   }
 }
 
-$(document).ready(function () {
+document.addEventListener("DOMContentLoaded", () => {
   var makeTable = $("#hmkTable").val();
   var start = $("#hstart").val();
   var end = $("#hend").val();

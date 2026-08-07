@@ -1,4 +1,4 @@
-$(document).ready(function () {
+document.addEventListener("DOMContentLoaded", () => {
   $("#btnPrint, #btnEmail").button();
   $(document).on("click", "#stmtDiv #btnEmail", function () {
     $("#emMsg").text("");

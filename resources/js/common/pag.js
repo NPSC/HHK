@@ -249,7 +249,7 @@ export function hhkReportError(message, infoArray) {
   });
 }
 
-$(document).ready(function () {
+document.addEventListener("DOMContentLoaded", () => {
   "use strict";
   // Hover states on the nav bar left icons.
   $("ul.hhk-ui-icons li").hover(

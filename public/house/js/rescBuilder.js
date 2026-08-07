@@ -268,7 +268,7 @@ function saveResource(idresc, type, clas) {
   );
 }
 
-$(document).ready(function () {
+document.addEventListener("DOMContentLoaded", () => {
   "use strict";
 
   $("#formBuilder").hhkFormBuilder({

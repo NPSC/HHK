@@ -1,4 +1,4 @@
-$(document).ready(function () {
+document.addEventListener("DOMContentLoaded", () => {
   $("#searchSel").submit(function (e) {
     e.preventDefault();
     $("#divExpansion").hide().children().remove();

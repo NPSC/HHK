@@ -756,7 +756,7 @@ var hindx = 0,
 
 window.fixedRate = fixedRate; // used by resv.js and resvManager.js, loaded alongside register.js on this page
 
-$(document).ready(function () {
+document.addEventListener("DOMContentLoaded", () => {
   "use strict";
 
   // Current Guests

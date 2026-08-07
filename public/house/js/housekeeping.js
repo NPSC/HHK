@@ -32,7 +32,7 @@ window.housekeeping.getDtBtns = function (title) {
   ];
 };
 
-$(document).ready(function () {
+document.addEventListener("DOMContentLoaded", () => {
   "use strict";
 
   var dateFormat = "ddd MMM D, YYYY";

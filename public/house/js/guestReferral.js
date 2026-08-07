@@ -1,6 +1,6 @@
 var idPatient, idDoc;
 
-$(document).ready(function () {
+document.addEventListener("DOMContentLoaded", () => {
   "use strict";
 
   var $btnDone = $("#btnDone");

@@ -189,10 +189,12 @@ export default defineConfig({
           // public/house/js/resv.js, loaded alongside regForm.js on ShowRegForm.php
           getRegistrationDialog: "readonly",
           showRegDialog: "readonly",
-          // public/house/js/resvManager.js and resv.js, loaded alongside hospitalStay.js
-          verifyDocAgent: "readonly",
+          // public/house/js/resv.js, loaded alongside resources/js/house/resvManager.js
           getAgent: "readonly",
           getDoc: "readonly",
+          setupRates: "readonly",
+          // set by public/house/js/reserve.js, checkingIn.js, loaded alongside resources/js/house/resvManager.js
+          payFailPage: "readonly",
           // resources/js/house.js exposes these from house/visitDialog.js; consumed by resources/js/register.js
           viewVisit: "readonly",
           saveFees: "readonly",
@@ -253,6 +255,7 @@ export default defineConfig({
         // HHK\Vite\Vite::asset('resources/js/<entry>.js') from the page.
         house: "resources/js/house.js",
         register: "resources/js/house/register.js",
+        resvManager: "resources/js/house/resvManager.js",
         guestLoad: "resources/js/house/guestload.js",
         regForm: "resources/js/house/regForm.js",
         referralform: "resources/js/house/referralform.js",

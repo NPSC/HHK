@@ -24,7 +24,6 @@ define('STATEMENT_PDF_CSS', \HHK\Vite\Vite::cssLink('resources/css/pdf/statement
 define('INVOICE_PDF_CSS', \HHK\Vite\Vite::cssLink('resources/css/pdf/invoice.css'));
 
 /* common mins */
-define('RESV_MANAGER_JS', 'js/resvManager-min.js' . JSV);
 define('PAYMENT_JS', "js/payments-min.js" . JSV);
 /* end mins */
 
