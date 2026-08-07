@@ -4,7 +4,7 @@ on: push
 
 jobs:
   code-quality:
-    name: Linting, Vite+ check, PHP stan
+    name: Code Quality
     runs-on: ubuntu-latest
 
     steps:
@@ -23,7 +23,7 @@ jobs:
         uses: voidzero-dev/setup-vp@v1
         with:
           node-version: "24"
-          cache: true,
+          cache: true
           run-install: true
 
       - name: PHP Lint 8.4
