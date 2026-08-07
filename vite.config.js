@@ -149,9 +149,7 @@ export default defineConfig({
         globals: {
           moment: "readonly",
           he: "readonly",
-          DOMPurify: "readonly",
           buffer: "readonly",
-          libphonenumber: "readonly",
           DataTable: "readonly",
           flagAlertMessage: "readonly",
           dateRender: "readonly",

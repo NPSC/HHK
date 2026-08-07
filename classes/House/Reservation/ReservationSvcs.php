@@ -196,7 +196,6 @@ class ReservationSvcs
                 HTMLContainer::generateMarkup('div', ($r['doc'] != '' ? $r['doc']: '<div class="ui-state-error">The confirmation document is empty</div>'), array('id'=>'PrintArea'.$r['tabIndex'])),
                 array('id'=>$r['tabIndex']));
 
-            $sty = $r['style'];
         }
 
         $ul = HTMLContainer::generateMarkup('ul', $li, array());
@@ -614,10 +613,10 @@ class ReservationSvcs
      * Get signed reg forms HTML
      *
      * @param \PDO $dbh
-     * @param number $idPsg
-     * @param number $idReservation
-     * @param number $idVisit
-     * @param number $span
+     * @param int $idPsg
+     * @param int $idReservation
+     * @param int $idVisit
+     * @param int $span
      *
      * @return array
      */

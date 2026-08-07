@@ -40,7 +40,6 @@ $idRegistration = 0;
 $msg = '';
 
 $guest = NULL;
-$sty = '';
 $emtableMarkup = '';
 $emAddr = '';
 

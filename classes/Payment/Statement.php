@@ -1316,15 +1316,15 @@ WHERE
 		);
 		$emTbl->addBodyTr(
 			HTMLTable::makeTd('Subject', ['class'=>"tdlabel", 'style'=>"width: 110px"]) . 
-			HTMLTable::makeTd(HTMLInput::generateMarkup($emSubject, array('name' => 'txtSubject')))
+			HTMLTable::makeTd(HTMLInput::generateMarkup($emSubject, array('name' => 'txtSubject', 'class'=>'fullWidth')))
 		);
         $emTbl->addBodyTr(
 			HTMLTable::makeTd('To', ['class'=>"tdlabel"]) . 
-            HTMLTable::makeTd(HTMLInput::generateMarkup($emAddrs, array('name' => 'txtEmail')))
+            HTMLTable::makeTd(HTMLInput::generateMarkup($emAddrs, array('name' => 'txtEmail', 'class'=>'fullWidth')))
 		);
         $emTbl->addBodyTr(
 			HTMLTable::makeTd('Body', ['class'=>"tdlabel"]) . 
-            HTMLTable::makeTd(HTMLContainer::generateMarkup("textarea", $emBody, array('name' => 'txtBody', 'class' => 'hhk-autosize')))
+            HTMLTable::makeTd(HTMLContainer::generateMarkup("textarea", $emBody, array('name' => 'txtBody', 'class' => 'hhk-autosize fullWidth')))
 		);
 		$emTbl->addBodyTr(
 			HTMLTable::makeTd('Attachment', ['class'=>"tdlabel"]) . 
@@ -1334,7 +1334,7 @@ WHERE
         $emtableMarkup .= HTMLContainer::generateMarkup("div", HTMLContainer::generateMarkup("h4", 'Email ' . Labels::getString('MemberType', 'visitor', 'Guest') . ' Statement'), ['class' => "ui-widget ui-widget-header align-center ui-corner-top"]);
         
         $emtableMarkup .= HTMLContainer::generateMarkup("div", 
-			$emTbl->generateMarkup(array("class"=>"emTbl mb-2"), ) . 
+			$emTbl->generateMarkup(array("class"=>"emTbl mb-2 fullWidth"), ) . 
 			HTMLContainer::generateMarkup('div', HTMLContainer::generateMarkup('button', '&nbsp;<span>Send</span> <i class="ms-2 bi bi-send-fill"></i>', array('style'=>'font-size: 0.9em;', 'type'=>"button", "id"=>"btnEmail", 'class'=> 'ui-button ui-corner-all ui-widget', 'data-reg'=>$idRegistration, 'data-vid'=>$idVisit)), ["class"=>'align-center']), ["class"=>"p-2 hhk-tdbox mb-3 ui-widget ui-widget-content ui-corner-bottom hhk-visitdialog"]);
 
         $emtableMarkup .= HTMLContainer::generateMarkup("div",

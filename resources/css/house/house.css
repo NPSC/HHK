@@ -1415,3 +1415,25 @@ table.dataTable tfoot > tr > td div.dt-column-header .dt-column-title,
 table.dataTable tfoot > tr > td div.dt-column-footer .dt-column-title {
   font-weight: bold;
 }
+
+.fullWidth {
+  width: 100%;
+}
+
+.align-center {
+  text-align: center;
+}
+
+.align-right {
+  text-align: right;
+}
+
+.align-left {
+  text-align: left;
+}
+
+@media print {
+  .hhk-noprint {
+    display: none;
+  }
+}

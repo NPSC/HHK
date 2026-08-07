@@ -415,7 +415,6 @@ $alertMessage = $alertMsg->createMarkup();
         <?php echo Vite::asset('resources/js/admin/nameEdit.js'); ?>
 
         <?php echo FAVICON; ?>
-        <link href="css/volCtrl.css" rel="stylesheet" type="text/css" />
 
         <script type="text/javascript">
             document.addEventListener("DOMContentLoaded", () => {

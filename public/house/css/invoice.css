@@ -7,12 +7,6 @@
   max-width: 800px;
 }
 
-.emTbl,
-.emTbl input[type="text"],
-.emTbl textarea {
-  width: 100%;
-}
-
 .emTbl textarea {
   resize: vertical;
 }
@@ -56,10 +50,6 @@
   font-size: 1em;
 }
 
-.align-center {
-  text-align: center;
-}
-
 @media print {
   body {
     margin: 0;
@@ -74,15 +64,8 @@
       serif;
     color: #000;
   }
-  .hhk-noprint {
-    display: none;
-  }
 
   .PrintArea {
     border: none !important;
   }
-}
-
-.fullWidth {
-  width: 100%;
 }

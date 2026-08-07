@@ -1,9 +1,3 @@
-.emTbl,
-.emTbl input[type="text"],
-.emTbl textarea {
-  width: 100%;
-}
-
 #formEm input[type="submit"],
 #formEm input[type="button"],
 #formWord input[type="submit"],
@@ -51,18 +45,6 @@
 
 @page {
   margin: 1cm;
-}
-
-.fullWidth {
-  width: 100%;
-}
-
-.align-center {
-  text-align: center;
-}
-
-.align-right {
-  text-align: right;
 }
 
 .hhk-tdTotals {
@@ -119,9 +101,6 @@
       "Lucida Grande",
       serif;
     color: #000;
-  }
-  .hhk-noprint {
-    display: none;
   }
 
   .PrintArea {
