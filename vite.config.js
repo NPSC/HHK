@@ -262,6 +262,10 @@ export default defineConfig({
         nameEdit: "resources/js/admin/nameEdit.js",
         root: "resources/js/root.js",
         login: "resources/js/login.js",
+        // Server-side CSS bundles for generated PDFs
+        receiptCss: "resources/css/pdf/receipt.css",
+        statementCss: "resources/css/pdf/statement.css",
+        invoiceCss: "resources/css/pdf/invoice.css",
       },
       output: {
         manualChunks(id) {

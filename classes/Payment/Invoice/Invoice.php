@@ -611,7 +611,7 @@ where
 		$mpdf = new Mpdf(['tempDir' => sys_get_temp_dir() . "/mpdf", 'shrink-tables-to-fit'=>0]);
 		$mpdf->showImageErrors = true;
 		$mpdf->WriteHTML(
-			'<html><head>' . HOUSE_CSS . INVOICE_CSS . '</head><body><div class="PrintArea">' . $stmtMarkup . '</div></body></html>'
+			'<html><head>' . INVOICE_PDF_CSS . '</head><body><div class="PrintArea">' . $stmtMarkup . '</div></body></html>'
 		);
 
 		if($download == true){
@@ -730,7 +730,6 @@ where
 
         $emtableMarkup .= HTMLContainer::generateMarkup("div",
 			HTMLInput::generateMarkup('Print', ["type" => "button", "id" => "btnPrint", "class" => "ui-button ui-corner-all ui-widget me-3"])
-        	//. HTMLInput::generateMarkup("Download MS Word", ["type"=>"submit", "name"=>"btnWord", "id"=>"btnWord", "class"=>"ui-button ui-corner-all ui-widget me-3"])
 			,
 		["class"=>'mb-3']);
 

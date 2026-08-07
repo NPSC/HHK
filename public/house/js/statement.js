@@ -1,5 +1,5 @@
 $(document).ready(function () {
-  $("#btnPrint, #btnEmail, #btnWord").button();
+  $("#btnPrint, #btnEmail").button();
   $(document).on("click", "#stmtDiv #btnEmail", function () {
     $("#emMsg").text("");
     if ($("#txtEmail").val() === "") {

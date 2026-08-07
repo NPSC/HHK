@@ -459,7 +459,7 @@ if (($stmt = $dbh->query("select distinct `Table_Name` from `gen_lookups`;")) !=
         
         <?php echo FAVICON; ?>
 
-        <script type="text/javascript" src="js/misc.js" defer></script>
+        <script type="text/javascript" src="<?php echo MISC_JS ?>" defer></script>
 
     </head>
     <body <?php if ($wInit->testVersion) echo "class='testbody'"; ?>>

@@ -46,7 +46,7 @@ if ($stmt->rowCount() > 0) {
 
         <?php echo FAVICON; ?>
 
-        <script type="text/javascript" src="js/accessLog.js" defer></script>
+        <script type="text/javascript" src="<?php echo ACCESSLOG_JS ?>" defer></script>
     </head>
     <body <?php if ($wInit->testVersion) {echo "class='testbody'";} ?>>
 <?php echo $menuMarkup; ?>

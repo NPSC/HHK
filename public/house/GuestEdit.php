@@ -736,8 +736,7 @@ $uS->guestId = $id;
         <title><?php echo $wInit->pageTitle; ?></title>
         <meta http-equiv="x-ua-compatible" content="IE=edge">
         <?php echo Vite::asset('resources/js/house/guestload.js'); ?>
-        
-        <?php echo INCIDENT_CSS; ?>
+
         <?php echo FAVICON; ?>
         <?php echo CSSVARS; ?>
         <?php echo STATEMENT_CSS; ?>

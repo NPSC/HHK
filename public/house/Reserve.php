@@ -232,8 +232,7 @@ $resvObjEncoded = json_encode($resvAr);
         <meta http-equiv="x-ua-compatible" content="IE=edge">
 
         <?php echo Vite::asset('resources/js/house.js'); ?>
-        
-        <?php echo INCIDENT_CSS; ?>
+
         <?php echo CSSVARS; ?>
         <?php echo FAVICON; ?>
 

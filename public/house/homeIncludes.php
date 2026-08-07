@@ -13,11 +13,15 @@
  */
 require('../../functions/commonDefines.php');
 
-define('HOUSE_CSS', "<link href='css/house.css" . JSV . "' rel='stylesheet' type='text/css' />");
 define('INVOICE_CSS', "<link href='css/invoice.css" . JSV . "' rel='stylesheet' type='text/css' />");
 define('STATEMENT_CSS', "<link href='css/statement.css" . JSV . "' rel='stylesheet' type='text/css' />");
-define('ROOT_CSS', "<link href='../css/root.css" . JSV . "' rel='stylesheet' type='text/css' />");
 define('CUSTOM_REGFORM_CSS', "<link href='css/customRegForm.css" . JSV . "' rel='stylesheet' type='text/css' />");
+
+// CSS bundles for PDFs generated via mPDF (Receipt/Statement/Invoice), which fetch
+// their own <link> stylesheets rather than loading a page in a browser.
+define('RECEIPT_CSS', \HHK\Vite\Vite::cssLink('resources/css/pdf/receipt.css'));
+define('STATEMENT_PDF_CSS', \HHK\Vite\Vite::cssLink('resources/css/pdf/statement.css'));
+define('INVOICE_PDF_CSS', \HHK\Vite\Vite::cssLink('resources/css/pdf/invoice.css'));
 
 /* common mins */
 define('RESV_MANAGER_JS', 'js/resvManager-min.js' . JSV);
@@ -33,8 +37,6 @@ define('CHECKINGIN_JS', 'js/checkingIn.js' . JSV);
 define('RESCBUILDER_JS', 'js/rescBuilder.js' . JSV);
 define('MISSINGDEMOG_JS', 'js/missingDemog.js' . JSV);
 define('GUESTTRANSFER_JS', 'js/guestTransfer.js' . JSV);
-// define('INS_EMBED_JS', '<script src="https://instamedprd.cachefly.net/Content/Js/embed.js" data-displaymode="embedded" data-hostname="https://online.instamed.com/providers" data-mobiledisplaymode="embedded"></script>');
-// Javascript file Embed.js moved to new server.  7/26/2024
 define('INS_EMBED_JS', '<script src="https://cdn.instamed.com/Content/Js/embed.js" data-displaymode="incontext" data-hostname="https://online.instamed.com/providers" data-mobiledisplaymode="incontext"></script>');
 define('DELUXE_SANDBOX_EMBED_JS', '<script src="https://hostedform2.deluxe.com/V2/deluxe.js"></script>');
 define('DELUXE_EMBED_JS', '<script src="https://hostedpaymentform.deluxe.com/v2/deluxe.js"></script>');
@@ -44,7 +46,4 @@ define('TOPAZ_SIGWEB_JS', 'js/SigWebTablet.js' . JSV);
 define('VISIT_INTERVAL_JS', "js/visitInterval.js" . JSV);
 define('HOUSEKEEPING_JS', 'js/housekeeping.js' . JSV);
 
-define('GRID_CSS', "<link href='../css/bootstrap-grid.min.css" . JSV . "' rel='stylesheet' type='text/css' />");
-define('NAVBAR_CSS', "<link href='../css/bootstrapNavbar.css" . JSV . "' rel='stylesheet' type='text/css' />");
 define('CSSVARS', "<link href='ws_resc.php?cmd=getCssVars' rel='stylesheet' type='text/css' />");
-define('BOOTSTRAP_ICONS_CSS', "<link href='../css/bootstrap-icons.min.css" . JSV . "' rel='stylesheet' type='text/css' />");

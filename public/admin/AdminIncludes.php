@@ -10,10 +10,7 @@
 
 require ('../../functions/commonDefines.php');
 
-define('DEFAULT_CSS', '<link href="css/default.css' . JSV . '" rel="stylesheet" type="text/css" />');
-define('ROOT_CSS', "<link href='../css/root.css" . JSV . "' rel='stylesheet' type='text/css' />");
-define('GRID_CSS', "<link href='../css/bootstrap-grid.min.css" . JSV . "' rel='stylesheet' type='text/css' />");
-define('BOOTSTRAP_ICONS_CSS', "<link href='../css/bootstrap-icons.min.css" . JSV . "' rel='stylesheet' type='text/css' />");
-define('NAVBAR_CSS', "<link href='../css/bootstrapNavbar.css" . JSV . "' rel='stylesheet' type='text/css' />");
-
+define('ACCESSLOG_JS', "js/accessLog.js" . JSV);
 define('CONFIGURE_JS', "js/Configure.js" . JSV);
+define('DUPLICATE_JS', "js/duplicate.js" . JSV);
+define('MISC_JS', "js/misc.js" . JSV);

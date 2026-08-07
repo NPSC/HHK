@@ -53,6 +53,29 @@ class Vite
         return $tags;
     }
 
+    /**
+     * Renders a <link> tag for a CSS-only entry point, e.g.
+     * Vite::cssLink('resources/css/pdf/receipt.css'), for consumers that
+     * fetch stylesheets themselves (mPDF's WriteHTML) rather than running
+     * in a browser. Always resolves from the manifest, even under the dev
+     * server, since these consumers never load in a browser.
+     */
+    public static function cssLink(string $entry): string
+    {
+        return '<link rel="stylesheet" href="/build/' . self::resolveFile($entry) . '">';
+    }
+
+    private static function resolveFile(string $entry): string
+    {
+        $manifest = self::manifest();
+
+        if (!isset($manifest[$entry])) {
+            throw new \RuntimeException("Vite manifest entry not found: {$entry}");
+        }
+
+        return $manifest[$entry]['file'];
+    }
+
     private static function devServerUrl(): ?string
     {
         if (self::$devChecked) {

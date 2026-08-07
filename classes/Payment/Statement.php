@@ -1283,15 +1283,6 @@ WHERE
 
     }
 
-    public static function createEmailStmtWrapper(string $stmtMarkup){
-        return '<html><head><style type="text/css">' .
-            file_get_contents("css/jqui/jquery-ui.min.css") .
-            file_get_contents("css/house.css") .
-            file_get_contents("css/statement.css") .
-            file_get_contents("css/bootstrap-grid.min.css") .
-            '</style></head><body><div id="emailStmtDiv">' . $stmtMarkup . '</div></body></html>';
-    }
-
     public static function makeHeaderMkup(\PDO $dbh, $includeLogo = true){
         $uS = Session::getInstance();
 
@@ -1348,7 +1339,6 @@ WHERE
 
         $emtableMarkup .= HTMLContainer::generateMarkup("div",
 			HTMLInput::generateMarkup('Print', ["type" => "button", "id" => "btnPrint", "class" => "ui-button ui-corner-all ui-widget me-3"])
-            //. HTMLInput::generateMarkup("Download MS Word", ["type"=>"submit", "name"=>"btnWord", "id"=>"btnWord", "class"=>"ui-button ui-corner-all ui-widget me-3"])
             ,
 		["class"=>'mb-3']);
 
@@ -1360,7 +1350,7 @@ WHERE
 
 		$mpdf = new Mpdf(['tempDir' => sys_get_temp_dir() . "/mpdf"]);
 		$mpdf->showImageErrors = true;
-		$mpdf->WriteHTML('<html><head>' . HOUSE_CSS . GRID_CSS . STATEMENT_CSS . '</head><body style="font-size: 0.9em"><div class="PrintArea">' . $stmtMarkup . '</div></body></html>');
+		$mpdf->WriteHTML('<html><head>' . STATEMENT_PDF_CSS . '</head><body style="font-size: 0.9em"><div class="PrintArea">' . $stmtMarkup . '</div></body></html>');
 
 		if($download == true){
 			$mpdf->OutputHttpDownload("Statement.pdf");
@@ -1368,29 +1358,6 @@ WHERE
 			return $mpdf->Output('', 'S');
 		}
 	}
-
-    public static function makeEmailTblOLD($emSubject = "", $emAddrs = "", $emBody = "", $idRegistration = 0, $idVisit = 0){
-        // create send email table
-        $emTbl = new HTMLTable();
-        $emTbl->addBodyTr(HTMLTable::makeTd('Subject: ' . HTMLInput::generateMarkup($emSubject, array('name'=>'txtSubject', 'class'=>'ignrSave ms-2')), array("class"=>"hhk-flex")));
-        $emTbl->addBodyTr(HTMLTable::makeTd(
-                'Email: '
-                . HTMLInput::generateMarkup($emAddrs, array('name'=>'txtEmail', 'class'=>'ignrSave ms-2')), array("class"=>"hhk-flex")));
-        $emTbl->addBodyTr(HTMLTable::makeTd(HTMLInput::generateMarkup('Send Email', array('class'=> 'ui-button ui-corner-all ui-widget', 'name'=>'btnEmail', 'type'=>'button', 'data-reg'=>$idRegistration, 'data-vid'=>$idVisit))));
-
-        $emtableMarkup = HTMLContainer::generateMarkup('div', HTMLContainer::generateMarkup('form',
-                $emTbl->generateMarkup(array('class'=>'emTbl'), 'Email '.Labels::getString('MemberType', 'visitor', 'Guest') . ' Statement'), array('id'=>'formEm'))
-
-                .HTMLContainer::generateMarkup('form',
-                        HTMLInput::generateMarkup('Print', array('type'=>'button', 'id'=>'btnPrint', 'class'=>'ui-button ui-corner-all ui-widget me-3 mt-2'))
-                        .HTMLInput::generateMarkup('Download to MS Word', array('name'=>'btnWord', 'type'=>'submit', 'class'=>'ui-button ui-corner-all ui-widget me-3 mt-2'))
-                        .HTMLInput::generateMarkup($idRegistration, array('name'=>'hdnIdReg', 'type'=>'hidden'))
-                        .HTMLInput::generateMarkup($idVisit, array('name'=>'hdnIdVisit', 'type'=>'hidden'))
-                        , array('name'=>'formWord','action'=>'ShowStatement.php', 'method'=>'post'))
-                ,array('class'=>'ui-widget ui-widget-content ui-corner-all hhk-panel hhk-tdbox my-3'));
-
-        return $emtableMarkup;
-    }
 
     /**
      * Summary of makeSummaryDiv

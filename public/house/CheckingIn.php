@@ -195,8 +195,6 @@ $resvManagerOptionsEncoded = json_encode($resvManagerOptions);
 
         <?php echo Vite::asset('resources/js/house.js'); ?>
 
-
-		<?php echo INCIDENT_CSS; ?>
         <?php echo FAVICON; ?>
         <?php echo CSSVARS; ?>
 

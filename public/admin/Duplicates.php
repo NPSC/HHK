@@ -127,7 +127,7 @@ $filterCBs = HTMLContainer::generateMarkup("div",
         
         <?php echo FAVICON; ?>
 
-        <script type="text/javascript" src="js/duplicate.js" defer></script>
+        <script type="text/javascript" src="<?php echo DUPLICATE_JS ?>" defer></script>
 
     </head>
     <body <?php if ($wInit->testVersion) {echo "class='testbody'";} ?>>

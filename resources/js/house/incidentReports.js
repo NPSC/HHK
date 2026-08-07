@@ -1,5 +1,8 @@
 import $ from "../common/jquery.js";
 import SignaturePad from "signature_pad";
+import "../../css/house/incidentReports.css";
+import houseCssUrl from "../../css/house/house.css?url";
+import incidentReportsCssUrl from "../../css/house/incidentReports.css?url";
 
 (function ($) {
   $.fn.incidentViewer = function (options) {
@@ -541,9 +544,11 @@ import SignaturePad from "signature_pad";
           body += "</table>" + "</div>";
           var mywindow = window.open("", "PRINT", "height=600,width=800");
           mywindow.document.write("<html><head><title>" + document.title + "</title>");
-          mywindow.document.write('<link href="css/house.css" rel="stylesheet" type="text/css">');
           mywindow.document.write(
-            '<link href="css/incidentReports.css" rel="stylesheet" type="text/css">',
+            '<link href="' + houseCssUrl + '" rel="stylesheet" type="text/css">',
+          );
+          mywindow.document.write(
+            '<link href="' + incidentReportsCssUrl + '" rel="stylesheet" type="text/css">',
           );
           mywindow.document.write(
             '</head><body id="incidentReport" class="PrintArea hhk-visitdialog hhk-tdbox">',

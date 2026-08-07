@@ -11,7 +11,6 @@ use HHK\HTMLControls\HTMLContainer;
 use HHK\Note\Note;
 use HHK\Note\LinkNote;
 use HHK\House\Registration;
-use HHK\TableLog\HouseLog;
 use HHK\Vite\Vite;
 use PHPMailer\PHPMailer\PHPMailer;
 
@@ -46,56 +45,6 @@ $emtableMarkup = '';
 $emAddr = '';
 
 $includeLogo = TRUE;
-
-
-function createScript($guestLabel) {
-    return "
-    $('#btnPrint, #btnEmail, #btnWord').button();
-    $(document).on('click', '#btnEmail', function () {
-        if ($('#btnEmail').val() == 'Sending...') {
-            return;
-        }
-        $('#emMsg').text('');
-        if ($('#txtEmail').val() === '') {
-            $('#emMsg').text('Enter an Email Address.  ').css('color', 'red');
-            return;
-        }
-        if ($('#txtSubject').val() === '') {
-            $('#emMsg').text('Enter a Subject line.').css('color', 'red');
-            return;
-        }
-        $('#btnEmail').val('Sending...');
-        $.post('ShowStatement.php', $('#formEm').serialize() + '&cmd=email' + '&reg=' + $(this).data('reg') + '&vid=' + $(this).data('vid'), function(data) {
-            $('#btnEmail').val('Send Email');
-            try {
-                data = JSON.parse(data);
-            } catch (err) {
-                alert('Bad JSON Encoding');
-                return;
-            }
-            if (data.error) {
-                if (data.gotopage) {
-                    window.open(data.gotopage, '_self');
-                }
-            }
-            if (data.msg) {
-                $('#emMsg').text(data.msg).css('color', 'red');
-            }
-        });
-    });
-    var opt = {mode: 'popup',
-        popClose: true,
-        popHt      : $('#divStmt').height(),
-        popWd      : $('#divStmt').width(),
-        popX       : 20,
-        popY       : 20,
-        popTitle   : '$guestLabel' +' Statement'};
-
-    $('#btnPrint').click(function() {
-        $('div.PrintArea').printArea(opt);
-    });
-    ";
-}
 
 if (isset($_REQUEST['vid'])) {
     $idVisit = intval(filter_var($_REQUEST["vid"], FILTER_SANITIZE_NUMBER_INT), 10);
@@ -148,30 +97,6 @@ if ($idRegistration > 0) {
 
 $stmtMarkup = HTMLContainer::generateMarkup('div', $stmtMarkup, array('id'=>'divStmt', 'class'=>'PrintArea ui-widget ui-widget-content ui-corner-all hhk-panel hhk-tdbox hhk-visitdialog'));
 
-if (isset($_POST['btnWord'])) {
-
-    HouseLog::logDownload($dbh, "Statement", "Word", "Statement Word Doc for $statementTitle downloaded", $uS->username);
-
-    $form = "<!DOCTYPE html>"
-            . "<html>"
-                . "<head>"
-                    . "<style type='text/css'>" . file_get_contents('css/jqui/jquery-ui.min.css') . "</style>"
-                    . "<style type='text/css'>" . file_get_contents('css/house.css') . "</style>"
-                . "</head>"
-                . "<body><div class='ui-widget ui-widget-content ui-corner-all hhk-panel'" . $stmtMarkup . '</div></body>'
-            . '</html>';
-
-    header('Content-Disposition: attachment; filename=Statement.doc');
-    header("Content-Description: File Transfer");
-    header('Content-Type: text/html');
-    header('Cache-Control: must-revalidate, post-check=0, pre-check=0');
-    header('Expires: 0');
-
-    echo($form);
-    exit();
-
-}
-
 $emSubject = $wInit->siteName .' '. $labels->getString('MemberType', 'visitor', 'Guest')." Statement";
 
 $emBody = $uS->StatementEmailBody;
@@ -180,8 +105,7 @@ if (is_null($guest) === FALSE && $emAddr == '') {
     $email = $guest->getEmailsObj()->get_data($guest->getEmailsObj()->get_preferredCode());
     $emAddr = $email["Email"];
 }
-//echo Statement::createEmailStmtWrapper($stmtMarkup);
-//exit;
+
 $emtableMarkup = HTMLContainer::generateMarkup("form",
     Statement::makeEmailTbl("<strong class='me-2'>" . $uS->siteName . "</strong><small>&lt;" . $uS->FromAddress . "&gt;</small>",$emSubject, $emAddr, $emBody, $idRegistration, $idVisit)
 , ['id' => 'formEm', 'name' => 'formEm', 'method' => "POST", 'action' => 'ShowStatement.php', 'class' => 'hhk-noprint']);
@@ -236,7 +160,6 @@ if (isset($_REQUEST['cmd'])) {
                 }
 
                 $mail->Subject = htmlspecialchars_decode($emSubject, ENT_QUOTES);
-                //$mail->msgHTML(Statement::createEmailStmtWrapper($stmtMarkup));
                 $mail->msgHTML($emBody);
                 $mail->addStringAttachment(Statement::makePDF($stmtMarkup), "Statement.pdf", PHPMailer::ENCODING_BASE64, 'application/pdf');
 
@@ -294,7 +217,7 @@ if ($msg != '') {
         <script type='text/javascript'>
             document.addEventListener("DOMContentLoaded", () => {
                 "use strict";
-                $('#btnPrint, #btnEmail, #btnWord').button();
+                $('#btnPrint, #btnEmail').button();
                 $('#btnEmail').click(function () {
                     if ($('#btnEmail').val() == 'Sending...') {
                         return;

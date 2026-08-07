@@ -625,7 +625,7 @@ WHERE
 
 		$mpdf = new Mpdf(['tempDir' => sys_get_temp_dir() . "/mpdf"]);
 		$mpdf->showImageErrors = true;
-		$mpdf->WriteHTML('<html><head>' . HOUSE_CSS . GRID_CSS . '</head><body style="font-size: 0.9em"><div class="PrintArea">' . $receiptMarkup . '</div></body></html>');
+		$mpdf->WriteHTML('<html><head>' . RECEIPT_CSS . '</head><body style="font-size: 0.9em"><div class="PrintArea">' . $receiptMarkup . '</div></body></html>');
 
 		if($download == true){
 			$mpdf->OutputHttpDownload("Receipt.pdf");

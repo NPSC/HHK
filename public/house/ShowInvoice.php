@@ -4,7 +4,6 @@ use HHK\sec\{Session, WebInit};
 use HHK\SysConst\WebPageCode;
 use HHK\Payment\Invoice\Invoice;
 use HHK\HTMLControls\HTMLContainer;
-use HHK\TableLog\HouseLog;
 use HHK\Vite\Vite;
 use PHPMailer\PHPMailer\PHPMailer;
 
@@ -60,29 +59,6 @@ try {
         $stmtMarkup = $invoice->createMarkup($dbh);
 
         $emAddrs[] = $invoice->getBillToEmail($dbh);
-
-        if (isset($_POST['btnWord'])) {
-
-            HouseLog::logDownload($dbh, "Invoice", "Word", "Invoice $invNum Word Doc downloaded", $uS->username);
-
-            $form = "<!DOCTYPE html>"
-                    . "<html>"
-                        . "<head>"
-                            . "<style type='text/css'>" . file_get_contents("css/house.css") . file_get_contents("css/invoice.css") . "</style>"
-                        . "</head>"
-                        . "<body><div class='PrintArea'>" . $stmtMarkup . '</div></body>'
-                    . '</html>';
-
-            header('Content-Disposition: attachment; filename=Invoice.doc');
-            header("Content-Description: File Transfer");
-            header('Content-Type: text/html');
-            header('Cache-Control: must-revalidate, post-check=0, pre-check=0');
-            header('Expires: 0');
-
-            echo($form);
-            exit();
-
-        }
 
         if (isset($_POST['txtEmail'])) {
             $emAddr = filter_var($_POST['txtEmail'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
@@ -207,7 +183,7 @@ if ($msg != '') {
         <script type='text/javascript'>
             document.addEventListener("DOMContentLoaded", () => {
                 "use strict";
-                $('#btnPrint, #btnEmail, #btnWord').button();
+                $('#btnPrint, #btnEmail').button();
                 var opt = {mode: 'popup',
                     popClose: true,
                     popHt      : $('#divBody').height(),
