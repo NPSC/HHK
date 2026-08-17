@@ -83,11 +83,13 @@ try {
         case "save":
 
             $parms = array();
-            if (isset($_POST["parms"])) {
-                $parms = filter_input_array(INPUT_POST, [
-                    "parms" => FILTER_SANITIZE_FULL_SPECIAL_CHARS
-                ]);
-            }
+            $post = filter_input_array(INPUT_POST, [
+                "parms" => [
+                    'filter' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
+                    'flags'=>FILTER_FORCE_ARRAY
+                ]
+            ]);
+            $parms = $post['parms'] ?? [];
 
             $events = WebUser::saveUname($dbh, $uS->username, $parms, $maintFlag);
 

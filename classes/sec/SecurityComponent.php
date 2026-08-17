@@ -259,7 +259,7 @@ class SecurityComponent {
 
     /**
      * Summary of defineThisURL
-     * @throws \HHK\Exception\RuntimeException
+     * @throws RuntimeException
      * @return void
      */
     private function defineThisURL() {
@@ -336,27 +336,20 @@ class SecurityComponent {
      * Does the user have the Admin role or is the THE Admin user.
      * @return bool
      */
-    public static function is_Admin() {
+    public static function is_Admin(): bool {
         $tokn = false;
         $ssn = Session::getInstance();
-        $roleCode = $ssn->rolecode;
+        $roleCode = intval($ssn->rolecode);
         $userName = $ssn->username;
 
-        // try to int-ify the roleCode if it is not an int
-        if (!is_int($roleCode)) {
-            $intRole = intval($roleCode);
-        } else {
-            $intRole = $roleCode;
-        }
-
-        if ($intRole > 0 && is_string($userName)) {
+        if ($roleCode > 0 && is_string($userName)) {
 
             // Authorization Bypass
-            if ($intRole <= 10 || self::is_TheAdmin()) {
-                $tokn = TRUE;
+            if ($roleCode <= 10 || self::is_TheAdmin()) {
+                return true;
             }
         }
-        return $tokn;
+        return false;
     }
 
     // Checks for THE admin account.

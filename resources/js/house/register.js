@@ -683,7 +683,7 @@ function getDtBtns(title, stripHtml = true, className = "") {
       paperSize: "letter",
       exportOptions: {
         stripHtml: stripHtml,
-        columns: ":not('.noPrint')",
+        columns: ":not(.noPrint)",
       },
       title: function () {
         return title;

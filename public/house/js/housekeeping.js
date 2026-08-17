@@ -8,7 +8,7 @@ window.housekeeping.getDtBtns = function (title) {
       autoPrint: true,
       paperSize: "letter",
       exportOptions: {
-        columns: ":not('.noPrint')",
+        columns: ":not(.noPrint)",
         orthogonal: "print",
       },
       title: function () {
