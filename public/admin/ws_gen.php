@@ -554,7 +554,7 @@ try {
 
             $exportManager = AbstractExportManager::factory($dbh, $uS->ContactManager);
 
-            if ($exportManager !== NULL) {
+            if ($exportManager instanceof SalesforceManager) {
                 $sfObject = filter_input(INPUT_GET, 'sfObject', FILTER_SANITIZE_FULL_SPECIAL_CHARS) ?? '';
                 $sfField  = filter_input(INPUT_GET, 'sfField',  FILTER_SANITIZE_FULL_SPECIAL_CHARS) ?? '';
                 $hhkField = filter_input(INPUT_GET, 'hhkField', FILTER_SANITIZE_FULL_SPECIAL_CHARS) ?? '';
@@ -567,7 +567,7 @@ try {
 
             $exportManager = AbstractExportManager::factory($dbh, $uS->ContactManager);
 
-            if ($exportManager !== NULL) {
+            if ($exportManager instanceof SalesforceManager) {
                 $events = $exportManager->savePicklistMap($dbh);
             }
 
