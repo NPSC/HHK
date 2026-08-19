@@ -49,8 +49,10 @@ function processAction(PDO $dbh, $tbl, $cde, $colr, $desc, $repl, $action, &$vol
     if (count($rows) == 0 && $action == "add") {
         // add a new code with desc.
 
-        $dbh->query("CALL IncrementCounter('codes', @num);");
-        foreach ($dbh->query("SELECT @num") as $row) {
+        $dbh->prepare("CALL IncrementCounter('codes', @num);")->execute();
+        $numStmt = $dbh->prepare("SELECT @num");
+        $numStmt->execute();
+        foreach ($numStmt as $row) {
             $rptId = $row[0];
         }
         if ($rptId == 0) {

@@ -213,20 +213,28 @@ class GuestDemogReport {
         room r on rr.idRoom = r.idRoom
     WHERE
         n.Member_Status IN ('a' , 'in', 'd') $whHosp $whAssoc $whDiags $whPatient
-        AND DATE(s.Span_Start_Date) < DATE('" . $endDT->format('Y-m-d') . "') and DATEDIFF(DATE(ifnull(s.Span_End_Date, now())), DATE(s.Span_Start_Date)) > 0";
+        AND DATE(s.Span_Start_Date) < DATE(:endDate) and DATEDIFF(DATE(ifnull(s.Span_End_Date, now())), DATE(s.Span_Start_Date)) > 0";
+
+        $queryParams = [':endDate' => $endDT->format('Y-m-d')];
 
         if ($whichGuests == 'new') {
-            $query .= " GROUP BY s.idName HAVING DATE(`minDate`) >= DATE('" . $stDT->format('Y-m-01') . "')";
+            $query .= " GROUP BY s.idName HAVING DATE(`minDate`) >= DATE(:stDate1)";
+            $queryParams[':stDate1'] = $stDT->format('Y-m-01');
         } else if($whichGuests == 'allStarted'){
-            $query .= " AND DATE(s.Span_Start_Date) >= DATE('" . $stDT->format('Y-m-01') . "') and s.Status in ('" . VisitStatus::Active . "','" . VisitStatus::CheckedOut . "')";
+            $query .= " AND DATE(s.Span_Start_Date) >= DATE(:stDate2) and s.Status in (:stActive, :stCheckedOut)";
+            $queryParams[':stDate2'] = $stDT->format('Y-m-01');
+            $queryParams[':stActive'] = VisitStatus::Active;
+            $queryParams[':stCheckedOut'] = VisitStatus::CheckedOut;
         } else if($whichGuests == 'allStayed'){
-            $query .= " AND DATE(ifnull(s.Span_End_Date, now())) > DATE('" . $stDT->format('Y-m-01') . "')";
+            $query .= " AND DATE(ifnull(s.Span_End_Date, now())) > DATE(:stDate3)";
+            $queryParams[':stDate3'] = $stDT->format('Y-m-01');
         }
         $query .= " ORDER BY s.idName";
 
         $currId = 0;
         $currPeriod = '';
-        $stmt = $dbh->query($query);
+        $stmt = $dbh->prepare($query);
+        $stmt->execute($queryParams);
 
         while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
 

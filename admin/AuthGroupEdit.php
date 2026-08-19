@@ -128,7 +128,7 @@ $wgroupRS = new W_groupsRS();
 $rows = EditRS::select($dbh, $wgroupRS, array());
 
 // fetch ip list
-$stmt = $dbh->prepare("SELECT IP_addr, title from w_auth_ip");
+$stmt = $dbh->prepare("SELECT `IP_addr`, `title` FROM `w_auth_ip`");
 $stmt->setFetchMode(\PDO::FETCH_NUM);
 $stmt->execute();
 $ipAuthRows = $stmt->fetchAll(\PDO::FETCH_NUM);
@@ -139,9 +139,9 @@ foreach ($rows as $r) {
 
     //get IPs
     $gc = $wgroupRS->Group_Code->getStoredVal();
-    $query = "SELECT `IP_addr` FROM `w_group_ip` where `Group_Code` = '$gc';";
+    $query = "SELECT `IP_addr` FROM `w_group_ip` WHERE `Group_Code` = :gc;";
     $stmt = $dbh->prepare($query);
-    $stmt->execute();
+    $stmt->execute([':gc' => $gc]);
     $ips = $stmt->fetchAll();
     $selected = array();
     foreach ($ips as $ip) {

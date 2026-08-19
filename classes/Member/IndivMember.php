@@ -383,7 +383,8 @@ class IndivMember extends AbstractMember
 
             $langs = array();
 
-            $stmt = $dbh->query("Select idLanguage, Title, ISO_639_1 from language where Display = 1");
+            $stmt = $dbh->prepare("SELECT `idLanguage`, `Title`, `ISO_639_1` FROM `language` WHERE `Display` = 1");
+            $stmt->execute();
 
             while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
 
@@ -492,7 +493,8 @@ class IndivMember extends AbstractMember
         $this->getInsurance($dbh, $this->get_idName());
 
         // Insurance Companies
-        $stmt = $dbh->query("select * from insurance where `Status` = 'a' order by `idInsuranceType`, `Title`");
+        $stmt = $dbh->prepare("SELECT * FROM `insurance` WHERE `Status` = 'a' ORDER BY `idInsuranceType`, `Title`");
+        $stmt->execute();
         $ins = array();
 
         while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
@@ -500,19 +502,20 @@ class IndivMember extends AbstractMember
         }
 
         // Insurance Types
-        $stmt2 = $dbh->query("SELECT
-    idInsurance_type,
-    Title,
+        $stmt2 = $dbh->prepare("SELECT
+    `idInsurance_type`,
+    `Title`,
     CASE
-        WHEN Is_Primary = 1 THEN '1'
+        WHEN `Is_Primary` = 1 THEN '1'
         ELSE '0'
     END AS `Is_Primary`,
-    List_Order
+    `List_Order`
 FROM
     `insurance_type`
 WHERE
     `Status` = 'a'
 ORDER BY `List_Order`");
+        $stmt2->execute();
         $insTypes = array();
 
 
@@ -609,7 +612,8 @@ ORDER BY `List_Order`");
         $this->getInsurance($dbh, $this->get_idName());
 
         // Insurance Companies
-        $stmt = $dbh->query("select * from insurance where `Status` = 'a' order by `idInsuranceType`, `Title`");
+        $stmt = $dbh->prepare("SELECT * FROM `insurance` WHERE `Status` = 'a' ORDER BY `idInsuranceType`, `Title`");
+        $stmt->execute();
         $ins = array();
 
         while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
@@ -617,19 +621,20 @@ ORDER BY `List_Order`");
         }
 
         // Insurance Types
-        $stmt2 = $dbh->query("SELECT
-    idInsurance_type,
-    Title,
+        $stmt2 = $dbh->prepare("SELECT
+    `idInsurance_type`,
+    `Title`,
     CASE
-        WHEN Is_Primary = 1 THEN '1'
+        WHEN `Is_Primary` = 1 THEN '1'
         ELSE '0'
     END AS `Is_Primary`,
-    List_Order
+    `List_Order`
 FROM
     `insurance_type`
 WHERE
     `Status` = 'a'
 ORDER BY `List_Order`");
+        $stmt2->execute();
         $insTypes = array();
 
 
@@ -1102,7 +1107,8 @@ ORDER BY `List_Order`");
         $myInss = array();
 
         // Insurance Types
-        $stmt2 = $dbh->query("Select * from `insurance_type` order by `List_Order`");
+        $stmt2 = $dbh->prepare("SELECT * FROM `insurance_type` ORDER BY `List_Order`");
+        $stmt2->execute();
         $insTypes = array();
         $primaryInsType = '';
 
@@ -1115,7 +1121,8 @@ ORDER BY `List_Order`");
         }
 
         // Insurances
-        $stmt3 = $dbh->query("select idInsurance, idInsuranceType, Title from insurance");
+        $stmt3 = $dbh->prepare("SELECT `idInsurance`, `idInsuranceType`, `Title` FROM `insurance`");
+        $stmt3->execute();
         $insCos = array();
 
         while ($c = $stmt3->fetch(\PDO::FETCH_ASSOC)) {

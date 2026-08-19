@@ -61,11 +61,24 @@ if (isset($_POST['btnRoom']) && count($rPrices) > 0) {
     if ($numRooms > 0 && $numRooms < 201) {
 
         // Clear the database
-        $dbh->exec("Delete from `room` where idRoom > 0;");
-        $dbh->exec("Delete from `resource`;");
-        $dbh->exec("Delete from `resource_room`;");
-        $dbh->exec("Delete from `resource_use`;");
-        $dbh->exec("Delete from `room_log`;");
+        $dbh->prepare("DELETE FROM `room` WHERE `idRoom` > 0;")->execute();
+        $dbh->prepare("DELETE FROM `resource`;")->execute();
+        $dbh->prepare("DELETE FROM `resource_room`;")->execute();
+        $dbh->prepare("DELETE FROM `resource_use`;")->execute();
+        $dbh->prepare("DELETE FROM `room_log`;")->execute();
+
+        $roomStmt = $dbh->prepare("INSERT INTO `room` "
+                . "(`idRoom`,`idHouse`,`Item_Id`,`Title`,`Type`,`Category`,`Status`,`State`,`Availability`,"
+                . "`Max_Occupants`,`Min_Occupants`,`Rate_Code`,`Key_Deposit_Code`,`Cleaning_Cycle_Code`, `idLocation`) VALUES "
+                . "(:idRoom, 0, 1, :title, 'r', 'dh', 'a', 'a', 'a', 4, 0, 'rb', 'k0', 'a', 1)");
+
+        $resourceStmt = $dbh->prepare("INSERT INTO `resource` "
+                . "(`idResource`,`idSponsor`,`Title`,`Utilization_Category`,`Type`,`Util_Priority`,`Status`) VALUES "
+                . "(:idResource, 0, :rTitle, 'uc1', 'room', :priority, 'a')");
+
+        $resourceRoomStmt = $dbh->prepare("INSERT INTO `resource_room` "
+                . "(`idResource_room`,`idResource`,`idRoom`) VALUES "
+                . "(:idResourceRoom, :rrResource, :rrRoom)");
 
         // Install new rooms
         for ($n = 1; $n <= $numRooms; $n++) {
@@ -74,21 +87,13 @@ if (isset($_POST['btnRoom']) && count($rPrices) > 0) {
             $title = $idRoom + 100;
 
             // create room record
-            $dbh->exec("insert into room "
-                    . "(`idRoom`,`idHouse`,`Item_Id`,`Title`,`Type`,`Category`,`Status`,`State`,`Availability`,
-`Max_Occupants`,`Min_Occupants`,`Rate_Code`,`Key_Deposit_Code`,`Cleaning_Cycle_Code`, `idLocation`) VALUES
-($idRoom, 0, 1, '$title', 'r', 'dh', 'a', 'a', 'a', 4, 0,'rb', 'k0', 'a', 1);");
+            $roomStmt->execute([':idRoom' => $idRoom, ':title' => $title]);
 
             // create resource record
-            $dbh->exec("insert into resource "
-                    . "(`idResource`,`idSponsor`,`Title`,`Utilization_Category`,`Type`,`Util_Priority`,`Status`)"
-                    . " Values "
-                    . "($idRoom, 0, '$title', 'uc1', 'room', '$title', 'a')");
+            $resourceStmt->execute([':idResource' => $idRoom, ':rTitle' => $title, ':priority' => $title]);
 
             // Resource-Room
-            $dbh->exec("insert into resource_room "
-                    . "(`idResource_room`,`idResource`,`idRoom`) values "
-                    . "($idRoom, $idRoom, $idRoom)");
+            $resourceRoomStmt->execute([':idResourceRoom' => $idRoom, ':rrResource' => $idRoom, ':rrRoom' => $idRoom]);
         }
 
     }
@@ -107,7 +112,7 @@ if (isset($_POST['btnRoom']) && count($rPrices) > 0) {
 
         SysConfig::getCategory($dbh, $ssn, ["h", "hf"], WebInit::SYS_CONFIG);
 
-        $dbh->exec("delete from `room_rate`");
+        $dbh->prepare("DELETE FROM `room_rate`")->execute();
 
         AbstractPriceModel::installRates($dbh, $rateCode, $ssn->IncomeRated);
 
@@ -118,18 +123,21 @@ if (isset($_POST['btnRoom']) && count($rPrices) > 0) {
 
     if ($siteId > 0) {
 
-        $stmt = $dbh->query("Select count(`idName`) from `name` where `idName` = $siteId");
-        $row = $stmt->fetchAll(PDO::FETCH_NUM);
+        $countStmt = $dbh->prepare("SELECT COUNT(`idName`) FROM `name` WHERE `idName` = :siteId");
+        $countStmt->execute([':siteId' => $siteId]);
+        $row = $countStmt->fetchAll(PDO::FETCH_NUM);
 
 
         if (isset($row[0]) && $row[0][0] == 0 && $houseName != '') {
-            $dbh->exec("insert into `name` (`idName`, `Company`, `Member_Type`, `Member_Status`, `Record_Company`, `Last_Updated`, `Updated_By`) values ($siteId, '$houseName', 'np', 'a', 1, now(), 'admin')");
+            $nameStmt = $dbh->prepare("INSERT INTO `name` (`idName`, `Company`, `Member_Type`, `Member_Status`, `Record_Company`, `Last_Updated`, `Updated_By`) VALUES (:idName, :company, 'np', 'a', 1, NOW(), 'admin')");
+            $nameStmt->execute([':idName' => $siteId, ':company' => $houseName]);
         }
 
     } else {
 
-        $numRcrds = $dbh->exec("insert into `name` (`Company`, `Member_Type`, `Member_Status`, `Record_Company`, `Last_Updated`, `Updated_By`) values ('$houseName', 'np', 'a', 1, now(), 'admin')");
-        if ($numRcrds != 1) {
+        $nameStmt = $dbh->prepare("INSERT INTO `name` (`Company`, `Member_Type`, `Member_Status`, `Record_Company`, `Last_Updated`, `Updated_By`) VALUES (:company, 'np', 'a', 1, NOW(), 'admin')");
+        $nameStmt->execute([':company' => $houseName]);
+        if ($nameStmt->rowCount() != 1) {
             // problem
             exit('Insert of house name record failed.  ');
         }

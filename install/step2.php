@@ -98,21 +98,23 @@ if (isset($_POST['btnSave'])) {
         $volDir = str_ireplace('/', '', 'volunteer');
 
 
+        $updWebSiteStmt = $dbh->prepare("UPDATE `web_sites` SET `Relative_Address` = :relAddr WHERE `Site_Code` = :siteCode");
+
         // Admin
-        $dbh->exec("update web_sites set Relative_Address = '$adminDir/' where Site_Code = '" . WebSiteCode::Admin . "'");
+        $updWebSiteStmt->execute([':relAddr' => $adminDir . '/', ':siteCode' => WebSiteCode::Admin]);
 
         // House
         if ($houseDir != '') {
-            $dbh->exec("update web_sites set Relative_Address = '$houseDir/' where Site_Code = '" . WebSiteCode::House . "'");
+            $updWebSiteStmt->execute([':relAddr' => $houseDir . '/', ':siteCode' => WebSiteCode::House]);
         } else {
-            $dbh->exec("update web_sites set Relative_Address = '' where Site_Code = '" . WebSiteCode::House . "'");
+            $updWebSiteStmt->execute([':relAddr' => '', ':siteCode' => WebSiteCode::House]);
         }
 
         // Volunteer
         if ($volDir != '') {
-            $dbh->exec("update web_sites set Relative_Address = '$volDir/' where Site_Code = '" . WebSiteCode::Volunteer . "'");
+            $updWebSiteStmt->execute([':relAddr' => $volDir . '/', ':siteCode' => WebSiteCode::Volunteer]);
         } else {
-            $dbh->exec("update web_sites set Relative_Address = '' where Site_Code = '" . WebSiteCode::Volunteer . "'");
+            $updWebSiteStmt->execute([':relAddr' => '', ':siteCode' => WebSiteCode::Volunteer]);
         }
 
 
