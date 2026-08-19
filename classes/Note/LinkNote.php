@@ -53,10 +53,10 @@ class LinkNote {
      * Summary of findIdPsg
      * @param \PDO $dbh
      * @param mixed $linkType
-     * @param mixed $linkId
+     * @param int $linkId
      * @return array
      */
-    public static function findIdPsg(\PDO $dbh, $linkType, $linkId): array {
+    public static function findIdPsg(\PDO $dbh, $linkType, int $linkId): array {
 
         if ($linkType === Note::PsgLink) {
             return [$linkId];
@@ -103,16 +103,18 @@ class LinkNote {
             if($linkType == Note::VisitLink) {
 
                 // We actually need the reservation ID
-                $stmt = $dbh->query("SELECT
-    v.`idReservation`, IFNULL(r.Title, '(?)')
-FROM
-    `visit` v
-        LEFT JOIN
-    reservation rv on v.idReservation = rv.idReservation
-	LEFT JOIN
-    resource r ON rv.idResource = r.idResource
-WHERE
-    v.`Span` = 0 AND v.`idVisit` =" . $linkId);
+                $stmt = $dbh->prepare("SELECT
+                    `v`.`idReservation`, IFNULL(`r`.`Title`, '(?)')
+                    FROM
+                    `visit` `v`
+                    LEFT JOIN
+                        `reservation` `rv` on `v`.`idReservation` = `rv`.`idReservation`
+	                LEFT JOIN
+                        `resource` `r` ON `rv`.`idResource` = `r`.`idResource`
+                    WHERE
+                        `v`.`Span` = 0 AND `v`.`idVisit` = :idLink");
+                $stmt->execute([':idLink'=>$linkId]);
+                
                 $rows = $stmt->fetchAll(\PDO::FETCH_NUM);
 
                 if (count($rows) > 0) {
@@ -128,7 +130,13 @@ WHERE
 
             if ($linkId >= 0) {
 
-                $dbh->exec("insert into `link_note` (`linkType`, `idLink`, `idNote`) values ('$linkType', '$linkId', '" . $note->getIdNote() . "');");
+                $stmt = $dbh->prepare("INSERT INTO `link_note` (`linkType`, `idLink`, `idNote`) values (:linkType, :linkId, :idNote);");
+                $stmt->execute([
+                    ':linkType'=>$linkType,
+                    ':linkId'=>$linkId,
+                    ':idNote'=>$note->getIdNote()
+                ]);
+
             } else {
                 return 'The link id is missing ';
             }

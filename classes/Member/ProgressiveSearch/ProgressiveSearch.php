@@ -9,7 +9,7 @@ use HHK\Member\ProgressiveSearch\SearchNameData\SearchNameData;
 class ProgressiveSearch {
  
 
-	public static function doSearch(\PDO $dbh, SearchFor $searchFor) {
+	public static function doSearch(\PDO $dbh, SearchFor $searchFor): array {
 
 	    $stmt = $dbh->query(self::getSearchQuery($searchFor));
 
@@ -27,9 +27,7 @@ class ProgressiveSearch {
 	    return $results;
     }
 
-    public static function getMemberQuery($idName) {
-
-        $id = intval($idName);
+    public static function getMemberQuery(int $idName): string {
 
         return "SELECT
             n.idName,
@@ -77,12 +75,12 @@ class ProgressiveSearch {
                 LEFT JOIN
             gen_lookups gr ON gr.Table_Name = 'NoReturnReason'
                 AND gr.Code = nd.No_Return
-        WHERE n.idName = $id ";
+        WHERE n.idName = $idName ";
 
     }
 
 
-    public static function getSearchQuery(SearchFor $searchFor) {
+    public static function getSearchQuery(SearchFor $searchFor): string {
 
         $selRel = '';
         $joinRel = '';

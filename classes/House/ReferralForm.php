@@ -2,6 +2,7 @@
 
 namespace HHK\House;
 
+use DateTimeInterface;
 use HHK\Common;
 use HHK\Document\FormDocument;
 use HHK\HTMLControls\{HTMLContainer, HTMLTable};
@@ -40,9 +41,9 @@ class ReferralForm
 
 	/**
 	 *
-	 * @var integer The unique document id
+	 * @var int The unique document id
 	 */
-	protected $referralDocId;
+	protected int $referralDocId;
 
 	/**
 	 *
@@ -50,37 +51,27 @@ class ReferralForm
 	 */
 	protected $formUserData;
 
-	/**
-	 * Summary of formDoc
-	 * @var
-	 */
-	protected $formDoc;
+	protected FormDocument $formDoc;
 
-	/**
-	 * Summary of patSearchFor
-	 * @var
-	 */
-	protected $patSearchFor;
+	protected SearchFor $patSearchFor;
 
-	protected $patResults;
+	protected array $patResults;
 
 	protected $gstSearchFor = [];
+	
 	protected $gstResults = [];
 
-	protected $idPatient;
-	protected $idPsg;
-	protected $idRegistration;
-	protected $idHospitalStay;
+	protected int $idPsg;
 
-	protected $CkinDT = NULL;
-	protected $CkoutDT = NULL;
+	protected ?\DateTime $CkinDT = NULL;
+	protected ?\DateTime $CkoutDT = NULL;
 
 	// Patient search includes
-	const HTML_Incl_Birthday = 'cbPIncludeBD';
-	const HTML_Incl_Phone = 'cbPIncludePhone';
-	const HTML_Incl_Email = 'cbPIncludeEmail';
+	public const string HTML_Incl_Birthday = 'cbPIncludeBD';
+	public const string HTML_Incl_Phone = 'cbPIncludePhone';
+	public const string HTML_Incl_Email = 'cbPIncludeEmail';
 
-	const MAX_GUESTS = 20;
+	protected const int MAX_GUESTS = 20;
 
 	/**
 	 * Open the referral and pull in the user data.
@@ -115,9 +106,9 @@ class ReferralForm
 	 * @param \PDO $dbh
 	 * @param array $formUserData The userdata array with patient or guest already selected.
 	 * @param array $searchIncludes The columns to include in the search.
-	 * @return \HHK\Member\ProgressiveSearch\SearchNameData\SearchFor
+	 * @return SearchFor
 	 */
-	public static function loadSearchFor(\PDO $dbh, array $formUserData, array $searchIncludes = [])
+	public static function loadSearchFor(\PDO $dbh, array $formUserData, array $searchIncludes = []): SearchFor
 	{
 
 		$searchFor = new SearchFor();
@@ -335,7 +326,7 @@ class ReferralForm
 	 *
 	 * @param \PDO $dbh
 	 * @param integer $idPatient
-	 * @return boolean|null|\HHK\Member\Role\Patient
+	 * @return bool|null|Patient
 	 */
 	public function setPatient(\PDO $dbh, $idPatient)
 	{
@@ -362,7 +353,7 @@ class ReferralForm
 
 		}
 
-		if (is_null($searchNameData) === FALSE) {
+		if ($searchNameData !== NULL) {
 			$patient = $this->savePatient($dbh, $idP, $searchNameData, $uS->username);
 
 		}
@@ -377,10 +368,10 @@ class ReferralForm
 	 * @param \PDO $dbh
 	 * @param array $post
 	 * @param PSG $psg
-	 * @param integer $maxGuests
+	 * @param int $maxGuests
 	 * @return mixed[]
 	 */
-	public function setGuests(\PDO $dbh, $post, PSG $psg, $maxGuests = self::MAX_GUESTS)
+	public function setGuests(\PDO $dbh, $post, PSG $psg, $maxGuests = self::MAX_GUESTS): array
 	{
 
 		$uS = Session::getInstance();
@@ -450,11 +441,11 @@ class ReferralForm
 	 * Loads member data from the database.
 	 *
 	 * @param \PDO $dbh
-	 * @param integer $id IdName of member to get data from.
+	 * @param int $id IdName of member to get data from.
 	 * @param SearchNameDataInterface $snd The object to be loaded.
-	 * @return \HHK\Member\ProgressiveSearch\SearchNameData\SearchNameDataInterface
+	 * @return SearchNameDataInterface
 	 */
-	protected function LoadMemberData(\PDO $dbh, $id, SearchNameDataInterface $snd, SearchNameDataInterface $formData)
+	protected function LoadMemberData(\PDO $dbh, int $id, SearchNameDataInterface $snd, SearchNameDataInterface $formData): SearchNameDataInterface
 	{
 
 		$stmt = $dbh->query(ProgressiveSearch::getMemberQuery($id));
@@ -471,12 +462,12 @@ class ReferralForm
 	 * Save defined patient (idP) along with PSG, Registration, and Hospital_Stay.
 	 *
 	 * @param \PDO $dbh
-	 * @param integer $idP
+	 * @param int $idP
 	 * @param SearchNameData $searchNameData
 	 * @param string $username
-	 * @return \HHK\Member\Role\Patient
+	 * @return Patient
 	 */
-	protected function savePatient(\PDO $dbh, $idP, SearchNameData $searchNameData, $username)
+	protected function savePatient(\PDO $dbh, int $idP, SearchNameData $searchNameData, $username): Patient
 	{
 
 		$post = $this->memberDataPost($dbh, $searchNameData);
@@ -492,7 +483,7 @@ class ReferralForm
 		$psg = new PSG($dbh, 0, $patient->getIdName());
 		$psg->setNewMember($patient->getIdName(), RelLinkType::Self);
 		$psg->savePSG($dbh, $patient->getIdName(), $username);
-		$this->idPsg = $psg->getIdPsg();
+		$this->idPsg = intval($psg->getIdPsg());
 
 		// Registration
 		$reg = new Registration($dbh, $psg->getIdPsg());
@@ -509,13 +500,13 @@ class ReferralForm
 	 * Save defined guest (idname) and adds guest to patient's PSG.
 	 *
 	 * @param \PDO $dbh
-	 * @param integer $idName
+	 * @param int $idName
 	 * @param PSG $psg Patient's PSG
 	 * @param SearchNameData $searchNameData
 	 * @param string $username
-	 * @return \HHK\Member\Role\Guest
+	 * @return Guest|Patient
 	 */
-	protected function saveGuest(\PDO $dbh, $idName, PSG $psg, SearchNameData $searchNameData, $username): Guest|Patient
+	protected function saveGuest(\PDO $dbh, int $idName, PSG $psg, SearchNameData $searchNameData, $username): Guest|Patient
 	{
 
 		$post = $this->memberDataPost($dbh, $searchNameData);
@@ -538,10 +529,12 @@ class ReferralForm
 	/**
 	 *
 	 * @param \PDO $dbh
-	 * @param integer $idPatient
+	 * @param int $idPatient
+	 * @param int $idResv
+	 * @return string
 	 * @throws RuntimeException
 	 */
-	public function finishReferral(\PDO $dbh, $idPatient, int $idResv = -1)
+	public function finishReferral(\PDO $dbh, $idPatient, int $idResv = -1): string
 	{
 
 		// Get idPsg
@@ -582,7 +575,8 @@ class ReferralForm
 		}
 
 	}
-	protected function resvSearcher(\PDO $dbh, PSG $psg)
+
+	protected function resvSearcher(\PDO $dbh, PSG $psg): array
 	{
 		$query = "select r.idReservation, r.Expected_Arrival, r.Expected_Departure, l.Title as 'Status', p.Name_Full as 'Patient' from reservation r join registration reg on r.idRegistration = reg.idRegistration join lookups l on r.Status = l.Code and Category = 'ReservStatus' join hospital_stay hs on r.idHospital_Stay = hs.idHospital_stay join name p on hs.idPatient = p.idName where reg.idPsg = :idPsg and l.Type = 'a'";
 		$stmt = $dbh->prepare($query);
@@ -598,7 +592,7 @@ class ReferralForm
 	 * @param \PDO $dbh
 	 * @param PSG $psg Patient's PSG
 	 * @param array $guests array of guest member id's
-	 * @return number|mixed
+	 * @return int|mixed
 	 */
 	protected function makeNewReservation(\PDO $dbh, PSG $psg, array $guests)
 	{
@@ -686,7 +680,7 @@ class ReferralForm
 	 * @param int $idResv
 	 * @param PSG $psg Patient's PSG
 	 * @param array $guests array of guest member id's
-	 * @return number|mixed
+	 * @return int|mixed
 	 */
 	protected function mergeReservation(\PDO $dbh, int $idResv, PSG $psg, array $guests)
 	{
@@ -773,7 +767,7 @@ class ReferralForm
 
 	}
 
-	protected function resvMkup(array $resvAr)
+	protected function resvMkup(array $resvAr): string
 	{
 		$tbl = new HTMLTable();
 
@@ -825,7 +819,7 @@ class ReferralForm
 	 * @param int $idDoc
 	 * @return void
 	 */
-	public function copyNotes(\PDO $dbh, $resvId, $idDoc)
+	public function copyNotes(\PDO $dbh, $resvId, $idDoc): void
 	{
 		$stmt = $dbh->prepare("select * from `link_note` where `idLink` = :docId and `linkType` = 'document'");
 		$stmt->execute([":docId" => $idDoc]);
@@ -841,7 +835,7 @@ class ReferralForm
 	 * @param AbstractRole $role
 	 * @return string An HTML Table
 	 */
-	public function chosenMemberMkup(AbstractRole $role)
+	public function chosenMemberMkup(AbstractRole $role): string
 	{
 
 		$tbl = new HTMLTable();
@@ -887,7 +881,7 @@ class ReferralForm
 	 * @param NameAddressRS $addr
 	 * @return string
 	 */
-	public function createAddrString(NameAddressRS $addr)
+	public function createAddrString(NameAddressRS $addr): string
 	{
 
 		if (is_null($addr) === FALSE) {
@@ -910,7 +904,7 @@ class ReferralForm
 	 *
 	 * @return string
 	 */
-	public function createPatientMarkup()
+	public function createPatientMarkup(): string
 	{
 
 		$uS = Session::getInstance();
@@ -1013,10 +1007,9 @@ class ReferralForm
 
 	/**
 	 * Guests selections markup.
-	 * @param integer $numberGuests
 	 * @return string
 	 */
-	public function guestsMarkup()
+	public function guestsMarkup(): string
 	{
 
 		$markup = '';
@@ -1044,7 +1037,7 @@ class ReferralForm
 	 * @param array $guestResults
 	 * @return string
 	 */
-	protected function createGuestMarkup($gindx, SearchFor $guestSearchFor, array $guestResults)
+	protected function createGuestMarkup($gindx, SearchFor $guestSearchFor, array $guestResults): string
 	{
 
 		$uS = Session::getInstance();
@@ -1151,7 +1144,7 @@ class ReferralForm
 	 *
 	 * @return string
 	 */
-	public function datesMarkup()
+	public function datesMarkup(): string
 	{
 
 		$ckinDate = '';
@@ -1177,9 +1170,8 @@ class ReferralForm
 		return HTMLContainer::generateMarkup('div', $ckinDate . $ckoutDate, array('style' => 'font-size:.9em;'));
 	}
 
-	protected function setHospital()
+	protected function setHospital(): int
 	{
-
 		$hospId = 0;
 
 		if (isset($this->formUserData['hospital']['idHospital'])) {
@@ -1189,7 +1181,7 @@ class ReferralForm
 		return $hospId;
 	}
 
-	protected function setInsurance(&$post)
+	protected function setInsurance(array &$post): void
 	{
 		if (isset($this->formUserData['insurance']) && is_array($this->formUserData['insurance'])) {
 			foreach ($this->formUserData['insurance'] as $key => $insurance) {
@@ -1202,10 +1194,11 @@ class ReferralForm
 	/**
 	 * Builds an array to simulate a member save from a page.
 	 *
+	 * @param \PDO $dbh
 	 * @param SearchNameDataInterface $data
 	 * @return array
 	 */
-	protected function memberDataPost(\PDO $dbh, SearchNameDataInterface $data)
+	protected function memberDataPost(\PDO $dbh, SearchNameDataInterface $data): array
 	{
 
 		$post = array(
@@ -1259,7 +1252,7 @@ class ReferralForm
 		return $post;
 	}
 
-	protected function formatDemogDataPost(\PDO $dbh, array $demographicsUserData){
+	protected function formatDemogDataPost(\PDO $dbh, array $demographicsUserData): array{
 		$demos = Common::readGenLookupsPDO($dbh, 'Demographics', 'Order');
 		$demogPost = [];
 
@@ -1297,7 +1290,7 @@ class ReferralForm
 		return $this->formDoc->getStatus();
 	}
 
-	public function getGuestCount()
+	public function getGuestCount(): int
 	{
 		if (is_countable($this->gstSearchFor)) {
 			return count($this->gstSearchFor);
