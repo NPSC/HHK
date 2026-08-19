@@ -140,8 +140,8 @@ if (isset($_POST['btnkfSave'])) {
         $dAmt = filter_var($_POST['srrAmt'][0], FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION);
 
         // Check for an entry with the same description
-        $stmt = $dbh->prepare("Select count(*) from gen_lookups where `Table_Name` = 'Static_Room_Rate' and LOWER(`Description`) = :desc;");
-        $stmt->execute([':desc' => strtolower($dText)]);
+        $stmt = $dbh->prepare("SELECT count(*) FROM `gen_lookups` WHERE `Table_Name` = 'Static_Room_Rate' AND LOWER(`Description`) = :description;");
+        $stmt->execute([':description' => strtolower($dText)]);
         $rows = $stmt->fetchAll(PDO::FETCH_NUM);
 
         if ($rows[0][0] == 0) {
@@ -300,7 +300,8 @@ if (isset($_POST['btnkfSave'])) {
     // Payment types GL Codes
     if (isset($_POST['ptGlCode'])) {
 
-        $stmtp = $dbh->query("select idPayment_method, Gl_Code from payment_method");
+        $stmtp = $dbh->prepare("SELECT `idPayment_method`, `Gl_Code` FROM `payment_method`");
+        $stmtp->execute();
         $payMethods = $stmtp->fetchAll(\PDO::FETCH_NUM);
 
         foreach ($payMethods as $t) {
@@ -347,7 +348,9 @@ if (isset($_POST['btnkfSave'])) {
 
     if (isset($_POST['newExtPayDesc'])) {
 
-        $maxOrderRow = $dbh->query("SELECT MAX(`Order`) FROM gen_lookups WHERE `Table_Name` = 'Pay_Type'")->fetch(\PDO::FETCH_NUM);
+        $maxOrderStmt = $dbh->prepare("SELECT MAX(`Order`) FROM `gen_lookups` WHERE `Table_Name` = 'Pay_Type'");
+        $maxOrderStmt->execute();
+        $maxOrderRow = $maxOrderStmt->fetch(\PDO::FETCH_NUM);
         $nextOrder = intval($maxOrderRow[0] ?? 0) + 1;
 
         foreach ($_POST['newExtPayDesc'] as $desc) {
@@ -403,14 +406,16 @@ if (isset($_POST['btnkfSave'])) {
         $currentHhSize = 0;
         $ratCats = [];
 
-        $stmt = $dbh->query("Select max(`Household_Size`) from rate_breakpoint;");
+        $stmt = $dbh->prepare("SELECT MAX(`Household_Size`) FROM `rate_breakpoint`;");
+        $stmt->execute();
         $rows = $stmt->fetchAll(\PDO::FETCH_NUM);
 
         if (count($rows) === 1) {
             $currentHhSize = $rows[0][0];
         }
 
-        $stmt = $dbh->query("select Rate_Breakpoint_Category from room_rate WHERE Rate_Breakpoint_Category != '' AND  `Status` = '" . RateStatus::Active . "' ORDER BY `Rate_Breakpoint_Category`");
+        $stmt = $dbh->prepare("SELECT `Rate_Breakpoint_Category` FROM `room_rate` WHERE `Rate_Breakpoint_Category` != '' AND `Status` = :status ORDER BY `Rate_Breakpoint_Category`");
+        $stmt->execute([':status' => RateStatus::Active]);
         $rows = $stmt->fetchAll(\PDO::FETCH_NUM);
 
         foreach ($rows as $r) {
@@ -806,11 +811,13 @@ if (isset($_POST['btnItemSave'])) {
     $tabActive = "#itemTable";
 
     // item-item table
-    $iistmt = $dbh->query("Select * from item_item");
+    $iistmt = $dbh->prepare("SELECT * FROM `item_item`");
+    $iistmt->execute();
     $taxItemMap = $iistmt->fetchAll(\PDO::FETCH_ASSOC);
 
-    $sitems = $dbh->query("Select  i.idItem, itm.Type_Id, i.Description, i.Gl_Code, i.Percentage
-    from item i left join item_type_map itm on itm.Item_Id = i.idItem");
+    $sitems = $dbh->prepare("SELECT `i`.`idItem`, `itm`.`Type_Id`, `i`.`Description`, `i`.`Gl_Code`, `i`.`Percentage`
+    FROM `item` `i` LEFT JOIN `item_type_map` `itm` ON `itm`.`Item_Id` = `i`.`idItem`");
+    $sitems->execute();
     $items = $sitems->fetchAll(PDO::FETCH_ASSOC);
 
     foreach ($items as $i) {
@@ -892,12 +899,14 @@ if (isset($_POST['btnTaxSave'])) {
         return $newItemId;
     };
 
-    $sitems = $dbh->query("Select i.idItem, i.Description, i.Gl_Code, i.Percentage, i.Timeout_Days, i.First_Order_Id, i.Last_Order_Id
-        from item i join item_type_map itm on itm.Item_Id = i.idItem and itm.Type_Id = " . ItemType::Tax);
+    $sitems = $dbh->prepare("SELECT `i`.`idItem`, `i`.`Description`, `i`.`Gl_Code`, `i`.`Percentage`, `i`.`Timeout_Days`, `i`.`First_Order_Id`, `i`.`Last_Order_Id`
+        FROM `item` `i` JOIN `item_type_map` `itm` ON `itm`.`Item_Id` = `i`.`idItem` AND `itm`.`Type_Id` = :typeId");
+    $sitems->execute([':typeId' => ItemType::Tax]);
     $items = $sitems->fetchAll(PDO::FETCH_ASSOC);
 
     // Get the latest visit id
-    $stmt = $dbh->query("select max(idVisit) from visit");
+    $stmt = $dbh->prepare("SELECT MAX(`idVisit`) FROM `visit`");
+    $stmt->execute();
     $vrows = $stmt->fetchAll(\PDO::FETCH_NUM);
     $maxVisitId = $vrows[0][0];
     $nextVisitId = $maxVisitId + 1;
@@ -933,7 +942,8 @@ if (isset($_POST['btnTaxSave'])) {
                     $newItemId = $insertTaxItem($dbh, $desc, $glCode, $percentage, $maxDays, $nextVisitId);
 
                     // Get the items these tax
-                    $tstmt = $dbh->query("SELECT idItem from item_item where Item_Id = " . $i['idItem']);
+                    $tstmt = $dbh->prepare("SELECT `idItem` FROM `item_item` WHERE `Item_Id` = :itemId");
+                    $tstmt->execute([':itemId' => $i['idItem']]);
 
                     // add to item_item to connet with the taxed item id.
                     while ($t = $tstmt->fetch(\PDO::FETCH_NUM)) {
@@ -973,8 +983,8 @@ if (isset($_POST['ldfm'])) {
     $rarry = Common::readGenLookupsPDO($dbh, 'Form_Upload');
 
     // get available doc replacements
-    $replacementStmt = $dbh->prepare("SELECT `idTemplate_tag`, `Tag_Title`, `Tag_Name` FROM `template_tag` WHERE `Doc_Name` = :docName order by Tag_Title");
-    $replacementStmt->execute([':docName' => $formType]);
+    $replacementStmt = $dbh->prepare("SELECT `idTemplate_tag`, `Tag_Title`, `Tag_Name` FROM `template_tag` WHERE `Doc_Name` = :formType ORDER BY `Tag_Title`");
+    $replacementStmt->execute([':formType' => $formType]);
     $replacementRows = $replacementStmt->fetchAll();
     $rTbl = new HTMLTable();
 
@@ -1000,7 +1010,8 @@ if (isset($_POST['ldfm'])) {
         EditRS::updateFields($dbh, new GenLookupsRS(), ['Table_Name' => 'Form_Upload', 'Code' => $formType], ['Substitute' => $formDef]);
     }
 
-    $formstmt = $dbh->query("Select g.`Code`, g.`Description`, d.`Doc`, d.idDocument, ifnull(d.Abstract, '') as `Abstract` from `document` d join gen_lookups g on d.idDocument = g.`Substitute` where g.`Table_Name` = '$formDef' order by g.Order asc");
+    $formstmt = $dbh->prepare("SELECT `g`.`Code`, `g`.`Description`, `d`.`Doc`, `d`.`idDocument`, IFNULL(`d`.`Abstract`, '') AS `Abstract` FROM `document` `d` JOIN `gen_lookups` `g` ON `d`.`idDocument` = `g`.`Substitute` WHERE `g`.`Table_Name` = :formDef ORDER BY `g`.`Order` ASC");
+    $formstmt->execute([':formDef' => $formDef]);
     $docRows = $formstmt->fetchAll();
 
     $li = '';
@@ -1174,7 +1185,7 @@ if (isset($_POST['docAction']) && $_POST["docAction"] == "docUpload") {
             $filetype = strtolower(pathinfo($_FILES['formfile']['name'], PATHINFO_EXTENSION));
         }
 
-        $sql = "UPDATE `document` SET Abstract = :abstract, ";
+        $sql = "UPDATE `document` SET `Abstract` = :abstract, ";
         if (!empty($_FILES['formfile']['tmp_name'])) {
             if (in_array($mimetype, $allowedMimetypes) && in_array($filetype, $allowedFiletypes)) {
                 // Get the file and convert it.
@@ -1184,13 +1195,13 @@ if (isset($_POST['docAction']) && $_POST["docAction"] == "docUpload") {
                 } else { //assume Windows-1252
                     $doc = iconv('Windows-1252', 'UTF-8//TRANSLIT', $file); // add //TRANSLIT for special character conversion
                 }
-                $sql .= "Doc = :doc, ";
+                $sql .= "`Doc` = :doc, ";
             } else {
                 echo json_encode(["error" => "Could not save form: Invalid file type."]);
                 exit();
             }
         }
-        $sql .= "Updated_By = :updatedBy, Last_Updated = now() where idDocument = :idDoc";
+        $sql .= "`Updated_By` = :updatedBy, `Last_Updated` = NOW() WHERE `idDocument` = :idDoc";
 
         $ustmt = $dbh->prepare($sql);
 
@@ -1348,7 +1359,7 @@ if (isset($_POST['txtformLang'])) {
             $langCode = '';
 
             // lookup teh language
-            $lstmt = $dbh->prepare("Select `ISO_639_1` as `Code` from `language` where `Title` = :lang;");
+            $lstmt = $dbh->prepare("SELECT `ISO_639_1` AS `Code` FROM `language` WHERE `Title` = :lang;");
             $lstmt->execute([':lang' => $lang]);
             $langRows = $lstmt->fetchAll(PDO::FETCH_ASSOC);
 
@@ -1362,7 +1373,8 @@ if (isset($_POST['txtformLang'])) {
             if ($langCode != '') {
 
                 // Code already exist?
-                $formstmt = $dbh->query("Select g.`Code`, g.`Description` from gen_lookups g where g.`Table_Name` = '$formDef' and g.`Code` = '$langCode'");
+                $formstmt = $dbh->prepare("SELECT `g`.`Code`, `g`.`Description` FROM `gen_lookups` `g` WHERE `g`.`Table_Name` = :formDef AND `g`.`Code` = :langCode");
+                $formstmt->execute([':formDef' => $formDef, ':langCode' => $langCode]);
                 $docRows = $formstmt->fetchAll();
 
                 if (count($docRows) == 0) {
@@ -1708,7 +1720,8 @@ if ($uS->IncomeRated) {
     $headerTr = HTMLTable::makeTh('Household Size');
 
     // preload all rate categories and make header row
-    $stmt = $dbh->query("select Rate_Breakpoint_Category from room_rate WHERE Rate_Breakpoint_Category != '' AND  `Status` = '" . RateStatus::Active . "' ORDER BY `Rate_Breakpoint_Category`");
+    $stmt = $dbh->prepare("SELECT `Rate_Breakpoint_Category` FROM `room_rate` WHERE `Rate_Breakpoint_Category` != '' AND `Status` = :status ORDER BY `Rate_Breakpoint_Category`");
+    $stmt->execute([':status' => RateStatus::Active]);
 
     while ($r = $stmt->fetch(\PDO::FETCH_NUM)) {
         $ratCats[] = $r[0];
@@ -1717,21 +1730,19 @@ if ($uS->IncomeRated) {
 
     $faTbl->addHeaderTr($headerTr);
 
-    // Limit the breakpoints
-    $catList = '';
-    // Make cdl of rate categories
-    foreach ($ratCats as $c) {
-        if ($catList == '') {
-            $catList .= "'$c'";
-        } else {
-            $catList .= ",'$c'";
-        }
-    }
-
     $rbRows = [];
 
-    if ($catList != '') {
-        $stmt = $dbh->query("Select * from `rate_breakpoint` where `Rate_Category` in (" . $catList . ") ORDER BY `Household_Size`, `Rate_Category`");
+    if (count($ratCats) > 0) {
+        $catPlaceholders = [];
+        $catParams = [];
+        foreach ($ratCats as $idx => $c) {
+            $ph = ':cat' . $idx;
+            $catPlaceholders[] = $ph;
+            $catParams[$ph] = $c;
+        }
+
+        $stmt = $dbh->prepare("SELECT * FROM `rate_breakpoint` WHERE `Rate_Category` IN (" . implode(',', $catPlaceholders) . ") ORDER BY `Household_Size`, `Rate_Category`");
+        $stmt->execute($catParams);
 
         //$rbRows = EditRS::select($dbh, $rbRs, array(), 'and', array($rbRs->Household_Size, $rbRs->Rate_Category));
     }
@@ -1927,7 +1938,8 @@ if ($uS->RoomPriceModel != ItemPriceCode::None) {
 
     $payMethods = [];
     $payMethodGlCodes = [];
-    $stmtp = $dbh->query("select idPayment_method, Method_Name, Gl_Code from payment_method");
+    $stmtp = $dbh->prepare("SELECT `idPayment_method`, `Method_Name`, `Gl_Code` FROM `payment_method`");
+    $stmtp->execute();
     while ($t = $stmtp->fetch(\PDO::FETCH_NUM)) {
         $payMethods[$t[0]] = $t[1];
         $payMethodGlCodes[$t[0]] = $t[2];
@@ -2228,8 +2240,8 @@ $tbl = ResourceBldr::getSelections($dbh, 'Demographics', 'm', $labels);
 $demoSelections = $tbl->generateMarkup(["class" => "sortable"]);
 
 // Demographics category selectors
-$stmt = $dbh->query("SELECT DISTINCT
-    `g`.`Table_Name`, g2.Description
+$stmt = $dbh->prepare("SELECT DISTINCT
+    `g`.`Table_Name`, `g2`.`Description`
 FROM
     `gen_lookups` `g`
         JOIN
@@ -2238,6 +2250,7 @@ FROM
         AND `g2`.`Substitute` = 'y'
 WHERE
     `g`.`Type` = 'd';");
+$stmt->execute();
 
 $rows = $stmt->fetchAll(\PDO::FETCH_NUM);
 
@@ -2279,7 +2292,8 @@ if (isset($_POST["insurances"])) {
 $lookupErrMsg = '';
 
 // General Lookup categories
-$stmt2 = $dbh->query("select distinct `Type`, `Table_Name` from gen_lookups where `Type` in ('h','u', 'ha', 'm');");
+$stmt2 = $dbh->prepare("SELECT DISTINCT `Type`, `Table_Name` FROM `gen_lookups` WHERE `Type` IN ('h','u', 'ha', 'm');");
+$stmt2->execute();
 $rows2 = $stmt2->fetchAll(\PDO::FETCH_NUM);
 
 $lkups = [];
@@ -2315,7 +2329,8 @@ $selLookups = HTMLSelector::generateMarkup(
 
 // Additional charges and discounts
 // Lookup categories
-$stmt3 = $dbh->query("select distinct `Type`, `Table_Name` from gen_lookups where `Type` = 'ca';");
+$stmt3 = $dbh->prepare("SELECT DISTINCT `Type`, `Table_Name` FROM `gen_lookups` WHERE `Type` = 'ca';");
+$stmt3->execute();
 $rows3 = $stmt3->fetchAll(\PDO::FETCH_NUM);
 $hasAddnl = FALSE;
 $hasDiscounts = FALSE;
@@ -2353,8 +2368,9 @@ $selmisc = HTMLSelector::generateMarkup(
 );
 
 // Items
-$sitems = $dbh->query("Select  i.idItem, itm.Type_Id, i.Description, i.Gl_Code, i.Percentage, i.Last_Order_Id
-    from item i left join item_type_map itm on itm.Item_Id = i.idItem");
+$sitems = $dbh->prepare("SELECT `i`.`idItem`, `itm`.`Type_Id`, `i`.`Description`, `i`.`Gl_Code`, `i`.`Percentage`, `i`.`Last_Order_Id`
+    FROM `item` `i` LEFT JOIN `item_type_map` `itm` ON `itm`.`Item_Id` = `i`.`idItem`");
+$sitems->execute();
 $items = $sitems->fetchAll(\PDO::FETCH_ASSOC);
 
 $itbl = new HTMLTable();
@@ -2373,7 +2389,8 @@ foreach ($items as $d) {
 }
 
 // item-item table
-$iistmt = $dbh->query("Select * from item_item");
+$iistmt = $dbh->prepare("SELECT * FROM `item_item`");
+$iistmt->execute();
 $taxItemMap = $iistmt->fetchAll(\PDO::FETCH_ASSOC);
 
 $itbl->addHeaderTr($ths);
@@ -2454,8 +2471,9 @@ $itemTable = $itbl->generateMarkup(
 );
 
 // Taxes
-$tstmt = $dbh->query("Select i.idItem, i.Description, i.Gl_Code, i.Percentage, i.Timeout_Days, i.First_Order_Id, i.Last_Order_Id
-from item i join item_type_map itm on itm.Item_Id = i.idItem and itm.Type_Id = " . ItemType::Tax . " order by i.Last_Order_Id");
+$tstmt = $dbh->prepare("SELECT `i`.`idItem`, `i`.`Description`, `i`.`Gl_Code`, `i`.`Percentage`, `i`.`Timeout_Days`, `i`.`First_Order_Id`, `i`.`Last_Order_Id`
+FROM `item` `i` JOIN `item_type_map` `itm` ON `itm`.`Item_Id` = `i`.`idItem` AND `itm`.`Type_Id` = :typeId ORDER BY `i`.`Last_Order_Id`");
+$tstmt->execute([':typeId' => ItemType::Tax]);
 $titems = $tstmt->fetchAll(\PDO::FETCH_ASSOC);
 $hotTaxes = 0;
 $lastId = 0;
