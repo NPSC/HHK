@@ -158,11 +158,12 @@ class ResourceBldr
 
         } else if($tableName == "insurance_type") {
 
-            $stmt = $dbh->query("SELECT
-    `t`.`idInsurance_type` as 'Table_Name', `t`.`Title` as 'Description',if(`t`.`Status` = 'a','y',''),'', `t`.`List_Order` as 'Order'
+            $stmt = $dbh->prepare("SELECT
+    `t`.`idInsurance_type` AS 'Table_Name', `t`.`Title` AS 'Description', IF(`t`.`Status` = 'a','y',''),'', `t`.`List_Order` AS 'Order'
 FROM
     `insurance_type` `t`
-Order by `t`.`List_Order`;");
+ORDER BY `t`.`List_Order`;");
+            $stmt->execute();
 
             $diags = $stmt->fetchAll(\PDO::FETCH_NUM);
 
@@ -437,7 +438,8 @@ Order by `t`.`List_Order`;");
                 }
 
                 // Check for an entry with the same description
-                $stmt = $dbh->query("Select count(*) from gen_lookups where `Table_Name` = '$tableName' and LOWER(`Description`) = '" . strtolower($dText) . "';");
+                $stmt = $dbh->prepare("SELECT COUNT(*) FROM `gen_lookups` WHERE `Table_Name` = :tableName AND LOWER(`Description`) = :description;");
+                $stmt->execute([':tableName' => $tableName, ':description' => strtolower($dText)]);
                 $rows = $stmt->fetchAll(\PDO::FETCH_NUM);
 
                 if ($rows[0][0] == 0) {
@@ -470,11 +472,15 @@ Order by `t`.`List_Order`;");
 
                 if ($tableName == 'Gender') {
                     $rep = function ($dbh, $newId, $oldId, $tableName) {
-                        return $dbh->exec("update name set `$tableName` = '$newId' where `$tableName` = '$oldId';");
+                        $stmt = $dbh->prepare("UPDATE `name` SET `$tableName` = :newId WHERE `$tableName` = :oldId;");
+                        $stmt->execute([':newId' => $newId, ':oldId' => $oldId]);
+                        return $stmt->rowCount();
                     };
                 } else {
                     $rep = function ($dbh, $newId, $oldId, $tableName) {
-                        return $dbh->exec("update name_demog set `$tableName` = '$newId' where `$tableName` = '$oldId';");
+                        $stmt = $dbh->prepare("UPDATE `name_demog` SET `$tableName` = :newId WHERE `$tableName` = :oldId;");
+                        $stmt->execute([':newId' => $newId, ':oldId' => $oldId]);
+                        return $stmt->rowCount();
                     };
                 }
             } else {
@@ -483,85 +489,107 @@ Order by `t`.`List_Order`;");
                     case 'Patient_Rel_Type':
 
                         $rep = function ($dbh, $newId, $oldId) {
-                            return $dbh->exec("update name_guest set Relationship_Code = '$newId' where Relationship_Code = '$oldId';");
+                            $stmt = $dbh->prepare("UPDATE `name_guest` SET `Relationship_Code` = :newId WHERE `Relationship_Code` = :oldId;");
+                            $stmt->execute([':newId' => $newId, ':oldId' => $oldId]);
+                            return $stmt->rowCount();
                         };
 
-                        $verify = "Select n.Relationship_Code from name_guest n left join gen_lookups g on n.Relationship_Code = g.Code Where g.Table_Name = 'Patient_Rel_Type' and g.Code is null;";
+                        $verify = "SELECT `n`.`Relationship_Code` FROM `name_guest` `n` LEFT JOIN `gen_lookups` `g` ON `n`.`Relationship_Code` = `g`.`Code` WHERE `g`.`Table_Name` = 'Patient_Rel_Type' AND `g`.`Code` IS NULL;";
                         break;
 
                     case 'Diagnosis':
 
                         $rep = function ($dbh, $newId, $oldId) {
-                            return $dbh->exec("update hospital_stay set Diagnosis = '$newId' where Diagnosis = '$oldId';");
+                            $stmt = $dbh->prepare("UPDATE `hospital_stay` SET `Diagnosis` = :newId WHERE `Diagnosis` = :oldId;");
+                            $stmt->execute([':newId' => $newId, ':oldId' => $oldId]);
+                            return $stmt->rowCount();
                         };
 
-                        $verify = "select hs.Diagnosis from hospital_stay hs left join gen_lookups g on hs.Diagnosis = g.Code where g.Table_Name = 'Diagnosis' and g.Code is null;";
+                        $verify = "SELECT `hs`.`Diagnosis` FROM `hospital_stay` `hs` LEFT JOIN `gen_lookups` `g` ON `hs`.`Diagnosis` = `g`.`Code` WHERE `g`.`Table_Name` = 'Diagnosis' AND `g`.`Code` IS NULL;";
                         break;
 
                     case 'Diagnosis_Category':
 
                         $rep = function ($dbh, $newId, $oldId) {
-                            return $dbh->exec("update gen_lookups set Substitute = '$newId' where Substitute = '$oldId' and Table_Name = 'Diagnosis';");
+                            $stmt = $dbh->prepare("UPDATE `gen_lookups` SET `Substitute` = :newId WHERE `Substitute` = :oldId AND `Table_Name` = 'Diagnosis';");
+                            $stmt->execute([':newId' => $newId, ':oldId' => $oldId]);
+                            return $stmt->rowCount();
                         };
                         break;
 
                     case 'Staff_Note_Category':
 
                         $rep = function ($dbh, $newId, $oldId) {
-                           return $dbh->exec("update note n join link_note sn on n.idNote = sn.idNote and sn.linkType = 'staff' set n.Category = '$newId' where n.Category = '$oldId';");
+                           $stmt = $dbh->prepare("UPDATE `note` `n` JOIN `link_note` `sn` ON `n`.`idNote` = `sn`.`idNote` AND `sn`.`linkType` = 'staff' SET `n`.`Category` = :newId WHERE `n`.`Category` = :oldId;");
+                           $stmt->execute([':newId' => $newId, ':oldId' => $oldId]);
+                           return $stmt->rowCount();
                         };
 
-                        $verify = "select n.Category from note n left join gen_lookups g on n.Category = g.Code where g.Table_Name = 'Staff_Note_Category' and g.Code is null;";
+                        $verify = "SELECT `n`.`Category` FROM `note` `n` LEFT JOIN `gen_lookups` `g` ON `n`.`Category` = `g`.`Code` WHERE `g`.`Table_Name` = 'Staff_Note_Category' AND `g`.`Code` IS NULL;";
                         break;
 
                     case 'Location':
 
                         $rep = function ($dbh, $newId, $oldId) {
-                            return $dbh->exec("update hospital_stay set Location = '$newId' where Location = '$oldId';");
+                            $stmt = $dbh->prepare("UPDATE `hospital_stay` SET `Location` = :newId WHERE `Location` = :oldId;");
+                            $stmt->execute([':newId' => $newId, ':oldId' => $oldId]);
+                            return $stmt->rowCount();
                         };
                         break;
 
                     case 'OSS_Codes':
 
                         $rep = function ($dbh, $newId, $oldId) {
-                            return $dbh->exec("update resource_use set OSS_Code = '$newId' where OSS_Code = '$oldId';");
+                            $stmt = $dbh->prepare("UPDATE `resource_use` SET `OSS_Code` = :newId WHERE `OSS_Code` = :oldId;");
+                            $stmt->execute([':newId' => $newId, ':oldId' => $oldId]);
+                            return $stmt->rowCount();
                         };
                         break;
 
                     case 'Utilization_Category':
 
                         $rep = function ($dbh, $newId, $oldId) {
-                            return $dbh->exec("update resource set Utilization_Category = '$newId' where Utilization_Category = '$oldId';");
+                            $stmt = $dbh->prepare("UPDATE `resource` SET `Utilization_Category` = :newId WHERE `Utilization_Category` = :oldId;");
+                            $stmt->execute([':newId' => $newId, ':oldId' => $oldId]);
+                            return $stmt->rowCount();
                         };
                         break;
 
                     case 'Ins_Type':
 
                         $rep = function ($dbh, $newId, $oldId) {
-                            return $dbh->exec("update insurance set `Type` = '$newId' where `Type` = '$oldId';");
+                            $stmt = $dbh->prepare("UPDATE `insurance` SET `Type` = :newId WHERE `Type` = :oldId;");
+                            $stmt->execute([':newId' => $newId, ':oldId' => $oldId]);
+                            return $stmt->rowCount();
                         };
                         break;
 
                     case 'Room_Cleaning_Days':
 
                         $rep = function ($dbh, $newId, $oldId) {
-                            return $dbh->exec("update room set `Cleaning_Cycle_Code` = '$newId' where `Cleaning_Cycle_Code` = '$oldId';");
+                            $stmt = $dbh->prepare("UPDATE `room` SET `Cleaning_Cycle_Code` = :newId WHERE `Cleaning_Cycle_Code` = :oldId;");
+                            $stmt->execute([':newId' => $newId, ':oldId' => $oldId]);
+                            return $stmt->rowCount();
                         };
                         break;
 
                     case 'NoReturnReason':
 
                         $rep = function ($dbh, $newId, $oldId) {
-                            return $dbh->exec("update name_demog set `No_Return` = '$newId' where `No_Return` = '$oldId';");
+                            $stmt = $dbh->prepare("UPDATE `name_demog` SET `No_Return` = :newId WHERE `No_Return` = :oldId;");
+                            $stmt->execute([':newId' => $newId, ':oldId' => $oldId]);
+                            return $stmt->rowCount();
                         };
                         break;
 
                     case (ChecklistType::PSG || ChecklistType::Reservation || ChecklistType::Visit || ChecklistType::Hospital):
 
                         $rep = function ($dbh, $newId, $oldId) {
-                            return $dbh->exec("update checklist_item set `GL_Code` = '$newId' where `GL_Code` = '$oldId';");
+                            $stmt = $dbh->prepare("UPDATE `checklist_item` SET `GL_Code` = :newId WHERE `GL_Code` = :oldId;");
+                            $stmt->execute([':newId' => $newId, ':oldId' => $oldId]);
+                            return $stmt->rowCount();
                         };
-                        break; 
+                        break;
                 }
             }
 
@@ -629,10 +657,12 @@ Order by `t`.`List_Order`;");
                             $use = 'y';
                             if (isset($demos[$tableName])) {
                                 $on = $orderNumber + 100;
-                                $dbh->exec("Insert Ignore into `gen_lookups` (`Table_Name`, `Code`, `Description`, `Order`) values ('RibbonColors', '$c', '$desc', '$on');");
+                                $dbh->prepare("INSERT IGNORE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Order`) VALUES ('RibbonColors', :code, :desc, :order);")
+                                    ->execute([':code' => $c, ':desc' => $desc, ':order' => $on]);
                             }
                         } else {
-                            $dbh->exec("DELETE FROM `gen_lookups` where `Table_Name` = 'Ribbon_Colors' and `Code` = '$c';");
+                            $dbh->prepare("DELETE FROM `gen_lookups` WHERE `Table_Name` = 'Ribbon_Colors' AND `Code` = :code;")
+                                ->execute([':code' => $c]);
                         }
 
                         $gluRs->Description->setNewVal($desc);

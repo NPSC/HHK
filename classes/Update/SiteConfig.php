@@ -179,17 +179,14 @@ class SiteConfig {
 
         // Delete old table contents
         if (count($lines) > 30000) {
-            $dbh->exec("delete from postal_codes;");
+            $dbh->prepare("DELETE FROM `postal_codes`;")->execute();
         } else {
             return "File size is too small.";
         }
 
+        $insStmt = $dbh->prepare("INSERT INTO `postal_codes` (`Zip_Code`, `City`, `County`, `State`, `Lat`, `Lng`, `Type`, `Acceptable_Cities`) VALUES (:zip, :city, :county, :state, :lat, :long, :type, :altCitys)");
 
-        $query = '';
-
-        $indx = 0;
         $recordCounter = 0;
-        $maxRecords = 10000;
 
         // 2020 download file structure.
         // zip, type, decommissioned, primary_city, acceptable_cities, unacceptable_cities, state, county, timezone, area_codes, world_region, country, approximate_latitude, approximate_longitude,
@@ -219,35 +216,18 @@ class SiteConfig {
                 	$long = filter_var(trim($fields[13]), FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION);
                 }
 
-                $query .= "('"
-                        . filter_var(trim($fields[0]), FILTER_SANITIZE_NUMBER_INT) . "','"    	// Zip_Code
-                        . $city . "','"        													// City
-                        . $county . "','"        												// County
-                        . filter_var(trim($fields[6]), FILTER_SANITIZE_FULL_SPECIAL_CHARS) . "','"        	// State
-                        . $lat . "','"   // Lat
-                        . $long . "','"	// Long
-                        . filter_var(trim(substr($fields[1], 0, 2)), FILTER_SANITIZE_FULL_SPECIAL_CHARS) . "','"						//Type
-                        . $altCitys
-                        . "'),";
-                $indx++;
+                $insStmt->execute([
+                    ':zip' => filter_var(trim($fields[0]), FILTER_SANITIZE_NUMBER_INT),
+                    ':city' => $city,
+                    ':county' => $county,
+                    ':state' => filter_var(trim($fields[6]), FILTER_SANITIZE_FULL_SPECIAL_CHARS),
+                    ':lat' => $lat,
+                    ':long' => $long,
+                    ':type' => filter_var(trim(substr($fields[1], 0, 2)), FILTER_SANITIZE_FULL_SPECIAL_CHARS),
+                    ':altCitys' => $altCitys,
+                ]);
                 $recordCounter++;
             }
-
-            if ($indx > $maxRecords) {
-
-                $indx = 0;
-
-                if ($query != "") {
-                    $dbh->exec("insert into postal_codes values " . substr($query, 0, -1));
-                }
-
-                $query = '';
-            }
-        }
-
-        // Insert the remaining records.
-        if ($indx > 0 && $query != "") {
-            $dbh->exec("insert into postal_codes values " . substr($query, 0, -1));
         }
 
         return "Success, " . $recordCounter . " zip codes loaded.";
@@ -283,13 +263,16 @@ class SiteConfig {
         $resultMsg = '';
 
         // Turn fed holidays on or off
-        $stmt = $dbh->query("Select Code, Substitute from gen_lookups where Table_Name = 'Holiday'");
+        $stmt = $dbh->prepare("SELECT `Code`, `Substitute` FROM `gen_lookups` WHERE `Table_Name` = 'Holiday'");
+        $stmt->execute();
         $hols = $stmt->fetchall(\PDO::FETCH_ASSOC);
         $ctrl = array();
 
         if (isset($post['cbhol'])) {
             $ctrl = $post['cbhol'];
         }
+
+        $updHolStmt = $dbh->prepare("UPDATE `gen_lookups` SET `Substitute` = :substitute WHERE `Table_Name` = 'Holiday' AND `Code` = :code");
 
         // Federal Holidays
         foreach ($hols as $h) {
@@ -298,10 +281,10 @@ class SiteConfig {
 
             if (isset($ctrl[$h['Code']])) {
                 // set this holidy
-                $dbh->exec("update gen_lookups set Substitute = '1' where Table_Name = 'Holiday' and Code = '". $h['Code'] ."'");
+                $updHolStmt->execute([':substitute' => '1', ':code' => $h['Code']]);
             } else {
                 // skip this holiday
-                $dbh->exec("update gen_lookups set Substitute = '' where Table_Name = 'Holiday' and Code = '". $h['Code'] ."'");
+                $updHolStmt->execute([':substitute' => '', ':code' => $h['Code']]);
             }
 
         }
@@ -415,7 +398,8 @@ class SiteConfig {
         $tbl = new HTMLTable();
         $inputSize = '40';
 
-        $stmt = $dbh->query("select `Code`, `Description` from `gen_lookups` where Table_Name = 'labels_category' order by `Order`");
+        $stmt = $dbh->prepare("SELECT `Code`, `Description` FROM `gen_lookups` WHERE `Table_Name` = 'labels_category' ORDER BY `Order`");
+        $stmt->execute();
         $cats = [];
         while($r = $stmt->fetch(\PDO::FETCH_ASSOC)){
             $cats[strtolower($r['Description'])] = $r['Code'];
@@ -473,18 +457,24 @@ class SiteConfig {
         $cat = '';
 
         $categorySql = '';
+        $categoryParams = [];
         if($category !== NULL){
-            $categorySql = "and `s`.`Category` = '" . $category . "' ";
+            $categorySql = "AND `s`.`Category` = :category ";
+            $categoryParams[':category'] = $category;
         }
 
         if(count($hideCats) > 0){
+            $hideCatPlaceholders = [];
             foreach($hideCats as $i=>$cat){
-                $hideCats[$i] = "'" . $cat . "'";
+                $ph = ':hideCat' . $i;
+                $hideCatPlaceholders[] = $ph;
+                $categoryParams[$ph] = $cat;
             }
-            $categorySql = "and `s`.`Category` NOT IN (" . implode(",", $hideCats) . ") ";
+            $categorySql = "AND `s`.`Category` NOT IN (" . implode(",", $hideCatPlaceholders) . ") ";
         }
 
-        $stmt = $dbh->query("select s.*, g.`Description` as `Cat` from sys_config s left join gen_lookups g on s.Category = g.Code and g.Table_Name = 'Sys_Config_Category' where s.Show = 1 " . $categorySql . "order by g.`Order`, s.`Key`");
+        $stmt = $dbh->prepare("SELECT `s`.*, `g`.`Description` AS `Cat` FROM `sys_config` `s` LEFT JOIN `gen_lookups` `g` ON `s`.`Category` = `g`.`Code` AND `g`.`Table_Name` = 'Sys_Config_Category' WHERE `s`.`Show` = 1 " . $categorySql . "ORDER BY `g`.`Order`, `s`.`Key`");
+        $stmt->execute($categoryParams);
 
         while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
 

@@ -86,9 +86,10 @@ class Invoice {
 
 			$this->invoiceNum = $invoiceNumber;
 
-			$stmt = $dbh->query ( "select i.*, ifnull(di.Invoice_Number, '') as Delegated_Invoice_Number, ifnull(di.Status, '') as Delegated_Invoice_Status
-                from invoice i left join invoice di on i.Delegated_Invoice_Id = di.idInvoice
-                where i.Invoice_Number = '$invoiceNumber'" );
+			$stmt = $dbh->prepare ( "SELECT `i`.*, IFNULL(`di`.`Invoice_Number`, '') AS `Delegated_Invoice_Number`, IFNULL(`di`.`Status`, '') AS `Delegated_Invoice_Status`
+                FROM `invoice` `i` LEFT JOIN `invoice` `di` ON `i`.`Delegated_Invoice_Id` = `di`.`idInvoice`
+                WHERE `i`.`Invoice_Number` = :invoiceNumber" );
+			$stmt->execute ( [':invoiceNumber' => $invoiceNumber] );
 			$rows = $stmt->fetchAll ( \PDO::FETCH_ASSOC );
 
 			if (count ( $rows ) == 1) {
@@ -113,20 +114,21 @@ class Invoice {
 			return array ();
 		}
 
-		$stmt = $dbh->query ( "SELECT
-    i.idInvoice, i.`Invoice_Number`, i.`Balance`, i.`Amount`, IFNULL(n.Name_Full, '') as `Payor`
+		$stmt = $dbh->prepare ( "SELECT
+    `i`.`idInvoice`, `i`.`Invoice_Number`, `i`.`Balance`, `i`.`Amount`, IFNULL(`n`.`Name_Full`, '') AS `Payor`
 FROM
-    `invoice` i
+    `invoice` `i`
         LEFT JOIN
-    name_volunteer2 nv ON i.Sold_To_Id = nv.idName
-        AND nv.Vol_Category = 'Vol_Type'
-        AND nv.Vol_Code = 'ba'
+    `name_volunteer2` `nv` ON `i`.`Sold_To_Id` = `nv`.`idName`
+        AND `nv`.`Vol_Category` = 'Vol_Type'
+        AND `nv`.`Vol_Code` = 'ba'
 		LEFT JOIN
-	`name` n ON i.Sold_To_Id = n.idName
+	`name` `n` ON `i`.`Sold_To_Id` = `n`.`idName`
 WHERE
-    i.Order_Number = '$orderNum' AND i.Status = '" . InvoiceStatus::Unpaid . "'
-        AND i.Deleted = 0
-        AND nv.idName IS NULL;" );
+    `i`.`Order_Number` = :orderNum AND `i`.`Status` = :status
+        AND `i`.`Deleted` = 0
+        AND `nv`.`idName` IS NULL;" );
+		$stmt->execute ( [':orderNum' => $orderNum, ':status' => InvoiceStatus::Unpaid] );
 
 		return $stmt->fetchAll ( \PDO::FETCH_ASSOC );
 	}
@@ -144,18 +146,19 @@ WHERE
 	        return array ();
 	    }
 
-	    $stmt = $dbh->query ( "SELECT
-    i.idInvoice, i.`Invoice_Number`, i.`Balance`, i.`Amount`
+	    $stmt = $dbh->prepare ( "SELECT
+    `i`.`idInvoice`, `i`.`Invoice_Number`, `i`.`Balance`, `i`.`Amount`
 FROM
-    `invoice` i
+    `invoice` `i`
 		LEFT JOIN
-	`invoice_line` il on i.idInvoice = il.Invoice_Id
+	`invoice_line` `il` ON `i`.`idInvoice` = `il`.`Invoice_Id`
         LEFT JOIN
-    `reservation_invoice_line` ri on il.idInvoice_Line = ri.Invoice_Line_Id
+    `reservation_invoice_line` `ri` ON `il`.`idInvoice_Line` = `ri`.`Invoice_Line_Id`
 
 WHERE
-    ri.Reservation_Id = $idReservation AND i.Status = '" . InvoiceStatus::Unpaid . "'
-        AND i.Deleted = 0 group by i.idInvoice" );
+    `ri`.`Reservation_Id` = :idReservation AND `i`.`Status` = :status
+        AND `i`.`Deleted` = 0 GROUP BY `i`.`idInvoice`" );
+	    $stmt->execute ( [':idReservation' => $idReservation, ':status' => InvoiceStatus::Unpaid] );
 
 	    return $stmt->fetchAll ( \PDO::FETCH_ASSOC );
 	}
@@ -222,14 +225,16 @@ WHERE
 
 		if ($idInvoice > 0) {
 
-			$stmt = $dbh->query ( "select i.*, ifnull(di.Invoice_Number, '') as Delegated_Invoice_Number, ifnull(di.Status, '') as Delegated_Invoice_Status
- from invoice i left join invoice di on i.Delegated_Invoice_Id = di.idInvoice
- where i.idInvoice = '$idInvoice'" );
+			$stmt = $dbh->prepare ( "SELECT `i`.*, IFNULL(`di`.`Invoice_Number`, '') AS `Delegated_Invoice_Number`, IFNULL(`di`.`Status`, '') AS `Delegated_Invoice_Status`
+ FROM `invoice` `i` LEFT JOIN `invoice` `di` ON `i`.`Delegated_Invoice_Id` = `di`.`idInvoice`
+ WHERE `i`.`idInvoice` = :idInvoice" );
+			$stmt->execute ( [':idInvoice' => $idInvoice] );
 
 			$rows = $stmt->fetchAll ( \PDO::FETCH_ASSOC );
 		} else if ($idPayment > 0) {
 
-			$stmt = $dbh->query ( "Select i.*, ifnull(di.Invoice_Number, '') as Delegated_Invoice_Number, ifnull(di.Status, '') as Delegated_Invoice_Status " . "from payment_invoice pi join invoice i on pi.Invoice_Id = i.idInvoice " . "left join invoice di on i.Delegated_Invoice_Id = di.idInvoice " . "where pi.Payment_Id = $idPayment" );
+			$stmt = $dbh->prepare ( "SELECT `i`.*, IFNULL(`di`.`Invoice_Number`, '') AS `Delegated_Invoice_Number`, IFNULL(`di`.`Status`, '') AS `Delegated_Invoice_Status` " . "FROM `payment_invoice` `pi` JOIN `invoice` `i` ON `pi`.`Invoice_Id` = `i`.`idInvoice` " . "LEFT JOIN `invoice` `di` ON `i`.`Delegated_Invoice_Id` = `di`.`idInvoice` " . "WHERE `pi`.`Payment_Id` = :idPayment" );
+			$stmt->execute ( [':idPayment' => $idPayment] );
 			$rows = $stmt->fetchAll ( \PDO::FETCH_ASSOC );
 		}
 
@@ -264,9 +269,10 @@ WHERE
 	public function getLines(\PDO $dbh, $includeDeletedLines = false) {
 		$lines = array ();
 
-		$stmt = $dbh->query ( "select il.*
-from invoice_line il left join invoice_line_type ilt on il.Type_Id = ilt.id
-where il.Invoice_Id = " . $this->idInvoice . " order by ilt.Order_Position" );
+		$stmt = $dbh->prepare ( "SELECT `il`.*
+FROM `invoice_line` `il` LEFT JOIN `invoice_line_type` `ilt` ON `il`.`Type_Id` = `ilt`.`id`
+WHERE `il`.`Invoice_Id` = :idInvoice ORDER BY `ilt`.`Order_Position`" );
+		$stmt->execute ( [':idInvoice' => $this->idInvoice] );
 
 		while ( $r = $stmt->fetch ( \PDO::FETCH_ASSOC ) ) {
 
@@ -324,8 +330,9 @@ where il.Invoice_Id = " . $this->idInvoice . " order by ilt.Order_Position" );
 					$this->updateInvoiceStatus ( $dbh, $username );
 
 					// Delete any zero amount payments for this Invoice.
-					$stmt = $dbh->query ( "select p.idPayment, pi.idPayment_Invoice from payment_invoice pi join payment p on pi.Payment_Id = p.idPayment and p.Amount = 0
-where pi.Invoice_Id = " . $this->getIdInvoice () );
+					$stmt = $dbh->prepare ( "SELECT `p`.`idPayment`, `pi`.`idPayment_Invoice` FROM `payment_invoice` `pi` JOIN `payment` `p` ON `pi`.`Payment_Id` = `p`.`idPayment` AND `p`.`Amount` = 0
+WHERE `pi`.`Invoice_Id` = :idInvoice" );
+					$stmt->execute ( [':idInvoice' => $this->getIdInvoice ()] );
 
 					$rows = $stmt->fetchAll ( \PDO::FETCH_NUM );
 					if (count ( $rows ) > 0) {
@@ -333,8 +340,8 @@ where pi.Invoice_Id = " . $this->getIdInvoice () );
 						$idPayInv = intval ( $rows [0] [1] );
 
 						if ($idPayment > 0) {
-							$dbh->exec ( "delete from payment where idPayment = $idPayment" );
-							$dbh->exec ( "delete from payment_invoice where idPayment_Invoice = $idPayInv" );
+							$dbh->prepare ( "DELETE FROM `payment` WHERE `idPayment` = :idPayment" )->execute ( [':idPayment' => $idPayment] );
+							$dbh->prepare ( "DELETE FROM `payment_invoice` WHERE `idPayment_Invoice` = :idPayInv" )->execute ( [':idPayInv' => $idPayInv] );
 						}
 					}
 
@@ -363,10 +370,11 @@ where pi.Invoice_Id = " . $this->getIdInvoice () );
 
 		$lines = array ();
 		$itemDesc = '';
-		$stmt = $dbh->query ( "Select il.*, it.Description as `Item_Description` from
-            invoice i left join invoice_line il on i.idInvoice = il.Invoice_Id
-            left join item it on il.Item_Id = it.idItem
-    where i.Deleted = 0 and il.Deleted = 0 and il.Item_Id = " . ItemId::Lodging . " and i.Order_Number = '$idVisit'" );
+		$stmt = $dbh->prepare ( "SELECT `il`.*, `it`.`Description` AS `Item_Description` FROM
+            `invoice` `i` LEFT JOIN `invoice_line` `il` ON `i`.`idInvoice` = `il`.`Invoice_Id`
+            LEFT JOIN `item` `it` ON `il`.`Item_Id` = `it`.`idItem`
+    WHERE `i`.`Deleted` = 0 AND `il`.`Deleted` = 0 AND `il`.`Item_Id` = :itemId AND `i`.`Order_Number` = :idVisit" );
+		$stmt->execute ( [':itemId' => ItemId::Lodging, ':idVisit' => $idVisit] );
 
 		while ( $r = $stmt->fetch ( \PDO::FETCH_ASSOC ) ) {
 
@@ -422,18 +430,19 @@ where pi.Invoice_Id = " . $this->getIdInvoice () );
 		$patientName = '';
 
 		// Find Hospital and Room
-		$pstmt = $dbh->query ( "select
-    hs.idHospital, hs.idAssociation, re.Title, v.idPrimaryGuest, hs.idPatient, n.Name_Full
-from
-    visit v
-	left join
-    resource re on v.idResource = re.idResource
-        left join
-    hospital_stay hs on v.idHospital_stay = hs.idHospital_stay
-        left join
-    name n on n.idName = hs.idPatient
-where
-    v.idVisit = " . $this->getOrderNumber () . " and v.Span = " . $this->getSuborderNumber());
+		$pstmt = $dbh->prepare ( "SELECT
+    `hs`.`idHospital`, `hs`.`idAssociation`, `re`.`Title`, `v`.`idPrimaryGuest`, `hs`.`idPatient`, `n`.`Name_Full`
+FROM
+    `visit` `v`
+	LEFT JOIN
+    `resource` `re` ON `v`.`idResource` = `re`.`idResource`
+        LEFT JOIN
+    `hospital_stay` `hs` ON `v`.`idHospital_stay` = `hs`.`idHospital_stay`
+        LEFT JOIN
+    `name` `n` ON `n`.`idName` = `hs`.`idPatient`
+WHERE
+    `v`.`idVisit` = :idVisit AND `v`.`Span` = :span" );
+		$pstmt->execute ( [':idVisit' => $this->getOrderNumber (), ':span' => $this->getSuborderNumber ()] );
 
 		$rows = $pstmt->fetchAll ( \PDO::FETCH_ASSOC );
 
@@ -632,24 +641,25 @@ where
 
 		if ($idName > 0) {
 
-			$stmt = $dbh->query ( "select
-    ifnull(a.Address_1,'') as Address_1,
-    ifnull(a.Address_2,'') as Address_2,
-    ifnull(a.City,'') as City,
-    ifnull(a.State_Province,'') as State,
-    ifnull(a.Postal_Code,'') as Zip,
-    ifnull(p.Phone_Num,'') as Phone_Num,
-    ifnull(e.Email,'') as Email,
-	n.Name_Full
-from
-	name n left join
-    name_address a ON n.idName = a.idName  and a.Purpose = n.Preferred_Mail_Address
-        left join
-    name_phone p ON n.idName = p.idName and n.Preferred_Phone = p.Phone_Code
-        left join
-    name_email e ON n.idName = e.idName and n.Preferred_Email = e.Purpose
-where
-    n.idName = $idName" );
+			$stmt = $dbh->prepare ( "SELECT
+    IFNULL(`a`.`Address_1`,'') AS `Address_1`,
+    IFNULL(`a`.`Address_2`,'') AS `Address_2`,
+    IFNULL(`a`.`City`,'') AS `City`,
+    IFNULL(`a`.`State_Province`,'') AS `State`,
+    IFNULL(`a`.`Postal_Code`,'') AS `Zip`,
+    IFNULL(`p`.`Phone_Num`,'') AS `Phone_Num`,
+    IFNULL(`e`.`Email`,'') AS `Email`,
+	`n`.`Name_Full`
+FROM
+	`name` `n` LEFT JOIN
+    `name_address` `a` ON `n`.`idName` = `a`.`idName` AND `a`.`Purpose` = `n`.`Preferred_Mail_Address`
+        LEFT JOIN
+    `name_phone` `p` ON `n`.`idName` = `p`.`idName` AND `n`.`Preferred_Phone` = `p`.`Phone_Code`
+        LEFT JOIN
+    `name_email` `e` ON `n`.`idName` = `e`.`idName` AND `n`.`Preferred_Email` = `e`.`Purpose`
+WHERE
+    `n`.`idName` = :idName" );
+			$stmt->execute ( [':idName' => $idName] );
 
 			$rows = $stmt->fetchAll ( \PDO::FETCH_ASSOC );
 
@@ -745,7 +755,8 @@ where
 		$idName = $this->getSoldToId();
 		if ($idName > 0) {
 
-			$stmt = $dbh->query("select ifnull(e.Email, '') from name n left join name_email e ON n.idName = e.idName and n.Preferred_Email = e.Purpose where n.idName = $idName");
+			$stmt = $dbh->prepare("SELECT IFNULL(`e`.`Email`, '') FROM `name` `n` LEFT JOIN `name_email` `e` ON `n`.`idName` = `e`.`idName` AND `n`.`Preferred_Email` = `e`.`Purpose` WHERE `n`.`idName` = :idName");
+			$stmt->execute ( [':idName' => $idName] );
 
 			$rows = $stmt->fetchAll ( \PDO::FETCH_NUM );
 
@@ -765,7 +776,8 @@ where
 		$idName = $this->getSoldToId();
 		if ($idName > 0) {
 
-			$stmt = $dbh->query("select n.*, ifnull(e.Email, '') from name n left join name_email e ON n.idName = e.idName and n.Preferred_Email = e.Purpose where n.idName = $idName");
+			$stmt = $dbh->prepare("SELECT `n`.*, IFNULL(`e`.`Email`, '') FROM `name` `n` LEFT JOIN `name_email` `e` ON `n`.`idName` = `e`.`idName` AND `n`.`Preferred_Email` = `e`.`Purpose` WHERE `n`.`idName` = :idName");
+			$stmt->execute ( [':idName' => $idName] );
 
 			$rows = $stmt->fetchAll ( \PDO::FETCH_ASSOC );
 
@@ -785,22 +797,23 @@ where
 	public static function getBillToName(\PDO $dbh, int $idName){
 		if ($idName > 0) {
 
-			$stmt = $dbh->query("select
-    ifnull(n.Company,'') as Company,
-    ifnull(p.Phone_Num,'') as Phone_Num,
-    ifnull(e.Email,'') as Email,
-	n1.Name_First,
-	n1.Name_Last,
-	n1.Company as Company_Name
-from
-	name n1 left join
-    name n on n1.Company_Id = n.idName
-        left join
-    name_phone p ON n1.idName = p.idName and n1.Preferred_Phone = p.Phone_Code
-        left join
-    name_email e ON n1.idName = e.idName and n1.Preferred_Email = e.Purpose
-where
-    n1.idName = $idName");
+			$stmt = $dbh->prepare("SELECT
+    IFNULL(`n`.`Company`,'') AS `Company`,
+    IFNULL(`p`.`Phone_Num`,'') AS `Phone_Num`,
+    IFNULL(`e`.`Email`,'') AS `Email`,
+	`n1`.`Name_First`,
+	`n1`.`Name_Last`,
+	`n1`.`Company` AS `Company_Name`
+FROM
+	`name` `n1` LEFT JOIN
+    `name` `n` ON `n1`.`Company_Id` = `n`.`idName`
+        LEFT JOIN
+    `name_phone` `p` ON `n1`.`idName` = `p`.`idName` AND `n1`.`Preferred_Phone` = `p`.`Phone_Code`
+        LEFT JOIN
+    `name_email` `e` ON `n1`.`idName` = `e`.`idName` AND `n1`.`Preferred_Email` = `e`.`Purpose`
+WHERE
+    `n1`.`idName` = :idName");
+			$stmt->execute ( [':idName' => $idName] );
 
 			$rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
@@ -823,42 +836,43 @@ where
 
 		if ($idName > 0) {
 
-			$stmt = $dbh->query ( "select
-    ifnull(n.Company,'') as Company,
-    ifnull(a.Address_1,'') as Address_1,
-    ifnull(a.Address_2,'') as Address_2,
-    ifnull(a.City,'') as City,
-    ifnull(a.State_Province,'') as State,
-    ifnull(a.Postal_Code,'') as Zip,
-    ifnull(ab.Address_1,'') as Billing_1,
-    ifnull(ab.Address_2,'') as Billing_2,
-    ifnull(ab.City,'') as Billing_City,
-    ifnull(ab.State_Province,'') as Billing_State,
-    ifnull(ab.Postal_Code,'') as Billing_Zip,
-    ifnull(ac.Address_1,'') as Company_1,
-    ifnull(ac.Address_2,'') as Company_2,
-    ifnull(ac.City,'') as Company_City,
-    ifnull(ac.State_Province,'') as Company_State,
-    ifnull(ac.Postal_Code,'') as Company_Zip,
-    ifnull(p.Phone_Num,'') as Phone_Num,
-    ifnull(e.Email,'') as Email,
-	n1.Name_Full,
-	n1.Company as Company_Name
-from
-	name n1 left join
-    name n on n1.Company_Id = n.idName
-        left join
-    name_address ab ON n.idName = ab.idName  and ab.Purpose = 'b'
-        left join
-    name_address a ON n.idName = a.idName  and a.Purpose = n.Preferred_Mail_Address
-        left join
-    name_address ac ON n1.idName = ac.idName  and ac.Purpose = n1.Preferred_Mail_Address
-        left join
-    name_phone p ON n1.idName = p.idName and n1.Preferred_Phone = p.Phone_Code
-        left join
-    name_email e ON n1.idName = e.idName and n1.Preferred_Email = e.Purpose
-where
-    n1.idName = $idName" );
+			$stmt = $dbh->prepare ( "SELECT
+    IFNULL(`n`.`Company`,'') AS `Company`,
+    IFNULL(`a`.`Address_1`,'') AS `Address_1`,
+    IFNULL(`a`.`Address_2`,'') AS `Address_2`,
+    IFNULL(`a`.`City`,'') AS `City`,
+    IFNULL(`a`.`State_Province`,'') AS `State`,
+    IFNULL(`a`.`Postal_Code`,'') AS `Zip`,
+    IFNULL(`ab`.`Address_1`,'') AS `Billing_1`,
+    IFNULL(`ab`.`Address_2`,'') AS `Billing_2`,
+    IFNULL(`ab`.`City`,'') AS `Billing_City`,
+    IFNULL(`ab`.`State_Province`,'') AS `Billing_State`,
+    IFNULL(`ab`.`Postal_Code`,'') AS `Billing_Zip`,
+    IFNULL(`ac`.`Address_1`,'') AS `Company_1`,
+    IFNULL(`ac`.`Address_2`,'') AS `Company_2`,
+    IFNULL(`ac`.`City`,'') AS `Company_City`,
+    IFNULL(`ac`.`State_Province`,'') AS `Company_State`,
+    IFNULL(`ac`.`Postal_Code`,'') AS `Company_Zip`,
+    IFNULL(`p`.`Phone_Num`,'') AS `Phone_Num`,
+    IFNULL(`e`.`Email`,'') AS `Email`,
+	`n1`.`Name_Full`,
+	`n1`.`Company` AS `Company_Name`
+FROM
+	`name` `n1` LEFT JOIN
+    `name` `n` ON `n1`.`Company_Id` = `n`.`idName`
+        LEFT JOIN
+    `name_address` `ab` ON `n`.`idName` = `ab`.`idName` AND `ab`.`Purpose` = 'b'
+        LEFT JOIN
+    `name_address` `a` ON `n`.`idName` = `a`.`idName` AND `a`.`Purpose` = `n`.`Preferred_Mail_Address`
+        LEFT JOIN
+    `name_address` `ac` ON `n1`.`idName` = `ac`.`idName` AND `ac`.`Purpose` = `n1`.`Preferred_Mail_Address`
+        LEFT JOIN
+    `name_phone` `p` ON `n1`.`idName` = `p`.`idName` AND `n1`.`Preferred_Phone` = `p`.`Phone_Code`
+        LEFT JOIN
+    `name_email` `e` ON `n1`.`idName` = `e`.`idName` AND `n1`.`Preferred_Email` = `e`.`Purpose`
+WHERE
+    `n1`.`idName` = :idName" );
+			$stmt->execute ( [':idName' => $idName] );
 
 			$rows = $stmt->fetchAll ( \PDO::FETCH_ASSOC );
 
@@ -987,7 +1001,8 @@ where
 	 * @param string $user
 	 */
 	protected function updateInvoiceAmount(\PDO $dbh, $user) {
-		$stmt = $dbh->query ( "Select sum(Amount) from invoice_line where Deleted = 0 and Invoice_Id = " . $this->idInvoice );
+		$stmt = $dbh->prepare ( "SELECT SUM(`Amount`) FROM `invoice_line` WHERE `Deleted` = 0 AND `Invoice_Id` = :idInvoice" );
+		$stmt->execute ( [':idInvoice' => $this->idInvoice] );
 		$rows = $stmt->fetchAll ();
 
 		if (count ( $rows ) == 1) {
@@ -1204,7 +1219,8 @@ where
 	 * @return void
 	 */
 	protected function unwindCarriedInv(\PDO $dbh, $id, &$invIds) {
-		$stmt = $dbh->query ( "select idInvoice from invoice where Delegated_Invoice_Id = " . $id );
+		$stmt = $dbh->prepare ( "SELECT `idInvoice` FROM `invoice` WHERE `Delegated_Invoice_Id` = :id" );
+		$stmt->execute ( [':id' => $id] );
 		$rows = $stmt->fetchAll ( \PDO::FETCH_NUM );
 
 		foreach ( $rows as $r ) {
@@ -1229,24 +1245,23 @@ where
 		$invIds = array ();
 		$this->unwindCarriedInv ( $dbh, $this->idInvoice, $invIds );
 
-		$whAssoc = '';
-		foreach ( $invIds as $a ) {
+		$idPlaceholders = [];
+		$idParams = [];
+		foreach ( $invIds as $idx => $a ) {
 
 			if ($a != 0) {
-
-				if ($whAssoc == '') {
-					$whAssoc .= $a;
-				} else {
-					$whAssoc .= "," . $a;
-				}
+				$ph = ':id' . $idx;
+				$idPlaceholders [] = $ph;
+				$idParams [$ph] = $a;
 			}
 		}
 
-		$query = "select count(p.idPayment)
-From payment p join payment_invoice pi on p.idPayment = pi.Payment_Id and p.Status_Code = 's' and p.Is_Refund = 0
-where pi.Invoice_Id in ($whAssoc)";
+		$query = "SELECT COUNT(`p`.`idPayment`)
+FROM `payment` `p` JOIN `payment_invoice` `pi` ON `p`.`idPayment` = `pi`.`Payment_Id` AND `p`.`Status_Code` = 's' AND `p`.`Is_Refund` = 0
+WHERE `pi`.`Invoice_Id` IN (" . implode ( ',', $idPlaceholders ) . ")";
 
-		$stmn = $dbh->query ( $query );
+		$stmn = $dbh->prepare ( $query );
+		$stmn->execute ( $idParams );
 		$rows = $stmn->fetchAll ( \PDO::FETCH_NUM );
 
 		if (count ( $rows ) > 0 && $rows [0] [0] > 0) {
@@ -1288,7 +1303,8 @@ where pi.Invoice_Id in ($whAssoc)";
 
 				if ($this->getAmount () == 0) {
 					// Delete any 0-amount CASH payment records...
-					$dbh->exec ( "CALL `delete_Invoice_payments`(" . $this->idInvoice . ", " . PaymentMethod::Cash . ");" );
+					$dbh->prepare ( "CALL `delete_Invoice_payments`(:idInvoice, :paymentMethod);" )
+						->execute ( [':idInvoice' => $this->idInvoice, ':paymentMethod' => PaymentMethod::Cash] );
 				}
 
 				if ($this->countPayments ( $dbh ) == 0) {
@@ -1347,8 +1363,10 @@ where pi.Invoice_Id in ($whAssoc)";
 	private function _deleteInvoice(\PDO $dbh, $id, $user) {
 		if ($id > 0) {
 
-			$dbh->exec ( "update invoice set Deleted = 1, Last_Updated = now(), Updated_By = '$user' where idInvoice = $id" );
-			$dbh->exec ( "update invoice_line set Deleted = 1 where Invoice_Id = $id" );
+			$dbh->prepare ( "UPDATE `invoice` SET `Deleted` = 1, `Last_Updated` = NOW(), `Updated_By` = :user WHERE `idInvoice` = :id" )
+				->execute ( [':user' => $user, ':id' => $id] );
+			$dbh->prepare ( "UPDATE `invoice_line` SET `Deleted` = 1 WHERE `Invoice_Id` = :id" )
+				->execute ( [':id' => $id] );
 
 			return TRUE;
 		}
@@ -1362,7 +1380,8 @@ where pi.Invoice_Id in ($whAssoc)";
 	 * @return bool
 	 */
 	protected function is3rdParty(\PDO $dbh, $idName) {
-		$stmt = $dbh->query ( "Select count(*) from name_volunteer2 where idName = $idName and Vol_Category = 'Vol_Type' and Vol_Code = '" . VolMemberType::ReferralAgent . "' and Vol_Status = '" . VolStatus::Active . "'" );
+		$stmt = $dbh->prepare ( "SELECT COUNT(*) FROM `name_volunteer2` WHERE `idName` = :idName AND `Vol_Category` = 'Vol_Type' AND `Vol_Code` = :volCode AND `Vol_Status` = :volStatus" );
+		$stmt->execute ( [':idName' => $idName, ':volCode' => VolMemberType::ReferralAgent, ':volStatus' => VolStatus::Active] );
 		$rows = $stmt->fetchAll ( \PDO::FETCH_NUM );
 
 		if (count ( $rows ) > 0 && $rows [0] [0] > 0) {
@@ -1378,7 +1397,8 @@ where pi.Invoice_Id in ($whAssoc)";
 	 */
 	protected function countPayments(\PDO $dbh) {
 		$cnt = 0;
-		$stmt = $dbh->query ( "select count(*) from payment_invoice pi where pi.Invoice_Id = " . $this->idInvoice );
+		$stmt = $dbh->prepare ( "SELECT COUNT(*) FROM `payment_invoice` `pi` WHERE `pi`.`Invoice_Id` = :idInvoice" );
+		$stmt->execute ( [':idInvoice' => $this->idInvoice] );
 		$rows = $stmt->fetchAll ( \PDO::FETCH_NUM );
 
 		if (count ( $rows ) > 0) {

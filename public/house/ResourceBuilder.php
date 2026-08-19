@@ -100,23 +100,27 @@ $labels = Labels::getLabels();
 
 // Add diags and locations buttons
 if (isset($_POST['btnAddDiags'])) {
-    $dbh->exec("insert into gen_lookups (`Table_Name`, `Code`, `Description`, `Type`, `Order`) values ('Diagnosis', 'q9', 'New Entry', 'h', 10 )");
+    $dbh->prepare("INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Type`, `Order`) values (:tableName, 'q9', 'New Entry', :type, 10 )")
+        ->execute([':tableName' => 'Diagnosis', ':type' => 'h']);
     $tabActive = "#lkTable";
 }
 
 if (isset($_POST['btnAddLocs'])) {
-    $dbh->exec("insert into gen_lookups (`Table_Name`, `Code`, `Description`, `Type`, `Order`) values ('Location', 'q9', 'New Entry', 'h', 10 )");
+    $dbh->prepare("INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Type`, `Order`) values (:tableName, 'q9', 'New Entry', :type, 10 )")
+        ->execute([':tableName' => 'Location', ':type' => 'h']);
     $tabActive = "#lkTable";
 }
 
 // Add House Discounts and additional charges.
 if (isset($_POST['btnHouseDiscs'])) {
-    $dbh->exec("insert into gen_lookups (`Table_Name`, `Code`, `Description`, `Type`, `Order`) values ('House_Discount', 'q9', 'New Entry', 'ca', 10 )");
+    $dbh->prepare("INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Type`, `Order`) values (:tableName, 'q9', 'New Entry', :type, 10 )")
+        ->execute([':tableName' => 'House_Discount', ':type' => 'ca']);
     $tabActive = "#lkTable";
 }
 
 if (isset($_POST['btnAddnlCharge'])) {
-    $dbh->exec("insert into gen_lookups (`Table_Name`, `Code`, `Description`, `Type`, `Order`) values ('Addnl_Charge', 'q9', 'New Entry', 'ca', 10 )");
+    $dbh->prepare("INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Type`, `Order`) values (:tableName, 'q9', 'New Entry', :type, 10 )")
+        ->execute([':tableName' => 'Addnl_Charge', ':type' => 'ca']);
     $tabActive = "#lkTable";
 }
 
@@ -146,7 +150,8 @@ if (isset($_POST['btnkfSave'])) {
         $dAmt = filter_var($_POST['srrAmt'][0], FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION);
 
         // Check for an entry with the same description
-        $stmt = $dbh->query("Select count(*) from gen_lookups where `Table_Name` = 'Static_Room_Rate' and LOWER(`Description`) = '" . strtolower($dText) . "';");
+        $stmt = $dbh->prepare("SELECT count(*) FROM `gen_lookups` WHERE `Table_Name` = 'Static_Room_Rate' AND LOWER(`Description`) = :description;");
+        $stmt->execute([':description' => strtolower($dText)]);
         $rows = $stmt->fetchAll(PDO::FETCH_NUM);
 
         if ($rows[0][0] == 0) {
@@ -305,15 +310,18 @@ if (isset($_POST['btnkfSave'])) {
     // Payment types GL Codes
     if (isset($_POST['ptGlCode'])) {
 
-        $stmtp = $dbh->query("select idPayment_method, Gl_Code from payment_method");
+        $stmtp = $dbh->prepare("SELECT `idPayment_method`, `Gl_Code` FROM `payment_method`");
+        $stmtp->execute();
         $payMethods = $stmtp->fetchAll(\PDO::FETCH_NUM);
+
+        $updGlStmt = $dbh->prepare("UPDATE `payment_method` SET `Gl_Code` = :gl WHERE `idPayment_method` = :id");
 
         foreach ($payMethods as $t) {
 
             if (isset($_POST['ptGlCode'][$t[0]])) {
                 $gl = filter_var($_POST['ptGlCode'][$t[0]], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
-                $dbh->exec("Update payment_method set Gl_Code = '$gl' where idPayment_method = " . $t[0]);
+                $updGlStmt->execute([':gl' => $gl, ':id' => $t[0]]);
             }
         }
     }
@@ -352,7 +360,9 @@ if (isset($_POST['btnkfSave'])) {
 
     if (isset($_POST['newExtPayDesc'])) {
 
-        $maxOrderRow = $dbh->query("SELECT MAX(`Order`) FROM gen_lookups WHERE `Table_Name` = 'Pay_Type'")->fetch(\PDO::FETCH_NUM);
+        $maxOrderStmt = $dbh->prepare("SELECT MAX(`Order`) FROM `gen_lookups` WHERE `Table_Name` = 'Pay_Type'");
+        $maxOrderStmt->execute();
+        $maxOrderRow = $maxOrderStmt->fetch(\PDO::FETCH_NUM);
         $nextOrder = intval($maxOrderRow[0] ?? 0) + 1;
 
         foreach ($_POST['newExtPayDesc'] as $desc) {
@@ -386,7 +396,8 @@ if (isset($_POST['btnkfSave'])) {
             $order = intval(filter_var($order, FILTER_SANITIZE_NUMBER_INT), 10);
 
             if ($code !== '' && isset($payTypes[$code])) {
-                $dbh->exec("UPDATE gen_lookups SET `Order` = $order WHERE `Table_Name` = 'Pay_Type' AND `Code` = '$code'");
+                $dbh->prepare("UPDATE `gen_lookups` SET `Order` = :order WHERE `Table_Name` = 'Pay_Type' AND `Code` = :code")
+                    ->execute([':order' => $order, ':code' => $code]);
             }
         }
     }
@@ -408,14 +419,16 @@ if (isset($_POST['btnkfSave'])) {
         $currentHhSize = 0;
         $ratCats = [];
 
-        $stmt = $dbh->query("Select max(`Household_Size`) from rate_breakpoint;");
+        $stmt = $dbh->prepare("SELECT MAX(`Household_Size`) FROM `rate_breakpoint`;");
+        $stmt->execute();
         $rows = $stmt->fetchAll(\PDO::FETCH_NUM);
 
         if (count($rows) === 1) {
             $currentHhSize = $rows[0][0];
         }
 
-        $stmt = $dbh->query("select Rate_Breakpoint_Category from room_rate WHERE Rate_Breakpoint_Category != '' AND  `Status` = '" . RateStatus::Active . "' ORDER BY `Rate_Breakpoint_Category`");
+        $stmt = $dbh->prepare("SELECT `Rate_Breakpoint_Category` FROM `room_rate` WHERE `Rate_Breakpoint_Category` != '' AND `Status` = :status ORDER BY `Rate_Breakpoint_Category`");
+        $stmt->execute([':status' => RateStatus::Active]);
         $rows = $stmt->fetchAll(\PDO::FETCH_NUM);
 
         foreach ($rows as $r) {
@@ -470,7 +483,9 @@ if (isset($_POST['btnkfSave'])) {
         } else if ($newHhSize > 0 && $newHhSize < $currentHhSize) {
 
             // Delete the extra size rows
-            $numDeleted = $dbh->exec("delete from `rate_breakpoint` where Household_Size > $newHhSize");
+            $delHhStmt = $dbh->prepare("DELETE FROM `rate_breakpoint` WHERE `Household_Size` > :newHhSize");
+            $delHhStmt->execute([':newHhSize' => $newHhSize]);
+            $numDeleted = $delHhStmt->rowCount();
 
             if ($numDeleted > 0) {
                 $logText = 'Deleted household sizes greater than ' . $newHhSize;
@@ -534,13 +549,16 @@ if (isset($_POST['btnkfSave'])) {
             $lastCat = $ratCats[$newRateSize - 1];
 
             // Delete the extra size rows
-            $numDeleted = $dbh->exec("delete from `rate_breakpoint` where Rate_Category > '$lastCat';");
+            $delCatStmt = $dbh->prepare("DELETE FROM `rate_breakpoint` WHERE `Rate_Category` > :lastCat;");
+            $delCatStmt->execute([':lastCat' => $lastCat]);
+            $numDeleted = $delCatStmt->rowCount();
 
             if ($numDeleted > 0) {
                 $logText = 'Deleted Rate Categories over ' . $lastCat;
                 HouseLog::logFinAssist($dbh, 'delete', 0, $logText, $uS->username);
 
-                $dbh->exec("update `room_rate` set `Status` = '" . RateStatus::NotActive . "' where Rate_Breakpoint_Category > '$lastCat';");
+                $dbh->prepare("UPDATE `room_rate` SET `Status` = :status WHERE `Rate_Breakpoint_Category` > :lastCat;")
+                    ->execute([':status' => RateStatus::NotActive, ':lastCat' => $lastCat]);
             }
         }
 
@@ -607,7 +625,7 @@ if (isset($_POST['btnhSave'])) {
             }
 
             // Delete any attribute entries
-            $query = "delete from attribute_entity where idEntity = :id and Type = :tpe";
+            $query = "DELETE FROM `attribute_entity` WHERE `idEntity` = :id AND `Type` = :tpe";
             $stmt = $dbh->prepare($query);
             $stmt->execute(
                 [
@@ -742,8 +760,8 @@ if (isset($_POST['btnAttrSave'])) {
             );
 
             // delete from attribute_entity
-            $dbh->query("Delete from attribute_entity where idAttribute = $idAttr");
-            $dbh->query("Delete from constraint_attribute where idAttribute = $idAttr");
+            $dbh->prepare("DELETE FROM `attribute_entity` WHERE `idAttribute` = :idAttr")->execute([':idAttr' => $idAttr]);
+            $dbh->prepare("DELETE FROM `constraint_attribute` WHERE `idAttribute` = :idAttr")->execute([':idAttr' => $idAttr]);
 
             continue;
         }
@@ -810,12 +828,19 @@ if (isset($_POST['btnItemSave'])) {
     $tabActive = "#itemTable";
 
     // item-item table
-    $iistmt = $dbh->query("Select * from item_item");
+    $iistmt = $dbh->prepare("SELECT * FROM `item_item`");
+    $iistmt->execute();
     $taxItemMap = $iistmt->fetchAll(\PDO::FETCH_ASSOC);
 
-    $sitems = $dbh->query("Select  i.idItem, itm.Type_Id, i.Description, i.Gl_Code, i.Percentage
-    from item i left join item_type_map itm on itm.Item_Id = i.idItem");
+    $sitems = $dbh->prepare("SELECT `i`.`idItem`, `itm`.`Type_Id`, `i`.`Description`, `i`.`Gl_Code`, `i`.`Percentage`
+    FROM `item` `i` LEFT JOIN `item_type_map` `itm` ON `itm`.`Item_Id` = `i`.`idItem`");
+    $sitems->execute();
     $items = $sitems->fetchAll(PDO::FETCH_ASSOC);
+
+    $updDescStmt = $dbh->prepare("UPDATE `item` SET `Description` = :desc WHERE `idItem` = :idItem");
+    $updGlStmt = $dbh->prepare("UPDATE `item` SET `Gl_Code` = :glCode WHERE `idItem` = :idItem");
+    $replTaxStmt = $dbh->prepare("REPLACE INTO `item_item` (`idItem`, `Item_Id`) VALUES (:idItem, :idTaxItem)");
+    $delTaxStmt = $dbh->prepare("DELETE FROM `item_item` WHERE `idItem` = :idItem AND `Item_Id` = :itemId");
 
     foreach ($items as $i) {
 
@@ -829,14 +854,14 @@ if (isset($_POST['btnItemSave'])) {
 
             $desc = filter_var($_POST['txtItem'][$idItem], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
-            $dbh->exec("update `item` set `Description` = '$desc' where `idItem` = " . $idItem);
+            $updDescStmt->execute([':desc' => $desc, ':idItem' => $idItem]);
         }
 
         if (isset($_POST['txtGlCode'][$idItem])) {
 
             $glCode = filter_var($_POST['txtGlCode'][$idItem], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
-            $dbh->exec("update `item` set `Gl_Code` = '$glCode' where `idItem` = " . $idItem);
+            $updGlStmt->execute([':glCode' => $glCode, ':idItem' => $idItem]);
         }
 
         if (isset($_POST['cbtax'][$idItem])) {
@@ -846,7 +871,7 @@ if (isset($_POST['btnItemSave'])) {
                 $idTaxItem = intval(filter_var($t, FILTER_SANITIZE_NUMBER_INT), 10);
 
                 if ($idTaxItem > 0) {
-                    $dbh->exec("Replace into item_item (idItem, Item_Id) values ($idItem, $idTaxItem)");
+                    $replTaxStmt->execute([':idItem' => $idItem, ':idTaxItem' => $idTaxItem]);
                 }
             }
         }
@@ -855,7 +880,7 @@ if (isset($_POST['btnItemSave'])) {
         foreach ($taxItemMap as $m) {
             if ($m['idItem'] == $idItem && !isset($_POST['cbtax'][$idItem][$m['Item_Id']])) {
 
-                $dbh->exec("delete from item_item where idItem = $idItem and Item_Id = " . $m['Item_Id']);
+                $delTaxStmt->execute([':idItem' => $idItem, ':itemId' => $m['Item_Id']]);
             }
         }
     }
@@ -864,12 +889,14 @@ if (isset($_POST['btnItemSave'])) {
 if (isset($_POST['btnTaxSave'])) {
     $tabActive = "#taxTable";
 
-    $sitems = $dbh->query("Select i.idItem, i.Description, i.Gl_Code, i.Percentage, i.Timeout_Days, i.First_Order_Id, i.Last_Order_Id
-        from item i join item_type_map itm on itm.Item_Id = i.idItem and itm.Type_Id = " . ItemType::Tax);
+    $sitems = $dbh->prepare("SELECT `i`.`idItem`, `i`.`Description`, `i`.`Gl_Code`, `i`.`Percentage`, `i`.`Timeout_Days`, `i`.`First_Order_Id`, `i`.`Last_Order_Id`
+        FROM `item` `i` JOIN `item_type_map` `itm` ON `itm`.`Item_Id` = `i`.`idItem` AND `itm`.`Type_Id` = :typeId");
+    $sitems->execute([':typeId' => ItemType::Tax]);
     $items = $sitems->fetchAll(PDO::FETCH_ASSOC);
 
     // Get the latest visit id
-    $stmt = $dbh->query("select max(idVisit) from visit");
+    $stmt = $dbh->prepare("SELECT MAX(`idVisit`) FROM `visit`");
+    $stmt->execute();
     $vrows = $stmt->fetchAll(\PDO::FETCH_NUM);
     $maxVisitId = $vrows[0][0];
     $nextVisitId = $maxVisitId + 1;
@@ -899,29 +926,45 @@ if (isset($_POST['btnTaxSave'])) {
                 } else {
 
                     // save this one with the last order id
-                    $dbh->exec("update `item` set `Description` = '$desc', `Gl_Code` = '$glCode', Last_Order_Id = $maxVisitId " . " where `idItem` = " . $i['idItem']);
+                    $dbh->prepare("UPDATE `item` SET `Description` = :desc, `Gl_Code` = :glCode, `Last_Order_Id` = :maxVisitId WHERE `idItem` = :idItem")
+                        ->execute([
+                            ':desc' => $desc,
+                            ':glCode' => $glCode,
+                            ':maxVisitId' => $maxVisitId,
+                            ':idItem' => $i['idItem']
+                        ]);
 
                     // Create the a new item with the new percentage or maxDays
-                    $dbh->exec("insert into `item` (`Description`, `Gl_Code`, `Percentage`, `Timeout_Days`, First_Order_Id) " . "Values ('$desc', '$glCode', '$percentage', '$maxDays', $nextVisitId)");
+                    $dbh->prepare("INSERT INTO `item` (`Description`, `Gl_Code`, `Percentage`, `Timeout_Days`, `First_Order_Id`) Values (:desc, :glCode, :percentage, :maxDays, :nextVisitId)")
+                        ->execute([
+                            ':desc' => $desc,
+                            ':glCode' => $glCode,
+                            ':percentage' => $percentage,
+                            ':maxDays' => $maxDays,
+                            ':nextVisitId' => $nextVisitId
+                        ]);
 
                     $newItemId = $dbh->lastInsertId();
 
                     // Add to the item type map
                     if ($newItemId > 0) {
-                        $dbh->exec("insert into `item_type_map` Values ('" . $newItemId . "', '" . ItemType::Tax . "')");
+                        $dbh->prepare("INSERT INTO `item_type_map` VALUES (:newItemId, :typeId)")
+                            ->execute([':newItemId' => $newItemId, ':typeId' => ItemType::Tax]);
                     }
 
                     // Get the items these tax
-                    $tstmt = $dbh->query("SELECT idItem from item_item where Item_Id = " . $i['idItem']);
+                    $tstmt = $dbh->prepare("SELECT `idItem` FROM `item_item` WHERE `Item_Id` = :itemId");
+                    $tstmt->execute([':itemId' => $i['idItem']]);
 
                     // add to item_item to connet with the taxed item id.
+                    $insItemItemStmt = $dbh->prepare("INSERT INTO `item_item` (`idItem`, `Item_Id`) VALUES (:idItem, :newItemId)");
                     while ($t = $tstmt->fetch(\PDO::FETCH_NUM)) {
-                        $dbh->exec("Insert into item_item (idItem, Item_Id) values (" . $t[0] . ", $newItemId)");
+                        $insItemItemStmt->execute([':idItem' => $t[0], ':newItemId' => $newItemId]);
                     }
                 }
             } else {
 
-                $stmt = $dbh->prepare("update `item` set `Description` = :description, `Gl_Code` = :glCode where `idItem` = :idItem");
+                $stmt = $dbh->prepare("UPDATE `item` SET `Description` = :description, `Gl_Code` = :glCode WHERE `idItem` = :idItem");
                 $stmt->execute([
                     ":description" => $desc,
                     ":glCode" => $glCode ? $glCode : "",
@@ -939,7 +982,7 @@ if (isset($_POST['btnTaxSave'])) {
         $percentage = filter_var($_POST['txttPercentage'][0], FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION);
         $maxDays = filter_var($_POST['txttMaxDays'][0], FILTER_SANITIZE_NUMBER_INT);
 
-        $stmt = $dbh->prepare("insert into `item` (`Description`, `Gl_Code`, `Percentage`, `Timeout_Days`, First_Order_Id) Values (:description, :glCode, :percentage, :maxDays, :nextVisitId)");
+        $stmt = $dbh->prepare("INSERT INTO `item` (`Description`, `Gl_Code`, `Percentage`, `Timeout_Days`, `First_Order_Id`) VALUES (:description, :glCode, :percentage, :maxDays, :nextVisitId)");
         $stmt->execute([
             ":description" => $desc,
             ":glCode" => $glCode ? $glCode : "",
@@ -949,7 +992,8 @@ if (isset($_POST['btnTaxSave'])) {
         ]);
 
         if ($dbh->lastInsertId() > 0) {
-            $dbh->exec("insert into `item_type_map` Values ('" . $dbh->lastInsertId() . "', '" . ItemType::Tax . "')");
+            $dbh->prepare("INSERT INTO `item_type_map` VALUES (:newItemId, :typeId)")
+                ->execute([':newItemId' => $dbh->lastInsertId(), ':typeId' => ItemType::Tax]);
         }
     }
 }
@@ -965,7 +1009,8 @@ if (isset($_POST['ldfm'])) {
     $rarry = Common::readGenLookupsPDO($dbh, 'Form_Upload');
 
     // get available doc replacements
-    $replacementStmt = $dbh->query("SELECT `idTemplate_tag`, `Tag_Title`, `Tag_Name` FROM `template_tag` WHERE `Doc_Name` = '$formType' order by Tag_Title");
+    $replacementStmt = $dbh->prepare("SELECT `idTemplate_tag`, `Tag_Title`, `Tag_Name` FROM `template_tag` WHERE `Doc_Name` = :formType ORDER BY `Tag_Title`");
+    $replacementStmt->execute([':formType' => $formType]);
     $replacementRows = $replacementStmt->fetchAll();
     $rTbl = new HTMLTable();
 
@@ -988,10 +1033,12 @@ if (isset($_POST['ldfm'])) {
     if (empty($formDef)) {
 
         $formDef = "FormDef-" . Common::incCounter($dbh, 'codes');
-        $dbh->exec("UPDATE `gen_lookups` SET `Substitute` = '$formDef' WHERE `Table_Name` = 'Form_Upload' AND `Code` = '$formType'");
+        $dbh->prepare("UPDATE `gen_lookups` SET `Substitute` = :formDef WHERE `Table_Name` = 'Form_Upload' AND `Code` = :formType")
+            ->execute([':formDef' => $formDef, ':formType' => $formType]);
     }
 
-    $formstmt = $dbh->query("Select g.`Code`, g.`Description`, d.`Doc`, d.idDocument, ifnull(d.Abstract, '') as `Abstract` from `document` d join gen_lookups g on d.idDocument = g.`Substitute` where g.`Table_Name` = '$formDef' order by g.Order asc");
+    $formstmt = $dbh->prepare("SELECT `g`.`Code`, `g`.`Description`, `d`.`Doc`, `d`.`idDocument`, IFNULL(`d`.`Abstract`, '') AS `Abstract` FROM `document` `d` JOIN `gen_lookups` `g` ON `d`.`idDocument` = `g`.`Substitute` WHERE `g`.`Table_Name` = :formDef ORDER BY `g`.`Order` ASC");
+    $formstmt->execute([':formDef' => $formDef]);
     $docRows = $formstmt->fetchAll();
 
     $li = '';
@@ -1165,7 +1212,7 @@ if (isset($_POST['docAction']) && $_POST["docAction"] == "docUpload") {
             $filetype = strtolower(pathinfo($_FILES['formfile']['name'], PATHINFO_EXTENSION));
         }
 
-        $sql = "UPDATE `document` SET Abstract = :abstract, ";
+        $sql = "UPDATE `document` SET `Abstract` = :abstract, ";
         if (!empty($_FILES['formfile']['tmp_name'])) {
             if (in_array($mimetype, $allowedMimetypes) && in_array($filetype, $allowedFiletypes)) {
                 // Get the file and convert it.
@@ -1175,13 +1222,13 @@ if (isset($_POST['docAction']) && $_POST["docAction"] == "docUpload") {
                 } else { //assume Windows-1252
                     $doc = iconv('Windows-1252', 'UTF-8//TRANSLIT', $file); // add //TRANSLIT for special character conversion
                 }
-                $sql .= "Doc = :doc, ";
+                $sql .= "`Doc` = :doc, ";
             } else {
                 echo json_encode(["error" => "Could not save form: Invalid file type."]);
                 exit();
             }
         }
-        $sql .= "Updated_By = :updatedBy, Last_Updated = now() where idDocument = :idDoc";
+        $sql .= "`Updated_By` = :updatedBy, `Last_Updated` = NOW() WHERE `idDocument` = :idDoc";
 
         $ustmt = $dbh->prepare($sql);
 
@@ -1195,7 +1242,7 @@ if (isset($_POST['docAction']) && $_POST["docAction"] == "docUpload") {
         $ustmt->execute();
 
         if ($applyAll) {
-            $applyAllSql = "UPDATE `document` d join gen_lookups g on d.idDocument = g.Substitute and g.Table_Name = 'Reg_Agreement' SET Abstract = :abstract";
+            $applyAllSql = "UPDATE `document` `d` JOIN `gen_lookups` `g` ON `d`.`idDocument` = `g`.`Substitute` AND `g`.`Table_Name` = 'Reg_Agreement' SET `d`.`Abstract` = :abstract";
             $astmt = $dbh->prepare($applyAllSql);
             $astmt->bindParam(":abstract", $abstract);
             $astmt->execute();
@@ -1220,8 +1267,10 @@ if (isset($_POST['docAction']) && $_POST['docAction'] == "docDelete" && isset($_
 
         $tabActive = "#formUpload";
 
-        $dbh->exec("UPDATE `document` d JOIN `gen_lookups` g ON g.`Table_Name` = '$formDef' AND g.`Code` = '$docCode' SET d.`status` = 'd' WHERE `idDocument` = g.`Substitute`");
-        $dbh->exec("DELETE FROM gen_lookups where `Table_Name` = '$formDef' AND `Code` = '$docCode'");
+        $dbh->prepare("UPDATE `document` `d` JOIN `gen_lookups` `g` ON `g`.`Table_Name` = :formDef AND `g`.`Code` = :docCode SET `d`.`status` = 'd' WHERE `idDocument` = `g`.`Substitute`")
+            ->execute([':formDef' => $formDef, ':docCode' => $docCode]);
+        $dbh->prepare("DELETE FROM `gen_lookups` WHERE `Table_Name` = :formDef AND `Code` = :docCode")
+            ->execute([':formDef' => $formDef, ':docCode' => $docCode]);
 
         if (isset($_POST['docfrmtype'])) {
             $formType = filter_var($_POST['docfrmtype'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
@@ -1294,8 +1343,9 @@ if (stripos($content_type, 'application/json') !== false) {
     if ($data->cmd == "reorderfm") {
         $output = "";
         try {
+            $reorderStmt = $dbh->prepare("UPDATE `gen_lookups` SET `Order` = :order WHERE `Table_Name` = :formDef AND `Code` = :code;");
             foreach ($data->order as $i => $v) {
-                $dbh->exec("UPDATE `gen_lookups` SET `Order` = $i WHERE `Table_Name` = '" . $data->formDef . "' AND `Code` = '$v';");
+                $reorderStmt->execute([':order' => $i, ':formDef' => $data->formDef, ':code' => $v]);
             }
         } catch (\Exception $e) {
             echo json_encode(["status" => "error", "message" => $e->getMessage()]);
@@ -1338,7 +1388,8 @@ if (isset($_POST['txtformLang'])) {
             $langCode = '';
 
             // lookup teh language
-            $lstmt = $dbh->query("Select `ISO_639_1` as `Code` from `language` where `Title` = '$lang';");
+            $lstmt = $dbh->prepare("SELECT `ISO_639_1` AS `Code` FROM `language` WHERE `Title` = :lang;");
+            $lstmt->execute([':lang' => $lang]);
             $langRows = $lstmt->fetchAll(PDO::FETCH_ASSOC);
 
             if (count($langRows) > 0) {
@@ -1351,7 +1402,8 @@ if (isset($_POST['txtformLang'])) {
             if ($langCode != '') {
 
                 // Code already exist?
-                $formstmt = $dbh->query("Select g.`Code`, g.`Description` from gen_lookups g where g.`Table_Name` = '$formDef' and g.`Code` = '$langCode'");
+                $formstmt = $dbh->prepare("SELECT `g`.`Code`, `g`.`Description` FROM `gen_lookups` `g` WHERE `g`.`Table_Name` = :formDef AND `g`.`Code` = :langCode");
+                $formstmt->execute([':formDef' => $formDef, ':langCode' => $langCode]);
                 $docRows = $formstmt->fetchAll();
 
                 if (count($docRows) == 0) {
@@ -1697,7 +1749,8 @@ if ($uS->IncomeRated) {
     $headerTr = HTMLTable::makeTh('Household Size');
 
     // preload all rate categories and make header row
-    $stmt = $dbh->query("select Rate_Breakpoint_Category from room_rate WHERE Rate_Breakpoint_Category != '' AND  `Status` = '" . RateStatus::Active . "' ORDER BY `Rate_Breakpoint_Category`");
+    $stmt = $dbh->prepare("SELECT `Rate_Breakpoint_Category` FROM `room_rate` WHERE `Rate_Breakpoint_Category` != '' AND `Status` = :status ORDER BY `Rate_Breakpoint_Category`");
+    $stmt->execute([':status' => RateStatus::Active]);
 
     while ($r = $stmt->fetch(\PDO::FETCH_NUM)) {
         $ratCats[] = $r[0];
@@ -1706,21 +1759,19 @@ if ($uS->IncomeRated) {
 
     $faTbl->addHeaderTr($headerTr);
 
-    // Limit the breakpoints
-    $catList = '';
-    // Make cdl of rate categories
-    foreach ($ratCats as $c) {
-        if ($catList == '') {
-            $catList .= "'$c'";
-        } else {
-            $catList .= ",'$c'";
-        }
-    }
-
     $rbRows = [];
 
-    if ($catList != '') {
-        $stmt = $dbh->query("Select * from `rate_breakpoint` where `Rate_Category` in (" . $catList . ") ORDER BY `Household_Size`, `Rate_Category`");
+    if (count($ratCats) > 0) {
+        $catPlaceholders = [];
+        $catParams = [];
+        foreach ($ratCats as $idx => $c) {
+            $ph = ':cat' . $idx;
+            $catPlaceholders[] = $ph;
+            $catParams[$ph] = $c;
+        }
+
+        $stmt = $dbh->prepare("SELECT * FROM `rate_breakpoint` WHERE `Rate_Category` IN (" . implode(',', $catPlaceholders) . ") ORDER BY `Household_Size`, `Rate_Category`");
+        $stmt->execute($catParams);
 
         //$rbRows = EditRS::select($dbh, $rbRs, array(), 'and', array($rbRs->Household_Size, $rbRs->Rate_Category));
     }
@@ -1916,7 +1967,8 @@ if ($uS->RoomPriceModel != ItemPriceCode::None) {
 
     $payMethods = [];
     $payMethodGlCodes = [];
-    $stmtp = $dbh->query("select idPayment_method, Method_Name, Gl_Code from payment_method");
+    $stmtp = $dbh->prepare("SELECT `idPayment_method`, `Method_Name`, `Gl_Code` FROM `payment_method`");
+    $stmtp->execute();
     while ($t = $stmtp->fetch(\PDO::FETCH_NUM)) {
         $payMethods[$t[0]] = $t[1];
         $payMethodGlCodes[$t[0]] = $t[2];
@@ -2217,8 +2269,8 @@ $tbl = ResourceBldr::getSelections($dbh, 'Demographics', 'm', $labels);
 $demoSelections = $tbl->generateMarkup(["class" => "sortable"]);
 
 // Demographics category selectors
-$stmt = $dbh->query("SELECT DISTINCT
-    `g`.`Table_Name`, g2.Description
+$stmt = $dbh->prepare("SELECT DISTINCT
+    `g`.`Table_Name`, `g2`.`Description`
 FROM
     `gen_lookups` `g`
         JOIN
@@ -2227,6 +2279,7 @@ FROM
         AND `g2`.`Substitute` = 'y'
 WHERE
     `g`.`Type` = 'd';");
+$stmt->execute();
 
 $rows = $stmt->fetchAll(\PDO::FETCH_NUM);
 
@@ -2268,7 +2321,8 @@ if (isset($_POST["insurances"])) {
 $lookupErrMsg = '';
 
 // General Lookup categories
-$stmt2 = $dbh->query("select distinct `Type`, `Table_Name` from gen_lookups where `Type` in ('h','u', 'ha', 'm');");
+$stmt2 = $dbh->prepare("SELECT DISTINCT `Type`, `Table_Name` FROM `gen_lookups` WHERE `Type` IN ('h','u', 'ha', 'm');");
+$stmt2->execute();
 $rows2 = $stmt2->fetchAll(\PDO::FETCH_NUM);
 
 $lkups = [];
@@ -2304,7 +2358,8 @@ $selLookups = HTMLSelector::generateMarkup(
 
 // Additional charges and discounts
 // Lookup categories
-$stmt3 = $dbh->query("select distinct `Type`, `Table_Name` from gen_lookups where `Type` = 'ca';");
+$stmt3 = $dbh->prepare("SELECT DISTINCT `Type`, `Table_Name` FROM `gen_lookups` WHERE `Type` = 'ca';");
+$stmt3->execute();
 $rows3 = $stmt3->fetchAll(\PDO::FETCH_NUM);
 $hasAddnl = FALSE;
 $hasDiscounts = FALSE;
@@ -2342,8 +2397,9 @@ $selmisc = HTMLSelector::generateMarkup(
 );
 
 // Items
-$sitems = $dbh->query("Select  i.idItem, itm.Type_Id, i.Description, i.Gl_Code, i.Percentage, i.Last_Order_Id
-    from item i left join item_type_map itm on itm.Item_Id = i.idItem");
+$sitems = $dbh->prepare("SELECT `i`.`idItem`, `itm`.`Type_Id`, `i`.`Description`, `i`.`Gl_Code`, `i`.`Percentage`, `i`.`Last_Order_Id`
+    FROM `item` `i` LEFT JOIN `item_type_map` `itm` ON `itm`.`Item_Id` = `i`.`idItem`");
+$sitems->execute();
 $items = $sitems->fetchAll(\PDO::FETCH_ASSOC);
 
 $itbl = new HTMLTable();
@@ -2362,7 +2418,8 @@ foreach ($items as $d) {
 }
 
 // item-item table
-$iistmt = $dbh->query("Select * from item_item");
+$iistmt = $dbh->prepare("SELECT * FROM `item_item`");
+$iistmt->execute();
 $taxItemMap = $iistmt->fetchAll(\PDO::FETCH_ASSOC);
 
 $itbl->addHeaderTr($ths);
@@ -2443,8 +2500,9 @@ $itemTable = $itbl->generateMarkup(
 );
 
 // Taxes
-$tstmt = $dbh->query("Select i.idItem, i.Description, i.Gl_Code, i.Percentage, i.Timeout_Days, i.First_Order_Id, i.Last_Order_Id
-from item i join item_type_map itm on itm.Item_Id = i.idItem and itm.Type_Id = " . ItemType::Tax . " order by i.Last_Order_Id");
+$tstmt = $dbh->prepare("SELECT `i`.`idItem`, `i`.`Description`, `i`.`Gl_Code`, `i`.`Percentage`, `i`.`Timeout_Days`, `i`.`First_Order_Id`, `i`.`Last_Order_Id`
+FROM `item` `i` JOIN `item_type_map` `itm` ON `itm`.`Item_Id` = `i`.`idItem` AND `itm`.`Type_Id` = :typeId ORDER BY `i`.`Last_Order_Id`");
+$tstmt->execute([':typeId' => ItemType::Tax]);
 $titems = $tstmt->fetchAll(\PDO::FETCH_ASSOC);
 $hotTaxes = 0;
 $lastId = 0;

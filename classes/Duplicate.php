@@ -37,67 +37,71 @@ class Duplicate {
         if ($mType == VolMemberType::ReferralAgent || $mType == VolMemberType::Doctor) {
 
             // get duplicate names
-            $stmt = $dbh->query("select
-    Name_Full, count(n.idName) as `dups`, group_concat(n.idName) as `idNames`
-from
-    `name` n join name_volunteer2 nv on n.idName = nv.idName and nv.Vol_Category = 'Vol_Type' and nv.Vol_Code = '$mType'
-where
-    n.Member_Status = 'a' and n.Record_Member = 1
-group by n.Name_Full having count(n.idName) > 1;");
+            $stmt = $dbh->prepare("SELECT
+    `Name_Full`, COUNT(`n`.`idName`) AS `dups`, GROUP_CONCAT(`n`.`idName`) AS `idNames`
+FROM
+    `name` `n` JOIN `name_volunteer2` `nv` ON `n`.`idName` = `nv`.`idName` AND `nv`.`Vol_Category` = 'Vol_Type' AND `nv`.`Vol_Code` = :mType
+WHERE
+    `n`.`Member_Status` = 'a' AND `n`.`Record_Member` = 1
+GROUP BY `n`.`Name_Full` HAVING COUNT(`n`.`idName`) > 1;");
+            $stmt->execute([':mType' => $mType]);
 
             $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
         } else if ($mType == VolMemberType::Patient) {
 
-            $stmt = $dbh->query("select
-    n.Name_Full, count(n.idName) as `dups`, group_concat(n.idName) as `idNames`
-from
-    `name` n join name_guest ng on n.idName = ng.idName and ng.Relationship_Code = 'slf'
-    left join name_phone np on n.idName = np.idName and n.Preferred_Phone = np.Phone_Code
-    left join name_email ne on n.idName = ne.idName and n.Preferred_Email = ne.Purpose
-    left join name_address na on n.idName = na.idName and n.Preferred_Mail_Address = na.Purpose
-where
-    n.Member_Status in ('a','d') and n.Record_Member = 1 " . $whereStr . "
-group by LOWER(n.Name_Full)" . $groupByStr . "
-having count(n.idName) > 1
-order by count(n.idName) DESC, LOWER(n.Name_Last), LOWER(n.Name_First);");
+            $stmt = $dbh->prepare("SELECT
+    `n`.`Name_Full`, COUNT(`n`.`idName`) AS `dups`, GROUP_CONCAT(`n`.`idName`) AS `idNames`
+FROM
+    `name` `n` JOIN `name_guest` `ng` ON `n`.`idName` = `ng`.`idName` AND `ng`.`Relationship_Code` = 'slf'
+    LEFT JOIN `name_phone` `np` ON `n`.`idName` = `np`.`idName` AND `n`.`Preferred_Phone` = `np`.`Phone_Code`
+    LEFT JOIN `name_email` `ne` ON `n`.`idName` = `ne`.`idName` AND `n`.`Preferred_Email` = `ne`.`Purpose`
+    LEFT JOIN `name_address` `na` ON `n`.`idName` = `na`.`idName` AND `n`.`Preferred_Mail_Address` = `na`.`Purpose`
+WHERE
+    `n`.`Member_Status` IN ('a','d') AND `n`.`Record_Member` = 1 " . $whereStr . "
+GROUP BY LOWER(`n`.`Name_Full`)" . $groupByStr . "
+HAVING COUNT(`n`.`idName`) > 1
+ORDER BY COUNT(`n`.`idName`) DESC, LOWER(`n`.`Name_Last`), LOWER(`n`.`Name_First`);");
+            $stmt->execute();
 
             $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
         } else if ($mType == VolMemberType::Guest) {
 
-            $stmt = $dbh->query("select
-    n.Name_Full, count(n.idName) as `dups`, group_concat(n.idName) as `idNames`
-from
-    `name` n join name_guest ng on n.idName = ng.idName
-    left join name_phone np on n.idName = np.idName and n.Preferred_Phone = np.Phone_Code
-    left join name_email ne on n.idName = ne.idName and n.Preferred_Email = ne.Purpose
-    left join name_address na on n.idName = na.idName and n.Preferred_Mail_Address = na.Purpose
-where
-    n.Member_Status in ('a','d') and n.Record_Member = 1 " . $whereStr . "
-group by LOWER(n.Name_Full), ng.idPsg" . $groupByStr . "
-having count(n.idName) > 1
-order by count(n.idName) DESC, LOWER(n.Name_Last), LOWER(n.Name_First);");
+            $stmt = $dbh->prepare("SELECT
+    `n`.`Name_Full`, COUNT(`n`.`idName`) AS `dups`, GROUP_CONCAT(`n`.`idName`) AS `idNames`
+FROM
+    `name` `n` JOIN `name_guest` `ng` ON `n`.`idName` = `ng`.`idName`
+    LEFT JOIN `name_phone` `np` ON `n`.`idName` = `np`.`idName` AND `n`.`Preferred_Phone` = `np`.`Phone_Code`
+    LEFT JOIN `name_email` `ne` ON `n`.`idName` = `ne`.`idName` AND `n`.`Preferred_Email` = `ne`.`Purpose`
+    LEFT JOIN `name_address` `na` ON `n`.`idName` = `na`.`idName` AND `n`.`Preferred_Mail_Address` = `na`.`Purpose`
+WHERE
+    `n`.`Member_Status` IN ('a','d') AND `n`.`Record_Member` = 1 " . $whereStr . "
+GROUP BY LOWER(`n`.`Name_Full`), `ng`.`idPsg`" . $groupByStr . "
+HAVING COUNT(`n`.`idName`) > 1
+ORDER BY COUNT(`n`.`idName`) DESC, LOWER(`n`.`Name_Last`), LOWER(`n`.`Name_First`);");
+            $stmt->execute();
 
             $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
         }else if($mType == VolMemberType::Patient.VolMemberType::Guest){
 
-            $stmt = $dbh->query("select
-    n.Name_Full, count(distinct n.idName) as `dups`, group_concat(distinct n.idName) as `idNames`
-from
-    `name` n join name_guest ng on n.idName = ng.idName
-    left join name_phone np on n.idName = np.idName and n.Preferred_Phone = np.Phone_Code
-    left join name_email ne on n.idName = ne.idName and n.Preferred_Email = ne.Purpose
-    left join name_address na on n.idName = na.idName and n.Preferred_Mail_Address = na.Purpose
-where
-    n.Member_Status in ('a','d') and n.Record_Member = 1 " . $whereStr . "
-group by LOWER(n.Name_Full)" . $groupByStr . "
-having count(distinct n.idName) > 1
-order by count(distinct n.idName) DESC, LOWER(n.Name_Last), LOWER(n.Name_First);");
+            $stmt = $dbh->prepare("SELECT
+    `n`.`Name_Full`, COUNT(DISTINCT `n`.`idName`) AS `dups`, GROUP_CONCAT(DISTINCT `n`.`idName`) AS `idNames`
+FROM
+    `name` `n` JOIN `name_guest` `ng` ON `n`.`idName` = `ng`.`idName`
+    LEFT JOIN `name_phone` `np` ON `n`.`idName` = `np`.`idName` AND `n`.`Preferred_Phone` = `np`.`Phone_Code`
+    LEFT JOIN `name_email` `ne` ON `n`.`idName` = `ne`.`idName` AND `n`.`Preferred_Email` = `ne`.`Purpose`
+    LEFT JOIN `name_address` `na` ON `n`.`idName` = `na`.`idName` AND `n`.`Preferred_Mail_Address` = `na`.`Purpose`
+WHERE
+    `n`.`Member_Status` IN ('a','d') AND `n`.`Record_Member` = 1 " . $whereStr . "
+GROUP BY LOWER(`n`.`Name_Full`)" . $groupByStr . "
+HAVING COUNT(DISTINCT `n`.`idName`) > 1
+ORDER BY COUNT(DISTINCT `n`.`idName`) DESC, LOWER(`n`.`Name_Last`), LOWER(`n`.`Name_First`);");
+            $stmt->execute();
 
             $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
-            
+
         }
 
         return $rows;
@@ -159,25 +163,26 @@ order by count(distinct n.idName) DESC, LOWER(n.Name_Last), LOWER(n.Name_First);
                     continue;
                 }
 
-                $stmt = $dbh->query("select
-        rg.idPsg,
-        n.idName,
-        n.Name_Full,
-        DATE(ifnull(s.Span_Start_Date, '')) as `start`,
-        DATE(ifnull(s.Span_End_Date, '')) as `end`,
-        ifnull(s.idStays, 0) as idStays,
-        ifnull(s.idVisit, 0) as idVisit,
-        ifnull(s.Visit_Span, 0) as Visit_Span,
-        ifnull(s.idRoom, 0) as idRoom,
-        ifnull(s.`Status`, '') as `Status`,
-        ifnull(v.idReservation, 0) as idReservation
-    from
-        registration rg left join
-        visit v on rg.idRegistration = v.idRegistration
-        left join stays s ON v.idVisit = s.idVisit and v.Span = s.Visit_Span
-        left join `name` n on s.idName = n.idName
-    where rg.idPsg = $idPsg
-    order by idStays;");
+                $stmt = $dbh->prepare("SELECT
+        `rg`.`idPsg`,
+        `n`.`idName`,
+        `n`.`Name_Full`,
+        DATE(IFNULL(`s`.`Span_Start_Date`, '')) AS `start`,
+        DATE(IFNULL(`s`.`Span_End_Date`, '')) AS `end`,
+        IFNULL(`s`.`idStays`, 0) AS `idStays`,
+        IFNULL(`s`.`idVisit`, 0) AS `idVisit`,
+        IFNULL(`s`.`Visit_Span`, 0) AS `Visit_Span`,
+        IFNULL(`s`.`idRoom`, 0) AS `idRoom`,
+        IFNULL(`s`.`Status`, '') AS `Status`,
+        IFNULL(`v`.`idReservation`, 0) AS `idReservation`
+    FROM
+        `registration` `rg` LEFT JOIN
+        `visit` `v` ON `rg`.`idRegistration` = `v`.`idRegistration`
+        LEFT JOIN `stays` `s` ON `v`.`idVisit` = `s`.`idVisit` AND `v`.`Span` = `s`.`Visit_Span`
+        LEFT JOIN `name` `n` ON `s`.`idName` = `n`.`idName`
+    WHERE `rg`.`idPsg` = :idPsg
+    ORDER BY `idStays`;");
+                $stmt->execute([':idPsg' => $idPsg]);
 
                 $markup .= HTMLContainer::generateMarkup('div',
                             CreateMarkupFromDB::generateHTML_Table($stmt->fetchAll(\PDO::FETCH_ASSOC), 'idPsg')
@@ -232,39 +237,41 @@ order by count(distinct n.idName) DESC, LOWER(n.Name_Last), LOWER(n.Name_First);
 
                 $psg = new PSG($dbh, $idPsg);
 
-                $psgStmt = $dbh->query("select ng.idName as `ID`, n.Name_Full as `Name`, rc.Description as `Patient Relationship`
-                from name_guest ng
-                    left join name n on ng.idName = n.idName
-                    left join gen_lookups rc on ng.Relationship_Code = rc.Code and rc.Table_Name = 'Patient_Rel_Type'
-                where ng.idPsg = " . $idPsg);
+                $psgStmt = $dbh->prepare("SELECT `ng`.`idName` AS `ID`, `n`.`Name_Full` AS `Name`, `rc`.`Description` AS `Patient Relationship`
+                FROM `name_guest` `ng`
+                    LEFT JOIN `name` `n` ON `ng`.`idName` = `n`.`idName`
+                    LEFT JOIN `gen_lookups` `rc` ON `ng`.`Relationship_Code` = `rc`.`Code` AND `rc`.`Table_Name` = 'Patient_Rel_Type'
+                WHERE `ng`.`idPsg` = :idPsg");
+                $psgStmt->execute([':idPsg' => $idPsg]);
 
             $psgMembers = $psgStmt->fetchAll(\PDO::FETCH_ASSOC);
 
-                $stmt = $dbh->query("select
-            rg.idPsg,
-            concat(ifnull(s.idVisit, ''), '-', ifnull(s.Visit_Span, '')) as `Visit ID`,
-            ifnull(v.idReservation, '') as `Reservation ID`,
-            n.idName,
-            n.Name_Full as `Name`,
-            ifnull(date_format(DATE(s.Span_Start_Date), '%b %e, %Y'), '') as `Span Start`,
-            ifnull(date_format(DATE(s.Span_End_Date), '%b %e, %Y'), '') as `Span End`,
-        ifnull(resc.Title, ifnull(s.idRoom, '')) as Room,
-        ifnull(vstat.Description, ifnull(s.`Status`, '')) as `Status`
-    from
-            registration rg
-                    left join
-            visit v on rg.idRegistration = v.idRegistration
-            left join
-        stays s ON v.idVisit = s.idVisit and v.Span = s.Visit_Span
-                    left join
-            `name` n on s.idName = n.idName
-            left join
-                resource resc on s.idRoom = resc.idResource
-            left join
-                gen_lookups vstat on vstat.Table_Name = 'Visit_Status' and vstat.Code = s.Status
-    where
-        rg.idPsg = $idPsg
-    order by idStays;");
+                $stmt = $dbh->prepare("SELECT
+            `rg`.`idPsg`,
+            CONCAT(IFNULL(`s`.`idVisit`, ''), '-', IFNULL(`s`.`Visit_Span`, '')) AS `Visit ID`,
+            IFNULL(`v`.`idReservation`, '') AS `Reservation ID`,
+            `n`.`idName`,
+            `n`.`Name_Full` AS `Name`,
+            IFNULL(DATE_FORMAT(DATE(`s`.`Span_Start_Date`), '%b %e, %Y'), '') AS `Span Start`,
+            IFNULL(DATE_FORMAT(DATE(`s`.`Span_End_Date`), '%b %e, %Y'), '') AS `Span End`,
+        IFNULL(`resc`.`Title`, IFNULL(`s`.`idRoom`, '')) AS `Room`,
+        IFNULL(`vstat`.`Description`, IFNULL(`s`.`Status`, '')) AS `Status`
+    FROM
+            `registration` `rg`
+                    LEFT JOIN
+            `visit` `v` ON `rg`.`idRegistration` = `v`.`idRegistration`
+            LEFT JOIN
+        `stays` `s` ON `v`.`idVisit` = `s`.`idVisit` AND `v`.`Span` = `s`.`Visit_Span`
+                    LEFT JOIN
+            `name` `n` ON `s`.`idName` = `n`.`idName`
+            LEFT JOIN
+                `resource` `resc` ON `s`.`idRoom` = `resc`.`idResource`
+            LEFT JOIN
+                `gen_lookups` `vstat` ON `vstat`.`Table_Name` = 'Visit_Status' AND `vstat`.`Code` = `s`.`Status`
+    WHERE
+        `rg`.`idPsg` = :idPsg
+    ORDER BY `idStays`;");
+                $stmt->execute([':idPsg' => $idPsg]);
 
                 $markup .= HTMLContainer::generateMarkup('h3', 'Patient ID: ' . $psg->getIdPatient() . ' ' . $psg->getPatientName($dbh), array("class"=>' ui-widget-header ui-corner-top ui-state-default mt-3', 'style'=>"text-align: left;")) . 
                         HTMLContainer::generateMarkup('div',
@@ -286,101 +293,126 @@ order by count(distinct n.idName) DESC, LOWER(n.Name_Last), LOWER(n.Name_First);
 
     protected static function expandPatient(\PDO $dbh, $name, string $idNamesStr = "") {
 
+        $idNameParams = [];
+        $idNameClause = "";
 
-        $stmt = $dbh->prepare("select
-    n.idName as `Id`,
-    ng.idPsg,
-    's' as `Save`,
-    'r' as `Remove`,
-    n.Name_Full as `Name`,
-    concat(na.Address_1, na.Address_2) as `Address`,
-    na.City,
-    na.State_Province as `St`,
-    CASE WHEN n.Preferred_Phone = 'no' THEN 'No Phone' ELSE ifnull(np.Phone_Num, '') END as Phone,
-    ms.Description as `Status`,
-    ng.Relationship_Code as `Rel`,
-    n2.idName as `P id`,
-    n2.Name_Full as `Patient`,
-    (select count(*) from visit where idRegistration = r.idregistration) as `visits`,
-    (select count(*) from stays where idName = n.idName) as `stays`,
-    (select count(*) from reservation_guest where idGuest = n.idName) as `Resvs`,
-    (select count(*) from link_doc where idGuest = n.idName or idPSG = ng.idPsg) as `Docs`,
-    (select count(*) from incident_report where Guest_Id = n.idName or Psg_Id = ng.idPsg) as `Incidents`
-from
-    `name` n
-        left join
-    name_address na ON n.idName = na.idName
-        and n.Preferred_Mail_Address = na.Purpose
-        left join
-    name_phone np ON n.idName = np.idName
-        and n.Preferred_Phone = np.Phone_Code
-        left join
-    name_guest ng ON n.idName = ng.idName
-        left join
-    psg ON ng.idPsg = psg.idPsg
-        left join
-    name n2 ON psg.idPatient = n2.idName
-        left join
-    registration r ON ng.idPsg = r.idPsg
-        left join
-    gen_lookups ms ON n.Member_Status = ms.Code and ms.Table_Name = 'mem_status'
-where
-    ng.Status = 'a' and LOWER(n.Name_Full) = :name and ng.idName is not null and n.Member_Status in('a', 'd') and ng.Relationship_Code = '" . RelLinkType::Self . "' " . ($idNamesStr != "" ? " and n.idName IN (" . $idNamesStr . ")" : ""));
+        if ($idNamesStr != "") {
+            $idNamePlaceholders = [];
+            foreach (explode(",", $idNamesStr) as $idx => $idNameVal) {
+                $ph = ":idn" . $idx;
+                $idNamePlaceholders[] = $ph;
+                $idNameParams[$ph] = $idNameVal;
+            }
+            $idNameClause = " AND `n`.`idName` IN (" . implode(",", $idNamePlaceholders) . ")";
+        }
 
-        $stmt->execute(array(':name'=>  strtolower($name)));
+        $stmt = $dbh->prepare("SELECT
+    `n`.`idName` AS `Id`,
+    `ng`.`idPsg`,
+    's' AS `Save`,
+    'r' AS `Remove`,
+    `n`.`Name_Full` AS `Name`,
+    CONCAT(`na`.`Address_1`, `na`.`Address_2`) AS `Address`,
+    `na`.`City`,
+    `na`.`State_Province` AS `St`,
+    CASE WHEN `n`.`Preferred_Phone` = 'no' THEN 'No Phone' ELSE IFNULL(`np`.`Phone_Num`, '') END AS `Phone`,
+    `ms`.`Description` AS `Status`,
+    `ng`.`Relationship_Code` AS `Rel`,
+    `n2`.`idName` AS `P id`,
+    `n2`.`Name_Full` AS `Patient`,
+    (SELECT COUNT(*) FROM `visit` WHERE `idRegistration` = `r`.`idregistration`) AS `visits`,
+    (SELECT COUNT(*) FROM `stays` WHERE `idName` = `n`.`idName`) AS `stays`,
+    (SELECT COUNT(*) FROM `reservation_guest` WHERE `idGuest` = `n`.`idName`) AS `Resvs`,
+    (SELECT COUNT(*) FROM `link_doc` WHERE `idGuest` = `n`.`idName` OR `idPSG` = `ng`.`idPsg`) AS `Docs`,
+    (SELECT COUNT(*) FROM `incident_report` WHERE `Guest_Id` = `n`.`idName` OR `Psg_Id` = `ng`.`idPsg`) AS `Incidents`
+FROM
+    `name` `n`
+        LEFT JOIN
+    `name_address` `na` ON `n`.`idName` = `na`.`idName`
+        AND `n`.`Preferred_Mail_Address` = `na`.`Purpose`
+        LEFT JOIN
+    `name_phone` `np` ON `n`.`idName` = `np`.`idName`
+        AND `n`.`Preferred_Phone` = `np`.`Phone_Code`
+        LEFT JOIN
+    `name_guest` `ng` ON `n`.`idName` = `ng`.`idName`
+        LEFT JOIN
+    `psg` ON `ng`.`idPsg` = `psg`.`idPsg`
+        LEFT JOIN
+    `name` `n2` ON `psg`.`idPatient` = `n2`.`idName`
+        LEFT JOIN
+    `registration` `r` ON `ng`.`idPsg` = `r`.`idPsg`
+        LEFT JOIN
+    `gen_lookups` `ms` ON `n`.`Member_Status` = `ms`.`Code` AND `ms`.`Table_Name` = 'mem_status'
+WHERE
+    `ng`.`Status` = 'a' AND LOWER(`n`.`Name_Full`) = :name AND `ng`.`idName` IS NOT NULL AND `n`.`Member_Status` IN ('a', 'd') AND `ng`.`Relationship_Code` = :relCode" . $idNameClause);
+
+        $stmt->execute(array(':name' => strtolower($name), ':relCode' => RelLinkType::Self) + $idNameParams);
 
         return $stmt->fetchAll(\PDO::FETCH_ASSOC);
     }
 
     public static function expandGuest(\PDO $dbh, $name, string $idNamesStr = "") {
 
-        $stmt = $dbh->prepare("select
-    n.idName as `Id`,
-    's' as `Save`,
-    'r' as `Remove`,
-    n.Name_Full as `Name`,
-    concat(na.Address_1, na.Address_2) as `Address`,
-    na.City,
-    na.State_Province as `St`,
-    date_format(n.BirthDate, '%b %e, %Y') as `Birth Date`,
-    CASE WHEN n.Preferred_Phone = 'no' THEN 'No Phone' ELSE ifnull(np.Phone_Num, '') END as Phone,
-    CASE WHEN n.Preferred_Email = 'no' THEN 'No Email' ELSE ifnull(ne.Email, '') END as Email,
-    ms.Description as `Status`,
-    ng.idPsg,
-    ng.Relationship_Code as `Patient Relation`,
-    n2.idName as `Patient ID`,
-    n2.Name_Full as `Patient`,
-    (select count(*) from visit where idRegistration = r.idregistration) as `visits`,
-    (select count(*) from stays where idName = n.idName) as `stays`,
-    (select count(*) from reservation_guest where idGuest = n.idName) as `Resvs`,
-    (select count(*) from link_doc where idGuest = n.idName) as `Docs`,
-    (select count(*) from incident_report where Guest_Id = n.idName or Psg_Id = ng.idPsg) as `Incidents`
-from
-    `name` n
-        left join
-    name_address na ON n.idName = na.idName
-        and n.Preferred_Mail_Address = na.Purpose
-        left join
-    name_phone np ON n.idName = np.idName
-        and n.Preferred_Phone = np.Phone_Code
-        left join
-    name_email ne ON n.idName = ne.idName
-        and n.Preferred_Email = ne.Purpose
-        left join
-    name_guest ng ON n.idName = ng.idName
-        left join
-    psg ON ng.idPsg = psg.idPsg
-        left join
-    name n2 ON psg.idPatient = n2.idName
-        left join
-    registration r ON ng.idPsg = r.idPsg
-        left join
-    gen_lookups ms ON n.Member_Status = ms.Code and ms.Table_Name = 'mem_status'
-where
-    ng.Status = 'a' and LOWER(n.Name_Full) = :name and ng.idName is not null and n.Member_Status in ('a', 'd')" . ($idNamesStr != "" ? " and n.idName IN (" . $idNamesStr . ")" : "")
+        $idNameParams = [];
+        $idNameClause = "";
+
+        if ($idNamesStr != "") {
+            $idNamePlaceholders = [];
+            foreach (explode(",", $idNamesStr) as $idx => $idNameVal) {
+                $ph = ":idn" . $idx;
+                $idNamePlaceholders[] = $ph;
+                $idNameParams[$ph] = $idNameVal;
+            }
+            $idNameClause = " AND `n`.`idName` IN (" . implode(",", $idNamePlaceholders) . ")";
+        }
+
+        $stmt = $dbh->prepare("SELECT
+    `n`.`idName` AS `Id`,
+    's' AS `Save`,
+    'r' AS `Remove`,
+    `n`.`Name_Full` AS `Name`,
+    CONCAT(`na`.`Address_1`, `na`.`Address_2`) AS `Address`,
+    `na`.`City`,
+    `na`.`State_Province` AS `St`,
+    DATE_FORMAT(`n`.`BirthDate`, '%b %e, %Y') AS `Birth Date`,
+    CASE WHEN `n`.`Preferred_Phone` = 'no' THEN 'No Phone' ELSE IFNULL(`np`.`Phone_Num`, '') END AS `Phone`,
+    CASE WHEN `n`.`Preferred_Email` = 'no' THEN 'No Email' ELSE IFNULL(`ne`.`Email`, '') END AS `Email`,
+    `ms`.`Description` AS `Status`,
+    `ng`.`idPsg`,
+    `ng`.`Relationship_Code` AS `Patient Relation`,
+    `n2`.`idName` AS `Patient ID`,
+    `n2`.`Name_Full` AS `Patient`,
+    (SELECT COUNT(*) FROM `visit` WHERE `idRegistration` = `r`.`idregistration`) AS `visits`,
+    (SELECT COUNT(*) FROM `stays` WHERE `idName` = `n`.`idName`) AS `stays`,
+    (SELECT COUNT(*) FROM `reservation_guest` WHERE `idGuest` = `n`.`idName`) AS `Resvs`,
+    (SELECT COUNT(*) FROM `link_doc` WHERE `idGuest` = `n`.`idName`) AS `Docs`,
+    (SELECT COUNT(*) FROM `incident_report` WHERE `Guest_Id` = `n`.`idName` OR `Psg_Id` = `ng`.`idPsg`) AS `Incidents`
+FROM
+    `name` `n`
+        LEFT JOIN
+    `name_address` `na` ON `n`.`idName` = `na`.`idName`
+        AND `n`.`Preferred_Mail_Address` = `na`.`Purpose`
+        LEFT JOIN
+    `name_phone` `np` ON `n`.`idName` = `np`.`idName`
+        AND `n`.`Preferred_Phone` = `np`.`Phone_Code`
+        LEFT JOIN
+    `name_email` `ne` ON `n`.`idName` = `ne`.`idName`
+        AND `n`.`Preferred_Email` = `ne`.`Purpose`
+        LEFT JOIN
+    `name_guest` `ng` ON `n`.`idName` = `ng`.`idName`
+        LEFT JOIN
+    `psg` ON `ng`.`idPsg` = `psg`.`idPsg`
+        LEFT JOIN
+    `name` `n2` ON `psg`.`idPatient` = `n2`.`idName`
+        LEFT JOIN
+    `registration` `r` ON `ng`.`idPsg` = `r`.`idPsg`
+        LEFT JOIN
+    `gen_lookups` `ms` ON `n`.`Member_Status` = `ms`.`Code` AND `ms`.`Table_Name` = 'mem_status'
+WHERE
+    `ng`.`Status` = 'a' AND LOWER(`n`.`Name_Full`) = :name AND `ng`.`idName` IS NOT NULL AND `n`.`Member_Status` IN ('a', 'd')" . $idNameClause
 );
 
-        $stmt->execute(array(':name'=>  strtolower($name)));
+        $stmt->execute(array(':name' => strtolower($name)) + $idNameParams);
 
         return $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
@@ -388,22 +420,23 @@ where
 
     public static function expandOther(\PDO $dbh, $nameLastFirst, $mType) {
 
-        $stmt = $dbh->query("SELECT
-    n.idName, n.Name_Full, 
-    CASE WHEN n.Preferred_Phone = 'no' THEN 'No Phone' ELSE ifnull(np.Phone_Num, '') END as Phone_Num, 
-    CASE WHEN n.Preferred_Email = 'no' THEN 'No Email' ELSE ifnull(ne.Email, '') END as Email
+        $stmt = $dbh->prepare("SELECT
+    `n`.`idName`, `n`.`Name_Full`,
+    CASE WHEN `n`.`Preferred_Phone` = 'no' THEN 'No Phone' ELSE IFNULL(`np`.`Phone_Num`, '') END AS `Phone_Num`,
+    CASE WHEN `n`.`Preferred_Email` = 'no' THEN 'No Email' ELSE IFNULL(`ne`.`Email`, '') END AS `Email`
 FROM
-    name n
+    `name` `n`
         LEFT JOIN
-    name_phone np ON n.idName = np.idName
+    `name_phone` `np` ON `n`.`idName` = `np`.`idName`
         LEFT JOIN
-    name_email ne ON n.idName = ne.idName
+    `name_email` `ne` ON `n`.`idName` = `ne`.`idName`
         JOIN
-    name_volunteer2 nv ON n.idName = nv.idName
-        AND nv.Vol_Category = 'Vol_Type'
-        AND nv.Vol_Code = '$mType'
+    `name_volunteer2` `nv` ON `n`.`idName` = `nv`.`idName`
+        AND `nv`.`Vol_Category` = 'Vol_Type'
+        AND `nv`.`Vol_Code` = :mType
 WHERE
-    n.Member_Status='a' and n.Name_Full = '$nameLastFirst'");
+    `n`.`Member_Status`='a' AND `n`.`Name_Full` = :nameLastFirst");
+        $stmt->execute([':mType' => $mType, ':nameLastFirst' => $nameLastFirst]);
 
         $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
         $tbl = new HTMLTable();
@@ -452,7 +485,8 @@ WHERE
         if ($mType == VolMemberType::ReferralAgent && $id > 0) {
             // combine referral agents into this agent.
 
-            $stmt = $dbh->query("SELECT Name_Last_First FROM name WHERE idName = $id");
+            $stmt = $dbh->prepare("SELECT `Name_Last_First` FROM `name` WHERE `idName` = :id");
+            $stmt->execute([':id' => $id]);
 
             $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
@@ -462,8 +496,12 @@ WHERE
 
                 if ($nameLastFirst != '') {
 
-                    $stmt = $dbh->query("select n.idName from name n join name_volunteer2 nv on n.idName = nv.idName
-where nv.Vol_Category = 'Vol_Type' and nv.Vol_Code = '" . VolMemberType::ReferralAgent . "' and n.Name_Last_First = '$nameLastFirst'");
+                    $stmt = $dbh->prepare("SELECT `n`.`idName` FROM `name` `n` JOIN `name_volunteer2` `nv` ON `n`.`idName` = `nv`.`idName`
+WHERE `nv`.`Vol_Category` = 'Vol_Type' AND `nv`.`Vol_Code` = :volCode AND `n`.`Name_Last_First` = :nameLastFirst");
+                    $stmt->execute([':volCode' => VolMemberType::ReferralAgent, ':nameLastFirst' => $nameLastFirst]);
+
+                    $updHospStmt = $dbh->prepare("UPDATE `hospital_stay` SET `idReferralAgent` = :id WHERE `idReferralAgent` = :oldId");
+                    $updNameStmt = $dbh->prepare("UPDATE `name` SET `Member_Status` = :status WHERE `idName` = :oldId");
 
                     while ($r = $stmt->fetch(\PDO::FETCH_NUM)) {
 
@@ -471,11 +509,9 @@ where nv.Vol_Category = 'Vol_Type' and nv.Vol_Code = '" . VolMemberType::Referra
                             continue;
                         }
 
-                        $dbh->exec("update hospital_stay set idReferralAgent = $id "
-                            . "where idReferralAgent = " . $r[0]);
+                        $updHospStmt->execute([':id' => $id, ':oldId' => $r[0]]);
 
-                        $dbh->exec("update name set Member_Status = '" . MemStatus::ToBeDeleted . "' "
-                            . " where idName = " . $r[0]);
+                        $updNameStmt->execute([':status' => MemStatus::ToBeDeleted, ':oldId' => $r[0]]);
 
                         $reply = 'Okay';
                     }
@@ -485,7 +521,8 @@ where nv.Vol_Category = 'Vol_Type' and nv.Vol_Code = '" . VolMemberType::Referra
         } else if ($mType == VolMemberType::Doctor && $id > 0) {
             // combine referral agents into this agent.
 
-            $stmt = $dbh->query("SELECT Name_Last_First FROM name WHERE idName = $id");
+            $stmt = $dbh->prepare("SELECT `Name_Last_First` FROM `name` WHERE `idName` = :id");
+            $stmt->execute([':id' => $id]);
 
             $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
@@ -495,8 +532,12 @@ where nv.Vol_Category = 'Vol_Type' and nv.Vol_Code = '" . VolMemberType::Referra
 
                 if ($nameLastFirst != '') {
 
-                    $stmt = $dbh->query("select n.idName from name n join name_volunteer2 nv on n.idName = nv.idName
-where nv.Vol_Category = 'Vol_Type' and nv.Vol_Code = '" . VolMemberType::Doctor . "' and n.Name_Last_First = '$nameLastFirst'");
+                    $stmt = $dbh->prepare("SELECT `n`.`idName` FROM `name` `n` JOIN `name_volunteer2` `nv` ON `n`.`idName` = `nv`.`idName`
+WHERE `nv`.`Vol_Category` = 'Vol_Type' AND `nv`.`Vol_Code` = :volCode AND `n`.`Name_Last_First` = :nameLastFirst");
+                    $stmt->execute([':volCode' => VolMemberType::Doctor, ':nameLastFirst' => $nameLastFirst]);
+
+                    $updHospStmt = $dbh->prepare("UPDATE `hospital_stay` SET `idDoctor` = :id WHERE `idDoctor` = :oldId");
+                    $updNameStmt = $dbh->prepare("UPDATE `name` SET `Member_Status` = :status WHERE `idName` = :oldId");
 
                     while ($r = $stmt->fetch(\PDO::FETCH_NUM)) {
 
@@ -504,11 +545,9 @@ where nv.Vol_Category = 'Vol_Type' and nv.Vol_Code = '" . VolMemberType::Doctor 
                             continue;
                         }
 
-                        $dbh->exec("update hospital_stay set idDoctor = $id "
-                            . "where idDoctor = " . $r[0]);
+                        $updHospStmt->execute([':id' => $id, ':oldId' => $r[0]]);
 
-                        $dbh->exec("update name set Member_Status = '" . MemStatus::ToBeDeleted . "' "
-                            . " where idName = " . $r[0]);
+                        $updNameStmt->execute([':status' => MemStatus::ToBeDeleted, ':oldId' => $r[0]]);
 
                         $reply = 'Okay';
                     }
@@ -532,8 +571,8 @@ where nv.Vol_Category = 'Vol_Type' and nv.Vol_Code = '" . VolMemberType::Doctor 
             return array('error'=>'Good and Bad are the same.  No action.');
         }
 
-        //$affRows = $dbh->exec("call combinePSG($sPsgId, $dPsgId);");
-        $stmt = $dbh->query("call combinePSG($sPsgId, $dPsgId);");
+        $stmt = $dbh->prepare("CALL `combinePSG`(:sPsgId, :dPsgId);");
+        $stmt->execute([':sPsgId' => $sPsgId, ':dPsgId' => $dPsgId]);
         $rtn = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
         return (isset($rtn[0])? $rtn[0]: array('error'=>'Query failed'));
@@ -554,14 +593,15 @@ where nv.Vol_Category = 'Vol_Type' and nv.Vol_Code = '" . VolMemberType::Doctor 
         }
 
         //check if deleteId is patient
-        $query = "select idName from name_guest where idName = :idName and Relationship_Code = '" . RelLinkType::Self . "';";
+        $query = "SELECT `idName` FROM `name_guest` WHERE `idName` = :idName AND `Relationship_Code` = :relCode;";
         $stmt = $dbh->prepare($query);
-        $stmt->execute([":idName"=>$dPsgId]);
+        $stmt->execute([":idName" => $dPsgId, ":relCode" => RelLinkType::Self]);
         if($stmt->rowCount() > 0){
             return array('error'=>'Cannot remove ID ' . $dPsgId . " because they are a patient. Try removing the duplicate guest instead, or search for duplicate patients first");
         }
 
-        $stmt = $dbh->query("call remove_dup_guest($sPsgId, $dPsgId);");
+        $stmt = $dbh->prepare("CALL `remove_dup_guest`(:sPsgId, :dPsgId);");
+        $stmt->execute([':sPsgId' => $sPsgId, ':dPsgId' => $dPsgId]);
         $rtn = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
         return (isset($rtn[0])? $rtn[0]: array('error'=>'Query failed'));
@@ -579,16 +619,16 @@ where nv.Vol_Category = 'Vol_Type' and nv.Vol_Code = '" . VolMemberType::Doctor 
         foreach($filters as $filter){
             switch($filter){
                 case "birthdate":
-                    $groupBy[] = "n.BirthDate";
+                    $groupBy[] = "`n`.`BirthDate`";
                     break;
                 case "phone":
-                    $groupBy[] = "np.Phone_Search";
+                    $groupBy[] = "`np`.`Phone_Search`";
                     break;
                 case "email":
-                    $groupBy[] = "LOWER(ne.Email)";
+                    $groupBy[] = "LOWER(`ne`.`Email`)";
                     break;
                 case "address":
-                    $groupBy[] = "LOWER(concat(na.Address_1, na.Address_2, na.City, na.State_province, na.Postal_Code))";
+                    $groupBy[] = "LOWER(CONCAT(`na`.`Address_1`, `na`.`Address_2`, `na`.`City`, `na`.`State_province`, `na`.`Postal_Code`))";
                     break;
                 default:
             }
@@ -602,16 +642,16 @@ where nv.Vol_Category = 'Vol_Type' and nv.Vol_Code = '" . VolMemberType::Doctor 
         foreach($filters as $filter){
             switch($filter){
                 case "birthdate":
-                    $where[] = "n.BirthDate != ''";
+                    $where[] = "`n`.`BirthDate` != ''";
                     break;
                 case "phone":
-                    $where[] = "np.Phone_Search != ''";
+                    $where[] = "`np`.`Phone_Search` != ''";
                     break;
                 case "email":
-                    $where[] = "LOWER(ne.Email) != ''";
+                    $where[] = "LOWER(`ne`.`Email`) != ''";
                     break;
                 case "address":
-                    $where[] = "LOWER(concat(na.Address_1, na.Address_2, na.City, na.State_province, na.Postal_Code)) != ''";
+                    $where[] = "LOWER(CONCAT(`na`.`Address_1`, `na`.`Address_2`, `na`.`City`, `na`.`State_province`, `na`.`Postal_Code`)) != ''";
                     break;
                 default:
             }

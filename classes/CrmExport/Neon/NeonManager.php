@@ -118,7 +118,8 @@ class NeonManager extends AbstractExportManager {
         $this->customFields = $this->getMyCustomFields($dbh);
 
         // Load Individual types
-        $stmtList = $dbh->query("Select * from neon_type_map where List_Name in ('individualTypes', 'genders')");
+        $stmtList = $dbh->prepare("SELECT * FROM `neon_type_map` WHERE `List_Name` IN ('individualTypes', 'genders')");
+        $stmtList->execute();
 
         while ($t = $stmtList->fetch(\PDO::FETCH_ASSOC)) {
             $this->typeMap[$t['List_Name']][$t['HHK_Type_Code']] = $t;
@@ -952,8 +953,17 @@ class NeonManager extends AbstractExportManager {
 
         if (count($idList) > 0) {
 
-            $parm = "(" . implode(',', $idList) . ") ";
-            return $dbh->exec("Update stays set Recorded = 1 where idStays in $parm");
+            $placeholders = [];
+            $params = [];
+            foreach ($idList as $idx => $idVal) {
+                $ph = ':id' . $idx;
+                $placeholders[] = $ph;
+                $params[$ph] = $idVal;
+            }
+
+            $stmt = $dbh->prepare("UPDATE `stays` SET `Recorded` = 1 WHERE `idStays` IN (" . implode(',', $placeholders) . ")");
+            $stmt->execute($params);
+            return $stmt->rowCount();
 
         }
 
@@ -974,31 +984,43 @@ class NeonManager extends AbstractExportManager {
 
         if (count($idList) > 0) {
 
-            $stmt = $dbh->query("Select	DISTINCT
-    ng.idName AS `hhkId`,
-    IFNULL(ng.Relationship_Code, '') as `Relation_Code`,
-    IFNULL(n.External_Id, '') AS `accountId`,
-    IFNULL(n.Name_Last, '') AS `Last_Name`,
-    IFNULL(n.Name_Full, '') AS `Full_Name`,
-    IFNULL(hs.idPsg, 0) as `idPsg`,
-    CONCAT_WS(' ', na.Address_1, na.Address_2) as `Address`
-from
-	visit v
-		join
-	hospital_stay hs on v.idHospital_stay = hs.idHospital_stay
-        join
-	name_guest ng on hs.idPsg = ng.idPsg
-		left join
-	stays s on ng.idName = s.idName
+            $placeholders = [];
+            $params = [
+                ':excludeTerm' => self::EXCLUDE_TERM,
+                ':memberStatus' => MemStatus::Active,
+            ];
+            foreach ($idList as $idx => $idVal) {
+                $ph = ':vid' . $idx;
+                $placeholders[] = $ph;
+                $params[$ph] = $idVal;
+            }
+
+            $stmt = $dbh->prepare("SELECT DISTINCT
+    `ng`.`idName` AS `hhkId`,
+    IFNULL(`ng`.`Relationship_Code`, '') AS `Relation_Code`,
+    IFNULL(`n`.`External_Id`, '') AS `accountId`,
+    IFNULL(`n`.`Name_Last`, '') AS `Last_Name`,
+    IFNULL(`n`.`Name_Full`, '') AS `Full_Name`,
+    IFNULL(`hs`.`idPsg`, 0) AS `idPsg`,
+    CONCAT_WS(' ', `na`.`Address_1`, `na`.`Address_2`) AS `Address`
+FROM
+	`visit` `v`
+		JOIN
+	`hospital_stay` `hs` ON `v`.`idHospital_stay` = `hs`.`idHospital_stay`
+        JOIN
+	`name_guest` `ng` ON `hs`.`idPsg` = `ng`.`idPsg`
+		LEFT JOIN
+	`stays` `s` ON `ng`.`idName` = `s`.`idName`
         LEFT JOIN
-    name n on n.idName = ng.idName
+    `name` `n` ON `n`.`idName` = `ng`.`idName`
         LEFT JOIN
-    name_address na on n.idName = na.idName and n.Preferred_Mail_Address = na.Purpose
-where
-	s.idName is NULL
-    AND n.External_Id != '" . self::EXCLUDE_TERM . "'
-    AND n.Member_Status = '" . MemStatus::Active ."'
-    AND v.idVisit in (" . implode(',', $idList) . ")");
+    `name_address` `na` ON `n`.`idName` = `na`.`idName` AND `n`.`Preferred_Mail_Address` = `na`.`Purpose`
+WHERE
+	`s`.`idName` IS NULL
+    AND `n`.`External_Id` != :excludeTerm
+    AND `n`.`Member_Status` = :memberStatus
+    AND `v`.`idVisit` IN (" . implode(',', $placeholders) . ")");
+            $stmt->execute($params);
 
             while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
 
@@ -1422,41 +1444,41 @@ where
     public static function fetchPsgMemberStays(\PDO $dbh, ?string $start = null, ?string $end = null, ?int $idPsg = null, int $limit = 500): array {
 
         $sql = "SELECT
-    IFNULL(s.idStays, 0) AS `idStays`,
-    IFNULL(s.idVisit, 0) AS `idVisit`,
-    IFNULL(s.Visit_Span, 0) AS `Visit_Span`,
-    ng.idName AS `hhkId`,
-    IFNULL(ng.Relationship_Code, '') AS `Relationship_Code`,
-    IFNULL(v.idPrimaryGuest, 0) AS `idPrimaryGuest`,
-    IFNULL(n.External_Id, '') AS `accountId`,
-    IFNULL(n.Name_Last, '') AS `Last_Name`,
-    IFNULL(n.Name_Full, '') AS `Name_Full`,
-    IFNULL(h.Title, '') AS `Hospital`,
-    IFNULL(g.Description, '') AS `Diagnosis`,
-    IFNULL(hs.Diagnosis, '') AS `Diagnosis_Code`,
-    IFNULL(hs.idHospital, 0) AS `idHospital`,
-    IFNULL(hs.idPsg, 0) AS `idPsg`,
-    IFNULL(hs.idPatient, 0) AS `idPatient`,
-    CONCAT_WS(' ', na.Address_1, na.Address_2) AS `Address`,
-    IFNULL(DATE_FORMAT(s.Span_Start_Date, '%Y-%m-%d'), '') AS `Start_Date`,
-    IFNULL(DATE_FORMAT(s.Span_End_Date, '%Y-%m-%d'), '') AS `End_Date`,
-    IFNULL(DATEDIFF(DATE(s.Span_End_Date), DATE(s.Span_Start_Date)), 0) AS `Nite_Counter`
+    IFNULL(`s`.`idStays`, 0) AS `idStays`,
+    IFNULL(`s`.`idVisit`, 0) AS `idVisit`,
+    IFNULL(`s`.`Visit_Span`, 0) AS `Visit_Span`,
+    `ng`.`idName` AS `hhkId`,
+    IFNULL(`ng`.`Relationship_Code`, '') AS `Relationship_Code`,
+    IFNULL(`v`.`idPrimaryGuest`, 0) AS `idPrimaryGuest`,
+    IFNULL(`n`.`External_Id`, '') AS `accountId`,
+    IFNULL(`n`.`Name_Last`, '') AS `Last_Name`,
+    IFNULL(`n`.`Name_Full`, '') AS `Name_Full`,
+    IFNULL(`h`.`Title`, '') AS `Hospital`,
+    IFNULL(`g`.`Description`, '') AS `Diagnosis`,
+    IFNULL(`hs`.`Diagnosis`, '') AS `Diagnosis_Code`,
+    IFNULL(`hs`.`idHospital`, 0) AS `idHospital`,
+    IFNULL(`hs`.`idPsg`, 0) AS `idPsg`,
+    IFNULL(`hs`.`idPatient`, 0) AS `idPatient`,
+    CONCAT_WS(' ', `na`.`Address_1`, `na`.`Address_2`) AS `Address`,
+    IFNULL(DATE_FORMAT(`s`.`Span_Start_Date`, '%Y-%m-%d'), '') AS `Start_Date`,
+    IFNULL(DATE_FORMAT(`s`.`Span_End_Date`, '%Y-%m-%d'), '') AS `End_Date`,
+    IFNULL(DATEDIFF(DATE(`s`.`Span_End_Date`), DATE(`s`.`Span_Start_Date`)), 0) AS `Nite_Counter`
 FROM
-    name_guest ng
-        JOIN hospital_stay hs ON ng.idPsg = hs.idPsg
-        JOIN visit v ON v.idHospital_stay = hs.idHospital_stay
-        JOIN name n ON n.idName = ng.idName
-        LEFT JOIN stays s ON s.idName = ng.idName
-            AND s.idVisit = v.idVisit
-            AND s.Visit_Span = v.Span
-            AND s.On_Leave = 0
-            AND s.Status != 'a'
-        LEFT JOIN name_address na ON n.idName = na.idName AND n.Preferred_Mail_Address = na.Purpose
-        LEFT JOIN hospital h ON hs.idHospital = h.idHospital
-        LEFT JOIN gen_lookups g ON g.Table_Name = 'Diagnosis' AND g.Code = hs.Diagnosis
+    `name_guest` `ng`
+        JOIN `hospital_stay` `hs` ON `ng`.`idPsg` = `hs`.`idPsg`
+        JOIN `visit` `v` ON `v`.`idHospital_stay` = `hs`.`idHospital_stay`
+        JOIN `name` `n` ON `n`.`idName` = `ng`.`idName`
+        LEFT JOIN `stays` `s` ON `s`.`idName` = `ng`.`idName`
+            AND `s`.`idVisit` = `v`.`idVisit`
+            AND `s`.`Visit_Span` = `v`.`Span`
+            AND `s`.`On_Leave` = 0
+            AND `s`.`Status` != 'a'
+        LEFT JOIN `name_address` `na` ON `n`.`idName` = `na`.`idName` AND `n`.`Preferred_Mail_Address` = `na`.`Purpose`
+        LEFT JOIN `hospital` `h` ON `hs`.`idHospital` = `h`.`idHospital`
+        LEFT JOIN `gen_lookups` `g` ON `g`.`Table_Name` = 'Diagnosis' AND `g`.`Code` = `hs`.`Diagnosis`
 WHERE
-    n.External_Id != :excludeTerm
-    AND n.Member_Status = :memberStatus";
+    `n`.`External_Id` != :excludeTerm
+    AND `n`.`Member_Status` = :memberStatus";
 
         $params = [
             ':excludeTerm'  => self::EXCLUDE_TERM,
@@ -1465,24 +1487,24 @@ WHERE
 
         if ($idPsg !== null) {
             $sql .= "
-    AND ng.idPsg = :idPsg 
- ORDER BY s.idVisit, s.Visit_Span, ng.idName, s.Span_Start_Date";
+    AND `ng`.`idPsg` = :idPsg
+ ORDER BY `s`.`idVisit`, `s`.`Visit_Span`, `ng`.`idName`, `s`.`Span_Start_Date`";
             $params[':idPsg'] = $idPsg;
 
         } else {
             $sql .= "
-    AND ng.idPsg IN (
-        SELECT DISTINCT hs2.idPsg
-        FROM stays s2
-            JOIN visit v2 ON s2.idVisit = v2.idVisit AND s2.Visit_Span = v2.Span
-            JOIN hospital_stay hs2 ON v2.idHospital_stay = hs2.idHospital_stay
-        WHERE s2.On_Leave = 0
-            AND s2.Status != 'a'
-            AND DATE(s2.Span_Start_Date) < DATE(:end)
-            AND DATE(s2.Span_End_Date) > DATE(:start)
-            AND DATEDIFF(DATE(s2.Span_End_Date), DATE(s2.Span_Start_Date)) > 0
+    AND `ng`.`idPsg` IN (
+        SELECT DISTINCT `hs2`.`idPsg`
+        FROM `stays` `s2`
+            JOIN `visit` `v2` ON `s2`.`idVisit` = `v2`.`idVisit` AND `s2`.`Visit_Span` = `v2`.`Span`
+            JOIN `hospital_stay` `hs2` ON `v2`.`idHospital_stay` = `hs2`.`idHospital_stay`
+        WHERE `s2`.`On_Leave` = 0
+            AND `s2`.`Status` != 'a'
+            AND DATE(`s2`.`Span_Start_Date`) < DATE(:end)
+            AND DATE(`s2`.`Span_End_Date`) > DATE(:start)
+            AND DATEDIFF(DATE(`s2`.`Span_End_Date`), DATE(`s2`.`Span_Start_Date`)) > 0
     )
-ORDER BY hs.idPsg";
+ORDER BY `hs`.`idPsg`";
             $params[':start'] = $start;
             $params[':end']   = $end;
 
@@ -1498,20 +1520,26 @@ ORDER BY hs.idPsg";
 
     public static function findPrimaryGuest(\PDO $dbh, $idPrimaryGuest, $idPsg, RelationshipMapper $rMapper): array {
 
-        $stmt = $dbh->query("Select
-	n.idName as `hhkId`,
-    IFNULL(n.External_Id, '') AS `accountId`,
-    IFNULL(n.Name_Last, '') AS `Last_Name`,
-    IFNULL(n.Name_Full, '') AS `Full_Name`,
-    IFNULL(ng.Relationship_Code, '') as `Relation_Code`,
-    CONCAT_WS(' ', na.Address_1, na.Address_2) as `Address`
+        $stmt = $dbh->prepare("SELECT
+	`n`.`idName` AS `hhkId`,
+    IFNULL(`n`.`External_Id`, '') AS `accountId`,
+    IFNULL(`n`.`Name_Last`, '') AS `Last_Name`,
+    IFNULL(`n`.`Name_Full`, '') AS `Full_Name`,
+    IFNULL(`ng`.`Relationship_Code`, '') AS `Relation_Code`,
+    CONCAT_WS(' ', `na`.`Address_1`, `na`.`Address_2`) AS `Address`
 FROM
-	`name` n
+	`name` `n`
 		LEFT JOIN
-    `name_guest` ng on n.idName = ng.idName and ng.idPsg = $idPsg
+    `name_guest` `ng` ON `n`.`idName` = `ng`.`idName` AND `ng`.`idPsg` = :idPsg
 		LEFT JOIN
-    name_address na on n.idName = na.idName and n.Preferred_Mail_Address = na.Purpose
-where n.External_Id != '" . self::EXCLUDE_TERM . "' AND n.Member_Status = '" . MemStatus::Active ."' AND n.idName = $idPrimaryGuest ");
+    `name_address` `na` ON `n`.`idName` = `na`.`idName` AND `n`.`Preferred_Mail_Address` = `na`.`Purpose`
+WHERE `n`.`External_Id` != :excludeTerm AND `n`.`Member_Status` = :memberStatus AND `n`.`idName` = :idPrimaryGuest ");
+        $stmt->execute([
+            ':idPsg' => $idPsg,
+            ':excludeTerm' => self::EXCLUDE_TERM,
+            ':memberStatus' => MemStatus::Active,
+            ':idPrimaryGuest' => $idPrimaryGuest,
+        ]);
 
         $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
@@ -1542,7 +1570,8 @@ where n.External_Id != '" . self::EXCLUDE_TERM . "' AND n.Member_Status = '" . M
 
          if ($parm > 0) {
 
-             $stmt = $dbh->query("Select * from `$view` where HHK_ID = $parm");
+             $stmt = $dbh->prepare("SELECT * FROM `$view` WHERE `HHK_ID` = :parm");
+             $stmt->execute([':parm' => $parm]);
              $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
              if (count($rows) > 1) {
@@ -1589,9 +1618,18 @@ where n.External_Id != '" . self::EXCLUDE_TERM . "' AND n.Member_Status = '" . M
 
         if (count($idList) > 0) {
 
+            $placeholders = [];
+            $params = [];
+            foreach ($idList as $idx => $idVal) {
+                $ph = ':id' . $idx;
+                $placeholders[] = $ph;
+                $params[$ph] = $idVal;
+            }
+
             // Remove Exclude status when an excluded member checks in.
-            $stmt = $dbh->query("select DISTINCT n.idName from `name` n join name_guest ng on n.idName = ng.idName
-                where ng.idPsg in (" . implode(',', $idList) . ");" );
+            $stmt = $dbh->prepare("SELECT DISTINCT `n`.`idName` FROM `name` `n` JOIN `name_guest` `ng` ON `n`.`idName` = `ng`.`idName`
+                WHERE `ng`.`idPsg` IN (" . implode(',', $placeholders) . ");" );
+            $stmt->execute($params);
 
             // Reset each external Id, and log it.
             while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
@@ -1626,7 +1664,7 @@ where n.External_Id != '" . self::EXCLUDE_TERM . "' AND n.Member_Status = '" . M
         $rows = [];
 
         $query = "SELECT * FROM `vguest_transfer`
-        WHERE ifnull(DATE(`Departure`), DATE(now())) >= DATE(:start) and DATE(`Arrival`) < DATE(:end)
+        WHERE IFNULL(DATE(`Departure`), DATE(NOW())) >= DATE(:start) AND DATE(`Arrival`) < DATE(:end)
         GROUP BY `HHK ID` ORDER BY `PSG Id`";
 
         $stmt = $dbh->prepare($query);
@@ -1810,7 +1848,8 @@ where n.External_Id != '" . self::EXCLUDE_TERM . "' AND n.Member_Status = '" . M
 
             try {
 
-                $stmt = $dbh->query("select * from neon_lists;");
+                $stmt = $dbh->prepare("SELECT * FROM `neon_lists`;");
+                $stmt->execute();
 
                 while ($list = $stmt->fetch(\PDO::FETCH_ASSOC)) {
 
@@ -1829,7 +1868,8 @@ where n.External_Id != '" . self::EXCLUDE_TERM . "' AND n.Member_Status = '" . M
 
                     switch ($list['HHK_Lookup']) {
                         case 'Fund':
-                            $stFund = $dbh->query("select idItem as Code, Description, '' as `Substitute` from item where Deleted = 0;");
+                            $stFund = $dbh->prepare("SELECT `idItem` AS `Code`, `Description`, '' AS `Substitute` FROM `item` WHERE `Deleted` = 0;");
+                            $stFund->execute();
                             $hhkLookup = [];
 
                             while ($row = $stFund->fetch(\PDO::FETCH_BOTH)) {
@@ -1839,7 +1879,8 @@ where n.External_Id != '" . self::EXCLUDE_TERM . "' AND n.Member_Status = '" . M
                             $hhkLookup['p'] = ['Code' => 'p', 0 => 'p', 'Description' => 'Payment', 1 => 'Payment', 'Substitute' => '', 2 => ''];
                             break;
                         case 'Pay_Type':
-                            $stFund = $dbh->query("select `idPayment_method` as `Code`, `Method_Name` as `Description`, '' as `Substitute` from payment_method;");
+                            $stFund = $dbh->prepare("SELECT `idPayment_method` AS `Code`, `Method_Name` AS `Description`, '' AS `Substitute` FROM `payment_method`;");
+                            $stFund->execute();
                             $hhkLookup = [];
 
                             while ($row = $stFund->fetch(\PDO::FETCH_BOTH)) {
@@ -1851,7 +1892,8 @@ where n.External_Id != '" . self::EXCLUDE_TERM . "' AND n.Member_Status = '" . M
                             break;
                     }
 
-                    $stmtList = $dbh->query("Select * from neon_type_map where List_Name = '" . $list['List_Name'] . "'");
+                    $stmtList = $dbh->prepare("SELECT * FROM `neon_type_map` WHERE `List_Name` = :listName");
+                    $stmtList->execute([':listName' => $list['List_Name']]);
                     $items = $stmtList->fetchAll(\PDO::FETCH_ASSOC);
 
                     $mappedItems = array();
@@ -1908,7 +1950,8 @@ where n.External_Id != '" . self::EXCLUDE_TERM . "' AND n.Member_Status = '" . M
                 $markup .= HTMLContainer::generateMarkup('div', $cfTbl->generateMarkup([], 'Custom Fields'), ['class'=>'ui-widget ui-widget-content ui-corner-all p-2 mb-3 me-2']);
 
                 // Sources
-                $stmt = $dbh->query("Select * from neon_type_map where List_Name = 'sources' and Neon_Type_Name = '" . self::SOURCE . "'");
+                $stmt = $dbh->prepare("SELECT * FROM `neon_type_map` WHERE `List_Name` = 'sources' AND `Neon_Type_Name` = :source");
+                $stmt->execute([':source' => self::SOURCE]);
                 $neonSourceRow = $stmt->fetch(\PDO::FETCH_ASSOC);
                 $mappedSourceId = isset($neonSourceRow['Neon_Type_Code']) ? $neonSourceRow['Neon_Type_Code'] : null;
                 $results = $this->neonWebServiceV2->getSources();
@@ -2064,7 +2107,8 @@ where n.External_Id != '" . self::EXCLUDE_TERM . "' AND n.Member_Status = '" . M
 
 
         // Properties
-        $stmt = $dbh->query("Select * from neon_lists;");
+        $stmt = $dbh->prepare("SELECT * FROM `neon_lists`;");
+        $stmt->execute();
 
         $lists = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
@@ -2075,7 +2119,8 @@ where n.External_Id != '" . self::EXCLUDE_TERM . "' AND n.Member_Status = '" . M
             if ($list['HHK_Lookup'] == 'Fund') {
 
                 // Use Items for the Fund
-                $stFund = $dbh->query("select `idItem` as `Code`, `Description`, '' as `Substitute` from item where Deleted = 0;");
+                $stFund = $dbh->prepare("SELECT `idItem` AS `Code`, `Description`, '' AS `Substitute` FROM `item` WHERE `Deleted` = 0;");
+                $stFund->execute();
                 $hhkLookup = [];
 
                 while ($row = $stFund->fetch(\PDO::FETCH_BOTH)) {
@@ -2087,7 +2132,8 @@ where n.External_Id != '" . self::EXCLUDE_TERM . "' AND n.Member_Status = '" . M
             } else if ($list['HHK_Lookup'] == 'Pay_Type') {
 
                 // Use payment_method
-                $stFund = $dbh->query("select `idPayment_method` as `Code`, `Method_Name` as `Description`, '' as `Substitute` from payment_method;");
+                $stFund = $dbh->prepare("SELECT `idPayment_method` AS `Code`, `Method_Name` AS `Description`, '' AS `Substitute` FROM `payment_method`;");
+                $stFund->execute();
                 $hhkLookup = [];
 
                 while ($row = $stFund->fetch(\PDO::FETCH_BOTH)) {
@@ -2098,7 +2144,8 @@ where n.External_Id != '" . self::EXCLUDE_TERM . "' AND n.Member_Status = '" . M
                 $hhkLookup = HTMLSelector::removeOptionGroups(Common::readGenLookupsPDO($dbh, $list['HHK_Lookup']));
             }
 
-            $stmtList = $dbh->query("Select * from neon_type_map where List_Name = '" . $list['List_Name'] . "'");
+            $stmtList = $dbh->prepare("SELECT * FROM `neon_type_map` WHERE `List_Name` = :listName");
+            $stmtList->execute([':listName' => $list['List_Name']]);
             $items = $stmtList->fetchAll(\PDO::FETCH_ASSOC);
             $mappedItems = [];
             foreach ($items as $i) {
@@ -2120,7 +2167,7 @@ where n.External_Id != '" . self::EXCLUDE_TERM . "' AND n.Member_Status = '" . M
                     if ($neonTypeCode == '') {
                         // delete if previously set
                         if (isset($mappedItems[$hhkCode]) && $mappedItems[$hhkCode]['Neon_Type_Code'] != '') {
-                            $stmt = $dbh->prepare("delete from neon_type_map where idNeon_type_map = :id");
+                            $stmt = $dbh->prepare("DELETE FROM `neon_type_map` WHERE `idNeon_type_map` = :id");
                             $stmt->execute([':id' => $mappedItems[$hhkCode]['idNeon_type_map']]);
                         }
 
@@ -2131,9 +2178,9 @@ where n.External_Id != '" . self::EXCLUDE_TERM . "' AND n.Member_Status = '" . M
                     }
 
                     //upsert
-                    $stmt = $dbh->prepare("INSERT INTO neon_type_map (List_Name, Neon_Name, Neon_Type_Code, Neon_Type_Name, HHK_Type_Code, Updated_By, Last_Updated)
-                        VALUES (:name, :item, :n, :k, :typeCode, :user, now())
-                        ON DUPLICATE KEY UPDATE Neon_Name = VALUES(Neon_Name), Neon_Type_Code = VALUES(Neon_Type_Code), Neon_Type_Name = VALUES(Neon_Type_Name), Updated_By = VALUES(Updated_By), Last_Updated = VALUES(Last_Updated)");
+                    $stmt = $dbh->prepare("INSERT INTO `neon_type_map` (`List_Name`, `Neon_Name`, `Neon_Type_Code`, `Neon_Type_Name`, `HHK_Type_Code`, `Updated_By`, `Last_Updated`)
+                        VALUES (:name, :item, :n, :k, :typeCode, :user, NOW())
+                        ON DUPLICATE KEY UPDATE `Neon_Name` = VALUES(`Neon_Name`), `Neon_Type_Code` = VALUES(`Neon_Type_Code`), `Neon_Type_Name` = VALUES(`Neon_Type_Name`), `Updated_By` = VALUES(`Updated_By`), `Last_Updated` = VALUES(`Last_Updated`)");
                     $stmt->execute([
                         ':name' => $list['List_Name'],
                         ':item' => $list['List_Item'],
@@ -2167,9 +2214,9 @@ where n.External_Id != '" . self::EXCLUDE_TERM . "' AND n.Member_Status = '" . M
             if(isset($source['name']) && $source['name'] == self::SOURCE){
                 $found = true;
                 //upsert
-                $stmt = $dbh->prepare("INSERT INTO neon_type_map (List_Name, Neon_Name, Neon_Type_Code, Neon_Type_Name, HHK_Type_Code, Updated_By, Last_Updated)
-                    VALUES (:name, :item, :n, :k, :typeCode, :user, now())
-                    ON DUPLICATE KEY UPDATE Neon_Name = VALUES(Neon_Name), Neon_Type_Code = VALUES(Neon_Type_Code), Neon_Type_Name = VALUES(Neon_Type_Name), Updated_By = VALUES(Updated_By), Last_Updated = VALUES(Last_Updated)");
+                $stmt = $dbh->prepare("INSERT INTO `neon_type_map` (`List_Name`, `Neon_Name`, `Neon_Type_Code`, `Neon_Type_Name`, `HHK_Type_Code`, `Updated_By`, `Last_Updated`)
+                    VALUES (:name, :item, :n, :k, :typeCode, :user, NOW())
+                    ON DUPLICATE KEY UPDATE `Neon_Name` = VALUES(`Neon_Name`), `Neon_Type_Code` = VALUES(`Neon_Type_Code`), `Neon_Type_Name` = VALUES(`Neon_Type_Name`), `Updated_By` = VALUES(`Updated_By`), `Last_Updated` = VALUES(`Last_Updated`)");
                 $stmt->execute([
                     ':name' => "sources",
                     ':item' => "source",
@@ -2183,7 +2230,7 @@ where n.External_Id != '" . self::EXCLUDE_TERM . "' AND n.Member_Status = '" . M
         }
         
         if($found == false){
-            $stmt = $dbh->prepare("delete from neon_type_map where List_Name = :name and HHK_Type_Code = :code");
+            $stmt = $dbh->prepare("DELETE FROM `neon_type_map` WHERE `List_Name` = :name AND `HHK_Type_Code` = :code");
             $stmt->execute([':name'=>"sources", ':code'=>self::SOURCE]);
         }
     }

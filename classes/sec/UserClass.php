@@ -180,9 +180,10 @@ class UserClass
         try {
         $id = intval($userId, 10);
 
-        $stmt = "update w_users set `Chg_PW` = '1', `Last_Updated` = '" . date("Y-m-d H:i:s") . "' where idName = $id";
+        $stmt = $dbh->prepare("UPDATE `w_users` SET `Chg_PW` = '1', `Last_Updated` = :lastUpdated WHERE `idName` = :id");
+        $stmt->execute([':lastUpdated' => date("Y-m-d H:i:s"), ':id' => $id]);
 
-        if ($dbh->exec($stmt) > 0) {
+        if ($stmt->rowCount() > 0) {
             self::insertUserLog($dbh, UserClass::Expired, 'forcePwReset', date("Y-m-d H:i:s"));
         }
         } catch (\Exception $e) {}
@@ -285,9 +286,9 @@ class UserClass
             $ipRS->IP_addr->setStoredVal($ipAddr);
 
             // check if IP is assigned to a group
-            $query = "select * from w_group_ip where IP_addr = '$ipAddr'";
+            $query = "SELECT * FROM `w_group_ip` WHERE `IP_addr` = :ipAddr";
             $stmt = $dbh->prepare($query);
-            $stmt->execute();
+            $stmt->execute([':ipAddr' => $ipAddr]);
             if ($stmt->rowCount() == 0) { // only revoke if no groups are assigned
                 if (count(EditRS::select($dbh, $ipRS, array(
                     $ipAddr
@@ -321,12 +322,14 @@ class UserClass
     public static function checkPCAccess(\PDO $dbh, $gc = false)
     {
         $remoteIp = self::getRemoteIp();
-        $query = "SELECT * from w_auth_ip waip";
+        $params = [];
+        $query = "SELECT * FROM `w_auth_ip` `waip`";
         if ($gc) {
-            $query .= " join w_group_ip wgip on waip.IP_addr = wgip.IP_addr where wgip.Group_Code = '$gc'";
+            $query .= " JOIN `w_group_ip` `wgip` ON `waip`.`IP_addr` = `wgip`.`IP_addr` WHERE `wgip`.`Group_Code` = :gc";
+            $params[':gc'] = $gc;
         }
         $stmt = $dbh->prepare($query);
-        $stmt->execute();
+        $stmt->execute($params);
         $rows = $stmt->fetchAll();
 
         foreach ($rows as $row) {
@@ -417,7 +420,7 @@ class UserClass
         }
 
         if ($success) {
-            $query = "update w_users set PW_Change_Date = now(), PW_Updated_By = :uname, Enc_PW = :newPw, Chg_PW = :reset, Status = 'a' where idName = :id;";
+            $query = "UPDATE `w_users` SET `PW_Change_Date` = NOW(), `PW_Updated_By` = :uname, `Enc_PW` = :newPw, `Chg_PW` = :reset, `Status` = 'a' WHERE `idName` = :id;";
             $stmt = $dbh->prepare($query);
             $stmt->execute(array(
                 ':uname' => $ssn->username,
@@ -429,7 +432,7 @@ class UserClass
             if ($stmt->rowCount() == 1) {
                 $this->insertUserLog($dbh, UserClass::PW_Changed, $uname);
 
-                $query = "insert into w_user_passwords (idUser, Enc_PW) values(:idUser, :newPw);";
+                $query = "INSERT INTO `w_user_passwords` (`idUser`, `Enc_PW`) VALUES(:idUser, :newPw);";
                 $stmt = $dbh->prepare($query);
                 $stmt->execute(array(
                     ':idUser' => $id,
@@ -459,8 +462,9 @@ class UserClass
         $uS = Session::getInstance();
 
         // get prior password hashes
-        $query = "select Enc_PW from w_user_passwords where idUser = " . $uS->uid . " order by Timestamp desc limit " . $uS->PriorPasswords . ";";
-        $stmt = $dbh->query($query);
+        $query = "SELECT `Enc_PW` FROM `w_user_passwords` WHERE `idUser` = :idUser ORDER BY `Timestamp` DESC LIMIT " . intval($uS->PriorPasswords) . ";";
+        $stmt = $dbh->prepare($query);
+        $stmt->execute([':idUser' => $uS->uid]);
         $hashes = $stmt->fetchAll(\PDO::FETCH_COLUMN);
 
         foreach($hashes as $hash){
@@ -486,7 +490,7 @@ class UserClass
 
             $newPwHash = password_hash($newPw . $uS->sitePepper, PASSWORD_ARGON2ID);
 
-            $query = "update w_users set PW_Change_Date = now(), PW_Updated_By = 'install', Enc_PW = :newPw where idName = :id;";
+            $query = "UPDATE `w_users` SET `PW_Change_Date` = NOW(), `PW_Updated_By` = 'install', `Enc_PW` = :newPw WHERE `idName` = :id;";
             $stmt = $dbh->prepare($query);
             $stmt->execute(array(
                 ':newPw' => $newPwHash,
@@ -510,8 +514,9 @@ class UserClass
      */
     public static function isUserNew(\PDO $dbh, Session $uS): bool
     {
-        $query = "select idAnswer, idQuestion from w_user_answers A join w_users U on A.idUser = U.idName where U.User_Name='" . $uS->username . "' limit 3;";
-        $stmt = $dbh->query($query);
+        $query = "SELECT `idAnswer`, `idQuestion` FROM `w_user_answers` `A` JOIN `w_users` `U` ON `A`.`idUser` = `U`.`idName` WHERE `U`.`User_Name` = :username LIMIT 3;";
+        $stmt = $dbh->prepare($query);
+        $stmt->execute([':username' => $uS->username]);
         if ($stmt->rowCount() != 3 && $uS->AllowPasswordRecovery) {
             return true;
         }
@@ -654,8 +659,9 @@ class UserClass
                 $today = $now->setTime(0, 0);
                 $lastChangeDays = $date->diff($today)->format('%a');
                 if ($lastChangeDays >= $passResetDays) {
-                    $stmt = "update w_users set `Chg_PW` = '1', `Last_Updated` = '" . $deactivateDate->format("Y-m-d H:i:s") . "' where idName = $user[idName]";
-                    if ($dbh->exec($stmt) > 0) {
+                    $stmt = $dbh->prepare("UPDATE `w_users` SET `Chg_PW` = '1', `Last_Updated` = :lastUpdated WHERE `idName` = :idName");
+                    $stmt->execute([':lastUpdated' => $deactivateDate->format("Y-m-d H:i:s"), ':idName' => $user['idName']]);
+                    if ($stmt->rowCount() > 0) {
                         $user['Chg_PW'] = '1';
                         self::insertUserLog($dbh, UserClass::Expired, $user['User_Name'], $deactivateDate->format("Y-m-d H:i:s"));
                     }
@@ -876,11 +882,11 @@ class UserClass
         }
 
         try{
-            $stmt = $dbh->prepare("insert into w_user_log (`Username`, `Access_Date`, `IP`, `Action`, `Browser`, `OS`) values (:username, :timestamp , :remoteIp, :action, :browserName, :osName)");
+            $stmt = $dbh->prepare("INSERT INTO `w_user_log` (`Username`, `Access_Date`, `IP`, `Action`, `Browser`, `OS`) VALUES (:username, :timestamp , :remoteIp, :action, :browserName, :osName)");
             $stmt->execute(array(':username'=>$username, ':timestamp'=>$timestamp, ':remoteIp'=>$remoteIp, ':action'=>$action, ':browserName'=>$browserName, ':osName'=>$osName));
         }catch (\Exception $e){
             //Browser/OS fields not in DB - skip user agent
-            $stmt = $dbh->prepare("insert into w_user_log (`Username`, `Access_Date`, `IP`, `Action`) values (:username, :timestamp , :remoteIp, :action)");
+            $stmt = $dbh->prepare("INSERT INTO `w_user_log` (`Username`, `Access_Date`, `IP`, `Action`) VALUES (:username, :timestamp , :remoteIp, :action)");
             $stmt->execute(array(':username'=>$username, ':timestamp'=>$timestamp, ':remoteIp'=>$remoteIp, ':action'=>$action));
         }
     }
@@ -910,11 +916,11 @@ class UserClass
             return $uS->userCredentials;
         }
 
-        $stmt = $dbh->prepare("SELECT u.*, a.Role_Id as Role_Id, ifnull(idp.Name, 'Unknown Provider') as 'authProvider'
-FROM w_users u join w_auth a on u.idName = a.idName
-join `name` n on n.idName = u.idName
-left join `w_idp` idp on u.`idIdp` = idp.`idIdp`
-WHERE n.idName is not null and u.Status IN ('a', 'd') and n.`Member_Status` = 'a' and u.User_Name = :uname");
+        $stmt = $dbh->prepare("SELECT `u`.*, `a`.`Role_Id` AS `Role_Id`, IFNULL(`idp`.`Name`, 'Unknown Provider') AS 'authProvider'
+FROM `w_users` `u` JOIN `w_auth` `a` ON `u`.`idName` = `a`.`idName`
+JOIN `name` `n` ON `n`.`idName` = `u`.`idName`
+LEFT JOIN `w_idp` `idp` ON `u`.`idIdp` = `idp`.`idIdp`
+WHERE `n`.`idName` IS NOT NULL AND `u`.`Status` IN ('a', 'd') AND `n`.`Member_Status` = 'a' AND `u`.`User_Name` = :uname");
 
         $stmt->execute(array(':uname'=>$uname));
         $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
@@ -959,8 +965,9 @@ WHERE n.idName is not null and u.Status IN ('a', 'd') and n.`Member_Status` = 'a
                 $lastLoginDays = $date->diff($today)->format('%a');
                 $lastUpdatedDays = $lastUpdated->diff($today)->format('%a');
                 if ($lastLoginDays >= $userInactiveDays && $lastUpdatedDays >= $userInactiveDays) {
-                    $stmt = "update w_users set `Status` = 'd', `Updated_By` = 'HHK', `Last_Updated` = '" . $deactivateDate->format("Y-m-d H:i:s") . "' where idName = $user[idName]";
-                    if ($dbh->exec($stmt) > 0) {
+                    $stmt = $dbh->prepare("UPDATE `w_users` SET `Status` = 'd', `Updated_By` = 'HHK', `Last_Updated` = :lastUpdated WHERE `idName` = :idName");
+                    $stmt->execute([':lastUpdated' => $deactivateDate->format("Y-m-d H:i:s"), ':idName' => $user['idName']]);
+                    if ($stmt->rowCount() > 0) {
                         $user['Status'] = 'd';
                         self::insertUserLog($dbh, UserClass::Lockout, $user['User_Name'], $deactivateDate->format("Y-m-d H:i:s"), TRUE);
                     }
@@ -982,8 +989,9 @@ WHERE n.idName is not null and u.Status IN ('a', 'd') and n.`Member_Status` = 'a
         $id = intval($idName, 10);
 
         $grpArray = array("authorized"=>array(), "ip_restricted"=>array());
-        $query = "SELECT s.Group_Code, case when w.IP_Restricted = 1 then '1' else '0' end as `IP_Restricted` FROM id_securitygroup s join w_groups w on s.Group_Code = w.Group_Code WHERE s.idName = $id";
-        $stmt = $dbh->query($query);
+        $query = "SELECT `s`.`Group_Code`, CASE WHEN `w`.`IP_Restricted` = 1 THEN '1' ELSE '0' END AS `IP_Restricted` FROM `id_securitygroup` `s` JOIN `w_groups` `w` ON `s`.`Group_Code` = `w`.`Group_Code` WHERE `s`.`idName` = :id";
+        $stmt = $dbh->prepare($query);
+        $stmt->execute([':id' => $id]);
 
         while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
 
@@ -1030,8 +1038,8 @@ WHERE n.idName is not null and u.Status IN ('a', 'd') and n.`Member_Status` = 'a
 
             $remoteIp = self::getRemoteIp();
 
-            $query = "UPDATE w_users SET Session = '$sessionId', Ip = '$remoteIp', Last_Login=now() WHERE User_Name = '" . $ssn->username . "'";
-            $dbh->exec($query);
+            $query = "UPDATE `w_users` SET `Session` = :sessionId, `Ip` = :remoteIp, `Last_Login` = NOW() WHERE `User_Name` = :username";
+            $dbh->prepare($query)->execute([':sessionId' => $sessionId, ':remoteIp' => $remoteIp, ':username' => $ssn->username]);
 
             // Log access
             $this->insertUserLog($dbh, UserClass::Login);

@@ -126,7 +126,8 @@ class Reservation {
 
         // if we have a member id, is them in the name_guest table?
         if ($rData->getId() > 0) {
-        	$stmt = $dbh->query("Select count(*) from name_guest where idName = " . $rData->getId());
+        	$stmt = $dbh->prepare("SELECT COUNT(*) FROM `name_guest` WHERE `idName` = :idName");
+        	$stmt->execute([':idName' => $rData->getId()]);
         	$rows = $stmt->fetchAll(\PDO::FETCH_NUM);
 
         	if ($rows[0][0] > 0) {
@@ -157,21 +158,23 @@ class Reservation {
     	$uS = Session::getInstance();
 
     	// Load reservation
-        $stmt = $dbh->query("SELECT r.*, rg.idPsg, ifnull(v.idVisit, 0) as idVisit, ifnull(v.`Status`, '') as `SpanStatus`, ifnull(v.Span_Start, '') as `SpanStart`,
-            ifnull(v.Span_End, datedefaultnow(v.Expected_Departure)) as `SpanEnd`
-FROM reservation r
+        $stmt = $dbh->prepare("SELECT `r`.*, `rg`.`idPsg`, IFNULL(`v`.`idVisit`, 0) AS `idVisit`, IFNULL(`v`.`Status`, '') AS `SpanStatus`, IFNULL(`v`.`Span_Start`, '') AS `SpanStart`,
+            IFNULL(`v`.`Span_End`, datedefaultnow(`v`.`Expected_Departure`)) AS `SpanEnd`
+FROM `reservation` `r`
         LEFT JOIN
-    registration rg ON r.idRegistration = rg.idRegistration
+    `registration` `rg` ON `r`.`idRegistration` = `rg`.`idRegistration`
 	    LEFT JOIN
-    visit v on v.idReservation = r.idReservation and v.Span = 0
+    `visit` `v` ON `v`.`idReservation` = `r`.`idReservation` AND `v`.`Span` = 0
 
-WHERE r.idReservation = " . $rData->getIdResv());
+WHERE `r`.`idReservation` = :idResv");
+        $stmt->execute([':idResv' => $rData->getIdResv()]);
 
         $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
         if (count($rows) != 1) {
             // Deleted?
-            $stmt = $dbh->query("Select max(idReservation) from reservation;");
+            $stmt = $dbh->prepare("SELECT MAX(`idReservation`) FROM `reservation`;");
+            $stmt->execute();
             $rows = $stmt->FetchAll(\PDO::FETCH_NUM);
 
             if ($rData->getIdResv() > 0 && count($rows) > 0 && $rows[0][0] > $rData->getIdResv()) {
@@ -694,12 +697,14 @@ WHERE r.idReservation = " . $rData->getIdResv());
                     // select gateway
                     if ($resv->getIdResource() > 0) {
                         // Get gateway merchant
-                        $gwStmt = $dbh->query("SELECT ifnull(l.Merchant, '') as `Merchant`, ifnull(l.idLocation, 0) as idLocation FROM location l join room r on l.idLocation = r.idLocation
-                        join resource_room rr on r.idRoom = rr.idRoom where l.Status = 'a' and rr.idResource = " . $resv->getIdResource());
+                        $gwStmt = $dbh->prepare("SELECT IFNULL(`l`.`Merchant`, '') AS `Merchant`, IFNULL(`l`.`idLocation`, 0) AS `idLocation` FROM `location` `l` JOIN `room` `r` ON `l`.`idLocation` = `r`.`idLocation`
+                        JOIN `resource_room` `rr` ON `r`.`idRoom` = `rr`.`idRoom` WHERE `l`.`Status` = 'a' AND `rr`.`idResource` = :idResource");
+                        $gwStmt->execute([':idResource' => $resv->getIdResource()]);
 
                     } else {
-                        $gwStmt = $dbh->query("SELECT DISTINCT ifnull(l.Merchant, '') as `Merchant`, ifnull(l.idLocation, 0) as idLocation FROM room rm LEFT JOIN location l  on l.idLocation = rm.idLocation
-                        where l.`Status` = 'a' or l.`Status` is null;");
+                        $gwStmt = $dbh->prepare("SELECT DISTINCT IFNULL(`l`.`Merchant`, '') AS `Merchant`, IFNULL(`l`.`idLocation`, 0) AS `idLocation` FROM `room` `rm` LEFT JOIN `location` `l` ON `l`.`idLocation` = `rm`.`idLocation`
+                        WHERE `l`.`Status` = 'a' OR `l`.`Status` IS NULL;");
+                        $gwStmt->execute();
                     }
 
                     $rows = $gwStmt->fetchAll(\PDO::FETCH_ASSOC);
@@ -886,14 +891,25 @@ WHERE r.idReservation = " . $rData->getIdResv());
 
         $mrkup = '';
 
-        $stmt = $dbh->query("select * from vresv_patient "
-            . "where Status in ('".ReservationStatus::Staying."','".ReservationStatus::Committed."','".ReservationStatus::UnCommitted."','".ReservationStatus::Waitlist."') "
-            . "and idPsg= " . $this->reserveData->getIdPsg() . " order by `Expected_Arrival`");
+        $stmt = $dbh->prepare("SELECT * FROM `vresv_patient`
+            WHERE `Status` IN (:stStaying, :stCommitted, :stUnCommitted, :stWaitlist)
+            AND `idPsg` = :idPsg ORDER BY `Expected_Arrival`");
+        $stmt->execute([
+            ':stStaying' => ReservationStatus::Staying,
+            ':stCommitted' => ReservationStatus::Committed,
+            ':stUnCommitted' => ReservationStatus::UnCommitted,
+            ':stWaitlist' => ReservationStatus::Waitlist,
+            ':idPsg' => $this->reserveData->getIdPsg(),
+        ]);
 
 
         $trs = array();
         $today = new \DateTime();
         $today->setTime(0, 0, 0);
+
+        $gstmt = $dbh->prepare("SELECT `n`.`Name_Full`, `rg`.`Primary_Guest`
+FROM `reservation_guest` `rg` JOIN `name` `n` ON `rg`.`idGuest` = `n`.`idName`
+WHERE `rg`.`idReservation` = :idReservation");
 
         while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
 
@@ -921,9 +937,7 @@ WHERE r.idReservation = " . $rData->getIdResv());
 
 
             // Get guest names
-            $gstmt = $dbh->query("select n.Name_Full, rg.Primary_Guest
-from reservation_guest rg join name n on rg.idGuest = n.idName
-where rg.idReservation =" . $r['idReservation']);
+            $gstmt->execute([':idReservation' => $r['idReservation']]);
 
             $names = '';
             $fst = TRUE;
@@ -1069,7 +1083,6 @@ where rg.idReservation =" . $r['idReservation']);
      */
     protected static function findConflictingStays(\PDO $dbh, array &$psgMembers, ?\DateTimeInterface $arrivalDT, $idPsg, ?\DateTimeInterface $departureDT, $idVisit = 0, $idSpan = -1) {
 
-        $whStays = '';
         $rooms = array();
 
         // Dates correct?
@@ -1083,40 +1096,48 @@ where rg.idReservation =" . $r['idReservation']);
         }
 
         // Collect member ids
+        $stayIdPlaceholders = [];
+        $stayIdParams = [];
         foreach ($psgMembers as $m) {
             if ($m->getId() != 0 && $m->isBlocked() === FALSE) {
-                $whStays .= ',' . $m->getId();
+                $ph = ':sid' . count($stayIdPlaceholders);
+                $stayIdPlaceholders[] = $ph;
+                $stayIdParams[$ph] = $m->getId();
             }
         }
 
         // Find any visits.
-        if ($whStays != '') {
+        if (count($stayIdPlaceholders) > 0) {
 
             // Check ongoing visits
-            $vstmt = $dbh->query("SELECT
-    s.`idName`,
-    s.`idVisit`,
-    s.`Visit_Span`,
-    s.`idRoom`,
-    s.`Status` as `Status`,
-    r.`idPsg`,
-    rm.`Title`,
-    v.`idPrimaryGuest`
+            $vstmt = $dbh->prepare("SELECT
+    `s`.`idName`,
+    `s`.`idVisit`,
+    `s`.`Visit_Span`,
+    `s`.`idRoom`,
+    `s`.`Status` AS `Status`,
+    `r`.`idPsg`,
+    `rm`.`Title`,
+    `v`.`idPrimaryGuest`
 FROM
-    stays s
+    `stays` `s`
         JOIN
-    visit v ON s.idVisit = v.idVisit
-        AND s.Visit_Span = v.Span
+    `visit` `v` ON `s`.`idVisit` = `v`.`idVisit`
+        AND `s`.`Visit_Span` = `v`.`Span`
         JOIN
-    room rm ON s.idRoom = rm.idRoom
+    `room` `rm` ON `s`.`idRoom` = `rm`.`idRoom`
         JOIN
-    registration r ON v.idRegistration = r.idRegistration
+    `registration` `r` ON `v`.`idRegistration` = `r`.`idRegistration`
 WHERE
-    DATEDIFF(DATE(s.Span_Start_Date), DATE(ifnull(s.Span_End_Date, '2500-01-01'))) != 0
-    and DATE(ifnull(s.Span_End_Date, datedefaultnow(s.Expected_Co_Date))) > DATE('" . $arrivalDT->format('Y-m-d') . "')
-    and DATE(s.Span_Start_Date) < DATE('" . $departureDT->format('Y-m-d') . "')
-    and s.idName in (" . substr($whStays, 1) . ") "
-                    . " order by s.idVisit, s.Visit_Span");
+    DATEDIFF(DATE(`s`.`Span_Start_Date`), DATE(IFNULL(`s`.`Span_End_Date`, '2500-01-01'))) != 0
+    AND DATE(IFNULL(`s`.`Span_End_Date`, datedefaultnow(`s`.`Expected_Co_Date`))) > DATE(:arrivalDT)
+    AND DATE(`s`.`Span_Start_Date`) < DATE(:departureDT)
+    AND `s`.`idName` IN (" . implode(',', $stayIdPlaceholders) . ")
+    ORDER BY `s`.`idVisit`, `s`.`Visit_Span`");
+            $vstmt->execute($stayIdParams + [
+                ':arrivalDT' => $arrivalDT->format('Y-m-d'),
+                ':departureDT' => $departureDT->format('Y-m-d'),
+            ]);
 
             while ($s = $vstmt->fetch(\PDO::FETCH_ASSOC)) {
                 // These guests are already staying somewhere
@@ -1168,7 +1189,6 @@ WHERE
     protected static function findConflictingReservations(\PDO $dbh, $idPsg, $idResv, array &$psgMembers, $arrivalDT, $departDT, $resvPrompt = 'Reservation') {
 
         // Check reservations
-        $whResv = '';
         $rescs = array();
 
         if (is_null($arrivalDT)) {
@@ -1181,22 +1201,35 @@ WHERE
             $departDT->add(new \DateInterval('P1D'));
         }
 
+        $resvIdPlaceholders = [];
+        $resvIdParams = [];
         foreach ($psgMembers as $m) {
             if ($m->getId() != 0 && $m->isBlocked() === FALSE) {
-                $whResv .= ',' . $m->getId();
+                $ph = ':rid' . count($resvIdPlaceholders);
+                $resvIdPlaceholders[] = $ph;
+                $resvIdParams[$ph] = $m->getId();
             }
         }
 
-        if ($whResv != '') {
+        if (count($resvIdPlaceholders) > 0) {
 
-            $rStatus = " in ('" . ReservationStatus::Committed. "','" . ReservationStatus::UnCommitted. "','". ReservationStatus::Waitlist. "') ";
-
-            $rstmt = $dbh->query("select rg.idReservation, reg.idPsg, rg.idGuest, r.idResource, r.`Status` "
-                . "from reservation_guest rg  "
-                . "join reservation r on r.idReservation = rg.idReservation "
-                . "join registration reg on reg.idRegistration = r.idRegistration "
-                . "where r.`Status` $rStatus and rg.idGuest in (" . substr($whResv, 1) . ") and rg.idReservation != " . $idResv
-                . " and r.Expected_Arrival < '".$departDT->format('Y-m-d') . "' and r.Expected_Departure > '".$arrivalDT->format('Y-m-d') . " 23:59:59'");
+            $rstmt = $dbh->prepare("SELECT `rg`.`idReservation`, `reg`.`idPsg`, `rg`.`idGuest`, `r`.`idResource`, `r`.`Status`
+                FROM `reservation_guest` `rg`
+                JOIN `reservation` `r` ON `r`.`idReservation` = `rg`.`idReservation`
+                JOIN `registration` `reg` ON `reg`.`idRegistration` = `r`.`idRegistration`
+                WHERE `r`.`Status` IN (:stCommitted, :stUnCommitted, :stWaitlist)
+                    AND `rg`.`idGuest` IN (" . implode(',', $resvIdPlaceholders) . ")
+                    AND `rg`.`idReservation` != :idResv
+                    AND `r`.`Expected_Arrival` < :departDT
+                    AND `r`.`Expected_Departure` > :arrivalDT");
+            $rstmt->execute($resvIdParams + [
+                ':stCommitted' => ReservationStatus::Committed,
+                ':stUnCommitted' => ReservationStatus::UnCommitted,
+                ':stWaitlist' => ReservationStatus::Waitlist,
+                ':idResv' => $idResv,
+                ':departDT' => $departDT->format('Y-m-d'),
+                ':arrivalDT' => $arrivalDT->format('Y-m-d') . ' 23:59:59',
+            ]);
 
             while ($r = $rstmt->fetch(\PDO::FETCH_ASSOC)) {
 
@@ -1433,9 +1466,10 @@ WHERE
             return $oldResvId;
         }
 
-        $stmt = $dbh->query("SELECT  MAX(r.idReservation), r.idGuest "
-                . "FROM reservation r LEFT JOIN registration rg ON r.idRegistration = rg.idRegistration "
-                . "WHERE rg.idPsg = " . $this->reserveData->getIdPsg());
+        $stmt = $dbh->prepare("SELECT MAX(`r`.`idReservation`), `r`.`idGuest`
+                FROM `reservation` `r` LEFT JOIN `registration` `rg` ON `r`.`idRegistration` = `rg`.`idRegistration`
+                WHERE `rg`.`idPsg` = :idPsg");
+        $stmt->execute([':idPsg' => $this->reserveData->getIdPsg()]);
 
         $rows = $stmt->fetchAll(\PDO::FETCH_NUM);
 
@@ -1468,11 +1502,16 @@ WHERE
     		return '';
     	}
 
-    	$stmt = $dbh->query("select v.idVisit, v.Span, v.Span_Start, v.Span_End, v.`Status`, g.Description as `Status_Title`, v.idPrimaryGuest, r.Title as `Room`
-	from visit v left join resource r on v.idResource = r.idResource
-    left join gen_lookups g on g.Table_Name = 'Visit_Status' and g.Code = v.`Status`
-    LEFT JOIN registration rg ON v.idRegistration = rg.idRegistration
- where v.Status not in ('".VisitStatus::Cancelled."', '".VisitStatus::Pending."') and rg.idPsg = " . $this->reserveData->getIdPsg() ." order by Span_Start DESC limit 1;");
+    	$stmt = $dbh->prepare("SELECT `v`.`idVisit`, `v`.`Span`, `v`.`Span_Start`, `v`.`Span_End`, `v`.`Status`, `g`.`Description` AS `Status_Title`, `v`.`idPrimaryGuest`, `r`.`Title` AS `Room`
+	FROM `visit` `v` LEFT JOIN `resource` `r` ON `v`.`idResource` = `r`.`idResource`
+    LEFT JOIN `gen_lookups` `g` ON `g`.`Table_Name` = 'Visit_Status' AND `g`.`Code` = `v`.`Status`
+    LEFT JOIN `registration` `rg` ON `v`.`idRegistration` = `rg`.`idRegistration`
+ WHERE `v`.`Status` NOT IN (:stCancelled, :stPending) AND `rg`.`idPsg` = :idPsg ORDER BY `Span_Start` DESC LIMIT 1;");
+    	$stmt->execute([
+    		':stCancelled' => VisitStatus::Cancelled,
+    		':stPending' => VisitStatus::Pending,
+    		':idPsg' => $this->reserveData->getIdPsg(),
+    	]);
 
     	$rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
     	$mkup = '';
@@ -1538,7 +1577,8 @@ WHERE
                         // Still staying?
                         if ($g->isStaying() === FALSE) {
                             // Delete record
-                            $dbh->exec("Delete from reservation_guest where idReservation = " . $this->reserveData->getIdResv() . " and idGuest = " . $g->getId());
+                            $dbh->prepare("DELETE FROM `reservation_guest` WHERE `idReservation` = :idResv AND `idGuest` = :idGuest")
+                                ->execute([':idResv' => $this->reserveData->getIdResv(), ':idGuest' => $g->getId()]);
                         }
 
                         // Is this the primary guest?
@@ -1546,7 +1586,8 @@ WHERE
                         if ($g->isPrimaryGuest()) {
                             $priGuestFlag = '1';
                         }
-                        $dbh->exec("update reservation_guest set Primary_Guest = '$priGuestFlag' where idReservation = " . $this->reserveData->getIdResv() . " and idGuest = " . $g->getId());
+                        $dbh->prepare("UPDATE `reservation_guest` SET `Primary_Guest` = :priGuestFlag WHERE `idReservation` = :idResv AND `idGuest` = :idGuest")
+                            ->execute([':priGuestFlag' => $priGuestFlag, ':idResv' => $this->reserveData->getIdResv(), ':idGuest' => $g->getId()]);
 
                         break;
                     }

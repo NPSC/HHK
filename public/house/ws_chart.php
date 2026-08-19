@@ -54,11 +54,12 @@ try {
             ];
 
             $obh = new PDO($dsn, 'overview', $overviewPw, $options);
-            $obh->exec("SET SESSION wait_timeout = 3600;");
+            $obh->prepare("SET SESSION wait_timeout = 3600;")->execute();
 
 
 
-            $stmt = $obh->query("Select Rate, count(Rate) from overview.site group by Rate order by Start_Date;");
+            $stmt = $obh->prepare("SELECT `Rate`, COUNT(`Rate`) FROM `overview`.`site` GROUP BY `Rate` ORDER BY `Start_Date`;");
+            $stmt->execute();
 
             $events = [];
             $events[] = ['Rate', 'Houses at Rate'];
@@ -80,10 +81,11 @@ try {
             ];
 
             $obh = new PDO($dsn, 'overview', $overviewPw, $options);
-            $obh->exec("SET SESSION wait_timeout = 3600;");
+            $obh->prepare("SET SESSION wait_timeout = 3600;")->execute();
 
 
-            $stmt = $obh->query("Select Title, Contracted_Rooms from overview.site  order by Start_Date;");
+            $stmt = $obh->prepare("SELECT `Title`, `Contracted_Rooms` FROM `overview`.`site` ORDER BY `Start_Date`;");
+            $stmt->execute();
 
             $events = [];
             $events[] = ['Rooms', 'House Rooms'];
@@ -105,12 +107,13 @@ try {
             ];
 
             $obh = new PDO($dsn, 'overview', $overviewPw, $options);
-            $obh->exec("SET SESSION wait_timeout = 3600;");
+            $obh->prepare("SET SESSION wait_timeout = 3600;")->execute();
 
 
             $events[] = ['Year', 'Visit Nights'];
 
-            $stmt = $obh->query("Select Title, Db_Schema, Start_Date from site order by Start_Date;");
+            $stmt = $obh->prepare("SELECT `Title`, `Db_Schema`, `Start_Date` FROM `site` ORDER BY `Start_Date`;");
+            $stmt->execute();
             $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
             // Cycle years
@@ -133,7 +136,8 @@ try {
 
                     $schema = $r['Db_Schema'];
 
-                    $stmt = $obh->query("CALL `$schema`.sum_visit_days($y);");
+                    $stmt = $obh->prepare("CALL `$schema`.`sum_visit_days`(:year);");
+                    $stmt->execute([':year' => $y]);
 
                     while ($c = $stmt->fetch(\PDO::FETCH_NUM)) {
                         $cnt = $c[0];
@@ -159,12 +163,13 @@ try {
             ];
 
             $obh = new \PDO($dsn, 'overview', $overviewPw, $options);
-            $obh->exec("SET SESSION wait_timeout = 3600;");
+            $obh->prepare("SET SESSION wait_timeout = 3600;")->execute();
 
 
             $events[] = ['Year', 'Income'];
 
-            $stmt = $obh->query("Select Title, Db_Schema, Start_Date from site order by Start_Date;");
+            $stmt = $obh->prepare("SELECT `Title`, `Db_Schema`, `Start_Date` FROM `site` ORDER BY `Start_Date`;");
+            $stmt->execute();
             $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
 
@@ -179,7 +184,8 @@ try {
 
                 $schema = $r['Db_Schema'];
 
-                $stmt = $obh->query("select YEAR(Payment_Date), sum(amount) from $schema.payment where Status_Code = 's' and Is_Refund = 0 group by YEAR(Payment_Date)");
+                $stmt = $obh->prepare("SELECT YEAR(`Payment_Date`), SUM(`amount`) FROM `$schema`.`payment` WHERE `Status_Code` = :statusCode AND `Is_Refund` = :isRefund GROUP BY YEAR(`Payment_Date`)");
+                $stmt->execute([':statusCode' => 's', ':isRefund' => 0]);
 
                 $rw = $stmt->fetchAll(\PDO::FETCH_NUM);
 

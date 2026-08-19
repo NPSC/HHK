@@ -60,19 +60,21 @@ class ReservationSvcs
 
         if ($idPsg > 0 && $id > 0) {
             // look for both
-            $stmt = $dbh->query("select * from vfind_guests " . "where (idPsg = $idPsg or idGuest = $id) and idReservation != $idResv and " . "Date(Arrival_Date) < DATE('" . $endDT->format('Y-m-d') . "') and Date(Departure_Date) > DATE('" . $startDT->format('Y-m-d') . "')");
+            $stmt = $dbh->prepare("SELECT * FROM `vfind_guests` WHERE (`idPsg` = :idPsg OR `idGuest` = :id) AND `idReservation` != :idResv AND DATE(`Arrival_Date`) < DATE(:endDT) AND DATE(`Departure_Date`) > DATE(:startDT)");
+            $stmt->execute([':idPsg' => $idPsg, ':id' => $id, ':idResv' => $idResv, ':endDT' => $endDT->format('Y-m-d'), ':startDT' => $startDT->format('Y-m-d')]);
 
             $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
         } else if ($idPsg > 0) {
 
-            $stmt = $dbh->query("select * from vfind_guests where idPsg = $idPsg and idReservation != $idResv and " . "Date(Arrival_Date) < DATE('" . $endDT->format('Y-m-d') . "') and Date(Departure_Date) > DATE('" . $startDT->format('Y-m-d') . "')");
+            $stmt = $dbh->prepare("SELECT * FROM `vfind_guests` WHERE `idPsg` = :idPsg AND `idReservation` != :idResv AND DATE(`Arrival_Date`) < DATE(:endDT) AND DATE(`Departure_Date`) > DATE(:startDT)");
+            $stmt->execute([':idPsg' => $idPsg, ':idResv' => $idResv, ':endDT' => $endDT->format('Y-m-d'), ':startDT' => $startDT->format('Y-m-d')]);
 
             $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
         } else if ($id > 0) {
 
             // EKC 9/15/2023; changed all three to vfind_guests from vresv_guests.
-            //$stmt = $dbh->query("select * from vresv_guest where idGuest= $id and idReservation != $idResv and " . "Date(Arrival_Date) < DATE('" . $endDT->format('Y-m-d') . "') and Date(Departure_Date) > DATE('" . $startDT->format('Y-m-d') . "')");
-            $stmt = $dbh->query("select * from vfind_guests where idGuest= $id and idReservation != $idResv and " . "Date(Arrival_Date) < DATE('" . $endDT->format('Y-m-d') . "') and Date(Departure_Date) > DATE('" . $startDT->format('Y-m-d') . "')");
+            $stmt = $dbh->prepare("SELECT * FROM `vfind_guests` WHERE `idGuest` = :id AND `idReservation` != :idResv AND DATE(`Arrival_Date`) < DATE(:endDT) AND DATE(`Departure_Date`) > DATE(:startDT)");
+            $stmt->execute([':id' => $id, ':idResv' => $idResv, ':endDT' => $endDT->format('Y-m-d'), ':startDT' => $startDT->format('Y-m-d')]);
 
             $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
         }
@@ -104,13 +106,15 @@ class ReservationSvcs
 
         $guest = new Guest($dbh, '', $idGuest);
 
-        $stmt = $dbh->query("Select d.`idDocument`, g.`Code`, g.`Description` from `document` d join gen_lookups g on d.idDocument = g.`Substitute` join gen_lookups fu on fu.`Substitute` = g.`Table_Name` where fu.`Code` = 'c' AND fu.`Table_Name` = 'Form_Upload' order by g.`Order`");
+        $stmt = $dbh->prepare("SELECT `d`.`idDocument`, `g`.`Code`, `g`.`Description` FROM `document` `d` JOIN `gen_lookups` `g` ON `d`.`idDocument` = `g`.`Substitute` JOIN `gen_lookups` `fu` ON `fu`.`Substitute` = `g`.`Table_Name` WHERE `fu`.`Code` = 'c' AND `fu`.`Table_Name` = 'Form_Upload' ORDER BY `g`.`Order`");
+        $stmt->execute();
         $docRows = $stmt->fetchAll();
 
         if (count($docRows) > 0) {
 
             //get cron jobs
-            $stmt = $dbh->query("select * from cronjobs where `Code` = 'SendConfirmationEmailJob' and `Status` = 'a'");
+            $stmt = $dbh->prepare("SELECT * FROM `cronjobs` WHERE `Code` = 'SendConfirmationEmailJob' AND `Status` = 'a'");
+            $stmt->execute();
             $jobs = $stmt->fetchAll(\PDO::FETCH_ASSOC);
             foreach($jobs as $job){
                 $params = json_decode($job["Params"], true);
@@ -304,7 +308,8 @@ class ReservationSvcs
         $return = array("docs"=>[]);
         $docs = array();
 
-        $stmt = $dbh->query("Select g.`Code`, g.`Description`, d.`Abstract`, d.`Doc`, d.idDocument as `docId` from `document` d join gen_lookups g on d.idDocument = g.`Substitute` where g.`Table_Name` = 'Reg_Agreement' order by g.`Order`");
+        $stmt = $dbh->prepare("SELECT `g`.`Code`, `g`.`Description`, `d`.`Abstract`, `d`.`Doc`, `d`.`idDocument` AS `docId` FROM `document` `d` JOIN `gen_lookups` `g` ON `d`.`idDocument` = `g`.`Substitute` WHERE `g`.`Table_Name` = 'Reg_Agreement' ORDER BY `g`.`Order`");
+        $stmt->execute();
         $docRows = $stmt->fetchAll();
 
         if ($uS->RegForm == 1) {
@@ -371,7 +376,7 @@ class ReservationSvcs
             //get primary guest
             if ($idVisit > 0) {
 
-                $stmtv = $dbh->prepare("Select v.idPrimaryGuest, v.idRegistration, r.idPsg, v.idReservation from visit v join registration r on v.idRegistration = r.idRegistration where idVisit = :idv and span = :span");
+                $stmtv = $dbh->prepare("SELECT `v`.`idPrimaryGuest`, `v`.`idRegistration`, `r`.`idPsg`, `v`.`idReservation` FROM `visit` `v` JOIN `registration` `r` ON `v`.`idRegistration` = `r`.`idRegistration` WHERE `idVisit` = :idv AND `span` = :span");
                 $stmtv->execute(array(
                     ':idv' => $idVisit,
                     ':span' => $span
@@ -385,7 +390,7 @@ class ReservationSvcs
                 }
 
             }else if($idReservation > 0){
-                $stmtr = $dbh->prepare("Select rg.idGuest, reg.idPsg from reservation r join reservation_guest rg on r.idReservation = rg.idReservation join registration reg on r.idRegistration = reg.idRegistration where rg.idReservation = :idr and `Primary_Guest` = '1'");
+                $stmtr = $dbh->prepare("SELECT `rg`.`idGuest`, `reg`.`idPsg` FROM `reservation` `r` JOIN `reservation_guest` `rg` ON `r`.`idReservation` = `rg`.`idReservation` JOIN `registration` `reg` ON `r`.`idRegistration` = `reg`.`idRegistration` WHERE `rg`.`idReservation` = :idr AND `Primary_Guest` = '1'");
                 $stmtr->execute(array(
                     ':idr' => $idReservation
                 ));
@@ -419,7 +424,7 @@ class ReservationSvcs
             if ($idVisit > 0) {
 
                 // arrival date and time
-                $stmtv = $dbh->prepare("Select idPrimaryGuest, idHospital_stay, idRegistration from visit where idVisit = :idv");
+                $stmtv = $dbh->prepare("SELECT `idPrimaryGuest`, `idHospital_stay`, `idRegistration` FROM `visit` WHERE `idVisit` = :idv");
                 $stmtv->execute(array(
                     ':idv' => $idVisit
                 ));
@@ -439,11 +444,13 @@ class ReservationSvcs
                 $priGuest = new Guest($dbh, '', $idPG);
 
                 // Get additional Guests
-                $query = "select * from vadditional_guests where Status in ('" . VisitStatus::Active . "','" . VisitStatus::CheckedOut . "') and idVisit = :idv LIMIT 6";
+                $query = "SELECT * FROM `vadditional_guests` WHERE `Status` IN (:stActive, :stCheckedOut) AND `idVisit` = :idv LIMIT 6";
                 $stmt = $dbh->prepare($query, array(
                     \PDO::ATTR_CURSOR => \PDO::CURSOR_FWDONLY
                 ));
                 $stmt->bindValue(':idv', $idVisit, \PDO::PARAM_INT);
+                $stmt->bindValue(':stActive', VisitStatus::Active);
+                $stmt->bindValue(':stCheckedOut', VisitStatus::CheckedOut);
                 $stmt->execute();
                 $stays = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
@@ -514,17 +521,18 @@ class ReservationSvcs
             // Patient and Hospital
             if ($idHospitalStay > 0) {
 
-                $stmt = $dbh->query("Select n.Name_Full, n.BirthDate, case when ha.Description = '' then ha.`Title` else ha.Description end as `Assoc`, case when hh.Description = '' then hh.`Title` else hh.Description end as `Hosp`
-    from
-        hospital_stay hs
-            left join
-        `name` n ON hs.idPatient = n.idName
-            left join
-        hospital ha ON hs.idAssociation = ha.idHospital
-            left join
-        hospital hh ON hs.idHospital = hh.idHospital
-    where
-        hs.idHospital_stay = $idHospitalStay");
+                $stmt = $dbh->prepare("SELECT `n`.`Name_Full`, `n`.`BirthDate`, CASE WHEN `ha`.`Description` = '' THEN `ha`.`Title` ELSE `ha`.`Description` END AS `Assoc`, CASE WHEN `hh`.`Description` = '' THEN `hh`.`Title` ELSE `hh`.`Description` END AS `Hosp`
+    FROM
+        `hospital_stay` `hs`
+            LEFT JOIN
+        `name` `n` ON `hs`.`idPatient` = `n`.`idName`
+            LEFT JOIN
+        `hospital` `ha` ON `hs`.`idAssociation` = `ha`.`idHospital`
+            LEFT JOIN
+        `hospital` `hh` ON `hs`.`idHospital` = `hh`.`idHospital`
+    WHERE
+        `hs`.`idHospital_stay` = :idHospitalStay");
+                $stmt->execute([':idHospitalStay' => $idHospitalStay]);
 
                 $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
@@ -621,20 +629,20 @@ class ReservationSvcs
      * @return array
      */
     public static function getSignedCkinDocs(\PDO $dbh, $idPsg = 0, $idReservation = 0, $idVisit = 0, $span = 0){
-        $sql = 'select * from v_signed_reg_forms where PSG_Id = :idPsg';
+        $sql = 'SELECT * FROM `v_signed_reg_forms` WHERE `PSG_Id` = :idPsg';
         $params = array(':idPsg'=>$idPsg);
 
         if($idReservation > 0 || $idVisit > 0){
             $sql .= " AND (";
             if($idReservation > 0){
-                $sql .= ' Resv_Id = :idResv';
+                $sql .= ' `Resv_Id` = :idResv';
                 $params[':idResv'] = $idReservation;
             }
             if($idReservation > 0 && $idVisit > 0){
                 $sql .= " OR ";
             }
             if($idVisit > 0){
-                $sql .= '  Visit_Id = :idVisit';
+                $sql .= '  `Visit_Id` = :idVisit';
                 $params[':idVisit'] = $idVisit;
             }
             $sql .= ")";
@@ -651,7 +659,8 @@ class ReservationSvcs
         $idResv = intval($idReservation, 10);
         $ids = array();
 
-        $stmt = $dbh->query("Select * from reservation_guest where idReservation = $idResv");
+        $stmt = $dbh->prepare("SELECT * FROM `reservation_guest` WHERE `idReservation` = :idResv");
+        $stmt->execute([':idResv' => $idResv]);
 
         while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
             $ids[$r['idGuest']] = $r['Primary_Guest'];
