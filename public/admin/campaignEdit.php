@@ -118,8 +118,10 @@ function saveCampaign(PDO $dbh, $campCode, $type, $post) {
     if ($campCode == "vNew" || $campCode == '') {
 
         $rptId = 0;
-        $dbh->query("CALL IncrementCounter('codes', @num);");
-        foreach ($dbh->query("SELECT @num") as $row) {
+        $dbh->prepare("CALL IncrementCounter('codes', @num);")->execute();
+        $numStmt = $dbh->prepare("SELECT @num");
+        $numStmt->execute();
+        foreach ($numStmt as $row) {
             $rptId = $row[0];
         }
         if ($rptId == 0) {

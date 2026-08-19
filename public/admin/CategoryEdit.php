@@ -50,8 +50,10 @@ function processAction(PDO $dbh, $tbl, $cde, $colr, $desc, $repl, $action, &$vol
     if (count($rows) == 0 && $action == "add") {
         // add a new code with desc.
 
-        $dbh->query("CALL IncrementCounter('codes', @num);");
-        foreach ($dbh->query("SELECT @num") as $row) {
+        $dbh->prepare("CALL IncrementCounter('codes', @num);")->execute();
+        $numStmt = $dbh->prepare("SELECT @num");
+        $numStmt->execute();
+        foreach ($numStmt as $row) {
             $rptId = $row[0];
         }
         if ($rptId == 0) {
@@ -101,15 +103,17 @@ function processAction(PDO $dbh, $tbl, $cde, $colr, $desc, $repl, $action, &$vol
                 if (count($rowsReplace) == 1) {
                     // Make any needed replacements in Name_Volunteer
                     // if any member has a vol record for the old code AND a record for the new code, delete the old code.
-                    $qu = "delete  nv  from name_volunteer2 nv join name_volunteer2 nv2 on nv.idName = nv2.idName
-                        where nv.Vol_Category=" . $dbh->quote($tbl) . " and nv.Vol_Code=" . $dbh->quote($cde)
-                            . " and nv2.Vol_Category=" . $dbh->quote($tbl) . " and nv2.Vol_Code= " . $dbh->quote($repl);
-                    $dbh->exec($qu);
+                    $qu = "DELETE `nv` FROM `name_volunteer2` `nv` JOIN `name_volunteer2` `nv2` ON `nv`.`idName` = `nv2`.`idName`
+                        WHERE `nv`.`Vol_Category` = :tbl1 AND `nv`.`Vol_Code` = :cde
+                            AND `nv2`.`Vol_Category` = :tbl2 AND `nv2`.`Vol_Code` = :repl1";
+                    $delStmt = $dbh->prepare($qu);
+                    $delStmt->execute([':tbl1' => $tbl, ':cde' => $cde, ':tbl2' => $tbl, ':repl1' => $repl]);
 
                     // Now we are free to simply change the old code to the replacement code.
-                    $query = "update name_volunteer2 set Vol_Code= " . $dbh->quote($repl) . ", Updated_By=" . $dbh->quote($_SESSION["username"]) . ", Last_Updated=Now()
-                    where Vol_Category=" . $dbh->quote($tbl) . " and Vol_Code=" . $dbh->quote($cde) . ";";
-                    $dbh->exec($query);
+                    $query = "UPDATE `name_volunteer2` SET `Vol_Code` = :repl2, `Updated_By` = :updatedBy, `Last_Updated` = NOW()
+                    WHERE `Vol_Category` = :tbl3 AND `Vol_Code` = :cde2;";
+                    $updStmt = $dbh->prepare($query);
+                    $updStmt->execute([':repl2' => $repl, ':updatedBy' => $_SESSION["username"], ':tbl3' => $tbl, ':cde2' => $cde]);
 
                     // delete orig from gen_lookups
                     EditRS::delete($dbh, $gl, array($gl->Table_Name, $gl->Code));

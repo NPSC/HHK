@@ -66,23 +66,23 @@ if (isset($_POST['btnRoom']) && count($rPrices) > 0) {
         if ($numRooms > 0 && $numRooms < 201) {
 
             // Clear the database
-            $dbh->exec("Delete from `room` where idRoom > 0;");
-            $dbh->exec("Delete from `resource`;");
-            $dbh->exec("Delete from `resource_room`;");
-            $dbh->exec("Delete from `resource_use`;");
-            $dbh->exec("Delete from `room_log`;");
+            $dbh->prepare("DELETE FROM `room` WHERE `idRoom` > 0;")->execute();
+            $dbh->prepare("DELETE FROM `resource`;")->execute();
+            $dbh->prepare("DELETE FROM `resource_room`;")->execute();
+            $dbh->prepare("DELETE FROM `resource_use`;")->execute();
+            $dbh->prepare("DELETE FROM `room_log`;")->execute();
 
-            $roomStmt = $dbh->prepare("insert into room "
+            $roomStmt = $dbh->prepare("INSERT INTO `room` "
                     . "(`idRoom`,`idHouse`,`Item_Id`,`Title`,`Type`,`Category`,`Status`,`State`,`Availability`,"
                     . "`Max_Occupants`,`Min_Occupants`,`Rate_Code`,`Key_Deposit_Code`,`Cleaning_Cycle_Code`, `idLocation`) VALUES "
                     . "(:idRoom, 0, 1, :title, 'r', 'dh', 'a', 'a', 'a', 4, 0, 'rb', 'k0', 'a', 1)");
 
-            $resourceStmt = $dbh->prepare("insert into resource "
-                    . "(`idResource`,`idSponsor`,`Title`,`Utilization_Category`,`Type`,`Util_Priority`,`Status`) Values "
+            $resourceStmt = $dbh->prepare("INSERT INTO `resource` "
+                    . "(`idResource`,`idSponsor`,`Title`,`Utilization_Category`,`Type`,`Util_Priority`,`Status`) VALUES "
                     . "(:idResource, 0, :rTitle, 'uc1', 'room', :priority, 'a')");
 
-            $resourceRoomStmt = $dbh->prepare("insert into resource_room "
-                    . "(`idResource_room`,`idResource`,`idRoom`) values "
+            $resourceRoomStmt = $dbh->prepare("INSERT INTO `resource_room` "
+                    . "(`idResource_room`,`idResource`,`idRoom`) VALUES "
                     . "(:idResourceRoom, :rrResource, :rrRoom)");
 
             // Install new rooms
@@ -115,7 +115,7 @@ if (isset($_POST['btnRoom']) && count($rPrices) > 0) {
 
             SysConfig::getCategory($dbh, $ssn, ["h", "hf"], WebInit::SYS_CONFIG);
 
-            $dbh->exec("delete from `room_rate`");
+            $dbh->prepare("DELETE FROM `room_rate`")->execute();
 
             AbstractPriceModel::installRates($dbh, $rateCode, $ssn->IncomeRated);
 
@@ -126,18 +126,18 @@ if (isset($_POST['btnRoom']) && count($rPrices) > 0) {
 
         if ($siteId > 0) {
 
-            $countStmt = $dbh->prepare("Select count(`idName`) from `name` where `idName` = :siteId");
+            $countStmt = $dbh->prepare("SELECT COUNT(`idName`) FROM `name` WHERE `idName` = :siteId");
             $countStmt->execute([':siteId' => $siteId]);
             $row = $countStmt->fetchAll(PDO::FETCH_NUM);
 
             if (isset($row[0]) && $row[0][0] == 0 && $houseName != '') {
-                $nameStmt = $dbh->prepare("insert into `name` (`idName`, `Company`, `Member_Type`, `Member_Status`, `Record_Company`, `Last_Updated`, `Updated_By`) values (:idName, :company, 'np', 'a', 1, now(), 'admin')");
+                $nameStmt = $dbh->prepare("INSERT INTO `name` (`idName`, `Company`, `Member_Type`, `Member_Status`, `Record_Company`, `Last_Updated`, `Updated_By`) VALUES (:idName, :company, 'np', 'a', 1, NOW(), 'admin')");
                 $nameStmt->execute([':idName' => $siteId, ':company' => $houseName]);
             }
 
         } else {
 
-            $nameStmt = $dbh->prepare("insert into `name` (`Company`, `Member_Type`, `Member_Status`, `Record_Company`, `Last_Updated`, `Updated_By`) values (:company, 'np', 'a', 1, now(), 'admin')");
+            $nameStmt = $dbh->prepare("INSERT INTO `name` (`Company`, `Member_Type`, `Member_Status`, `Record_Company`, `Last_Updated`, `Updated_By`) VALUES (:company, 'np', 'a', 1, NOW(), 'admin')");
             $nameStmt->execute([':company' => $houseName]);
 
             if ($nameStmt->rowCount() != 1) {

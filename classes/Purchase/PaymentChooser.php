@@ -738,7 +738,9 @@ class PaymentChooser {
 
         if (count($discounts) > 0) {
 
-            $discountLabel = $dbh->query("SELECT Description FROM item WHERE idItem = " . ItemId::Discount)->fetchColumn();
+            $discLblStmt = $dbh->prepare("SELECT `Description` FROM `item` WHERE `idItem` = :itemId");
+            $discLblStmt->execute([':itemId' => ItemId::Discount]);
+            $discountLabel = $discLblStmt->fetchColumn();
 
             $buttons .= HTMLContainer::generateMarkup('label', $discountLabel, array('for'=>'cbAdjustPmt1'))
             . HTMLInput::generateMarkup('', array('type'=>'radio', 'name'=>'cbAdjustPmt', 'id'=>'cbAdjustPmt1', 'data-sho'=>'houseDisc', 'data-hid'=>'addnlChg', 'data-item'=>ItemId::Discount));
@@ -749,7 +751,9 @@ class PaymentChooser {
 
         if (count($addnls) > 0) {
 
-            $addnlChargeLabel = $dbh->query("SELECT Description FROM item WHERE idItem = " . ItemId::AddnlCharge)->fetchColumn();
+            $addnlLblStmt = $dbh->prepare("SELECT `Description` FROM `item` WHERE `idItem` = :itemId");
+            $addnlLblStmt->execute([':itemId' => ItemId::AddnlCharge]);
+            $addnlChargeLabel = $addnlLblStmt->fetchColumn();
 
             $buttons .= HTMLContainer::generateMarkup('label', $addnlChargeLabel, array('for'=>'cbAdjustPmt2'))
                 . HTMLInput::generateMarkup('', array('type'=>'radio', 'name'=>'cbAdjustPmt', 'id'=>'cbAdjustPmt2', 'data-hid'=>'houseDisc', 'data-sho'=>'addnlChg', 'data-item'=>ItemId::AddnlCharge));
@@ -828,30 +832,31 @@ dateFormat: "M d, yy" ';
         if ($idInvoice > 0) {
 
             // Collect any unpaid invoices
-            $stmt = $dbh->query("SELECT
-    i.idInvoice,
-    i.`Invoice_Number`,
-    i.`Balance`,
-    i.`Amount`,
-    n.Name_Full,
-    IFNULL(n.Name_Full, '') as `Payor`,
-    n.Company,
-    ng.Name_Last AS `Guest Name`,
-    v.idVisit,
-    v.Span
+            $stmt = $dbh->prepare("SELECT
+    `i`.`idInvoice`,
+    `i`.`Invoice_Number`,
+    `i`.`Balance`,
+    `i`.`Amount`,
+    `n`.`Name_Full`,
+    IFNULL(`n`.`Name_Full`, '') AS `Payor`,
+    `n`.`Company`,
+    `ng`.`Name_Last` AS `Guest Name`,
+    `v`.`idVisit`,
+    `v`.`Span`
 FROM
-    `invoice` i
+    `invoice` `i`
         LEFT JOIN
-    name n ON i.Sold_To_Id = n.idName
+    `name` `n` ON `i`.`Sold_To_Id` = `n`.`idName`
         LEFT JOIN
-    visit v ON i.Order_Number = v.idVisit
-        AND i.Suborder_Number = v.Span
+    `visit` `v` ON `i`.`Order_Number` = `v`.`idVisit`
+        AND `i`.`Suborder_Number` = `v`.`Span`
         LEFT JOIN
-    name ng ON v.idPrimaryGuest = ng.idName
+    `name` `ng` ON `v`.`idPrimaryGuest` = `ng`.`idName`
 WHERE
-    i.idInvoice = $idInvoice AND i.Status = '" . InvoiceStatus::Unpaid . "'
-        AND i.Deleted = 0
-ORDER BY v.idVisit , v.Span;");
+    `i`.`idInvoice` = :idInvoice AND `i`.`Status` = :status
+        AND `i`.`Deleted` = 0
+ORDER BY `v`.`idVisit`, `v`.`Span`;");
+            $stmt->execute([':idInvoice' => $idInvoice, ':status' => InvoiceStatus::Unpaid]);
 
             $unpaidInvoices = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 

@@ -41,68 +41,74 @@ class VisitIntervalOldRpt {
         $uS = Session::getInstance();
         $ageYears = $uS->StartGuestFeesYr;
 
-        $stmt = $dbh->query("SELECT
-    s.idVisit,
-    s.Visit_Span,
+        $stmt = $dbh->prepare("SELECT
+    `s`.`idVisit`,
+    `s`.`Visit_Span`,
     SUM(
     CASE
         WHEN
-            DATE(IFNULL(s.Span_End_Date, datedefaultnow(s.Expected_Co_Date))) < DATE('$start')
+            DATE(IFNULL(`s`.`Span_End_Date`, datedefaultnow(`s`.`Expected_Co_Date`))) < DATE(:start1)
         THEN 0
         WHEN
-            DATE(s.Span_Start_Date) >= DATE('$end')
+            DATE(`s`.`Span_Start_Date`) >= DATE(:end1)
         THEN 0
         ELSE
             DATEDIFF(
                 CASE
                     WHEN
-                        DATE(IFNULL(s.Span_End_Date, datedefaultnow(s.Expected_Co_Date))) >= DATE('$end')
+                        DATE(IFNULL(`s`.`Span_End_Date`, datedefaultnow(`s`.`Expected_Co_Date`))) >= DATE(:end2)
                     THEN
-                        DATE('$end')
-                    ELSE DATE(IFNULL(s.Span_End_Date, datedefaultnow(s.Expected_Co_Date)))
+                        DATE(:end3)
+                    ELSE DATE(IFNULL(`s`.`Span_End_Date`, datedefaultnow(`s`.`Expected_Co_Date`)))
                 END,
                 CASE
-                    WHEN DATE(s.Span_Start_Date) < DATE('$start') THEN DATE('$start')
-                    ELSE DATE(s.Span_Start_Date)
+                    WHEN DATE(`s`.`Span_Start_Date`) < DATE(:start2) THEN DATE(:start3)
+                    ELSE DATE(`s`.`Span_Start_Date`)
                 END
             )
         END) AS `Actual_Guest_Nights`,
     SUM(
     CASE
-        WHEN DATE(s.Span_Start_Date) >= DATE('$start') THEN 0
+        WHEN DATE(`s`.`Span_Start_Date`) >= DATE(:start4) THEN 0
         WHEN
-            DATE(IFNULL(s.Span_End_Date, datedefaultnow(s.Expected_Co_Date))) <= DATE('$start')
+            DATE(IFNULL(`s`.`Span_End_Date`, datedefaultnow(`s`.`Expected_Co_Date`))) <= DATE(:start5)
         THEN
-            DATEDIFF(DATE(IFNULL(s.Span_End_Date, datedefaultnow(s.Expected_Co_Date))),
-                    DATE(s.Span_Start_Date))
+            DATEDIFF(DATE(IFNULL(`s`.`Span_End_Date`, datedefaultnow(`s`.`Expected_Co_Date`))),
+                    DATE(`s`.`Span_Start_Date`))
         ELSE DATEDIFF(CASE
                     WHEN
-                        DATE(IFNULL(s.Span_End_Date, datedefaultnow(s.Expected_Co_Date))) > DATE('$start')
+                        DATE(IFNULL(`s`.`Span_End_Date`, datedefaultnow(`s`.`Expected_Co_Date`))) > DATE(:start6)
                     THEN
-                        DATE('$start')
-                    ELSE DATE(IFNULL(s.Span_End_Date, datedefaultnow(s.Expected_Co_Date)))
+                        DATE(:start7)
+                    ELSE DATE(IFNULL(`s`.`Span_End_Date`, datedefaultnow(`s`.`Expected_Co_Date`)))
                 END,
-                DATE(s.Span_Start_Date))
+                DATE(`s`.`Span_Start_Date`))
     END) AS `PI_Guest_Nights`
 
-FROM stays s JOIN name n ON s.idName = n.idName
+FROM `stays` `s` JOIN `name` `n` ON `s`.`idName` = `n`.`idName`
 
-WHERE  IFNULL(DATE(n.BirthDate), DATE('1901-01-01')) < DATE(DATE_SUB(DATE(s.Checkin_Date), INTERVAL $ageYears YEAR))
-        AND DATE(s.Span_Start_Date) < DATE('$end')
-        AND s.idVisit IN (SELECT
-            idVisit
+WHERE  IFNULL(DATE(`n`.`BirthDate`), DATE('1901-01-01')) < DATE(DATE_SUB(DATE(`s`.`Checkin_Date`), INTERVAL :ageYears YEAR))
+        AND DATE(`s`.`Span_Start_Date`) < DATE(:end4)
+        AND `s`.`idVisit` IN (SELECT
+            `idVisit`
         FROM
-            visit
+            `visit`
         WHERE
             `Status` NOT IN ('p' , 'c')
-                AND DATE(Arrival_Date) < DATE('$end')
-                AND DATE(IFNULL(Span_End,
+                AND DATE(`Arrival_Date`) < DATE(:end5)
+                AND DATE(IFNULL(`Span_End`,
                         CASE
-                            WHEN NOW() > Expected_Departure THEN NOW()
-                            ELSE Expected_Departure
-                        END)) >= DATE('$start'))
-GROUP BY s.idVisit , s.Visit_Span
-ORDER BY s.idVisit , s.Visit_Span");
+                            WHEN NOW() > `Expected_Departure` THEN NOW()
+                            ELSE `Expected_Departure`
+                        END)) >= DATE(:start8))
+GROUP BY `s`.`idVisit` , `s`.`Visit_Span`
+ORDER BY `s`.`idVisit` , `s`.`Visit_Span`");
+        $stmt->execute([
+            ':start1' => $start, ':end1' => $end, ':end2' => $end, ':end3' => $end,
+            ':start2' => $start, ':start3' => $start, ':start4' => $start, ':start5' => $start,
+            ':start6' => $start, ':start7' => $start, ':ageYears' => $ageYears,
+            ':end4' => $end, ':end5' => $end, ':start8' => $start,
+        ]);
 
         while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
 
@@ -158,14 +164,19 @@ ORDER BY s.idVisit , s.Visit_Span");
 
 
 
-        $qu = "select r.idResource, rm.Category, rm.Type, rm.Report_Category, ifnull(r.Retired_At, '') as `Retired_At`
-        from resource r
-        left join resource_room rr on r.idResource = rr.idResource
-        left join room rm on rr.idRoom = rm.idRoom
-        where r.`Type` in ('" . ResourceTypes::Room . "','" . ResourceTypes::RmtRoom . "') and (r.Retired_At is null or date(r.Retired_At) > '" . $stDT->format('Y-m-d') . "')
-        order by r.idResource;";
+        $qu = "SELECT `r`.`idResource`, `rm`.`Category`, `rm`.`Type`, `rm`.`Report_Category`, IFNULL(`r`.`Retired_At`, '') AS `Retired_At`
+        FROM `resource` `r`
+        LEFT JOIN `resource_room` `rr` ON `r`.`idResource` = `rr`.`idResource`
+        LEFT JOIN `room` `rm` ON `rr`.`idRoom` = `rm`.`idRoom`
+        WHERE `r`.`Type` IN (:type1, :type2) AND (`r`.`Retired_At` IS NULL OR DATE(`r`.`Retired_At`) > :retiredAfter)
+        ORDER BY `r`.`idResource`;";
 
-        $rstmt = $dbh->query($qu);
+        $rstmt = $dbh->prepare($qu);
+        $rstmt->execute([
+            ':type1' => ResourceTypes::Room,
+            ':type2' => ResourceTypes::RmtRoom,
+            ':retiredAfter' => $stDT->format('Y-m-d'),
+        ]);
 
         $rooms = array();
 
@@ -288,175 +299,203 @@ ORDER BY s.idVisit , s.Visit_Span");
      */
     protected function buildQuery($start, $end, $subsidyId, $eachTaxSql = '')
     {
-        return "select
-    v.idVisit,
-    v.Span,
-    v.idPrimaryGuest,
-    ifnull(hs.idPatient, 0) as idPatient,
-    v.idResource,
-    v.Expected_Departure,
-    ifnull(v.Actual_Departure, '') as Actual_Departure,
-    v.Arrival_Date,
-    v.Span_Start,
-    ifnull(v.Span_End, '') as Span_End,
-    v.Pledged_Rate,
-    v.Expected_Rate,
-    v.Rate_Category,
-    v.idRoom_Rate,
-    v.Status,
-    v.Rate_Glide_Credit,
-    DATEDIFF(DATE(IFNULL(v.Span_End, datedefaultnow(v.Expected_Departure))),DATE(v.Span_Start)) as `Visit_Age`,
+        return "SELECT
+    `v`.`idVisit`,
+    `v`.`Span`,
+    `v`.`idPrimaryGuest`,
+    IFNULL(`hs`.`idPatient`, 0) AS `idPatient`,
+    `v`.`idResource`,
+    `v`.`Expected_Departure`,
+    IFNULL(`v`.`Actual_Departure`, '') AS `Actual_Departure`,
+    `v`.`Arrival_Date`,
+    `v`.`Span_Start`,
+    IFNULL(`v`.`Span_End`, '') AS `Span_End`,
+    `v`.`Pledged_Rate`,
+    `v`.`Expected_Rate`,
+    `v`.`Rate_Category`,
+    `v`.`idRoom_Rate`,
+    `v`.`Status`,
+    `v`.`Rate_Glide_Credit`,
+    DATEDIFF(DATE(IFNULL(`v`.`Span_End`, datedefaultnow(`v`.`Expected_Departure`))), DATE(`v`.`Span_Start`)) AS `Visit_Age`,
     CASE
         WHEN
-            DATE(IFNULL(v.Span_End, datedefaultnow(v.Expected_Departure))) <= DATE('$start')
+            DATE(IFNULL(`v`.`Span_End`, datedefaultnow(`v`.`Expected_Departure`))) <= DATE(:start1)
         THEN 0
         WHEN
-            DATE(v.Span_Start) >= DATE('$end')
+            DATE(`v`.`Span_Start`) >= DATE(:end1)
         THEN 0
         ELSE
             DATEDIFF(
                 CASE
                     WHEN
-                        DATE(IFNULL(v.Span_End, datedefaultnow(v.Expected_Departure))) > DATE('$end')
+                        DATE(IFNULL(`v`.`Span_End`, datedefaultnow(`v`.`Expected_Departure`))) > DATE(:end2)
                     THEN
-                        DATE('$end')
-                    ELSE DATE(IFNULL(v.Span_End, datedefaultnow(v.Expected_Departure)))
+                        DATE(:end3)
+                    ELSE DATE(IFNULL(`v`.`Span_End`, datedefaultnow(`v`.`Expected_Departure`)))
                 END,
                 CASE
-                    WHEN DATE(v.Span_Start) < DATE('$start') THEN DATE('$start')
-                    ELSE DATE(v.Span_Start)
+                    WHEN DATE(`v`.`Span_Start`) < DATE(:start2) THEN DATE(:start3)
+                    ELSE DATE(`v`.`Span_Start`)
                 END
             )
         END AS `Actual_Month_Nights`,
     CASE
-        WHEN DATE(v.Span_Start) >= DATE('$start') THEN 0
+        WHEN DATE(`v`.`Span_Start`) >= DATE(:start4) THEN 0
         WHEN
-            DATE(IFNULL(v.Span_End, datedefaultnow(v.Expected_Departure))) <= DATE('$start')
+            DATE(IFNULL(`v`.`Span_End`, datedefaultnow(`v`.`Expected_Departure`))) <= DATE(:start5)
         THEN
-            DATEDIFF(DATE(IFNULL(v.Span_End, datedefaultnow(v.Expected_Departure))),
-                    DATE(v.Span_Start))
+            DATEDIFF(DATE(IFNULL(`v`.`Span_End`, datedefaultnow(`v`.`Expected_Departure`))),
+                    DATE(`v`.`Span_Start`))
         ELSE DATEDIFF(CASE
                     WHEN
-                        DATE(IFNULL(v.Span_End, datedefaultnow(v.Expected_Departure))) > DATE('$start')
+                        DATE(IFNULL(`v`.`Span_End`, datedefaultnow(`v`.`Expected_Departure`))) > DATE(:start6)
                     THEN
-                        DATE('$start')
-                    ELSE DATE(IFNULL(v.Span_End, datedefaultnow(v.Expected_Departure)))
+                        DATE(:start7)
+                    ELSE DATE(IFNULL(`v`.`Span_End`, datedefaultnow(`v`.`Expected_Departure`)))
                 END,
-                DATE(v.Span_Start))
+                DATE(`v`.`Span_Start`))
     END AS `Pre_Interval_Nights`,
 
-    ifnull(rv.Visit_Fee, 0) as `Visit_Fee_Amount`,
-    ifnull(n.Name_Last,'') as Name_Last,
-    ifnull(n.Name_First,'') as Name_First,
-    concat(ifnull(napg.Address_1, ''), '', ifnull(napg.Address_2, ''))  as pgAddr,
-    ifnull(napg.City, '') as pgCity,
-    ifnull(napg.County, '') as pgCounty,
-    ifnull(napg.State_Province, '') as pgState,
-    ifnull(napg.Country_Code, '') as pgCountry,
-    ifnull(napg.Postal_Code, '') as pgZip,
-    concat(ifnull(na.Address_1, ''), '', ifnull(na.Address_2, ''))  as pAddr,
-    ifnull(na.City, '') as pCity,
-    ifnull(na.County, '') as pCounty,
-    ifnull(na.State_Province, '') as pState,
-    ifnull(na.Country_Code, '') as pCountry,
-    ifnull(na.Postal_Code, '') as pZip,
-    ifnull(na.Bad_Address, '') as pBad_Address,
-    ifnull(rm.Title, '') as Title,
-    ifnull(np.Name_Last,'') as Patient_Last,
-    ifnull(np.Name_First,'') as Patient_First,
-    ifnull(np.BirthDate, '') as pBirth,
-    ifnull(nd.Name_Last,'') as Doctor_Last,
-    ifnull(nd.Name_First,'') as Doctor_First,
-    ifnull(hs.idPsg, 0) as idPsg,
-    ifnull(hs.idHospital, 0) as idHospital,
-    ifnull(hs.idAssociation, 0) as idAssociation,
-    ifnull(nra.Name_Full, '') as Referral_Agent,
-    ifnull(hs.MRN, '') as MRN,
-    ifnull(g.Description, hs.Diagnosis) as Diagnosis,
-    ifnull(hs.Diagnosis2, '') as Diagnosis2,
-    ifnull(group_concat(i.Title order by it.List_Order separator ', '), '') as Insurance,
-    ifnull(gl.Description, '') as Location,
-    ifnull(rm.Rate_Code, '') as Rate_Code,
-    ifnull(rm.Category, '') as Category,
-    ifnull(rm.Type, '') as Type,
-    ifnull(rm.Report_Category, '') as Report_Category,
-    ifnull((select sum(il.Amount) from invoice_line il join invoice i on il.Invoice_Id = i.idInvoice
-        where il.Deleted = 0 and i.Deleted = 0 and i.Status in ('" . InvoiceStatus::Paid . "', '" . InvoiceStatus::Carried . "') and il.Item_Id in (" . ItemId::Lodging . ", " . ItemId::Waive . ", " . ItemId::Discount . ", " . ItemId::LodgingReversal . ") and i.Sold_To_Id != " . $subsidyId . "  and i.Order_Number = v.idVisit),
-            0) as `AmountPaid`,
-    ifnull((select sum(il.Amount) from invoice_line il join invoice i on il.Invoice_Id = i.idInvoice
-        where il.Deleted = 0 and i.Deleted = 0 and i.Status in ('" . InvoiceStatus::Paid . "', '" . InvoiceStatus::Carried . "') and il.Type_Id = " . ItemType::Tax . " and il.Source_Item_Id in ( " . ItemId::Lodging . ", " . ItemId::LodgingReversal . ") and i.Sold_To_Id != " . $subsidyId . " and i.Order_Number = v.idVisit),
-            0) as `TaxPaid`,
+    IFNULL(`rv`.`Visit_Fee`, 0) AS `Visit_Fee_Amount`,
+    IFNULL(`n`.`Name_Last`, '') AS `Name_Last`,
+    IFNULL(`n`.`Name_First`, '') AS `Name_First`,
+    CONCAT(IFNULL(`napg`.`Address_1`, ''), '', IFNULL(`napg`.`Address_2`, '')) AS `pgAddr`,
+    IFNULL(`napg`.`City`, '') AS `pgCity`,
+    IFNULL(`napg`.`County`, '') AS `pgCounty`,
+    IFNULL(`napg`.`State_Province`, '') AS `pgState`,
+    IFNULL(`napg`.`Country_Code`, '') AS `pgCountry`,
+    IFNULL(`napg`.`Postal_Code`, '') AS `pgZip`,
+    CONCAT(IFNULL(`na`.`Address_1`, ''), '', IFNULL(`na`.`Address_2`, '')) AS `pAddr`,
+    IFNULL(`na`.`City`, '') AS `pCity`,
+    IFNULL(`na`.`County`, '') AS `pCounty`,
+    IFNULL(`na`.`State_Province`, '') AS `pState`,
+    IFNULL(`na`.`Country_Code`, '') AS `pCountry`,
+    IFNULL(`na`.`Postal_Code`, '') AS `pZip`,
+    IFNULL(`na`.`Bad_Address`, '') AS `pBad_Address`,
+    IFNULL(`rm`.`Title`, '') AS `Title`,
+    IFNULL(`np`.`Name_Last`, '') AS `Patient_Last`,
+    IFNULL(`np`.`Name_First`, '') AS `Patient_First`,
+    IFNULL(`np`.`BirthDate`, '') AS `pBirth`,
+    IFNULL(`nd`.`Name_Last`, '') AS `Doctor_Last`,
+    IFNULL(`nd`.`Name_First`, '') AS `Doctor_First`,
+    IFNULL(`hs`.`idPsg`, 0) AS `idPsg`,
+    IFNULL(`hs`.`idHospital`, 0) AS `idHospital`,
+    IFNULL(`hs`.`idAssociation`, 0) AS `idAssociation`,
+    IFNULL(`nra`.`Name_Full`, '') AS `Referral_Agent`,
+    IFNULL(`hs`.`MRN`, '') AS `MRN`,
+    IFNULL(`g`.`Description`, `hs`.`Diagnosis`) AS `Diagnosis`,
+    IFNULL(`hs`.`Diagnosis2`, '') AS `Diagnosis2`,
+    IFNULL(GROUP_CONCAT(`i`.`Title` ORDER BY `it`.`List_Order` SEPARATOR ', '), '') AS `Insurance`,
+    IFNULL(`gl`.`Description`, '') AS `Location`,
+    IFNULL(`rm`.`Rate_Code`, '') AS `Rate_Code`,
+    IFNULL(`rm`.`Category`, '') AS `Category`,
+    IFNULL(`rm`.`Type`, '') AS `Type`,
+    IFNULL(`rm`.`Report_Category`, '') AS `Report_Category`,
+    IFNULL((SELECT SUM(`il`.`Amount`) FROM `invoice_line` `il` JOIN `invoice` `i` ON `il`.`Invoice_Id` = `i`.`idInvoice`
+        WHERE `il`.`Deleted` = 0 AND `i`.`Deleted` = 0 AND `i`.`Status` IN (:stPaid1, :stCarried1) AND `il`.`Item_Id` IN (:itemLodging1, :itemWaive1, :itemDiscount1, :itemLodgingReversal1) AND `i`.`Sold_To_Id` != :subsidyId1 AND `i`.`Order_Number` = `v`.`idVisit`),
+            0) AS `AmountPaid`,
+    IFNULL((SELECT SUM(`il`.`Amount`) FROM `invoice_line` `il` JOIN `invoice` `i` ON `il`.`Invoice_Id` = `i`.`idInvoice`
+        WHERE `il`.`Deleted` = 0 AND `i`.`Deleted` = 0 AND `i`.`Status` IN (:stPaid2, :stCarried2) AND `il`.`Type_Id` = :typeTax1 AND `il`.`Source_Item_Id` IN (:itemLodging2, :itemLodgingReversal2) AND `i`.`Sold_To_Id` != :subsidyId2 AND `i`.`Order_Number` = `v`.`idVisit`),
+            0) AS `TaxPaid`,
     $eachTaxSql
-    ifnull((select sum(il.Amount) from invoice_line il join invoice i on il.Invoice_Id = i.idInvoice
-        where il.Deleted = 0 and i.Deleted = 0 and i.Status in ('" . InvoiceStatus::Paid . "', '" . InvoiceStatus::Carried . "') and il.Item_Id = " . ItemId::LodgingDonate . " and i.Order_Number = v.idVisit),
-            0) as `ContributionPaid`,
-    ifnull((select sum(il.Amount) from invoice_line il join invoice i on il.Invoice_Id = i.idInvoice
+    IFNULL((SELECT SUM(`il`.`Amount`) FROM `invoice_line` `il` JOIN `invoice` `i` ON `il`.`Invoice_Id` = `i`.`idInvoice`
+        WHERE `il`.`Deleted` = 0 AND `i`.`Deleted` = 0 AND `i`.`Status` IN (:stPaid3, :stCarried3) AND `il`.`Item_Id` = :itemLodgingDonate AND `i`.`Order_Number` = `v`.`idVisit`),
+            0) AS `ContributionPaid`,
+    IFNULL((SELECT SUM(`il`.`Amount`) FROM `invoice_line` `il` JOIN `invoice` `i` ON `il`.`Invoice_Id` = `i`.`idInvoice`
             LEFT JOIN
-        name_volunteer2 nv ON i.Sold_To_Id = nv.idName AND nv.Vol_Category = 'Vol_Type' AND nv.Vol_Code = '" . VolMemberType::BillingAgent . "'
-        where il.Deleted = 0 and i.Deleted = 0 and i.Status in ('" . InvoiceStatus::Paid . "', '" . InvoiceStatus::Carried . "') and il.Item_Id in (" . ItemId::Lodging . ", " . ItemId::Waive . ", " . ItemId::Discount . ", " . ItemId::LodgingReversal . ") and ifnull(nv.idName, 0) > 0 and i.Sold_To_Id != " . $subsidyId . " and i.Order_Number = v.idVisit),
-            0) as `ThrdPaid`,
-    ifnull((select sum(il.Amount) from invoice_line il join invoice i on il.Invoice_Id = i.idInvoice
-        where il.Deleted = 0 and i.Deleted = 0 and i.Status in ('" . InvoiceStatus::Paid . "', '" . InvoiceStatus::Carried . "') and il.Item_Id in (" . ItemId::Discount . ", " . ItemId::Waive . ") and i.Order_Number = v.idVisit),
-            0) as `HouseDiscount`,
-    ifnull((select sum(il.Amount) from invoice_line il join invoice i on il.Invoice_Id = i.idInvoice
-    where il.Deleted = 0 and i.Deleted = 0 and i.Status in ('" . InvoiceStatus::Paid . "', '" . InvoiceStatus::Carried . "') and il.Item_Id = " . ItemId::AddnlCharge . " and i.Order_Number = v.idVisit),
-            0) as `AddnlPaid`,
-    ifnull((select sum(il.Amount) from invoice_line il join invoice i on il.Invoice_Id = i.idInvoice
-    where il.Deleted = 0 and i.Deleted = 0 and i.Status in ('" . InvoiceStatus::Paid . "', '" . InvoiceStatus::Carried . "') and il.Type_Id = " . ItemType::Tax . " and il.Source_Item_Id = " . ItemId::AddnlCharge . " and  i.Order_Number = v.idVisit),
-            0) as `AddnlTaxPaid`,
-    ifnull((select sum(il.Amount) from invoice_line il join invoice i on il.Invoice_Id = i.idInvoice
-    where il.Deleted = 0 and i.Deleted = 0 and il.Item_Id = " . ItemId::AddnlCharge . " and i.Order_Number = v.idVisit),
-            0) as `AddnlCharged`,
-    ifnull((select sum(il.Amount) from invoice_line il join invoice i on il.Invoice_Id = i.idInvoice
-        where il.Deleted = 0 and i.Deleted = 0 and i.Status = '" . InvoiceStatus::Unpaid . "' and il.Item_Id in (" . ItemId::Lodging . ", " . ItemId::Waive . ", " . ItemId::Discount . ", " . ItemId::LodgingReversal . ") and i.Order_Number = v.idVisit),
-            0) as `AmountPending`,
-    ifnull((select sum(il.Amount) from invoice_line il join invoice i on il.Invoice_Id = i.idInvoice
-        where il.Deleted = 0 and i.Deleted = 0 and i.Status = '" . InvoiceStatus::Unpaid . "' and il.Type_Id = " . ItemType::Tax . "  and il.Source_Item_Id in (" . ItemId::Lodging . ", " . ItemId::LodgingReversal . ") and i.Order_Number = v.idVisit),
-            0) as `TaxPending`,
-    ifnull((select sum(il.Amount) from invoice_line il join invoice i on il.Invoice_Id = i.idInvoice
-    where il.Deleted = 0 and i.Deleted = 0 and i.Status in ('" . InvoiceStatus::Paid . "', '" . InvoiceStatus::Carried . "') and il.Item_Id = " . ItemId::VisitFee . " and i.Order_Number = v.idVisit),
-            0) as `VisitFeePaid`
-from
-    visit v
-        left join
-    reservation rv ON v.idReservation = rv.idReservation
-        left join
-    resource_room rr ON v.idResource = rr.idResource
-        left join
-    room rm ON rr.idRoom = rm.idRoom
-        left join
-    name n ON v.idPrimaryGuest = n.idName
-        left join
-    hospital_stay hs ON v.idHospital_stay = hs.idHospital_stay
-        left join
-    name np ON hs.idPatient = np.idName
-        left join
-    name nd ON hs.idDoctor = nd.idName
-        left join
-    name nra ON hs.idReferralAgent = nra.idName
-        left join
-	name_insurance ni on np.idName = ni.idName
-		left join
-	insurance i on ni.Insurance_Id = i.idInsurance
-		left join
-	insurance_type it on i.idInsuranceType = it.idInsurance_type
-        left join
-    gen_lookups g ON g.`Table_Name` = 'Diagnosis' and g.`Code` = hs.Diagnosis
-        left join
-    gen_lookups gl ON gl.`Table_Name` = 'Location' and gl.`Code` = hs.Location
-        left join
-    name_address na on ifnull(hs.idPatient, 0) = na.idName and np.Preferred_Mail_Address = na.Purpose
-        left join
-    name_address napg on n.idName = napg.idName and n.Preferred_Mail_Address = napg.Purpose
-where
-    v.`Status` not in ('p', 'c')
-    AND v.Arrival_Date < '$end'
-  AND COALESCE(v.Span_End,
-          CASE WHEN NOW() > v.Expected_Departure
-               THEN NOW() ELSE v.Expected_Departure END
-      ) >= '$start'
-  AND v.Span_Start < '$end' ";
+        `name_volunteer2` `nv` ON `i`.`Sold_To_Id` = `nv`.`idName` AND `nv`.`Vol_Category` = 'Vol_Type' AND `nv`.`Vol_Code` = :billingAgent
+        WHERE `il`.`Deleted` = 0 AND `i`.`Deleted` = 0 AND `i`.`Status` IN (:stPaid4, :stCarried4) AND `il`.`Item_Id` IN (:itemLodging3, :itemWaive2, :itemDiscount2, :itemLodgingReversal3) AND IFNULL(`nv`.`idName`, 0) > 0 AND `i`.`Sold_To_Id` != :subsidyId3 AND `i`.`Order_Number` = `v`.`idVisit`),
+            0) AS `ThrdPaid`,
+    IFNULL((SELECT SUM(`il`.`Amount`) FROM `invoice_line` `il` JOIN `invoice` `i` ON `il`.`Invoice_Id` = `i`.`idInvoice`
+        WHERE `il`.`Deleted` = 0 AND `i`.`Deleted` = 0 AND `i`.`Status` IN (:stPaid5, :stCarried5) AND `il`.`Item_Id` IN (:itemDiscount3, :itemWaive3) AND `i`.`Order_Number` = `v`.`idVisit`),
+            0) AS `HouseDiscount`,
+    IFNULL((SELECT SUM(`il`.`Amount`) FROM `invoice_line` `il` JOIN `invoice` `i` ON `il`.`Invoice_Id` = `i`.`idInvoice`
+    WHERE `il`.`Deleted` = 0 AND `i`.`Deleted` = 0 AND `i`.`Status` IN (:stPaid6, :stCarried6) AND `il`.`Item_Id` = :itemAddnlCharge1 AND `i`.`Order_Number` = `v`.`idVisit`),
+            0) AS `AddnlPaid`,
+    IFNULL((SELECT SUM(`il`.`Amount`) FROM `invoice_line` `il` JOIN `invoice` `i` ON `il`.`Invoice_Id` = `i`.`idInvoice`
+    WHERE `il`.`Deleted` = 0 AND `i`.`Deleted` = 0 AND `i`.`Status` IN (:stPaid7, :stCarried7) AND `il`.`Type_Id` = :typeTax2 AND `il`.`Source_Item_Id` = :itemAddnlCharge2 AND `i`.`Order_Number` = `v`.`idVisit`),
+            0) AS `AddnlTaxPaid`,
+    IFNULL((SELECT SUM(`il`.`Amount`) FROM `invoice_line` `il` JOIN `invoice` `i` ON `il`.`Invoice_Id` = `i`.`idInvoice`
+    WHERE `il`.`Deleted` = 0 AND `i`.`Deleted` = 0 AND `il`.`Item_Id` = :itemAddnlCharge3 AND `i`.`Order_Number` = `v`.`idVisit`),
+            0) AS `AddnlCharged`,
+    IFNULL((SELECT SUM(`il`.`Amount`) FROM `invoice_line` `il` JOIN `invoice` `i` ON `il`.`Invoice_Id` = `i`.`idInvoice`
+        WHERE `il`.`Deleted` = 0 AND `i`.`Deleted` = 0 AND `i`.`Status` = :stUnpaid1 AND `il`.`Item_Id` IN (:itemLodging4, :itemWaive4, :itemDiscount4, :itemLodgingReversal4) AND `i`.`Order_Number` = `v`.`idVisit`),
+            0) AS `AmountPending`,
+    IFNULL((SELECT SUM(`il`.`Amount`) FROM `invoice_line` `il` JOIN `invoice` `i` ON `il`.`Invoice_Id` = `i`.`idInvoice`
+        WHERE `il`.`Deleted` = 0 AND `i`.`Deleted` = 0 AND `i`.`Status` = :stUnpaid2 AND `il`.`Type_Id` = :typeTax3 AND `il`.`Source_Item_Id` IN (:itemLodging5, :itemLodgingReversal5) AND `i`.`Order_Number` = `v`.`idVisit`),
+            0) AS `TaxPending`,
+    IFNULL((SELECT SUM(`il`.`Amount`) FROM `invoice_line` `il` JOIN `invoice` `i` ON `il`.`Invoice_Id` = `i`.`idInvoice`
+    WHERE `il`.`Deleted` = 0 AND `i`.`Deleted` = 0 AND `i`.`Status` IN (:stPaid8, :stCarried8) AND `il`.`Item_Id` = :itemVisitFee AND `i`.`Order_Number` = `v`.`idVisit`),
+            0) AS `VisitFeePaid`
+FROM
+    `visit` `v`
+        LEFT JOIN
+    `reservation` `rv` ON `v`.`idReservation` = `rv`.`idReservation`
+        LEFT JOIN
+    `resource_room` `rr` ON `v`.`idResource` = `rr`.`idResource`
+        LEFT JOIN
+    `room` `rm` ON `rr`.`idRoom` = `rm`.`idRoom`
+        LEFT JOIN
+    `name` `n` ON `v`.`idPrimaryGuest` = `n`.`idName`
+        LEFT JOIN
+    `hospital_stay` `hs` ON `v`.`idHospital_stay` = `hs`.`idHospital_stay`
+        LEFT JOIN
+    `name` `np` ON `hs`.`idPatient` = `np`.`idName`
+        LEFT JOIN
+    `name` `nd` ON `hs`.`idDoctor` = `nd`.`idName`
+        LEFT JOIN
+    `name` `nra` ON `hs`.`idReferralAgent` = `nra`.`idName`
+        LEFT JOIN
+	`name_insurance` `ni` ON `np`.`idName` = `ni`.`idName`
+		LEFT JOIN
+	`insurance` `i` ON `ni`.`Insurance_Id` = `i`.`idInsurance`
+		LEFT JOIN
+	`insurance_type` `it` ON `i`.`idInsuranceType` = `it`.`idInsurance_type`
+        LEFT JOIN
+    `gen_lookups` `g` ON `g`.`Table_Name` = 'Diagnosis' AND `g`.`Code` = `hs`.`Diagnosis`
+        LEFT JOIN
+    `gen_lookups` `gl` ON `gl`.`Table_Name` = 'Location' AND `gl`.`Code` = `hs`.`Location`
+        LEFT JOIN
+    `name_address` `na` ON IFNULL(`hs`.`idPatient`, 0) = `na`.`idName` AND `np`.`Preferred_Mail_Address` = `na`.`Purpose`
+        LEFT JOIN
+    `name_address` `napg` ON `n`.`idName` = `napg`.`idName` AND `n`.`Preferred_Mail_Address` = `napg`.`Purpose`
+WHERE
+    `v`.`Status` NOT IN ('p', 'c')
+    AND `v`.`Arrival_Date` < :end4
+  AND COALESCE(`v`.`Span_End`,
+          CASE WHEN NOW() > `v`.`Expected_Departure`
+               THEN NOW() ELSE `v`.`Expected_Departure` END
+      ) >= :start8
+  AND `v`.`Span_Start` < :end5 ";
 
+    }
+
+    protected function buildQueryParams($start, $end, $subsidyId)
+    {
+        return [
+            ':start1' => $start, ':start2' => $start, ':start3' => $start, ':start4' => $start,
+            ':start5' => $start, ':start6' => $start, ':start7' => $start, ':start8' => $start,
+            ':end1' => $end, ':end2' => $end, ':end3' => $end, ':end4' => $end, ':end5' => $end,
+            ':stPaid1' => InvoiceStatus::Paid, ':stPaid2' => InvoiceStatus::Paid, ':stPaid3' => InvoiceStatus::Paid,
+            ':stPaid4' => InvoiceStatus::Paid, ':stPaid5' => InvoiceStatus::Paid, ':stPaid6' => InvoiceStatus::Paid,
+            ':stPaid7' => InvoiceStatus::Paid, ':stPaid8' => InvoiceStatus::Paid,
+            ':stCarried1' => InvoiceStatus::Carried, ':stCarried2' => InvoiceStatus::Carried, ':stCarried3' => InvoiceStatus::Carried,
+            ':stCarried4' => InvoiceStatus::Carried, ':stCarried5' => InvoiceStatus::Carried, ':stCarried6' => InvoiceStatus::Carried,
+            ':stCarried7' => InvoiceStatus::Carried, ':stCarried8' => InvoiceStatus::Carried,
+            ':stUnpaid1' => InvoiceStatus::Unpaid, ':stUnpaid2' => InvoiceStatus::Unpaid,
+            ':itemLodging1' => ItemId::Lodging, ':itemLodging2' => ItemId::Lodging, ':itemLodging3' => ItemId::Lodging,
+            ':itemLodging4' => ItemId::Lodging, ':itemLodging5' => ItemId::Lodging,
+            ':itemWaive1' => ItemId::Waive, ':itemWaive2' => ItemId::Waive, ':itemWaive3' => ItemId::Waive, ':itemWaive4' => ItemId::Waive,
+            ':itemDiscount1' => ItemId::Discount, ':itemDiscount2' => ItemId::Discount, ':itemDiscount3' => ItemId::Discount, ':itemDiscount4' => ItemId::Discount,
+            ':itemLodgingReversal1' => ItemId::LodgingReversal, ':itemLodgingReversal2' => ItemId::LodgingReversal,
+            ':itemLodgingReversal3' => ItemId::LodgingReversal, ':itemLodgingReversal4' => ItemId::LodgingReversal, ':itemLodgingReversal5' => ItemId::LodgingReversal,
+            ':itemLodgingDonate' => ItemId::LodgingDonate,
+            ':itemAddnlCharge1' => ItemId::AddnlCharge, ':itemAddnlCharge2' => ItemId::AddnlCharge, ':itemAddnlCharge3' => ItemId::AddnlCharge,
+            ':itemVisitFee' => ItemId::VisitFee,
+            ':typeTax1' => ItemType::Tax, ':typeTax2' => ItemType::Tax, ':typeTax3' => ItemType::Tax,
+            ':billingAgent' => VolMemberType::BillingAgent,
+            ':subsidyId1' => $subsidyId, ':subsidyId2' => $subsidyId, ':subsidyId3' => $subsidyId,
+        ];
     }
 
 
@@ -788,9 +827,10 @@ where
 
         $dbh->setAttribute(Mysql::ATTR_USE_BUFFERED_QUERY, FALSE);
 
-        $query = $this->buildQuery($start, $end, $uS->subsidyId, $eachTaxSql) . $whHosp . $whAssoc . " group by v.idVisit, v.Span order by v.idVisit, v.Span";
+        $query = $this->buildQuery($start, $end, $uS->subsidyId, $eachTaxSql) . $whHosp . $whAssoc . " GROUP BY `v`.`idVisit`, `v`.`Span` ORDER BY `v`.`idVisit`, `v`.`Span`";
 
-        $stmt = $dbh->query($query);
+        $stmt = $dbh->prepare($query);
+        $stmt->execute($this->buildQueryParams($start, $end, $uS->subsidyId));
 
         while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
 

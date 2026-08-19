@@ -386,8 +386,9 @@ abstract class AbstractRole {
 
         if ($id > 0) {
 
-            $query = "select idVisit from stays where `Status` = '" . VisitStatus::CheckedIn . "' and idName = " . $id;
-            $stmt = $dbh->query($query);
+            $query = "SELECT `idVisit` FROM `stays` WHERE `Status` = :status AND `idName` = :id";
+            $stmt = $dbh->prepare($query);
+            $stmt->execute([':status' => VisitStatus::CheckedIn, ':id' => $id]);
             $rows = $stmt->fetchAll(\PDO::FETCH_NUM);
 
             if (count($rows) > 0 && $rows[0][0] > 0) {
@@ -413,16 +414,17 @@ abstract class AbstractRole {
 
         if ($id > 0 && $idPsg > 0) {
 
-            $query = "Select count(s.idStays)
-from stays s join visit v on s.idVisit = v.idVisit
-	left join registration r on v.idRegistration = r.idRegistration
-where r.idPsg = $idPsg and s.idName = " . $id;
+            $query = "SELECT COUNT(`s`.`idStays`)
+FROM `stays` `s` JOIN `visit` `v` ON `s`.`idVisit` = `v`.`idVisit`
+	LEFT JOIN `registration` `r` ON `v`.`idRegistration` = `r`.`idRegistration`
+WHERE `r`.`idPsg` = :idPsg AND `s`.`idName` = :id";
 
             if ($ignoreZeroDayStays) {
-            	$query .= " and (s.Span_End_Date is NULL or DATEDIFF(s.Span_End_Date, s.Span_Start_Date) > 0)";
+            	$query .= " AND (`s`.`Span_End_Date` IS NULL OR DATEDIFF(`s`.`Span_End_Date`, `s`.`Span_Start_Date`) > 0)";
             }
 
-            $stmt = $dbh->query($query);
+            $stmt = $dbh->prepare($query);
+            $stmt->execute([':idPsg' => $idPsg, ':id' => $id]);
             $rows = $stmt->fetchAll(\PDO::FETCH_NUM);
 
             if (count($rows) > 0 && $rows[0][0] > 0) {

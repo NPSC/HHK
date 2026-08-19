@@ -45,7 +45,8 @@ $refreshDate = 'Never';
 $affectedRows = 0;
 
 // create date of mail listing table
-$stmt = $dbh->query("select Description from gen_lookups where Table_Name='Mail_List' and Code = 'Refresh_Date'");
+$stmt = $dbh->prepare("SELECT `Description` FROM `gen_lookups` WHERE `Table_Name` = 'Mail_List' AND `Code` = 'Refresh_Date'");
+$stmt->execute();
 $rows = $stmt->fetchAll(PDO::FETCH_NUM);
 if (count($rows) > 0) {
     $refreshDate = date('M j, Y', strtotime($rows[0][0]));
@@ -58,7 +59,8 @@ if (filter_has_var(INPUT_POST, 'btnPrep')) {
     $affectedRows = MailList::fillMailistTable($dbh, $uS->SolicitBuffer);
 
     if ($affectedRows > 0) {
-        $dbh->exec("replace into gen_lookups (`Table_Name`, `Code`, `Description`) values ('Mail_List', 'Refresh_Date', '" . date('Y-m-d') . "')");
+        $replStmt = $dbh->prepare("REPLACE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`) VALUES ('Mail_List', 'Refresh_Date', :refreshDate)");
+        $replStmt->execute([':refreshDate' => date('Y-m-d')]);
     }
 
 }

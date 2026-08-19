@@ -210,8 +210,15 @@ class SAML {
 
             if(!isset($user['Role_Id']) || (isset($user['idIdp']) && $user['idIdp'] != $this->IdpId)){
                 //register Web User
-                $query = "call register_web_user(" . $idName . ", '', '" . $this->auth->getNameId() . "', '" . $this->auditUser . "', 'p', '" . $role . "', '', '', 0, " . $this->IdpId . ");";
-                if($this->dbh->exec($query) === false){
+                $query = "CALL `register_web_user`(:idName, '', :nameId, :auditUser, 'p', :role, '', '', 0, :idpId);";
+                $regStmt = $this->dbh->prepare($query);
+                if($regStmt->execute([
+                    ':idName' => $idName,
+                    ':nameId' => $this->auth->getNameId(),
+                    ':auditUser' => $this->auditUser,
+                    ':role' => $role,
+                    ':idpId' => $this->IdpId,
+                ]) === false){
                     $err = $this->dbh->errorInfo();
                     return array("error"=>$err[0] . "; " . $err[2]);
                 }
@@ -346,7 +353,8 @@ class SAML {
         if(count($rows) == 1){
             $this->IdpConfig = $rows[0];
 
-            $stmt = $this->dbh->query("select idSecGroup as Code from w_idp_secgroups where idIdp = " . $this->IdpId);
+            $stmt = $this->dbh->prepare("SELECT `idSecGroup` AS `Code` FROM `w_idp_secgroups` WHERE `idIdp` = :idIdp");
+            $stmt->execute([':idIdp' => $this->IdpId]);
             $defaultGroups = $stmt->fetchAll(\PDO::FETCH_ASSOC);
             $this->IdpConfig['defaultGroups'] = [];
 
@@ -410,7 +418,8 @@ class SAML {
     }
 
     public function getSecurityGroups(\PDO $dbh, $titlesOnly = false){
-        $stmt = $dbh->query("select Group_Code as Code, Title from w_groups");
+        $stmt = $dbh->prepare("SELECT `Group_Code` AS `Code`, `Title` FROM `w_groups`");
+        $stmt->execute();
         $groups = $stmt->fetchAll(\PDO::FETCH_BOTH);
 
         if($titlesOnly){ //list titles
@@ -1207,7 +1216,8 @@ class SAML {
     private function updateDefaultSecurityGroups(array $parms){
         // Group Code security table
         $sArray = [];
-        $stmt = $this->dbh->query("select Group_Code as Code, Description from w_groups");
+        $stmt = $this->dbh->prepare("SELECT `Group_Code` AS `Code`, `Description` FROM `w_groups`");
+        $stmt->execute();
         $groups = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
         foreach ($groups as $g) {

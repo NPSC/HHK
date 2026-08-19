@@ -103,7 +103,8 @@ $eachTaxPaid = [];
 $eachTaxSQL = '';
 
 // Look for taxes
-$tstmt = $dbh->query("Select i.idItem, i.Percentage, i.Description from item i join item_type_map itm on itm.Item_Id = i.idItem and itm.Type_Id = " . ItemType::Tax . " where i.Deleted = 0");
+$tstmt = $dbh->prepare("SELECT `i`.`idItem`, `i`.`Percentage`, `i`.`Description` FROM `item` `i` JOIN `item_type_map` `itm` ON `itm`.`Item_Id` = `i`.`idItem` AND `itm`.`Type_Id` = :typeTax WHERE `i`.`Deleted` = 0");
+$tstmt->execute([':typeTax' => ItemType::Tax]);
 
 while ($taxItem = $tstmt->fetch(\PDO::FETCH_ASSOC)) {
 

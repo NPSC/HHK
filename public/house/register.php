@@ -213,7 +213,8 @@ $waitlist = HTMLContainer::generateMarkup('h3', '<span>' . $labels->getString('r
 
 
 // Hospital Selector
-$stmth = $dbh->query("Select idHospital, Title, Reservation_Style, Stay_Style from hospital where Status = 'a' and Title != '(None)' and Hide = 0 order by Title asc");
+$stmth = $dbh->prepare("SELECT `idHospital`, `Title`, `Reservation_Style`, `Stay_Style` FROM `hospital` WHERE `Status` = 'a' AND `Title` != '(None)' AND `Hide` = 0 ORDER BY `Title` ASC");
+$stmth->execute();
 
 if ($stmth->rowCount() > 1) {
     $shoHosptialName = TRUE;

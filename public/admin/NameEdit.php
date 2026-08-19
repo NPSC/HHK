@@ -215,8 +215,9 @@ if(filter_has_var(INPUT_POST, "btnSubmit")){
         foreach ($uS->siteList as $s) {
             if ($s["Site_Code"] == 'h' && $name->getMemberDesignation() == MemDesignation::Organization) {
 
-                $dbh->exec("UPDATE `name` n LEFT JOIN `name_volunteer2` nv ON n.idName = nv.idName
-SET n.Record_Member = 1 WHERE n.Record_Member != 1 and n.idName = $id AND nv.idName IS NOT NULL AND nv.Vol_Category = 'Vol_Type' AND nv.Vol_Code = 'ba'");
+                $baUpdStmt = $dbh->prepare("UPDATE `name` `n` LEFT JOIN `name_volunteer2` `nv` ON `n`.`idName` = `nv`.`idName`
+SET `n`.`Record_Member` = 1 WHERE `n`.`Record_Member` != 1 AND `n`.`idName` = :id AND `nv`.`idName` IS NOT NULL AND `nv`.`Vol_Category` = 'Vol_Type' AND `nv`.`Vol_Code` = 'ba'");
+                $baUpdStmt->execute([':id' => $id]);
 
                 break;
             }

@@ -45,7 +45,8 @@ class RepeatReservations {
 
         $markup = '';
 
-        $stmt = $dbh->query("call multiple_reservations(" . $idResv . ");");
+        $stmt = $dbh->prepare("CALL multiple_reservations(:idResv);");
+        $stmt->execute([':idResv' => $idResv]);
 
         if ($stmt->rowCount() > 0) {
             // This is already a repeated reservation
@@ -274,7 +275,9 @@ class RepeatReservations {
 
             if ($idResv > 0) {
                 // record new child
-                $numRows = $dbh->exec("Insert into reservation_multiple (`Host_Id`, `Child_Id`, `Status`) VALUES(" . $resv1->getIdReservation() . ", $idResv, 'a')");
+                $insMultiStmt = $dbh->prepare("INSERT INTO `reservation_multiple` (`Host_Id`, `Child_Id`, `Status`) VALUES(:hostId, :childId, 'a')");
+                $insMultiStmt->execute([':hostId' => $resv1->getIdReservation(), ':childId' => $idResv]);
+                $numRows = $insMultiStmt->rowCount();
                 if ($numRows != 1) {
                     throw new RuntimeException('Insert faild: reservtion_multiple');
                 }

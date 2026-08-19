@@ -115,7 +115,8 @@ class Common {
         $hrs = floor($mins / 60);
         $mins -= $hrs * 60;
         $offset = sprintf('%+d:%02d', $hrs * $sgn, $mins);
-        $dbh->exec("SET time_zone='$offset';");
+        $tzStmt = $dbh->prepare("SET time_zone = :offset;");
+        $tzStmt->execute([':offset' => $offset]);
     }
 
 
@@ -159,10 +160,13 @@ class Common {
 
     public static function incCounter(PDO $dbh, string $counterName)
     {
-        $dbh->query("CALL IncrementCounter('$counterName', @num);");
+        $incStmt = $dbh->prepare("CALL IncrementCounter(:counterName, @num);");
+        $incStmt->execute([':counterName' => $counterName]);
 
         $rptId = 0;
-        foreach ($dbh->query("SELECT @num") as $row) {
+        $numStmt = $dbh->prepare("SELECT @num");
+        $numStmt->execute();
+        foreach ($numStmt as $row) {
             $rptId = $row[0];
         }
 
@@ -197,8 +201,9 @@ class Common {
             $where = "and `Use` = 'y'";
         }
 
-        $query = "SELECT `Code`, `Title`, `Use`, `Show`, `Type`, `Other` as 'Icon' FROM `lookups` WHERE `Category` = '$category' $where order by `$orderBy`;";
-        $stmt = $dbh->query($query);
+        $query = "SELECT `Code`, `Title`, `Use`, `Show`, `Type`, `Other` AS 'Icon' FROM `lookups` WHERE `Category` = :category $where ORDER BY `$orderBy`;";
+        $stmt = $dbh->prepare($query);
+        $stmt->execute([':category' => $category]);
         $genArray = array();
 
         while ($row = $stmt->fetch(PDO::FETCH_BOTH)) {

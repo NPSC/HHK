@@ -58,7 +58,8 @@ $scheduler = new Scheduler();
 $allowedIntervals = AbstractJob::AllowedIntervals;
 
 //Get jobs from DB
-$stmt = $dbh->query("select * from cronjobs");
+$stmt = $dbh->prepare("SELECT * FROM `cronjobs`");
+$stmt->execute();
 $jobs = $stmt->fetchAll(PDO::FETCH_ASSOC);
 $jobObjs = array();
 $results = array();

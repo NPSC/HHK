@@ -46,20 +46,29 @@ function getChangeLog(\PDO $dbh, $naIndex, $stDate = "", $endDate = "") {
     $logDates = "";
     $whDates = "";
     $whereName = "";
+    $logParams = [];
 
     if ($stDate != "") {
-        $logDates = " and Date_Time >= '$stDate' ";
-        $whDates = " and a.Effective_Date >= '$stDate' ";
+        $logDates = " AND `Date_Time` >= :logStart ";
+        $whDates = " AND `a`.`Effective_Date` >= :actStart ";
+        $logParams[':logStart'] = $stDate;
+        $logParams[':actStart'] = $stDate;
     }
 
     if ($endDate != "") {
-        $logDates .= " and Date_Time <= '$endDate' ";
-        $whDates .= " and a.Effective_Date <= '$endDate' ";
+        $logDates .= " AND `Date_Time` <= :logEnd ";
+        $whDates .= " AND `a`.`Effective_Date` <= :actEnd ";
+        $logParams[':logEnd'] = $endDate;
+        $logParams[':actEnd'] = $endDate;
     }
 
-    $whereName = ($naIndex == 0) ? "" : " and idName = " . $naIndex;
+    if ($naIndex != 0) {
+        $whereName = " AND `idName` = :naIndex1 ";
+        $logParams[':naIndex1'] = $naIndex;
+    }
 
-    $result2 = $dbh->query("SELECT * FROM name_log WHERE 1=1 " . $whereName . $logDates . " order by Date_Time desc limit 200;");
+    $result2 = $dbh->prepare("SELECT * FROM `name_log` WHERE 1=1 " . $whereName . $logDates . " ORDER BY `Date_Time` DESC LIMIT 200;");
+    $result2->execute($logParams);
 
     $data = "<table id='dataTbl' class='display'><thead><tr>
             <th>Date</th>
@@ -82,13 +91,14 @@ function getChangeLog(\PDO $dbh, $naIndex, $stDate = "", $endDate = "") {
 
 
     // activity table has volunteer data
-    $query = "select a.idName, a.Effective_Date, a.Action_Codes, a.Other_Code, a.Source_Code, g.Description as Code, g2.Description as Category, ifnull(g3.Description, '') as Rank
-from activity a left join gen_lookups g on substring_index(Product_Code, '|', 1) = g.Table_Name and  substring_index(Product_Code, '|', -1) = g.Code
-left join gen_lookups g2 on g2.Table_Name = 'Vol_Category' and substring_index(Product_Code, '|', 1) = g2.Code
-left join gen_lookups g3 on g3.Table_Name = 'Vol_Rank' and g3.Code = a.Other_Code
-        where a.Type = 'vol' $whereName $whDates order by a.Effective_Date desc limit 100;";
+    $query = "SELECT `a`.`idName`, `a`.`Effective_Date`, `a`.`Action_Codes`, `a`.`Other_Code`, `a`.`Source_Code`, `g`.`Description` AS `Code`, `g2`.`Description` AS `Category`, IFNULL(`g3`.`Description`, '') AS `Rank`
+FROM `activity` `a` LEFT JOIN `gen_lookups` `g` ON SUBSTRING_INDEX(`Product_Code`, '|', 1) = `g`.`Table_Name` AND  SUBSTRING_INDEX(`Product_Code`, '|', -1) = `g`.`Code`
+LEFT JOIN `gen_lookups` `g2` ON `g2`.`Table_Name` = 'Vol_Category' AND SUBSTRING_INDEX(`Product_Code`, '|', 1) = `g2`.`Code`
+LEFT JOIN `gen_lookups` `g3` ON `g3`.`Table_Name` = 'Vol_Rank' AND `g3`.`Code` = `a`.`Other_Code`
+        WHERE `a`.`Type` = 'vol' $whereName $whDates ORDER BY `a`.`Effective_Date` DESC LIMIT 100;";
 
-    $result3 = $dbh->query($query);
+    $result3 = $dbh->prepare($query);
+    $result3->execute($logParams);
 
     while ($row2 = $result3->fetch(\PDO::FETCH_ASSOC)) {
 
@@ -111,7 +121,8 @@ if (filter_has_var(INPUT_POST, "table")) {
 
     $tableName = substr(filter_var($_POST["table"], FILTER_SANITIZE_FULL_SPECIAL_CHARS), 0, 45);
 
-    $res = $dbh->query("Select Code, Description, Substitute from gen_lookups where Table_Name='" . $tableName . "';");
+    $res = $dbh->prepare("SELECT `Code`, `Description`, `Substitute` FROM `gen_lookups` WHERE `Table_Name`=:tableName;");
+    $res->execute([':tableName' => $tableName]);
 
     $code = array(
         "Code" => "",
@@ -170,7 +181,7 @@ if (isset($_POST["btnGenLookups"])) {
 
             // Is the table_name there?
 
-            $stmt = $dbh->prepare("select count(*) from gen_lookups where Table_Name = ?");
+            $stmt = $dbh->prepare("SELECT COUNT(*) FROM `gen_lookups` WHERE `Table_Name` = ?");
             $stmt->execute(array($selTbl));
             $rows = $stmt->fetchAll(PDO::FETCH_NUM);
 
@@ -179,7 +190,7 @@ if (isset($_POST["btnGenLookups"])) {
             } else {
 
                 // Is the Code there?
-                $stmt1 = $dbh->prepare("select count(*) from gen_lookups where Table_Name = ? and Code = ?");
+                $stmt1 = $dbh->prepare("SELECT COUNT(*) FROM `gen_lookups` WHERE `Table_Name` = ? AND `Code` = ?");
                 $stmt1->execute(array($selTbl, $code));
                 $row = $stmt1->fetchAll(PDO::FETCH_NUM);
 
@@ -188,11 +199,11 @@ if (isset($_POST["btnGenLookups"])) {
 
                 if ($row[0][0] == 0 && $selCode == "n_$") {
                     // add a new code with desc.
-                    $query = "insert into gen_lookups (Table_Name, Code, Description, Substitute) values (?, ?, ?, ?)";
+                    $query = "INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`) VALUES (?, ?, ?, ?)";
                     $params = array($selTbl, $code, $desc, $subt);
                 } else if ($row[0][0] > 0 && $selCode != "n_$") {
                     // just update the description
-                    $query = "update gen_lookups set Description = ?, Substitute = ? where Table_Name = ? and Code = ?";
+                    $query = "UPDATE `gen_lookups` SET `Description` = ?, `Substitute` = ? WHERE `Table_Name` = ? AND `Code` = ?";
                     $params = array($desc, $subt, $selTbl, $code);
                 } else {
                     $lookUpAlert->set_Text("sorry, don't understand (been a long day)");
@@ -232,8 +243,11 @@ $cleanMsg = '';
 if (isset($_POST['btnClnPhone'])) {
     // Clean up phone numbers
     $accordIndex = 1;
-    $stmt = $dbh->query("select idName, Phone_Code, Phone_Num from name_phone where Phone_Num <> '';");
+    $stmt = $dbh->prepare("SELECT `idName`, `Phone_Code`, `Phone_Num` FROM `name_phone` WHERE `Phone_Num` <> '';");
+    $stmt->execute();
     $n = 0;
+
+    $updPhoneStmt = $dbh->prepare("UPDATE `name_phone` SET `Phone_Num` = :new, `Phone_Search` = :srch WHERE `idName` = :idName AND `Phone_Code`=:phoneCode");
 
     while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
 
@@ -241,7 +255,8 @@ if (isset($_POST['btnClnPhone'])) {
 
         $srch = str_replace('(', '', str_replace(')', '', str_replace('-', '', str_replace(' ', '', $new))));
 
-        $n += $dbh->exec("update name_phone set Phone_Num = '$new', Phone_Search = '$srch' where idName = " . $r['idName'] . " and Phone_Code='" . $r['Phone_Code'] . "'");
+        $updPhoneStmt->execute([':new' => $new, ':srch' => $srch, ':idName' => $r['idName'], ':phoneCode' => $r['Phone_Code']]);
+        $n += $updPhoneStmt->rowCount();
     }
 
     $cleanMsg = $n . " phone records cleaned.";
@@ -251,7 +266,8 @@ if (isset($_POST['btnClnPhone'])) {
 if (isset($_POST['btnClnNames'])) {
     // Clean up
     $accordIndex = 1;
-    $stmt = $dbh->query("select * from `name` where idName > 0 and Record_Member = 1 and Name_Last <> '';");
+    $stmt = $dbh->prepare("SELECT * FROM `name` WHERE `idName` > 0 AND `Record_Member` = 1 AND `Name_Last` <> '';");
+    $stmt->execute();
     $c = 0;
 
     while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
@@ -365,7 +381,8 @@ if (isset($_POST["btnDoBackup"])) {
  */
 $delIdListing = "";
 
-$res3 = $dbh->query("select idName from name where name.Member_Status in ('u','TBD');");
+$res3 = $dbh->prepare("SELECT `idName` FROM `name` WHERE `name`.`Member_Status` IN ('u','TBD');");
+$res3->execute();
 
 while ($r = $res3->fetch(\PDO::FETCH_NUM)) {
     $delIdListing .= "<a href='NameEdit.php?id=" . $r[0] . "'>" . $r[0] . "</a> ";
@@ -385,8 +402,9 @@ if (filter_has_var(INPUT_POST, "btnDelIds")) {
     $stayIds = '';
 
     // Check for existing donation records
-    $query = "select d.Donor_Id, sum(d.Amount), n.Name_Last_First from donations d left join name n on d.Donor_Id = n.idName where d.Status='a' and n.Member_Status in ('u','TBD') group by d.Donor_Id;";
-    $res = $dbh->query($query);
+    $query = "SELECT `d`.`Donor_Id`, SUM(`d`.`Amount`), `n`.`Name_Last_First` FROM `donations` `d` LEFT JOIN `name` `n` ON `d`.`Donor_Id` = `n`.`idName` WHERE `d`.`Status`='a' AND `n`.`Member_Status` IN ('u','TBD') GROUP BY `d`.`Donor_Id`;";
+    $res = $dbh->prepare($query);
+    $res->execute();
 
     while ($r = $res->fetch(\PDO::FETCH_NUM)) {
         $ids .= $r[0] . ",  ";
@@ -394,7 +412,8 @@ if (filter_has_var(INPUT_POST, "btnDelIds")) {
     }
 
     // Check for existing stays
-    $staysStmt = $dbh->query("select n.idName, n.Name_Last_First from stays s left join name n on n.idName = s.idName where n.Member_Status in ('u','TBD') and (s.Status = '" . VisitStatus::CheckedIn . "' or DATEDIFF(ifnull(s.Span_End_Date, now()), s.Span_Start_Date) > 0) group by s.idName");
+    $staysStmt = $dbh->prepare("SELECT `n`.`idName`, `n`.`Name_Last_First` FROM `stays` `s` LEFT JOIN `name` `n` ON `n`.`idName` = `s`.`idName` WHERE `n`.`Member_Status` IN ('u','TBD') AND (`s`.`Status` = :status OR DATEDIFF(IFNULL(`s`.`Span_End_Date`, NOW()), `s`.`Span_Start_Date`) > 0) GROUP BY `s`.`idName`");
+    $staysStmt->execute([':status' => VisitStatus::CheckedIn]);
     while ($r = $staysStmt->fetch(\PDO::FETCH_ASSOC)) {
         $stayIds .= $r['idName'] . ', ';
         $numStays++;
@@ -413,7 +432,8 @@ if (filter_has_var(INPUT_POST, "btnDelIds")) {
     } else {
 
         // delete the name and associated records.
-        $delStmt = $dbh->query("call delete_names_u_tbd;");
+        $delStmt = $dbh->prepare("CALL `delete_names_u_tbd`;");
+        $delStmt->execute();
         $response = $delStmt->fetchAll(\PDO::FETCH_ASSOC);
         $delStmt->nextRowset();
 
@@ -435,7 +455,9 @@ if (filter_has_var(INPUT_POST, "btnDelIds")) {
 
 $selLookups = "<option value=''>No records</option>";
 
-if (($stmt = $dbh->query("select distinct `Table_Name` from `gen_lookups`;")) !== FALSE) {
+$stmt = $dbh->prepare("SELECT DISTINCT `Table_Name` FROM `gen_lookups`;");
+
+if ($stmt->execute() !== FALSE) {
 
     $selLookups = "<option value=''>Select</option>";
 

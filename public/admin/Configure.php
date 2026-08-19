@@ -172,7 +172,8 @@ $logs = '';
 if (filter_has_var(INPUT_POST, 'btnLogs')) {
     $tabIndex = 1;
 
-    $stmt = $dbh->query("Select * from syslog order by Timestamp DESC Limit 100;");
+    $stmt = $dbh->prepare("SELECT * FROM `syslog` ORDER BY `Timestamp` DESC LIMIT 100;");
+    $stmt->execute();
     $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
     $edRows = array();
 
@@ -277,7 +278,8 @@ if(SecurityComponent::is_TheAdmin()){
     }
 }
 try {
-    $stmt = $dbh->query("Select MAX(TimeStamp) from syslog where Log_Type = 'Zip';");
+    $stmt = $dbh->prepare("SELECT MAX(`TimeStamp`) FROM `syslog` WHERE `Log_Type` = 'Zip';");
+    $stmt->execute();
     $rows = $stmt->fetchAll(\PDO::FETCH_NUM);
 } catch (PDOException $pe) {
     $rows = array();

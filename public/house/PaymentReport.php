@@ -190,7 +190,10 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
     $filter->loadSelectedPayTypes();
     $filter->loadSelectedPaymentGateways();
 
-    $whDates = " and (CASE WHEN lp.Payment_Status = 'r' THEN DATE(lp.Payment_Last_Updated) ELSE DATE(lp.Payment_Date) END) < DATE('" . $filter->getQueryEnd() . "') and (CASE WHEN lp.Payment_Status = 'r' THEN DATE(lp.Payment_Last_Updated) ELSE DATE(lp.Payment_Date) END) >= DATE('" . $filter->getReportStart() . "') ";
+    $queryParams = [];
+    $whDates = " AND (CASE WHEN `lp`.`Payment_Status` = 'r' THEN DATE(`lp`.`Payment_Last_Updated`) ELSE DATE(`lp`.`Payment_Date`) END) < DATE(:queryEnd) AND (CASE WHEN `lp`.`Payment_Status` = 'r' THEN DATE(`lp`.`Payment_Last_Updated`) ELSE DATE(`lp`.`Payment_Date`) END) >= DATE(:reportStart) ";
+    $queryParams[':queryEnd'] = $filter->getQueryEnd();
+    $queryParams[':reportStart'] = $filter->getReportStart();
 
     $endDT = new DateTime($end);
     $endDT->sub(new DateInterval('P1D'));
@@ -203,7 +206,8 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
             $invoiceNumber = '0';
         }
 
-        $where = "and lp.Invoice_Number = '$invoiceNumber' ";
+        $where = "AND `lp`.`Invoice_Number` = :invoiceNumber ";
+        $queryParams[':invoiceNumber'] = $invoiceNumber;
         $headerTable->addBodyTr(HTMLTable::makeTd('Invoice Number: ', ['class' => 'tdlabel']) . HTMLTable::makeTd($invoiceNumber));
 
 
@@ -246,15 +250,36 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
 		}
 
 		if ($whHosp != '') {
-			$whHosp = " and hs.idHospital in (".$whHosp.") ";
+			$hospIds = explode(',', $whHosp);
+			$hospPh = [];
+			foreach ($hospIds as $i => $hid) {
+				$ph = ':hosp' . $i;
+				$hospPh[] = $ph;
+				$queryParams[$ph] = $hid;
+			}
+			$whHosp = " AND `hs`.`idHospital` IN (" . implode(', ', $hospPh) . ") ";
 		}
 
 		if ($whAssoc != '') {
-			$whAssoc = " and hs.idAssociation in (" . $whAssoc . ") ";
+			$assocIds = explode(',', $whAssoc);
+			$assocPh = [];
+			foreach ($assocIds as $i => $aid) {
+				$ph = ':assoc' . $i;
+				$assocPh[] = $ph;
+				$queryParams[$ph] = $aid;
+			}
+			$whAssoc = " AND `hs`.`idAssociation` IN (" . implode(', ', $assocPh) . ") ";
 		}
 
 		if ($whBillAgent != '') {
-			$whBillAgent = " and lp.Payment_idPayor in (".$whBillAgent.") ";
+			$baIds = explode(',', $whBillAgent);
+			$baPh = [];
+			foreach ($baIds as $i => $bid) {
+				$ph = ':ba' . $i;
+				$baPh[] = $ph;
+				$queryParams[$ph] = $bid;
+			}
+			$whBillAgent = " AND `lp`.`Payment_idPayor` IN (" . implode(', ', $baPh) . ") ";
 		}
 
 		$hdrHosps = $filter->getSelectedHospitalsString();
@@ -279,15 +304,11 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
         $payStatusText = '';
         $rtnIncluded = FALSE;
         $statusList = $filter->getPayStatuses();
+        $statusVals = [];
 
 		foreach ($filter->getSelectedPayStatuses() as $s) {
 			if ($s != '') {
-				// Set up query where part.
-				if ($whStatus == '') {
-					$whStatus = "'$s'";
-				} else {
-					$whStatus .= ",'$s'";
-				}
+				$statusVals[] = $s;
 
                 if ($s == PaymentStatusCode::Retrn) {
                     $rtnIncluded = TRUE;
@@ -301,12 +322,19 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
             }
         }
 
-        if ($whStatus != '') {
+        if (count($statusVals) > 0) {
+
+            $statusPh = [];
+            foreach ($statusVals as $i => $sv) {
+                $ph = ':stat' . $i;
+                $statusPh[] = $ph;
+                $queryParams[$ph] = $sv;
+            }
+            $whStatus = " AND `lp`.`Payment_Status` IN (" . implode(', ', $statusPh) . ") ";
 
             if ($rtnIncluded) {
-                $whStatus = " and (lp.Payment_Status in (" . $whStatus . ") or (lp.Is_Refund = 1 && lp.Payment_Status = '" . PaymentStatusCode::Paid . "')) ";
-            } else {
-                $whStatus = " and lp.Payment_Status in (" . $whStatus . ") ";
+                $whStatus = " AND (`lp`.`Payment_Status` IN (" . implode(', ', $statusPh) . ") OR (`lp`.`Is_Refund` = 1 && `lp`.`Payment_Status` = :stPaid)) ";
+                $queryParams[':stPaid'] = PaymentStatusCode::Paid;
             }
 
         } else {
@@ -326,7 +354,7 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
                 $payType = $payTypes[$s] ?? null;
                 if ($payType !== null) {
                     if ((int)$payType[2] === PaymentMethod::External) {
-                        $externalTypeCodes[] = "'" . $s . "'";
+                        $externalTypeCodes[] = $s;
                     } else {
                         $standardMethodIds[] = (int)$payType[2];
                     }
@@ -337,10 +365,23 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
 
         $typeConditions = [];
         if (!empty($standardMethodIds)) {
-            $typeConditions[] = "lp.idPayment_Method IN (" . implode(',', array_unique($standardMethodIds)) . ")";
+            $methodPh = [];
+            foreach (array_values(array_unique($standardMethodIds)) as $i => $mid) {
+                $ph = ':method' . $i;
+                $methodPh[] = $ph;
+                $queryParams[$ph] = $mid;
+            }
+            $typeConditions[] = "`lp`.`idPayment_Method` IN (" . implode(', ', $methodPh) . ")";
         }
         if (!empty($externalTypeCodes)) {
-            $typeConditions[] = "(lp.idPayment_Method = " . PaymentMethod::External . " AND tx.Payment_Type IN (" . implode(',', $externalTypeCodes) . "))";
+            $extPh = [];
+            foreach ($externalTypeCodes as $i => $ec) {
+                $ph = ':extType' . $i;
+                $extPh[] = $ph;
+                $queryParams[$ph] = $ec;
+            }
+            $typeConditions[] = "(`lp`.`idPayment_Method` = :externalMethod AND `tx`.`Payment_Type` IN (" . implode(', ', $extPh) . "))";
+            $queryParams[':externalMethod'] = PaymentMethod::External;
         }
         if (!empty($typeConditions)) {
             $whType = " AND (" . implode(' OR ', $typeConditions) . ") ";
@@ -354,17 +395,13 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
         $gwText = '';
         $gwList = $filter->getPaymentGateways();
         $gwSelections = $filter->getSelectedPaymentGateways();
+        $gwVals = [];
 
         if (count($gwSelections) > 0) {
 
             foreach ($gwSelections as $s) {
                 if ($s != '') {
-                    // Set up query where part.
-                    if ($whGw == '') {
-                        $whGw = " '" . $s . "' ";
-                    } else {
-                        $whGw .= ", '" . $s . "' ";
-                    }
+                    $gwVals[] = $s;
 
                     if ($gwText == '') {
                         $gwText .= (isset($gwList[$s][1]) ? $gwList[$s][1] : '');
@@ -375,8 +412,14 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
                 }
             }
 
-            if ($whGw != '') {
-                $whGw = " and lp.`Merchant` in (" . $whGw . ") ";
+            if (count($gwVals) > 0) {
+                $gwPh = [];
+                foreach ($gwVals as $i => $gv) {
+                    $ph = ':gw' . $i;
+                    $gwPh[] = $ph;
+                    $queryParams[$ph] = $gv;
+                }
+                $whGw = " AND `lp`.`Merchant` IN (" . implode(', ', $gwPh) . ") ";
             } else {
                 $gwText = 'All';
             }
@@ -387,32 +430,32 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
         $where = $whHosp . $whAssoc . $whDates . $whStatus . $whType . $whGw . $whBillAgent;
     }
 
-    $query = "Select
-    lp.*,
+    $query = "SELECT
+    `lp`.*,
     " . Statement::externalPaymentTitleSelectSql('lp') . ",
-    ifnull(n.Name_First, '') as `First`,
-    ifnull(n.Name_Last, '') as `Last`,
-    ifnull(n.Company, '') as `Company`,
-    ifnull(r.Title, '') as `Room`,
-    ifnull(hs.idHospital, 0) as idHospital,
-    ifnull(hs.idAssociation, 0) as idAssociation,
-    ifnull(np.Name_Last, '') as `Patient_Last`,
-    ifnull(np.Name_First, '') as `Patient_First`,
-    DATE(hs.Arrival_Date) as Hosp_Arrival
-from
-    vlist_pments lp
-        left join
-    `name` n ON lp.Sold_To_Id = n.idName
-        left join
-    visit v on lp.Order_Number = v.idVisit and lp.Suborder_Number = v.Span
-	left join
-    resource r ON v.idResource = r.idResource
-        left join
-    hospital_stay hs ON v.idHospital_stay = hs.idHospital_stay
-        left join
-    name np on hs.idPatient = np.idName
+    IFNULL(`n`.`Name_First`, '') AS `First`,
+    IFNULL(`n`.`Name_Last`, '') AS `Last`,
+    IFNULL(`n`.`Company`, '') AS `Company`,
+    IFNULL(`r`.`Title`, '') AS `Room`,
+    IFNULL(`hs`.`idHospital`, 0) AS `idHospital`,
+    IFNULL(`hs`.`idAssociation`, 0) AS `idAssociation`,
+    IFNULL(`np`.`Name_Last`, '') AS `Patient_Last`,
+    IFNULL(`np`.`Name_First`, '') AS `Patient_First`,
+    DATE(`hs`.`Arrival_Date`) AS `Hosp_Arrival`
+FROM
+    `vlist_pments` `lp`
+        LEFT JOIN
+    `name` `n` ON `lp`.`Sold_To_Id` = `n`.`idName`
+        LEFT JOIN
+    `visit` `v` ON `lp`.`Order_Number` = `v`.`idVisit` AND `lp`.`Suborder_Number` = `v`.`Span`
+	LEFT JOIN
+    `resource` `r` ON `v`.`idResource` = `r`.`idResource`
+        LEFT JOIN
+    `hospital_stay` `hs` ON `v`.`idHospital_stay` = `hs`.`idHospital_stay`
+        LEFT JOIN
+    `name` `np` ON `hs`.`idPatient` = `np`.`idName`
         " . Statement::externalPaymentTitleJoinSql('lp') . "
-where lp.idPayment > 0
+WHERE `lp`.`idPayment` > 0
   $where ";
 
     $tbl = null;
@@ -470,7 +513,8 @@ where lp.idPayment > 0
 
 
     // Now the data ...
-    $stmt = $dbh->query($query);
+    $stmt = $dbh->prepare($query);
+    $stmt->execute($queryParams);
     $invoices = Statement::processPayments($stmt, array('First', 'Last', 'Company', 'Room', 'idHospital', 'idAssociation', 'Patient_Last', 'Patient_First', 'Hosp_Arrival'));
 
     foreach ($invoices as $r) {

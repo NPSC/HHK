@@ -84,38 +84,50 @@ function getNonVisitors(\PDO $dbh, array $visitIds): array {
         return $idNames;
     }
 
-    $stmt = $dbh->query("Select	DISTINCT
-    ng.idName AS `hhkId`,
-    IFNULL(ng.Relationship_Code, '') as `Relationship_Code`,
-    IFNULL(n.External_Id, '') AS `accountId`,
-    IFNULL(n.Name_Full, '') AS `Name`,
-    IFNULL(h.Title, '') AS `Hospital`,
-    IFNULL(g.Description, '') AS `Diagnosis`,
-    IFNULL(hs.idPsg, 0) as `idPsg`,
-    CONCAT_WS(' ', na.Address_1, na.Address_2) as `Address`,
-    v.idPrimaryGuest
+    $idPh = [];
+    $idParams = [];
+    foreach ($idList as $i => $vid) {
+        $ph = ':vid' . $i;
+        $idPh[] = $ph;
+        $idParams[$ph] = $vid;
+    }
 
-from
-	visit v
-		join
-	hospital_stay hs on v.idHospital_stay = hs.idHospital_stay
-        join
-	name_guest ng on hs.idPsg = ng.idPsg
-		left join
-	stays s on ng.idName = s.idName
+    $stmt = $dbh->prepare("SELECT DISTINCT
+    `ng`.`idName` AS `hhkId`,
+    IFNULL(`ng`.`Relationship_Code`, '') AS `Relationship_Code`,
+    IFNULL(`n`.`External_Id`, '') AS `accountId`,
+    IFNULL(`n`.`Name_Full`, '') AS `Name`,
+    IFNULL(`h`.`Title`, '') AS `Hospital`,
+    IFNULL(`g`.`Description`, '') AS `Diagnosis`,
+    IFNULL(`hs`.`idPsg`, 0) AS `idPsg`,
+    CONCAT_WS(' ', `na`.`Address_1`, `na`.`Address_2`) AS `Address`,
+    `v`.`idPrimaryGuest`
+
+FROM
+	`visit` `v`
+		JOIN
+	`hospital_stay` `hs` ON `v`.`idHospital_stay` = `hs`.`idHospital_stay`
+        JOIN
+	`name_guest` `ng` ON `hs`.`idPsg` = `ng`.`idPsg`
+		LEFT JOIN
+	`stays` `s` ON `ng`.`idName` = `s`.`idName`
         LEFT JOIN
-    name n on n.idName = ng.idName
+    `name` `n` ON `n`.`idName` = `ng`.`idName`
         LEFT JOIN
-    name_address na on n.idName = na.idName and n.Preferred_Mail_Address = na.Purpose
+    `name_address` `na` ON `n`.`idName` = `na`.`idName` AND `n`.`Preferred_Mail_Address` = `na`.`Purpose`
         LEFT JOIN
-    hospital h on hs.idHospital = h.idHospital
+    `hospital` `h` ON `hs`.`idHospital` = `h`.`idHospital`
         LEFT JOIN
-    gen_lookups g on g.Table_Name = 'Diagnosis' and g.Code = hs.Diagnosis
-where
-	s.idName is NULL
-    AND n.External_Id != '" . AbstractExportManager::EXCLUDE_TERM . "'
-    AND n.Member_Status = '" . MemStatus::Active ."'
-    AND v.idVisit in (" . implode(',', $idList) . ")");
+    `gen_lookups` `g` ON `g`.`Table_Name` = 'Diagnosis' AND `g`.`Code` = `hs`.`Diagnosis`
+WHERE
+	`s`.`idName` IS NULL
+    AND `n`.`External_Id` != :excludeTerm
+    AND `n`.`Member_Status` = :activeStatus
+    AND `v`.`idVisit` IN (" . implode(', ', $idPh) . ")");
+    $stmt->execute(array_merge($idParams, [
+        ':excludeTerm' => AbstractExportManager::EXCLUDE_TERM,
+        ':activeStatus' => MemStatus::Active,
+    ]));
 
     while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
 
@@ -136,17 +148,21 @@ where
 function getPaymentReport(\PDO $dbh, $start, $end) {
 
     $uS = Session::getInstance();
-    $whereClause = " DATE(`Payment Date`) >= DATE('$start') and DATE(`Payment Date`) <= DATE('$end') ";
+    $whereClause = " DATE(`Payment Date`) >= DATE(:start) AND DATE(`Payment Date`) <= DATE(:end) ";
+    $whereParams = [':start' => $start, ':end' => $end];
 
     if (isset($uS->sId) && $uS->sId > 0) {
-        $whereClause .= " and `HHK Id` != " . $uS->sId;
+        $whereClause .= " AND `HHK Id` != :sId";
+        $whereParams[':sId'] = $uS->sId;
     }
 
     if (isset($uS->subsidyId) && $uS->subsidyId > 0) {
-        $whereClause .= " and `HHK Id` != " . $uS->subsidyId;
+        $whereClause .= " AND `HHK Id` != :subsidyId";
+        $whereParams[':subsidyId'] = $uS->subsidyId;
     }
 
-    $stmt = $dbh->query("Select * from `vneon_payment_display` where $whereClause");
+    $stmt = $dbh->prepare("SELECT * FROM `vneon_payment_display` WHERE $whereClause");
+    $stmt->execute($whereParams);
     $rows = array();
 
     if ($stmt->rowCount() == 0) {
@@ -253,7 +269,8 @@ function searchVisits(\PDO $dbh, string $start, string $end, int $maxGuests, Abs
     $rMapper = new RelationshipMapper($dbh);
 
     // Get Neon relationship code list
-    $nstmt = $dbh->query("Select * from neon_lists where `Method` = 'account/listRelationTypes';");
+    $nstmt = $dbh->prepare("SELECT * FROM `neon_lists` WHERE `Method` = 'account/listRelationTypes';");
+    $nstmt->execute();
     $method = $nstmt->fetchAll(PDO::FETCH_ASSOC);
     
     $neonRelList = count($method) > 0 ? getNeonTypes($CmsManager, $method[0]) : [];

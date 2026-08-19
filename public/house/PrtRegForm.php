@@ -49,7 +49,8 @@ if ($checkinDate == '') {
     $ckinDT = new DateTime($checkinDate);
 
     // get reservations on the date indicated
-    $stmt = $dbh->query("select idReservation from reservation where Status = '" . ReservationStatus::Committed . "' and DATE(Expected_Arrival) = '" . $ckinDT->format('Y-m-d') . "'");
+    $stmt = $dbh->prepare("SELECT `idReservation` FROM `reservation` WHERE `Status` = :status AND DATE(`Expected_Arrival`) = :ckinDate");
+    $stmt->execute([':status' => ReservationStatus::Committed, ':ckinDate' => $ckinDT->format('Y-m-d')]);
     $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
     if (count($rows) == 0) {

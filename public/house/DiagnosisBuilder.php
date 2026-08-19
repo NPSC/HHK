@@ -123,12 +123,12 @@ $labels = Labels::getLabels();
 
 // Add diags and locations buttons
 if (isset($_POST['btnAddDiags'])) {
-    $dbh->exec("insert into gen_lookups (`Table_Name`, `Code`, `Description`, `Type`, `Order`) values ('Diagnosis', 'q9', 'New Entry', 'h', 10 )");
+    $dbh->exec("INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Type`, `Order`) VALUES ('Diagnosis', 'q9', 'New Entry', 'h', 10)");
     $tabIndex = 5;
 }
 
 if (isset($_POST['btnAddLocs'])) {
-    $dbh->exec("insert into gen_lookups (`Table_Name`, `Code`, `Description`, `Type`, `Order`) values ('Location', 'q9', 'New Entry', 'h', 10 )");
+    $dbh->exec("INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Type`, `Order`) VALUES ('Location', 'q9', 'New Entry', 'h', 10)");
     $tabIndex = 5;
 }
 
@@ -175,7 +175,8 @@ if (isset($_POST['table'])) {
             }
 
             // Check for an entry with the same description
-            $stmt = $dbh->query("Select count(*) from gen_lookups where `Table_Name` = '$tableName' and LOWER(`Description`) = '" . strtolower($dText) . "';");
+            $stmt = $dbh->prepare("SELECT COUNT(*) FROM `gen_lookups` WHERE `Table_Name` = :tableName AND LOWER(`Description`) = :desc;");
+            $stmt->execute([':tableName' => $tableName, ':desc' => strtolower($dText)]);
             $rows = $stmt->fetchAll(PDO::FETCH_NUM);
 
             if ($rows[0][0] == 0) {
@@ -223,7 +224,8 @@ if (isset($_POST['table'])) {
 
 
 // General Lookup categories
-$stmt2 = $dbh->query("select distinct `Type`, `Table_Name` from gen_lookups where `Table_Name` in ('Diagnosis', 'Location');");
+$stmt2 = $dbh->prepare("SELECT DISTINCT `Type`, `Table_Name` FROM `gen_lookups` WHERE `Table_Name` IN ('Diagnosis', 'Location');");
+$stmt2->execute();
 $rows2 = $stmt2->fetchAll(PDO::FETCH_NUM);
 
 $lkups = array();

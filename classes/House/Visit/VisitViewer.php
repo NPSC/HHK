@@ -279,7 +279,8 @@ class VisitViewer {
         if ($r['Status'] == VisitStatus::CheckedIn && $extendVisitDays > 0 && $action != 'ref') {
             $etbl = new HTMLTable();
 
-            $olStmt = $dbh->query("select `On_Leave`, `Span_Start_Date`  from `stays` where `stays`.`idVisit` = " . $r['idVisit'] . " and `stays`.`Status` = 'a' LIMIT 0, 1 ");
+            $olStmt = $dbh->prepare("SELECT `On_Leave`, `Span_Start_Date` FROM `stays` WHERE `stays`.`idVisit` = :idVisit AND `stays`.`Status` = 'a' LIMIT 0, 1 ");
+            $olStmt->execute([':idVisit' => $r['idVisit']]);
             $olRows = $olStmt->fetchAll(\PDO::FETCH_NUM);
 
             if (isset($olRows[0][0]) && $olRows[0][0] > 0) {
@@ -423,7 +424,8 @@ class VisitViewer {
 
         if ($idV > 0 && $idS > -1) {
             // load stays for this specific visit-span
-            $stmt = $dbh->query("select * from `vstays_listing` where `idVisit` = $idV and `Visit_Span` = $idS order by `Span_Start_Date` desc;");
+            $stmt = $dbh->prepare("SELECT * FROM `vstays_listing` WHERE `idVisit` = :idV AND `Visit_Span` = :idS ORDER BY `Span_Start_Date` DESC;");
+            $stmt->execute([':idV' => $idV, ':idS' => $idS]);
             $staysDtable = $stmt->fetchAll(\PDO::FETCH_ASSOC);
             $staysDtable_rows = count($staysDtable);
 
@@ -444,7 +446,8 @@ class VisitViewer {
         // Get previous span status
         if ($idV > 0 && $idS > 0) {
             $idS--;
-            $stmt = $dbh->query("select `Status` from `visit` where `idVisit` = $idV and `Span` = $idS;");
+            $stmt = $dbh->prepare("SELECT `Status` FROM `visit` WHERE `idVisit` = :idV AND `Span` = :idS;");
+            $stmt->execute([':idV' => $idV, ':idS' => $idS]);
             $rows = $stmt->fetchAll(\PDO::FETCH_NUM);
             if(count($rows) > 0) {
                 if ($rows[0][0] == VisitStatus::ChangeRate) {

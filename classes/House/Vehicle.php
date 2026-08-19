@@ -35,12 +35,19 @@ class Vehicle {
         $rows = array();
 
         if ($idReg > 0 && $idResv > 0){
-            
-            $stmt = $dbh->query("select v.*, n.Name_Full, rv.idReservation, r.No_Vehicle from vehicle v left join name n on v.idName = n.idName left join reservation r on idReservation = $idResv left join reservation_vehicle rv on v.idVehicle = rv.idVehicle and rv.idReservation = $idResv where v.idRegistration = $idReg" . ($thisResv ? " and rv.idReservation = $idResv": ""));
+
+            $query = "SELECT `v`.*, `n`.`Name_Full`, `rv`.`idReservation`, `r`.`No_Vehicle` FROM `vehicle` `v` LEFT JOIN `name` `n` ON `v`.`idName` = `n`.`idName` LEFT JOIN `reservation` `r` ON `idReservation` = :idResv1 LEFT JOIN `reservation_vehicle` `rv` ON `v`.`idVehicle` = `rv`.`idVehicle` AND `rv`.`idReservation` = :idResv2 WHERE `v`.`idRegistration` = :idReg" . ($thisResv ? " AND `rv`.`idReservation` = :idResv3": "");
+            $params = [':idResv1' => $idResv, ':idResv2' => $idResv, ':idReg' => $idReg];
+            if ($thisResv) {
+                $params[':idResv3'] = $idResv;
+            }
+            $stmt = $dbh->prepare($query);
+            $stmt->execute($params);
             $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
         }else if ($idReg > 0) {
 
-            $stmt = $dbh->query("select v.*, n.Name_Full from vehicle v left join name n on v.idName = n.idName where v.idRegistration = $idReg");
+            $stmt = $dbh->prepare("SELECT `v`.*, `n`.`Name_Full` FROM `vehicle` `v` LEFT JOIN `name` `n` ON `v`.`idName` = `n`.`idName` WHERE `v`.`idRegistration` = :idReg");
+            $stmt->execute([':idReg' => $idReg]);
             $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
         }
@@ -61,28 +68,29 @@ class Vehicle {
 
         if ($tag != '') {
 
-            $tag = addslashes($tag) . '%';
-            $stmt = $dbh->query("SELECT COUNT(v.idVehicle),
-    v.*,
-    IFNULL(r.Title, '') AS `Room`,
-    IFNULL(vs.idVisit, 0) AS `idVisit`,
-    IFNULL(n.Name_Full, '') AS `Patient`,
-    IFNULL(n.idName, 0) AS `idName`
+            $tag = $tag . '%';
+            $stmt = $dbh->prepare("SELECT COUNT(`v`.`idVehicle`),
+    `v`.*,
+    IFNULL(`r`.`Title`, '') AS `Room`,
+    IFNULL(`vs`.`idVisit`, 0) AS `idVisit`,
+    IFNULL(`n`.`Name_Full`, '') AS `Patient`,
+    IFNULL(`n`.`idName`, 0) AS `idName`
 FROM
-    vehicle v
+    `vehicle` `v`
         LEFT JOIN
-    visit vs ON vs.`Status` = 'a'
-        AND vs.idRegistration = v.idRegistration
+    `visit` `vs` ON `vs`.`Status` = 'a'
+        AND `vs`.`idRegistration` = `v`.`idRegistration`
         LEFT JOIN
-    resource r ON vs.idResource = r.idResource
+    `resource` `r` ON `vs`.`idResource` = `r`.`idResource`
 		LEFT JOIN
-	registration rg on v.idRegistration = rg.idRegistration
+	`registration` `rg` ON `v`.`idRegistration` = `rg`.`idRegistration`
 		LEFT JOIN
-	name_guest ng on rg.idPsg = ng.idPsg and ng.Relationship_Code = 'slf'
+	`name_guest` `ng` ON `rg`.`idPsg` = `ng`.`idPsg` AND `ng`.`Relationship_Code` = 'slf'
 		LEFT JOIN
-	`name` n on ng.idName = n.idName
+	`name` `n` ON `ng`.`idName` = `n`.`idName`
 WHERE
-    v.License_Number LIKE '$tag' GROUP BY v.idVehicle");
+    `v`.`License_Number` LIKE :tag GROUP BY `v`.`idVehicle`");
+            $stmt->execute([':tag' => $tag]);
 
             $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 

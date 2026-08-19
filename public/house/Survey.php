@@ -68,7 +68,8 @@ function outputIt(array $gName, bool $excel, int $reportRows, ExcelHelper $write
 }
 
 // date of last survey
-$stmt = $dbh->query("select Description from gen_lookups where Table_Name='Guest_Survey' and Code = 'Survey_Date'");
+$stmt = $dbh->prepare("SELECT `Description` FROM `gen_lookups` WHERE `Table_Name` = 'Guest_Survey' AND `Code` = 'Survey_Date'");
+$stmt->execute();
 $rows = $stmt->fetchAll(PDO::FETCH_NUM);
 if (count($rows) > 0) {
     $refreshDate = new DateTime(date('Y-m-d', strtotime($rows[0][0])));
@@ -88,27 +89,31 @@ if (isset($_POST['btnPsg']) || isset($_POST['btnGen'])) {
 
     $endDate = $endDT->format('Y-m-d');
 
+    $params = [':endDate' => $endDate];
+
     if ($refreshDate != NULL) {
-        $startDateClause = " and v.Actual_Departure >= '" . $refreshDate->format('Y-m-d') . "'";
+        $startDateClause = " AND `v`.`Actual_Departure` >= :refreshDate";
+        $params[':refreshDate'] = $refreshDate->format('Y-m-d');
     } else {
         $startDateClause = '';
     }
 
-    $query = "select max(v.Actual_Departure)as Actual_Departure, n2.Name_Last as pLast, n2.Name_First as pFirst, v.idPrimaryGuest, n.idName, n.Name_Last, n.Name_First, n.Name_Prefix, n.Name_Suffix, g.Description as Relationship,
-ifnull(na.Address_1,'') as Address_1, ifnull(na.Address_2,'') as Address_2, ifnull(na.City,'') as City, ifnull(na.State_Province,'') as State_Province, ifnull(na.Postal_Code,'') as Postal_Code
-from visit v left join stays s on v.idVisit = s.idVisit
-	left join name_guest ng on s.idName = ng.idName
-	left join name n on ng.idName = n.idName
-        left join hospital_stay h on v.idHospital_stay = h.idHospital_stay
-        left join name n2 on h.idPatient = n2.idName
-	left join name_address na on n.idName = na.idName and n.Preferred_Mail_Address = na.Purpose
-	left join name_demog nd on n.idName = nd.idName and ifnull(nd.Age_Bracket, '6') in ('6', '8')
-        left join gen_lookups g on g.Table_Name = 'Patient_Rel_Type' and g.Code = ng.Relationship_Code
-where v.Status = 'co' and v.Actual_Departure < '$endDate' $startDateClause
-    group by n.idName
-order by h.idPsg, na.Address_1, na.Address_2";
+    $query = "SELECT MAX(`v`.`Actual_Departure`) AS `Actual_Departure`, `n2`.`Name_Last` AS `pLast`, `n2`.`Name_First` AS `pFirst`, `v`.`idPrimaryGuest`, `n`.`idName`, `n`.`Name_Last`, `n`.`Name_First`, `n`.`Name_Prefix`, `n`.`Name_Suffix`, `g`.`Description` AS `Relationship`,
+IFNULL(`na`.`Address_1`, '') AS `Address_1`, IFNULL(`na`.`Address_2`, '') AS `Address_2`, IFNULL(`na`.`City`, '') AS `City`, IFNULL(`na`.`State_Province`, '') AS `State_Province`, IFNULL(`na`.`Postal_Code`, '') AS `Postal_Code`
+FROM `visit` `v` LEFT JOIN `stays` `s` ON `v`.`idVisit` = `s`.`idVisit`
+	LEFT JOIN `name_guest` `ng` ON `s`.`idName` = `ng`.`idName`
+	LEFT JOIN `name` `n` ON `ng`.`idName` = `n`.`idName`
+        LEFT JOIN `hospital_stay` `h` ON `v`.`idHospital_stay` = `h`.`idHospital_stay`
+        LEFT JOIN `name` `n2` ON `h`.`idPatient` = `n2`.`idName`
+	LEFT JOIN `name_address` `na` ON `n`.`idName` = `na`.`idName` AND `n`.`Preferred_Mail_Address` = `na`.`Purpose`
+	LEFT JOIN `name_demog` `nd` ON `n`.`idName` = `nd`.`idName` AND IFNULL(`nd`.`Age_Bracket`, '6') IN ('6', '8')
+        LEFT JOIN `gen_lookups` `g` ON `g`.`Table_Name` = 'Patient_Rel_Type' AND `g`.`Code` = `ng`.`Relationship_Code`
+WHERE `v`.`Status` = 'co' AND `v`.`Actual_Departure` < :endDate $startDateClause
+    GROUP BY `n`.`idName`
+ORDER BY `h`.`idPsg`, `na`.`Address_1`, `na`.`Address_2`";
 
-    $stmt = $dbh->query($query);
+    $stmt = $dbh->prepare($query);
+    $stmt->execute($params);
     $tbl = new HTMLTable();
     $pName = '';
     $address = '';
@@ -196,7 +201,8 @@ order by h.idPsg, na.Address_1, na.Address_2";
     if ($excel) {
 
         // update the saved survey date.
-        $dbh->exec("update gen_lookups set Description = '$endDate' where Table_Name='Guest_Survey' and Code = 'Survey_Date'");
+        $updSurveyStmt = $dbh->prepare("UPDATE `gen_lookups` SET `Description` = :endDate WHERE `Table_Name` = 'Guest_Survey' AND `Code` = 'Survey_Date'");
+        $updSurveyStmt->execute([':endDate' => $endDate]);
 
         $writer->download();
     }

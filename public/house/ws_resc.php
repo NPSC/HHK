@@ -104,8 +104,8 @@ try {
                 throw new \Exception("GuestId missing");
             } else {
                 // Delete it.
-                $delete = "CALL delete_guest_photo($guestId)";
-                $dbh->exec($delete);
+                $delStmt = $dbh->prepare("CALL delete_guest_photo(:guestId)");
+                $delStmt->execute([':guestId' => $guestId]);
             }
 
             break;

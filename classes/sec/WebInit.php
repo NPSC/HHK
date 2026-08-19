@@ -222,9 +222,10 @@ class WebInit {
      * @return void
      */
     public static function loadNameLookups(\PDO $dbh, $uS){
-        $query = "select `Table_Name`, `Code`, `Description`, `Substitute` from `gen_lookups`
-            where `Table_Name` in ('Address_Purpose','Email_Purpose','rel_type', 'NoReturnReason', 'Member_Basis','mem_status','Name_Prefix','Name_Suffix','Phone_Type', 'Pay_Type', 'Salutation', 'Role_Codes', 'Referral_Form_Status') order by `Table_Name`, `Code`;";
-        $stmt = $dbh->query($query);
+        $query = "SELECT `Table_Name`, `Code`, `Description`, `Substitute` FROM `gen_lookups`
+            WHERE `Table_Name` IN ('Address_Purpose','Email_Purpose','rel_type', 'NoReturnReason', 'Member_Basis','mem_status','Name_Prefix','Name_Suffix','Phone_Type', 'Pay_Type', 'Salutation', 'Role_Codes', 'Referral_Form_Status') ORDER BY `Table_Name`, `Code`;";
+        $stmt = $dbh->prepare($query);
+        $stmt->execute();
 
         $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
         $nameLookups = array();
@@ -293,11 +294,12 @@ class WebInit {
 
         SysConfig::getCategory($this->dbh, $uS, ["h", "ha", "hf", "c", "g", "p", "ga"], WebInit::SYS_CONFIG);
 
-        $query = "select `Table_Name`, `Code`, `Description`, `Substitute` from `gen_lookups`
-            where `Table_Name` in ('Patient_Rel_Type', 'Key_Deposit_Code', 'Room_Category', 'Static_Room_Rate', 'Room_Rate_Adjustment', 'Room_Type', 'Resource_Type', 'Resource_Status', 'Room_Status', 'Visit_Status')
-            UNION select `Category` as `Table_Name`, `Code`, `Title` as `Description`, `Other` as `Substitute` from `lookups` where `Use` = 'y'
-            order by `Table_Name`, `Description`;";
-        $stmt = $this->dbh->query($query);
+        $query = "SELECT `Table_Name`, `Code`, `Description`, `Substitute` FROM `gen_lookups`
+            WHERE `Table_Name` IN ('Patient_Rel_Type', 'Key_Deposit_Code', 'Room_Category', 'Static_Room_Rate', 'Room_Rate_Adjustment', 'Room_Type', 'Resource_Type', 'Resource_Status', 'Room_Status', 'Visit_Status')
+            UNION SELECT `Category` AS `Table_Name`, `Code`, `Title` AS `Description`, `Other` AS `Substitute` FROM `lookups` WHERE `Use` = 'y'
+            ORDER BY `Table_Name`, `Description`;";
+        $stmt = $this->dbh->prepare($query);
+        $stmt->execute();
 
         $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
         $nameLookups = array();
@@ -307,8 +309,9 @@ class WebInit {
         }
 
         //get hospitals with status
-        $query = "select idHospital, IF(`status`='r', concat(`Title`, ' (Retired)'), `Title`) as `Title`, `Type`, `Status`, `Reservation_Style`, `Stay_Style` from hospital where `Status` in ('a','r') order by `Status` asc, `Title` asc";
-        $stmt = $this->dbh->query($query);
+        $query = "SELECT `idHospital`, IF(`status`='r', CONCAT(`Title`, ' (Retired)'), `Title`) AS `Title`, `Type`, `Status`, `Reservation_Style`, `Stay_Style` FROM `hospital` WHERE `Status` IN ('a','r') ORDER BY `Status` ASC, `Title` ASC";
+        $stmt = $this->dbh->prepare($query);
+        $stmt->execute();
         $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
         foreach ($rows as $r) {
@@ -349,8 +352,9 @@ class WebInit {
         // get session instance
         $uS = Session::getInstance();
 
-        $stmt = $this->dbh->query("select `Table_Name`, `Code`, `Description`, `Substitute` from `gen_lookups`
-            where `Table_Name` in ('Vol_Category', 'Vol_Rank') order by `Table_Name`, `Description`;");
+        $stmt = $this->dbh->prepare("SELECT `Table_Name`, `Code`, `Description`, `Substitute` FROM `gen_lookups`
+            WHERE `Table_Name` IN ('Vol_Category', 'Vol_Rank') ORDER BY `Table_Name`, `Description`;");
+        $stmt->execute();
         $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
         $nameLookups = array();
 

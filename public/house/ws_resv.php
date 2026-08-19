@@ -227,7 +227,7 @@ try {
 
     		if ($newHsId != $idHs) {
     			// Update visit and reservation
-    			$dbh->exec("call updt_visit_hospstay($idVisit, $newHsId);");
+    			$dbh->prepare("CALL `updt_visit_hospstay`(:idVisit, :newHsId);")->execute([':idVisit' => $idVisit, ':newHsId' => $newHsId]);
     		}
 
     		$events = ['success' => 'Hospital Saved', 'newHsId' => $newHsId];
@@ -458,9 +458,10 @@ try {
 
         if (isset($_GET['rid'])) {
             $rid = intval(filter_input(INPUT_GET, 'rid', FILTER_SANITIZE_NUMBER_INT), 10);
-            $stmt = $dbh->query("SELECT reg.idPsg FROM reservation res
-JOIN registration reg on res.`idRegistration` = reg.`idRegistration`
-WHERE res.`idReservation` = " . $rid . " LIMIT 1;");
+            $stmt = $dbh->prepare("SELECT `reg`.`idPsg` FROM `reservation` `res`
+JOIN `registration` `reg` ON `res`.`idRegistration` = `reg`.`idRegistration`
+WHERE `res`.`idReservation` = :rid LIMIT 1;");
+			$stmt->execute([':rid' => $rid]);
 			$result = $stmt->fetchAll();
 			if(count($result) == 1){
 				$psgId = $result[0]["idPsg"];
@@ -487,7 +488,8 @@ WHERE res.`idReservation` = " . $rid . " LIMIT 1;");
             $reportAr["userCanEdit"] = $report->userCanEdit();
 
             if(isset($_POST['print'])){
-	            $stmt = $dbh->query("SELECT * from `vguest_listing` where id = $idGuest limit 1");
+	            $stmt = $dbh->prepare("SELECT * FROM `vguest_listing` WHERE `id` = :idGuest LIMIT 1");
+	            $stmt->execute([':idGuest' => $idGuest]);
 	            $guestAr = $stmt->fetch(\PDO::FETCH_ASSOC);
 	            $reportAr = $reportAr + ["guest"=>$guestAr];
 	            $reportAr['description'] = nl2br($reportAr['description']);

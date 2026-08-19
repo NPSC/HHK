@@ -96,8 +96,9 @@ class SitePage extends SecurityComponent {
         // Load all the web sites.
         if (isset($uS->siteList) === FALSE) {
 
-            $stmt = $dbh->query("Select Site_Code, Required_Group_Code, Relative_Address, Index_Page, Default_Page, Description, Path_To_CSS as `Class`
-                from web_sites where Relative_Address != '';");
+            $stmt = $dbh->prepare("SELECT `Site_Code`, `Required_Group_Code`, `Relative_Address`, `Index_Page`, `Default_Page`, `Description`, `Path_To_CSS` AS `Class`
+                FROM `web_sites` WHERE `Relative_Address` != '';");
+            $stmt->execute();
 
             $sl = array();
 
@@ -161,34 +162,36 @@ class SitePage extends SecurityComponent {
         if (isset($uS->webSite)) {
 
             $wsCode = strtolower($uS->webSite["Site_Code"]);
-            $where = " where p.Web_Site = '$wsCode' and p.Hide = 0 ";
-            $orderBy = " order by p.Type, p.Menu_Parent, p.Menu_Position";
+            $where = " WHERE `p`.`Web_Site` = :wsCode AND `p`.`Hide` = 0 ";
+            $orderBy = " ORDER BY `p`.`Type`, `p`.`Menu_Parent`, `p`.`Menu_Position`";
 
             // Get list of pages
-            $query = "select
-                p.idPage as idPage,
-                p.File_Name,
-                p.Title as Title,
-                p.Type as Type,
-                p.Menu_Parent,
-                p.Menu_Position,
-                case
-                    when p.Login_Page_Id > 0 then p1.File_Name
-                    else ''
-                end as Login_Page,
-                ifnull(s.Group_Code, '') as Group_Code
-            from
-                page p
-                    left join
-                page p1 ON p.Login_Page_Id = p1.idPage
-                    left join
-                page_securitygroup s ON p.idPage = s.idPage";
+            $query = "SELECT
+                `p`.`idPage` AS `idPage`,
+                `p`.`File_Name`,
+                `p`.`Title` AS `Title`,
+                `p`.`Type` AS `Type`,
+                `p`.`Menu_Parent`,
+                `p`.`Menu_Position`,
+                CASE
+                    WHEN `p`.`Login_Page_Id` > 0 THEN `p1`.`File_Name`
+                    ELSE ''
+                END AS `Login_Page`,
+                IFNULL(`s`.`Group_Code`, '') AS `Group_Code`
+            FROM
+                `page` `p`
+                    LEFT JOIN
+                `page` `p1` ON `p`.`Login_Page_Id` = `p1`.`idPage`
+                    LEFT JOIN
+                `page_securitygroup` `s` ON `p`.`idPage` = `s`.`idPage`";
 
             try {
-                $stmt = $dbh->query($query . $where . $orderBy);
+                $stmt = $dbh->prepare($query . $where . $orderBy);
+                $stmt->execute([':wsCode' => $wsCode]);
             } catch (\PDOException $pex) {
-                $where = " where p.Web_Site = '$wsCode' ";
-                $stmt = $dbh->query($query . $where . $orderBy);
+                $where = " WHERE `p`.`Web_Site` = :wsCode ";
+                $stmt = $dbh->prepare($query . $where . $orderBy);
+                $stmt->execute([':wsCode' => $wsCode]);
             }
 
             if ($stmt->rowCount() > 0) {

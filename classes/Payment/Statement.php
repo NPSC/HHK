@@ -1054,23 +1054,25 @@ class Statement {
         $labels = Labels::getLabels();
 
         // Payments
-        $query = "select lp.*, " . self::externalPaymentTitleSelectSql('lp') . ", ifnull(n.Name_First, '') as `First`,
-    ifnull(n.Name_Last, '') as `Last`,
-    ifnull(n.Company, '') as `Company`
-from vlist_inv_pments lp
-    left join
-    `name` n ON lp.Sold_To_Id = n.idName
+        $query = "SELECT `lp`.*, " . self::externalPaymentTitleSelectSql('lp') . ", IFNULL(`n`.`Name_First`, '') AS `First`,
+    IFNULL(`n`.`Name_Last`, '') AS `Last`,
+    IFNULL(`n`.`Company`, '') AS `Company`
+FROM `vlist_inv_pments` `lp`
+    LEFT JOIN
+    `name` `n` ON `lp`.`Sold_To_Id` = `n`.`idName`
     " . self::externalPaymentTitleJoinSql('lp') . "
- where lp.idGroup = $idRegistration and lp.Deleted = 0 ORDER BY lp.idInvoice";
-        $stmt = $dbh->query($query);
+ WHERE `lp`.`idGroup` = :idRegistration AND `lp`.`Deleted` = 0 ORDER BY `lp`.`idInvoice`";
+        $stmt = $dbh->prepare($query);
+        $stmt->execute([':idRegistration' => $idRegistration]);
 
         $pments = self::processPayments($stmt, array('Last', 'First', 'Company'));
 
         // items
-        $ilStmt = $dbh->query("select il.Invoice_Id, il.idInvoice_line, il.Type_Id, il.Amount, il.Description, il.Item_Id, il.Source_Item_Id, i.tax_exempt, i.Delegated_Invoice_Id, i.Order_Number, i.Suborder_Number, i.Invoice_Date, i.Status
-from invoice_line il join invoice i on il.Invoice_Id = i.idInvoice
-left join invoice_line_type ilt on il.Type_Id = ilt.id
-where i.Deleted = 0 and il.Deleted = 0 and i.idGroup = $idRegistration order by i.idGroup, il.Invoice_Id, ilt.Order_Position");
+        $ilStmt = $dbh->prepare("SELECT `il`.`Invoice_Id`, `il`.`idInvoice_line`, `il`.`Type_Id`, `il`.`Amount`, `il`.`Description`, `il`.`Item_Id`, `il`.`Source_Item_Id`, `i`.`tax_exempt`, `i`.`Delegated_Invoice_Id`, `i`.`Order_Number`, `i`.`Suborder_Number`, `i`.`Invoice_Date`, `i`.`Status`
+FROM `invoice_line` `il` JOIN `invoice` `i` ON `il`.`Invoice_Id` = `i`.`idInvoice`
+LEFT JOIN `invoice_line_type` `ilt` ON `il`.`Type_Id` = `ilt`.`id`
+WHERE `i`.`Deleted` = 0 AND `il`.`Deleted` = 0 AND `i`.`idGroup` = :idRegistration ORDER BY `i`.`idGroup`, `il`.`Invoice_Id`, `ilt`.`Order_Position`");
+        $ilStmt->execute([':idRegistration' => $idRegistration]);
 
         $invLines = $ilStmt->fetchAll(\PDO::FETCH_ASSOC);
 
@@ -1092,7 +1094,8 @@ where i.Deleted = 0 and il.Deleted = 0 and i.idGroup = $idRegistration order by 
         $diags = [];
         if ($idPsg > 0){
 
-            $pstmt = $dbh->query("select n.Name_First, n.Name_Last, hs.idHospital, hs.idAssociation from name n left join hospital_stay hs on n.idName = hs.idPatient where hs.idPsg = $idPsg");
+            $pstmt = $dbh->prepare("SELECT `n`.`Name_First`, `n`.`Name_Last`, `hs`.`idHospital`, `hs`.`idAssociation` FROM `name` `n` LEFT JOIN `hospital_stay` `hs` ON `n`.`idName` = `hs`.`idPatient` WHERE `hs`.`idPsg` = :idPsg");
+            $pstmt->execute([':idPsg' => $idPsg]);
             $rows = $pstmt->fetchAll(\PDO::FETCH_ASSOC);
             if (count($rows) > 0) {
                 $patientName = $rows[0]['Name_First'] . ' ' . $rows[0]['Name_Last'];
@@ -1182,18 +1185,20 @@ where i.Deleted = 0 and il.Deleted = 0 and i.idGroup = $idRegistration order by 
         }
 
         // Payments
-        $stmt = $dbh->query("select lp.*, " . self::externalPaymentTitleSelectSql('lp') . ", ifnull(n.Name_First, '') as `First`, ifnull(n.Name_Last, '') as `Last`, ifnull(n.Company, '') as `Company`
-from vlist_inv_pments `lp` left join `name` n ON lp.Sold_To_Id = n.idName
+        $stmt = $dbh->prepare("SELECT `lp`.*, " . self::externalPaymentTitleSelectSql('lp') . ", IFNULL(`n`.`Name_First`, '') AS `First`, IFNULL(`n`.`Name_Last`, '') AS `Last`, IFNULL(`n`.`Company`, '') AS `Company`
+FROM `vlist_inv_pments` `lp` LEFT JOIN `name` `n` ON `lp`.`Sold_To_Id` = `n`.`idName`
  " . self::externalPaymentTitleJoinSql('lp') . "
- where lp.Order_Number = $idVisit and lp.Deleted = 0 ORDER BY lp.idInvoice ");
+ WHERE `lp`.`Order_Number` = :idVisit AND `lp`.`Deleted` = 0 ORDER BY `lp`.`idInvoice` ");
+        $stmt->execute([':idVisit' => $idVisit]);
 
         $pments = self::processPayments($stmt, array('Last', 'First', 'Company'));
 
         // Items
-        $ilStmt = $dbh->query("select il.Invoice_Id, il.idInvoice_line, il.Type_Id, il.Amount, il.Description, il.Item_Id, il.Source_Item_Id, i.tax_exempt, i.Delegated_Invoice_Id, i.Order_Number, i.Suborder_Number, i.Invoice_Date, i.Status
-from invoice_line il join invoice i on il.Invoice_Id = i.idInvoice and il.Deleted = 0
-left join invoice_line_type ilt on il.Type_Id = ilt.id
-where i.Deleted = 0 and i.Order_Number = $idVisit order by il.Invoice_Id, ilt.Order_Position");
+        $ilStmt = $dbh->prepare("SELECT `il`.`Invoice_Id`, `il`.`idInvoice_line`, `il`.`Type_Id`, `il`.`Amount`, `il`.`Description`, `il`.`Item_Id`, `il`.`Source_Item_Id`, `i`.`tax_exempt`, `i`.`Delegated_Invoice_Id`, `i`.`Order_Number`, `i`.`Suborder_Number`, `i`.`Invoice_Date`, `i`.`Status`
+FROM `invoice_line` `il` JOIN `invoice` `i` ON `il`.`Invoice_Id` = `i`.`idInvoice` AND `il`.`Deleted` = 0
+LEFT JOIN `invoice_line_type` `ilt` ON `il`.`Type_Id` = `ilt`.`id`
+WHERE `i`.`Deleted` = 0 AND `i`.`Order_Number` = :idVisit ORDER BY `il`.`Invoice_Id`, `ilt`.`Order_Position`");
+        $ilStmt->execute([':idVisit' => $idVisit]);
 
         $invLines = $ilStmt->fetchAll(\PDO::FETCH_ASSOC);
 
@@ -1222,20 +1227,21 @@ where i.Deleted = 0 and i.Order_Number = $idVisit order by il.Invoice_Id, ilt.Or
         $diags = [];
         if ($idPsg > 0){
 
-            $pstmt = $dbh->query("SELECT
-    n.Name_First, n.Name_Last, ifnull(g.Description, '') as Diagnosis, ifnull(g2.Description, '') as Diagnosis2
+            $pstmt = $dbh->prepare("SELECT
+    `n`.`Name_First`, `n`.`Name_Last`, IFNULL(`g`.`Description`, '') AS `Diagnosis`, IFNULL(`g2`.`Description`, '') AS `Diagnosis2`
 FROM
-	visit v
+	`visit` `v`
         LEFT JOIN
-    hospital_stay hs ON v.idHospital_stay = hs.idHospital_stay
+    `hospital_stay` `hs` ON `v`.`idHospital_stay` = `hs`.`idHospital_stay`
 		LEFT JOIN
-    name n on hs.idPatient = n.idName
+    `name` `n` ON `hs`.`idPatient` = `n`.`idName`
 		LEFT JOIN
-	gen_lookups g on g.Table_Name = 'Diagnosis' and g.Code = hs.Diagnosis
+	`gen_lookups` `g` ON `g`.`Table_Name` = 'Diagnosis' AND `g`.`Code` = `hs`.`Diagnosis`
 		LEFT JOIN
-	gen_lookups g2 on g2.Table_Name = 'Diagnosis' and g2.Code = hs.Diagnosis2
+	`gen_lookups` `g2` ON `g2`.`Table_Name` = 'Diagnosis' AND `g2`.`Code` = `hs`.`Diagnosis2`
 WHERE
-    v.idVisit = $idVisit");
+    `v`.`idVisit` = :idVisit");
+            $pstmt->execute([':idVisit' => $idVisit]);
             $rows = $pstmt->fetchAll(\PDO::FETCH_ASSOC);
             if (count($rows) > 0) {
                 $patientName = $rows[0]['Name_First'] . ' ' . $rows[0]['Name_Last'];

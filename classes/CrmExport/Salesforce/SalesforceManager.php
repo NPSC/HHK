@@ -637,7 +637,15 @@ class SalesforceManager extends AbstractExportManager {
         // GraphId = psgId.
 
         // get the member records. the rows must be ordered by PSG Id
-        $stmt = $dbh->query("SELECT * FROM `vguest_canonical` WHERE `hhk_id` IN (" . implode(',', $sourceIds) . ") ORDER BY `psg_id`;");
+        $idPlaceholders = [];
+        $idParams = [];
+        foreach ($sourceIds as $idx => $idVal) {
+            $ph = ':id' . $idx;
+            $idPlaceholders[] = $ph;
+            $idParams[$ph] = $idVal;
+        }
+        $stmt = $dbh->prepare("SELECT * FROM `vguest_canonical` WHERE `hhk_id` IN (" . implode(',', $idPlaceholders) . ") ORDER BY `psg_id`;");
+        $stmt->execute($idParams);
         $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
         $idPsg = 0;
@@ -1194,7 +1202,8 @@ class SalesforceManager extends AbstractExportManager {
         $errorResult    = [];
 
         // All non-patient rows that have an SF relationship record
-        $stmt      = $dbh->query("SELECT * FROM `vguest_canonical` WHERE `relationship_id` IS NOT NULL AND `relationship_id` != '' ORDER BY `psg_id`");
+        $stmt      = $dbh->prepare("SELECT * FROM `vguest_canonical` WHERE `relationship_id` IS NOT NULL AND `relationship_id` != '' ORDER BY `psg_id`");
+        $stmt->execute();
         $guestRows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
         if (empty($guestRows)) {
@@ -1207,7 +1216,15 @@ class SalesforceManager extends AbstractExportManager {
 
         // Build a psgId → patient SF Contact ID map from the same view
         $psgIds     = array_unique(array_column($guestRows, 'psg_id'));
-        $patStmt    = $dbh->query("SELECT `hhk_id`, `external_id`, `psg_id`, `relationship_code` FROM `vguest_canonical` WHERE `psg_id` IN (" . implode(',', $psgIds) . ")");
+        $psgPlaceholders = [];
+        $psgParams = [];
+        foreach ($psgIds as $idx => $psgIdVal) {
+            $ph = ':psg' . $idx;
+            $psgPlaceholders[] = $ph;
+            $psgParams[$ph] = $psgIdVal;
+        }
+        $patStmt    = $dbh->prepare("SELECT `hhk_id`, `external_id`, `psg_id`, `relationship_code` FROM `vguest_canonical` WHERE `psg_id` IN (" . implode(',', $psgPlaceholders) . ")");
+        $patStmt->execute($psgParams);
         $patientSfIds = [];
         while ($p = $patStmt->fetch(\PDO::FETCH_ASSOC)) {
             if ($p['relationship_code'] == RelLinkType::Self && $p['external_id'] !== '') {
@@ -1445,8 +1462,17 @@ class SalesforceManager extends AbstractExportManager {
 
         if (count($idList) > 0) {
 
-            $parm = " in (" . implode(',', $idList) . ") ";
-            return $dbh->query("SELECT * FROM `$view` WHERE `hhk_id` $parm");
+            $idPlaceholders = [];
+            $idParams = [];
+            foreach ($idList as $idx => $idVal) {
+                $ph = ':id' . $idx;
+                $idPlaceholders[] = $ph;
+                $idParams[$ph] = $idVal;
+            }
+
+            $stmt = $dbh->prepare("SELECT * FROM `$view` WHERE `hhk_id` IN (" . implode(',', $idPlaceholders) . ")");
+            $stmt->execute($idParams);
+            return $stmt;
 
         }
 
@@ -1471,7 +1497,8 @@ class SalesforceManager extends AbstractExportManager {
 
         if ($parm > 0) {
 
-            $stmt = $dbh->query("SELECT * FROM `$view` WHERE `hhk_id` = $parm");
+            $stmt = $dbh->prepare("SELECT * FROM `$view` WHERE `hhk_id` = :parm");
+            $stmt->execute([':parm' => $parm]);
             $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
             if (count($rows) == 0) {
@@ -2730,15 +2757,16 @@ JS;
             }
         }
 
-        $stmt = $dbh->query(
-            "SELECT vt.*, ng.Relationship_Code
-             FROM `vguest_transfer` vt
-             JOIN `name_guest` ng ON vt.`HHK Id` = ng.idName AND vt.`PSG Id` = ng.idPsg
-             WHERE IFNULL(DATE(vt.`Departure`), DATE(NOW())) >= DATE('$start')
-               AND DATE(vt.`Arrival`) < DATE('$end')
-             GROUP BY vt.`PSG Id`, vt.`HHK Id`
-             ORDER BY vt.`PSG Id`"
+        $stmt = $dbh->prepare(
+            "SELECT `vt`.*, `ng`.`Relationship_Code`
+             FROM `vguest_transfer` `vt`
+             JOIN `name_guest` `ng` ON `vt`.`HHK Id` = `ng`.`idName` AND `vt`.`PSG Id` = `ng`.`idPsg`
+             WHERE IFNULL(DATE(`vt`.`Departure`), DATE(NOW())) >= DATE(:start)
+               AND DATE(`vt`.`Arrival`) < DATE(:end)
+             GROUP BY `vt`.`PSG Id`, `vt`.`HHK Id`
+             ORDER BY `vt`.`PSG Id`"
         );
+        $stmt->execute([':start' => $start, ':end' => $end]);
 
         if ($stmt->rowCount() == 0) {
             return false;

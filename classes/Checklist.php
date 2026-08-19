@@ -67,12 +67,13 @@ class Checklist
     public static function createChecklistTypes(\PDO $dbh) {
 
         // Chceklist category selectors
-        $stmt = $dbh->query("SELECT
-            `g`.`Code` as `Table_Name`, g.Description
+        $stmt = $dbh->prepare("SELECT
+            `g`.`Code` AS `Table_Name`, `g`.`Description`
         FROM
             `gen_lookups` `g`
         WHERE
-            `g`.`Table_Name` = '" . self::ChecklistRootTablename . "' and `g`.`Substitute` = 'y';");
+            `g`.`Table_Name` = :tableName AND `g`.`Substitute` = 'y';");
+        $stmt->execute([':tableName' => self::ChecklistRootTablename]);
 
         $rows = $stmt->fetchAll(\PDO::FETCH_NUM);
 

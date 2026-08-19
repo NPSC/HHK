@@ -124,7 +124,8 @@ $idResv = $reqParms['rid'] ?? 0;
 $idDoc = $reqParms['idDoc'] ?? 0;
 
 if ($idVisit == 0 && $idResv > 0) {
-    $stmt = $dbh->query("Select idVisit from visit where idReservation = $idResv");
+    $stmt = $dbh->prepare("SELECT `idVisit` FROM `visit` WHERE `idReservation` = :idResv");
+    $stmt->execute([':idResv' => $idResv]);
     $rows = $stmt->fetchAll(PDO::FETCH_NUM);
 
     if (count($rows) > 0) {

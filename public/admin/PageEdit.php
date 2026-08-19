@@ -71,7 +71,8 @@ if (filter_has_var(INPUT_POST, "btnSubmit")) {
 $securityCodes = "";
 
 // create web site table
-$stmt = $dbh->query("Select * from web_sites");
+$stmt = $dbh->prepare("SELECT * FROM `web_sites`");
+$stmt->execute();
 
 
 if ($stmt->rowCount() > 0) {
@@ -95,7 +96,8 @@ if ($stmt->rowCount() > 0) {
     <th>Code</th><th>Rel. Address</th><th>Authorization</th><th>CSS</th>
     <th>Default Page</th><th>Index Page</th><th>Updated By</th><th>Last Updated</th></tr>" . $siteMarkup . "</table>";
 
-    $stmtp = $dbh->query("select Group_Code as Code, Title as Description from w_groups");
+    $stmtp = $dbh->prepare("SELECT `Group_Code` AS `Code`, `Title` AS `Description` FROM `w_groups`");
+    $stmtp->execute();
     $grps = $stmtp->fetchAll(\PDO::FETCH_NUM);
     $securityCodes = HTMLSelector::doOptionsMkup($grps, false, false);
 

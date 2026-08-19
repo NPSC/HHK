@@ -253,9 +253,10 @@ $aList = $filter->getAList();
 $invoiceStatuses = Common::readGenLookupsPDO($dbh, 'Invoice_Status');
 
 // Billing agent.
-$stmt = $dbh->query("SELECT n.idName, n.Name_First, n.Name_Last, n.Company " .
-        " FROM name n join name_volunteer2 nv on n.idName = nv.idName and nv.Vol_Category = 'Vol_Type'  and nv.Vol_Code = '" . VolMemberType::BillingAgent . "' " .
-        " where n.Member_Status='a' and n.Record_Member = 1 order by n.Name_Last, n.Name_First, n.Company");
+$stmt = $dbh->prepare("SELECT `n`.`idName`, `n`.`Name_First`, `n`.`Name_Last`, `n`.`Company` " .
+        " FROM `name` `n` JOIN `name_volunteer2` `nv` ON `n`.`idName` = `nv`.`idName` AND `nv`.`Vol_Category` = 'Vol_Type' AND `nv`.`Vol_Code` = :volCode " .
+        " WHERE `n`.`Member_Status` = 'a' AND `n`.`Record_Member` = 1 ORDER BY `n`.`Name_Last`, `n`.`Name_First`, `n`.`Company`");
+$stmt->execute([':volCode' => VolMemberType::BillingAgent]);
 
 $bagnts = [];
 
@@ -367,13 +368,15 @@ if (filter_has_var(INPUT_POST, 'btnHere') || filter_has_var(INPUT_POST, 'btnExce
     $whStatus = '';
     $whBillAgent = '';
     $whDeleted = '';
+    $queryParams = [];
 
     $filter->loadSelectedTimePeriod()
         ->loadSelectedHospitals();
 
     if ($invNum != '') {
 
-        $whDates = " i.Invoice_Number = '$invNum' ";
+        $whDates = " `i`.`Invoice_Number` = :invNum ";
+        $queryParams[':invNum'] = $invNum;
         $headerTable->addBodyTr(HTMLTable::makeTd('For Invoice Number: ', array('class'=>'tdlabel')) . HTMLTable::makeTd($invNum));
 
     } else {
@@ -381,10 +384,12 @@ if (filter_has_var(INPUT_POST, 'btnHere') || filter_has_var(INPUT_POST, 'btnExce
         $headerTable->addBodyTr(HTMLTable::makeTd('Reporting Period: ', array('class'=>'tdlabel')) . HTMLTable::makeTd(date('M j, Y', strtotime($filter->getReportStart())) . ' thru ' . date('M j, Y', strtotime($filter->getReportEnd()))));
 
         if ($useVisitDates) {
-            $whDates = " and DATE(v.Arrival_Date) < DATE('".$filter->getQueryEnd()."') and ifnull(DATE(v.Actual_Departure), DATE(v.Expected_Departure)) >= DATE('".$filter->getReportStart()."') ";
+            $whDates = " AND DATE(`v`.`Arrival_Date`) < DATE(:queryEnd) AND IFNULL(DATE(`v`.`Actual_Departure`), DATE(`v`.`Expected_Departure`)) >= DATE(:reportStart) ";
         } else {
-            $whDates = " and DATE(`i`.`Invoice_Date`) < DATE('".$filter->getQueryEnd()."') and DATE(`i`.`Invoice_Date`) >= DATE('".$filter->getReportStart()."') ";
+            $whDates = " AND DATE(`i`.`Invoice_Date`) < DATE(:queryEnd) AND DATE(`i`.`Invoice_Date`) >= DATE(:reportStart) ";
         }
+        $queryParams[':queryEnd'] = $filter->getQueryEnd();
+        $queryParams[':reportStart'] = $filter->getReportStart();
 
 
         // Hospitals
@@ -409,10 +414,24 @@ if (filter_has_var(INPUT_POST, 'btnHere') || filter_has_var(INPUT_POST, 'btnExce
         }
 
         if ($whHosp != '') {
-            $whHosp = " and hs.idHospital in (".$whHosp.") ";
+            $hospIds = explode(',', $whHosp);
+            $hospPh = [];
+            foreach ($hospIds as $i => $hid) {
+                $ph = ':hosp' . $i;
+                $hospPh[] = $ph;
+                $queryParams[$ph] = $hid;
+            }
+            $whHosp = " AND `hs`.`idHospital` IN (" . implode(', ', $hospPh) . ") ";
         }
         if ($whAssoc != '') {
-            $whAssoc = " and hs.idAssociation in (".$whAssoc.") ";
+            $assocIds = explode(',', $whAssoc);
+            $assocPh = [];
+            foreach ($assocIds as $i => $aid) {
+                $ph = ':assoc' . $i;
+                $assocPh[] = $ph;
+                $queryParams[$ph] = $aid;
+            }
+            $whAssoc = " AND `hs`.`idAssociation` IN (" . implode(', ', $assocPh) . ") ";
         }
 
         $hdrHosps = $filter->getSelectedHospitalsString();
@@ -427,46 +446,58 @@ if (filter_has_var(INPUT_POST, 'btnHere') || filter_has_var(INPUT_POST, 'btnExce
 
         // Invoice status
         $hdrStatus = 'All';
+        $statusVals = [];
         foreach ($invStatus as $s) {
             if ($s != '') {
-                if ($whStatus == '') {
-                    $whStatus = "'" . $s . "'";
+                $statusVals[] = $s;
+                if ($hdrStatus == 'All') {
                     $hdrStatus = $invoiceStatuses[$s][1];
                 } else {
-                    $whStatus .= ",'".$s . "'";
                     $hdrStatus .= ", " . $invoiceStatuses[$s][1];
                 }
             }
         }
-        if ($whStatus != '') {
-            $whStatus = " and i.`Status` in (" . $whStatus . ") ";
+        if (count($statusVals) > 0) {
+            $statusPh = [];
+            foreach ($statusVals as $i => $sv) {
+                $ph = ':stat' . $i;
+                $statusPh[] = $ph;
+                $queryParams[$ph] = $sv;
+            }
+            $whStatus = " AND `i`.`Status` IN (" . implode(', ', $statusPh) . ") ";
         }
 
         $headerTable->addBodyTr(HTMLTable::makeTd('Pay Statuses: ', array('class'=>'tdlabel')) . HTMLTable::makeTd($hdrStatus));
 
         // Billing Agent
         $hdrBillAgent = 'All';
+        $billAgentVals = [];
         foreach ($baSelections as $s) {
             if ($s != '') {
-                if ($whBillAgent == '') {
-                    $whBillAgent = $s;
+                $billAgentVals[] = $s;
+                if ($hdrBillAgent == 'All') {
                     $hdrBillAgent = $bagnts[$s][1];
                 } else {
-                    $whBillAgent .= ",".$s;
                     $hdrBillAgent .= ", ".$bagnts[$s][1];
                 }
             }
         }
 
-        if ($whBillAgent != '') {
-            $whBillAgent = " and `i`.`Sold_To_Id` in (" . $whBillAgent . ") ";
+        if (count($billAgentVals) > 0) {
+            $baPh = [];
+            foreach ($billAgentVals as $i => $bv) {
+                $ph = ':ba' . $i;
+                $baPh[] = $ph;
+                $queryParams[$ph] = $bv;
+            }
+            $whBillAgent = " AND `i`.`Sold_To_Id` IN (" . implode(', ', $baPh) . ") ";
             $headerTable->addBodyTr(HTMLTable::makeTd('Billing Agents: ', array('class'=>'tdlabel')) . HTMLTable::makeTd($hdrBillAgent));
         }
 
         if ($showDeleted) {
             $whDeleted = '1=1 ';
         } else {
-            $whDeleted = 'i.Deleted = 0 ';
+            $whDeleted = '`i`.`Deleted` = 0 ';
         }
     }
 
@@ -474,9 +505,9 @@ if (filter_has_var(INPUT_POST, 'btnHere') || filter_has_var(INPUT_POST, 'btnExce
     $query = "SELECT
 `i`.`idInvoice`,
 `i`.`Delegated_Invoice_Id`,
-ifnull(di.Invoice_Number, '') as Delegated_Invoice_Number,
-ifnull(di.Status, '') as Delegated_Invoice_Status,
-i.Deleted,
+IFNULL(`di`.`Invoice_Number`, '') AS `Delegated_Invoice_Number`,
+IFNULL(`di`.`Status`, '') AS `Delegated_Invoice_Status`,
+`i`.`Deleted`,
 `i`.`Invoice_Number`,
 `i`.`Amount`,
 `i`.`Carried_Amount`,
@@ -484,36 +515,36 @@ i.Deleted,
 `i`.`Order_Number`,
 `i`.`Sold_To_Id`,
 `i`.`Notes`,
-n.Name_Full as Sold_To_Name,
-n.Company,
-ifnull(np.Name_Full, '') as Patient_Name,
-ifnull(nap.County, '') as `County`,
-ifnull(nap.Postal_Code, '') as `Zip`,
-ifnull(re.Title, '') as `Title`,
-ifnull(v.Arrival_Date, '') as `Arrival`,
-ifnull(v.Actual_Departure, '') as `Departure`,
-ifnull(hs.idHospital, 0) as `idHospital`,
-ifnull(hs.idAssociation, 0) as `idAssociation`,
-ifnull(hs.idPatient, 0) as `idPatient`,
+`n`.`Name_Full` AS `Sold_To_Name`,
+`n`.`Company`,
+IFNULL(`np`.`Name_Full`, '') AS `Patient_Name`,
+IFNULL(`nap`.`County`, '') AS `County`,
+IFNULL(`nap`.`Postal_Code`, '') AS `Zip`,
+IFNULL(`re`.`Title`, '') AS `Title`,
+IFNULL(`v`.`Arrival_Date`, '') AS `Arrival`,
+IFNULL(`v`.`Actual_Departure`, '') AS `Departure`,
+IFNULL(`hs`.`idHospital`, 0) AS `idHospital`,
+IFNULL(`hs`.`idAssociation`, 0) AS `idAssociation`,
+IFNULL(`hs`.`idPatient`, 0) AS `idPatient`,
 `i`.`idGroup`,
 `i`.`Invoice_Date`,
-i.BillStatus,
-i.BillDate,
-i.EmailDate,
+`i`.`BillStatus`,
+`i`.`BillDate`,
+`i`.`EmailDate`,
 `i`.`Payment_Attempts`,
 `i`.`Status`,
 `i`.`Updated_By`,
 `i`.`Last_Updated`,
-ifnull(il.Item_Id, 0) as `Item_Id`
-FROM `invoice` `i` left join `name` n on i.Sold_To_Id = n.idName
-    left join invoice_line il on il.Invoice_Id = i.idInvoice and il.Item_Id = 6
-    left join visit v on i.Order_Number = v.idVisit and i.Suborder_Number = v.Span
-    left join hospital_stay hs on hs.idHospital_stay = v.idHospital_stay
-    left join name np on hs.idPatient = np.idName
-    left join name_address nap on np.idName = nap.idName and nap.Purpose = np.Preferred_Mail_Address
-    left join resource re on v.idResource = re.idResource
-    left join invoice di on i.Delegated_Invoice_Id = di.idInvoice
-where $whDeleted $whDates $whHosp $whAssoc  $whStatus $whBillAgent ";
+IFNULL(`il`.`Item_Id`, 0) AS `Item_Id`
+FROM `invoice` `i` LEFT JOIN `name` `n` ON `i`.`Sold_To_Id` = `n`.`idName`
+    LEFT JOIN `invoice_line` `il` ON `il`.`Invoice_Id` = `i`.`idInvoice` AND `il`.`Item_Id` = 6
+    LEFT JOIN `visit` `v` ON `i`.`Order_Number` = `v`.`idVisit` AND `i`.`Suborder_Number` = `v`.`Span`
+    LEFT JOIN `hospital_stay` `hs` ON `hs`.`idHospital_stay` = `v`.`idHospital_stay`
+    LEFT JOIN `name` `np` ON `hs`.`idPatient` = `np`.`idName`
+    LEFT JOIN `name_address` `nap` ON `np`.`idName` = `nap`.`idName` AND `nap`.`Purpose` = `np`.`Preferred_Mail_Address`
+    LEFT JOIN `resource` `re` ON `v`.`idResource` = `re`.`idResource`
+    LEFT JOIN `invoice` `di` ON `i`.`Delegated_Invoice_Id` = `di`.`idInvoice`
+WHERE $whDeleted $whDates $whHosp $whAssoc  $whStatus $whBillAgent ";
 
 
     $tbl = null;
@@ -572,7 +603,8 @@ where $whDeleted $whDates $whHosp $whAssoc  $whStatus $whBillAgent ";
 
 
     // Now the data ...
-    $stmt = $dbh->query($query);
+    $stmt = $dbh->prepare($query);
+    $stmt->execute($queryParams);
 
     while ($r = $stmt->fetch(PDO::FETCH_ASSOC)) {
 
@@ -728,7 +760,8 @@ if ($useGlReport) {
 			$tbl->addBodyTr($lineHdr);
 
 			// Get payment methods (types) labels.
-			$pmstmt = $dbh->query("Select idPayment_method, Method_Name from payment_method;");
+			$pmstmt = $dbh->prepare("SELECT `idPayment_method`, `Method_Name` FROM `payment_method`;");
+			$pmstmt->execute();
 			$pmRows = $pmstmt->fetchAll(\PDO::FETCH_NUM);
 			$pmtMethods = array();
 			foreach ($pmRows as $r) {

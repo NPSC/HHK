@@ -61,11 +61,11 @@ class History {
      */
     public static function addToGuestHistoryList(\PDO $dbh, $id, $role) {
         if ($id > 0 && $role < WebRole::Guest) {
-            $query = "INSERT INTO member_history (idName, Guest_Access_Date) VALUES ($id, now())
-        ON DUPLICATE KEY UPDATE Guest_Access_Date = now();";
+            $query = "INSERT INTO `member_history` (`idName`, `Guest_Access_Date`) VALUES (:id, NOW())
+        ON DUPLICATE KEY UPDATE `Guest_Access_Date` = NOW();";
 
             $stmt = $dbh->prepare($query);
-            $stmt->execute();
+            $stmt->execute([':id' => $id]);
         }
     }
 
@@ -78,11 +78,10 @@ class History {
      */
     public static function addToMemberHistoryList(\PDO $dbh, $id, $role) {
         if ($id > 0 && $role < WebRole::Guest) {
-            $query = "INSERT INTO member_history (idName, Admin_Access_Date) VALUES ($id, now())
-        ON DUPLICATE KEY UPDATE Admin_Access_Date = now();";
-            //$query = "replace admin_history (idName, Access_Date) values ($id, now());";
+            $query = "INSERT INTO `member_history` (`idName`, `Admin_Access_Date`) VALUES (:id, NOW())
+        ON DUPLICATE KEY UPDATE `Admin_Access_Date` = NOW();";
             $stmt = $dbh->prepare($query);
-            $stmt->execute();
+            $stmt->execute([':id' => $id]);
         }
     }
 
@@ -100,8 +99,9 @@ class History {
             throw new InvalidArgumentException("Database view name must be defined.");
         }
 
-        $query = "select * from $view";
-        $stmt = $dbh->query($query);
+        $query = "SELECT * FROM `$view`";
+        $stmt = $dbh->prepare($query);
+        $stmt->execute();
 
         $table = new HTMLTable();
         $table->addHeaderTr(
@@ -187,7 +187,8 @@ class History {
      * @return int
      */
     public static function activeHospitalCount(\PDO $dbh): int {
-        $stmt = $dbh->query("select count(*) from hospital where Status = 'a' and Title != '(None)' and Hide = 0");
+        $stmt = $dbh->prepare("SELECT COUNT(*) FROM `hospital` WHERE `Status` = 'a' AND `Title` != '(None)' AND `Hide` = 0");
+        $stmt->execute();
         return (int) $stmt->fetchColumn();
     }
 
@@ -245,6 +246,7 @@ class History {
         $page = 'Reserve.php';
 
         $whDate = '';
+        $whDateParams = [];
 
         if ($start != '') {
             try {
@@ -254,17 +256,20 @@ class History {
                 $endDT = new \DateTime(filter_var($start, FILTER_SANITIZE_FULL_SPECIAL_CHARS));
                 $endDT->add(new \DateInterval('P' . $days . 'D'));
 
-                $whDate = " and DATE(Expected_Arrival) >= DATE('" . $startDT->format('Y-m-d') . "') and DATE(Expected_Arrival) <= DATE('" . $endDT->format('Y-m-d') . "') ";
+                $whDate = " AND DATE(Expected_Arrival) >= DATE(:whStart) AND DATE(Expected_Arrival) <= DATE(:whEnd) ";
+                $whDateParams = [':whStart' => $startDT->format('Y-m-d'), ':whEnd' => $endDT->format('Y-m-d')];
 
             } catch (\Exception $ex) {
                 $whDate = '';
+                $whDateParams = [];
             }
         }
 
         if (is_null($this->resvEvents)) {
 
-            $query = "select * from vreservation_events where `Status` = '$status' $whDate $orderBy";
-            $stmt = $dbh->query($query);
+            $query = "SELECT * FROM `vreservation_events` WHERE `Status` = :status $whDate $orderBy";
+            $stmt = $dbh->prepare($query);
+            $stmt->execute([':status' => $status] + $whDateParams);
             $this->resvEvents = $stmt->fetchAll(\PDO::FETCH_ASSOC);
         }
 
@@ -284,6 +289,7 @@ class History {
         $page = 'Reserve.php';
 
         $whDate = '';
+        $whDateBindings = [];
 
         if ($start != '') {
             try {
@@ -293,10 +299,12 @@ class History {
                 $endDT = new \DateTime(filter_var($start, FILTER_SANITIZE_FULL_SPECIAL_CHARS));
                 $endDT->add(new \DateInterval('P' . $days . 'D'));
 
-                $whDate = " and DATE(Expected_Arrival) >= DATE('" . $startDT->format('Y-m-d') . "') and DATE(Expected_Arrival) <= DATE('" . $endDT->format('Y-m-d') . "') ";
+                $whDate = " AND DATE(Expected_Arrival) >= DATE(:ssp_whStart) AND DATE(Expected_Arrival) <= DATE(:ssp_whEnd) ";
+                $whDateBindings = [':ssp_whStart' => $startDT->format('Y-m-d'), ':ssp_whEnd' => $endDT->format('Y-m-d')];
 
             } catch (\Exception $ex) {
                 $whDate = '';
+                $whDateBindings = [];
             }
         }
 
@@ -369,7 +377,10 @@ class History {
             array('db' => 'Meters_From_House', 'dt' => 'Miles_From_House', 'formatter' => function ($d, $row) use ($dist) { return $d > 0 ? $dist->meters2miles((float) $d):''; }),
         );
 
-        $where = "`Status` = '$status' $whDate";
+        $where = [
+            'condition' => "`Status` = :ssp_status $whDate",
+            'bindings' => [':ssp_status' => $status] + $whDateBindings,
+        ];
 
         return SSP::complex($_REQUEST, $dbh, "vreservation_events", "idReservation", $columns, "",$where);
     }
@@ -654,17 +665,22 @@ class History {
 
         $curGuestDemogIcon = ($uS->CurGuestDemogIcon != "" ? $uS->CurGuestDemogIcon : "ADA");
 
-        $query = "select v.*,
+        $demogParams = [];
+        $query = "SELECT `v`.*,
                 IFNULL(`di`.`Description`, '') AS `demogTitle`,
-                IFNULL(JSON_VALUE(`di`.`Attributes`, '$.iconClass'), '') AS `demogIcon` from vcurrent_residents v" .
+                IFNULL(JSON_VALUE(`di`.`Attributes`, '$.iconClass'), '') AS `demogIcon` FROM `vcurrent_residents` `v`" .
                 ($curGuestDemogIcon != "Gender" && $curGuestDemogIcon != "" ?
-                    " LEFT JOIN `name_demog` nd on v.Id = nd.idName
-                      LEFT JOIN `gen_lookups` di on nd.".$curGuestDemogIcon . " = di.Code and di.Table_Name = '" . $curGuestDemogIcon . "'" : "") .
+                    " LEFT JOIN `name_demog` `nd` ON `v`.`Id` = `nd`.`idName`
+                      LEFT JOIN `gen_lookups` `di` ON `nd`.`" . $curGuestDemogIcon . "` = `di`.`Code` AND `di`.`Table_Name` = :demogIcon" : "") .
                 ($curGuestDemogIcon == "Gender" ?
-                    " LEFT JOIN `gen_lookups` di on v.Gender = di.Code and di.Table_Name = 'Gender'" : ""
+                    " LEFT JOIN `gen_lookups` `di` ON `v`.`Gender` = `di`.`Code` AND `di`.`Table_Name` = 'Gender'" : ""
                 ) .
-                " order by `Room`;";
-        $stmt = $dbh->query($query);
+                " ORDER BY `Room`;";
+        if ($curGuestDemogIcon != "Gender" && $curGuestDemogIcon != "") {
+            $demogParams[':demogIcon'] = $curGuestDemogIcon;
+        }
+        $stmt = $dbh->prepare($query);
+        $stmt->execute($demogParams);
 
         $returnRows = array();
 
@@ -863,8 +879,9 @@ class History {
      */
     public static function getVolEventsMarkup(\PDO $dbh, \DateTimeInterface $startDate) {
 
-        $query = "select * from vrecent_calevents where `Last Updated` > '" .$startDate->format('Y-m-d'). "' order by Category, `Last Updated`;";
-        $stmt = $dbh->query($query);
+        $query = "SELECT * FROM `vrecent_calevents` WHERE `Last Updated` > :startDate ORDER BY `Category`, `Last Updated`;";
+        $stmt = $dbh->prepare($query);
+        $stmt->execute([':startDate' => $startDate->format('Y-m-d')]);
         $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
         $fixedRows = array();
 

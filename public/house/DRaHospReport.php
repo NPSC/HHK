@@ -58,14 +58,20 @@ function getRecords(\PDO $dbh, bool $local, string $type, string $colNameTitle, 
 
     if(isset($id)) {
 
-        $query = "select hs.$id as `Id`, concat(n.Name_Last, ', ', n.Name_First) as `FirstLast`, ifnull(hs.idHospital, 'Sub Total') as `Hospital`, count(hs.idHospital_stay) as `Patients`
-    from hospital_stay hs left join `name` n  ON hs.$id = n.idName
-    left join reservation rv on hs.idHospital_stay = rv.idHospital_Stay
-    where rv.`Status` in ('" . ReservationStatus::Checkedout . "', '" . ReservationStatus::Staying . "') "
-    . " and DATE(ifnull(rv.Actual_Departure, rv.Expected_Departure)) >= DATE('".$filter->getReportStart()."') and DATE(ifnull(rv.Actual_Arrival, rv.Expected_Arrival)) < DATE('".$filter->getQueryEnd()."')  $whClause
-    group by concat(n.Name_Last, ', ', n.Name_First), hs.idHospital with rollup";
+        $query = "SELECT `hs`.`$id` AS `Id`, CONCAT(`n`.`Name_Last`, ', ', `n`.`Name_First`) AS `FirstLast`, IFNULL(`hs`.`idHospital`, 'Sub Total') AS `Hospital`, COUNT(`hs`.`idHospital_stay`) AS `Patients`
+    FROM `hospital_stay` `hs` LEFT JOIN `name` `n` ON `hs`.`$id` = `n`.`idName`
+    LEFT JOIN `reservation` `rv` ON `hs`.`idHospital_stay` = `rv`.`idHospital_Stay`
+    WHERE `rv`.`Status` IN (:stCheckedout, :stStaying) "
+    . " AND DATE(IFNULL(`rv`.`Actual_Departure`, `rv`.`Expected_Departure`)) >= DATE(:reportStart) AND DATE(IFNULL(`rv`.`Actual_Arrival`, `rv`.`Expected_Arrival`)) < DATE(:queryEnd)  $whClause
+    GROUP BY CONCAT(`n`.`Name_Last`, ', ', `n`.`Name_First`), `hs`.`idHospital` WITH ROLLUP";
 
-            $stmt = $dbh->query($query);
+            $stmt = $dbh->prepare($query);
+            $stmt->execute([
+                ':stCheckedout' => ReservationStatus::Checkedout,
+                ':stStaying' => ReservationStatus::Staying,
+                ':reportStart' => $filter->getReportStart(),
+                ':queryEnd' => $filter->getQueryEnd(),
+            ]);
 
         if ($local) {
 
@@ -209,14 +215,20 @@ function blanksOnly(\PDO $dbh, string $type, string $whClause, ReportFilter $fil
 
     if (isset($id)) {
 
-        $query = "select hs.idPatient as `Id`, n.Name_Full as `$nameCol Name`, h.Title as `$hospitalCol`, hs.idPsg
-from hospital_stay hs left join `name` n on hs.idPatient = n.idName
-left join reservation rv on hs.idHospital_stay = rv.idHospital_Stay
-left join hospital h on h.idHospital = hs.idHospital
-where hs.$id = 0 and rv.`Status` in ('" . ReservationStatus::Checkedout . "', '" . ReservationStatus::Staying . "') "
- . " and DATE(ifnull(rv.Actual_Departure, rv.Expected_Departure)) >= DATE('".$filter->getReportStart()."') and DATE(ifnull(rv.Actual_Arrival, rv.Expected_Arrival)) < DATE('".$filter->getQueryEnd()."') $whClause";
+        $query = "SELECT `hs`.`idPatient` AS `Id`, `n`.`Name_Full` AS `$nameCol Name`, `h`.`Title` AS `$hospitalCol`, `hs`.`idPsg`
+FROM `hospital_stay` `hs` LEFT JOIN `name` `n` ON `hs`.`idPatient` = `n`.`idName`
+LEFT JOIN `reservation` `rv` ON `hs`.`idHospital_stay` = `rv`.`idHospital_Stay`
+LEFT JOIN `hospital` `h` ON `h`.`idHospital` = `hs`.`idHospital`
+WHERE `hs`.`$id` = 0 AND `rv`.`Status` IN (:stCheckedout, :stStaying) "
+ . " AND DATE(IFNULL(`rv`.`Actual_Departure`, `rv`.`Expected_Departure`)) >= DATE(:reportStart) AND DATE(IFNULL(`rv`.`Actual_Arrival`, `rv`.`Expected_Arrival`)) < DATE(:queryEnd) $whClause";
 
-        $stmt = $dbh->query($query);
+        $stmt = $dbh->prepare($query);
+        $stmt->execute([
+            ':stCheckedout' => ReservationStatus::Checkedout,
+            ':stStaying' => ReservationStatus::Staying,
+            ':reportStart' => $filter->getReportStart(),
+            ':queryEnd' => $filter->getQueryEnd(),
+        ]);
 
         $rows = array();
 

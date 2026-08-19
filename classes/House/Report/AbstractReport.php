@@ -132,7 +132,8 @@ abstract class AbstractReport {
     public function getResultSet():array {
         $this->makeQuery();
         if($this->query != ''){
-            $stmt = $this->dbh->query($this->query);
+            $stmt = $this->dbh->prepare($this->query);
+            $stmt->execute();
 
             $this->resultSet = $stmt->fetchAll(\PDO::FETCH_ASSOC);
         }else{

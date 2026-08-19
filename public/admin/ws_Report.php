@@ -28,8 +28,9 @@ function campaignList(PDO $dbh, string $yr): array {
         $stmt->execute(array(':startyr' => $yr, ':endyr' => $yr));
         $headerYears = "$yr";
     } else {
-        $query = "select * from vdump_campaigns;";
-        $stmt = $dbh->query($query);
+        $query = "SELECT * FROM `vdump_campaigns`;";
+        $stmt = $dbh->prepare($query);
+        $stmt->execute();
     }
 
     $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);

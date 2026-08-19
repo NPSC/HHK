@@ -55,30 +55,32 @@ class ResourceView
         $attribute = new Attributes($dbh);
         $attrs = $attribute->getAttributesByType(AttributeTypes::Resource);
 
-        $rmAtrStmt = $dbh->query("Select idEntity, idAttribute from attribute_entity where `Type` = '" . AttributeTypes::Resource . "'");
+        $rmAtrStmt = $dbh->prepare("SELECT `idEntity`, `idAttribute` FROM `attribute_entity` WHERE `Type` = :type");
+        $rmAtrStmt->execute([':type' => AttributeTypes::Resource]);
         $roomAttrs = $rmAtrStmt->fetchAll(\PDO::FETCH_ASSOC);
 
 
-        $stmt = $dbh->query("Select
-    '' as `Edit`,
-    r.idResource as `Id`,
-    r.Title,
-    ifnull(g.Description,'') as `Type`,
-    ifnull(rm.Title, '') as `Room`,
-    r.Util_Priority as `Priority`,
-    r.Background_Color as `Bkgrd Color`,
-    r.Text_Color as `Text Color`,
-    r.Retired_At as `Retired At`,
-    if(date(now()) >= date(r.Retired_At), 'hhk-retired', '') as `isRetired`
-from
-    resource r
-        left join
-    gen_lookups g ON g.Table_Name = 'Resource_Type' and g.`Code` = r.`Type`
-        left join
-    resource_room rr on r.idResource = rr.idResource
-        left join
-    room rm on rr.idRoom = rm.idRoom
-order by r.Retired_At, r.Title;");
+        $stmt = $dbh->prepare("SELECT
+    '' AS `Edit`,
+    `r`.`idResource` AS `Id`,
+    `r`.`Title`,
+    IFNULL(`g`.`Description`,'') AS `Type`,
+    IFNULL(`rm`.`Title`, '') AS `Room`,
+    `r`.`Util_Priority` AS `Priority`,
+    `r`.`Background_Color` AS `Bkgrd Color`,
+    `r`.`Text_Color` AS `Text Color`,
+    `r`.`Retired_At` AS `Retired At`,
+    IF(DATE(NOW()) >= DATE(`r`.`Retired_At`), 'hhk-retired', '') AS `isRetired`
+FROM
+    `resource` `r`
+        LEFT JOIN
+    `gen_lookups` `g` ON `g`.`Table_Name` = 'Resource_Type' AND `g`.`Code` = `r`.`Type`
+        LEFT JOIN
+    `resource_room` `rr` ON `r`.`idResource` = `rr`.`idResource`
+        LEFT JOIN
+    `room` `rm` ON `rr`.`idRoom` = `rm`.`idRoom`
+ORDER BY `r`.`Retired_At`, `r`.`Title`;");
+        $stmt->execute();
 
         $idResc = 0;
         $numResc = $stmt->rowCount();
@@ -157,36 +159,39 @@ order by r.Retired_At, r.Title;");
         $attribute = new Attributes($dbh);
         $attrs = $attribute->getAttributesByType(AttributeTypes::Room);
 
-        $rmAtrStmt = $dbh->query("Select idEntity, idAttribute from attribute_entity where `Type` = '" . AttributeTypes::Room . "'");
+        $rmAtrStmt = $dbh->prepare("SELECT `idEntity`, `idAttribute` FROM `attribute_entity` WHERE `Type` = :type");
+        $rmAtrStmt->execute([':type' => AttributeTypes::Room]);
         $roomAttrs = $rmAtrStmt->fetchAll(\PDO::FETCH_ASSOC);
 
         $depositCol = '';
         $depositTitle = $labels->getString('resourceBuilder', 'keyDepositLabel', 'Deposit');
 
         if ($keyDeposit) {
-            $depositCol .= ", g5.Description as `$depositTitle` ";
+            $depositCol .= ", `g5`.`Description` AS `$depositTitle` ";
         }
 
         if ($payGW != '') {
-            $depositCol .= ", ifnull(l.Merchant, '') as `Merchant` ";
+            $depositCol .= ", IFNULL(`l`.`Merchant`, '') AS `Merchant` ";
         }
 
+        $phoneLabel = $labels->getString("ResourceBuilder","RoomPhone","Phone");
 
-        $stmt = $dbh->query("Select '' as `Edit`, r.idRoom as `Id`, r.Title, g.Description as `Type`, g3.Description as `Category`, g7.Description as `Report Category`, r.Max_Occupants as `Max`,
-r.Floor, r.Phone as `". $labels->getString("ResourceBuilder","RoomPhone","Phone") ."`, g4.Description as `Static Rate`, ifnull(rr.Title, '') as `Default Rate` , g6.Description as `Clean Cycle`, if(count(rcr.idResource_room) = count(resc.idResource), 'hhk-retired', '') as `isRetired` $depositCol
-from room r
-left join gen_lookups g on g.`Table_Name`='Room_Type' and g.`Code` = r.`Type`
-left join gen_lookups g3 on g3.`Table_Name`='Room_Category' and g3.`Code`=r.Category
-left join gen_lookups g4 on g4.`Table_Name`='Static_Room_Rate' and g4.`Code`=r.Rate_Code
-left join gen_lookups g5 on g5.`Table_Name`='Key_Deposit_Code' and g5.`Code`=r.Key_Deposit_Code
-left join gen_lookups g6 on g6.`Table_Name` = 'Room_Cleaning_Days' and g6.`Code` = r.Cleaning_Cycle_Code
-left join gen_lookups g7 on g7.`Table_Name` = 'Room_Rpt_Cat' and g7.`Code` = r.Report_Category
-left join location l on r.idLocation = l.idLocation
-left join room_rate rr on r.Default_Rate_Category = rr.FA_Category and rr.`Status` = 'a'
-left join resource_room rcr on r.idRoom = rcr.idRoom
-left join resource resc on rcr.idResource = resc.idResource and date(now()) >= date(resc.Retired_At)
-group by r.idRoom
-order by r.Title;");
+        $stmt = $dbh->prepare("SELECT '' AS `Edit`, `r`.`idRoom` AS `Id`, `r`.`Title`, `g`.`Description` AS `Type`, `g3`.`Description` AS `Category`, `g7`.`Description` AS `Report Category`, `r`.`Max_Occupants` AS `Max`,
+`r`.`Floor`, `r`.`Phone` AS `$phoneLabel`, `g4`.`Description` AS `Static Rate`, IFNULL(`rr`.`Title`, '') AS `Default Rate` , `g6`.`Description` AS `Clean Cycle`, IF(COUNT(`rcr`.`idResource_room`) = COUNT(`resc`.`idResource`), 'hhk-retired', '') AS `isRetired` $depositCol
+FROM `room` `r`
+LEFT JOIN `gen_lookups` `g` ON `g`.`Table_Name`='Room_Type' AND `g`.`Code` = `r`.`Type`
+LEFT JOIN `gen_lookups` `g3` ON `g3`.`Table_Name`='Room_Category' AND `g3`.`Code`=`r`.`Category`
+LEFT JOIN `gen_lookups` `g4` ON `g4`.`Table_Name`='Static_Room_Rate' AND `g4`.`Code`=`r`.`Rate_Code`
+LEFT JOIN `gen_lookups` `g5` ON `g5`.`Table_Name`='Key_Deposit_Code' AND `g5`.`Code`=`r`.`Key_Deposit_Code`
+LEFT JOIN `gen_lookups` `g6` ON `g6`.`Table_Name` = 'Room_Cleaning_Days' AND `g6`.`Code` = `r`.`Cleaning_Cycle_Code`
+LEFT JOIN `gen_lookups` `g7` ON `g7`.`Table_Name` = 'Room_Rpt_Cat' AND `g7`.`Code` = `r`.`Report_Category`
+LEFT JOIN `location` `l` ON `r`.`idLocation` = `l`.`idLocation`
+LEFT JOIN `room_rate` `rr` ON `r`.`Default_Rate_Category` = `rr`.`FA_Category` AND `rr`.`Status` = 'a'
+LEFT JOIN `resource_room` `rcr` ON `r`.`idRoom` = `rcr`.`idRoom`
+LEFT JOIN `resource` `resc` ON `rcr`.`idResource` = `resc`.`idResource` AND DATE(NOW()) >= DATE(`resc`.`Retired_At`)
+GROUP BY `r`.`idRoom`
+ORDER BY `r`.`Title`;");
+        $stmt->execute();
 
         $numResc = $stmt->rowCount();
 
@@ -287,7 +292,8 @@ order by r.Title;");
             }
         }
 
-        $stmt = $dbh->query("Select * from resource_use where $whid = $id order by Start_Date desc");
+        $stmt = $dbh->prepare("SELECT * FROM `resource_use` WHERE `$whid` = :id ORDER BY `Start_Date` DESC");
+        $stmt->execute([':id' => $id]);
 
 
         /* var \HTMLTable */
@@ -385,34 +391,34 @@ order by r.Title;");
 
             // Check for resource in use
             $query = "SELECT
-    r.idResource
+    `r`.`idResource`
 FROM
-    reservation r
+    `reservation` `r`
 WHERE
-case WHEN r.`Status` = '" . ReservationStatus::Staying . "' THEN
-		DATE(r.Actual_Arrival) < DATE(:rsend)
-                AND DATE(datedefaultnow(r.Expected_Departure)) > DATE(:dtstart)
-	WHEN r.`Status` = '" . ReservationStatus::Checkedout . "' THEN
-        DATE(r.Actual_Arrival) < DATE(:dtend)
-        AND DATE(r.Actual_Departure) > DATE(:start)
-        AND DATEDIFF(r.Actual_Departure, r.Actual_Arrival) > 0
+CASE WHEN `r`.`Status` = :stStaying THEN
+		DATE(`r`.`Actual_Arrival`) < DATE(:rsend)
+                AND DATE(datedefaultnow(`r`.`Expected_Departure`)) > DATE(:dtstart)
+	WHEN `r`.`Status` = :stCheckedout THEN
+        DATE(`r`.`Actual_Arrival`) < DATE(:dtend)
+        AND DATE(`r`.`Actual_Departure`) > DATE(:start)
+        AND DATEDIFF(`r`.`Actual_Departure`, `r`.`Actual_Arrival`) > 0
 	ELSE 1=2
 END
 UNION
 SELECT
-    resc.idResource
-FROM resource resc
+    `resc`.`idResource`
+FROM `resource` `resc`
 WHERE
-    resc.Retired_At is not null
-    AND DATE(resc.Retired_At) <= DATE(:retend)
+    `resc`.`Retired_At` IS NOT NULL
+    AND DATE(`resc`.`Retired_At`) <= DATE(:retend)
 UNION
 SELECT
-    ru.idResource
-FROM resource_use ru
+    `ru`.`idResource`
+FROM `resource_use` `ru`
 WHERE
-    ru.idResource_use != :idRu
-    AND DATE(ru.Start_Date) < DATE(:ruend)
-    AND ifnull(DATE(ru.End_Date), DATE(now())) > DATE(:rustart)";
+    `ru`.`idResource_use` != :idRu
+    AND DATE(`ru`.`Start_Date`) < DATE(:ruend)
+    AND IFNULL(DATE(`ru`.`End_Date`), DATE(NOW())) > DATE(:rustart)";
 
             $stmt = $dbh->prepare($query);
             $stmt->execute(array(
@@ -423,7 +429,9 @@ WHERE
                 ':rsend' => $enDT->format('Y-m-d'),
                 ':rustart' => $stDT->format('Y-m-d'),
                 ':ruend' => $enDT->format('Y-m-d'),
-                ':retend' => $enDT->format('Y-m-d')
+                ':retend' => $enDT->format('Y-m-d'),
+                ':stStaying' => ReservationStatus::Staying,
+                ':stCheckedout' => ReservationStatus::Checkedout,
             ));
 
             $inUse = FALSE;
@@ -707,7 +715,8 @@ WHERE
         if (isset($post['txtRetired'])) {
             $retiredAt = filter_var($post['txtRetired'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
             if ($retiredAt == '') {
-                $dbh->exec("UPDATE resource set `Retired_At` = null where idResource = '" . $resc->getIdResource() . "';");
+                $dbh->prepare("UPDATE `resource` SET `Retired_At` = NULL WHERE `idResource` = :idResource;")
+                    ->execute([':idResource' => $resc->getIdResource()]);
             } else {
                 try {
                     $retiredDT = new \DateTime($retiredAt);
@@ -850,7 +859,8 @@ WHERE
 
         if ($uS->PaymentGateway != '') {
 
-            $gstmt = $dbh->query("Select idLocation, Title from location where ifnull(Merchant, '') != '';");
+            $gstmt = $dbh->prepare("SELECT `idLocation`, `Title` FROM `location` WHERE IFNULL(`Merchant`, '') != '';");
+            $gstmt->execute();
             $ccGateways = $gstmt->fetchAll(\PDO::FETCH_NUM);
 
             $opts = array();
@@ -910,7 +920,8 @@ WHERE
         }
 
         // Get rooms
-        $stmt = $dbh->query("Select `idRoom` as `Code`, `Title` from room order by `Title`");
+        $stmt = $dbh->prepare("SELECT `idRoom` AS `Code`, `Title` FROM `room` ORDER BY `Title`");
+        $stmt->execute();
 
         $options = array();
         while ($r = $stmt->fetch()) {
@@ -970,16 +981,17 @@ WHERE
         $today = new \DateTime();
         $today->setTime(0, 0, 0);
 
-        $stmt = $dbh->query("select
-    r.*,
-    v.idVisit,
-    ifnull(v.Arrival_Date, '') as `Arrival`
-from
-    room r
-        left join
-    resource_room rr ON r.idRoom = rr.idRoom
-        join
-    visit v ON rr.idResource = v.idResource and v.`Status` = '" . VisitStatus::CheckedIn . "';");
+        $stmt = $dbh->prepare("SELECT
+    `r`.*,
+    `v`.`idVisit`,
+    IFNULL(`v`.`Arrival_Date`, '') AS `Arrival`
+FROM
+    `room` `r`
+        LEFT JOIN
+    `resource_room` `rr` ON `r`.`idRoom` = `rr`.`idRoom`
+        JOIN
+    `visit` `v` ON `rr`.`idResource` = `v`.`idResource` AND `v`.`Status` = :status;");
+        $stmt->execute([':status' => VisitStatus::CheckedIn]);
 
         while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
 
@@ -1042,7 +1054,8 @@ from
 
         $rescGroupBy = '';
         $genJoin = '';
-        $orderBy = 'r.Util_Priority';
+        $orderBy = '`r`.`Util_Priority`';
+        $genJoinParams = [];
 
         if (isset($rescGroups[$uS->CalResourceGroupBy])) {
             $rescGroupBy = $uS->CalResourceGroupBy;
@@ -1053,58 +1066,67 @@ from
 
             if ($rescGroupBy === $g[0]) {
 
-                $genJoin = " left join `gen_lookups` gr on gr.`Table_Name` = '" . $g[2] . "' and gr.`Code` = r." . $g[0] . " ";
-                $orderBy = "gr.`Order`, " . $orderBy;
+                $genJoin = " LEFT JOIN `gen_lookups` `gr` ON `gr`.`Table_Name` = :genJoinTableName AND `gr`.`Code` = `r`.`" . $g[0] . "` ";
+                $genJoinParams[':genJoinTableName'] = $g[2];
+                $orderBy = "`gr`.`Order`, " . $orderBy;
                 break;
             }
         }
 
-        $stmt = $dbh->query("select
-    r.idRoom,
-    ifnull(v.idVisit, 0) as idVisit,
-    r.Title,
-    gr.Description as `Group_Title`,
-    re.Util_Priority,
-    r.`Status`,
-    ifnull(g.Description, 'Unknown') as `Status_Text`,
-    r.`Cleaning_Cycle_Code`,
-    ifnull(n.Name_Full, '') as `Name`,
-    if(count(s.idName) > 0, count(s.idName), '') as `numGuests`,
-    ifnull(v.Arrival_Date, '') as `Arrival`,
-    ifnull(v.Expected_Departure, '') as `Expected_Departure`,
-    ifnull(res.Expected_Arrival, '') as `Next_Expected_Arrival`,
-    r.Last_Cleaned,
-    r.Last_Deep_Clean,
-    ifnull(date_format(nt.`Timestamp`, '%b %d, %Y'), '') as `noteDate`,
-    ifnull(nt.`Note_Text`, '') as `Notes`
-from
-    room r
-        left join
-    resource_room rr ON r.idRoom = rr.idRoom
-        left join
-    resource re on rr.idResource = re.idResource
-        left join
-    visit v ON rr.idResource = v.idResource and v.`Status` = '" . VisitStatus::CheckedIn . "'
-        left join
-        (select reservation.*, ROW_NUMBER() OVER (PARTITION BY idResource ORDER BY Expected_Arrival) AS rn FROM reservation where date(Expected_Arrival) >= date(NOW()) and `Status` in ('" . ReservationStatus::Committed . "', '" . ReservationStatus::UnCommitted . "'))
-        res ON rr.idResource = res.idResource && res.rn = 1
-        left join
-    name n ON v.idPrimaryGuest = n.idName
-        left join
-    stays s on v.idVisit = s.idVisit and v.Span = s.Visit_Span and s.Status = 'a'
-        left join
-    gen_lookups g on g.Table_Name = 'Room_Status' and g.Code = r.Status
-        left join
-    gen_lookups g3 on g3.Table_Name = 'Room_Cleaning_Days' and g3.`Code` = r.Cleaning_Cycle_Code
-        left join
-    resource_use ru on rr.idResource = ru.idResource  and ru.`Status` = '" . ResourceStatus::Unavailable . "'  and DATE(ru.Start_Date) <= DATE('" . $endDT->format('Y-m-d') . "') and DATE(ru.End_Date) > DATE('" . $beginDT->format('Y-m-d') . "')
-        left join
-    note nt on nt.idNote = (select ln.idNote from link_note ln join note n on ln.idNote = n.idNote where ln.idLink = r.idRoom and ln.linkType = 'room' and n.Status = 'a' order by ln.idNote desc limit 1)
+        $stmt = $dbh->prepare("SELECT
+    `r`.`idRoom`,
+    IFNULL(`v`.`idVisit`, 0) AS `idVisit`,
+    `r`.`Title`,
+    `gr`.`Description` AS `Group_Title`,
+    `re`.`Util_Priority`,
+    `r`.`Status`,
+    IFNULL(`g`.`Description`, 'Unknown') AS `Status_Text`,
+    `r`.`Cleaning_Cycle_Code`,
+    IFNULL(`n`.`Name_Full`, '') AS `Name`,
+    IF(COUNT(`s`.`idName`) > 0, COUNT(`s`.`idName`), '') AS `numGuests`,
+    IFNULL(`v`.`Arrival_Date`, '') AS `Arrival`,
+    IFNULL(`v`.`Expected_Departure`, '') AS `Expected_Departure`,
+    IFNULL(`res`.`Expected_Arrival`, '') AS `Next_Expected_Arrival`,
+    `r`.`Last_Cleaned`,
+    `r`.`Last_Deep_Clean`,
+    IFNULL(DATE_FORMAT(`nt`.`Timestamp`, '%b %d, %Y'), '') AS `noteDate`,
+    IFNULL(`nt`.`Note_Text`, '') AS `Notes`
+FROM
+    `room` `r`
+        LEFT JOIN
+    `resource_room` `rr` ON `r`.`idRoom` = `rr`.`idRoom`
+        LEFT JOIN
+    `resource` `re` ON `rr`.`idResource` = `re`.`idResource`
+        LEFT JOIN
+    `visit` `v` ON `rr`.`idResource` = `v`.`idResource` AND `v`.`Status` = :visitStatus
+        LEFT JOIN
+        (SELECT `reservation`.*, ROW_NUMBER() OVER (PARTITION BY `idResource` ORDER BY `Expected_Arrival`) AS `rn` FROM `reservation` WHERE DATE(`Expected_Arrival`) >= DATE(NOW()) AND `Status` IN (:stCommitted, :stUnCommitted))
+        `res` ON `rr`.`idResource` = `res`.`idResource` && `res`.`rn` = 1
+        LEFT JOIN
+    `name` `n` ON `v`.`idPrimaryGuest` = `n`.`idName`
+        LEFT JOIN
+    `stays` `s` ON `v`.`idVisit` = `s`.`idVisit` AND `v`.`Span` = `s`.`Visit_Span` AND `s`.`Status` = 'a'
+        LEFT JOIN
+    `gen_lookups` `g` ON `g`.`Table_Name` = 'Room_Status' AND `g`.`Code` = `r`.`Status`
+        LEFT JOIN
+    `gen_lookups` `g3` ON `g3`.`Table_Name` = 'Room_Cleaning_Days' AND `g3`.`Code` = `r`.`Cleaning_Cycle_Code`
+        LEFT JOIN
+    `resource_use` `ru` ON `rr`.`idResource` = `ru`.`idResource`  AND `ru`.`Status` = :resourceStatus  AND DATE(`ru`.`Start_Date`) <= DATE(:endDate) AND DATE(`ru`.`End_Date`) > DATE(:beginDate)
+        LEFT JOIN
+    `note` `nt` ON `nt`.`idNote` = (SELECT `ln`.`idNote` FROM `link_note` `ln` JOIN `note` `n` ON `ln`.`idNote` = `n`.`idNote` WHERE `ln`.`idLink` = `r`.`idRoom` AND `ln`.`linkType` = 'room' AND `n`.`Status` = 'a' ORDER BY `ln`.`idNote` DESC LIMIT 1)
     $genJoin
-where g3.Substitute > 0 and ru.idResource_use is null
-    and (re.Retired_At is null or re.Retired_At > date(now()))
-group by rr.idResource
+WHERE `g3`.`Substitute` > 0 AND `ru`.`idResource_use` IS NULL
+    AND (`re`.`Retired_At` IS NULL OR `re`.`Retired_At` > DATE(NOW()))
+GROUP BY `rr`.`idResource`
 ORDER BY $orderBy;");
+        $stmt->execute($genJoinParams + [
+            ':visitStatus' => VisitStatus::CheckedIn,
+            ':stCommitted' => ReservationStatus::Committed,
+            ':stUnCommitted' => ReservationStatus::UnCommitted,
+            ':resourceStatus' => ResourceStatus::Unavailable,
+            ':endDate' => $endDT->format('Y-m-d'),
+            ':beginDate' => $beginDT->format('Y-m-d'),
+        ]);
 
         // Loop rooms.
         while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
@@ -1222,13 +1244,19 @@ ORDER BY $orderBy;");
             return $returnRows;
         }
 
-        $stmt = $dbh->query("
-        	select pg.`Name_Full` as 'Primary Guest', rp.`Number_Guests` as 'Guests', DATE(rp.`Expected_Arrival`) as 'Arrival Date', DATE(rp.`Expected_Departure`) as 'Expected Departure', rp.`Title` as 'Room', DATEDIFF(rp.`Expected_Departure`, rp.`Expected_Arrival`) as 'Nights'
-			from vresv_patient rp
-			left join `name` pg on rp.idGuest = pg.idName
-			where rp.`Status` in ('" . ReservationStatus::Committed . "', '" . ReservationStatus::UnCommitted . "', '" . ReservationStatus::Waitlist . "') "
-            . "and DATE(`Expected_Arrival`) <= DATE('$endCiDate') order by `Expected_Arrival`;
+        $stmt = $dbh->prepare("
+        	SELECT `pg`.`Name_Full` AS 'Primary Guest', `rp`.`Number_Guests` AS 'Guests', DATE(`rp`.`Expected_Arrival`) AS 'Arrival Date', DATE(`rp`.`Expected_Departure`) AS 'Expected Departure', `rp`.`Title` AS 'Room', DATEDIFF(`rp`.`Expected_Departure`, `rp`.`Expected_Arrival`) AS 'Nights'
+			FROM `vresv_patient` `rp`
+			LEFT JOIN `name` `pg` ON `rp`.`idGuest` = `pg`.`idName`
+			WHERE `rp`.`Status` IN (:stCommitted, :stUnCommitted, :stWaitlist)
+            AND DATE(`Expected_Arrival`) <= DATE(:endCiDate) ORDER BY `Expected_Arrival`;
         ");
+        $stmt->execute([
+            ':stCommitted' => ReservationStatus::Committed,
+            ':stUnCommitted' => ReservationStatus::UnCommitted,
+            ':stWaitlist' => ReservationStatus::Waitlist,
+            ':endCiDate' => $endCiDate,
+        ]);
 
         return $stmt->fetchAll(\PDO::FETCH_ASSOC);
     }
@@ -1251,29 +1279,36 @@ ORDER BY $orderBy;");
             return $returnRows;
         }
 
-        $stmt = $dbh->query("select
-        r.idRoom,
-        ifnull(v.idVisit, 0) as idVisit,
-        r.`Title`,
-        ifnull(n.Name_Full, '') as `Name`,
-        v.Arrival_Date,
-        ifnull(DATE(v.Span_End), DATE(datedefaultnow(v.Expected_Departure))) as `Departure_Date`,
-        g.`Description` as `Visit_Status`,
-        r.`Last_Cleaned`,
-        concat('<strong>', ifnull(date_format(nt.`Timestamp`, '%b %d, %Y'), ''), '</strong>','  ', ifnull(nt.`Note_Text`, '')) as `Notes`
-    from
-        room r
-            left join
-        resource_room rr ON r.idRoom = rr.idRoom
-            join
-        visit v ON rr.idResource = v.idResource and v.`Status` in ('" . VisitStatus::CheckedIn . "', '" . VisitStatus::CheckedOut . "', '" . VisitStatus::NewSpan . "')
-            left join
-        name n ON v.idPrimaryGuest = n.idName
-            left join
-        gen_lookups g on g.Table_Name = 'Visit_Status' and g.Code = v.`Status`
-            left join
-        note nt on nt.idNote = (select ln.idNote from link_note ln join note n on ln.idNote = n.idNote where ln.idLink = r.idRoom and ln.linkType = 'room' and n.Status = 'a' order by ln.idNote desc limit 1)
-    where ifnull(DATE(v.Span_End), DATE(datedefaultnow(v.Expected_Departure))) between Date('$startCoDate') and Date('$endCoDate');");
+        $stmt = $dbh->prepare("SELECT
+        `r`.`idRoom`,
+        IFNULL(`v`.`idVisit`, 0) AS `idVisit`,
+        `r`.`Title`,
+        IFNULL(`n`.`Name_Full`, '') AS `Name`,
+        `v`.`Arrival_Date`,
+        IFNULL(DATE(`v`.`Span_End`), DATE(datedefaultnow(`v`.`Expected_Departure`))) AS `Departure_Date`,
+        `g`.`Description` AS `Visit_Status`,
+        `r`.`Last_Cleaned`,
+        CONCAT('<strong>', IFNULL(DATE_FORMAT(`nt`.`Timestamp`, '%b %d, %Y'), ''), '</strong>','  ', IFNULL(`nt`.`Note_Text`, '')) AS `Notes`
+    FROM
+        `room` `r`
+            LEFT JOIN
+        `resource_room` `rr` ON `r`.`idRoom` = `rr`.`idRoom`
+            JOIN
+        `visit` `v` ON `rr`.`idResource` = `v`.`idResource` AND `v`.`Status` IN (:stCheckedIn, :stCheckedOut, :stNewSpan)
+            LEFT JOIN
+        `name` `n` ON `v`.`idPrimaryGuest` = `n`.`idName`
+            LEFT JOIN
+        `gen_lookups` `g` ON `g`.`Table_Name` = 'Visit_Status' AND `g`.`Code` = `v`.`Status`
+            LEFT JOIN
+        `note` `nt` ON `nt`.`idNote` = (SELECT `ln`.`idNote` FROM `link_note` `ln` JOIN `note` `n` ON `ln`.`idNote` = `n`.`idNote` WHERE `ln`.`idLink` = `r`.`idRoom` AND `ln`.`linkType` = 'room' AND `n`.`Status` = 'a' ORDER BY `ln`.`idNote` DESC LIMIT 1)
+    WHERE IFNULL(DATE(`v`.`Span_End`), DATE(datedefaultnow(`v`.`Expected_Departure`))) BETWEEN DATE(:startCoDate) AND DATE(:endCoDate);");
+        $stmt->execute([
+            ':stCheckedIn' => VisitStatus::CheckedIn,
+            ':stCheckedOut' => VisitStatus::CheckedOut,
+            ':stNewSpan' => VisitStatus::NewSpan,
+            ':startCoDate' => $startCoDate,
+            ':endCoDate' => $endCoDate,
+        ]);
 
 
         while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
@@ -1301,26 +1336,32 @@ ORDER BY $orderBy;");
         //reservations
         $uS = Session::getInstance();
         if ($uS->showResvHousekeeping) {
-            $stmt = $dbh->query("select
-            r.idRoom,
-            r.`Title`,
-            ifnull(n.Name_Full, '') as `Name`,
-            resv.Expected_Arrival as `Arrival_Date`,
-            DATE(resv.Expected_Departure) as `Departure_Date`,
-            l.`Title` as `Status`,
-            r.`Last_Cleaned`,
-            ifnull(r.`Notes`, '') as `Notes`
-        from
-            room r
-                left join
-            resource_room rr ON r.idRoom = rr.idRoom
-                join
-            reservation resv ON rr.idResource = resv.idResource and resv.`Status` in ('" . ReservationStatus::Committed . "', '" . ReservationStatus::UnCommitted . "')
-                left join
-            name n ON resv.idGuest = n.idName
-                left join
-            lookups l on l.Category = 'ReservStatus' and l.Code = resv.`Status`
-        where DATE(resv.Expected_Departure) between Date('$startCoDate') and Date('$endCoDate');");
+            $stmt = $dbh->prepare("SELECT
+            `r`.`idRoom`,
+            `r`.`Title`,
+            IFNULL(`n`.`Name_Full`, '') AS `Name`,
+            `resv`.`Expected_Arrival` AS `Arrival_Date`,
+            DATE(`resv`.`Expected_Departure`) AS `Departure_Date`,
+            `l`.`Title` AS `Status`,
+            `r`.`Last_Cleaned`,
+            IFNULL(`r`.`Notes`, '') AS `Notes`
+        FROM
+            `room` `r`
+                LEFT JOIN
+            `resource_room` `rr` ON `r`.`idRoom` = `rr`.`idRoom`
+                JOIN
+            `reservation` `resv` ON `rr`.`idResource` = `resv`.`idResource` AND `resv`.`Status` IN (:stCommitted, :stUnCommitted)
+                LEFT JOIN
+            `name` `n` ON `resv`.`idGuest` = `n`.`idName`
+                LEFT JOIN
+            `lookups` `l` ON `l`.`Category` = 'ReservStatus' AND `l`.`Code` = `resv`.`Status`
+        WHERE DATE(`resv`.`Expected_Departure`) BETWEEN DATE(:startCoDate) AND DATE(:endCoDate);");
+            $stmt->execute([
+                ':stCommitted' => ReservationStatus::Committed,
+                ':stUnCommitted' => ReservationStatus::UnCommitted,
+                ':startCoDate' => $startCoDate,
+                ':endCoDate' => $endCoDate,
+            ]);
 
 
             while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {

@@ -552,31 +552,32 @@ where
 
         if ($idName > 0) {
 
-            $stmt = $dbh->query("SELECT
-    n.Company,
+            $stmt = $dbh->prepare("SELECT
+    `n`.`Company`,
     CASE
-        WHEN a.Address_2 != '' THEN a.Address_1
-        ELSE CONCAT(a.Address_1, ' ', a.Address_2)
+        WHEN `a`.`Address_2` != '' THEN `a`.`Address_1`
+        ELSE CONCAT(`a`.`Address_1`, ' ', `a`.`Address_2`)
     END AS `Address`,
-    IFNULL(a.City, '') AS `City`,
-    IFNULL(a.State_Province, '') AS `State`,
-    IFNULL(a.Postal_Code, '') AS `Zip`,
-    IFNULL(p.Phone_Num, '') AS `Phone`,
-    IFNULL(e.Email, '') AS `Email`,
-    IFNULL(n.Web_Site, '') AS `Web_Site`
+    IFNULL(`a`.`City`, '') AS `City`,
+    IFNULL(`a`.`State_Province`, '') AS `State`,
+    IFNULL(`a`.`Postal_Code`, '') AS `Zip`,
+    IFNULL(`p`.`Phone_Num`, '') AS `Phone`,
+    IFNULL(`e`.`Email`, '') AS `Email`,
+    IFNULL(`n`.`Web_Site`, '') AS `Web_Site`
 FROM
-    name n
+    `name` `n`
         LEFT JOIN
-    name_address a ON n.idName = a.idName
-        AND n.Preferred_Mail_Address = a.Purpose
+    `name_address` `a` ON `n`.`idName` = `a`.`idName`
+        AND `n`.`Preferred_Mail_Address` = `a`.`Purpose`
         LEFT JOIN
-    name_phone p ON n.idName = p.idName
-        AND n.Preferred_Phone = p.Phone_Code
+    `name_phone` `p` ON `n`.`idName` = `p`.`idName`
+        AND `n`.`Preferred_Phone` = `p`.`Phone_Code`
         LEFT JOIN
-    name_email e ON n.idName = e.idName
-        AND n.Preferred_Email = e.Purpose
+    `name_email` `e` ON `n`.`idName` = `e`.`idName`
+        AND `n`.`Preferred_Email` = `e`.`Purpose`
 WHERE
-    n.idName = $idName");
+    `n`.`idName` = :idName");
+            $stmt->execute([':idName' => $idName]);
 
             $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 

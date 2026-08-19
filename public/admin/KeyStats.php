@@ -28,23 +28,25 @@ $menuMarkup = $wInit->generatePageMenu();
 
 // Member category counts
 // get the categories
-$query = "select Code, Description from gen_lookups where Table_Name = 'Vol_Category' order by Description;";
-    $stmt = $dbh->query($query);
+$query = "SELECT `Code`, `Description` FROM `gen_lookups` WHERE `Table_Name` = 'Vol_Category' ORDER BY `Description`;";
+    $stmt = $dbh->prepare($query);
+    $stmt->execute();
     $rows = $stmt->fetchAll(\PDO::FETCH_NUM);
 //$res = queryDB($dbcon, $query);
 $typedata = "";
+
+$volCategoryStmt = $dbh->prepare("SELECT IFNULL(`g`.`Description`,'Not Assigned'), COUNT(`v`.`Vol_Code`) AS `count`
+                FROM `name_volunteer2` `v` JOIN `name` `n` ON `v`.`idName` = `n`.`idName` AND `n`.`Member_Status` = 'a' AND `v`.`Vol_Category` = :volCategory1
+                LEFT JOIN `gen_lookups` `g` ON `v`.`Vol_Code` = `g`.`Code` AND `g`.`Table_Name` = :volCategory2
+                WHERE `n`.`idName` > 0 AND `v`.`Vol_Status` = 'a' AND IFNULL(`v`.`Vol_End`,'2999/10/1') > NOW()
+                GROUP BY `v`.`Vol_Code`;");
 
 foreach ($rows as $r) {
 
     $typedata .= "<td style='vertical-align: top;'><table><tr><th>$r[1]</th><th>Count</th></tr>";
 
-    $query = "select ifnull(g.Description,'Not Assigned'), count(v.Vol_Code) as `count`
-                from name_volunteer2 v join name n on v.idName = n.idName and `n`.`Member_Status` = 'a' and v.Vol_Category = '" . $r[0] . "'
-                left join gen_lookups g on v.Vol_Code = g.Code and g.Table_Name = '" . $r[0] . "'
-                where n.idName > 0 and v.Vol_Status = 'a' and ifnull(v.Vol_End,'2999/10/1') > now()
-                group by v.Vol_Code;";
-    $stmt = $dbh->query($query);
-    $rows2 = $stmt->fetchAll(\PDO::FETCH_NUM);
+    $volCategoryStmt->execute([':volCategory1' => $r[0], ':volCategory2' => $r[0]]);
+    $rows2 = $volCategoryStmt->fetchAll(\PDO::FETCH_NUM);
     //$result2 = queryDB($dbcon, $query, true);
 
     $cntr = 0;
@@ -62,11 +64,12 @@ foreach ($rows as $r) {
 
 
 // Member status counts
-$query = "select ifnull(g.Description,'Not Assigned') as Description, count(n.Member_Status) as `count`
-                from  name n left join gen_lookups g on n.Member_Status = g.Code and g.Table_Name = 'mem_status'
-                where n.idName > 0
-                group by n.Member_Status";
-    $stmt = $dbh->query($query);
+$query = "SELECT IFNULL(`g`.`Description`,'Not Assigned') AS `Description`, COUNT(`n`.`Member_Status`) AS `count`
+                FROM  `name` `n` LEFT JOIN `gen_lookups` `g` ON `n`.`Member_Status` = `g`.`Code` AND `g`.`Table_Name` = 'mem_status'
+                WHERE `n`.`idName` > 0
+                GROUP BY `n`.`Member_Status`";
+    $stmt = $dbh->prepare($query);
+    $stmt->execute();
     $rows = $stmt->fetchAll(\PDO::FETCH_NUM);
 //$result2 = queryDB($dbcon, $query, true);
 $statusdata = "";
@@ -79,11 +82,12 @@ foreach ($rows as $row2) {
 
 
 // Member Basis counts
-$query = "select ifnull(g.Description,'Not Assigned') as Description, count(n.Member_Type) as `count`
-                from  name n left join gen_lookups g on n.Member_Type = g.Code and g.Table_Name = 'Member_Basis'
-                where n.idName > 0 and n.Member_Status = 'a'
-                group by n.Member_Type";
-    $stmt = $dbh->query($query);
+$query = "SELECT IFNULL(`g`.`Description`,'Not Assigned') AS `Description`, COUNT(`n`.`Member_Type`) AS `count`
+                FROM  `name` `n` LEFT JOIN `gen_lookups` `g` ON `n`.`Member_Type` = `g`.`Code` AND `g`.`Table_Name` = 'Member_Basis'
+                WHERE `n`.`idName` > 0 AND `n`.`Member_Status` = 'a'
+                GROUP BY `n`.`Member_Type`";
+    $stmt = $dbh->prepare($query);
+    $stmt->execute();
     $rows = $stmt->fetchAll(\PDO::FETCH_NUM);
 //$result2 = queryDB($dbcon, $query, true);
 $basisdata = "";
@@ -103,16 +107,17 @@ $basisChartLabels = substr($basisChartLabels, 0, strlen($basisChartLabels) - 1);
 
 
 // Guest percentages
-$query = "select  (
-                select count(*) from name_volunteer2 v1 join name_volunteer2 v2 on v1.idName = v2.idName
-                join name n on v1.idName = n.idName and n.Member_Status = 'a'
-                where  v1.Vol_Code = 'g' and v2.Vol_Code = 'd' and v1.Vol_Category = 'Vol_Type'  and v1.Vol_Status='a' and v2.Vol_Status='a' and v2.Vol_Category = 'Vol_Type'
+$query = "SELECT  (
+                SELECT COUNT(*) FROM `name_volunteer2` `v1` JOIN `name_volunteer2` `v2` ON `v1`.`idName` = `v2`.`idName`
+                JOIN `name` `n` ON `v1`.`idName` = `n`.`idName` AND `n`.`Member_Status` = 'a'
+                WHERE  `v1`.`Vol_Code` = 'g' AND `v2`.`Vol_Code` = 'd' AND `v1`.`Vol_Category` = 'Vol_Type'  AND `v1`.`Vol_Status`='a' AND `v2`.`Vol_Status`='a' AND `v2`.`Vol_Category` = 'Vol_Type'
                 )
                  / (
-                select count(*) from name_volunteer2 v1 join name n on v1.idName = n.idName and n.Member_Status = 'a' and v1.Vol_Status='a' and v1.Vol_Category = 'Vol_Type'
-                where n.idName > 0 and v1.Vol_Code = 'g'
-                ) * 100 as prcent;";
-    $stmt = $dbh->query($query);
+                SELECT COUNT(*) FROM `name_volunteer2` `v1` JOIN `name` `n` ON `v1`.`idName` = `n`.`idName` AND `n`.`Member_Status` = 'a' AND `v1`.`Vol_Status`='a' AND `v1`.`Vol_Category` = 'Vol_Type'
+                WHERE `n`.`idName` > 0 AND `v1`.`Vol_Code` = 'g'
+                ) * 100 AS `prcent`;";
+    $stmt = $dbh->prepare($query);
+    $stmt->execute();
     $rows = $stmt->fetchAll(\PDO::FETCH_NUM);
 //$result2 = queryDB($dbcon, $query, true);
 $rw = $rows[0];
@@ -121,15 +126,16 @@ $rw = $rows[0];
 $guestDonors = number_format($rw[0], 2);
 $guest = number_format(100 - $rw[0], 2);
 
-$query = "select  (
-                select count(*) from name_volunteer2 v1 join name_volunteer2 v2 on v1.idName = v2.idName
-                join name n on v1.idName = n.idName
-                where n.idName > 0 and n.Member_Status = 'a' and v1.Vol_Code = 'd' and v1.Vol_Status='a' and v2.Vol_Status='a' and v2.Vol_Code = 'Vol'  and v1.Vol_Category = 'Vol_Type' and v2.Vol_Category = 'Vol_Type')
+$query = "SELECT  (
+                SELECT COUNT(*) FROM `name_volunteer2` `v1` JOIN `name_volunteer2` `v2` ON `v1`.`idName` = `v2`.`idName`
+                JOIN `name` `n` ON `v1`.`idName` = `n`.`idName`
+                WHERE `n`.`idName` > 0 AND `n`.`Member_Status` = 'a' AND `v1`.`Vol_Code` = 'd' AND `v1`.`Vol_Status`='a' AND `v2`.`Vol_Status`='a' AND `v2`.`Vol_Code` = 'Vol'  AND `v1`.`Vol_Category` = 'Vol_Type' AND `v2`.`Vol_Category` = 'Vol_Type')
                  /
-                 (select count(*) from name_volunteer2 v1 join name n on v1.idName = n.idName and n.Member_Status = 'a' and v1.Vol_Category = 'Vol_Type'
-                where n.idName > 0 and v1.Vol_Code = 'Vol' and v1.Vol_Status='a')
-                * 100 as prcent;";
-    $stmt = $dbh->query($query);
+                 (SELECT COUNT(*) FROM `name_volunteer2` `v1` JOIN `name` `n` ON `v1`.`idName` = `n`.`idName` AND `n`.`Member_Status` = 'a' AND `v1`.`Vol_Category` = 'Vol_Type'
+                WHERE `n`.`idName` > 0 AND `v1`.`Vol_Code` = 'Vol' AND `v1`.`Vol_Status`='a')
+                * 100 AS `prcent`;";
+    $stmt = $dbh->prepare($query);
+    $stmt->execute();
     $rows = $stmt->fetchAll(\PDO::FETCH_NUM);
 //$result2 = queryDB($dbcon, $query, true);
 $rw = $rows[0];
@@ -140,16 +146,18 @@ $volunteer = number_format(100 - (is_null($rw[0]) ? 0 : $rw[0]), 2);
 
 
 // members not in the name_volunteer file
-$query = "select count(n.idName) from name n left join name_volunteer2 v on n.idName = v.idName
-        where n.idName > 0 and v.idName is null and n.Member_Status = 'a';";
-    $stmt = $dbh->query($query);
+$query = "SELECT COUNT(`n`.`idName`) FROM `name` `n` LEFT JOIN `name_volunteer2` `v` ON `n`.`idName` = `v`.`idName`
+        WHERE `n`.`idName` > 0 AND `v`.`idName` IS NULL AND `n`.`Member_Status` = 'a';";
+    $stmt = $dbh->prepare($query);
+    $stmt->execute();
     $rows = $stmt->fetchAll(\PDO::FETCH_NUM);
 //$result2 = queryDB($dbcon, $query);
 $rw =$rows[0];
 
 $notVolunteers = $rw[0];
 
-    $stmt = $dbh->query($query);
+    $stmt = $dbh->prepare($query);
+    $stmt->execute();
     $rows = $stmt->fetchAll(\PDO::FETCH_NUM);
 //$result2 = queryDB($dbcon, "Select count(n.idName) from name n where n.idName > 0 and n.Member_Status = 'a'");
 $rw = $rows[0];
@@ -173,8 +181,9 @@ $preHeader = "<tr><th colspan='2'>";
 
 
 // get "good" status types
-$query = "Select Description from gen_lookups where Table_Name = 'mem_status' and Substitute = 'm' order by Code;";
-    $stmt = $dbh->query($query);
+$query = "SELECT `Description` FROM `gen_lookups` WHERE `Table_Name` = 'mem_status' AND `Substitute` = 'm' ORDER BY `Code`;";
+    $stmt = $dbh->prepare($query);
+    $stmt->execute();
     $rows = $stmt->fetchAll(\PDO::FETCH_NUM);
 //$res = queryDB($dbcon, $query);
 
@@ -188,8 +197,9 @@ $preHeader .= "<th colspan='" . (count($line) + 1) . "'>Valid Member Statuses</t
 $header .= "<th style='border-right: 1px solid #D4CCB0;'>Sub Total</th>";
 
 // get "bad" status types
-$query = "Select Description from gen_lookups where Table_Name = 'mem_status' and Substitute <> 'm' order by Code;";
-    $stmt = $dbh->query($query);
+$query = "SELECT `Description` FROM `gen_lookups` WHERE `Table_Name` = 'mem_status' AND `Substitute` <> 'm' ORDER BY `Code`;";
+    $stmt = $dbh->prepare($query);
+    $stmt->execute();
     $rows = $stmt->fetchAll(\PDO::FETCH_NUM);
 //$res = queryDB($dbcon, $query);
 
@@ -205,15 +215,16 @@ $preHeader .= "<th colspan='" . count($badLine) . "'>Invalid Member Statuses</th
 $header .= "<th>Total</th></tr>";
 
 // Get the data
-$query = "select gc.Description as `Category`, g.Description as `Committee`, gs.Description as `Status`,
-v.Vol_Category, v.Vol_Code, n.Member_Status, count(n.Member_Status) as `Count`
-from name_volunteer2 v left join name n on n.idName = v.idName
-left join gen_lookups gc on gc.Table_Name = 'Vol_Category' and gc.Code = v.Vol_Category
-left join gen_lookups g on g.Table_Name = v.Vol_Category and g.Code = v.Vol_Code
-left join gen_lookups gs on gs.Table_Name = 'mem_status' and gs.Code = n.Member_Status
-where v.Vol_Status = 'a'
-group by v.Vol_Category, v.Vol_Code, n.Member_Status with rollup;";
-    $stmt = $dbh->query($query);
+$query = "SELECT `gc`.`Description` AS `Category`, `g`.`Description` AS `Committee`, `gs`.`Description` AS `Status`,
+`v`.`Vol_Category`, `v`.`Vol_Code`, `n`.`Member_Status`, COUNT(`n`.`Member_Status`) AS `Count`
+FROM `name_volunteer2` `v` LEFT JOIN `name` `n` ON `n`.`idName` = `v`.`idName`
+LEFT JOIN `gen_lookups` `gc` ON `gc`.`Table_Name` = 'Vol_Category' AND `gc`.`Code` = `v`.`Vol_Category`
+LEFT JOIN `gen_lookups` `g` ON `g`.`Table_Name` = `v`.`Vol_Category` AND `g`.`Code` = `v`.`Vol_Code`
+LEFT JOIN `gen_lookups` `gs` ON `gs`.`Table_Name` = 'mem_status' AND `gs`.`Code` = `n`.`Member_Status`
+WHERE `v`.`Vol_Status` = 'a'
+GROUP BY `v`.`Vol_Category`, `v`.`Vol_Code`, `n`.`Member_Status` WITH ROLLUP;";
+    $stmt = $dbh->prepare($query);
+    $stmt->execute();
     $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 //$res = queryDB($dbcon, $query);
 

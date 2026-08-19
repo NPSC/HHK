@@ -217,7 +217,7 @@ class QuarterlyOccupancyReport extends AbstractReport implements ReportInterface
 
     public function getAgeDistribution(string $start, string $end){
 
-        $query = 'select if(n.BirthDate is not null, if(timestampdiff(YEAR, n.BirthDate, s.Span_Start_Date) < 18, "Child", "Adult"), if(nd.Is_Minor, "Child", "' . self::NOT_INDICATED . '")) as `Key`, count(distinct n.idName) as "count" from stays s join visit v on s.idVisit = v.idVisit and s.Visit_Span = v.Span join name n on s.idName = n.idName join name_demog nd on n.idName = nd.idName where date(s.Span_Start_Date) < date(:endDate) and date(ifnull(s.Span_End_Date, now())) > date(:startDate) and not DATE(s.Span_End_Date) <=> DATE(s.Span_Start_Date) and not DATE(v.Span_End) <=> DATE(v.Span_Start) group by `key`';
+        $query = 'SELECT IF(`n`.`BirthDate` IS NOT NULL, IF(TIMESTAMPDIFF(YEAR, `n`.`BirthDate`, `s`.`Span_Start_Date`) < 18, "Child", "Adult"), IF(`nd`.`Is_Minor`, "Child", "' . self::NOT_INDICATED . '")) AS `Key`, COUNT(DISTINCT `n`.`idName`) AS "count" FROM `stays` `s` JOIN `visit` `v` ON `s`.`idVisit` = `v`.`idVisit` AND `s`.`Visit_Span` = `v`.`Span` JOIN `name` `n` ON `s`.`idName` = `n`.`idName` JOIN `name_demog` `nd` ON `n`.`idName` = `nd`.`idName` WHERE DATE(`s`.`Span_Start_Date`) < DATE(:endDate) AND DATE(IFNULL(`s`.`Span_End_Date`, NOW())) > DATE(:startDate) AND NOT DATE(`s`.`Span_End_Date`) <=> DATE(`s`.`Span_Start_Date`) AND NOT DATE(`v`.`Span_End`) <=> DATE(`v`.`Span_Start`) GROUP BY `Key`';
         $stmt = $this->dbh->prepare($query);
         $stmt->execute([":startDate"=>$start, ":endDate"=>$end]);
         $data = $stmt->fetchAll(\PDO::FETCH_NUM);
@@ -237,24 +237,31 @@ class QuarterlyOccupancyReport extends AbstractReport implements ReportInterface
         $roomTypes = Common::readGenLookupsPDO($this->dbh, "Resource_Type");
         $rmtroomTitle = (isset($roomTypes['rmtroom']['Description']) ? $roomTypes['rmtroom']['Description']: "Remote Room");
 
-        $retiredRescSql = "(re.Retired_At is null or re.Retired_At > date('$start'))";
+        $retiredRescSql = "(`re`.`Retired_At` IS NULL OR `re`.`Retired_At` > DATE(:retiredStart))";
 
         $query = '
 SELECT
-(select count(*) from resource re where re.Type = "room" and ' .$retiredRescSql .')*datediff("' . $end . '", "' . $start . '") as "Room-nights available",
-(select SUM(DATEDIFF(least(ifnull(v.Span_End, date("' . $end . '")), date("' . $end . '")), greatest(v.Span_Start, date("' . $start . '")))) from visit v where date(v.Span_Start) < date("' . $end . '") and date(ifnull(v.Span_End, curdate())) > date("' . $start . '") and not date(v.Span_Start) <=> date(v.Span_End)) as "Room-nights occupied",
-CONCAT(ROUND((select SUM(DATEDIFF(least(ifnull(v.Span_End, date("' . $end . '")), date("' . $end . '")), greatest(v.Span_Start, date("' . $start . '")))) from visit v where date(v.Span_Start) < date("' . $end . '") and date(ifnull(v.Span_End, curdate())) > date("' . $start . '"))/((select count(*) from resource re where re.Type = "room" and ' . $retiredRescSql . ')*datediff("' . $end . '", "' . $start . '"))*100,1), "%") as "Occupancy Rate",'.
+(SELECT COUNT(*) FROM `resource` `re` WHERE `re`.`Type` = "room" AND ' .$retiredRescSql .')*DATEDIFF(:end1, :start1) AS "Room-nights available",
+(SELECT SUM(DATEDIFF(LEAST(IFNULL(`v`.`Span_End`, DATE(:end2)), DATE(:end3)), GREATEST(`v`.`Span_Start`, DATE(:start2)))) FROM `visit` `v` WHERE DATE(`v`.`Span_Start`) < DATE(:end4) AND DATE(IFNULL(`v`.`Span_End`, CURDATE())) > DATE(:start3) AND NOT DATE(`v`.`Span_Start`) <=> DATE(`v`.`Span_End`)) AS "Room-nights occupied",
+CONCAT(ROUND((SELECT SUM(DATEDIFF(LEAST(IFNULL(`v`.`Span_End`, DATE(:end5)), DATE(:end6)), GREATEST(`v`.`Span_Start`, DATE(:start4)))) FROM `visit` `v` WHERE DATE(`v`.`Span_Start`) < DATE(:end7) AND DATE(IFNULL(`v`.`Span_End`, CURDATE())) > DATE(:start5))/((SELECT COUNT(*) FROM `resource` `re` WHERE `re`.`Type` = "room" AND ' . $retiredRescSql . ')*DATEDIFF(:end8, :start6))*100,1), "%") AS "Occupancy Rate",'.
 //ifnull((select SUM(DATEDIFF(least(ifnull(v.Span_End, date("' . $end . '")), date("' . $end . '")), greatest(v.Span_Start, date("' . $start . '")))) from visit v join resource re on v.idResource = re.idResource where re.Type = "rmtroom" and date(v.Span_Start) < date("' . $end . '") and date(ifnull(v.Span_End, curdate())) > date("' . $start . '")), "0") as "' . $rmtroomTitle . '-nights occupied",
-'(select count(distinct reg.idPsg) from visit v join registration reg on v.idRegistration = reg.idRegistration where date(v.Span_Start) < date(:endDate6) and date(ifnull(v.Span_End, curdate()+interval 1 day)) > date(:startDate6) and not date(v.Span_Start) <=> date(v.Span_End)) as "Unique ' . Labels::getString("Statement", "psgPlural", "PSGs") . '",
-(select count(distinct reg.idPsg) from visit v join registration reg on v.idRegistration = reg.idRegistration where idVisit in (select fv.idVisit from vlist_first_visit fv where date(ifnull(fv.Span_End, curdate()+interval 1 day)) > date(:startDate14) and date(fv.Span_Start) < date(:endDate14) and not date(fv.Span_Start) <=> date(fv.Span_End))) as "New ' . Labels::getString("Statement", "psgPlural", "PSGs") . '",
-(select count(distinct v.idVisit) from visit v where date(v.Span_Start) < date(:endDate8) and date(ifnull(v.Span_End, curdate()+interval 1 day)) > date(:startDate8) and not date(v.Span_Start) <=> date(v.Span_End)) as "Total Visits",
-(select ROUND(AVG(DATEDIFF(ifnull(v.Actual_Departure, curdate()), v.Arrival_Date)),1) from visit v where date(v.Arrival_Date) < date(:endDate9) and date(ifnull(v.Actual_Departure, curdate()+interval 1 day)) > date(:startDate9) and not date(v.Arrival_Date) <=> date(v.Actual_Departure) and v.Status in ("a","co")) as "Average Visit Length",
-(select ROUND(MEDIAN(DATEDIFF(ifnull(v.Actual_Departure, curdate()), v.Arrival_Date)) over (),1) from visit v where date(v.Arrival_Date) < date(:endDate10) and date(ifnull(v.Actual_Departure, curdate()+interval 1 day)) > date(:startDate10) and not date(v.Arrival_Date) <=> date(v.Actual_Departure) and v.Status in ("a","co") limit 1) as "Median Visit Length",
-(select round(AVG(DATEDIFF(ifnull(v.Actual_Departure, curdate()), v.Arrival_Date))) from visit v where idVisit in (select fv.idVisit from vlist_first_visit fv where date(ifnull(fv.Actual_Departure, curdate()+interval 1 day)) > date(:startDate11) and date(fv.Arrival_Date) < date(:endDate11) and not date(fv.Arrival_Date) <=> date(fv.Actual_Departure)) and v.Status in ("a","co")) as "Average First Visit Length",
-(select round(MEDIAN(DATEDIFF(ifnull(v.Actual_Departure, curdate()), v.Arrival_Date)) over (),1) from visit v where idVisit in (select fv.idVisit from vlist_first_visit fv where date(ifnull(fv.Actual_Departure, curdate() + interval 1 day)) > date(:startDate12) and date(fv.Arrival_Date) < date(:endDate12) and not date(fv.Arrival_Date) <=> date(fv.Actual_Departure)) and v.Status in ("a","co") limit 1) as "Median First Visit Length";
+'(SELECT COUNT(DISTINCT `reg`.`idPsg`) FROM `visit` `v` JOIN `registration` `reg` ON `v`.`idRegistration` = `reg`.`idRegistration` WHERE DATE(`v`.`Span_Start`) < DATE(:endDate6) AND DATE(IFNULL(`v`.`Span_End`, CURDATE()+INTERVAL 1 DAY)) > DATE(:startDate6) AND NOT DATE(`v`.`Span_Start`) <=> DATE(`v`.`Span_End`)) AS "Unique ' . Labels::getString("Statement", "psgPlural", "PSGs") . '",
+(SELECT COUNT(DISTINCT `reg`.`idPsg`) FROM `visit` `v` JOIN `registration` `reg` ON `v`.`idRegistration` = `reg`.`idRegistration` WHERE `idVisit` IN (SELECT `fv`.`idVisit` FROM `vlist_first_visit` `fv` WHERE DATE(IFNULL(`fv`.`Span_End`, CURDATE()+INTERVAL 1 DAY)) > DATE(:startDate14) AND DATE(`fv`.`Span_Start`) < DATE(:endDate14) AND NOT DATE(`fv`.`Span_Start`) <=> DATE(`fv`.`Span_End`))) AS "New ' . Labels::getString("Statement", "psgPlural", "PSGs") . '",
+(SELECT COUNT(DISTINCT `v`.`idVisit`) FROM `visit` `v` WHERE DATE(`v`.`Span_Start`) < DATE(:endDate8) AND DATE(IFNULL(`v`.`Span_End`, CURDATE()+INTERVAL 1 DAY)) > DATE(:startDate8) AND NOT DATE(`v`.`Span_Start`) <=> DATE(`v`.`Span_End`)) AS "Total Visits",
+(SELECT ROUND(AVG(DATEDIFF(IFNULL(`v`.`Actual_Departure`, CURDATE()), `v`.`Arrival_Date`)),1) FROM `visit` `v` WHERE DATE(`v`.`Arrival_Date`) < DATE(:endDate9) AND DATE(IFNULL(`v`.`Actual_Departure`, CURDATE()+INTERVAL 1 DAY)) > DATE(:startDate9) AND NOT DATE(`v`.`Arrival_Date`) <=> DATE(`v`.`Actual_Departure`) AND `v`.`Status` IN ("a","co")) AS "Average Visit Length",
+(SELECT ROUND(MEDIAN(DATEDIFF(IFNULL(`v`.`Actual_Departure`, CURDATE()), `v`.`Arrival_Date`)) OVER (),1) FROM `visit` `v` WHERE DATE(`v`.`Arrival_Date`) < DATE(:endDate10) AND DATE(IFNULL(`v`.`Actual_Departure`, CURDATE()+INTERVAL 1 DAY)) > DATE(:startDate10) AND NOT DATE(`v`.`Arrival_Date`) <=> DATE(`v`.`Actual_Departure`) AND `v`.`Status` IN ("a","co") LIMIT 1) AS "Median Visit Length",
+(SELECT ROUND(AVG(DATEDIFF(IFNULL(`v`.`Actual_Departure`, CURDATE()), `v`.`Arrival_Date`))) FROM `visit` `v` WHERE `idVisit` IN (SELECT `fv`.`idVisit` FROM `vlist_first_visit` `fv` WHERE DATE(IFNULL(`fv`.`Actual_Departure`, CURDATE()+INTERVAL 1 DAY)) > DATE(:startDate11) AND DATE(`fv`.`Arrival_Date`) < DATE(:endDate11) AND NOT DATE(`fv`.`Arrival_Date`) <=> DATE(`fv`.`Actual_Departure`)) AND `v`.`Status` IN ("a","co")) AS "Average First Visit Length",
+(SELECT ROUND(MEDIAN(DATEDIFF(IFNULL(`v`.`Actual_Departure`, CURDATE()), `v`.`Arrival_Date`)) OVER (),1) FROM `visit` `v` WHERE `idVisit` IN (SELECT `fv`.`idVisit` FROM `vlist_first_visit` `fv` WHERE DATE(IFNULL(`fv`.`Actual_Departure`, CURDATE() + INTERVAL 1 DAY)) > DATE(:startDate12) AND DATE(`fv`.`Arrival_Date`) < DATE(:endDate12) AND NOT DATE(`fv`.`Arrival_Date`) <=> DATE(`fv`.`Actual_Departure`)) AND `v`.`Status` IN ("a","co") LIMIT 1) AS "Median First Visit Length";
 ';
         $stmt = $this->dbh->prepare($query);
         $stmt->execute([
+            ":retiredStart"=>$start,
+            ":start1"=>$start, ":end1"=>$end,
+            ":start2"=>$start, ":end2"=>$end, ":end3"=>$end,
+            ":start3"=>$start, ":end4"=>$end,
+            ":start4"=>$start, ":end5"=>$end, ":end6"=>$end,
+            ":start5"=>$start, ":end7"=>$end,
+            ":start6"=>$start, ":end8"=>$end,
             ":startDate6"=>$start, ":endDate6"=>$end,
             ":startDate8"=>$start, ":endDate8"=>$end,
             ":startDate9"=>$start, ":endDate9"=>$end,
@@ -284,17 +291,23 @@ CONCAT(ROUND((select SUM(DATEDIFF(least(ifnull(v.Span_End, date("' . $end . '"))
     }
 
     public function getGuestAvgPerNight(){
-        $query = 'select
-	if(n.BirthDate is not null, if(timestampdiff(YEAR, n.BirthDate, s.Span_Start_Date) < 18, "Child", "Adult"), if(nd.Is_Minor, "Child", "' . self::NOT_INDICATED . '")) as "child/adult",
-    round(sum(DATEDIFF(IF(date(ifnull(s.Span_End_Date, now())) > date("' . $this->filter->getQueryEnd() . '"), date("' . $this->filter->getQueryEnd() . '"), date(ifnull(s.Span_End_Date, now()))), IF(date(s.Span_Start_Date) < date("' . $this->filter->getReportStart() . '"), date("' . $this->filter->getReportStart() . '"), date(s.Span_Start_Date))))/datediff(date("' . $this->filter->getQueryEnd() . '"), date("' . $this->filter->getReportStart() . '")),1) as "avg guests per night"
-from stays s
-join name n on s.idName = n.idName
-join name_demog nd on n.idName = nd.idName
-where date(ifnull(s.Span_End_Date, now())) >= date("' . $this->filter->getReportStart() . '") and date(s.Span_Start_Date) < date("' . $this->filter->getQueryEnd() . '")
-group by `child/adult`;';
+        $queryEnd = $this->filter->getQueryEnd();
+        $reportStart = $this->filter->getReportStart();
+
+        $query = 'SELECT
+	IF(`n`.`BirthDate` IS NOT NULL, IF(TIMESTAMPDIFF(YEAR, `n`.`BirthDate`, `s`.`Span_Start_Date`) < 18, "Child", "Adult"), IF(`nd`.`Is_Minor`, "Child", "' . self::NOT_INDICATED . '")) AS "child/adult",
+    ROUND(SUM(DATEDIFF(IF(DATE(IFNULL(`s`.`Span_End_Date`, NOW())) > DATE(:end1), DATE(:end2), DATE(IFNULL(`s`.`Span_End_Date`, NOW()))), IF(DATE(`s`.`Span_Start_Date`) < DATE(:start1), DATE(:start2), DATE(`s`.`Span_Start_Date`))))/DATEDIFF(DATE(:end3), DATE(:start3)),1) AS "avg guests per night"
+FROM `stays` `s`
+JOIN `name` `n` ON `s`.`idName` = `n`.`idName`
+JOIN `name_demog` `nd` ON `n`.`idName` = `nd`.`idName`
+WHERE DATE(IFNULL(`s`.`Span_End_Date`, NOW())) >= DATE(:start4) AND DATE(`s`.`Span_Start_Date`) < DATE(:end4)
+GROUP BY `child/adult`;';
 
         $stmt = $this->dbh->prepare($query);
-        $stmt->execute();
+        $stmt->execute([
+            ':end1' => $queryEnd, ':end2' => $queryEnd, ':end3' => $queryEnd, ':end4' => $queryEnd,
+            ':start1' => $reportStart, ':start2' => $reportStart, ':start3' => $reportStart, ':start4' => $reportStart,
+        ]);
         $data = $stmt->fetchAll(\PDO::FETCH_NUM);
 
         foreach($data as $key=>$value){
@@ -308,16 +321,19 @@ group by `child/adult`;';
 
     public function getDiagnosisCategoryTotals(string $start, string $end, bool $isExcel = false){
 
-        $query = 'select if(d.Code is not null, ifnull(dc.Description, "' . self::NO_CAT . '"), "' . self::NO_DIAGNOSIS . '") as "Category", sum(DATEDIFF(least(ifnull(v.Span_End, date("' . $end . '")), date("' . $end . '")), greatest(v.Span_Start, date("' . $start . '")))) as "count"
-from visit v
-join hospital_stay hs on v.idHospital_stay = hs.idHospital_stay
-left join gen_lookups d on hs.Diagnosis = d.Code and d.Table_Name = "Diagnosis"
-left join gen_lookups dc on d.Substitute = dc.Code and dc.Table_Name = "Diagnosis_Category"
-where (v.Span_End >= "' . $start . ' 00:00:00" || (v.Span_End is null and now() >= "' . $start . ' 00:00:00")) and v.Span_Start < "' . $end . ' 00:00:00"
-group by `Category` order by `count` desc;';
+        $query = 'SELECT IF(`d`.`Code` IS NOT NULL, IFNULL(`dc`.`Description`, "' . self::NO_CAT . '"), "' . self::NO_DIAGNOSIS . '") AS "Category", SUM(DATEDIFF(LEAST(IFNULL(`v`.`Span_End`, DATE(:end1)), DATE(:end2)), GREATEST(`v`.`Span_Start`, DATE(:start1)))) AS "count"
+FROM `visit` `v`
+JOIN `hospital_stay` `hs` ON `v`.`idHospital_stay` = `hs`.`idHospital_stay`
+LEFT JOIN `gen_lookups` `d` ON `hs`.`Diagnosis` = `d`.`Code` AND `d`.`Table_Name` = "Diagnosis"
+LEFT JOIN `gen_lookups` `dc` ON `d`.`Substitute` = `dc`.`Code` AND `dc`.`Table_Name` = "Diagnosis_Category"
+WHERE (`v`.`Span_End` >= :start2 || (`v`.`Span_End` IS NULL AND NOW() >= :start3)) AND `v`.`Span_Start` < :end3
+GROUP BY `Category` ORDER BY `count` DESC;';
 
         $stmt = $this->dbh->prepare($query);
-        $stmt->execute();
+        $stmt->execute([
+            ':end1' => $end, ':end2' => $end, ':end3' => $end . ' 00:00:00',
+            ':start1' => $start, ':start2' => $start . ' 00:00:00', ':start3' => $start . ' 00:00:00',
+        ]);
         $data = $stmt->fetchAll(\PDO::FETCH_NUM);
 
         if($isExcel == false){

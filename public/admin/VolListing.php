@@ -26,7 +26,8 @@ $labels = Labels::getLabels();
 $menuMarkup = $wInit->generatePageMenu();
 
 //disable inactive users
-$stmt = $dbh->query("select * from w_users");
+$stmt = $dbh->prepare("SELECT * FROM `w_users`");
+$stmt->execute();
 if ($stmt->rowCount() > 0) {
     $users = $stmt->fetchAll(\PDO::FETCH_ASSOC);
     foreach($users as $user){
@@ -35,8 +36,9 @@ if ($stmt->rowCount() > 0) {
 }
 
 // Create volunteer report
-$query = "SELECT * FROM vweb_users order by Id;";
-$stmt = $dbh->query($query);
+$query = "SELECT * FROM `vweb_users` ORDER BY `Id`;";
+$stmt = $dbh->prepare($query);
+$stmt->execute();
 $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 $noReport = "";

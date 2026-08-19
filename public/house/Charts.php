@@ -55,28 +55,30 @@ function todData(\PDO $dbh) {
     $since = $sinceDT->format('Y-m-d');
 
     // Get arrivals
-    $stmt = $dbh->query("SELECT
-            TIME_FORMAT(v.Arrival_Date, '%l %p') as `TOD`,
-            COUNT(HOUR(v.Arrival_Date)) as `Number`
+    $stmt = $dbh->prepare("SELECT
+            TIME_FORMAT(`v`.`Arrival_Date`, '%l %p') AS `TOD`,
+            COUNT(HOUR(`v`.`Arrival_Date`)) AS `Number`
         FROM
-            visit v
-        WHERE DATE(v.Arrival_Date) > DATE('$since') and v.Actual_Departure is not null
-        GROUP BY HOUR(v.Arrival_Date)
-        ORDER BY HOUR(v.Arrival_Date)");
+            `visit` `v`
+        WHERE DATE(`v`.`Arrival_Date`) > DATE(:since) AND `v`.`Actual_Departure` IS NOT NULL
+        GROUP BY HOUR(`v`.`Arrival_Date`)
+        ORDER BY HOUR(`v`.`Arrival_Date`)");
+    $stmt->execute([':since' => $since]);
 
     while ($r = $stmt->fetch(\PDO::FETCH_NUM)) {
         $toa[$r[0]] = intval($r[1]);
     }
 
     // Get departures
-    $stmt = $dbh->query("SELECT
-            TIME_FORMAT(v.Actual_Departure, '%l %p') as `TOD`,
-            COUNT(HOUR(v.Actual_Departure)) as `Number`
+    $stmt = $dbh->prepare("SELECT
+            TIME_FORMAT(`v`.`Actual_Departure`, '%l %p') AS `TOD`,
+            COUNT(HOUR(`v`.`Actual_Departure`)) AS `Number`
         FROM
-            visit v
-        WHERE DATE(v.Actual_Departure) > DATE('$since') and v.Actual_Departure is not null
-        GROUP BY HOUR(v.Actual_Departure)
-        ORDER BY HOUR(v.Actual_Departure)");
+            `visit` `v`
+        WHERE DATE(`v`.`Actual_Departure`) > DATE(:since) AND `v`.`Actual_Departure` IS NOT NULL
+        GROUP BY HOUR(`v`.`Actual_Departure`)
+        ORDER BY HOUR(`v`.`Actual_Departure`)");
+    $stmt->execute([':since' => $since]);
 
     while ($r = $stmt->fetch(\PDO::FETCH_NUM)) {
         $tod[$r[0]] = intval($r[1]);
@@ -158,14 +160,15 @@ function vlData(\PDO $dbh)
     $maxDays = 0;
 
     // Get visits
-    $stmt = $dbh->query("SELECT
-            DATEDIFF(DATE(v.Actual_Departure),DATE(v.Arrival_Date)) as `Visit_Age`,
-            count(v.idVisit)
+    $stmt = $dbh->prepare("SELECT
+            DATEDIFF(DATE(`v`.`Actual_Departure`),DATE(`v`.`Arrival_Date`)) AS `Visit_Age`,
+            COUNT(`v`.`idVisit`)
         FROM
-            visit v
-        WHERE DATE(v.Arrival_Date) > DATE('$since') and v.Actual_Departure is not null
-        group by Visit_Age;"
+            `visit` `v`
+        WHERE DATE(`v`.`Arrival_Date`) > DATE(:since) AND `v`.`Actual_Departure` IS NOT NULL
+        GROUP BY `Visit_Age`;"
     );
+    $stmt->execute([':since' => $since]);
 
     while ($r = $stmt->fetch(\PDO::FETCH_NUM)) {
         $raw[$r[0]] = $r[1];

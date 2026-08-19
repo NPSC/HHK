@@ -819,14 +819,14 @@ class CustomRegisterForm {
 
             $arrival = $visit->getArrivalDate();
 
-            $stayingSql = ($visit->getVisitStatus() == VisitStatus::CheckedIn ? " and s.Status = 'a' " : ""); //only show current stays if visit is checked in
-            $query = "select s.idName, s.Span_Start_Date, s.Expected_Co_Date, s.Span_End_Date, s.`Status`, if(s.idName = v.idPrimaryGuest, 1, 0) as `primaryGuest`
-					from stays s "
-                    . " join visit v on s.idVisit = v.idVisit and s.Visit_Span = v.Span "
-                    . " where s.idVisit = :reg and s.Visit_Span = :spn "
+            $stayingSql = ($visit->getVisitStatus() == VisitStatus::CheckedIn ? " AND `s`.`Status` = 'a' " : ""); //only show current stays if visit is checked in
+            $query = "SELECT `s`.`idName`, `s`.`Span_Start_Date`, `s`.`Expected_Co_Date`, `s`.`Span_End_Date`, `s`.`Status`, IF(`s`.`idName` = `v`.`idPrimaryGuest`, 1, 0) AS `primaryGuest`
+					FROM `stays` `s` "
+                    . " JOIN `visit` `v` ON `s`.`idVisit` = `v`.`idVisit` AND `s`.`Visit_Span` = `v`.`Span` "
+                    . " WHERE `s`.`idVisit` = :reg AND `s`.`Visit_Span` = :spn "
                     . $stayingSql
-                    . " and DATEDIFF(ifnull(s.Span_End_Date, datedefaultnow(s.Expected_Co_Date)), s.Span_Start_Date) > 0 "
-                    . " order by `primaryGuest` desc, `Status` desc";
+                    . " AND DATEDIFF(IFNULL(`s`.`Span_End_Date`, datedefaultnow(`s`.`Expected_Co_Date`)), `s`.`Span_Start_Date`) > 0 "
+                    . " ORDER BY `primaryGuest` DESC, `Status` DESC";
             $stmt = $dbh->prepare($query, array(\PDO::ATTR_CURSOR => \PDO::CURSOR_FWDONLY));
             $stmt->bindValue(':reg', $idVisit, \PDO::PARAM_INT);
             $stmt->bindValue(':spn', $span, \PDO::PARAM_INT);
@@ -877,17 +877,19 @@ class CustomRegisterForm {
                 $guests[] = $gst;
             }
 
-            $query = "select hs.idPatient, hs.Room, IFNULL(h.Title, ''), IFNULL(d.Description, '') as 'Diagnosis', IFNULL(l.Description, '') as 'Location', hs.MRN, hs.idReferralAgent, hs.idDoctor from hospital_stay hs join visit v on hs.idHospital_stay = v.idHospital_Stay
-				left join hospital h on hs.idHospital = h.idHospital left join gen_lookups d on hs.diagnosis = d.Code and d.Table_Name = 'diagnosis' left join gen_lookups l on hs.Location = l.Code and l.Table_Name = 'Location' where v.idVisit = " . intval($idVisit) . " group by v.idVisit limit 1";
+            $query = "SELECT `hs`.`idPatient`, `hs`.`Room`, IFNULL(`h`.`Title`, ''), IFNULL(`d`.`Description`, '') AS 'Diagnosis', IFNULL(`l`.`Description`, '') AS 'Location', `hs`.`MRN`, `hs`.`idReferralAgent`, `hs`.`idDoctor` FROM `hospital_stay` `hs` JOIN `visit` `v` ON `hs`.`idHospital_stay` = `v`.`idHospital_Stay`
+				LEFT JOIN `hospital` `h` ON `hs`.`idHospital` = `h`.`idHospital` LEFT JOIN `gen_lookups` `d` ON `hs`.`diagnosis` = `d`.`Code` AND `d`.`Table_Name` = 'diagnosis' LEFT JOIN `gen_lookups` `l` ON `hs`.`Location` = `l`.`Code` AND `l`.`Table_Name` = 'Location' WHERE `v`.`idVisit` = :idVisit GROUP BY `v`.`idVisit` LIMIT 1";
 
-            $stmt = $dbh->query($query);
+            $stmt = $dbh->prepare($query);
+            $stmt->execute([':idVisit' => intval($idVisit)]);
             $hospitalStay = $stmt->fetchAll(\PDO::FETCH_NUM);
 
         } else if ($idReservation > 0) {
 
-            $stmt = $dbh->query("Select rg.idGuest as GuestId, rg.Primary_Guest, r.* from reservation_guest rg join reservation r on rg.idReservation = r.idReservation JOIN registration reg ON r.idRegistration = reg.idRegistration
-        JOIN name_guest ng on reg.idPsg = ng.idPsg and rg.idGuest = ng.idName
-				where rg.idReservation = $idReservation order by rg.Primary_Guest desc");
+            $stmt = $dbh->prepare("SELECT `rg`.`idGuest` AS `GuestId`, `rg`.`Primary_Guest`, `r`.* FROM `reservation_guest` `rg` JOIN `reservation` `r` ON `rg`.`idReservation` = `r`.`idReservation` JOIN `registration` `reg` ON `r`.`idRegistration` = `reg`.`idRegistration`
+        JOIN `name_guest` `ng` ON `reg`.`idPsg` = `ng`.`idPsg` AND `rg`.`idGuest` = `ng`.`idName`
+				WHERE `rg`.`idReservation` = :idReservation ORDER BY `rg`.`Primary_Guest` DESC");
+            $stmt->execute([':idReservation' => $idReservation]);
             $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
             $arrival = $rows[0]['Actual_Arrival'];
@@ -926,10 +928,11 @@ class CustomRegisterForm {
 
             }
 
-            $query = "select hs.idPatient, hs.Room, IFNULL(h.Title, ''), IFNULL(d.Description, '') as 'Diagnosis', IFNULL(l.Description, '') as 'Location', hs.MRN, hs.idReferralAgent, hs.idDoctor from hospital_stay hs join reservation r on hs.idHospital_stay = r.idHospital_Stay
-				left join hospital h on hs.idHospital = h.idHospital left join gen_lookups d on hs.diagnosis = d.Code and d.Table_Name = 'diagnosis' left join gen_lookups l on hs.Location = l.Code and l.Table_Name = 'Location' where r.idReservation = " . intval($idReservation) . " limit 1";
+            $query = "SELECT `hs`.`idPatient`, `hs`.`Room`, IFNULL(`h`.`Title`, ''), IFNULL(`d`.`Description`, '') AS 'Diagnosis', IFNULL(`l`.`Description`, '') AS 'Location', `hs`.`MRN`, `hs`.`idReferralAgent`, `hs`.`idDoctor` FROM `hospital_stay` `hs` JOIN `reservation` `r` ON `hs`.`idHospital_stay` = `r`.`idHospital_Stay`
+				LEFT JOIN `hospital` `h` ON `hs`.`idHospital` = `h`.`idHospital` LEFT JOIN `gen_lookups` `d` ON `hs`.`diagnosis` = `d`.`Code` AND `d`.`Table_Name` = 'diagnosis' LEFT JOIN `gen_lookups` `l` ON `hs`.`Location` = `l`.`Code` AND `l`.`Table_Name` = 'Location' WHERE `r`.`idReservation` = :idReservation LIMIT 1";
 
-            $stmt = $dbh->query($query);
+            $stmt = $dbh->prepare($query);
+            $stmt->execute([':idReservation' => intval($idReservation)]);
             $hospitalStay = $stmt->fetchAll(\PDO::FETCH_NUM);
 
         } else {
@@ -1018,7 +1021,8 @@ class CustomRegisterForm {
 
         if (!empty($this->settings['Top']['room'])) {
 
-            $stmt2 = $dbh->query("select Title from resource where idResource = '" . $idResc . "';");
+            $stmt2 = $dbh->prepare("SELECT `Title` FROM `resource` WHERE `idResource` = :idResc;");
+            $stmt2->execute([':idResc' => $idResc]);
             $rows2 = $stmt2->fetchAll();
 
             if(count($rows2) == 1 && !empty($rows2[0]['Title'])) {
@@ -1059,8 +1063,9 @@ class CustomRegisterForm {
 
         $houseAddr = '';
 
-        $stmth = $dbh->query("select a.Address_1, a.Address_2, a.City, a.State_Province, a.Postal_Code, ifnull(p.Phone_Num, '') as 'Phone_Num'
-    from name n left join name_phone p on n.idName = p.idName and n.Preferred_Phone = p.Phone_Code left join name_address a on n.idName = a.idName and n.Preferred_Mail_Address = a.Purpose where n.idName = " . $uS->sId);
+        $stmth = $dbh->prepare("SELECT `a`.`Address_1`, `a`.`Address_2`, `a`.`City`, `a`.`State_Province`, `a`.`Postal_Code`, IFNULL(`p`.`Phone_Num`, '') AS 'Phone_Num'
+    FROM `name` `n` LEFT JOIN `name_phone` `p` ON `n`.`idName` = `p`.`idName` AND `n`.`Preferred_Phone` = `p`.`Phone_Code` LEFT JOIN `name_address` `a` ON `n`.`idName` = `a`.`idName` AND `n`.`Preferred_Mail_Address` = `a`.`Purpose` WHERE `n`.`idName` = :sId");
+        $stmth->execute([':sId' => $uS->sId]);
 
         $rows = $stmth->fetchAll(\PDO::FETCH_ASSOC);
 

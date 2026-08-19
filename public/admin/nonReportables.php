@@ -22,8 +22,9 @@ $menuMarkup = $wInit->generatePageMenu();
 
 
 // get excludeds
-$query = "Select * from vnon_reporting_list;";
-$stmt = $dbh->query($query);
+$query = "SELECT * FROM `vnon_reporting_list`;";
+$stmt = $dbh->prepare($query);
+$stmt->execute();
 $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 $markup = "";
 

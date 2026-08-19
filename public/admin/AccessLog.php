@@ -27,7 +27,8 @@ foreach($lookups as $action){
 }
 
 //disable inactive users
-$stmt = $dbh->query("select * from w_users");
+$stmt = $dbh->prepare("SELECT * FROM `w_users`");
+$stmt->execute();
 if ($stmt->rowCount() > 0) {
     $users = $stmt->fetchAll(\PDO::FETCH_ASSOC);
     foreach($users as $user){

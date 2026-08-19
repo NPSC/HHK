@@ -108,7 +108,8 @@ $dayAttrs = array('style'=>'text-align:center');
 $gattrs = Common::readGenLookupsPDO($dbh, 'E_Shell_Status');
 
 // Get Vol Categories
-$stmtCat = $dbh->query("SELECT `Code`, `Description`, '' FROM `gen_lookups` WHERE `Table_Name` = 'Vol_Category';");
+$stmtCat = $dbh->prepare("SELECT `Code`, `Description`, '' FROM `gen_lookups` WHERE `Table_Name` = 'Vol_Category';");
+$stmtCat->execute();
 
 $vattrs = array();
 $typeDump = '';
@@ -119,7 +120,8 @@ while ($row = $stmtCat->fetch(\PDO::FETCH_NUM)) {
         $vattrs[$row[0]] = $row;
 
         // Make its' type options
-        $stmtType = $dbh->query("SELECT `Code`, `Description`, '' FROM `gen_lookups` WHERE `Table_Name` = '$row[0]';");
+        $stmtType = $dbh->prepare("SELECT `Code`, `Description`, '' FROM `gen_lookups` WHERE `Table_Name` = :tableName;");
+        $stmtType->execute([':tableName' => $row[0]]);
         $typeRows = '';
 
         while ($r = $stmtType->fetch(\PDO::FETCH_NUM)) {
@@ -168,8 +170,9 @@ $minuteOptions = array(
     45 => array(0=>45, 1=>'45'),
 );
 
-$query = "Select * from shell_events order by Vol_Cat";
-$stmt = $dbh->query($query);
+$query = "SELECT * FROM `shell_events` ORDER BY `Vol_Cat`";
+$stmt = $dbh->prepare($query);
+$stmt->execute();
 
 // peruse the rows
 while ($rw = $stmt->fetch(PDO::FETCH_ASSOC)) {

@@ -64,16 +64,15 @@ if (filter_has_var(INPUT_POST, 'btnSave')) {
             }
 
             //set ip access
-            $query = "DELETE FROM `w_group_ip` WHERE `Group_Code` = '$gc'";
+            $query = "DELETE FROM `w_group_ip` WHERE `Group_Code` = :gc";
             $stmt = $dbh->prepare($query);
-            $stmt->execute();
+            $stmt->execute([':gc' => $gc]);
 
             if (isset($_POST[$wgRS->IP_Restricted->getColUnticked()][$gc]) && count($_POST[$wgRS->IP_Restricted->getColUnticked()][$gc]) > 0) {
 
+                $insIpStmt = $dbh->prepare("INSERT INTO `w_group_ip` (`Group_Code`, `IP_addr`) VALUES(:gc, :ipAddr);");
                 foreach ($_POST[$wgRS->IP_Restricted->getColUnticked()][$gc] as $ipAddr) {
-                    $query = "INSERT INTO `w_group_ip` (`Group_Code`, `IP_addr`) VALUES('$gc', '$ipAddr');";
-                    $stmt = $dbh->prepare($query);
-                    $stmt->execute();
+                    $insIpStmt->execute([':gc' => $gc, ':ipAddr' => $ipAddr]);
                 }
             }
         }
@@ -115,7 +114,7 @@ $wgroupRS = new W_groupsRS();
 $rows = EditRS::select($dbh, $wgroupRS, array());
 
 // fetch ip list
-$stmt = $dbh->prepare("SELECT IP_addr, title from w_auth_ip");
+$stmt = $dbh->prepare("SELECT `IP_addr`, `title` FROM `w_auth_ip`");
 $stmt->setFetchMode(\PDO::FETCH_NUM);
 $stmt->execute();
 $ipAuthRows = $stmt->fetchAll(\PDO::FETCH_NUM);
@@ -126,9 +125,9 @@ foreach ($rows as $r) {
 
     //get IPs
     $gc = $wgroupRS->Group_Code->getStoredVal();
-    $query = "SELECT `IP_addr` FROM `w_group_ip` where `Group_Code` = '$gc';";
+    $query = "SELECT `IP_addr` FROM `w_group_ip` WHERE `Group_Code` = :gc;";
     $stmt = $dbh->prepare($query);
-    $stmt->execute();
+    $stmt->execute([':gc' => $gc]);
     $ips = $stmt->fetchAll();
     $selected = array();
     foreach ($ips as $ip) {

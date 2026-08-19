@@ -158,8 +158,8 @@ exit();
 
 function deleteWuRow(PDO $dbh, $admin, $usr) {
 
-    $query = "call del_webuser ($usr, '$admin');";
-    $dbh->exec($query);
+    $delStmt = $dbh->prepare("CALL del_webuser(:usr, :admin);");
+    $delStmt->execute([':usr' => $usr, ':admin' => $admin]);
     $events = array("success" => "deleted: " . $usr);
 
     return $events;

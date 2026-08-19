@@ -171,7 +171,8 @@ if ($id > 0) {
 
     if (count($ngRss) == 0) {
         // Check for guest/patient category
-        $stmv = $dbh->query("Select IFNULL(Vol_Code, '') as Vol_Code from name_volunteer2 where idName = $id and Vol_Category = 'Vol_Type' and Vol_Code in ('" . VolMemberType::Guest . "', '" . VolMemberType::Patient . "');");
+        $stmv = $dbh->prepare("SELECT IFNULL(`Vol_Code`, '') AS `Vol_Code` FROM `name_volunteer2` WHERE `idName` = :id AND `Vol_Category` = 'Vol_Type' AND `Vol_Code` IN (:volGuest, :volPatient);");
+        $stmv->execute([':id' => $id, ':volGuest' => VolMemberType::Guest, ':volPatient' => VolMemberType::Patient]);
 
         if ($stmv->rowCount() > 0) {
 
@@ -529,18 +530,20 @@ if ($psg->getIdPsg() > 0) {
     $visitRows = [];
     if ($registration->getIdRegistration() > 0) {
 
-        $query = "select * from vspan_listing where "
-                . "(Actual_Span_Nights > 0 or `Status` = '". VisitStatus::CheckedIn . "' or DATE(Arrival_Date) = DATE(now()))"
-                . " and idRegistration = " . $registration->getIdRegistration() . " order by Span_Start DESC;";
-        $stmt = $dbh->query($query);
+        $query = "SELECT * FROM `vspan_listing` WHERE "
+                . "(`Actual_Span_Nights` > 0 OR `Status` = :status OR DATE(`Arrival_Date`) = DATE(NOW()))"
+                . " AND `idRegistration` = :idRegistration ORDER BY `Span_Start` DESC;";
+        $stmt = $dbh->prepare($query);
+        $stmt->execute([':status' => VisitStatus::CheckedIn, ':idRegistration' => $registration->getIdRegistration()]);
         $visitRows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
     }
 
 
     $stays = [];
     if ($id > 0) {
-        $query = "select * from vstays_listing where idName = $id order by Checkin_Date desc;";
-        $stmt = $dbh->query($query);
+        $query = "SELECT * FROM `vstays_listing` WHERE `idName` = :id ORDER BY `Checkin_Date` DESC;";
+        $stmt = $dbh->prepare($query);
+        $stmt->execute([':id' => $id]);
         $stays = $stmt->fetchAll(\PDO::FETCH_ASSOC);
     }
 
@@ -608,8 +611,9 @@ if ($psg->getIdPsg() > 0) {
     }
 
     // Reservations
-    $stmt = $dbh->query("select r.*, hs.idHospital from reservation r left join hospital_stay hs on r.idHospital_Stay = hs.idHospital_stay
- where idRegistration = ". $registration->getIdRegistration() . " order by idReservation desc");
+    $stmt = $dbh->prepare("SELECT `r`.*, `hs`.`idHospital` FROM `reservation` `r` LEFT JOIN `hospital_stay` `hs` ON `r`.`idHospital_Stay` = `hs`.`idHospital_stay`
+ WHERE `idRegistration` = :idRegistration ORDER BY `idReservation` DESC");
+    $stmt->execute([':idRegistration' => $registration->getIdRegistration()]);
     $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
 

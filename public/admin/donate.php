@@ -334,13 +334,13 @@ function recordDonation(PDO $dbh, $maxDonationAmt, $id, $parms)
         if ($donId > 0) {
 
             // insert vol_type = d if not there already...
-            $query = "call InsertDonor(" . $id . ");";
-            $dbh->exec($query);
+            $insDonorStmt = $dbh->prepare("CALL InsertDonor(:id);");
+            $insDonorStmt->execute([':id' => $id]);
 
             if ($assocId > 0) {
                 // insert vol_type = d if not there already...
-                $query = "call InsertDonor(" . $assocId . ");";
-                $dbh->exec($query);
+                $insDonorStmt2 = $dbh->prepare("CALL InsertDonor(:assocId);");
+                $insDonorStmt2->execute([':assocId' => $assocId]);
             }
 
             $reply["success"] = "ok";

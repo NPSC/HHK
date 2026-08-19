@@ -103,16 +103,17 @@ class LinkNote {
             if($linkType == Note::VisitLink) {
 
                 // We actually need the reservation ID
-                $stmt = $dbh->query("SELECT
-    v.`idReservation`, IFNULL(r.Title, '(?)')
+                $stmt = $dbh->prepare("SELECT
+    `v`.`idReservation`, IFNULL(`r`.`Title`, '(?)')
 FROM
-    `visit` v
+    `visit` `v`
         LEFT JOIN
-    reservation rv on v.idReservation = rv.idReservation
+    `reservation` `rv` ON `v`.`idReservation` = `rv`.`idReservation`
 	LEFT JOIN
-    resource r ON rv.idResource = r.idResource
+    `resource` `r` ON `rv`.`idResource` = `r`.`idResource`
 WHERE
-    v.`Span` = 0 AND v.`idVisit` =" . $linkId);
+    `v`.`Span` = 0 AND `v`.`idVisit` = :linkId");
+                $stmt->execute([':linkId' => $linkId]);
                 $rows = $stmt->fetchAll(\PDO::FETCH_NUM);
 
                 if (count($rows) > 0) {
@@ -128,7 +129,8 @@ WHERE
 
             if ($linkId >= 0) {
 
-                $dbh->exec("insert into `link_note` (`linkType`, `idLink`, `idNote`) values ('$linkType', '$linkId', '" . $note->getIdNote() . "');");
+                $insLinkStmt = $dbh->prepare("INSERT INTO `link_note` (`linkType`, `idLink`, `idNote`) VALUES (:linkType, :linkId, :idNote);");
+                $insLinkStmt->execute([':linkType' => $linkType, ':linkId' => $linkId, ':idNote' => $note->getIdNote()]);
             } else {
                 return 'The link id is missing ';
             }

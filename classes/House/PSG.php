@@ -175,23 +175,24 @@ where r.idPsg = :idPsg and s.idName = :idGuest and DATEDIFF(s.Span_End_Date, s.S
         $mTable = new HTMLTable();
         $mTable->addHeaderTr(HTMLTable::makeTh('Remove').HTMLTable::makeTh('Id').HTMLTable::makeTh('Name').HTMLTable::makeTh('Relationship to '.$labels->getString('MemberType', 'patient', 'Patient')).HTMLTable::makeTh('Guardian').HTMLTable::makeTh('Phone'));
 
-        $stmt = $dbh->query("SELECT
-            ng.idName AS `idGuest`,
-            ng.Relationship_Code,
-            ng.Legal_Custody,
-            IFNULL(n.Name_Full, '') AS `Name_Full`,
-            CASE WHEN n.Preferred_Phone = 'no' THEN 'No Phone' ELSE ifnull(np.Phone_Num, '') END AS `Preferred_Phone`
+        $stmt = $dbh->prepare("SELECT
+            `ng`.`idName` AS `idGuest`,
+            `ng`.`Relationship_Code`,
+            `ng`.`Legal_Custody`,
+            IFNULL(`n`.`Name_Full`, '') AS `Name_Full`,
+            CASE WHEN `n`.`Preferred_Phone` = 'no' THEN 'No Phone' ELSE IFNULL(`np`.`Phone_Num`, '') END AS `Preferred_Phone`
         FROM
-            name_guest ng
+            `name_guest` `ng`
                 JOIN
-            psg p ON ng.idPsg = p.idPsg
+            `psg` `p` ON `ng`.`idPsg` = `p`.`idPsg`
                 JOIN
-            name n ON n.idName = ng.idName
+            `name` `n` ON `n`.`idName` = `ng`.`idName`
                 LEFT JOIN
-            name_phone np ON np.idName = n.idName
-                AND n.Preferred_Phone = np.Phone_Code
+            `name_phone` `np` ON `np`.`idName` = `n`.`idName`
+                AND `n`.`Preferred_Phone` = `np`.`Phone_Code`
         WHERE
-            ng.idPsg = " . $this->getIdPsg() . " ;");
+            `ng`.`idPsg` = :idPsg ;");
+        $stmt->execute([':idPsg' => $this->getIdPsg()]);
 
 
         while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
@@ -443,12 +444,13 @@ where r.idPsg = :idPsg and s.idName = :idGuest and DATEDIFF(s.Span_End_Date, s.S
 
     public function countCurrentGuests(\PDO $dbh) {
 
-        $query = "select count(*) "
-                . " from stays s join visit v on s.idVisit = v.idVisit"
-                . " join registration r on v.idRegistration = r.idRegistration"
-                . " where r.idPsg = '" . $this->getIdPsg() . "' and s.Status='" . VisitStatus::CheckedIn . "'";
+        $query = "SELECT COUNT(*) "
+                . " FROM `stays` `s` JOIN `visit` `v` ON `s`.`idVisit` = `v`.`idVisit`"
+                . " JOIN `registration` `r` ON `v`.`idRegistration` = `r`.`idRegistration`"
+                . " WHERE `r`.`idPsg` = :idPsg AND `s`.`Status` = :status";
 
-        $stmt = $dbh->query($query);
+        $stmt = $dbh->prepare($query);
+        $stmt->execute([':idPsg' => $this->getIdPsg(), ':status' => VisitStatus::CheckedIn]);
         $cnt = $stmt->fetchAll(\PDO::FETCH_NUM);
 
         return $cnt[0][0];

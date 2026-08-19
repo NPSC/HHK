@@ -7,6 +7,7 @@ use HHK\SysConst\GLTableNames;
 class SearchFor extends SearchNameData
 {
     protected $whereClause = '';
+    protected $whereParams = [];
     protected $psgId;
 
     /**
@@ -51,7 +52,8 @@ class SearchFor extends SearchNameData
         parent::setEmail($email);
 
         if ($this->email != '' && $include) {
-            $this->whereClause .= " OR ne.Email = '" . $this->email . "' ";
+            $this->whereClause .= " OR `ne`.`Email` = :searchEmail ";
+            $this->whereParams[':searchEmail'] = $this->email;
         }
         return $this;
     }
@@ -64,7 +66,8 @@ class SearchFor extends SearchNameData
         parent::setPhone($phone);
 
         if ($this->phone != '' && $include) {
-            $this->whereClause .= " OR np.Phone_Search = '" . $this->phone . "' ";
+            $this->whereClause .= " OR `np`.`Phone_Search` = :searchPhone ";
+            $this->whereParams[':searchPhone'] = $this->phone;
         }
         return $this;
     }
@@ -99,6 +102,13 @@ class SearchFor extends SearchNameData
      */
     public function getWhereClause() {
         return $this->whereClause;
+    }
+
+    /**
+     * @return array
+     */
+    public function getWhereParams() {
+        return $this->whereParams;
     }
 
 }
