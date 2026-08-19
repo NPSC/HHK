@@ -9,7 +9,7 @@ use HHK\Member\ProgressiveSearch\SearchNameData\SearchNameData;
 class ProgressiveSearch {
  
 
-	public static function doSearch(\PDO $dbh, SearchFor $searchFor) {
+	public static function doSearch(\PDO $dbh, SearchFor $searchFor): array {
 
 	    $stmt = $dbh->prepare(self::getSearchQuery($searchFor));
 	    $stmt->execute(self::getSearchParams($searchFor));
@@ -28,7 +28,7 @@ class ProgressiveSearch {
 	    return $results;
     }
 
-    public static function getMemberQuery($idName) {
+    public static function getMemberQuery(int $idName): string {
 
         return "SELECT
             `n`.`idName`,
@@ -85,7 +85,7 @@ class ProgressiveSearch {
     }
 
 
-    public static function getSearchQuery(SearchFor $searchFor) {
+    public static function getSearchQuery(SearchFor $searchFor): string {
 
         $selRel = '';
         $joinRel = '';

@@ -24,17 +24,17 @@ use HHK\Tables\Registration\NoteRS;
 class Note {
 
     // Link Type
-    const ResvLink = 'reservation';
-    const VisitLink = 'visit';
-    const HouseLink = 'house';
-    const PsgLink = 'psg';
-    const RoomLink = 'room';
-    const MemberLink = 'member';
-    const DocumentLink = 'document';
-    const StaffLink = 'staff';
+    public const string ResvLink = 'reservation';
+    public const string VisitLink = 'visit';
+    public const string HouseLink = 'house';
+    public const string PsgLink = 'psg';
+    public const string RoomLink = 'room';
+    public const string MemberLink = 'member';
+    public const string DocumentLink = 'document';
+    public const string StaffLink = 'staff';
 
     // Note Type
-    const TextType = 'text';
+    private const string TextType = 'text';
 
     // Note Ststus
     const ActiveStatus = 'a';
@@ -46,7 +46,7 @@ class Note {
      * Summary of idNote
      * @var int
      */
-    protected $idNote = 0;
+    protected int $idNote = 0;
     /**
      * Summary of text
      * @var string
@@ -62,11 +62,8 @@ class Note {
      * @var string
      */
     protected $type = '';
-    /**
-     * Summary of flag
-     * @var
-     */
-    protected $flag = false;
+
+    protected bool $flag = false;
     /**
      * Summary of category
      * @var string
@@ -82,15 +79,9 @@ class Note {
      * @var string
      */
     protected $status = '';
-    /**
-     * Summary of createdOn
-     * @var
-     */
+
     protected $createdOn = null;
-    /**
-     * Summary of lastUpdated
-     * @var
-     */
+
     protected $lastUpdated = null;
     /**
      * Summary of updatedBy
@@ -102,7 +93,7 @@ class Note {
      * Summary of noteRS
      * @var NoteRS
      */
-    private $noteRS;
+    private NoteRS $noteRS;
 
     /**
      *
@@ -156,12 +147,16 @@ class Note {
 
     /**
      *
-     * @param string $userName
+     * 
      * @param string $noteText
+     * @param string $userName
+     * @param string $noteCategory
      * @param string $noteType
      * @param string $noteTitle
+     * @param string $noteStatus
+     * @return Note
      */
-    public static function createNew($noteText, $userName, $noteCategory = '', $noteType = self::TextType, $noteTitle = '', $noteStatus = Note::ActiveStatus ) {
+    public static function createNew($noteText, $userName, $noteCategory = '', $noteType = self::TextType, $noteTitle = '', string $noteStatus = Note::ActiveStatus ): Note {
 
         if ($noteText != '' && $userName != '') {
 
@@ -188,7 +183,7 @@ class Note {
      * @param \PDO $dbh
      *
      */
-    public function saveNew(\PDO $dbh) {
+    public function saveNew(\PDO $dbh): void {
 
         // Insert
         $noteRS = new NoteRs();
@@ -242,7 +237,7 @@ class Note {
      * @param string $title
      * @return int
      */
-    public function saveTitle(\PDO $dbh, string $title) {
+    public function saveTitle(\PDO $dbh, string $title): int {
 
         $counter = 0;
 
@@ -264,7 +259,7 @@ class Note {
      * @param string $username
      * @return int the number of rows affected
      */
-    public function deleteNote(\PDO $dbh, $username) {
+    public function deleteNote(\PDO $dbh, $username): int {
 
         $counter = 0;
 
@@ -289,7 +284,7 @@ class Note {
      * @param string $username
      * @return int the number of rows affected
      */
-    public function undoDeleteNote(\PDO $dbh, $username) {
+    public function undoDeleteNote(\PDO $dbh, $username): int {
 
         $counter = 0;
 
@@ -310,17 +305,19 @@ class Note {
     /**
      *
      * @param \PDO $dbh
+     * @param bool $flag
      * @param string $username
      * @return int the number of rows affected
      */
-    public function flagNote(\PDO $dbh, $flag, $username) {
+    public function flagNote(\PDO $dbh, bool $flag, $username): int {
 
         $counter = 0;
 
         if ($this->getIdNote() > 0 && $this->loadNote($dbh)) {
 
+            $this->setFlag($flag);
             $this->noteRS->Flag->setNewVal($flag);
-            if($flag){
+            if ($flag) {
 	            $this->noteRS->Status->setNewVal(self::ActiveStatus);
             }
             $this->noteRS->Updated_By->setNewVal($username);
@@ -339,7 +336,7 @@ class Note {
      * Summary of getIdNote
      * @return int
      */
-    public function getIdNote() {
+    public function getIdNote(): int {
         return $this->idNote;
     }
 
@@ -361,9 +358,9 @@ class Note {
 
     /**
      * Summary of getFlag
-     * @return mixed
+     * @return bool
      */
-    public function getFlag() {
+    public function getFlag(): bool {
         return $this->flag;
     }
 
@@ -454,10 +451,10 @@ class Note {
 
     /**
      * Summary of setFlag
-     * @param mixed $flag
+     * @param bool $flag
      * @return static
      */
-    public function setFlag($flag) {
+    public function setFlag(bool $flag) {
         $this->flag = $flag;
         return $this;
     }

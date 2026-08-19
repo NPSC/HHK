@@ -280,7 +280,7 @@ try {
         $idLink = 0;
 
         if (isset($_GET['linkType'])) {
-            $linkType = filter_input(INPUT_GET, 'linkType');
+            $linkType = filter_input(INPUT_GET, 'linkType', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         }
 
         if (isset($_GET['linkId'])) {

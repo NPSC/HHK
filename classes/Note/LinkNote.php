@@ -53,10 +53,10 @@ class LinkNote {
      * Summary of findIdPsg
      * @param \PDO $dbh
      * @param mixed $linkType
-     * @param mixed $linkId
+     * @param int $linkId
      * @return array
      */
-    public static function findIdPsg(\PDO $dbh, $linkType, $linkId): array {
+    public static function findIdPsg(\PDO $dbh, $linkType, int $linkId): array {
 
         if ($linkType === Note::PsgLink) {
             return [$linkId];

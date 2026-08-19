@@ -25,7 +25,7 @@ class HTMLTable extends AbstractHTMLControl {
         $this->bodyTR = $bodyTR;
     }
 
-    public function generateMarkup(array $attributes = array(), $caption = '') {
+    public function generateMarkup(array $attributes = array(), $caption = ''): string {
 
         $trHeader = "";
         if (($this->headerTR != '')) {
@@ -43,11 +43,6 @@ class HTMLTable extends AbstractHTMLControl {
 
 
         return '<table' . self::getAttrMarkup($attributes) . '>' . $caption . $trHeader . '<tbody>' . $this->bodyTR . '</tbody>' . $trFooter . '</table>';
-    }
-
-    public static function generateDirectMarkup($bodyTR, array $attributes = array()) {
-
-        return '<table' . self::getAttrMarkup($attributes) . '><tbody>' . $bodyTR . '</tbody></table>';
     }
 
     public function addHeader($contents) {
@@ -86,14 +81,12 @@ class HTMLTable extends AbstractHTMLControl {
         return $this;
     }
 
-    public static function makeTd($contents = '', array $attr = array()) {
+    public static function makeTd($contents = '', array $attr = array()): string {
         return HTMLContainer::generateMarkup('td', $contents, $attr);
     }
 
-    public static function makeTh($contents = '', array $attr = array()) {
+    public static function makeTh($contents = '', array $attr = array()): string {
         return HTMLContainer::generateMarkup('th', $contents, $attr);
     }
 
 }
-
-?>
