@@ -93,8 +93,9 @@ class HouseServices {
             return array("error" => "A Visit is not selected: " . $idV . "-" . $idSpan);
         }
 
-        $query = "select * from vspan_listing where idVisit = $idVisit and Span = $span;";
-        $stmt1 = $dbh->query($query);
+        $query = "SELECT * FROM `vspan_listing` WHERE `idVisit` = :idVisit AND `Span` = :span;";
+        $stmt1 = $dbh->prepare($query);
+        $stmt1->execute([':idVisit' => $idVisit, ':span' => $span]);
         $rows = $stmt1->fetchAll(\PDO::FETCH_ASSOC);
 
         $dataArray = array();
@@ -896,8 +897,9 @@ class HouseServices {
             return array("error" => "A Visit is not selected: " . $idV . "-" . $idSpan);
         }
 
-        $query = "select * from vspan_listing where idVisit = $idVisit and Span = $span;";
-        $stmt1 = $dbh->query($query);
+        $query = "SELECT * FROM `vspan_listing` WHERE `idVisit` = :idVisit AND `Span` = :span;";
+        $stmt1 = $dbh->prepare($query);
+        $stmt1->execute([':idVisit' => $idVisit, ':span' => $span]);
         $rows = $stmt1->fetchAll(\PDO::FETCH_ASSOC);
 
 
@@ -970,7 +972,8 @@ class HouseServices {
         $vid = intval($idVisit, 10);
         $spanId = intval($span, 10);
 
-        $vstmt = $dbh->query("Select idReservation, Span_Start, Expected_Departure from visit where idVisit = $vid and Span = $spanId");
+        $vstmt = $dbh->prepare("SELECT `idReservation`, `Span_Start`, `Expected_Departure` FROM `visit` WHERE `idVisit` = :vid AND `Span` = :spanId");
+        $vstmt->execute([':vid' => $vid, ':spanId' => $spanId]);
 
         $vRows = $vstmt->fetchAll(\PDO::FETCH_ASSOC);
 

@@ -60,7 +60,7 @@ class NewGuest
      * @param Labels $labels
      * @return string|void
      */
-    public function doNewGuestReport(\PDO $dbh, ColumnSelectors $colSelector, $whereStr, $local, Labels $labels) {
+    public function doNewGuestReport(\PDO $dbh, ColumnSelectors $colSelector, $whereStr, $local, Labels $labels, array $whereParams = []) {
 
         // get session instance
         $uS = Session::getInstance();
@@ -107,7 +107,12 @@ class NewGuest
 
         }
 
-        $stmt = $dbh->query($this->queryNewGuests($pgTitle, $whereStr));
+        $stmt = $dbh->prepare($this->queryNewGuests($pgTitle, $whereStr));
+        $stmt->execute($whereParams + [
+            ':pgTitle' => $pgTitle,
+            ':startDate' => $this->getStartDT()->format('Y-m-d'),
+            ':endDate' => $this->getEndDT()->format('Y-m-d'),
+        ]);
         $this->numberNewGuests = $stmt->rowCount();
 
         while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
@@ -187,7 +192,7 @@ class NewGuest
     n.Name_Middle,
     n.Name_Last,
     IFNULL(g2.Description, '') AS `Name_Suffix`,
-    CASE when s.idName = v.idPrimaryGuest then '$pgTitle' else '' end as `Primary`,
+    CASE WHEN s.idName = v.idPrimaryGuest THEN :pgTitle ELSE '' END AS `Primary`,
     CASE when IFNULL(na.Address_2, '') = '' THEN IFNULL(na.Address_1, '') ELSE CONCAT(IFNULL(na.Address_1, ''), ' ', IFNULL(na.Address_2, '')) END AS `Address`,
     IFNULL(na.City, '') AS `City`,
     IFNULL(na.County, '') AS `County`,
@@ -238,8 +243,8 @@ WHERE
         AND NOT DATE(s.Span_Start_Date) <=> DATE(s.Span_End_Date)
         $whereStr
 GROUP BY s.idName
-HAVING DATE(`First Stay`) >= DATE('" . $this->getStartDT()->format('Y-m-d') . "')
-    AND DATE(`First Stay`) < DATE('" . $this->getEndDT()->format('Y-m-d') . "')
+HAVING DATE(`First Stay`) >= DATE(:startDate)
+    AND DATE(`First Stay`) < DATE(:endDate)
 ORDER BY `First Stay`";
 
     }
@@ -250,7 +255,7 @@ ORDER BY `First Stay`";
      * @param mixed $whereStr
      * @return void
      */
-    public function doReturningGuests(\PDO $dbh, $whereStr = '') {
+    public function doReturningGuests(\PDO $dbh, $whereStr = '', array $whereParams = []) {
 
         // Returning stays in period with first stay start date less tham start date.
         $query = "SELECT
@@ -270,16 +275,28 @@ ORDER BY `First Stay`";
             	AND n.Record_Member = 1
             	$whereStr
                 AND NOT DATE(s.Span_Start_Date) <=> DATE(s.Span_End_Date)
-                AND DATE(s.Span_Start_Date) < DATE('" . $this->getEndDT()->format('Y-m-d') . "')
-                AND DATE(s.Span_Start_Date) >= DATE('" . $this->getStartDT()->format('Y-m-d') . "')";
+                AND DATE(s.Span_Start_Date) < DATE(:endDate)
+                AND DATE(s.Span_Start_Date) >= DATE(:startDate)";
+
+        $params = $whereParams + [
+            ':endDate' => $this->getEndDT()->format('Y-m-d'),
+            ':startDate' => $this->getStartDT()->format('Y-m-d'),
+        ];
 
             	if (count($this->newGuestIds) > 0) {
-            	    $query .= "AND s.idName not in (" . implode(',', $this->newGuestIds) . ")";
+            	    $idPh = [];
+            	    foreach (array_values($this->newGuestIds) as $i => $gid) {
+            	        $ph = ':exGid' . $i;
+            	        $idPh[] = $ph;
+            	        $params[$ph] = $gid;
+            	    }
+            	    $query .= "AND s.idName NOT IN (" . implode(', ', $idPh) . ")";
             	}
 
             	$query .= "GROUP BY s.idName;";
 
-    	$stmt = $dbh->query($query);
+    	$stmt = $dbh->prepare($query);
+    	$stmt->execute($params);
     	$this->numberReturnGuests = $stmt->rowCount();
 
     }
@@ -290,7 +307,7 @@ ORDER BY `First Stay`";
      * @param mixed $whereStr
      * @return void
      */
-    public function doReturningPSGs(\PDO $dbh, $whereStr = '') {
+    public function doReturningPSGs(\PDO $dbh, $whereStr = '', array $whereParams = []) {
 
         // Returning stays in period with first stay start date less tham start date.
         $query = "SELECT
@@ -309,17 +326,29 @@ ORDER BY `First Stay`";
             	AND n.Record_Member = 1
             	$whereStr
                 AND NOT DATE(s.Span_Start_Date) <=> DATE(s.Span_End_Date)
-                AND DATE(s.Span_Start_Date) < DATE('" . $this->getEndDT()->format('Y-m-d') . "')
-                AND DATE(s.Span_Start_Date) >= DATE('" . $this->getStartDT()->format('Y-m-d') . "')";
+                AND DATE(s.Span_Start_Date) < DATE(:endDate)
+                AND DATE(s.Span_Start_Date) >= DATE(:startDate)";
+
+        $params = $whereParams + [
+            ':endDate' => $this->getEndDT()->format('Y-m-d'),
+            ':startDate' => $this->getStartDT()->format('Y-m-d'),
+        ];
 
             	if (count($this->newPSGIds) > 0) {
-            	    $query .= "AND IFNULL(hs.idPsg, 0) not in (" . implode(',', $this->newPSGIds) . ")";
+            	    $idPh = [];
+            	    foreach (array_values($this->newPSGIds) as $i => $pid) {
+            	        $ph = ':exPid' . $i;
+            	        $idPh[] = $ph;
+            	        $params[$ph] = $pid;
+            	    }
+            	    $query .= "AND IFNULL(hs.idPsg, 0) NOT IN (" . implode(', ', $idPh) . ")";
             	}
 
             	$query .= "GROUP BY hs.idPsg";
 
 
-    	$stmt = $dbh->query($query);
+    	$stmt = $dbh->prepare($query);
+    	$stmt->execute($params);
     	$this->numberReturnPSGs = $stmt->rowCount();
 
     }
@@ -330,7 +359,7 @@ ORDER BY `First Stay`";
      * @param mixed $whereStr
      * @return void
      */
-    public function doNewPSGs(\PDO $dbh, $whereStr = '') {
+    public function doNewPSGs(\PDO $dbh, $whereStr = '', array $whereParams = []) {
 
         // Returning stays in period with first stay start date less tham start date.
         $query = "SELECT
@@ -350,11 +379,15 @@ ORDER BY `First Stay`";
             	$whereStr
                 AND NOT DATE(s.Span_Start_Date) <=> DATE(s.Span_End_Date)
             GROUP BY hs.idPsg
-                HAVING  DATE(`First Stay`) >= DATE('" . $this->getStartDT()->format('Y-m-d') . "') AND DATE(`First Stay`) < DATE('" . $this->getEndDT()->format('Y-m-d') . "')
+                HAVING  DATE(`First Stay`) >= DATE(:startDate) AND DATE(`First Stay`) < DATE(:endDate)
             ORDER BY `First Stay`;";
 
 
-    	$stmt = $dbh->query($query);
+    	$stmt = $dbh->prepare($query);
+    	$stmt->execute($whereParams + [
+    	    ':startDate' => $this->getStartDT()->format('Y-m-d'),
+    	    ':endDate' => $this->getEndDT()->format('Y-m-d'),
+    	]);
     	$this->numberNewPSGs = $stmt->rowCount();
 
     	While ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {

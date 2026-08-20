@@ -55,7 +55,8 @@ class RoomReport {
         if ($year != '') {
 
 
-            $stmt = $dbh->query("CALL sum_stay_days('$year', '$fyDiffMonths')");
+            $stmt = $dbh->prepare("CALL sum_stay_days(:year, :fyDiffMonths)");
+            $stmt->execute([':year' => $year, ':fyDiffMonths' => $fyDiffMonths]);
 
             while ($r = $stmt->fetch(\PDO::FETCH_NUM)) {
                 $niteCount = $r[0];
@@ -65,11 +66,12 @@ class RoomReport {
 
             // Entire history
             $query = "SELECT SUM(DATEDIFF(
-IFNULL(s.Span_End_Date, NOW()),
-DATE(s.Span_Start_Date))) AS `Nights`
-FROM stays s WHERE s.`On_Leave` = 0  and DATE(s.Span_Start_Date) <= DATE(NOW())";
+IFNULL(`s`.`Span_End_Date`, NOW()),
+DATE(`s`.`Span_Start_Date`))) AS `Nights`
+FROM `stays` `s` WHERE `s`.`On_Leave` = 0  AND DATE(`s`.`Span_Start_Date`) <= DATE(NOW())";
 
-            $stmt = $dbh->query($query);
+            $stmt = $dbh->prepare($query);
+            $stmt->execute();
             $rows = $stmt->fetchAll();
             if (count($rows) == 1) {
                 $niteCount = $rows[0][0];
@@ -89,12 +91,20 @@ FROM stays s WHERE s.`On_Leave` = 0  and DATE(s.Span_Start_Date) <= DATE(NOW())"
     public static function getGlobalStaysCount(\PDO $dbh, $year = '', $fiscalYearMonths = 0) {
 
         $whClause = '';
+        $params = [];
         if ($year != '') {
-            $whClause = " and DATE(Span_Start_Date) <= fiscal_year(DATE('$year-12-31'), '-$fiscalYearMonths') and Date(Span_End_Date) >= fiscal_year(DATE('$year-01-01'), '-$fiscalYearMonths')";
+            $whClause = " AND DATE(`Span_Start_Date`) <= fiscal_year(DATE(:fyEnd), :fyDiff1) AND DATE(`Span_End_Date`) >= fiscal_year(DATE(:fyStart), :fyDiff2)";
+            $params = [
+                ':fyEnd' => $year . '-12-31',
+                ':fyDiff1' => '-' . $fiscalYearMonths,
+                ':fyStart' => $year . '-01-01',
+                ':fyDiff2' => '-' . $fiscalYearMonths,
+            ];
         }
 
-        $query = "select count(*) from stays where `On_Leave` = 0 and `Status` = 'co' and DATEDIFF(Span_End_Date, Span_Start_Date) > 0" . $whClause;
-        $stmt = $dbh->query($query);
+        $query = "SELECT COUNT(*) FROM `stays` WHERE `On_Leave` = 0 AND `Status` = 'co' AND DATEDIFF(`Span_End_Date`, `Span_Start_Date`) > 0" . $whClause;
+        $stmt = $dbh->prepare($query);
+        $stmt->execute($params);
         $rows = $stmt->fetchAll(\PDO::FETCH_NUM);
         if (count($rows) == 1) {
             return intval($rows[0][0]);
@@ -212,17 +222,20 @@ FROM stays s WHERE s.`On_Leave` = 0  and DATE(s.Span_Start_Date) <= DATE(NOW())"
         $returnArr = ["Occupancy" => 0, "Category" => "Total"];
 
         $whereGroupSql = "";
+        $params = [];
         if($roomCategory != 'none'){
-            $whereGroupSql = " and rm.Category = '" . $roomCategory . "'";
+            $whereGroupSql = " AND `rm`.`Category` = :roomCategory";
+            $params[':roomCategory'] = $roomCategory;
         }
-        $query = "select round(sum(if(`idVisit` > 0, 1, 0))/count(r.idResource)*100) as 'Occupancy', g.Description as 'Category' from `resource` r
-left join visit v on r.idResource = v.idResource and v.Status = 'a'
-left join resource_use ru on r.idResource = ru.idResource and date(ru.Start_Date) <= date(now()) and date(ru.End_Date) > date(now())
-left join resource_room rr on r.idResource = rr.idResource
-left join room rm on rr.idRoom = rm.idRoom
-left join gen_lookups g on rm.Category = g.Code and g.Table_Name = 'Room_Category'
-where ru.idResource is null" . $whereGroupSql . ";";
-        $stmt = $dbh->query($query);
+        $query = "SELECT ROUND(SUM(IF(`idVisit` > 0, 1, 0))/COUNT(`r`.`idResource`)*100) AS 'Occupancy', `g`.`Description` AS 'Category' FROM `resource` `r`
+LEFT JOIN `visit` `v` ON `r`.`idResource` = `v`.`idResource` AND `v`.`Status` = 'a'
+LEFT JOIN `resource_use` `ru` ON `r`.`idResource` = `ru`.`idResource` AND DATE(`ru`.`Start_Date`) <= DATE(NOW()) AND DATE(`ru`.`End_Date`) > DATE(NOW())
+LEFT JOIN `resource_room` `rr` ON `r`.`idResource` = `rr`.`idResource`
+LEFT JOIN `room` `rm` ON `rr`.`idRoom` = `rm`.`idRoom`
+LEFT JOIN `gen_lookups` `g` ON `rm`.`Category` = `g`.`Code` AND `g`.`Table_Name` = 'Room_Category'
+WHERE `ru`.`idResource` IS NULL" . $whereGroupSql . ";";
+        $stmt = $dbh->prepare($query);
+        $stmt->execute($params);
         $row = $stmt->fetch(\PDO::FETCH_ASSOC);
 
         if(isset($row['Occupancy']) && isset($row['Category'])){
@@ -328,7 +341,8 @@ WHERE
     DATE(ru.Start_Date) <= DATE(NOW())
         AND IFNULL(DATE(ru.End_Date), DATE(NOW())) > DATE(NOW());";
 
-        $stmtrs = $dbh->query($query1);
+        $stmtrs = $dbh->prepare($query1);
+        $stmtrs->execute();
 
         while ($r = $stmtrs->fetch(\PDO::FETCH_ASSOC)) {
 
@@ -341,20 +355,21 @@ WHERE
        }
 
        // Get notes
-       $stmtn = $dbh->query("SELECT
-    rn.idLink as `Reservation_Id`,
-    n.User_Name,
+       $stmtn = $dbh->prepare("SELECT
+    `rn`.`idLink` AS `Reservation_Id`,
+    `n`.`User_Name`,
     CASE
-        WHEN n.Title = '' THEN n.Note_Text
-        ELSE CONCAT(n.Title, ' - ', n.Note_Text)
-    END AS Note_Text,
-    n.`Timestamp`
+        WHEN `n`.`Title` = '' THEN `n`.`Note_Text`
+        ELSE CONCAT(`n`.`Title`, ' - ', `n`.`Note_Text`)
+    END AS `Note_Text`,
+    `n`.`Timestamp`
 FROM
-visit v join link_note rn on v.idReservation = rn.idLink and linkType = 'reservation'
+`visit` `v` JOIN `link_note` `rn` ON `v`.`idReservation` = `rn`.`idLink` AND `linkType` = 'reservation'
         JOIN
-    note n ON rn.idNote = n.idNote
-where v.`Status` = 'a' and n.`Status` = 'a'
-ORDER BY rn.idLink, n.`Timestamp` DESC;");
+    `note` `n` ON `rn`.`idNote` = `n`.`idNote`
+WHERE `v`.`Status` = 'a' AND `n`.`Status` = 'a'
+ORDER BY `rn`.`idLink`, `n`.`Timestamp` DESC;");
+       $stmtn->execute();
 
         $notes = array();
         $rv = 0;
@@ -405,11 +420,12 @@ ORDER BY rn.idLink, n.`Timestamp` DESC;");
                 left join
             note nt on nt.idNote = (select ln.idNote from link_note ln join note n on ln.idNote = n.idNote where ln.idLink = r.idRoom and ln.linkType = 'room' and n.Status = 'a' order by ln.idNote desc limit 1)
         
-        where (rs.Retired_At is null or rs.Retired_At > '" . (new DateTime())->format('Y-m-d') . "')
+        WHERE (`rs`.`Retired_At` IS NULL OR `rs`.`Retired_At` > :retiredAt)
         ORDER BY r.idRoom";
 
 
-        $stmt = $dbh->query($query);
+        $stmt = $dbh->prepare($query);
+        $stmt->execute([':retiredAt' => (new DateTime())->format('Y-m-d')]);
 
         $tableRows = array();
         $idRoom = 0;
@@ -583,38 +599,40 @@ ORDER BY rn.idLink, n.`Timestamp` DESC;");
         }
 
         $query = "SELECT
-    r.idRoom,
-    r.Title,
-    r.`$roomGroup[0]`,
-    r.Max_Occupants,
-    s.Span_Start_Date,
-    IFNULL(s.Span_End_Date, NOW()) AS `CO_Date`,
-    DATEDIFF(IFNULL(s.Span_End_Date, NOW()), s.Span_Start_Date) AS `Nights`,
-    hs.idHospital,
-    hs.idAssociation
+    `r`.`idRoom`,
+    `r`.`Title`,
+    `r`.`$roomGroup[0]`,
+    `r`.`Max_Occupants`,
+    `s`.`Span_Start_Date`,
+    IFNULL(`s`.`Span_End_Date`, NOW()) AS `CO_Date`,
+    DATEDIFF(IFNULL(`s`.`Span_End_Date`, NOW()), `s`.`Span_Start_Date`) AS `Nights`,
+    `hs`.`idHospital`,
+    `hs`.`idAssociation`
 FROM
-    room r
+    `room` `r`
         LEFT JOIN
-    stays s ON s.idRoom = r.idRoom
+    `stays` `s` ON `s`.`idRoom` = `r`.`idRoom`
         LEFT JOIN
-    visit v on s.idVisit = v.idVisit and s.Visit_Span = v.Span
+    `visit` `v` ON `s`.`idVisit` = `v`.`idVisit` AND `s`.`Visit_Span` = `v`.`Span`
         LEFT JOIN
-    hospital_stay hs on v.idHospital_stay = hs.idHospital_stay
+    `hospital_stay` `hs` ON `v`.`idHospital_stay` = `hs`.`idHospital_stay`
 WHERE
-    DATEDIFF(IFNULL(s.Span_End_Date, NOW()), s.Span_Start_Date) > 0 $whHosp
-        AND s.`On_Leave` = 0
-and DATE(s.Span_Start_Date) < '" . $endDT->format('Y-m-d') . "' and ifnull(DATE(s.Span_End_Date),  DATE(now()) ) >= '" . $stDT->format('Y-m-d') ."'"
-                . " order by r.Title;";
-        $stmt = $dbh->query($query);
+    DATEDIFF(IFNULL(`s`.`Span_End_Date`, NOW()), `s`.`Span_Start_Date`) > 0 $whHosp
+        AND `s`.`On_Leave` = 0
+AND DATE(`s`.`Span_Start_Date`) < :endDate AND IFNULL(DATE(`s`.`Span_End_Date`), DATE(NOW())) >= :startDate"
+                . " ORDER BY `r`.`Title`;";
+        $stmt = $dbh->prepare($query);
+        $stmt->execute([':endDate' => $endDT->format('Y-m-d'), ':startDate' => $stDT->format('Y-m-d')]);
         $rows = $stmt->fetchAll();
 
-        $roomQuery = "SELECT r.idRoom, r.Title, r.`$roomGroup[0]`, r.Max_Occupants
-FROM room r
-JOIN resource_room rr on r.idRoom = rr.idRoom
-JOIN resource rs on rr.idResource = rs.idResource
-WHERE (rs.Retired_At is null or date(rs.Retired_At) > '" . $stDT->format('Y-m-d') . "')
-order by rs.Util_Priority;";
-        $stmtRooms = $dbh->query($roomQuery);
+        $roomQuery = "SELECT `r`.`idRoom`, `r`.`Title`, `r`.`$roomGroup[0]`, `r`.`Max_Occupants`
+FROM `room` `r`
+JOIN `resource_room` `rr` ON `r`.`idRoom` = `rr`.`idRoom`
+JOIN `resource` `rs` ON `rr`.`idResource` = `rs`.`idResource`
+WHERE (`rs`.`Retired_At` IS NULL OR DATE(`rs`.`Retired_At`) > :retiredAfter)
+ORDER BY `rs`.`Util_Priority`;";
+        $stmtRooms = $dbh->prepare($roomQuery);
+        $stmtRooms->execute([':retiredAfter' => $stDT->format('Y-m-d')]);
         $roomRows = $stmtRooms->fetchAll();
 
         $days = array();
@@ -1046,12 +1064,20 @@ order by rs.Util_Priority;";
 
 
         // Get all the rooms
-        $stResc = $dbh->query("select r.idResource, r.Title "
-                . " from resource r left join
-resource_use ru on r.idResource = ru.idResource and ru.`Status` = '" . ResourceStatus::Unavailable . "' and DATE(ru.Start_Date) <= '" . $stDT->format('Y-m-d') . "' and DATE(ru.End_Date) >= '" . $endDT->format('Y-m-d') . "'"
-                . " where ru.idResource_use is null and r.Type in ('" . ResourceTypes::Room . "', '" . ResourceTypes::RmtRoom . "')"
-                . " and (r.Retired_At is null or date(r.Retired_At) > '" . $stDT->format('Y-m-d') . "')"
-                . " order by r.Title;");
+        $stResc = $dbh->prepare("SELECT `r`.`idResource`, `r`.`Title` "
+                . " FROM `resource` `r` LEFT JOIN
+`resource_use` `ru` ON `r`.`idResource` = `ru`.`idResource` AND `ru`.`Status` = :unavailStatus AND DATE(`ru`.`Start_Date`) <= :startDate1 AND DATE(`ru`.`End_Date`) >= :endDate1"
+                . " WHERE `ru`.`idResource_use` IS NULL AND `r`.`Type` IN (:typeRoom, :typeRmtRoom)"
+                . " AND (`r`.`Retired_At` IS NULL OR DATE(`r`.`Retired_At`) > :startDate2)"
+                . " ORDER BY `r`.`Title`;");
+        $stResc->execute([
+            ':unavailStatus' => ResourceStatus::Unavailable,
+            ':startDate1' => $stDT->format('Y-m-d'),
+            ':endDate1' => $endDT->format('Y-m-d'),
+            ':typeRoom' => ResourceTypes::Room,
+            ':typeRmtRoom' => ResourceTypes::RmtRoom,
+            ':startDate2' => $stDT->format('Y-m-d'),
+        ]);
 
         $stRows = $stResc->fetchAll(\PDO::FETCH_ASSOC);
 
@@ -1143,19 +1169,24 @@ resource_use ru on r.idResource = ru.idResource and ru.`Status` = '" . ResourceS
 
 
         // Collect visit records
-        $query = "select
-    v.idResource,
-    r.Category,
-    r.idSponsor,
-    v.Span_Start,
-    v.Span_End,
-    v.Expected_Departure,
-    DATEDIFF(ifnull(v.Span_End, now()), v.Span_Start) as `Nights`
-from visit v left join resource r on v.idResource = r.idResource
-where v.Status != '" . VisitStatus::Pending . "' and DATEDIFF(ifnull(v.Span_End, now()), v.Span_Start) > 0
-and DATE(v.Span_Start) < DATE('" . $endDT->format('Y-m-d') . "') and DATE(ifnull(v.Span_End,  datedefaultnow(v.Expected_Departure) )) >= DATE('" . $stDT->format('Y-m-d') ."') order by r.Title;";
+        $query = "SELECT
+    `v`.`idResource`,
+    `r`.`Category`,
+    `r`.`idSponsor`,
+    `v`.`Span_Start`,
+    `v`.`Span_End`,
+    `v`.`Expected_Departure`,
+    DATEDIFF(IFNULL(`v`.`Span_End`, NOW()), `v`.`Span_Start`) AS `Nights`
+FROM `visit` `v` LEFT JOIN `resource` `r` ON `v`.`idResource` = `r`.`idResource`
+WHERE `v`.`Status` != :pendingStatus AND DATEDIFF(IFNULL(`v`.`Span_End`, NOW()), `v`.`Span_Start`) > 0
+AND DATE(`v`.`Span_Start`) < DATE(:endDate) AND DATE(IFNULL(`v`.`Span_End`, datedefaultnow(`v`.`Expected_Departure`))) >= DATE(:startDate) ORDER BY `r`.`Title`;";
 
-        $stmt = $dbh->query($query);
+        $stmt = $dbh->prepare($query);
+        $stmt->execute([
+            ':pendingStatus' => VisitStatus::Pending,
+            ':endDate' => $endDT->format('Y-m-d'),
+            ':startDate' => $stDT->format('Y-m-d'),
+        ]);
 
         $checkouts = [];
         $now = new DateTime();
@@ -1198,8 +1229,9 @@ and DATE(v.Span_Start) < DATE('" . $endDT->format('Y-m-d') . "') and DATE(ifnull
         }
 
         // Collect resource use records
-        $rstmt = $dbh->query("Select idResource, `Status`, `Start_Date`, `End_Date`, DATEDIFF(ifnull(`End_Date`, now()), `Start_Date`) as `Nights`"
-                . " from resource_use where Start_Date < '" . $endDT->format('Y-m-d 00:00:00') . "' and ifnull(End_Date, now()) >= '" . $stDT->format('Y-m-d 00:00:00') ."' order by idResource");
+        $rstmt = $dbh->prepare("SELECT `idResource`, `Status`, `Start_Date`, `End_Date`, DATEDIFF(IFNULL(`End_Date`, NOW()), `Start_Date`) AS `Nights`"
+                . " FROM `resource_use` WHERE `Start_Date` < :endDate AND IFNULL(`End_Date`, NOW()) >= :startDate ORDER BY `idResource`");
+        $rstmt->execute([':endDate' => $endDT->format('Y-m-d 00:00:00'), ':startDate' => $stDT->format('Y-m-d 00:00:00')]);
 
         while ($r = $rstmt->fetch(\PDO::FETCH_ASSOC)) {
 
@@ -1246,8 +1278,9 @@ and DATE(v.Span_Start) < DATE('" . $endDT->format('Y-m-d') . "') and DATE(ifnull
         }
 
         // Collect retired rooms
-        $rstmt = $dbh->query("Select idResource, `Retired_At`"
-                . " from resource where date(`Retired_At`) < '" . $endDT->format('Y-m-d') . "' and date(`Retired_At`) >= '" . $stDT->format('Y-m-d') ."' order by idResource");
+        $rstmt = $dbh->prepare("SELECT `idResource`, `Retired_At`"
+                . " FROM `resource` WHERE DATE(`Retired_At`) < :endDate AND DATE(`Retired_At`) >= :startDate ORDER BY `idResource`");
+        $rstmt->execute([':endDate' => $endDT->format('Y-m-d'), ':startDate' => $stDT->format('Y-m-d')]);
 
         while ($r = $rstmt->fetch(\PDO::FETCH_ASSOC)) {
 

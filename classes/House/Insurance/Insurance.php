@@ -34,11 +34,13 @@ class Insurance {
 
     public function loadInsurances(\PDO $dbh, $idInsuranceType = 0){
         if($idInsuranceType > 0){
-            $stmt = $dbh->query("SELECT * FROM `insurance` WHERE `idInsuranceType` = '" . $idInsuranceType . "' Order by `Order`,`Title`;");
+            $stmt = $dbh->prepare("SELECT * FROM `insurance` WHERE `idInsuranceType` = :idInsuranceType ORDER BY `Order`, `Title`;");
+            $stmt->execute([':idInsuranceType' => $idInsuranceType]);
             $this->Insurances = $stmt->fetchAll(\PDO::FETCH_ASSOC);
             $this->insuranceType = $idInsuranceType;
         }else if($idInsuranceType == "all"){
-            $stmt = $dbh->query("SELECT * FROM `insurance` Order by `Order`, `Title`;");
+            $stmt = $dbh->prepare("SELECT * FROM `insurance` ORDER BY `Order`, `Title`;");
+            $stmt->execute();
             $this->Insurances = $stmt->fetchAll(\PDO::FETCH_ASSOC);
         }else{
             $this->Insurances = array();

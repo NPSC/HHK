@@ -48,7 +48,7 @@ class SiteLog {
             return;
         }
 
-        $encodedText = addslashes($logText);
+        $encodedText = $logText;
 
         if(strlen($encodedText) > 255){
             $encodedText = substr($encodedText, 0, 252) . '...';
@@ -65,7 +65,15 @@ class SiteLog {
             $remoteIp = filter_input(INPUT_SERVER, 'REMOTE_ADDR', FILTER_VALIDATE_IP);
         }
 
-        $dbh->exec("insert into syslog values ('$logType', '" . $uS->username . "', '$remoteIp', '$encodedText', '" . $uS->ver . "', '" . $gitId  . "', now());");
+        $insLogStmt = $dbh->prepare("INSERT INTO `syslog` VALUES (:logType, :username, :remoteIp, :logText, :ver, :gitId, NOW());");
+        $insLogStmt->execute([
+            ':logType' => $logType,
+            ':username' => $uS->username,
+            ':remoteIp' => $remoteIp,
+            ':logText' => $encodedText,
+            ':ver' => $uS->ver,
+            ':gitId' => $gitId,
+        ]);
     }
 
 }

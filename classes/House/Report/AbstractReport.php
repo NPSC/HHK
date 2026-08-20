@@ -37,6 +37,7 @@ abstract class AbstractReport {
     public array $fieldSets;
     public array $resultSet = [];
     protected string $query = "";
+    protected array $queryParams = [];
     public string $filterMkup = "";
     public string $filterOptsMkup = "";
     public array $filterOpts = [];
@@ -135,7 +136,7 @@ abstract class AbstractReport {
         $this->makeQuery();
         if($this->query != ''){
             $stmt = $this->dbh->prepare($this->query);
-            $stmt->execute();
+            $stmt->execute($this->queryParams);
 
             $this->resultSet = $stmt->fetchAll(\PDO::FETCH_ASSOC);
         }else{

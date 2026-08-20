@@ -681,7 +681,8 @@ class PaymentSvcs {
         }
 
         // Find hte detail record.
-        $stmt = $dbh->query("Select * from payment_auth where idPayment = " . $payRs->idPayment->getStoredVal() . " order by idPayment_auth");
+        $stmt = $dbh->prepare("SELECT * FROM `payment_auth` WHERE `idPayment` = :idPayment ORDER BY `idPayment_auth`");
+            $stmt->execute([':idPayment' => $payRs->idPayment->getStoredVal()]);
         $arows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
         if (count($arows) < 1) {
@@ -832,7 +833,8 @@ class PaymentSvcs {
             case PaymentMethod::Charge:
 
             	// Find the detail record.
-            	$stmt = $dbh->query("Select * from payment_auth where idPayment = " . $payRs->idPayment->getStoredVal() . " order by idPayment_auth");
+            	$stmt = $dbh->prepare("SELECT * FROM `payment_auth` WHERE `idPayment` = :idPayment ORDER BY `idPayment_auth`");
+            $stmt->execute([':idPayment' => $payRs->idPayment->getStoredVal()]);
             	$arows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
             	if (count($arows) < 1) {
@@ -976,7 +978,8 @@ class PaymentSvcs {
             	}
 
             	// Find the detail record.
-            	$stmt = $dbh->query("Select * from payment_auth where idPayment = $idPayment order by idPayment_auth");
+            	$stmt = $dbh->prepare("SELECT * FROM `payment_auth` WHERE `idPayment` = :idPayment ORDER BY `idPayment_auth`");
+            	$stmt->execute([':idPayment' => $idPayment]);
             	$arows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
             	if (count($arows) < 1) {
@@ -1034,7 +1037,8 @@ class PaymentSvcs {
 
         $uS = Session::getInstance();
 
-        $stmt = $dbh->query("Select cc_name from cc_hosted_gateway where Gateway_Name = 'instamed'");
+        $stmt = $dbh->prepare("SELECT `cc_name` FROM `cc_hosted_gateway` WHERE `Gateway_Name` = 'instamed'");
+        $stmt->execute();
         $rows = $stmt->fetchAll(\PDO::FETCH_NUM);
 
         if (count($rows) == 1) {
@@ -1187,7 +1191,8 @@ class PaymentSvcs {
 
             case PaymentMethod::Charge:
 
-                $stmt = $dbh->query("SELECT * FROM payment_auth where idPayment = $idPayment order by `Timestamp`");
+                $stmt = $dbh->prepare("SELECT * FROM `payment_auth` WHERE `idPayment` = :idPayment ORDER BY `Timestamp`");
+                $stmt->execute([':idPayment' => $idPayment]);
                 $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
                 if (count($rows) < 1) {

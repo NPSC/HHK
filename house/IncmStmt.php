@@ -82,7 +82,7 @@ function getBaMarkup(\PDO $dbh, $prefix = 'bagl') {
 
 }
 
-function saveBa(\PDO $dbh, $post) {
+function saveBa(\PDO $dbh, array $post): void {
 
 	foreach ($post as $k => $v) {
 
@@ -98,19 +98,6 @@ function saveBa(\PDO $dbh, $post) {
 				EditRS::updateFields($dbh, new NameDemogRS(), ['idName' => $id], ['Gl_Code_Debit' => $gl]);
 			}
 		}
-
-// 		if (stristr($k, 'baglc')) {
-
-// 			$parts = explode('_', $k);
-
-// 			if (isset($parts[1]) && $parts[1] > 0) {
-
-// 				$id = intval($parts[1]);
-// 				$gl = filter_var($v, FILTER_SANITIZE_FULL_SPECIAL_CHARS);
-
-// 				$dbh->exec("Update name_demog set Gl_Code_Credit = '$gl' where idName = $id");
-// 			}
-// 		}
 	}
 
 }

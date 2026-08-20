@@ -38,17 +38,23 @@ class SysConfig {
         }
 
         if(is_array($category)){
-            foreach($category as $key=>$cat){
-                $category[$key] = "'" . $cat . "'";
-            }
-            $category = implode(",", $category);
+            $categories = $category;
         }else{
-            $category = "'" . $category . "'";
+            $categories = [$category];
+        }
+
+        $catPh = [];
+        $catParams = [];
+        foreach ($categories as $i => $cat) {
+            $ph = ':cat' . $i;
+            $catPh[] = $ph;
+            $catParams[$ph] = $cat;
         }
 
         $rows = [];
         try {
-            $stmt = $dbh->query("select `Key`,`Value`,`Type` from `" . $tableName . "` where Category in ($category) order by `Key`");
+            $stmt = $dbh->prepare("SELECT `Key`, `Value`, `Type` FROM `" . $tableName . "` WHERE `Category` IN (" . implode(', ', $catPh) . ") ORDER BY `Key`");
+            $stmt->execute($catParams);
             $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
         
             foreach ($rows as $r) {
@@ -82,7 +88,8 @@ class SysConfig {
         }
 
         try{
-            $stmt = $dbh->query("select `Value`,`Type` from `" . $tableName . "` where `Key` = '$key' ");
+            $stmt = $dbh->prepare("SELECT `Value`, `Type` FROM `" . $tableName . "` WHERE `Key` = :key ");
+            $stmt->execute([':key' => $key]);
             $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
         }catch(\Exception $e){
             $rows = array();
@@ -113,7 +120,8 @@ class SysConfig {
         }
 
         try{
-            $stmt = $dbh->query("select * from `" . $tableName . "` where `Key` = '$key' ");
+            $stmt = $dbh->prepare("SELECT * FROM `" . $tableName . "` WHERE `Key` = :key ");
+            $stmt->execute([':key' => $key]);
             $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
         }catch(\Exception $e){
             $rows = array();
@@ -176,10 +184,10 @@ class SysConfig {
                 // Update table
                 $parms = array(':val'=>$value, ':key'=>$key);
                 if($category){
-                    $query = "update `" . $tableName . "` set `Value` = :val where `Key` = :key and `Category` = :category";
+                    $query = "UPDATE `" . $tableName . "` SET `Value` = :val WHERE `Key` = :key AND `Category` = :category";
                     $parms[':category'] = $category;
                 }else{
-                    $query = "update `" . $tableName . "` set `Value` = :val where `Key` = :key";
+                    $query = "UPDATE `" . $tableName . "` SET `Value` = :val WHERE `Key` = :key";
                 }
 
                 $stmt = $dbh->prepare($query);
@@ -195,7 +203,7 @@ class SysConfig {
 
         }else {
             if($category){
-                $query = "insert into `" . $tableName . "` (`Key`, `Value`, `Type`, `Category`) values (:key, :val, 's', :category)";
+                $query = "INSERT INTO `" . $tableName . "` (`Key`, `Value`, `Type`, `Category`) VALUES (:key, :val, 's', :category)";
                 $stmt = $dbh->prepare($query);
                 $stmt->execute([':key'=>$key, ':val'=>$value, ':category'=>$category]);
             }else{

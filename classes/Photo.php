@@ -106,9 +106,10 @@ class Photo {
 
         $id = intval($idGuest, 10);
 
-        $stmt = $dbh->query("SELECT photo.* "
-                . "FROM photo JOIN name_demog demog ON photo.idPhoto = demog.Guest_Photo_Id "
-                . "WHERE demog.idName = $id");
+        $stmt = $dbh->prepare("SELECT `photo`.* "
+                . "FROM `photo` JOIN `name_demog` `demog` ON `photo`.`idPhoto` = `demog`.`Guest_Photo_Id` "
+                . "WHERE `demog`.`idName` = :id");
+        $stmt->execute([':id' => $id]);
 
         $results = $stmt->fetchAll();
 
@@ -142,7 +143,8 @@ class Photo {
 
         $id = intval($idGuest, 10);
 
-        $stmt = $dbh->query("SELECT Guest_Photo_Id FROM `name_demog` nd JOIN photo p ON nd.Guest_Photo_Id = p.idPhoto WHERE `idName` = $id");
+        $stmt = $dbh->prepare("SELECT `Guest_Photo_Id` FROM `name_demog` `nd` JOIN `photo` `p` ON `nd`.`Guest_Photo_Id` = `p`.`idPhoto` WHERE `idName` = :id");
+        $stmt->execute([':id' => $id]);
         $results = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
         $this->setImageSizePx($imageSizePx, $defaultSizePx);

@@ -39,7 +39,8 @@ class Item {
 
     protected function loadRecord(\PDO $dbh) {
 
-        $stmt = $dbh->query("select * from item where idItem = " . $this->idItem);
+        $stmt = $dbh->prepare("SELECT * FROM `item` WHERE `idItem` = :idItem");
+        $stmt->execute([':idItem' => $this->idItem]);
         $items = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
         if (count($items) == 0) {
@@ -61,7 +62,8 @@ class Item {
 
     public static function loadItems(\PDO $dbh) {
 
-        $stmt = $dbh->query("select idItem, Description from item where Deleted = 0");
+        $stmt = $dbh->prepare("SELECT `idItem`, `Description` FROM `item` WHERE `Deleted` = 0");
+        $stmt->execute();
         return $stmt->fetchAll(\PDO::FETCH_ASSOC);
     }
 

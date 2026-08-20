@@ -65,10 +65,18 @@ class HostedCheckout {
         if ($ciResponse->getResponseCode() == 0) {
 
             // Save payment ID
-            $ciq = "replace into card_id (idName, `idGroup`, `Transaction`, InvoiceNumber, CardID, Init_Date, Frequency, ResponseCode, Merchant)"
-                . " values ($idPayor, $idGroup, 'hco', '$invoiceNumber', '" . $ciResponse->getPaymentId() . "', now(), 'OneTime', '" . $ciResponse->getResponseCode() . "', '".$gway->getGatewayName()."')";
+            $ciq = "REPLACE INTO `card_id` (`idName`, `idGroup`, `Transaction`, `InvoiceNumber`, `CardID`, `Init_Date`, `Frequency`, `ResponseCode`, `Merchant`)"
+                . " VALUES (:idPayor, :idGroup, 'hco', :invoiceNumber, :cardId, NOW(), 'OneTime', :responseCode, :merchant)";
 
-            $dbh->exec($ciq);
+            $ciqStmt = $dbh->prepare($ciq);
+            $ciqStmt->execute([
+                ':idPayor' => $idPayor,
+                ':idGroup' => $idGroup,
+                ':invoiceNumber' => $invoiceNumber,
+                ':cardId' => $ciResponse->getPaymentId(),
+                ':responseCode' => $ciResponse->getResponseCode(),
+                ':merchant' => $gway->getGatewayName(),
+            ]);
 
             $dataArray = array('xfer' => $ciResponse->getCheckoutUrl(), 'paymentId' => $ciResponse->getPaymentId());
 
