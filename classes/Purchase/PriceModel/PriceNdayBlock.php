@@ -239,13 +239,13 @@ class PriceNdayBlock extends AbstractPriceModel {
      * @param mixed $r
      * @param float|int $totalAmt
      * @param HTMLTable $tbl
-     * @param mixed $tiers
+     * @param array $tiers
      * @param mixed $startDT
      * @param string $separator
      * @param int $totalGuestNites
      * @return float|int
      */
-    public function tiersMarkup($r, &$totalAmt, &$tbl, $tiers, &$startDT, $separator, &$totalGuestNites) {
+    public function tiersMarkup($r, &$totalAmt, HTMLTable &$tbl, array $tiers, &$startDT, $separator, &$totalGuestNites) {
 
         $roomCharge = 0;
 
@@ -282,14 +282,14 @@ class PriceNdayBlock extends AbstractPriceModel {
         $modelCode = ItemPriceCode::NdayBlock;
 
         if ($incomeRated) {
-            $dbh->exec("Insert into `room_rate` (`idRoom_rate`,`Title`,`FA_Category`, Rate_Breakpoint_Category,`PriceModel`,`Reduced_Rate_1`,`Reduced_Rate_2`,`Reduced_Rate_3`,`Min_Rate`,`Status`) values "
+            $dbh->exec("INSERT INTO `room_rate` (`idRoom_rate`,`Title`,`FA_Category`, Rate_Breakpoint_Category,`PriceModel`,`Reduced_Rate_1`,`Reduced_Rate_2`,`Reduced_Rate_3`,`Min_Rate`,`Status`) VALUES "
                 . "(1,'Rate A','a','a','$modelCode',5.00,3.00,1.00,0,'a'),"
                 . "(2,'Rate B','b','b','$modelCode',10.00,7.00,3.00,0,'a'),"
                 . "(3,'Rate C','c','c','$modelCode',20.00,15.00,10.00,0,'a'),"
                 . "(4,'Rate D','d','d','$modelCode',25.00,20.00,10.00,0,'a');");
         }
 
-        $dbh->exec("Insert into `room_rate` (`idRoom_rate`,`Title`,`FA_Category`,`PriceModel`,`Reduced_Rate_1`,`Reduced_Rate_2`,`Reduced_Rate_3`,`Min_Rate`,`Status`) values "
+        $dbh->exec("INSERT INTO `room_rate` (`idRoom_rate`,`Title`,`FA_Category`,`PriceModel`,`Reduced_Rate_1`,`Reduced_Rate_2`,`Reduced_Rate_3`,`Min_Rate`,`Status`) VALUES "
             . "(5,'Flat Rate','" . RoomRateCategories::FlatRateCategory . "','$modelCode',25.00,25.00,25.00,10,'a'), "
             . "(6,'Assigned','" . RoomRateCategories::Fixed_Rate_Category . "','$modelCode',0,0,0,0,'a');");
     }

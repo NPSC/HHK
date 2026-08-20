@@ -215,17 +215,20 @@ class CreditToken {
         $idGst = intval($idGuest);
 
         $whMerchant = '';
+        $whParams = [':idReg' => $idReg];
 
         if ($merchant != '') {
-            $whMerchant = " and t.Merchant = '$merchant' ";
+            $whMerchant = " AND `t`.`Merchant` = :merchant ";
+            $whParams[':merchant'] = $merchant;
         }
 
 
         // Get Billing Agent tokens
         if ($idReg > 0) {
 
-            $stmt = $dbh->query("select t.* from guest_token t left join name_volunteer2 nv on t.idGuest = nv.idName and nv.Vol_Category = 'Vol_Type' and nv.Vol_Code = 'ba'
-where t.idRegistration = $idReg $whMerchant and nv.idName is null order by t.Merchant");
+            $stmt = $dbh->prepare("SELECT `t`.* FROM `guest_token` `t` LEFT JOIN `name_volunteer2` `nv` ON `t`.`idGuest` = `nv`.`idName` AND `nv`.`Vol_Category` = 'Vol_Type' AND `nv`.`Vol_Code` = 'ba'
+WHERE `t`.`idRegistration` = :idReg $whMerchant AND `nv`.`idName` IS NULL ORDER BY `t`.`Merchant`");
+            $stmt->execute($whParams);
 
             while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
 
@@ -399,9 +402,10 @@ where t.idRegistration = $idReg $whMerchant and nv.idName is null order by t.Mer
 
     	$tbl = new HTMLTable();
 
-    	$stmt = $dbh->query("select t.*, n.Name_Full
-from guest_token t JOIN `name` n on t.idGuest = n.idName
-order by n.Name_Last, n.Name_First, t.Merchant");
+    	$stmt = $dbh->prepare("SELECT `t`.*, `n`.`Name_Full`
+FROM `guest_token` `t` JOIN `name` `n` ON `t`.`idGuest` = `n`.`idName`
+ORDER BY `n`.`Name_Last`, `n`.`Name_First`, `t`.`Merchant`");
+    	$stmt->execute();
 
     	while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
 

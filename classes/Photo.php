@@ -104,9 +104,10 @@ class Photo {
 
         $id = intval($idGuest, 10);
 
-        $stmt = $dbh->query("SELECT photo.* "
-                . "FROM photo JOIN name_demog demog ON photo.idPhoto = demog.Guest_Photo_Id "
-                . "WHERE demog.idName = $id");
+        $stmt = $dbh->prepare("SELECT `photo`.* "
+                . "FROM `photo` JOIN `name_demog` `demog` ON `photo`.`idPhoto` = `demog`.`Guest_Photo_Id` "
+                . "WHERE `demog`.`idName` = :id");
+        $stmt->execute([':id' => $id]);
 
         $results = $stmt->fetchAll();
 
@@ -140,7 +141,8 @@ class Photo {
 
         $id = intval($idGuest, 10);
 
-        $stmt = $dbh->query("SELECT Guest_Photo_Id FROM `name_demog` nd JOIN photo p ON nd.Guest_Photo_Id = p.idPhoto WHERE `idName` = $id");
+        $stmt = $dbh->prepare("SELECT `Guest_Photo_Id` FROM `name_demog` `nd` JOIN `photo` `p` ON `nd`.`Guest_Photo_Id` = `p`.`idPhoto` WHERE `idName` = :id");
+        $stmt->execute([':id' => $id]);
         $results = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
         $this->setImageSizePx($imageSizePx, $defaultSizePx);
@@ -156,17 +158,27 @@ class Photo {
 
         if ($this->getImageId() > 0) {
 
-            $update = "UPDATE photo SET `Image_Type` = '" . $this->getImageType() . "', `Image` = '" . $this->getImageBase64() . "' , `Updated_By` = '" . $userName . "', timestamp = current_timestamp WHERE `idPhoto` = " . $this->getImageId() . ";";
-            $dbh->exec($update);
+            $updStmt = $dbh->prepare("UPDATE `photo` SET `Image_Type` = :imageType, `Image` = :image, `Updated_By` = :userName, `timestamp` = CURRENT_TIMESTAMP WHERE `idPhoto` = :idPhoto;");
+            $updStmt->execute([
+                ':imageType' => $this->getImageType(),
+                ':image' => $this->getImageBase64(),
+                ':userName' => $userName,
+                ':idPhoto' => $this->getImageId(),
+            ]);
 
         } else {
 
-            $insert = "INSERT INTO photo (`Image_Type`, `Image`, `Updated_By`) VALUES ('" . $this->getImageType() . "', '" . $this->getImageBase64() . "', '" . $userName . "');";
-            $dbh->exec($insert);
+            $insStmt = $dbh->prepare("INSERT INTO `photo` (`Image_Type`, `Image`, `Updated_By`) VALUES (:imageType, :image, :userName);");
+            $insStmt->execute([
+                ':imageType' => $this->getImageType(),
+                ':image' => $this->getImageBase64(),
+                ':userName' => $userName,
+            ]);
 
             $this->setImageId($dbh->lastInsertId());
 
-            $dbh->exec("UPDATE name_demog SET `Guest_Photo_Id` = " . $this->getImageId() . " WHERE `idName` = $id");
+            $updDemogStmt = $dbh->prepare("UPDATE `name_demog` SET `Guest_Photo_Id` = :imageId WHERE `idName` = :id");
+            $updDemogStmt->execute([':imageId' => $this->getImageId(), ':id' => $id]);
         }
 
     }

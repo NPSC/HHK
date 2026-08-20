@@ -92,8 +92,9 @@ class HouseServices {
             return array("error" => "A Visit is not selected: " . $idV . "-" . $idSpan);
         }
 
-        $query = "select * from vspan_listing where idVisit = $idVisit and Span = $span;";
-        $stmt1 = $dbh->query($query);
+        $query = "SELECT * FROM `vspan_listing` WHERE `idVisit` = :idVisit AND `Span` = :span;";
+        $stmt1 = $dbh->prepare($query);
+        $stmt1->execute([':idVisit' => $idVisit, ':span' => $span]);
         $rows = $stmt1->fetchAll(\PDO::FETCH_ASSOC);
 
         $dataArray = array();
@@ -893,8 +894,9 @@ class HouseServices {
             return array("error" => "A Visit is not selected: " . $idV . "-" . $idSpan);
         }
 
-        $query = "select * from vspan_listing where idVisit = $idVisit and Span = $span;";
-        $stmt1 = $dbh->query($query);
+        $query = "SELECT * FROM `vspan_listing` WHERE `idVisit` = :idVisit AND `Span` = :span;";
+        $stmt1 = $dbh->prepare($query);
+        $stmt1->execute([':idVisit' => $idVisit, ':span' => $span]);
         $rows = $stmt1->fetchAll(\PDO::FETCH_ASSOC);
 
 
@@ -967,7 +969,8 @@ class HouseServices {
         $vid = intval($idVisit, 10);
         $spanId = intval($span, 10);
 
-        $vstmt = $dbh->query("Select idReservation, Span_Start, Expected_Departure from visit where idVisit = $vid and Span = $spanId");
+        $vstmt = $dbh->prepare("SELECT `idReservation`, `Span_Start`, `Expected_Departure` FROM `visit` WHERE `idVisit` = :vid AND `Span` = :spanId");
+        $vstmt->execute([':vid' => $vid, ':spanId' => $spanId]);
 
         $vRows = $vstmt->fetchAll(\PDO::FETCH_ASSOC);
 
@@ -1339,7 +1342,8 @@ class HouseServices {
             $room2->saveRoom($dbh, $uname, TRUE, $roomStatus);
 
             // Update invoices
-            $dbh->exec("Update invoice set Suborder_Number = " . $visit->getSpan() . " where Order_Number = " . $visit->getIdVisit() . " and Suborder_Number != ". $visit->getSpan());
+            $updInvStmt = $dbh->prepare("UPDATE `invoice` SET `Suborder_Number` = :span WHERE `Order_Number` = :idVisit AND `Suborder_Number` != :span2");
+            $updInvStmt->execute([':span' => $visit->getSpan(), ':idVisit' => $visit->getIdVisit(), ':span2' => $visit->getSpan()]);
 
             if($dbh->inTransaction()){
                 $dbh->commit();
@@ -1569,7 +1573,9 @@ class HouseServices {
 
                 if ($idGt > 0) {
 
-                    $cnt = $dbh->exec("update guest_token set Token = '' where idGuest_token = " . $idGt);
+                    $delTokenStmt = $dbh->prepare("UPDATE `guest_token` SET `Token` = '' WHERE `idGuest_token` = :idGt");
+                    $delTokenStmt->execute([':idGt' => $idGt]);
+                    $cnt = $delTokenStmt->rowCount();
 
                     if ($cnt > 0) {
                         $gtRs = CreditToken::getTokenRsFromId($dbh, $idGt);

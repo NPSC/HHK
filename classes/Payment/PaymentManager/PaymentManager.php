@@ -116,10 +116,11 @@ class PaymentManager {
         $this->pmp->setIdInvoicePayor($idPayor);
 
         //set Tax Exempt
-        $stmt = $dbh->query("SELECT n.idName, nd.tax_exempt " .
-            " FROM name n join name_volunteer2 nv on n.idName = nv.idName and nv.Vol_Category = 'Vol_Type'  and nv.Vol_Code = '" . VolMemberType::BillingAgent . "' " .
-            " JOIN name_demog nd on n.idName = nd.idName  ".
-            " where n.Member_Status='a' and n.Record_Member = 1 and n.idName='" . $idPayor . "'");
+        $stmt = $dbh->prepare("SELECT `n`.`idName`, `nd`.`tax_exempt` " .
+            " FROM `name` `n` JOIN `name_volunteer2` `nv` ON `n`.`idName` = `nv`.`idName` AND `nv`.`Vol_Category` = 'Vol_Type'  AND `nv`.`Vol_Code` = :volCode " .
+            " JOIN `name_demog` `nd` ON `n`.`idName` = `nd`.`idName`  ".
+            " WHERE `n`.`Member_Status` = 'a' AND `n`.`Record_Member` = 1 AND `n`.`idName` = :idPayor");
+        $stmt->execute([':volCode' => VolMemberType::BillingAgent, ':idPayor' => $idPayor]);
 
         $payor = $stmt->fetch(\PDO::FETCH_ASSOC);
 

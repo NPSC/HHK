@@ -48,34 +48,35 @@ class InvoiceActions {
 
             // Return listing of lines
 
-            $stmt = $dbh->query(
+            $stmt = $dbh->prepare(
     "SELECT
-        i.idInvoice,
-        i.`Invoice_Number`,
-        i.`Balance`,
-        i.`Amount`,
-        i.Deleted,
-        i.Sold_To_Id,
-        n.Name_Full,
-        n.Company,
-        ng.Name_Full AS `GuestName`,
-        v.idVisit,
-        v.Span,
-        il.Description,
-        il.Amount as `LineAmount`,
-        il.Deleted as `Item_Deleted`
+        `i`.`idInvoice`,
+        `i`.`Invoice_Number`,
+        `i`.`Balance`,
+        `i`.`Amount`,
+        `i`.`Deleted`,
+        `i`.`Sold_To_Id`,
+        `n`.`Name_Full`,
+        `n`.`Company`,
+        `ng`.`Name_Full` AS `GuestName`,
+        `v`.`idVisit`,
+        `v`.`Span`,
+        `il`.`Description`,
+        `il`.`Amount` AS `LineAmount`,
+        `il`.`Deleted` AS `Item_Deleted`
     FROM
-        `invoice` i
+        `invoice` `i`
             LEFT JOIN
-        name n ON i.Sold_To_Id = n.idName
+        `name` `n` ON `i`.`Sold_To_Id` = `n`.`idName`
             LEFT JOIN
-        visit v ON i.Order_Number = v.idVisit
-            AND i.Suborder_Number = v.Span
+        `visit` `v` ON `i`.`Order_Number` = `v`.`idVisit`
+            AND `i`.`Suborder_Number` = `v`.`Span`
             LEFT JOIN
-        name ng ON v.idPrimaryGuest = ng.idName
-        left join invoice_line il on i.idInvoice = il.Invoice_Id
+        `name` `ng` ON `v`.`idPrimaryGuest` = `ng`.`idName`
+        LEFT JOIN `invoice_line` `il` ON `i`.`idInvoice` = `il`.`Invoice_Id`
     WHERE
-        i.idInvoice = $iid");
+        `i`.`idInvoice` = :iid");
+            $stmt->execute([':iid' => $iid]);
 
             $tbl = new HTMLTable();
             $lines = $stmt->fetchAll(\PDO::FETCH_ASSOC);
@@ -132,7 +133,8 @@ class InvoiceActions {
             $tbl = new HTMLTable();
             $mkup = HTMLContainer::generateMarkup('div', 'No Payments', $divAttr);
 
-            $stmt = $dbh->query("Select * from vlist_inv_pments where idPayment > 0 and idInvoice = $iid");
+            $stmt = $dbh->prepare("SELECT * FROM `vlist_inv_pments` WHERE `idPayment` > 0 AND `idInvoice` = :iid");
+            $stmt->execute([':iid' => $iid]);
             $invoices = Statement::processPayments($stmt, array());
 
             foreach ($invoices as $r) {
@@ -169,7 +171,8 @@ class InvoiceActions {
         } else if ($action == 'srch') {
 
             $invNum = $iid . '%';
-            $stmt = $dbh->query("Select idInvoice, Invoice_Number from invoice where Invoice_Number like '$invNum'");
+            $stmt = $dbh->prepare("SELECT `idInvoice`, `Invoice_Number` FROM `invoice` WHERE `Invoice_Number` LIKE :invNum");
+            $stmt->execute([':invNum' => $invNum]);
 
             $numbers = array();
 

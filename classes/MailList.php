@@ -24,7 +24,7 @@ class MailList {
 
     const FORMAT_HTML = "html";
     const FORMAT_EXCEL = "excel";
-    public static function createList($stmt, $format, $formalcy, $include_CareOf = FALSE, $include_Partner = FALSE, $exclude_WorkAddr = TRUE) {
+    public static function createList(\PDOStatement|bool $stmt, $format, $formalcy, $include_CareOf = FALSE, $include_Partner = FALSE, $exclude_WorkAddr = TRUE) {
 
         // header -
         $file = "MailList";
@@ -109,16 +109,12 @@ class MailList {
         $writer->download();
     }
 
-    public static function fillMailistTable(\PDO $dbh, $guestBlackOutDays) {
+    public static function fillMailistTable(\PDO $dbh, $guestBlackOutDays): int {
 
-//        $dbh->exec("drop temporary table if exists `$tempTableName`;");
-//        $dbh->exec("create temporary table if not exists `$tempTableName` "
-//                . "(`id` int,`mr` varchar(5),`adr_frag` varchar(200),`street` varchar(200),`city` varchar(100),`state` varchar(5),"
-//                . "`zip` varchar(10),`sp` int,`fm` int,`rel` varchar(5),`cde` varchar(5), `ngid` int);");
-        $dbh->exec("delete from `mail_listing`;");
+        $dbh->exec("DELETE FROM `mail_listing`;");
 
         // generare the address table
-        $affectedRows = $dbh->exec("insert into `mail_listing`
+        $insStmt = $dbh->prepare("INSERT INTO `mail_listing`
 select v.Id,
     v.MemberRecord as mr,
     concat(v.Address_1, v.Address_2, v.City) as frag,
@@ -164,12 +160,13 @@ where
     and v.PostalCode <> ''
     and v.PostalCode <> '0'
     and case when ng.idName is not null
-        then ifnull(DATEDIFF(now(), (select max(ifnull(Checkout_Date, now())) from stays where idName = v.Id)), ($guestBlackOutDays + 2)) > $guestBlackOutDays
+        then ifnull(DATEDIFF(now(), (select max(ifnull(Checkout_Date, now())) from stays where idName = v.Id)), (:guestBlackOutDays1 + 2)) > :guestBlackOutDays2
         else 1=1 end");
+        $insStmt->execute([':guestBlackOutDays1' => $guestBlackOutDays, ':guestBlackOutDays2' => $guestBlackOutDays]);
+        $affectedRows = $insStmt->rowCount();
 
         return $affectedRows;
 
     }
 
 }
-?>

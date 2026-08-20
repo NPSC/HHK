@@ -114,13 +114,13 @@ class Donation {
         if ($donId > 0) {
 
             // insert vol_type = d if not there already...
-            $query = "call InsertDonor(" . $this->getDonorId() . ");";
-            $dbh->exec($query);
+            $insDonorStmt = $dbh->prepare("CALL InsertDonor(:id);");
+            $insDonorStmt->execute([':id' => $this->getDonorId()]);
 
             if ($this->getAssocDonorId() > 0) {
                 // insert vol_type = d if not there already...
-                $query = "call InsertDonor(" . $this->getAssocDonorId() . ");";
-                $dbh->exec($query);
+                $insDonorStmt2 = $dbh->prepare("CALL InsertDonor(:id);");
+                $insDonorStmt2->execute([':id' => $this->getAssocDonorId()]);
             }
 
         } else {

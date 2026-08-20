@@ -86,19 +86,21 @@ class CheckingIn extends ActiveReservation {
         $uS = Session::getInstance();
 
         // Load reservation and visit
-        $stmt = $dbh->query("SELECT r.*, rg.idPsg, ifnull(v.`idVisit`, 0) as `idVisit`, ifnull(v.`Status`, '') as `SpanStatus`, ifnull(v.Span_Start, '') as `SpanStart`, ifnull(v.Span_End, datedefaultnow(v.Expected_Departure)) as `SpanEnd`
-FROM reservation r
+        $stmt = $dbh->prepare("SELECT `r`.*, `rg`.`idPsg`, IFNULL(`v`.`idVisit`, 0) AS `idVisit`, IFNULL(`v`.`Status`, '') AS `SpanStatus`, IFNULL(`v`.`Span_Start`, '') AS `SpanStart`, IFNULL(`v`.`Span_End`, datedefaultnow(`v`.`Expected_Departure`)) AS `SpanEnd`
+FROM `reservation` `r`
         LEFT JOIN
-    registration rg ON r.idRegistration = rg.idRegistration
+    `registration` `rg` ON `r`.`idRegistration` = `rg`.`idRegistration`
 	LEFT JOIN
-    visit v on v.idReservation = r.idReservation and v.Span = " . $rData->getSpan() .
-            " WHERE r.idReservation = " . $rData->getIdResv());
+    `visit` `v` ON `v`.`idReservation` = `r`.`idReservation` AND `v`.`Span` = :span
+ WHERE `r`.`idReservation` = :idResv");
+        $stmt->execute([':span' => $rData->getSpan(), ':idResv' => $rData->getIdResv()]);
 
         $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
         if (count($rows) != 1) {
             // Deleted?
-            $stmt = $dbh->query("Select max(idReservation) from reservation;");
+            $stmt = $dbh->prepare("SELECT MAX(`idReservation`) FROM `reservation`;");
+            $stmt->execute();
             $rows = $stmt->FetchAll(\PDO::FETCH_NUM);
 
             if ($rData->getIdResv() > 0 && count($rows) > 0 && $rows[0][0] > $rData->getIdResv()) {
@@ -229,12 +231,14 @@ FROM reservation r
                 // select gateway
                 if ($resv->getIdResource() > 0) {
                     // Get gateway merchant
-                    $gwStmt = $dbh->query("SELECT ifnull(l.Merchant, '') as `Merchant`, ifnull(l.idLocation, 0) as idLocation FROM location l join room r on l.idLocation = r.idLocation
-                    join resource_room rr on r.idRoom = rr.idRoom where l.Status = 'a' and rr.idResource = " . $resv->getIdResource());
+                    $gwStmt = $dbh->prepare("SELECT IFNULL(`l`.`Merchant`, '') AS `Merchant`, IFNULL(`l`.`idLocation`, 0) AS `idLocation` FROM `location` `l` JOIN `room` `r` ON `l`.`idLocation` = `r`.`idLocation`
+                    JOIN `resource_room` `rr` ON `r`.`idRoom` = `rr`.`idRoom` WHERE `l`.`Status` = 'a' AND `rr`.`idResource` = :idResource");
+                    $gwStmt->execute([':idResource' => $resv->getIdResource()]);
 
                 } else {
-                    $gwStmt = $dbh->query("SELECT DISTINCT ifnull(l.Merchant, '') as `Merchant`, ifnull(l.idLocation, 0) as idLocation FROM room rm LEFT JOIN location l  on l.idLocation = rm.idLocation
-                    where l.`Status` = 'a' or l.`Status` is null;");
+                    $gwStmt = $dbh->prepare("SELECT DISTINCT IFNULL(`l`.`Merchant`, '') AS `Merchant`, IFNULL(`l`.`idLocation`, 0) AS `idLocation` FROM `room` `rm` LEFT JOIN `location` `l`  ON `l`.`idLocation` = `rm`.`idLocation`
+                    WHERE `l`.`Status` = 'a' OR `l`.`Status` IS NULL;");
+                    $gwStmt->execute();
                 }
 
                 $rows = $gwStmt->fetchAll(\PDO::FETCH_ASSOC);
@@ -331,7 +335,8 @@ FROM reservation r
 
         $resv = new Reservation_1($this->reservRs);
 
-        $stmt = $dbh->query("Select idVisit from visit where idReservation = " . $resv->getIdReservation() . " limit 1;");
+        $stmt = $dbh->prepare("SELECT `idVisit` FROM `visit` WHERE `idReservation` = :idResv LIMIT 1;");
+        $stmt->execute([':idResv' => $resv->getIdReservation()]);
 
         if ($stmt->rowCount() > 0) {
             throw new RuntimeException('Visit already exists for reservation Id ' . $resv->getIdReservation());
@@ -426,8 +431,9 @@ FROM reservation r
         // Neon transfer kludge
         if ($uS->ContactManager != '') {
             // Remove Exclude status when an excluded member checks in.
-            $stmt = $dbh->query("select DISTINCT n.idName from `name` n join name_guest ng on n.idName = ng.idName
-                where n.External_Id = '" . AbstractExportManager::EXCLUDE_TERM . "' AND ng.idPsg = " . $this->reserveData->getIdPsg() );
+            $stmt = $dbh->prepare("SELECT DISTINCT `n`.`idName` FROM `name` `n` JOIN `name_guest` `ng` ON `n`.`idName` = `ng`.`idName`
+                WHERE `n`.`External_Id` = :excludeTerm AND `ng`.`idPsg` = :idPsg");
+            $stmt->execute([':excludeTerm' => AbstractExportManager::EXCLUDE_TERM, ':idPsg' => $this->reserveData->getIdPsg()]);
 
             $rows = $stmt->fetchAll(\PDO::FETCH_NUM);
 
@@ -615,20 +621,27 @@ FROM reservation r
         if ($uS->AcceptResvPaymt) {
 
             // Add Order_Number to reservation pre-payment invoices.
-            $numRows = $dbh->exec("
-            UPDATE invoice i
+            $updOrderStmt = $dbh->prepare("
+            UPDATE `invoice` `i`
                     JOIN
-                invoice_line il on il.Invoice_Id = i.idInvoice
+                `invoice_line` `il` ON `il`.`Invoice_Id` = `i`.`idInvoice`
                     JOIN
-                reservation_invoice_line ri ON ri.Invoice_Line_Id = il.idInvoice_Line
+                `reservation_invoice_line` `ri` ON `ri`.`Invoice_Line_Id` = `il`.`idInvoice_Line`
             SET
-                i.Order_Number = ".$visit->getIdVisit()."
+                `i`.`Order_Number` = :idVisit
             WHERE
-                ri.Reservation_Id = " . $visit->getIdReservation());
+                `ri`.`Reservation_Id` = :idResv1");
+            $updOrderStmt->execute([':idVisit' => $visit->getIdVisit(), ':idResv1' => $visit->getIdReservation()]);
+            $numRows = $updOrderStmt->rowCount();
 
             // Relate Invoice to Reservation
             if ($numRows > 1 && ! is_Null($this->payResult) && $this->payResult->getIdInvoice() > 0 && $this->reserveData->getIdResv() > 0) {
-                $dbh->exec("insert ignore into `reservation_invoice_line` select '".$this->reserveData->getIdResv()."', il.idInvoice_Line from invoice_line il where il.Invoice_Id = " .$this->payResult->getIdInvoice() . " and il.Item_Id = '" . ItemId::LodgingMOA . "'");
+                $insResvInvStmt = $dbh->prepare("INSERT IGNORE INTO `reservation_invoice_line` SELECT :idResv2, `il`.`idInvoice_Line` FROM `invoice_line` `il` WHERE `il`.`Invoice_Id` = :idInvoice AND `il`.`Item_Id` = :itemLodgingMOA");
+                $insResvInvStmt->execute([
+                    ':idResv2' => $this->reserveData->getIdResv(),
+                    ':idInvoice' => $this->payResult->getIdInvoice(),
+                    ':itemLodgingMOA' => ItemId::LodgingMOA,
+                ]);
             }
 
         }

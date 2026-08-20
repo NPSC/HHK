@@ -39,8 +39,6 @@ class FormDocument {
     public static function listForms(\PDO $dbh, string $status, array $params, bool $totalsOnly = false): array{
 
         if($totalsOnly){
-            //sync referral/resv statuses
-            //$dbh->exec('CALL sync_referral_resv_status()');  // takes too long.
 
             $query = "SELECT g.Code AS 'idStatus', g.Description AS 'Status', g.Substitute AS 'icon', COUNT(d.idDocument) AS 'count' FROM gen_lookups g
 			left join document d on g.Code = d.Status and `d`.`Type` = 'json' and `d`.`Category` = 'form'

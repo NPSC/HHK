@@ -278,7 +278,7 @@ abstract class AbstractPriceModel {
      * @param int $totalGuestNites
      * @return float|int
      */
-    public function tiersMarkup($r, &$totalAmt, &$tbl, $tiers, &$startDT, $separator, &$totalGuestNites) {
+    public function tiersMarkup($r, &$totalAmt, HTMLTable &$tbl, array $tiers, &$startDT, $separator, &$totalGuestNites) {
 
         $roomCharge = 0;
 
@@ -827,7 +827,7 @@ WHERE `PriceModel` = :priceModelCode ORDER BY `breakpointOrder` DESC, `FA_Catego
 
     /**
      * Summary of getNewRateCategory
-     * @throws \HHK\Exception\RuntimeException
+     * @throws RuntimeException
      * @return mixed
      */
     public function getNewRateCategory() {
@@ -914,7 +914,7 @@ WHERE `PriceModel` = :priceModelCode ORDER BY `breakpointOrder` DESC, `FA_Catego
      * @param \PDO $dbh
      * @param mixed $modelCode
      * @param mixed $incomeRated
-     * @throws \HHK\Exception\RuntimeException
+     * @throws RuntimeException
      * @return void
      */
     public static function installRates(\PDO $dbh, $modelCode, $incomeRated) {

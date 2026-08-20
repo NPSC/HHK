@@ -43,7 +43,8 @@ class HospitalStay {
         
         if ($idHs > 0) {
             
-            $stmt = $dbh->query("Select * from hospital_stay where idHospital_stay=$idHs");
+            $stmt = $dbh->prepare("SELECT * FROM `hospital_stay` WHERE `idHospital_stay` = :idHs");
+            $stmt->execute([':idHs' => $idHs]);
             $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
             
             if (count($rows) === 1) {
@@ -53,19 +54,20 @@ class HospitalStay {
         }else if ($idP > 0) {
         	
             //get hospital stay from most recent reservation
-            $stmt = $dbh->query("
-SELECT hs.*, r.`idReservation`,
-	ifnull(r.`Actual_Arrival`, r.`Expected_Arrival`) as 'arrival',
-    (case
-		when r.`Status` = 's' then 10
-        when r.`Status` in ('c', 'c1', 'c2', 'c3', 'c4', 'ns', 'td') then 0
-        else 5
-    end) as 'order'
-from `hospital_stay` hs
-LEFT JOIN `reservation` r on hs.`idHospital_stay` = r.`idHospital_stay`
+            $stmt = $dbh->prepare("
+SELECT `hs`.*, `r`.`idReservation`,
+	IFNULL(`r`.`Actual_Arrival`, `r`.`Expected_Arrival`) AS 'arrival',
+    (CASE
+		WHEN `r`.`Status` = 's' THEN 10
+        WHEN `r`.`Status` IN ('c', 'c1', 'c2', 'c3', 'c4', 'ns', 'td') THEN 0
+        ELSE 5
+    END) AS 'order'
+FROM `hospital_stay` `hs`
+LEFT JOIN `reservation` `r` ON `hs`.`idHospital_stay` = `r`.`idHospital_stay`
 
-where hs.`idPatient` = $idP
-order by `order` desc, `arrival` desc limit 1");
+WHERE `hs`.`idPatient` = :idP
+ORDER BY `order` DESC, `arrival` DESC LIMIT 1");
+            $stmt->execute([':idP' => $idP]);
             $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
             
             if (count($rows) === 1) {
@@ -119,7 +121,8 @@ order by `order` desc, `arrival` desc limit 1");
 
         // who else uses it
         if ($currentHsId > 0) {
-	        $stmt = $dbh->query("select count(idReservation) from reservation where idHospital_Stay = ".$currentHsId);
+	        $stmt = $dbh->prepare("SELECT COUNT(`idReservation`) FROM `reservation` WHERE `idHospital_Stay` = :currentHsId");
+	        $stmt->execute([':currentHsId' => $currentHsId]);
 	        $resvIds = $stmt->fetchAll(\PDO::FETCH_NUM);
 	        $numReservations = $resvIds[0][0];
         }
@@ -168,7 +171,8 @@ order by `order` desc, `arrival` desc limit 1");
             if($this->idReservation > 0){
             	
                 $reservRS = new ReservationRS();
-                $stmt = $dbh->query("select * from reservation where idReservation = $this->idReservation");
+                $stmt = $dbh->prepare("SELECT * FROM `reservation` WHERE `idReservation` = :idResv");
+                $stmt->execute([':idResv' => $this->idReservation]);
                 $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
                 
                 if(count($rows) == 1){
@@ -184,7 +188,8 @@ order by `order` desc, `arrival` desc limit 1");
             if($this->idVisit > 0){
             	
                 $visitRS = new VisitRS();
-                $stmt = $dbh->query("select * from visit where idVisit = $this->idVisit");
+                $stmt = $dbh->prepare("SELECT * FROM `visit` WHERE `idVisit` = :idVisit");
+                $stmt->execute([':idVisit' => $this->idVisit]);
                 $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
                 
                 if(count($rows) == 1){

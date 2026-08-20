@@ -35,8 +35,10 @@ abstract class AbstractTemplateForm {
         $this->template = "";
         $this->subjectLine = "";
 
-       if(intval($docId) > 0 && $dbh){
-           $stmt = $dbh->query("Select ifnull(`g`.`Description`, '') as 'docTitle', `Doc`,`Abstract` from `document` d left join gen_lookups g on d.idDocument = g.`Substitute` where `idDocument` = $docId");
+       $docIdInt = intval($docId);
+       if($docIdInt > 0 && $dbh){
+           $stmt = $dbh->prepare("SELECT IFNULL(`g`.`Description`, '') AS 'docTitle', `Doc`, `Abstract` FROM `document` `d` LEFT JOIN `gen_lookups` `g` ON `d`.`idDocument` = `g`.`Substitute` WHERE `idDocument` = :docId");
+           $stmt->execute([':docId' => $docIdInt]);
            $docRow = $stmt->fetch(\PDO::FETCH_ASSOC);
 
            $this->template = (isset($docRow['Doc']) ? $docRow['Doc']: '');

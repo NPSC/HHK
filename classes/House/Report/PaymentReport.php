@@ -86,24 +86,20 @@ class PaymentReport {
         }
 
 
-        $whDates = " and DATE(lp.Payment_Date) <= DATE('$end') and DATE(lp.Payment_Date) >= DATE('$start') ";
+        $whDates = " AND DATE(`lp`.`Payment_Date`) <= DATE(:end) AND DATE(`lp`.`Payment_Date`) >= DATE(:start) ";
+        $queryParams = [':end' => $end, ':start' => $start];
 
 
         $whStatus = '';
-        foreach ($statusSelections as $s) {
-            if ($s != '') {
-                // Set up query where part.
-                if ($whStatus == '') {
-                    $whStatus = "'$s'";
-                } else {
-                    $whStatus .= ",'$s'";
-                }
-
+        $statusVals = array_values(array_filter($statusSelections, fn($s) => $s != ''));
+        if (count($statusVals) > 0) {
+            $statusPh = [];
+            foreach ($statusVals as $i => $sv) {
+                $ph = ':stat' . $i;
+                $statusPh[] = $ph;
+                $queryParams[$ph] = $sv;
             }
-        }
-
-        if ($whStatus != '') {
-            $whStatus = " and lp.Payment_Status in ($whStatus) ";
+            $whStatus = " AND `lp`.`Payment_Status` IN (" . implode(', ', $statusPh) . ") ";
         }
 
 
@@ -116,7 +112,7 @@ class PaymentReport {
                 $entry = $payTypeLookup[$s] ?? null;
                 if ($entry !== null) {
                     if ((int)$entry[2] === PaymentMethod::External) {
-                        $externalTypeCodes[] = "'" . $s . "'";
+                        $externalTypeCodes[] = $s;
                     } else {
                         $standardMethodIds[] = (int)$entry[2];
                     }
@@ -126,10 +122,23 @@ class PaymentReport {
 
         $typeConditions = [];
         if (!empty($standardMethodIds)) {
-            $typeConditions[] = "lp.idPayment_Method IN (" . implode(',', array_unique($standardMethodIds)) . ")";
+            $methodPh = [];
+            foreach (array_values(array_unique($standardMethodIds)) as $i => $mid) {
+                $ph = ':method' . $i;
+                $methodPh[] = $ph;
+                $queryParams[$ph] = $mid;
+            }
+            $typeConditions[] = "`lp`.`idPayment_Method` IN (" . implode(', ', $methodPh) . ")";
         }
         if (!empty($externalTypeCodes)) {
-            $typeConditions[] = "(lp.idPayment_Method = " . PaymentMethod::External . " AND tx.Payment_Type IN (" . implode(',', $externalTypeCodes) . "))";
+            $extPh = [];
+            foreach ($externalTypeCodes as $i => $ec) {
+                $ph = ':extType' . $i;
+                $extPh[] = $ph;
+                $queryParams[$ph] = $ec;
+            }
+            $typeConditions[] = "(`lp`.`idPayment_Method` = :externalMethod AND `tx`.`Payment_Type` IN (" . implode(', ', $extPh) . "))";
+            $queryParams[':externalMethod'] = PaymentMethod::External;
         }
         $whType = '';
         if (!empty($typeConditions)) {
@@ -137,30 +146,31 @@ class PaymentReport {
         }
 
         if ($showDelInv === FALSE) {
-            $whType .= " and lp.Deleted = 0 ";
+            $whType .= " AND `lp`.`Deleted` = 0 ";
         }
 
 
-        $query = "Select
-        lp.*,
+        $query = "SELECT
+        `lp`.*,
         " . Statement::externalPaymentTitleSelectSql('lp') . ",
-        ifnull(n.Name_First, '') as `First`,
-        ifnull(n.Name_Last, '') as `Last`,
-        ifnull(n.Company, '') as `Company`,
-        ifnull(r.Title, '') as `Room`
-    from
-        vlist_pments lp
-            left join
-        `name` n ON lp.Sold_To_Id = n.idName
-            left join
-        visit v on lp.Order_Number = v.idVisit and lp.Suborder_Number = v.Span
-            left join
-        resource r ON v.idResource = r.idResource
+        IFNULL(`n`.`Name_First`, '') AS `First`,
+        IFNULL(`n`.`Name_Last`, '') AS `Last`,
+        IFNULL(`n`.`Company`, '') AS `Company`,
+        IFNULL(`r`.`Title`, '') AS `Room`
+    FROM
+        `vlist_pments` `lp`
+            LEFT JOIN
+        `name` `n` ON `lp`.`Sold_To_Id` = `n`.`idName`
+            LEFT JOIN
+        `visit` `v` ON `lp`.`Order_Number` = `v`.`idVisit` AND `lp`.`Suborder_Number` = `v`.`Span`
+            LEFT JOIN
+        `resource` `r` ON `v`.`idResource` = `r`.`idResource`
             " . Statement::externalPaymentTitleJoinSql('lp') . "
-    where lp.idPayment > 0
+    WHERE `lp`.`idPayment` > 0
       $whDates $whStatus $whType ";
 
-        $stmt = $dbh->query($query);
+        $stmt = $dbh->prepare($query);
+        $stmt->execute($queryParams);
         $invoices = Statement::processPayments($stmt, array('First', 'Last', 'Company', 'Room'));
 
 

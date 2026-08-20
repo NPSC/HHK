@@ -40,62 +40,74 @@ class PriceGuestDay extends AbstractPriceModel {
         $uS = Session::getInstance();
 
         $parm = "NOW()";
+        $parmVal = null;
         if (is_null($depDT) === FALSE) {
-            $parm = "'" . $depDT->format('Y-m-d') . "'";
+            $parm = ":depDate";
+            $parmVal = $depDT->format('Y-m-d');
         }
 
         // Run the vvisit_stmt view, but modified by $parm
-        $stmt1 = $dbh->query("select
-    v.idVisit,
-    v.Span,
-    v.idRegistration,
-    v.idPrimaryGuest,
-    v.idResource,
-    ifnull(v.Arrival_Date, '') as `Arrival_Date`,
-    ifnull(v.Expected_Departure, '') as `Expected_Departure`,
-    ifnull(v.Actual_Departure, '') as `Actual_Departure`,
-    ifnull(v.Span_Start, '') as `Span_Start`,
-    ifnull(v.Span_End, '') as `Span_End`,
-    v.`Status`,
-    v.Rate_Glide_Credit,
-    ifnull(rm.Title, '') as `Title`,
-    ifnull(g.Substitute, 0) as Deposit_Amount,
-    v.DepositPayType,
-    v.Pledged_Rate,
-    v.Rate_Category,
-    v.idRoom_Rate,
-    v.Expected_Rate,
-    rv.Visit_Fee as `Visit_Fee_Amount`,
-    DATEDIFF(ifnull(v.Span_End, $parm), v.Span_Start) as `Actual_Span_Nights`,
-    ifnull(hs.idPsg, 0) as `idPsg`,
-    ifnull(hs.idHospital, 0) as `idHospital`,
-    ifnull(hs.idAssociation, 0) as `idAssociation`
-from
-    visit v
-        left join
-    reservation rv on v.idReservation = rv.idReservation
-        left join
-    hospital_stay hs on v.idHospital_stay = hs.idHospital_stay
-        left join
-    resource_room re ON v.idResource = re.idResource
-        left join
-    room rm on re.idRoom = rm.idRoom
-        left join
-    gen_lookups g on g.`Table_Name` = 'Key_Deposit_Code' and g.`Code` = rm.Key_Deposit_Code
-WHERE v.`Status` not in ( 'c', 'p' ) and v.idVisit = $idVisit
-order by v.`Span`;");
+        $stmt1 = $dbh->prepare("SELECT
+    `v`.`idVisit`,
+    `v`.`Span`,
+    `v`.`idRegistration`,
+    `v`.`idPrimaryGuest`,
+    `v`.`idResource`,
+    IFNULL(`v`.`Arrival_Date`, '') AS `Arrival_Date`,
+    IFNULL(`v`.`Expected_Departure`, '') AS `Expected_Departure`,
+    IFNULL(`v`.`Actual_Departure`, '') AS `Actual_Departure`,
+    IFNULL(`v`.`Span_Start`, '') AS `Span_Start`,
+    IFNULL(`v`.`Span_End`, '') AS `Span_End`,
+    `v`.`Status`,
+    `v`.`Rate_Glide_Credit`,
+    IFNULL(`rm`.`Title`, '') AS `Title`,
+    IFNULL(`g`.`Substitute`, 0) AS `Deposit_Amount`,
+    `v`.`DepositPayType`,
+    `v`.`Pledged_Rate`,
+    `v`.`Rate_Category`,
+    `v`.`idRoom_Rate`,
+    `v`.`Expected_Rate`,
+    `rv`.`Visit_Fee` AS `Visit_Fee_Amount`,
+    DATEDIFF(IFNULL(`v`.`Span_End`, $parm), `v`.`Span_Start`) AS `Actual_Span_Nights`,
+    IFNULL(`hs`.`idPsg`, 0) AS `idPsg`,
+    IFNULL(`hs`.`idHospital`, 0) AS `idHospital`,
+    IFNULL(`hs`.`idAssociation`, 0) AS `idAssociation`
+FROM
+    `visit` `v`
+        LEFT JOIN
+    `reservation` `rv` ON `v`.`idReservation` = `rv`.`idReservation`
+        LEFT JOIN
+    `hospital_stay` `hs` ON `v`.`idHospital_stay` = `hs`.`idHospital_stay`
+        LEFT JOIN
+    `resource_room` `re` ON `v`.`idResource` = `re`.`idResource`
+        LEFT JOIN
+    `room` `rm` ON `re`.`idRoom` = `rm`.`idRoom`
+        LEFT JOIN
+    `gen_lookups` `g` ON `g`.`Table_Name` = 'Key_Deposit_Code' AND `g`.`Code` = `rm`.`Key_Deposit_Code`
+WHERE `v`.`Status` NOT IN ('c', 'p') AND `v`.`idVisit` = :idVisit1
+ORDER BY `v`.`Span`;");
+        $params1 = [':idVisit1' => $idVisit];
+        if ($parmVal !== null) {
+            $params1[':depDate'] = $parmVal;
+        }
+        $stmt1->execute($params1);
 
         $spans = $stmt1->fetchAll(\PDO::FETCH_ASSOC);
 
         $ageYears = $uS->StartGuestFeesYr;
 
-        $stmt = $dbh->query("SELECT
-            s.Visit_Span,
-            SUM(DATEDIFF(IFNULL(DATE(s.Span_End_Date),
-            DATE($parm)), DATE(s.Span_Start_Date))) AS `GDays`
-        FROM stays s JOIN name n ON s.idName = n.idName
-        WHERE IFNULL(DATE(n.BirthDate), DATE('1901-01-01')) < DATE(DATE_SUB(DATE(s.Checkin_Date), INTERVAL $ageYears YEAR)) AND s.idVisit = $idVisit
-        GROUP BY s.Visit_Span");
+        $stmt = $dbh->prepare("SELECT
+            `s`.`Visit_Span`,
+            SUM(DATEDIFF(IFNULL(DATE(`s`.`Span_End_Date`),
+            DATE($parm)), DATE(`s`.`Span_Start_Date`))) AS `GDays`
+        FROM `stays` `s` JOIN `name` `n` ON `s`.`idName` = `n`.`idName`
+        WHERE IFNULL(DATE(`n`.`BirthDate`), DATE('1901-01-01')) < DATE(DATE_SUB(DATE(`s`.`Checkin_Date`), INTERVAL :ageYears YEAR)) AND `s`.`idVisit` = :idVisit2
+        GROUP BY `s`.`Visit_Span`");
+        $params2 = [':ageYears' => $ageYears, ':idVisit2' => $idVisit];
+        if ($parmVal !== null) {
+            $params2[':depDate'] = $parmVal;
+        }
+        $stmt->execute($params2);
 
 
         $stays = array();
@@ -134,16 +146,16 @@ order by v.`Span`;");
         $spans = parent::loadRegistrationNights($dbh, $idRegistration);
 
         $ageYears = $uS->StartGuestFeesYr;
-        $parm = "NOW()";
 
-        $stmt = $dbh->query("SELECT
-    s.idVisit,
-    s.Visit_Span,
-    SUM(DATEDIFF(IFNULL(DATE(s.Span_End_Date), DATE($parm)), DATE(s.Span_Start_Date))) AS `GDays`
-FROM stays s JOIN name n ON s.idName = n.idName
-    JOIN visit v on s.idVisit = v.idVisit and s.Visit_Span = v.Span
-WHERE v.idRegistration = $idRegistration AND IFNULL(DATE(n.BirthDate), DATE('1901-01-01')) < DATE(DATE_SUB(DATE(s.Checkin_Date), INTERVAL $ageYears YEAR))
-GROUP BY s.idVisit, s.Visit_Span");
+        $stmt = $dbh->prepare("SELECT
+    `s`.`idVisit`,
+    `s`.`Visit_Span`,
+    SUM(DATEDIFF(IFNULL(DATE(`s`.`Span_End_Date`), DATE(NOW())), DATE(`s`.`Span_Start_Date`))) AS `GDays`
+FROM `stays` `s` JOIN `name` `n` ON `s`.`idName` = `n`.`idName`
+    JOIN `visit` `v` ON `s`.`idVisit` = `v`.`idVisit` AND `s`.`Visit_Span` = `v`.`Span`
+WHERE `v`.`idRegistration` = :idRegistration AND IFNULL(DATE(`n`.`BirthDate`), DATE('1901-01-01')) < DATE(DATE_SUB(DATE(`s`.`Checkin_Date`), INTERVAL :ageYears YEAR))
+GROUP BY `s`.`idVisit`, `s`.`Visit_Span`");
+        $stmt->execute([':idRegistration' => $idRegistration, ':ageYears' => $ageYears]);
 
 
         $stays = array();
@@ -280,7 +292,7 @@ GROUP BY s.idVisit, s.Visit_Span");
         return $tiers;
     }
 
-    public function tiersMarkup($r, &$totalAmt, &$tbl, $tiers, &$startDT, $separator, &$totalGuestNites) {
+    public function tiersMarkup($r, &$totalAmt, HTMLTable &$tbl, array $tiers, &$startDT, $separator, &$totalGuestNites) {
 
         $startDate = $startDT->format('M j, Y');
         $startDT->add(new \DateInterval('P' . $tiers[0]['days'] . 'D'));
@@ -439,16 +451,23 @@ GROUP BY s.idVisit, s.Visit_Span");
         $modelCode = ItemPriceCode::PerGuestDaily;
 
         if ($incomeRated) {
-            $dbh->exec("Insert into `room_rate` (`idRoom_rate`,`Title`,`FA_Category`, Rate_Breakpoint_Category,`PriceModel`,`Reduced_Rate_1`,`Reduced_Rate_2`,`Reduced_Rate_3`,`Min_Rate`,`Status`) values "
-                . "(1,'Rate A','a','a','$modelCode',5.00,3.00,0,0,'a'),"
-                . "(2,'Rate B','b','b','$modelCode',10.00,7.00,0,0,'a'),"
-                . "(3,'Rate C','c','c','$modelCode',20.00,15.00,0,0,'a'),"
-                . "(4,'Rate D','d','d','$modelCode',25.00,20.00,0,0,'a');");
+            $insStmt1 = $dbh->prepare("INSERT INTO `room_rate` (`idRoom_rate`, `Title`, `FA_Category`, `Rate_Breakpoint_Category`, `PriceModel`, `Reduced_Rate_1`, `Reduced_Rate_2`, `Reduced_Rate_3`, `Min_Rate`, `Status`) VALUES "
+                . "(1, 'Rate A', 'a', 'a', :modelCode1, 5.00, 3.00, 0, 0, 'a'),"
+                . "(2, 'Rate B', 'b', 'b', :modelCode2, 10.00, 7.00, 0, 0, 'a'),"
+                . "(3, 'Rate C', 'c', 'c', :modelCode3, 20.00, 15.00, 0, 0, 'a'),"
+                . "(4, 'Rate D', 'd', 'd', :modelCode4, 25.00, 20.00, 0, 0, 'a');");
+            $insStmt1->execute([':modelCode1' => $modelCode, ':modelCode2' => $modelCode, ':modelCode3' => $modelCode, ':modelCode4' => $modelCode]);
         }
 
-        $dbh->exec("Insert into `room_rate` (`idRoom_rate`,`Title`,`FA_Category`,`PriceModel`,`Reduced_Rate_1`,`Reduced_Rate_2`,`Reduced_Rate_3`,`Min_Rate`,`Status`) values "
-            . "(5,'Flat Rate','" . RoomRateCategories::FlatRateCategory . "','$modelCode',25.00,25.00,0,0,'a'), "
-            . "(6,'Assigned','" . RoomRateCategories::Fixed_Rate_Category . "','$modelCode',0,0,0,0,'a');");
+        $insStmt2 = $dbh->prepare("INSERT INTO `room_rate` (`idRoom_rate`, `Title`, `FA_Category`, `PriceModel`, `Reduced_Rate_1`, `Reduced_Rate_2`, `Reduced_Rate_3`, `Min_Rate`, `Status`) VALUES "
+            . "(5, 'Flat Rate', :flatRateCat, :modelCode5, 25.00, 25.00, 0, 0, 'a'), "
+            . "(6, 'Assigned', :fixedRateCat, :modelCode6, 0, 0, 0, 0, 'a');");
+        $insStmt2->execute([
+            ':flatRateCat' => RoomRateCategories::FlatRateCategory,
+            ':modelCode5' => $modelCode,
+            ':fixedRateCat' => RoomRateCategories::Fixed_Rate_Category,
+            ':modelCode6' => $modelCode,
+        ]);
     }
 }
 ?>

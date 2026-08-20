@@ -83,12 +83,13 @@ class GLParameters {
                     // Process password
                     if ($desc != '' && $desc != $g[1] && $desc != '********') {
                         $desc = Crypto::encryptMessage($desc);
-                        $dbh->exec("update `gen_lookups` set `Description` = '$desc' where `Table_Name` = '" .$this->tableName . "' and `Code` = '" . $g[0] . "'");
+                        $updPwStmt = $dbh->prepare("UPDATE `gen_lookups` SET `Description` = :desc WHERE `Table_Name` = :tableName AND `Code` = :code");
+                        $updPwStmt->execute([':desc' => $desc, ':tableName' => $this->tableName, ':code' => $g[0]]);
                     }
 
                 } else {
-                    $desc = addslashes($desc);
-                    $dbh->exec("update `gen_lookups` set `Description` = '$desc' where `Table_Name` = '" .$this->tableName . "' and `Code` = '" . $g[0] . "'");
+                    $updDescStmt = $dbh->prepare("UPDATE `gen_lookups` SET `Description` = :desc WHERE `Table_Name` = :tableName AND `Code` = :code");
+                    $updDescStmt->execute([':desc' => $desc, ':tableName' => $this->tableName, ':code' => $g[0]]);
                 }
             }
         }
@@ -149,8 +150,9 @@ class GLParameters {
         }
 
         // Items
-        $sitems = $dbh->query("Select  i.idItem, itm.Type_Id, i.Description, i.Gl_Code, i.Percentage, i.Last_Order_Id
-    from item i left join item_type_map itm on itm.Item_Id = i.idItem");
+        $sitems = $dbh->prepare("SELECT  `i`.`idItem`, `itm`.`Type_Id`, `i`.`Description`, `i`.`Gl_Code`, `i`.`Percentage`, `i`.`Last_Order_Id`
+    FROM `item` `i` LEFT JOIN `item_type_map` `itm` ON `itm`.`Item_Id` = `i`.`idItem`");
+        $sitems->execute();
         $items = $sitems->fetchAll(\PDO::FETCH_ASSOC);
 
         $glTbl->addBodyTr(HTMLTable::makeTd('', array('colspan'=>'2')));
@@ -168,7 +170,8 @@ class GLParameters {
 
         // Pay Types
         $payMethods = array();
-        $stmtp = $dbh->query("select idPayment_method, Gl_Code from payment_method");
+        $stmtp = $dbh->prepare("SELECT `idPayment_method`, `Gl_Code` FROM `payment_method`");
+        $stmtp->execute();
         while ($t = $stmtp->fetch(\PDO::FETCH_NUM)) {
             $payMethods[$t[0]] = $t[1];
         }
@@ -205,10 +208,11 @@ class GLParameters {
 
     protected function getBaMarkup(\PDO $dbh, $prefix = 'bagl') {
 
-        $stmt = $dbh->query("SELECT n.idName, n.Name_First, n.Name_Last, n.Company, nd.Gl_Code_Debit, nd.Gl_Code_Credit, nd.tax_exempt " .
-            " FROM name n join name_volunteer2 nv on n.idName = nv.idName and nv.Vol_Category = 'Vol_Type'  and nv.Vol_Code = '" . VolMemberType::BillingAgent . "' " .
-            " JOIN name_demog nd on n.idName = nd.idName  ".
-            " where n.Member_Status='a' and n.Record_Member = 1 order by n.Company");
+        $stmt = $dbh->prepare("SELECT `n`.`idName`, `n`.`Name_First`, `n`.`Name_Last`, `n`.`Company`, `nd`.`Gl_Code_Debit`, `nd`.`Gl_Code_Credit`, `nd`.`tax_exempt` " .
+            " FROM `name` `n` JOIN `name_volunteer2` `nv` ON `n`.`idName` = `nv`.`idName` AND `nv`.`Vol_Category` = 'Vol_Type'  AND `nv`.`Vol_Code` = :volCode " .
+            " JOIN `name_demog` `nd` ON `n`.`idName` = `nd`.`idName`  ".
+            " WHERE `n`.`Member_Status` = 'a' AND `n`.`Record_Member` = 1 ORDER BY `n`.`Company`");
+        $stmt->execute([':volCode' => VolMemberType::BillingAgent]);
 
         // Billing agent markup
         $glTbl = new HTMLTable();

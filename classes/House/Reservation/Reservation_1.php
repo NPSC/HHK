@@ -255,19 +255,20 @@ class Reservation_1 {
 
         if ($idResv > 0) {
 
-             $query = "select
-        sum(il.Amount)
-    from
-        invoice_line il
-            join
-        invoice i ON il.Invoice_Id = i.idInvoice and il.Item_Id = ". ItemId::LodgingMOA . " and il.Deleted = 0
-            join
-    	reservation_invoice_line ri on ri.Reservation_Id = $idResv AND il.idInvoice_Line = ri.Invoice_Line_Id
-    where
-            i.Deleted = 0
-            and i.`Status` = '" . InvoiceStatus::Paid . "'";
+             $query = "SELECT
+        SUM(`il`.`Amount`)
+    FROM
+        `invoice_line` `il`
+            JOIN
+        `invoice` `i` ON `il`.`Invoice_Id` = `i`.`idInvoice` AND `il`.`Item_Id` = :itemLodgingMOA AND `il`.`Deleted` = 0
+            JOIN
+    	`reservation_invoice_line` `ri` ON `ri`.`Reservation_Id` = :idResv AND `il`.`idInvoice_Line` = `ri`.`Invoice_Line_Id`
+    WHERE
+            `i`.`Deleted` = 0
+            AND `i`.`Status` = :statusPaid";
 
-            $stmt = $dbh->query($query);
+            $stmt = $dbh->prepare($query);
+            $stmt->execute([':itemLodgingMOA' => ItemId::LodgingMOA, ':idResv' => $idResv, ':statusPaid' => InvoiceStatus::Paid]);
 
             $rows = $stmt->fetchAll(\PDO::FETCH_NUM);
 
@@ -634,20 +635,25 @@ class Reservation_1 {
 
         // Set referal doc to archived
         $this->updateReferralFormDocStatus($dbh, ReferralFormStatus::Archived);
-        $dbh->exec("delete from `link_doc` where `idReservation` = '" . $this->getIdReservation(). "'");
+        $delDocStmt = $dbh->prepare("DELETE FROM `link_doc` WHERE `idReservation` = :idResv");
+        $delDocStmt->execute([':idResv' => $this->getIdReservation()]);
 
 
 
         //move notes to PSG
         $idPsg = $this->getIdPsg($dbh);
         if($idPsg > 0 && $this->getIdReservation() > 0) {
-            $dbh->exec("update ignore `link_note` set linkType = '" . Note::PsgLink . "', idLink = " . $idPsg . " where `linkType` = '" . Note::ResvLink . "' and `idLink` = " . $this->getIdReservation());
-            $dbh->exec("delete from `link_note` where `linkType` = '" . Note::ResvLink . "' and `idLink` = " . $this->getIdReservation());
+            $updNoteStmt = $dbh->prepare("UPDATE IGNORE `link_note` SET `linkType` = :psgLink, `idLink` = :idPsg WHERE `linkType` = :resvLink1 AND `idLink` = :idResv1");
+            $updNoteStmt->execute([':psgLink' => Note::PsgLink, ':idPsg' => $idPsg, ':resvLink1' => Note::ResvLink, ':idResv1' => $this->getIdReservation()]);
+            $delNoteStmt = $dbh->prepare("DELETE FROM `link_note` WHERE `linkType` = :resvLink2 AND `idLink` = :idResv2");
+            $delNoteStmt->execute([':resvLink2' => Note::ResvLink, ':idResv2' => $this->getIdReservation()]);
         }
-        
+
 
         // Delete
-        $cnt = $dbh->exec("Delete from reservation where idReservation = " . $this->getIdReservation());
+        $delResvStmt = $dbh->prepare("DELETE FROM `reservation` WHERE `idReservation` = :idResv");
+        $delResvStmt->execute([':idResv' => $this->getIdReservation()]);
+        $cnt = $delResvStmt->rowCount();
 
         if ($cnt == 1) {
             $logText = VisitLog::getDeleteText($this->reservRs, $this->getIdReservation());
@@ -660,10 +666,14 @@ class Reservation_1 {
                 $this->reservRs->idGuest->getStoredVal(),
                 $logText, "delete", $uname);
 
-            $dbh->exec("Delete from reservation_guest where idReservation = " . $this->getIdReservation());
-            $dbh->exec("Delete from constraint_entity where idEntity = " . $this->getIdReservation());
-            $dbh->exec("delete from reservation_multiple where Child_Id = " . $this->getIdReservation());
-            $dbh->exec("delete from reservation_multiple where Host_Id = " . $this->getIdReservation());
+            $delGuestStmt = $dbh->prepare("DELETE FROM `reservation_guest` WHERE `idReservation` = :idResv");
+            $delGuestStmt->execute([':idResv' => $this->getIdReservation()]);
+            $delConstraintStmt = $dbh->prepare("DELETE FROM `constraint_entity` WHERE `idEntity` = :idResv");
+            $delConstraintStmt->execute([':idResv' => $this->getIdReservation()]);
+            $delMultChildStmt = $dbh->prepare("DELETE FROM `reservation_multiple` WHERE `Child_Id` = :idResv");
+            $delMultChildStmt->execute([':idResv' => $this->getIdReservation()]);
+            $delMultHostStmt = $dbh->prepare("DELETE FROM `reservation_multiple` WHERE `Host_Id` = :idResv");
+            $delMultHostStmt->execute([':idResv' => $this->getIdReservation()]);
 
             $this->reservRs = NULL;
 
@@ -685,7 +695,8 @@ class Reservation_1 {
         $boDays = $operatingHours->getNonCleaningDays();
 
         //get old non cleaning days
-        $stmt = $dbh->query("select Code from gen_lookups where Table_Name = 'Non_Cleaning_Day';");
+        $stmt = $dbh->prepare("SELECT `Code` FROM `gen_lookups` WHERE `Table_Name` = 'Non_Cleaning_Day';");
+        $stmt->execute();
         $rows = $stmt->fetchAll(\PDO::FETCH_NUM);
 
         foreach ($rows as $r) {
@@ -944,16 +955,16 @@ class Reservation_1 {
 
         // Resource types
         $typeList = '';
-        foreach ($resourceTypes as $t) {
-            if ($typeList == '') {
-                $typeList = "'" . $t . "'";
-            } else {
-                $typeList .= ",'" . $t . "'";
-            }
+        $typePh = [];
+        $typeParams = [];
+        foreach ($resourceTypes as $i => $t) {
+            $ph = ':type' . $i;
+            $typePh[] = $ph;
+            $typeParams[$ph] = $t;
         }
 
-        if ($typeList != '') {
-            $typeList =  " rc.`Type` in (" . $typeList . ") ";
+        if (count($typePh) > 0) {
+            $typeList =  " `rc`.`Type` IN (" . implode(', ', $typePh) . ") ";
         }
 
         $expectedDepartureDT = new \DateTime($expectedDeparture);
@@ -962,9 +973,13 @@ class Reservation_1 {
         }
 
         // Get the list of available resources
-        $stmtr = $dbh->query("select rc.*, sum(r.Max_Occupants) as `Max_Occupants`
-from resource rc join resource_room rr on rc.idResource = rr.idResource left join `room` r on r.idRoom = rr.idRoom
-where $typeList and (rc.`Retired_At` is null or date(rc.`Retired_At`) > '" . $expectedDepartureDT->format("Y-m-d") . "') group by rc.idResource having `Max_Occupants` >= $numOccupants order by rc.Util_Priority;");
+        $stmtr = $dbh->prepare("SELECT `rc`.*, SUM(`r`.`Max_Occupants`) AS `Max_Occupants`
+FROM `resource` `rc` JOIN `resource_room` `rr` ON `rc`.`idResource` = `rr`.`idResource` LEFT JOIN `room` `r` ON `r`.`idRoom` = `rr`.`idRoom`
+WHERE $typeList AND (`rc`.`Retired_At` IS NULL OR DATE(`rc`.`Retired_At`) > :retiredAfter) GROUP BY `rc`.`idResource` HAVING `Max_Occupants` >= :numOccupants ORDER BY `rc`.`Util_Priority`;");
+        $stmtr->execute($typeParams + [
+            ':retiredAfter' => $expectedDepartureDT->format("Y-m-d"),
+            ':numOccupants' => $numOccupants,
+        ]);
 
         $rescRows = array();
 
@@ -1003,13 +1018,19 @@ where $typeList and (rc.`Retired_At` is null or date(rc.`Retired_At`) > '" . $ex
 
         $arr = self::adjustStartDate($expectedArrival, $startHolidays, $endHolidays, $boDays);
         $dep = self::adjustEndDate($expectedDeparture, $startHolidays, $endHolidays, $boDays);
-        $statuses = "'" . ReservationStatus::UnCommitted . "','" . ReservationStatus::Committed . "'";
 
         //
-        $query = "select r.idReservation from reservation r "
-                . "where r.idResource = $idResource and r.Status in ($statuses) and DATE(ifnull(r.Actual_Arrival, r.Expected_Arrival)) < DATE('$dep') "
-                . "and DATE(ifnull(r.Actual_Departure, r.Expected_Departure)) > DATE('$arr')";
-        $stmt = $dbh->query($query);
+        $query = "SELECT `r`.`idReservation` FROM `reservation` `r` "
+                . "WHERE `r`.`idResource` = :idResource AND `r`.`Status` IN (:stUncommitted, :stCommitted) AND DATE(IFNULL(`r`.`Actual_Arrival`, `r`.`Expected_Arrival`)) < DATE(:dep) "
+                . "AND DATE(IFNULL(`r`.`Actual_Departure`, `r`.`Expected_Departure`)) > DATE(:arr)";
+        $stmt = $dbh->prepare($query);
+        $stmt->execute([
+            ':idResource' => $idResource,
+            ':stUncommitted' => ReservationStatus::UnCommitted,
+            ':stCommitted' => ReservationStatus::Committed,
+            ':dep' => $dep,
+            ':arr' => $arr,
+        ]);
 
 
         // return an array of resourceId's
@@ -1039,33 +1060,44 @@ where $typeList and (rc.`Retired_At` is null or date(rc.`Retired_At`) > '" . $ex
 
         $omitTxt = '';
         $omitVisit = '';
+        $omitParams = [];
         if ($omitSelf && $this->getIdReservation() > 0) {
-            $omitTxt = " and r.idReservation != " . $this->getIdReservation();
-            $omitVisit = " and v.idVisit != " . $this->getIdVisit($dbh);
+            $omitTxt = " AND `r`.`idReservation` != :omitResv";
+            $omitVisit = " AND `v`.`idVisit` != :omitVisit";
+            $omitParams[':omitResv'] = $this->getIdReservation();
+            $omitParams[':omitVisit'] = $this->getIdVisit($dbh);
         }
 
-        $stat = "'" . ReservationStatus::Committed . "', '" . ReservationStatus::UnCommitted . "'";
-        $vStat = "'" . VisitStatus::Pending . "', '" . VisitStatus::Cancelled . "'";
+        $params = $omitParams + [
+            ':stCommitted' => ReservationStatus::Committed,
+            ':stUncommitted' => ReservationStatus::UnCommitted,
+            ':vStPending' => VisitStatus::Pending,
+            ':vStCancelled' => VisitStatus::Cancelled,
+            ':dep1' => $dep, ':arr1' => $arr,
+            ':dep2' => $dep, ':arr2' => $arr,
+            ':dep3' => $dep, ':arr3' => $arr,
+        ];
 
         // Find resources in use
         if (!$uS->IncludeLastDay) {
 
-            $query = "select r.idResource "
-                . "from reservation r where r.Status in ($stat) $omitTxt and DATE(r.Expected_Arrival) < DATE('$dep') and DATE(r.Expected_Departure) > DATE('$arr')
-    union select ru.idResource from resource_use ru where DATE(ru.Start_Date) < DATE('$dep') and ifnull(DATE(ru.End_Date), DATE(now())) > DATE('$arr')
-    union select v.idResource from visit v where v.Status not in ($vStat) $omitVisit and (case when v.Status != 'a' then DATE(v.Span_Start) != DATE(v.Span_End) else 1=1 end) and DATE(v.Arrival_Date) < DATE('$dep') and
-    ifnull(AddDate(DATE(v.Span_End), -1), case when DATE(now()) >= DATE(v.Expected_Departure) then AddDate(DATE(now()), 1) else DATE(v.Expected_Departure) end) >= DATE('$arr')";
+            $query = "SELECT `r`.`idResource` "
+                . "FROM `reservation` `r` WHERE `r`.`Status` IN (:stCommitted, :stUncommitted) $omitTxt AND DATE(`r`.`Expected_Arrival`) < DATE(:dep1) AND DATE(`r`.`Expected_Departure`) > DATE(:arr1)
+    UNION SELECT `ru`.`idResource` FROM `resource_use` `ru` WHERE DATE(`ru`.`Start_Date`) < DATE(:dep2) AND IFNULL(DATE(`ru`.`End_Date`), DATE(NOW())) > DATE(:arr2)
+    UNION SELECT `v`.`idResource` FROM `visit` `v` WHERE `v`.`Status` NOT IN (:vStPending, :vStCancelled) $omitVisit AND (CASE WHEN `v`.`Status` != 'a' THEN DATE(`v`.`Span_Start`) != DATE(`v`.`Span_End`) ELSE 1=1 END) AND DATE(`v`.`Arrival_Date`) < DATE(:dep3) AND
+    IFNULL(AddDate(DATE(`v`.`Span_End`), -1), CASE WHEN DATE(NOW()) >= DATE(`v`.`Expected_Departure`) THEN AddDate(DATE(NOW()), 1) ELSE DATE(`v`.`Expected_Departure`) END) >= DATE(:arr3)";
 
         } else {
 
-            $query = "select r.idResource "
-                . "from reservation r where r.Status in ($stat) $omitTxt and DATE(r.Expected_Arrival) < DATE('$dep') and DATE(r.Expected_Departure) > DATE('$arr')
-    union select ru.idResource from resource_use ru where DATE(ru.Start_Date) < DATE('$dep') and ifnull(DATE(ru.End_Date), DATE(now())) > DATE('$arr')
-    union select v.idResource from visit v where v.Status not in ($vStat) $omitVisit  and (case when v.Status != 'a' then DATE(v.Span_Start) != DATE(v.Span_End) else 1=1 end) and DATE(v.Arrival_Date) < DATE('$dep') and
-    ifnull(DATE(v.Span_End), case when DATE(now()) > DATE(v.Expected_Departure) then AddDate(DATE(now()), 1) else DATE(v.Expected_Departure) end) > DATE('$arr')";
+            $query = "SELECT `r`.`idResource` "
+                . "FROM `reservation` `r` WHERE `r`.`Status` IN (:stCommitted, :stUncommitted) $omitTxt AND DATE(`r`.`Expected_Arrival`) < DATE(:dep1) AND DATE(`r`.`Expected_Departure`) > DATE(:arr1)
+    UNION SELECT `ru`.`idResource` FROM `resource_use` `ru` WHERE DATE(`ru`.`Start_Date`) < DATE(:dep2) AND IFNULL(DATE(`ru`.`End_Date`), DATE(NOW())) > DATE(:arr2)
+    UNION SELECT `v`.`idResource` FROM `visit` `v` WHERE `v`.`Status` NOT IN (:vStPending, :vStCancelled) $omitVisit  AND (CASE WHEN `v`.`Status` != 'a' THEN DATE(`v`.`Span_Start`) != DATE(`v`.`Span_End`) ELSE 1=1 END) AND DATE(`v`.`Arrival_Date`) < DATE(:dep3) AND
+    IFNULL(DATE(`v`.`Span_End`), CASE WHEN DATE(NOW()) > DATE(`v`.`Expected_Departure`) THEN AddDate(DATE(NOW()), 1) ELSE DATE(`v`.`Expected_Departure`) END) > DATE(:arr3)";
         }
 
-        $stmt = $dbh->query($query);
+        $stmt = $dbh->prepare($query);
+        $stmt->execute($params);
 
         // return an array of resourceId's
         return $stmt->fetchAll(\PDO::FETCH_ASSOC);
@@ -1137,7 +1169,8 @@ where $typeList and (rc.`Retired_At` is null or date(rc.`Retired_At`) > '" . $ex
         $roomIds = array();
 
         // Find any constrained rooms.  Comes back with roomId = 0 for no constraints
-        $stmt = $dbh->query("call constraint_room(" . $this->getIdReservation() . " );");
+        $stmt = $dbh->prepare("CALL constraint_room(:idResv);");
+        $stmt->execute([':idResv' => $this->getIdReservation()]);
         $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
         foreach ($rows as $r) {
@@ -1234,13 +1267,13 @@ where $typeList and (rc.`Retired_At` is null or date(rc.`Retired_At`) > '" . $ex
 
         if (is_null($idResc) === FALSE) {
 
-            $stmt = $dbh->prepare("select * from vresv_patient where ifnull(DATE(Actual_Arrival), DATE(`Expected_Arrival`)) <= DATE(:dte) and Status = '$reservStatus'  and idResource = :idr order by `Expected_Arrival`");
-            $stmt->execute(array(':idr'=>$idResc, ':dte'=>$dateAhead->format('Y-m-d')));
+            $stmt = $dbh->prepare("SELECT * FROM `vresv_patient` WHERE IFNULL(DATE(`Actual_Arrival`), DATE(`Expected_Arrival`)) <= DATE(:dte) AND `Status` = :status  AND `idResource` = :idr ORDER BY `Expected_Arrival`");
+            $stmt->execute(array(':idr'=>$idResc, ':dte'=>$dateAhead->format('Y-m-d'), ':status' => $reservStatus));
 
         } else {
 
-            $stmt = $dbh->prepare("select * from vresv_patient where ifnull(DATE(Actual_Arrival), DATE(`Expected_Arrival`)) <= DATE(:dte) and Status = '$reservStatus' order by `Expected_Arrival`");
-            $stmt->execute(array(':dte'=>$dateAhead->format('Y-m-d')));
+            $stmt = $dbh->prepare("SELECT * FROM `vresv_patient` WHERE IFNULL(DATE(`Actual_Arrival`), DATE(`Expected_Arrival`)) <= DATE(:dte) AND `Status` = :status ORDER BY `Expected_Arrival`");
+            $stmt->execute(array(':dte'=>$dateAhead->format('Y-m-d'), ':status' => $reservStatus));
         }
 
         $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
@@ -1299,7 +1332,8 @@ where $typeList and (rc.`Retired_At` is null or date(rc.`Retired_At`) > '" . $ex
                 unset($cleanCodes);
 
                 // Get the list of rooms
-                $stmt = $dbh->query("select rr.idResource, r.* from resource_room rr left join room r on rr.idRoom = r.idRoom");
+                $stmt = $dbh->prepare("SELECT `rr`.`idResource`, `r`.* FROM `resource_room` `rr` LEFT JOIN `room` `r` ON `rr`.`idRoom` = `r`.`idRoom`");
+                $stmt->execute();
 
                 while ($rm = $stmt->fetch(\PDO::FETCH_ASSOC)) {
                     $rooms[$rm['idResource']] = $rm;
@@ -1645,7 +1679,8 @@ where $typeList and (rc.`Retired_At` is null or date(rc.`Retired_At`) > '" . $ex
         $id = intval($idResv, 10);
 
         if ($idResv > 0) {
-            $stmt = $dbh->query("select ifnull(rg.idPsg, 0) from reservation r left join registration rg on rg.idRegistration = r.idRegistration where r.idReservation = $id");
+            $stmt = $dbh->prepare("SELECT IFNULL(`rg`.`idPsg`, 0) FROM `reservation` `r` LEFT JOIN `registration` `rg` ON `rg`.`idRegistration` = `r`.`idRegistration` WHERE `r`.`idReservation` = :id");
+            $stmt->execute([':id' => $id]);
             $rows = $stmt->fetchAll(\PDO::FETCH_NUM);
 
             if (count($rows) > 0) {
@@ -2058,7 +2093,8 @@ where $typeList and (rc.`Retired_At` is null or date(rc.`Retired_At`) > '" . $ex
 
         if ($this->idVisit < 0 && $this->getIdReservation() > 0) {
 
-            $stmt = $dbh->query("Select idVisit from visit where Span = 0 and idReservation = " . $this->getIdReservation());
+            $stmt = $dbh->prepare("SELECT `idVisit` FROM `visit` WHERE `Span` = 0 AND `idReservation` = :idResv");
+            $stmt->execute([':idResv' => $this->getIdReservation()]);
             $lines = $stmt->fetchAll(\PDO::FETCH_NUM);
 
             if (count($lines) > 0) {
@@ -2125,7 +2161,8 @@ where $typeList and (rc.`Retired_At` is null or date(rc.`Retired_At`) > '" . $ex
     public function getReferralDocs(\PDO $dbh) {
         $docs = [];
         if($this->getIdReservation() > 0){
-            $stmt = $dbh->query("select ld.idDocument from link_doc ld join document d on ld.idDocument = d.idDocument where ld.idReservation = " . $this->getIdReservation() . " and d.Type = 'json' and d.Category = 'form'");
+            $stmt = $dbh->prepare("SELECT `ld`.`idDocument` FROM `link_doc` `ld` JOIN `document` `d` ON `ld`.`idDocument` = `d`.`idDocument` WHERE `ld`.`idReservation` = :idResv AND `d`.`Type` = 'json' AND `d`.`Category` = 'form'");
+            $stmt->execute([':idResv' => $this->getIdReservation()]);
             $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
             
             foreach($rows as $row){
@@ -2231,9 +2268,10 @@ where $typeList and (rc.`Retired_At` is null or date(rc.`Retired_At`) > '" . $ex
 
         if ($dbh instanceof \PDO && $this->getStatus() == ReservationStatus::Staying) {
 
-            $stmt = $dbh->query("select count(s.idStays)
-from stays s join visit v on s.idVisit = v.idVisit and s.Visit_Span = v.Span
-where v.Status = 'a' and s.Status = 'a' and v.idReservation = " . $this->getIdReservation());
+            $stmt = $dbh->prepare("SELECT COUNT(`s`.`idStays`)
+FROM `stays` `s` JOIN `visit` `v` ON `s`.`idVisit` = `v`.`idVisit` AND `s`.`Visit_Span` = `v`.`Span`
+WHERE `v`.`Status` = 'a' AND `s`.`Status` = 'a' AND `v`.`idReservation` = :idResv");
+            $stmt->execute([':idResv' => $this->getIdReservation()]);
 
             $rows = $stmt->fetchAll(\PDO::FETCH_NUM);
             $this->numGuests = 0;

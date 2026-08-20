@@ -41,7 +41,8 @@ class ReserveSearcher extends ActiveReservation {
         if ($this->reserveData->getIdPsg() < 1 && $this->reserveData->getId() > 0) {
 
             // patient?
-            $stmt = $dbh->query("select count(*) from psg where idPatient = " . $this->reserveData->getId());
+            $stmt = $dbh->prepare("SELECT COUNT(*) FROM `psg` WHERE `idPatient` = :id");
+            $stmt->execute([':id' => $this->reserveData->getId()]);
             $rows = $stmt->fetchAll();
 
             if ($rows[0][0] > 0) {

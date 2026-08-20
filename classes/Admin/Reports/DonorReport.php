@@ -37,6 +37,7 @@ class DonorReport
         $notNull = array();
         $totalCategories = 0;
         $txtheadr = "";
+        $queryParams = [];
 
         $uS = Session::getInstance();
         $uname = $uS->username;
@@ -54,10 +55,11 @@ class DonorReport
         foreach ($donSelMemberType->get_codeArray() as $code) {
             if ($code != "" && $donSelMemberType->get_value($code)) {
                 $abr = "c" . $totalCategories;
-                $ljClause .= " left join
-            vmember_categories `$abr` on vd.Id = `$abr`.idName and `$abr`.Vol_Status = 'a' and `$abr`.Vol_Category = 'Vol_Type' and `$abr`.Vol_Code = '$code' ";
+                $ljClause .= " LEFT JOIN
+            `vmember_categories` `$abr` ON `vd`.`Id` = `$abr`.`idName` AND `$abr`.`Vol_Status` = 'a' AND `$abr`.`Vol_Category` = 'Vol_Type' AND `$abr`.`Vol_Code` = :code$totalCategories ";
+                $queryParams[':code' . $totalCategories] = $code;
 
-                $notNull[$totalCategories] = "`$abr`.idName is not null ";
+                $notNull[$totalCategories] = "`$abr`.`idName` IS NOT NULL ";
                 $typeMarkup .= $donSelMemberType->get_label($code) . " $andOr ";
                 $totalCategories++;
             }
@@ -67,13 +69,13 @@ class DonorReport
 
         if ($totalCategories > 0) {
 
-            $wclause = " and (" . $notNull[0];
+            $wclause = " AND (" . $notNull[0];
             // Build the where clause
             for ($n = 1; $n < count($notNull); $n++) {
                 if ($andOr == "and") {
-                    $wclause .= "and " . $notNull[$n];
+                    $wclause .= "AND " . $notNull[$n];
                 } else {
-                    $wclause .= "or " . $notNull[$n];
+                    $wclause .= "OR " . $notNull[$n];
                 }
             }
 
@@ -125,11 +127,15 @@ class DonorReport
 
             // Deal with the amount where clauses
             if ($maxAmt != 0 && $minAmt != 0) {
-                $totalClause .= "having  `Total` <= '$maxAmt' and `Total` >= '$minAmt'";
+                $totalClause .= "HAVING  `Total` <= :maxAmt1 AND `Total` >= :minAmt1";
+                $queryParams[':maxAmt1'] = $maxAmt;
+                $queryParams[':minAmt1'] = $minAmt;
             } else if ($maxAmt != 0) {
-                $totalClause .= "having  `Total` <= '$maxAmt'";
+                $totalClause .= "HAVING  `Total` <= :maxAmt1";
+                $queryParams[':maxAmt1'] = $maxAmt;
             } else if ($minAmt != 0) {
-                $totalClause .= "having  `Total` >= '$minAmt'" ;
+                $totalClause .= "HAVING  `Total` >= :minAmt1" ;
+                $queryParams[':minAmt1'] = $minAmt;
             }
 
         }
@@ -144,7 +150,9 @@ class DonorReport
                 $eDate = date('Y-m-d');
             }
 
-        $dateClause = " and vd.Effective_Date >= '" . $sDate . "' and vd.Effective_Date <= '" . $eDate . "' ";
+        $dateClause = " AND `vd`.`Effective_Date` >= :effDateStart AND `vd`.`Effective_Date` <= :effDateEnd ";
+        $queryParams[':effDateStart'] = $sDate;
+        $queryParams[':effDateEnd'] = $eDate;
 
         } else {
             $dateClause = "";
@@ -163,16 +171,21 @@ class DonorReport
             $campcodes = $_POST["selDonCamp"];
 
             // Get all the campaign codes
-            $qu = "Select Campaign_Code, Title, Campaign_Type from campaign;";
-            $stmt = $dbh->query($qu);
+            $qu = "SELECT `Campaign_Code`, `Title`, `Campaign_Type` FROM `campaign`;";
+            $stmt = $dbh->prepare($qu);
+            $stmt->execute();
             $cRows = $stmt->fetchAll(PDO::FETCH_NUM);
             $campRecords = count($cRows);  //mysqli_num_rows($res);
+            $campIdx = 0;
 
             foreach ($cRows as $rw) {
                 // add a clause for each indicidually selected campaign
                 foreach ($campcodes as $item) {
                     if ($item == $rw[0]) {
-                        $selClause .= " or LOWER(TRIM(vd.Campaign_Code)) = LOWER(TRIM('" . $rw[0] . "')) ";
+                        $ph = ':camp' . $campIdx;
+                        $selClause .= " OR LOWER(TRIM(`vd`.`Campaign_Code`)) = LOWER(TRIM($ph)) ";
+                        $queryParams[$ph] = $rw[0];
+                        $campIdx++;
                         $campList .= $rw[1] . ", ";
                         $campCount++;
                     }
@@ -182,7 +195,7 @@ class DonorReport
             // remove first "or"
             if ($selClause != "") {
                 $selClause = substr($selClause, 3);
-                $selClause = " and (" . $selClause . ") ";
+                $selClause = " AND (" . $selClause . ") ";
             } else {
                 $selClause = "";
             }
@@ -208,13 +221,13 @@ class DonorReport
         }
         $mTypeList = $cbBasisDonor->setSqlString();
         if ($mTypeList != "") {
-            $selClause .= " and vd.Member_Type in ($mTypeList) ";
+            $selClause .= " AND `vd`.`Member_Type` IN ($mTypeList) ";
         }
 
 
         // Set up ordering clauses based on users selections
         if ($dlFlag) {
-            $oClause = " order by Donor_Last ";
+            $oClause = " ORDER BY `Donor_Last` ";
         }
 
         $endD = $eDate;
@@ -306,9 +319,10 @@ class DonorReport
                 $sumaryRows['Report Type'] = "Rollup Report - Monetary Donations Only";
             }
 
-            $query = "from vindividual_donations vd $ljClause where vd.Campaign_Type <> 'ink' $wclause $dateClause $selClause group by id $totalClause $oClause";
+            $query = "FROM `vindividual_donations` `vd` $ljClause WHERE `vd`.`Campaign_Type` <> 'ink' $wclause $dateClause $selClause GROUP BY `id` $totalClause $oClause";
 
-            $stmt = $dbh->query("select vd.*, sum(vd.Amount) as Total, sum(vd.Tax_Free) as `Tot_TaxFree`, count(vd.Id) as numDon "  . $query);
+            $stmt = $dbh->prepare("SELECT `vd`.*, SUM(`vd`.`Amount`) AS `Total`, SUM(`vd`.`Tax_Free`) AS `Tot_TaxFree`, COUNT(`vd`.`Id`) AS `numDon` "  . $query);
+            $stmt->execute($queryParams);
             $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
             $reportTitle = "Donor Roll-up Report (Monetary Donations Only).   Date: " . date("m/d/Y");
 
@@ -367,9 +381,11 @@ class DonorReport
                     $sumaryRows['Report Type'] = "First Donations Report";
                 }
 
-                $query = "from vindividual_donations vd $ljClause where 1=1 $wclause $selClause group by vd.id " . ($totalClause != "" ? $totalClause . "and " : "having") . " min(vd.Effective_Date) >= '" . $sDate . "' and min(vd.Effective_Date) <= '" . $eDate . "' $oClause ";
+                $query = "FROM `vindividual_donations` `vd` $ljClause WHERE 1=1 $wclause $selClause GROUP BY `vd`.`id` " . ($totalClause != "" ? $totalClause . "AND " : "HAVING") . " MIN(`vd`.`Effective_Date`) >= :ftStart AND MIN(`vd`.`Effective_Date`) <= :ftEnd $oClause ";
+                $ftParams = $queryParams + [':ftStart' => $sDate, ':ftEnd' => $eDate];
 
-                $stmt = $dbh->query("select vd.*, vd.Amount as Total, vd.Tax_Free as `Tot_TaxFree`, min(vd.Effective_Date)" . $query);
+                $stmt = $dbh->prepare("SELECT `vd`.*, `vd`.`Amount` AS `Total`, `vd`.`Tax_Free` AS `Tot_TaxFree`, MIN(`vd`.`Effective_Date`)" . $query);
+                $stmt->execute($ftParams);
                 $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
                 $reportTitle = "First Donations Report.   Date: " . date("m/d/Y");
@@ -380,9 +396,10 @@ class DonorReport
                 }
 
 
-                $query = "select vd.*, vd.Amount as Total, vd.Tax_Free as `Tot_TaxFree` from vindividual_donations vd $ljClause where 1=1 $wclause $dateClause $selClause $totalClause $oClause";
+                $query = "SELECT `vd`.*, `vd`.`Amount` AS `Total`, `vd`.`Tax_Free` AS `Tot_TaxFree` FROM `vindividual_donations` `vd` $ljClause WHERE 1=1 $wclause $dateClause $selClause $totalClause $oClause";
 
-                $stmt = $dbh->query($query);
+                $stmt = $dbh->prepare($query);
+                $stmt->execute($queryParams);
                 $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
                 $reportTitle = "Individual Donation Report.   Date: " . date("m/d/Y");

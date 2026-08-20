@@ -60,9 +60,10 @@ class BillingAgentReport extends AbstractReport implements ReportInterface {
     }
 
     protected function loadBillingAgents(\PDO $dbh){
-        $stmt = $dbh->query("SELECT n.idName, if(trim(n.Name_Full) != '', n.Name_Full, n.Company) as `Title`" .
-            " FROM name n join name_volunteer2 nv on n.idName = nv.idName and nv.Vol_Category = 'Vol_Type'  and nv.Vol_Code = '" . VolMemberType::BillingAgent . "' " .
-            " where n.Member_Status='a' and n.Record_Member = 1 order by n.Company");
+        $stmt = $dbh->prepare("SELECT `n`.`idName`, IF(TRIM(`n`.`Name_Full`) != '', `n`.`Name_Full`, `n`.`Company`) AS `Title`" .
+            " FROM `name` `n` JOIN `name_volunteer2` `nv` ON `n`.`idName` = `nv`.`idName` AND `nv`.`Vol_Category` = 'Vol_Type'  AND `nv`.`Vol_Code` = :vcBillingAgent " .
+            " WHERE `n`.`Member_Status` = 'a' AND `n`.`Record_Member` = 1 ORDER BY `n`.`Company`");
+        $stmt->execute([':vcBillingAgent' => VolMemberType::BillingAgent]);
         return $stmt->fetchAll(\PDO::FETCH_NUM);
     }
 
@@ -102,30 +103,36 @@ class BillingAgentReport extends AbstractReport implements ReportInterface {
         foreach ($this->demogs as $d) {
             if (strtolower($d[2]) == 'y'){
                 if($d[0] == "Gender"){
-                    $joinDemos .= "left join gen_lookups Gender on p.Gender = Gender.Code and Gender.Table_Name = 'Gender'";
+                    $joinDemos .= "LEFT JOIN `gen_lookups` `Gender` ON `p`.`Gender` = `Gender`.`Code` AND `Gender`.`Table_Name` = 'Gender'";
                 }else{
-                    $joinDemos .= "left join gen_lookups " . $d[0] . " on pd.".$d[0]." = ".$d[0].".Code and ".$d[0].".Table_Name = '".$d[0]."'";
+                    $joinDemos .= "LEFT JOIN `gen_lookups` `" . $d[0] . "` ON `pd`.`".$d[0]."` = `".$d[0]."`.`Code` AND `".$d[0]."`.`Table_Name` = '".$d[0]."'";
                 }
-                $listDemos .= "ifnull(".$d[0].".Description, '') as `".$d[0]."`,";
+                $listDemos .= "IFNULL(`".$d[0]."`.`Description`, '') AS `".$d[0]."`,";
 
             }
         }
 
-        $departureCase = "CASE WHEN v.Span_End IS NOT NULL THEN v.Span_End
-         WHEN v.Expected_Departure IS NOT NULL AND v.Expected_Departure > NOW() THEN v.Expected_Departure
-         WHEN v.Status = 'a' THEN ''
+        $departureCase = "CASE WHEN `v`.`Span_End` IS NOT NULL THEN `v`.`Span_End`
+         WHEN `v`.`Expected_Departure` IS NOT NULL AND `v`.`Expected_Departure` > NOW() THEN `v`.`Expected_Departure`
+         WHEN `v`.`Status` = 'a' THEN ''
          ELSE '' END";
 
-        $whDepartureCase = "CASE WHEN v.Span_End IS NOT NULL THEN v.Span_End
-        WHEN v.Expected_Departure IS NOT NULL AND v.Expected_Departure > NOW() THEN v.Expected_Departure
+        $whDepartureCase = "CASE WHEN `v`.`Span_End` IS NOT NULL THEN `v`.`Span_End`
+        WHEN `v`.`Expected_Departure` IS NOT NULL AND `v`.`Expected_Departure` > NOW() THEN `v`.`Expected_Departure`
         ELSE NOW() END";
 
-        $whDates =  "v.Span_Start <= '" . $this->filter->getReportEnd() . "' and " . $whDepartureCase . " >= '" . $this->filter->getReportStart() . "' ";
+        $whDates =  "`v`.`Span_Start` <= :reportEnd AND " . $whDepartureCase . " >= :reportStart ";
+        $this->queryParams = [':reportEnd' => $this->filter->getReportEnd(), ':reportStart' => $this->filter->getReportStart()];
 
         $whBilling = "";
         if(count($this->selectedBillingAgents) > 0){
-            $billingAgents = implode(",", $this->selectedBillingAgents);
-            $whBilling = " and i.Sold_To_Id in (" . $billingAgents . ")";
+            $billingPh = [];
+            foreach ($this->selectedBillingAgents as $i => $ba) {
+                $ph = ':selBa' . $i;
+                $billingPh[] = $ph;
+                $this->queryParams[$ph] = $ba;
+            }
+            $whBilling = " AND `i`.`Sold_To_Id` IN (" . implode(', ', $billingPh) . ")";
         }
         $baIds = array();
         if(count($this->billingAgents) > 0){
@@ -133,68 +140,77 @@ class BillingAgentReport extends AbstractReport implements ReportInterface {
                 $baIds[] = $ba[0];
             }
         }
+        $baPh = [];
+        foreach ($baIds as $i => $bid) {
+            $ph = ':allBa' . $i;
+            $baPh[] = $ph;
+            $this->queryParams[$ph] = $bid;
+        }
+        $baList = implode(', ', $baPh);
+        $this->queryParams[':itemLodging'] = ItemId::Lodging;
 
-        $this->query = "select
-    CONCAT(v.idVisit, '-', v.Span) as idVisit,
-    v.idVisit as `visitId`,
-    v.Span as `Span`,
-    ifnull(p.idName, '') as `pId`,
-    ifnull(hs.idPsg, '') as `idPsg`,
-    ifnull(p.Name_Last, '') as Name_Last,
-    ifnull(p.Name_First, '') as Name_First,
-    concat(ifnull(pa.Address_1, ''), '', ifnull(pa.Address_2, ''))  as pAddr,
-    ifnull(pa.City, '') as pCity,
-    ifnull(pa.County, '') as pCounty,
-    ifnull(pa.State_Province, '') as pState,
-    ifnull(pa.Country_Code, '') as pCountry,
-    ifnull(pa.Postal_Code, '') as `pZip`,
-    concat(if(dc.Description is not null, concat(dc.Description, ': '), ''), ifnull(d.Description, '')) as `Diagnosis`,
-    ifnull(p.BirthDate, '') as `DOB`,
-    TIMESTAMPDIFF(YEAR, p.BirthDate, CURDATE()) as `Age`,
+        $this->query = "SELECT
+    CONCAT(`v`.`idVisit`, '-', `v`.`Span`) AS `idVisit`,
+    `v`.`idVisit` AS `visitId`,
+    `v`.`Span` AS `Span`,
+    IFNULL(`p`.`idName`, '') AS `pId`,
+    IFNULL(`hs`.`idPsg`, '') AS `idPsg`,
+    IFNULL(`p`.`Name_Last`, '') AS `Name_Last`,
+    IFNULL(`p`.`Name_First`, '') AS `Name_First`,
+    CONCAT(IFNULL(`pa`.`Address_1`, ''), '', IFNULL(`pa`.`Address_2`, ''))  AS `pAddr`,
+    IFNULL(`pa`.`City`, '') AS `pCity`,
+    IFNULL(`pa`.`County`, '') AS `pCounty`,
+    IFNULL(`pa`.`State_Province`, '') AS `pState`,
+    IFNULL(`pa`.`Country_Code`, '') AS `pCountry`,
+    IFNULL(`pa`.`Postal_Code`, '') AS `pZip`,
+    CONCAT(IF(`dc`.`Description` IS NOT NULL, CONCAT(`dc`.`Description`, ': '), ''), IFNULL(`d`.`Description`, '')) AS `Diagnosis`,
+    IFNULL(`p`.`BirthDate`, '') AS `DOB`,
+    TIMESTAMPDIFF(YEAR, `p`.`BirthDate`, CURDATE()) AS `Age`,
     " . $listDemos . "
-    ifnull(v.Span_Start, '') as `Arrival`,
-    " . $departureCase . " as `Departure`,
-    DATEDIFF(ifnull(v.Span_End, date(now())), v.Span_Start) as `Nights`,
-    SUM(DATEDIFF(il.Period_End, il.Period_Start)) as `PaidNights`,
-    ifnull(pgn.Name_First, '') as `pgFirst`,
-    ifnull(pgn.Name_Last, '') as `pgLast`,
-    ifnull(vs.Description, '') as `Status_Title`,
-    ifnull(i.Invoice_Number, '') as `Invoice_Number`,
-    sum(ifnull(i.Amount, '')) as `Invoice_Amount`,
-    if(trim(ba.Name_Full) != '', ba.Name_Full, ba.Company) as `Billed To`,
-    ifnull(invs.Description, '') as `Invoice_Status_Title`
-from
-    visit v
-        left join
-    hospital_stay hs on v.idHospital_Stay = hs.idHospital_Stay
-        left join
-    gen_lookups d on hs.Diagnosis = d.Code and d.`Table_Name` = 'Diagnosis'
-        left join
-    gen_lookups dc on d.Substitute = dc.Code and dc.Table_Name = 'Diagnosis_Category'
-        left join
-    name p ON hs.idPatient = p.idName
-        left join
-    name_address pa ON p.idName = pa.idName and p.Preferred_Mail_Address = pa.Purpose
-        left join
-    name_demog pd ON p.idName = pd.idName
+    IFNULL(`v`.`Span_Start`, '') AS `Arrival`,
+    " . $departureCase . " AS `Departure`,
+    DATEDIFF(IFNULL(`v`.`Span_End`, DATE(NOW())), `v`.`Span_Start`) AS `Nights`,
+    SUM(DATEDIFF(`il`.`Period_End`, `il`.`Period_Start`)) AS `PaidNights`,
+    IFNULL(`pgn`.`Name_First`, '') AS `pgFirst`,
+    IFNULL(`pgn`.`Name_Last`, '') AS `pgLast`,
+    IFNULL(`vs`.`Description`, '') AS `Status_Title`,
+    IFNULL(`i`.`Invoice_Number`, '') AS `Invoice_Number`,
+    SUM(IFNULL(`i`.`Amount`, '')) AS `Invoice_Amount`,
+    IF(TRIM(`ba`.`Name_Full`) != '', `ba`.`Name_Full`, `ba`.`Company`) AS `Billed To`,
+    IFNULL(`invs`.`Description`, '') AS `Invoice_Status_Title`
+FROM
+    `visit` `v`
+        LEFT JOIN
+    `hospital_stay` `hs` ON `v`.`idHospital_Stay` = `hs`.`idHospital_Stay`
+        LEFT JOIN
+    `gen_lookups` `d` ON `hs`.`Diagnosis` = `d`.`Code` AND `d`.`Table_Name` = 'Diagnosis'
+        LEFT JOIN
+    `gen_lookups` `dc` ON `d`.`Substitute` = `dc`.`Code` AND `dc`.`Table_Name` = 'Diagnosis_Category'
+        LEFT JOIN
+    `name` `p` ON `hs`.`idPatient` = `p`.`idName`
+        LEFT JOIN
+    `name_address` `pa` ON `p`.`idName` = `pa`.`idName` AND `p`.`Preferred_Mail_Address` = `pa`.`Purpose`
+        LEFT JOIN
+    `name_demog` `pd` ON `p`.`idName` = `pd`.`idName`
     ".$joinDemos."
-        left join
-    name pgn ON v.idPrimaryGuest = pgn.idName
-        left join
-    gen_lookups vs on vs.Table_Name = 'Visit_Status' and vs.Code = v.Status
-        join
-    invoice i on v.idVisit = i.Order_Number and v.Span = i.Suborder_Number and i.Sold_To_Id in (".implode(",",$baIds).")
-        left join
-    invoice_line il on i.idInvoice = il.Invoice_Id and il.Deleted = 0 and il.Item_Id = ". ItemId::Lodging ."
-        left join
-    gen_lookups invs on invs.Table_Name = 'Invoice_Status' and invs.Code = i.Status
-        join
-    name ba on i.Sold_To_Id = ba.idName and ba.idName in (".implode(",",$baIds).")
-where i.Deleted = 0 and " . $whDates . $whBilling . " group by v.idVisit, v.Span, i.Sold_To_Id order by v.idVisit";
+        LEFT JOIN
+    `name` `pgn` ON `v`.`idPrimaryGuest` = `pgn`.`idName`
+        LEFT JOIN
+    `gen_lookups` `vs` ON `vs`.`Table_Name` = 'Visit_Status' AND `vs`.`Code` = `v`.`Status`
+        JOIN
+    `invoice` `i` ON `v`.`idVisit` = `i`.`Order_Number` AND `v`.`Span` = `i`.`Suborder_Number` AND `i`.`Sold_To_Id` IN (" . $baList . ")
+        LEFT JOIN
+    `invoice_line` `il` ON `i`.`idInvoice` = `il`.`Invoice_Id` AND `il`.`Deleted` = 0 AND `il`.`Item_Id` = :itemLodging
+        LEFT JOIN
+    `gen_lookups` `invs` ON `invs`.`Table_Name` = 'Invoice_Status' AND `invs`.`Code` = `i`.`Status`
+        JOIN
+    `name` `ba` ON `i`.`Sold_To_Id` = `ba`.`idName` AND `ba`.`idName` IN (" . $baList . ")
+WHERE `i`.`Deleted` = 0 AND " . $whDates . $whBilling . " GROUP BY `v`.`idVisit`, `v`.`Span`, `i`.`Sold_To_Id` ORDER BY `v`.`idVisit`";
     }
 
     public function getStats(){
-        $stmt = $this->dbh->query($this->query);
+        $stmt = $this->dbh->prepare($this->query);
+        $stmt->execute($this->queryParams);
         $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
         $patientIds = array();
         $totalBilled = 0.00;

@@ -128,12 +128,28 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
 
     }
 
+    $whParams = [];
+
     if ($whHosp != '') {
-        $whHosp = " and hs.idHospital in (".$whHosp.") ";
+        $hospIds = explode(',', $whHosp);
+        $hospPh = [];
+        foreach ($hospIds as $i => $hid) {
+            $ph = ':hosp' . $i;
+            $hospPh[] = $ph;
+            $whParams[$ph] = $hid;
+        }
+        $whHosp = " AND `hs`.`idHospital` IN (" . implode(', ', $hospPh) . ") ";
     }
 
     if ($whAssoc != '') {
-        $whHosp .= " and hs.idAssociation in (".$whAssoc.") ";
+        $assocIds = explode(',', $whAssoc);
+        $assocPh = [];
+        foreach ($assocIds as $i => $aid) {
+            $ph = ':assoc' . $i;
+            $assocPh[] = $ph;
+            $whParams[$ph] = $aid;
+        }
+        $whHosp .= " AND `hs`.`idAssociation` IN (" . implode(', ', $assocPh) . ") ";
     }
 
     if ($filter->getReportStart() != '' && $filter->getReportEnd() != '') {
@@ -142,9 +158,9 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
 
         $newGuest = new NewGuest($filter->getReportStart(), $filter->getQueryEnd());
 
-        $dataTable = $newGuest->doNewGuestReport($dbh, $colSelector, $whHosp, $local, $labels);
+        $dataTable = $newGuest->doNewGuestReport($dbh, $colSelector, $whHosp, $local, $labels, $whParams);
 
-        $newGuest->doReturningGuests($dbh, $whHosp);
+        $newGuest->doReturningGuests($dbh, $whHosp, $whParams);
 
         $numAllGuests = $newGuest->getNumberNewGuests() + $newGuest->getNumberReturnGuests();
         $newRatio = 0;
@@ -172,8 +188,8 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
             . HTMLTable::makeTd($numAllGuests));
 
         // PSGs
-        $newGuest->doNewPSGs($dbh, $whHosp);
-        $newGuest->doReturningPSGs($dbh, $whHosp);
+        $newGuest->doNewPSGs($dbh, $whHosp, $whParams);
+        $newGuest->doReturningPSGs($dbh, $whHosp, $whParams);
         $numAllPSGs = $newGuest->getNumberNewPSGs() + $newGuest->getNumberReturnPSGs();
         $newRatio = 0;
 

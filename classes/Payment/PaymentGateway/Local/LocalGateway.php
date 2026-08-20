@@ -433,9 +433,12 @@ class LocalGateway extends AbstractPaymentGateway {
 		Transaction::recordTransaction($dbh, $vr, '', TransType::undoRetrn, TransMethod::Token);
 
 		// Payment records.
-		$dbh->exec("delete from payment_invoice where Payment_Id = " . $payRs->idPayment->getStoredVal ());
-		$dbh->exec("delete from payment_auth where idPayment = " . $payRs->idPayment->getStoredVal ());
-		$dbh->exec("delete from payment where idPayment = " . $payRs->idPayment->getStoredVal ());
+		$delPmtInvStmt = $dbh->prepare("DELETE FROM `payment_invoice` WHERE `Payment_Id` = :idPayment");
+		$delPmtInvStmt->execute([':idPayment' => $payRs->idPayment->getStoredVal()]);
+		$delAuthStmt = $dbh->prepare("DELETE FROM `payment_auth` WHERE `idPayment` = :idPayment");
+		$delAuthStmt->execute([':idPayment' => $payRs->idPayment->getStoredVal()]);
+		$delPmtStmt = $dbh->prepare("DELETE FROM `payment` WHERE `idPayment` = :idPayment");
+		$delPmtStmt->execute([':idPayment' => $payRs->idPayment->getStoredVal()]);
 
 		$invoice->updateInvoiceBalance($dbh, $pAuthRs->Approved_Amount->getStoredVal (), $uS->username);
 		// delete invoice

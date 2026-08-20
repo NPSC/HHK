@@ -58,6 +58,7 @@ class DataTableServer {
 
 
         $sWhere = "";
+        $whereParams = [];
 
         /* Individual column filtering */
         for ($i = 0; $i < count($aColumns); $i++) {
@@ -70,11 +71,15 @@ class DataTableServer {
                     $sWhere .= " AND ";
                 }
 
+                $ph = ':srch' . $i;
+
                 // Special fix for member id's
                 if ($aColumns[$i] == 'idName' || $aColumns[$i] == 'idRoom' || $aColumns[$i] == 'idResource' || $aColumns[$i] == 'idPsg') {
-                    $sWhere .= "`" . $aColumns[$i] . "` = " . intval($dtp['sSearch_' . $i], 10) . " ";
+                    $sWhere .= "`" . $aColumns[$i] . "` = " . $ph . " ";
+                    $whereParams[$ph] = intval($dtp['sSearch_' . $i], 10);
                 } else {
-                    $sWhere .= "`" . $aColumns[$i] . "` LIKE '%" . $dtp['sSearch_' . $i] . "%' ";
+                    $sWhere .= "`" . $aColumns[$i] . "` LIKE " . $ph . " ";
+                    $whereParams[$ph] = '%' . $dtp['sSearch_' . $i] . '%';
                 }
             }
         }
@@ -85,17 +90,19 @@ class DataTableServer {
          * Get data to display
          */
         $sQuery = "SELECT SQL_CALC_FOUND_ROWS `" . str_replace(" , ", " ", implode("`, `", $aColumns)) . "`
-                FROM   $sTable
+                FROM   `$sTable`
                 $sWhere
                 $sOrder
                 $sLimit";
 
-        $stmt = $dbh->query($sQuery);
+        $stmt = $dbh->prepare($sQuery);
+        $stmt->execute($whereParams);
 
 
 
         /* Data set length after filtering */
-        $stmtflt = $dbh->query("SELECT FOUND_ROWS()");
+        $stmtflt = $dbh->prepare("SELECT FOUND_ROWS()");
+        $stmtflt->execute();
         $rtots = $stmtflt->fetchAll(\PDO::FETCH_NUM);
 
         $iFilteredTotal = $rtots[0][0];
@@ -104,16 +111,17 @@ class DataTableServer {
         if ($sIndexColumn == "") {
             $sQuery = "
                 SELECT COUNT(*)
-                FROM   $sTable
+                FROM   `$sTable`
                 ";
         } else {
 
             $sQuery = "
                 SELECT COUNT(`" . $sIndexColumn . "`)
-                FROM   $sTable
+                FROM   `$sTable`
                 ";
         }
-        $stmtotal = $dbh->query($sQuery);
+        $stmtotal = $dbh->prepare($sQuery);
+        $stmtotal->execute();
         $tots = $stmtotal->fetchAll(\PDO::FETCH_NUM);
         $iTotal = $tots[0][0];
 

@@ -1002,7 +1002,8 @@ class Visit {
         EditRS::updateStoredVals($stayRS);
 
         // Get guest names
-        $stmt = $dbh->query("Select Name_Full from `name` where idName = $idGuest;");
+        $stmt = $dbh->prepare("SELECT `Name_Full` FROM `name` WHERE `idName` = :idGuest;");
+        $stmt->execute([':idGuest' => $idGuest]);
         $gsts = $stmt->fetchAll(\PDO::FETCH_NUM);
         $guestName = '';
 
@@ -1248,14 +1249,18 @@ class Visit {
         $uS = Session::getInstance();
 
         // delete this visit span and all its stays
-        $rowsAffected = $dbh->exec("Delete from visit where idVisit = ". $this->getIdVisit()." and Span = ". $this->getSpan() .";");
+        $delVisitStmt = $dbh->prepare("DELETE FROM `visit` WHERE `idVisit` = :idVisit AND `Span` = :span;");
+        $delVisitStmt->execute([':idVisit' => $this->getIdVisit(), ':span' => $this->getSpan()]);
+        $rowsAffected = $delVisitStmt->rowCount();
 
         if ($rowsAffected == 1){
             // remove any onleave stuff.
-            $dbh->exec("Delete from visit_onleave where idVisit = ". $this->getIdVisit()." and Span = ". $this->getSpan() .";");
+            $delOnLeaveStmt = $dbh->prepare("DELETE FROM `visit_onleave` WHERE `idVisit` = :idVisit AND `Span` = :span;");
+            $delOnLeaveStmt->execute([':idVisit' => $this->getIdVisit(), ':span' => $this->getSpan()]);
 
             // Delete stays
-            $dbh->exec("Delete from stays where idVisit = ". $this->getIdVisit()." and Visit_Span = ". $this->getSpan() .";");
+            $delStaysStmt = $dbh->prepare("DELETE FROM `stays` WHERE `idVisit` = :idVisit AND `Visit_Span` = :span;");
+            $delStaysStmt->execute([':idVisit' => $this->getIdVisit(), ':span' => $this->getSpan()]);
 
             $logText = VisitLog::getDeleteText($this->visitRS, $this->getIdVisit());
             VisitLog::logVisit($dbh, $this->visitRS->idVisit->getStoredVal(), $this->visitRS->Span->getStoredVal(), $this->visitRS->idResource->getStoredVal(), $this->visitRS->idRegistration->getStoredVal(), $logText, "delete", $uS->username);
@@ -2146,7 +2151,8 @@ class Visit {
                 EditRS::delete($dbh, $this->visitRS, array($this->visitRS->idVisit, $this->visitRS->Span));
 
                 // Delete all stays in current visit
-                $dbh->exec("delete from stays where idVisit = " . $this->getIdVisit() . " and Visit_Span = ".$this->getSpan());
+                $delStaysStmt2 = $dbh->prepare("DELETE FROM `stays` WHERE `idVisit` = :idVisit AND `Visit_Span` = :span");
+                $delStaysStmt2->execute([':idVisit' => $this->getIdVisit(), ':span' => $this->getSpan()]);
 
                 // Reset previous visit
                 $vRs = new VisitRS();

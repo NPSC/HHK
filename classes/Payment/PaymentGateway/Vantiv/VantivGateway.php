@@ -793,8 +793,9 @@ class VantivGateway extends AbstractPaymentGateway {
 
     protected function loadGateway(\PDO $dbh) {
 
-        $query = "select * from `cc_hosted_gateway` where `cc_name` = '" . $this->getGatewayType() . "' and `Gateway_Name` = '" .$this->getGatewayName()."'";
-        $stmt = $dbh->query($query);
+        $query = "SELECT * FROM `cc_hosted_gateway` WHERE `cc_name` = :gwType AND `Gateway_Name` = :gwName";
+        $stmt = $dbh->prepare($query);
+        $stmt->execute([':gwType' => $this->getGatewayType(), ':gwName' => $this->getGatewayName()]);
 
         $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
@@ -888,7 +889,8 @@ class VantivGateway extends AbstractPaymentGateway {
         } else {
 			// Show all locations, none is preselected.
 
-            $stmt = $dbh->query("Select DISTINCT l.`Merchant`, l.`Title` from `location` l join `room` r on l.idLocation = r.idLocation where r.idLocation is not null and l.`Status` = 'a'");
+            $stmt = $dbh->prepare("SELECT DISTINCT `l`.`Merchant`, `l`.`Title` FROM `location` `l` JOIN `room` `r` ON `l`.`idLocation` = `r`.`idLocation` WHERE `r`.`idLocation` IS NOT NULL AND `l`.`Status` = 'a'");
+            $stmt->execute();
             $gwRows = $stmt->fetchAll();
 
             $selArray['size'] = count($gwRows);
@@ -1261,7 +1263,9 @@ class VantivGateway extends AbstractPaymentGateway {
             EditRS::loadRow($r[0], $locRs);
             $idLocation = $locRs->idLocation->getStoredVal();
 
-            $num = $dbh->exec("update room set idLocation = $idLocation");
+            $updRoomStmt = $dbh->prepare("UPDATE `room` SET `idLocation` = :idLocation");
+            $updRoomStmt->execute([':idLocation' => $idLocation]);
+            $num = $updRoomStmt->rowCount();
         }
 
         return $num;

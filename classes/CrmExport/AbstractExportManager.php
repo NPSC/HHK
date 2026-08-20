@@ -87,7 +87,8 @@ abstract class AbstractExportManager implements ExportManagerInterface{
 
     public function __construct(\PDO $dbh, string $cmsName) {
 
-        $stmt = $dbh->query("SELECT `Description` FROM `gen_lookups` WHERE `Table_Name` = 'ExternalCRM' AND `Code` = '$cmsName';");
+        $stmt = $dbh->prepare("SELECT `Description` FROM `gen_lookups` WHERE `Table_Name` = 'ExternalCRM' AND `Code` = :cmsName;");
+        $stmt->execute([':cmsName' => $cmsName]);
         $rows = $stmt->fetchAll(\PDO::FETCH_NUM);
 
         if (isset($rows[0]) && isset($rows[0][0])) {
@@ -148,7 +149,8 @@ abstract class AbstractExportManager implements ExportManagerInterface{
 
     public function getSearchFields(?\PDO $dbh, string $tableName): array {
 
-        $stmt = $dbh->query("SHOW COLUMNS FROM `$tableName`;");
+        $stmt = $dbh->prepare("SHOW COLUMNS FROM `$tableName`;");
+        $stmt->execute();
         $cols = array();
 
         while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
@@ -309,8 +311,17 @@ abstract class AbstractExportManager implements ExportManagerInterface{
 
         if (count($idList) > 0) {
 
-            $parm = " in (" . implode(',', $idList) . ") ";
-            return $dbh->query("Select * from $view where HHK_ID $parm");
+            $idPh = [];
+            $idParams = [];
+            foreach ($idList as $i => $id) {
+                $ph = ':id' . $i;
+                $idPh[] = $ph;
+                $idParams[$ph] = $id;
+            }
+
+            $stmt = $dbh->prepare("SELECT * FROM `$view` WHERE `HHK_ID` IN (" . implode(', ', $idPh) . ")");
+            $stmt->execute($idParams);
+            return $stmt;
 
         }
 

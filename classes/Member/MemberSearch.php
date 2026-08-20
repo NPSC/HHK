@@ -202,15 +202,15 @@ class MemberSearch {
         // Referral Agent & Doctor
         } else if ($basis == VolMemberType::ReferralAgent || $basis == VolMemberType::Doctor) {
 
-                $query2 = "SELECT distinct n.idName, n.Name_Last, n.Name_First, n.Name_Nickname, ifnull(nw.Phone_Num, '') as `WorkPhone`, ifnull(nw.Phone_Extension, '') as `WorkExt`, ifnull(nc.Phone_Num, '') as `CellPhone`, ifnull(ne.Email, '') as `Email`
-FROM name n join name_volunteer2 nv on n.idName = nv.idName and nv.Vol_Category = 'Vol_Type'  and nv.Vol_Code = '$basis'
-left join name_phone nw on n.idName = nw.idName and nw.Phone_Code = '" . PhonePurpose::Work . "'
-left join name_phone nc on n.idName = nc.idName and nc.Phone_Code = '" . PhonePurpose::Cell . "'
-left join name_email ne on n.idName = ne.idName and n.Preferred_Email = ne.Purpose
-where n.idName>0 and n.Member_Status='a' and n.Record_Member = 1 AND MATCH(n.`Name_Search`) AGAINST (:search in boolean mode) order by n.Name_Last, n.Name_First;";
+                $query2 = "SELECT DISTINCT `n`.`idName`, `n`.`Name_Last`, `n`.`Name_First`, `n`.`Name_Nickname`, IFNULL(`nw`.`Phone_Num`, '') AS `WorkPhone`, IFNULL(`nw`.`Phone_Extension`, '') AS `WorkExt`, IFNULL(`nc`.`Phone_Num`, '') AS `CellPhone`, IFNULL(`ne`.`Email`, '') AS `Email`
+FROM `name` `n` JOIN `name_volunteer2` `nv` ON `n`.`idName` = `nv`.`idName` AND `nv`.`Vol_Category` = 'Vol_Type'  AND `nv`.`Vol_Code` = :basis
+LEFT JOIN `name_phone` `nw` ON `n`.`idName` = `nw`.`idName` AND `nw`.`Phone_Code` = '" . PhonePurpose::Work . "'
+LEFT JOIN `name_phone` `nc` ON `n`.`idName` = `nc`.`idName` AND `nc`.`Phone_Code` = '" . PhonePurpose::Cell . "'
+LEFT JOIN `name_email` `ne` ON `n`.`idName` = `ne`.`idName` AND `n`.`Preferred_Email` = `ne`.`Purpose`
+WHERE `n`.`idName` > 0 AND `n`.`Member_Status` = 'a' AND `n`.`Record_Member` = 1 AND MATCH(`n`.`Name_Search`) AGAINST (:search IN BOOLEAN MODE) ORDER BY `n`.`Name_Last`, `n`.`Name_First`;";
 
             $stmt = $dbh->prepare($query2);
-            $stmt->execute([':search'=>$this->buildFulltextQuery($this->letters)]);
+            $stmt->execute([':basis' => $basis, ':search'=>$this->buildFulltextQuery($this->letters)]);
             $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
             foreach ($rows as $r) {
@@ -262,20 +262,21 @@ where n.idName>0 and n.Member_Status='a' and n.Record_Member = 1 AND MATCH(n.`Na
 
             if ($baId > 0) {
                 // search on id
-                $stmt = $dbh->query("SELECT n.idName, n.Name_Last, n.Name_First, n.Name_Nickname, n.Company, nd.tax_exempt  " .
-                        " FROM name n join name_volunteer2 nv on n.idName = nv.idName and nv.Vol_Category = 'Vol_Type'  and nv.Vol_Code = '$basis'" .
-                        " join name_demog nd on n.idName = nd.idName" .
-                        " where n.Member_Status='a' and n.Record_Member = 1 and n.idName = $baId");
+                $stmt = $dbh->prepare("SELECT `n`.`idName`, `n`.`Name_Last`, `n`.`Name_First`, `n`.`Name_Nickname`, `n`.`Company`, `nd`.`tax_exempt`  " .
+                        " FROM `name` `n` JOIN `name_volunteer2` `nv` ON `n`.`idName` = `nv`.`idName` AND `nv`.`Vol_Category` = 'Vol_Type'  AND `nv`.`Vol_Code` = :basis" .
+                        " JOIN `name_demog` `nd` ON `n`.`idName` = `nd`.`idName`" .
+                        " WHERE `n`.`Member_Status` = 'a' AND `n`.`Record_Member` = 1 AND `n`.`idName` = :baId");
+                $stmt->execute([':basis' => $basis, ':baId' => $baId]);
 
             } else {
 
-                $query2 = "SELECT distinct n.idName, n.Name_Last, n.Name_First, n.Name_Nickname, n.Company, nd.tax_exempt
-FROM name n join name_volunteer2 nv on n.idName = nv.idName and nv.Vol_Category = 'Vol_Type'  and nv.Vol_Code = '$basis'
- join name_demog nd on n.idName = nd.idName
-where n.idName>0 and n.Member_Status='a' and n.Record_Member = 1 AND (MATCH(n.`Name_Search`) AGAINST (:search in boolean mode) or n.`Name_Search` LIKE :searchLike) order by n.Company, n.Name_Last, n.Name_First;";
+                $query2 = "SELECT DISTINCT `n`.`idName`, `n`.`Name_Last`, `n`.`Name_First`, `n`.`Name_Nickname`, `n`.`Company`, `nd`.`tax_exempt`
+FROM `name` `n` JOIN `name_volunteer2` `nv` ON `n`.`idName` = `nv`.`idName` AND `nv`.`Vol_Category` = 'Vol_Type'  AND `nv`.`Vol_Code` = :basis
+ JOIN `name_demog` `nd` ON `n`.`idName` = `nd`.`idName`
+WHERE `n`.`idName` > 0 AND `n`.`Member_Status` = 'a' AND `n`.`Record_Member` = 1 AND (MATCH(`n`.`Name_Search`) AGAINST (:search IN BOOLEAN MODE) OR `n`.`Name_Search` LIKE :searchLike) ORDER BY `n`.`Company`, `n`.`Name_Last`, `n`.`Name_First`;";
 
                 $stmt = $dbh->prepare($query2);
-                $stmt->execute([':search'=>$this->buildFulltextQuery($this->letters), ':searchLike'=>'%'.$this->letters.'%']);
+                $stmt->execute([':basis' => $basis, ':search'=>$this->buildFulltextQuery($this->letters), ':searchLike'=>'%'.$this->letters.'%']);
             }
 
 
@@ -742,25 +743,26 @@ where n.idName>0 and n.Member_Status='a' and n.Record_Member = 1 "
 
         $this->MRN = $this->letters . '%';
 
-        $query = "Select distinct n.idName,  n.Name_Last, n.Name_First, ifnull(gp.Description, '') as Name_Prefix, ifnull(g.Description, '') as Name_Suffix, n.Name_Nickname, n.BirthDate, "
-            . " n.Member_Status, ifnull(gs.Description, '') as `Status`, ifnull(np.Phone_Num, '') as `Phone`, ifnull(na.City,'') as `City`, ifnull(na.State_Province,'') as `State`, "
-            . " ifnull(gr.Description, '') as `No_Return` " . ", SUBSTR(MAX(CONCAT(LPAD(hs.idHospital_stay,50),hs.MRN)),51)as `MRN` "
-            . " from `name` n "
-            . " left join name_phone np on n.idName = np.idName and n.Preferred_Phone = np.Phone_Code"
-            . " left join name_address na on n.idName = na.idName and n.Preferred_Mail_Address = na.Purpose"
-            . " left join name_demog nd on n.idName = nd.idName"
-            . " left join name_volunteer2 nv on n.idName = nv.idName and nv.Vol_Category = 'Vol_Type'"
-            . " left join gen_lookups g on g.Table_Name = 'Name_Suffix' and g.Code = n.Name_Suffix"
-            . " left join gen_lookups gp on gp.Table_Name = 'Name_Prefix' and gp.Code = n.Name_Prefix"
-            . " left join gen_lookups gs on gs.Table_Name = 'mem_status' and gs.Code = n.Member_Status"
-            . " left join gen_lookups gr on gr.Table_Name = 'NoReturnReason' and gr.Code = nd.No_Return"
-            . " left join hospital_stay hs on n.idName = hs.idPatient"
-            . " where n.idName>0 and n.Member_Status in ('a','d') and n.Record_Member = 1 "
-            . " and nv.Vol_Code in ('" . VolMemberType::Guest . "', '" . VolMemberType::Patient . "') "
-            . " and hs.MRN like '" . $this->MRN . "' "
-            . " group by n.idName order by hs.MRN";
+        $query = "SELECT DISTINCT `n`.`idName`, `n`.`Name_Last`, `n`.`Name_First`, IFNULL(`gp`.`Description`, '') AS `Name_Prefix`, IFNULL(`g`.`Description`, '') AS `Name_Suffix`, `n`.`Name_Nickname`, `n`.`BirthDate`, "
+            . " `n`.`Member_Status`, IFNULL(`gs`.`Description`, '') AS `Status`, IFNULL(`np`.`Phone_Num`, '') AS `Phone`, IFNULL(`na`.`City`, '') AS `City`, IFNULL(`na`.`State_Province`, '') AS `State`, "
+            . " IFNULL(`gr`.`Description`, '') AS `No_Return` " . ", SUBSTR(MAX(CONCAT(LPAD(`hs`.`idHospital_stay`, 50), `hs`.`MRN`)), 51) AS `MRN` "
+            . " FROM `name` `n` "
+            . " LEFT JOIN `name_phone` `np` ON `n`.`idName` = `np`.`idName` AND `n`.`Preferred_Phone` = `np`.`Phone_Code`"
+            . " LEFT JOIN `name_address` `na` ON `n`.`idName` = `na`.`idName` AND `n`.`Preferred_Mail_Address` = `na`.`Purpose`"
+            . " LEFT JOIN `name_demog` `nd` ON `n`.`idName` = `nd`.`idName`"
+            . " LEFT JOIN `name_volunteer2` `nv` ON `n`.`idName` = `nv`.`idName` AND `nv`.`Vol_Category` = 'Vol_Type'"
+            . " LEFT JOIN `gen_lookups` `g` ON `g`.`Table_Name` = 'Name_Suffix' AND `g`.`Code` = `n`.`Name_Suffix`"
+            . " LEFT JOIN `gen_lookups` `gp` ON `gp`.`Table_Name` = 'Name_Prefix' AND `gp`.`Code` = `n`.`Name_Prefix`"
+            . " LEFT JOIN `gen_lookups` `gs` ON `gs`.`Table_Name` = 'mem_status' AND `gs`.`Code` = `n`.`Member_Status`"
+            . " LEFT JOIN `gen_lookups` `gr` ON `gr`.`Table_Name` = 'NoReturnReason' AND `gr`.`Code` = `nd`.`No_Return`"
+            . " LEFT JOIN `hospital_stay` `hs` ON `n`.`idName` = `hs`.`idPatient`"
+            . " WHERE `n`.`idName` > 0 AND `n`.`Member_Status` IN ('a', 'd') AND `n`.`Record_Member` = 1 "
+            . " AND `nv`.`Vol_Code` IN (:vcGuest, :vcPatient) "
+            . " AND `hs`.`MRN` LIKE :mrn "
+            . " GROUP BY `n`.`idName` ORDER BY `hs`.`MRN`";
 
-        $stmt = $dbh->query($query);
+        $stmt = $dbh->prepare($query);
+        $stmt->execute([':vcGuest' => VolMemberType::Guest, ':vcPatient' => VolMemberType::Patient, ':mrn' => $this->MRN]);
 
         $events = array();
 
@@ -818,30 +820,34 @@ where n.idName>0 and n.Member_Status='a' and n.Record_Member = 1 "
     public function phoneSearch(\PDO $dbh, $guestPatient = TRUE) {
 
         $filterGP = '';
+        $gpParams = [];
         if ($guestPatient) {
-            $filterGP = " and nv.Vol_Code in ('" . VolMemberType::Guest . "', '" . VolMemberType::Patient . "') ";
+            $filterGP = " AND `nv`.`Vol_Code` IN (:vcGuest, :vcPatient) ";
+            $gpParams[':vcGuest'] = VolMemberType::Guest;
+            $gpParams[':vcPatient'] = VolMemberType::Patient;
         }
 
 
-        $query = "Select distinct n.idName,  n.Name_Last, n.Name_First, ifnull(gp.Description, '') as Name_Prefix, ifnull(g.Description, '') as Name_Suffix, n.Name_Nickname, n.BirthDate, "
-            . " n.Member_Status, ifnull(gs.Description, '') as `Status`, ifnull(np.Phone_Num, '') as `Phone`, ifnull(na.City,'') as `City`, ifnull(na.State_Province,'') as `State`, "
-            . " ifnull(gr.Description, '') as `No_Return` " . ", SUBSTR(MAX(CONCAT(LPAD(hs.idHospital_stay,50),hs.MRN)),51) as `MRN`, np.Phone_Search "
-            . " from `name` n "
-            . " left join name_phone np on n.idName = np.idName AND n.Preferred_Phone = np.Phone_Code"
-            . " left join name_address na on n.idName = na.idName AND n.Preferred_Mail_Address = na.Purpose"
-            . " left join name_demog nd on n.idName = nd.idName"
-            . " left join name_volunteer2 nv on n.idName = nv.idName AND nv.Vol_Category = 'Vol_Type'"
-            . " left join gen_lookups g on g.Table_Name = 'Name_Suffix' AND g.Code = n.Name_Suffix"
-            . " left join gen_lookups gp on gp.Table_Name = 'Name_Prefix' AND gp.Code = n.Name_Prefix"
-            . " left join gen_lookups gs on gs.Table_Name = 'mem_status' AND gs.Code = n.Member_Status"
-            . " left join gen_lookups gr on gr.Table_Name = 'NoReturnReason' AND gr.Code = nd.No_Return"
-            . " left join hospital_stay hs on n.idName = hs.idPatient"
-            . " where n.idName>0 AND n.Member_Status in ('a','d') AND n.Record_Member = 1 "
+        $query = "SELECT DISTINCT `n`.`idName`, `n`.`Name_Last`, `n`.`Name_First`, IFNULL(`gp`.`Description`, '') AS `Name_Prefix`, IFNULL(`g`.`Description`, '') AS `Name_Suffix`, `n`.`Name_Nickname`, `n`.`BirthDate`, "
+            . " `n`.`Member_Status`, IFNULL(`gs`.`Description`, '') AS `Status`, IFNULL(`np`.`Phone_Num`, '') AS `Phone`, IFNULL(`na`.`City`, '') AS `City`, IFNULL(`na`.`State_Province`, '') AS `State`, "
+            . " IFNULL(`gr`.`Description`, '') AS `No_Return` " . ", SUBSTR(MAX(CONCAT(LPAD(`hs`.`idHospital_stay`, 50), `hs`.`MRN`)), 51) AS `MRN`, `np`.`Phone_Search` "
+            . " FROM `name` `n` "
+            . " LEFT JOIN `name_phone` `np` ON `n`.`idName` = `np`.`idName` AND `n`.`Preferred_Phone` = `np`.`Phone_Code`"
+            . " LEFT JOIN `name_address` `na` ON `n`.`idName` = `na`.`idName` AND `n`.`Preferred_Mail_Address` = `na`.`Purpose`"
+            . " LEFT JOIN `name_demog` `nd` ON `n`.`idName` = `nd`.`idName`"
+            . " LEFT JOIN `name_volunteer2` `nv` ON `n`.`idName` = `nv`.`idName` AND `nv`.`Vol_Category` = 'Vol_Type'"
+            . " LEFT JOIN `gen_lookups` `g` ON `g`.`Table_Name` = 'Name_Suffix' AND `g`.`Code` = `n`.`Name_Suffix`"
+            . " LEFT JOIN `gen_lookups` `gp` ON `gp`.`Table_Name` = 'Name_Prefix' AND `gp`.`Code` = `n`.`Name_Prefix`"
+            . " LEFT JOIN `gen_lookups` `gs` ON `gs`.`Table_Name` = 'mem_status' AND `gs`.`Code` = `n`.`Member_Status`"
+            . " LEFT JOIN `gen_lookups` `gr` ON `gr`.`Table_Name` = 'NoReturnReason' AND `gr`.`Code` = `nd`.`No_Return`"
+            . " LEFT JOIN `hospital_stay` `hs` ON `n`.`idName` = `hs`.`idPatient`"
+            . " WHERE `n`.`idName` > 0 AND `n`.`Member_Status` IN ('a', 'd') AND `n`.`Record_Member` = 1 "
             . $filterGP
-            . " AND np.Phone_Search LIKE '%" . $this->Name_First . "' "
-            . " group by n.idName order by np.Phone_Search";
+            . " AND `np`.`Phone_Search` LIKE :phoneSearch "
+            . " GROUP BY `n`.`idName` ORDER BY `np`.`Phone_Search`";
 
-        $stmt = $dbh->query($query);
+        $stmt = $dbh->prepare($query);
+        $stmt->execute($gpParams + [':phoneSearch' => '%' . $this->Name_First]);
 
         $events = array();
 
@@ -1041,30 +1047,42 @@ where n.idName>0 and n.Member_Status='a' and n.Record_Member = 1 "
     public function roleSearch(\PDO $dbh, $mode = '', $guestPatient = FALSE, $MRN = FALSE) {
 
         $filterGP = '';
+        $gpParams = [];
         if ($guestPatient) {
-            $filterGP = " and nv.Vol_Code in ('" . VolMemberType::Guest . "', '" . VolMemberType::Patient . "') ";
+            $filterGP = " AND `nv`.`Vol_Code` IN (:vcGuest, :vcPatient) ";
+            $gpParams[':vcGuest'] = VolMemberType::Guest;
+            $gpParams[':vcPatient'] = VolMemberType::Patient;
         }
 
-        $query = "Select distinct n.idName,  n.Name_Last, n.Name_First, ifnull(gp.Description, '') as Name_Prefix, ifnull(g.Description, '') as Name_Suffix, n.Name_Nickname, n.BirthDate, "
-                . " n.Member_Status, ifnull(gs.Description, '') as `Status`, ifnull(np.Phone_Num, '') as `Phone`, ifnull(na.City,'') as `City`, ifnull(na.State_Province,'') as `State`, "
-                . " ifnull(gr.Description, '') as `No_Return` " . ", SUBSTR(MAX(CONCAT(LPAD(hs.idHospital_stay,50),hs.MRN)),51)as `MRN` "
-            . " from `name` n "
-                . " left join name_phone np on n.idName = np.idName and n.Preferred_Phone = np.Phone_Code"
-                . " left join name_address na on n.idName = na.idName and n.Preferred_Mail_Address = na.Purpose"
-                . " left join name_demog nd on n.idName = nd.idName"
-                . " left join name_volunteer2 nv on n.idName = nv.idName and nv.Vol_Category = 'Vol_Type'"
-                . " left join gen_lookups g on g.Table_Name = 'Name_Suffix' and g.Code = n.Name_Suffix"
-                . " left join gen_lookups gp on gp.Table_Name = 'Name_Prefix' and gp.Code = n.Name_Prefix"
-                . " left join gen_lookups gs on gs.Table_Name = 'mem_status' and gs.Code = n.Member_Status"
-                . " left join gen_lookups gr on gr.Table_Name = 'NoReturnReason' and gr.Code = nd.No_Return"
-                . " left join hospital_stay hs on n.idName = hs.idPatient"
-            . " where n.idName>0 and n.Member_Status in ('a','d') and n.Record_Member = 1 $filterGP "
-                . ($MRN ? "" : " and MATCH(n.`Name_Search`) AGAINST ('" . $this->buildFulltextQuery($this->letters). "' in boolean mode)  "
-                . " OR np.Phone_Search like '" . $this->Name_First . "' ")
-                . ($MRN ? " and hs.MRN like '" . $this->MRN . "' " : "")
-            . " group by n.idName order by n.Name_Last, n.Name_First";
+        $query = "SELECT DISTINCT `n`.`idName`, `n`.`Name_Last`, `n`.`Name_First`, IFNULL(`gp`.`Description`, '') AS `Name_Prefix`, IFNULL(`g`.`Description`, '') AS `Name_Suffix`, `n`.`Name_Nickname`, `n`.`BirthDate`, "
+                . " `n`.`Member_Status`, IFNULL(`gs`.`Description`, '') AS `Status`, IFNULL(`np`.`Phone_Num`, '') AS `Phone`, IFNULL(`na`.`City`, '') AS `City`, IFNULL(`na`.`State_Province`, '') AS `State`, "
+                . " IFNULL(`gr`.`Description`, '') AS `No_Return` " . ", SUBSTR(MAX(CONCAT(LPAD(`hs`.`idHospital_stay`, 50), `hs`.`MRN`)), 51) AS `MRN` "
+            . " FROM `name` `n` "
+                . " LEFT JOIN `name_phone` `np` ON `n`.`idName` = `np`.`idName` AND `n`.`Preferred_Phone` = `np`.`Phone_Code`"
+                . " LEFT JOIN `name_address` `na` ON `n`.`idName` = `na`.`idName` AND `n`.`Preferred_Mail_Address` = `na`.`Purpose`"
+                . " LEFT JOIN `name_demog` `nd` ON `n`.`idName` = `nd`.`idName`"
+                . " LEFT JOIN `name_volunteer2` `nv` ON `n`.`idName` = `nv`.`idName` AND `nv`.`Vol_Category` = 'Vol_Type'"
+                . " LEFT JOIN `gen_lookups` `g` ON `g`.`Table_Name` = 'Name_Suffix' AND `g`.`Code` = `n`.`Name_Suffix`"
+                . " LEFT JOIN `gen_lookups` `gp` ON `gp`.`Table_Name` = 'Name_Prefix' AND `gp`.`Code` = `n`.`Name_Prefix`"
+                . " LEFT JOIN `gen_lookups` `gs` ON `gs`.`Table_Name` = 'mem_status' AND `gs`.`Code` = `n`.`Member_Status`"
+                . " LEFT JOIN `gen_lookups` `gr` ON `gr`.`Table_Name` = 'NoReturnReason' AND `gr`.`Code` = `nd`.`No_Return`"
+                . " LEFT JOIN `hospital_stay` `hs` ON `n`.`idName` = `hs`.`idPatient`"
+            . " WHERE `n`.`idName` > 0 AND `n`.`Member_Status` IN ('a', 'd') AND `n`.`Record_Member` = 1 $filterGP "
+                . ($MRN ? "" : " AND MATCH(`n`.`Name_Search`) AGAINST (:fulltext IN BOOLEAN MODE)  "
+                . " OR `np`.`Phone_Search` LIKE :phoneSearch ")
+                . ($MRN ? " AND `hs`.`MRN` LIKE :mrn " : "")
+            . " GROUP BY `n`.`idName` ORDER BY `n`.`Name_Last`, `n`.`Name_First`";
 
-        $stmt = $dbh->query($query);
+        $roleParams = $gpParams;
+        if ($MRN) {
+            $roleParams[':mrn'] = $this->MRN;
+        } else {
+            $roleParams[':fulltext'] = $this->buildFulltextQuery($this->letters);
+            $roleParams[':phoneSearch'] = $this->Name_First;
+        }
+
+        $stmt = $dbh->prepare($query);
+        $stmt->execute($roleParams);
 
         $events = array();
 

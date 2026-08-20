@@ -34,19 +34,21 @@ class Siblings extends AbstractRelation {
      */
     protected function getPdoStmt(\PDO $dbh): \PDOStatement|bool {
 
-        $query = "Select v.Id, concat(v.Name_First, ' ', v.Name_Last) as `Name`, v.MemberStatus as `MemStatus`, r . *
-from relationship r
-        join
-    vmember_listing v ON r.idName = v.Id
-        join
-    relationship r1 ON r.Group_Code = r1.Group_Code and r1.idName = :id
-where
-    r1.Relation_Type = '". $this->relCode->getCode() ."' and r.Status = 'a' and r.idName <> :idw;";
+        $query = "SELECT `v`.`Id`, CONCAT(`v`.`Name_First`, ' ', `v`.`Name_Last`) AS `Name`, `v`.`MemberStatus` AS `MemStatus`, `r`.*
+FROM `relationship` `r`
+        JOIN
+    `vmember_listing` `v` ON `r`.`idName` = `v`.`Id`
+        JOIN
+    `relationship` `r1` ON `r`.`Group_Code` = `r1`.`Group_Code` AND `r1`.`idName` = :id
+WHERE
+    `r1`.`Relation_Type` = :relType AND `r`.`Status` = 'a' AND `r`.`idName` <> :idw;";
 
         $stmt = $dbh->prepare($query, array(\PDO::ATTR_CURSOR => \PDO::CURSOR_FWDONLY));
         $idVar = $this->getIdName();
+        $relTypeVar = $this->relCode->getCode();
         $stmt->bindParam(':id', $idVar);
         $stmt->bindParam(':idw', $idVar);
+        $stmt->bindParam(':relType', $relTypeVar);
 
         return $stmt;
     }
@@ -82,10 +84,10 @@ where
         $RelCode = $this->relCode->getCode();
         $id = $this->getIdName();
 
-        $query = "Select idName, Group_Code from relationship
-            where Status = 'a' and Relation_Type = '$RelCode' and (idName = :id or idName = :relId);";
+        $query = "SELECT `idName`, `Group_Code` FROM `relationship`
+            WHERE `Status` = 'a' AND `Relation_Type` = :relType AND (`idName` = :id OR `idName` = :relId);";
         $stmt = $dbh->prepare($query, array(\PDO::ATTR_CURSOR=> \PDO::CURSOR_FWDONLY));
-        $stmt->execute(array(':id'=>$id, ':relId'=>$rId));
+        $stmt->execute(array(':relType' => $RelCode, ':id'=>$id, ':relId'=>$rId));
         $rws = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
         foreach ($rws as $r) {
@@ -101,24 +103,29 @@ where
         // Compare group codes, Check each case because they all require different processing
         if ($my_gc != 0 && $ur_gc != 0 && $my_gc != $ur_gc) {
             // we each have our own group code.  covert ur's to mine
-            $q = "update relationship set Group_Code = $my_gc where Group_Code = $ur_gc and Relation_Type = '$RelCode'";
-            $dbh->exec($q);
+            $q = "UPDATE `relationship` SET `Group_Code` = :myGc WHERE `Group_Code` = :urGc AND `Relation_Type` = :relType";
+            $updStmt = $dbh->prepare($q);
+            $updStmt->execute([':myGc' => $my_gc, ':urGc' => $ur_gc, ':relType' => $RelCode]);
         } else if ($my_gc != 0 && $ur_gc == 0) {
             // add ur to my group code
-            $q = "Insert into relationship (idName, Group_Code, Relation_Type, Status, Date_Added, Updated_By)
-                values ($rId, $my_gc, '$RelCode', 'a', now(), '" . $user . "');";
-            $dbh->exec($q);
+            $q = "INSERT INTO `relationship` (`idName`, `Group_Code`, `Relation_Type`, `Status`, `Date_Added`, `Updated_By`)
+                VALUES (:rId, :myGc, :relType, 'a', NOW(), :user);";
+            $insStmt = $dbh->prepare($q);
+            $insStmt->execute([':rId' => $rId, ':myGc' => $my_gc, ':relType' => $RelCode, ':user' => $user]);
         } else if ($my_gc == 0 && $ur_gc != 0) {
             // add me to ur group code
-            $q = "Insert into relationship (idName, Group_Code, Relation_Type, Status, Date_Added, Updated_By)
-                values ($id, $ur_gc, '$RelCode', 'a', now(), '" . $user . "');";
-            $dbh->exec($q);
+            $q = "INSERT INTO `relationship` (`idName`, `Group_Code`, `Relation_Type`, `Status`, `Date_Added`, `Updated_By`)
+                VALUES (:id, :urGc, :relType, 'a', NOW(), :user);";
+            $insStmt = $dbh->prepare($q);
+            $insStmt->execute([':id' => $id, ':urGc' => $ur_gc, ':relType' => $RelCode, ':user' => $user]);
         } else if ($my_gc == 0 && $ur_gc == 0) {
 
             // Get a new group code.
             $relCtr = 0;
-            $dbh->query("CALL IncrementCounter('relationship', @num);");
-            foreach ($dbh->query("SELECT @num") as $row) {
+            $dbh->prepare("CALL IncrementCounter('relationship', @num);")->execute();
+            $numStmt = $dbh->prepare("SELECT @num");
+            $numStmt->execute();
+            foreach ($numStmt as $row) {
                 $relCtr = $row[0];
             }
             if ($relCtr == 0) {
@@ -126,12 +133,14 @@ where
             }
 
             // Insert 2 new records.
-            $q = "Insert into relationship (idName, Group_Code, Relation_Type, Status, Date_Added, Updated_By)
-                values ($id, $relCtr, '$RelCode', 'a', now(), '" . $user . "');";
-            $dbh->exec($q);
-            $q = "Insert into relationship (idName, Group_Code, Relation_Type, Status, Date_Added, Updated_By)
-                values ($rId, $relCtr, '$RelCode', 'a', now(), '" . $user . "');";
-            $dbh->exec($q);
+            $q = "INSERT INTO `relationship` (`idName`, `Group_Code`, `Relation_Type`, `Status`, `Date_Added`, `Updated_By`)
+                VALUES (:id, :relCtr, :relType, 'a', NOW(), :user);";
+            $insStmt1 = $dbh->prepare($q);
+            $insStmt1->execute([':id' => $id, ':relCtr' => $relCtr, ':relType' => $RelCode, ':user' => $user]);
+            $q = "INSERT INTO `relationship` (`idName`, `Group_Code`, `Relation_Type`, `Status`, `Date_Added`, `Updated_By`)
+                VALUES (:rId, :relCtr, :relType, 'a', NOW(), :user);";
+            $insStmt2 = $dbh->prepare($q);
+            $insStmt2->execute([':rId' => $rId, ':relCtr' => $relCtr, ':relType' => $RelCode, ':user' => $user]);
         }
 
         //
@@ -150,9 +159,9 @@ where
      * @return string
      */
     public function removeRelationship(\PDO $dbh, $rId) {
-        $qq = "Delete from relationship where Relation_Type='". $this->relCode->getCode() ."' and idName=:rId ";
+        $qq = "DELETE FROM `relationship` WHERE `Relation_Type` = :relType AND `idName` = :rId ";
         $stmt = $dbh->prepare($qq);
-        $stmt->execute(array(':rId'=>$rId));
+        $stmt->execute(array(':relType' => $this->relCode->getCode(), ':rId'=>$rId));
         return "Sibling/Relative Deleted.  ";
 
     }

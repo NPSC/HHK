@@ -104,28 +104,37 @@ class Registration {
         $depositBalance = 0.0;
         $where = '';
 
+        $params = [
+            ':itemDepositRefund' => ItemId::DepositRefund,
+            ':itemKeyDeposit' => ItemId::KeyDeposit,
+            ':statusPaid' => InvoiceStatus::Paid,
+        ];
+
         if ($idVisit == 0) {
             $idg = intval($idRegistration, 10);
-            $where = "and i.idGroup = " . $idg;
+            $where = "AND `i`.`idGroup` = :idg";
+            $params[':idg'] = $idg;
             if ($idg < 1) {
                 return $depositBalance;
             }
         } else {
-            $where = " and i.Order_Number = " . $idVisit;
+            $where = " AND `i`.`Order_Number` = :idVisit";
+            $params[':idVisit'] = $idVisit;
         }
 
-        $query = "select
-    sum(il.Amount)
-from
-    invoice_line il
-        join
-    invoice i ON il.Invoice_Id = i.idInvoice
-where
-    il.Item_Id in (" . ItemId::DepositRefund . "  , " . ItemId::KeyDeposit . ")
-        and i.Deleted = 0
-        and il.Deleted = 0
-        and i.Status = '" . InvoiceStatus::Paid ."' " . $where;
-        $stmt = $dbh->query($query);
+        $query = "SELECT
+    SUM(`il`.`Amount`)
+FROM
+    `invoice_line` `il`
+        JOIN
+    `invoice` `i` ON `il`.`Invoice_Id` = `i`.`idInvoice`
+WHERE
+    `il`.`Item_Id` IN (:itemDepositRefund, :itemKeyDeposit)
+        AND `i`.`Deleted` = 0
+        AND `il`.`Deleted` = 0
+        AND `i`.`Status` = :statusPaid " . $where;
+        $stmt = $dbh->prepare($query);
+        $stmt->execute($params);
 
         $rows = $stmt->fetchAll(\PDO::FETCH_NUM);
 
@@ -147,30 +156,39 @@ where
         $lodgingBalance = 0.0;
         $where = '';
 
+        $params = [
+            ':itemLodgingMOA' => ItemId::LodgingMOA,
+            ':statusPaid1' => InvoiceStatus::Paid,
+            ':statusPaid2' => InvoiceStatus::Paid,
+        ];
+
         if ($idVisit == 0) {
             $idg = intval($idRegistration, 10);
             if ($idg < 1) {
                 return $lodgingBalance;
             }
-            $where = " and i.idGroup = $idg";
+            $where = " AND `i`.`idGroup` = :idg";
+            $params[':idg'] = $idg;
         } else {
-            $where = " and i.Order_Number = $idVisit";
+            $where = " AND `i`.`Order_Number` = :idVisit";
+            $params[':idVisit'] = $idVisit;
         }
 
 
-        $query = "select
-    sum(il.Amount)
-from
-    invoice_line il
-        join
-    invoice i ON il.Invoice_Id = i.idInvoice
-    left join invoice ci on i.Delegated_Invoice_Id = ci.idInvoice
-where
-    il.Item_Id = ". ItemId::LodgingMOA . "
-        and i.Deleted = 0
-        and il.Deleted = 0
-        and (i.Status = '" . InvoiceStatus::Paid . "' or ci.Status = '" . InvoiceStatus::Paid . "') " . $where;
-        $stmt = $dbh->query($query);
+        $query = "SELECT
+    SUM(`il`.`Amount`)
+FROM
+    `invoice_line` `il`
+        JOIN
+    `invoice` `i` ON `il`.`Invoice_Id` = `i`.`idInvoice`
+    LEFT JOIN `invoice` `ci` ON `i`.`Delegated_Invoice_Id` = `ci`.`idInvoice`
+WHERE
+    `il`.`Item_Id` = :itemLodgingMOA
+        AND `i`.`Deleted` = 0
+        AND `il`.`Deleted` = 0
+        AND (`i`.`Status` = :statusPaid1 OR `ci`.`Status` = :statusPaid2) " . $where;
+        $stmt = $dbh->prepare($query);
+        $stmt->execute($params);
 
         $rows = $stmt->fetchAll(\PDO::FETCH_NUM);
 
@@ -196,19 +214,20 @@ where
             return $DonBalance;
         }
 
-        $query = "select
-    sum(il.Amount)
-from
-    invoice_line il
-        join
-    invoice i ON il.Invoice_Id = i.idInvoice
-where
-    il.Item_Id = ". ItemId::LodgingDonate . "
-        and i.Deleted = 0
-        and il.Deleted = 0
-        and i.Status = '" . InvoiceStatus::Paid . "'
-        and i.idGroup = " . $idg;
-        $stmt = $dbh->query($query);
+        $query = "SELECT
+    SUM(`il`.`Amount`)
+FROM
+    `invoice_line` `il`
+        JOIN
+    `invoice` `i` ON `il`.`Invoice_Id` = `i`.`idInvoice`
+WHERE
+    `il`.`Item_Id` = :itemLodgingDonate
+        AND `i`.`Deleted` = 0
+        AND `il`.`Deleted` = 0
+        AND `i`.`Status` = :statusPaid
+        AND `i`.`idGroup` = :idg";
+        $stmt = $dbh->prepare($query);
+        $stmt->execute([':itemLodgingDonate' => ItemId::LodgingDonate, ':statusPaid' => InvoiceStatus::Paid, ':idg' => $idg]);
 
         $rows = $stmt->fetchAll(\PDO::FETCH_NUM);
 
@@ -234,20 +253,21 @@ where
             return $prePayment;
         }
 
-        $query = "select
-        sum(il.Amount)
-    from
-        invoice_line il
-            join
-        invoice i ON il.Invoice_Id = i.idInvoice and i.idGroup = $idg AND il.Item_Id = " . ItemId::LodgingMOA . " AND il.Deleted = 0
-            join
-    	reservation_invoice_line ri ON il.idInvoice_line = ri.Invoice_Line_Id
-    where
-        i.Deleted = 0
-        AND i.Order_Number = 0
-        AND i.`Status` = '" . InvoiceStatus::Paid . "'";
+        $query = "SELECT
+        SUM(`il`.`Amount`)
+    FROM
+        `invoice_line` `il`
+            JOIN
+        `invoice` `i` ON `il`.`Invoice_Id` = `i`.`idInvoice` AND `i`.`idGroup` = :idg AND `il`.`Item_Id` = :itemLodgingMOA AND `il`.`Deleted` = 0
+            JOIN
+    	`reservation_invoice_line` `ri` ON `il`.`idInvoice_line` = `ri`.`Invoice_Line_Id`
+    WHERE
+        `i`.`Deleted` = 0
+        AND `i`.`Order_Number` = 0
+        AND `i`.`Status` = :statusPaid";
 
-        $stmt = $dbh->query($query);
+        $stmt = $dbh->prepare($query);
+        $stmt->execute([':idg' => $idg, ':itemLodgingMOA' => ItemId::LodgingMOA, ':statusPaid' => InvoiceStatus::Paid]);
 
         $rows = $stmt->fetchAll(\PDO::FETCH_NUM);
 
@@ -274,7 +294,8 @@ where
             return false;
         }
 
-        return $dbh->exec("update registration set Pref_Token_Id = $tokenId where idregistration = $regId and Pref_Token_Id != $tokenId");
+        $updTokenStmt = $dbh->prepare("UPDATE `registration` SET `Pref_Token_Id` = :tokenId WHERE `idregistration` = :regId AND `Pref_Token_Id` != :tokenId2");
+        return $updTokenStmt->execute([':tokenId' => $tokenId, ':regId' => $regId, ':tokenId2' => $tokenId]) ? $updTokenStmt->rowCount() : false;
     }
 
     /**
@@ -288,7 +309,8 @@ where
         $tokenId = 0;
 
         if ($idRegistration > 0) {
-            $stmt = $dbh->query("select Pref_Token_Id from registration where idRegistration = $idRegistration");
+            $stmt = $dbh->prepare("SELECT `Pref_Token_Id` FROM `registration` WHERE `idRegistration` = :idRegistration");
+            $stmt->execute([':idRegistration' => $idRegistration]);
             $rows = $stmt->fetchAll(\PDO::FETCH_NUM);
             if (count($rows) == 1) {
                 $tokenId = $rows[0][0];

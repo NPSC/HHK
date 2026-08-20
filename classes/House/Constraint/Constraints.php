@@ -56,7 +56,8 @@ class Constraints {
 
         $this->constraints = array();
 
-        $stmt = $dbh->query("Select * from `constraints` where `Status` = 'a' order by `Type`, `Title`");
+        $stmt = $dbh->prepare("SELECT * FROM `constraints` WHERE `Status` = 'a' ORDER BY `Type`, `Title`");
+        $stmt->execute();
 
         while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
 
@@ -108,7 +109,8 @@ class Constraints {
 
         $attribute = new Attributes($dbh);
 
-        $rmAtrStmt = $dbh->query("Select idConstraint, idAttribute, `Type`, Operation from constraint_attribute");
+        $rmAtrStmt = $dbh->prepare("SELECT `idConstraint`, `idAttribute`, `Type`, `Operation` FROM `constraint_attribute`");
+        $rmAtrStmt->execute();
         $roomAttrs = $rmAtrStmt->fetchAll(\PDO::FETCH_ASSOC);
 
         $consMu = array();
@@ -306,7 +308,8 @@ class Constraints {
             EditRS::delete($dbh, $conRs, array($conRs->idConstraint));
 
             // delete from constraint_attribute
-            $dbh->query("Delete from constraint_attribute where idConstraint = $id");
+            $delAttrStmt = $dbh->prepare("DELETE FROM `constraint_attribute` WHERE `idConstraint` = :id");
+            $delAttrStmt->execute([':id' => $id]);
 
         }
 

@@ -123,8 +123,9 @@ class DeluxeGateway extends AbstractPaymentGateway
 
     protected function loadGateway(\PDO $dbh) {
 
-        $query = "select * from `cc_hosted_gateway` where `cc_name` = '" . $this->getGatewayType() . "' and `Gateway_Name` = '" .$this->getGatewayName()."'";
-        $stmt = $dbh->query($query);
+        $query = "SELECT * FROM `cc_hosted_gateway` WHERE `cc_name` = :gwType AND `Gateway_Name` = :gwName";
+        $stmt = $dbh->prepare($query);
+        $stmt->execute([':gwType' => $this->getGatewayType(), ':gwName' => $this->getGatewayName()]);
 
         $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
@@ -308,7 +309,8 @@ class DeluxeGateway extends AbstractPaymentGateway
         //get billing name
         if (isset($data['id']) && $data['id'] > 0 && $data["nameOnCard"] == "CardHolder") {
 
-			$stmt = $dbh->query("select ifnull(n.Name_First, '') as `Name_First`, ifnull(n.Name_Last, '') as `Name_Last` from name n where n.idName = " . $data['id']);
+			$stmt = $dbh->prepare("SELECT IFNULL(`n`.`Name_First`, '') AS `Name_First`, IFNULL(`n`.`Name_Last`, '') AS `Name_Last` FROM `name` `n` WHERE `n`.`idName` = :id");
+			$stmt->execute([':id' => $data['id']]);
 
 			$rows = $stmt->fetchAll ( \PDO::FETCH_ASSOC );
 
@@ -632,11 +634,12 @@ class DeluxeGateway extends AbstractPaymentGateway
 
 
         //find payment >= amount that hasn't been used for a refund yet. Payments used for return amount already can't be used again.
-        $stmt = $dbh->query("select sum(case WHEN pa.Status_Code = 'r' then (0-pa.Approved_Amount) WHEN rp.Is_Refund = 1 THEN 0 ELSE pa.Approved_Amount END) as `Total`, pa.AcqRefData, p.idPayment, p.Timestamp
-from payment p join payment_auth pa on p.idPayment = pa.idPayment left join payment rp on p.idPayment = rp.parent_idPayment
-left join payment_invoice pi on p.idPayment = pi.Payment_Id
-left join invoice i on pi.Invoice_Id = i.idInvoice
-where p.idToken = $idToken group by p.idPayment having `Total` >= $amount order by idPayment desc;");
+        $stmt = $dbh->prepare("SELECT SUM(CASE WHEN `pa`.`Status_Code` = 'r' THEN (0-`pa`.`Approved_Amount`) WHEN `rp`.`Is_Refund` = 1 THEN 0 ELSE `pa`.`Approved_Amount` END) AS `Total`, `pa`.`AcqRefData`, `p`.`idPayment`, `p`.`Timestamp`
+FROM `payment` `p` JOIN `payment_auth` `pa` ON `p`.`idPayment` = `pa`.`idPayment` LEFT JOIN `payment` `rp` ON `p`.`idPayment` = `rp`.`parent_idPayment`
+LEFT JOIN `payment_invoice` `pi` ON `p`.`idPayment` = `pi`.`Payment_Id`
+LEFT JOIN `invoice` `i` ON `pi`.`Invoice_Id` = `i`.`idInvoice`
+WHERE `p`.`idToken` = :idToken GROUP BY `p`.`idPayment` HAVING `Total` >= :amount ORDER BY `idPayment` DESC;");
+        $stmt->execute([':idToken' => $idToken, ':amount' => $amount]);
 
         $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
@@ -888,7 +891,8 @@ order by pa.Timestamp desc");
         } else {
 			// Show all locations, none is preselected.
 
-            $stmt = $dbh->query("Select DISTINCT l.`Merchant`, l.`Title` from `location` l join `room` r on l.idLocation = r.idLocation where r.idLocation is not null and l.`Status` = 'a'");
+            $stmt = $dbh->prepare("SELECT DISTINCT `l`.`Merchant`, `l`.`Title` FROM `location` `l` JOIN `room` `r` ON `l`.`idLocation` = `r`.`idLocation` WHERE `r`.`idLocation` IS NOT NULL AND `l`.`Status` = 'a'");
+            $stmt->execute();
             $gwRows = $stmt->fetchAll();
 
             $selArray['size'] = count($gwRows);
@@ -1246,7 +1250,9 @@ order by pa.Timestamp desc");
             EditRS::loadRow($r[0], $locRs);
             $idLocation = $locRs->idLocation->getStoredVal();
 
-            $num = $dbh->exec("update room set idLocation = $idLocation");
+            $updRoomStmt = $dbh->prepare("UPDATE `room` SET `idLocation` = :idLocation");
+            $updRoomStmt->execute([':idLocation' => $idLocation]);
+            $num = $updRoomStmt->rowCount();
         }
 
         return $num;

@@ -97,123 +97,130 @@ class AdditionalChargesReport extends AbstractReport implements ReportInterface 
         foreach ($this->demogs as $d) {
             if (strtolower($d[2]) == 'y'){
                 if($d[0] == "Gender"){
-                    $joinDemos .= "left join gen_lookups Gender on p.Gender = Gender.Code and Gender.Table_Name = 'Gender'";
+                    $joinDemos .= "LEFT JOIN `gen_lookups` `Gender` ON `p`.`Gender` = `Gender`.`Code` AND `Gender`.`Table_Name` = 'Gender'";
                 }else{
-                    $joinDemos .= "left join gen_lookups " . $d[0] . " on pd.".$d[0]." = ".$d[0].".Code and ".$d[0].".Table_Name = '".$d[0]."'";
+                    $joinDemos .= "LEFT JOIN `gen_lookups` `" . $d[0] . "` ON `pd`.`".$d[0]."` = `".$d[0]."`.`Code` AND `".$d[0]."`.`Table_Name` = '".$d[0]."'";
                 }
-                $listDemos .= "ifnull(".$d[0].".Description, '') as `".$d[0]."`,";
+                $listDemos .= "IFNULL(`".$d[0]."`.`Description`, '') AS `".$d[0]."`,";
 
             }
         }
 
-        $departureCase = "CASE WHEN v.Span_End IS NOT NULL THEN v.Span_End
-         WHEN v.Expected_Departure IS NOT NULL AND v.Expected_Departure > NOW() THEN v.Expected_Departure
-         WHEN v.Status = 'a' THEN ''
+        $departureCase = "CASE WHEN `v`.`Span_End` IS NOT NULL THEN `v`.`Span_End`
+         WHEN `v`.`Expected_Departure` IS NOT NULL AND `v`.`Expected_Departure` > NOW() THEN `v`.`Expected_Departure`
+         WHEN `v`.`Status` = 'a' THEN ''
          ELSE '' END";
 
-        $whDepartureCase = "CASE WHEN v.Span_End IS NOT NULL THEN v.Span_End
-        WHEN v.Expected_Departure IS NOT NULL AND v.Expected_Departure > NOW() THEN v.Expected_Departure
+        $whDepartureCase = "CASE WHEN `v`.`Span_End` IS NOT NULL THEN `v`.`Span_End`
+        WHEN `v`.`Expected_Departure` IS NOT NULL AND `v`.`Expected_Departure` > NOW() THEN `v`.`Expected_Departure`
         ELSE NOW() END";
 
-        $whDates =  "v.Span_Start <= '" . $this->filter->getReportEnd() . "' and " . $whDepartureCase . " >= '" . $this->filter->getReportStart() . "' ";
+        $whDates =  "`v`.`Span_Start` <= :reportEnd AND " . $whDepartureCase . " >= :reportStart ";
+        $this->queryParams = [':reportEnd' => $this->filter->getReportEnd(), ':reportStart' => $this->filter->getReportStart()];
 
         $whBilling = "";
         if(count($this->filter->getSelectedBillingAgents()) > 0 && !in_array("", $this->filter->getSelectedBillingAgents())){
-            $billingAgents = implode(",", $this->filter->getSelectedBillingAgents());
-            $whBilling = " and i.Sold_To_Id in (" . $billingAgents . ")";
+            $billingPh = [];
+            foreach ($this->filter->getSelectedBillingAgents() as $i => $ba) {
+                $ph = ':ba' . $i;
+                $billingPh[] = $ph;
+                $this->queryParams[$ph] = $ba;
+            }
+            $whBilling = " AND `i`.`Sold_To_Id` IN (" . implode(', ', $billingPh) . ")";
         }
 
         $selectedDiags = $this->filter->getSelectedDiagnoses();
         $whDiags = "";
         if(count($selectedDiags) > 0 && !in_array("", $selectedDiags)){
-            foreach($selectedDiags as $d){
+            $diagPh = [];
+            foreach($selectedDiags as $i => $d){
                 if ($d != '') {
-                    if ($whDiags == '') {
-                        $whDiags .= "'".$d."'";
-                    } else {
-                        $whDiags .= ",'". $d."'";
-                    }
+                    $ph = ':diag' . $i;
+                    $diagPh[] = $ph;
+                    $this->queryParams[$ph] = $d;
                 }
             }
 
-            $whDiags = " and hs.Diagnosis in (" . $whDiags . ")";
+            $whDiags = " AND `hs`.`Diagnosis` IN (" . implode(', ', $diagPh) . ")";
         }
 
         $selectedCharges = $this->selectedAdditionalCharges;
         $whCharges = "";
         if(count($selectedCharges) > 0){
-            foreach($selectedCharges as $d){
+            $chargePh = [];
+            foreach($selectedCharges as $i => $d){
                 if ($d != '' && isset($this->additionalCharges[$d])) {
-                    if ($whCharges == '') {
-                        $whCharges .= "'".$this->additionalCharges[$d]["Description"]."'";
-                    } else {
-                        $whCharges .= ",'". $this->additionalCharges[$d]["Description"]."'";
-                    }
+                    $ph = ':chg' . $i;
+                    $chargePh[] = $ph;
+                    $this->queryParams[$ph] = $this->additionalCharges[$d]["Description"];
                 }
             }
 
-            $whCharges = " and il.description in (" . $whCharges . ")";
+            $whCharges = " AND `il`.`description` IN (" . implode(', ', $chargePh) . ")";
         }
 
 
-        $this->query = "select
-    CONCAT(v.idVisit, '-', v.Span) as idVisit,
-    v.idVisit as `visitId`,
-    v.Span as `Span`,
-    ifnull(p.idName, '') as `pId`,
-    ifnull(hs.idPsg, '') as `idPsg`,
-    ifnull(p.Name_Last, '') as Name_Last,
-    ifnull(p.Name_First, '') as Name_First,
-    concat(ifnull(pa.Address_1, ''), '', ifnull(pa.Address_2, ''))  as pAddr,
-    ifnull(pa.City, '') as pCity,
-    ifnull(pa.County, '') as pCounty,
-    ifnull(pa.State_Province, '') as pState,
-    ifnull(pa.Country_Code, '') as pCountry,
-    ifnull(pa.Postal_Code, '') as `pZip`,
-    concat(if(dc.Description is not null, concat(dc.Description, ': '), ''), ifnull(d.Description, '')) as `Diagnosis`,
-    ifnull(p.BirthDate, '') as `DOB`,
-    TIMESTAMPDIFF(YEAR, p.BirthDate, CURDATE()) as `Age`,
+        $this->queryParams[':itemAddnlCharge'] = ItemId::AddnlCharge;
+        $this->queryParams[':itemDiscount'] = ItemId::Discount;
+
+        $this->query = "SELECT
+    CONCAT(`v`.`idVisit`, '-', `v`.`Span`) AS `idVisit`,
+    `v`.`idVisit` AS `visitId`,
+    `v`.`Span` AS `Span`,
+    IFNULL(`p`.`idName`, '') AS `pId`,
+    IFNULL(`hs`.`idPsg`, '') AS `idPsg`,
+    IFNULL(`p`.`Name_Last`, '') AS `Name_Last`,
+    IFNULL(`p`.`Name_First`, '') AS `Name_First`,
+    CONCAT(IFNULL(`pa`.`Address_1`, ''), '', IFNULL(`pa`.`Address_2`, ''))  AS `pAddr`,
+    IFNULL(`pa`.`City`, '') AS `pCity`,
+    IFNULL(`pa`.`County`, '') AS `pCounty`,
+    IFNULL(`pa`.`State_Province`, '') AS `pState`,
+    IFNULL(`pa`.`Country_Code`, '') AS `pCountry`,
+    IFNULL(`pa`.`Postal_Code`, '') AS `pZip`,
+    CONCAT(IF(`dc`.`Description` IS NOT NULL, CONCAT(`dc`.`Description`, ': '), ''), IFNULL(`d`.`Description`, '')) AS `Diagnosis`,
+    IFNULL(`p`.`BirthDate`, '') AS `DOB`,
+    TIMESTAMPDIFF(YEAR, `p`.`BirthDate`, CURDATE()) AS `Age`,
     " . $listDemos . "
-    ifnull(v.Span_Start, '') as `Arrival`,
-    " . $departureCase . " as `Departure`,
-    DATEDIFF(ifnull(v.Span_End, date(now())), v.Span_Start) as `Nights`,
-    SUM(DATEDIFF(il.Period_End, il.Period_Start)) as `PaidNights`,
-    ifnull(pgn.Name_First, '') as `pgFirst`,
-    ifnull(pgn.Name_Last, '') as `pgLast`,
-    ifnull(vs.Description, '') as `Status_Title`,
-    ifnull(i.Invoice_Number, '') as `Invoice_Number`,
-    sum(ifnull(il.Amount, '')) as `Invoice_Amount`,
-    if(trim(ba.Name_Full) != '', ba.Name_Full, ba.Company) as `Billed To`,
-    il.Description as `Additional Charge/Discount`,
-    ifnull(invs.Description, '') as `Invoice_Status_Title`
-from
-    visit v
-        left join
-    hospital_stay hs on v.idHospital_Stay = hs.idHospital_Stay
-        left join
-    gen_lookups d on hs.Diagnosis = d.Code and d.`Table_Name` = 'Diagnosis'
-        left join
-    gen_lookups dc on d.Substitute = dc.Code and dc.Table_Name = 'Diagnosis_Category'
-        left join
-    name p ON hs.idPatient = p.idName
-        left join
-    name_address pa ON p.idName = pa.idName and p.Preferred_Mail_Address = pa.Purpose
-        left join
-    name_demog pd ON p.idName = pd.idName
+    IFNULL(`v`.`Span_Start`, '') AS `Arrival`,
+    " . $departureCase . " AS `Departure`,
+    DATEDIFF(IFNULL(`v`.`Span_End`, DATE(NOW())), `v`.`Span_Start`) AS `Nights`,
+    SUM(DATEDIFF(`il`.`Period_End`, `il`.`Period_Start`)) AS `PaidNights`,
+    IFNULL(`pgn`.`Name_First`, '') AS `pgFirst`,
+    IFNULL(`pgn`.`Name_Last`, '') AS `pgLast`,
+    IFNULL(`vs`.`Description`, '') AS `Status_Title`,
+    IFNULL(`i`.`Invoice_Number`, '') AS `Invoice_Number`,
+    SUM(IFNULL(`il`.`Amount`, '')) AS `Invoice_Amount`,
+    IF(TRIM(`ba`.`Name_Full`) != '', `ba`.`Name_Full`, `ba`.`Company`) AS `Billed To`,
+    `il`.`Description` AS `Additional Charge/Discount`,
+    IFNULL(`invs`.`Description`, '') AS `Invoice_Status_Title`
+FROM
+    `visit` `v`
+        LEFT JOIN
+    `hospital_stay` `hs` ON `v`.`idHospital_Stay` = `hs`.`idHospital_Stay`
+        LEFT JOIN
+    `gen_lookups` `d` ON `hs`.`Diagnosis` = `d`.`Code` AND `d`.`Table_Name` = 'Diagnosis'
+        LEFT JOIN
+    `gen_lookups` `dc` ON `d`.`Substitute` = `dc`.`Code` AND `dc`.`Table_Name` = 'Diagnosis_Category'
+        LEFT JOIN
+    `name` `p` ON `hs`.`idPatient` = `p`.`idName`
+        LEFT JOIN
+    `name_address` `pa` ON `p`.`idName` = `pa`.`idName` AND `p`.`Preferred_Mail_Address` = `pa`.`Purpose`
+        LEFT JOIN
+    `name_demog` `pd` ON `p`.`idName` = `pd`.`idName`
     ".$joinDemos."
-        left join
-    name pgn ON v.idPrimaryGuest = pgn.idName
-        left join
-    gen_lookups vs on vs.Table_Name = 'Visit_Status' and vs.Code = v.Status
-        join
-    invoice i on v.idVisit = i.Order_Number and v.Span = i.Suborder_Number
-        join
-    invoice_line il on i.idInvoice = il.Invoice_Id and il.Deleted = 0 and il.Item_Id IN (". ItemId::AddnlCharge .", " . ItemId::Discount . ")
-        left join
-    gen_lookups invs on invs.Table_Name = 'Invoice_Status' and invs.Code = i.Status
-        join
-    name ba on i.Sold_To_Id = ba.idName
-where i.Deleted = 0 and " . $whDates . $whBilling . $whDiags . $whCharges . " group by i.idInvoice order by v.idVisit";
+        LEFT JOIN
+    `name` `pgn` ON `v`.`idPrimaryGuest` = `pgn`.`idName`
+        LEFT JOIN
+    `gen_lookups` `vs` ON `vs`.`Table_Name` = 'Visit_Status' AND `vs`.`Code` = `v`.`Status`
+        JOIN
+    `invoice` `i` ON `v`.`idVisit` = `i`.`Order_Number` AND `v`.`Span` = `i`.`Suborder_Number`
+        JOIN
+    `invoice_line` `il` ON `i`.`idInvoice` = `il`.`Invoice_Id` AND `il`.`Deleted` = 0 AND `il`.`Item_Id` IN (:itemAddnlCharge, :itemDiscount)
+        LEFT JOIN
+    `gen_lookups` `invs` ON `invs`.`Table_Name` = 'Invoice_Status' AND `invs`.`Code` = `i`.`Status`
+        JOIN
+    `name` `ba` ON `i`.`Sold_To_Id` = `ba`.`idName`
+WHERE `i`.`Deleted` = 0 AND " . $whDates . $whBilling . $whDiags . $whCharges . " GROUP BY `i`.`idInvoice` ORDER BY `v`.`idVisit`";
     }
 
     /**
@@ -232,7 +239,8 @@ where i.Deleted = 0 and " . $whDates . $whBilling . $whDiags . $whCharges . " gr
     public function getStats(){
         if(count($this->statsArray) == 0){
 
-            $stmt = $this->dbh->query($this->query);
+            $stmt = $this->dbh->prepare($this->query);
+            $stmt->execute($this->queryParams);
             $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
             $patientIds = array();
             $visitIds = array();
@@ -394,41 +402,45 @@ where i.Deleted = 0 and " . $whDates . $whBilling . $whDiags . $whCharges . " gr
     protected function getAdditionalChargeCounts(){
         $visitIds = $this->getStats()["visitIds"];
 
+        $params = [':itemAddnlCharge' => ItemId::AddnlCharge];
+
+        $visitPh = [];
         if(count($visitIds) == 0){
-            $visitIds = ['null'];
+            $visitPh[] = ':vid0';
+            $params[':vid0'] = 'null';
         }else{
-            foreach($visitIds as $k=>$v){
-                $visitIds[$k] = "'".$v."'";
+            foreach($visitIds as $i=>$v){
+                $ph = ':vid' . $i;
+                $visitPh[] = $ph;
+                $params[$ph] = $v;
             }
         }
-
-        $visitIds = implode(", ", $visitIds);
 
         $selectedCharges = $this->selectedAdditionalCharges;
         $whCharges = "";
         if(count($selectedCharges) > 0){
-            foreach($selectedCharges as $d){
+            $chargePh = [];
+            foreach($selectedCharges as $i => $d){
                 if ($d != '' && isset($this->additionalCharges[$d])) {
-                    if ($whCharges == '') {
-                        $whCharges .= "'".$this->additionalCharges[$d]["Description"]."'";
-                    } else {
-                        $whCharges .= ",'". $this->additionalCharges[$d]["Description"]."'";
-                    }
+                    $ph = ':chg' . $i;
+                    $chargePh[] = $ph;
+                    $params[$ph] = $this->additionalCharges[$d]["Description"];
                 }
             }
 
-            $whCharges = " and il.description in (" . $whCharges . ")";
+            $whCharges = " AND `il`.`description` IN (" . implode(', ', $chargePh) . ")";
         }
 
-        $query = 'select il.description, count(*) as `count` from invoice_line il
-join invoice i on il.Invoice_Id = i.idInvoice
-join visit v on i.Order_Number = v.idVisit and i.Suborder_Number = v.Span
-where il.Item_Id = ' . ItemId::AddnlCharge . ' and 
-il.Deleted = 0 and
-concat(v.idVisit, "-", v.Span) in (' . $visitIds .') ' . $whCharges . '
-group by il.Description';
+        $query = 'SELECT `il`.`description`, COUNT(*) AS `count` FROM `invoice_line` `il`
+JOIN `invoice` `i` ON `il`.`Invoice_Id` = `i`.`idInvoice`
+JOIN `visit` `v` ON `i`.`Order_Number` = `v`.`idVisit` AND `i`.`Suborder_Number` = `v`.`Span`
+WHERE `il`.`Item_Id` = :itemAddnlCharge AND
+`il`.`Deleted` = 0 AND
+CONCAT(`v`.`idVisit`, "-", `v`.`Span`) IN (' . implode(', ', $visitPh) .') ' . $whCharges . '
+GROUP BY `il`.`Description`';
 
-        $stmt = $this->dbh->query($query);
+        $stmt = $this->dbh->prepare($query);
+        $stmt->execute($params);
         return $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
     }
@@ -440,12 +452,21 @@ group by il.Description';
             $patientIds = [0];
         }
 
-        $query = 'select concat(10*floor(timestampdiff(YEAR, n.BirthDate, CURDATE())/10), "-", 10*floor(timestampdiff(YEAR, n.BirthDate, CURDATE())/10) + 9) as `description`, count(*) as `count` from `name` n
-where n.idName in (' . implode(", ", $patientIds) . ')
-group by `description`
+        $patientPh = [];
+        $params = [];
+        foreach ($patientIds as $i => $pid) {
+            $ph = ':pid' . $i;
+            $patientPh[] = $ph;
+            $params[$ph] = $pid;
+        }
+
+        $query = 'SELECT CONCAT(10*FLOOR(TIMESTAMPDIFF(YEAR, `n`.`BirthDate`, CURDATE())/10), "-", 10*FLOOR(TIMESTAMPDIFF(YEAR, `n`.`BirthDate`, CURDATE())/10) + 9) AS `description`, COUNT(*) AS `count` FROM `name` `n`
+WHERE `n`.`idName` IN (' . implode(', ', $patientPh) . ')
+GROUP BY `description`
 ;';
 
-        $stmt = $this->dbh->query($query);
+        $stmt = $this->dbh->prepare($query);
+        $stmt->execute($params);
         $results = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
         //fill defined brackets
@@ -481,18 +502,28 @@ group by `description`
             $patientIds = [0];
         }
 
-        $join = 'left join name_demog nd on nd.'.$demographic.' = de.Code and de.Table_Name = "' . $demographic . '" left join name n on nd.idName = n.idName and n.idName in (' . implode(", ", $patientIds) . ')';
+        $patientPh = [];
+        $params = [':demographic' => $demographic];
+        foreach ($patientIds as $i => $pid) {
+            $ph = ':pid' . $i;
+            $patientPh[] = $ph;
+            $params[$ph] = $pid;
+        }
+        $patientList = implode(', ', $patientPh);
+
+        $join = 'LEFT JOIN `name_demog` `nd` ON `nd`.`'.$demographic.'` = `de`.`Code` AND `de`.`Table_Name` = :demographic LEFT JOIN `name` `n` ON `nd`.`idName` = `n`.`idName` AND `n`.`idName` IN (' . $patientList . ')';
         if($demographic == "Gender"){
-            $join = 'left join name n on n.'.$demographic.' = de.Code and de.Table_Name = "' . $demographic . '" and n.idName in (' . implode(", ", $patientIds) . ')';
+            $join = 'LEFT JOIN `name` `n` ON `n`.`'.$demographic.'` = `de`.`Code` AND `de`.`Table_Name` = :demographic AND `n`.`idName` IN (' . $patientList . ')';
         }
 
-        $query = 'select de.Description as "description", count(n.idName) as `count` from gen_lookups de '
+        $query = 'SELECT `de`.`Description` AS "description", COUNT(`n`.`idName`) AS `count` FROM `gen_lookups` `de` '
         .$join.
-        'where de.Table_Name = "'.$demographic.'"
-group by de.`description` order by de.Order asc, de.`Code` asc
+        'WHERE `de`.`Table_Name` = :demographic
+GROUP BY `de`.`description` ORDER BY `de`.`Order` ASC, `de`.`Code` ASC
 ;';
 
-        $stmt = $this->dbh->query($query);
+        $stmt = $this->dbh->prepare($query);
+        $stmt->execute($params);
         return $stmt->fetchAll(\PDO::FETCH_ASSOC);
     }
 
@@ -503,12 +534,21 @@ group by de.`description` order by de.Order asc, de.`Code` asc
             $patientIds = [0];
         }
 
-        $query = 'select na.City, na.State_Province, na.Postal_Code, count(n.idName) as `count` from name n 
-        join name_address na on n.idName = na.idName and n.Preferred_Mail_Address = na.Purpose 
-        where n.idName in (' . implode(", ", $patientIds) . ')' .
-'group by na.Postal_Code;';
+        $patientPh = [];
+        $params = [];
+        foreach ($patientIds as $i => $pid) {
+            $ph = ':pid' . $i;
+            $patientPh[] = $ph;
+            $params[$ph] = $pid;
+        }
 
-        $stmt = $this->dbh->query($query);
+        $query = 'SELECT `na`.`City`, `na`.`State_Province`, `na`.`Postal_Code`, COUNT(`n`.`idName`) AS `count` FROM `name` `n`
+        JOIN `name_address` `na` ON `n`.`idName` = `na`.`idName` AND `n`.`Preferred_Mail_Address` = `na`.`Purpose`
+        WHERE `n`.`idName` IN (' . implode(', ', $patientPh) . ')' .
+'GROUP BY `na`.`Postal_Code`;';
+
+        $stmt = $this->dbh->prepare($query);
+        $stmt->execute($params);
         return $stmt->fetchAll(\PDO::FETCH_ASSOC);
     }
 

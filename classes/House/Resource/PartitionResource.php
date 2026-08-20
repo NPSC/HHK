@@ -83,8 +83,9 @@ class PartitionResource extends AbstractResource {
 
 
         if ($this->isNewResource() === FALSE && is_null($this->currentOccupants)) {
-            $stmt = $dbh->query("select count(s.idStays) from visit v left join stays s on v.idVisit = s.idVisit and s.`Status` = '" . VisitStatus::CheckedIn
-                    ."'where v.idResource = " . $this->getIdResource() ." and v.`Status` = '" . VisitStatus::CheckedIn ."'");
+            $stmt = $dbh->prepare("SELECT COUNT(`s`.`idStays`) FROM `visit` `v` LEFT JOIN `stays` `s` ON `v`.`idVisit` = `s`.`idVisit` AND `s`.`Status` = :status1
+                    WHERE `v`.`idResource` = :idResource AND `v`.`Status` = :status2");
+            $stmt->execute([':status1' => VisitStatus::CheckedIn, ':idResource' => $this->getIdResource(), ':status2' => VisitStatus::CheckedIn]);
             $rows = $stmt->fetchAll();
             $this->currentOccupants = $rows[0][0];
         }

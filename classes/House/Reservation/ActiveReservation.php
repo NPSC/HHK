@@ -322,7 +322,8 @@ class ActiveReservation extends Reservation {
                 $newIdResv = RepeatReservations::makeNewReservation($dbh, $resv, $newArrival, $departure, $resv->getIdResource(), $oldResvStatus, $guests);
 
                 if($uS->AcceptResvPaymt && $resv->getIdReservation() > 0 && $newIdResv > 0 && isset($post["selexcpay"]) && $post["selexcpay"] == ExcessPay::MoveToResv){
-                    $dbh->exec("UPDATE `reservation_invoice_line` set `Reservation_Id` = " . $newIdResv . " where `Reservation_Id` = " . $resv->getIdReservation());
+                    $updResvIdStmt = $dbh->prepare("UPDATE `reservation_invoice_line` SET `Reservation_Id` = :newIdResv WHERE `Reservation_Id` = :idResv");
+                    $updResvIdStmt->execute([':newIdResv' => $newIdResv, ':idResv' => $resv->getIdReservation()]);
                 }
 
                 return $newIdResv;
@@ -525,9 +526,20 @@ class ActiveReservation extends Reservation {
             // Relate Invoice to Reservation
             if (! is_Null($this->payResult) && $this->payResult->getIdInvoice() > 0 && $resv->getIdReservation() > 0) {
                 if(isset($post["selexcpay"]) && $post["selexcpay"] == ExcessPay::Hold){ //if putting overpayment towards general MOA, only link prepayment MOA payout to reservation
-                    $dbh->exec("insert ignore into `reservation_invoice_line` select '".$resv->getIdReservation()."', il.idInvoice_Line from invoice_line il where il.Invoice_Id = " .$this->payResult->getIdInvoice() . " and il.Item_Id = '" . ItemId::LodgingMOA . "' and il.Type_Id = '" . InvoiceLineType::Reimburse . "'");
+                    $insResvInvStmt1 = $dbh->prepare("INSERT IGNORE INTO `reservation_invoice_line` SELECT :idResv, `il`.`idInvoice_Line` FROM `invoice_line` `il` WHERE `il`.`Invoice_Id` = :idInvoice AND `il`.`Item_Id` = :itemLodgingMOA AND `il`.`Type_Id` = :typeReimburse");
+                    $insResvInvStmt1->execute([
+                        ':idResv' => $resv->getIdReservation(),
+                        ':idInvoice' => $this->payResult->getIdInvoice(),
+                        ':itemLodgingMOA' => ItemId::LodgingMOA,
+                        ':typeReimburse' => InvoiceLineType::Reimburse,
+                    ]);
                 }else{
-                    $dbh->exec("insert ignore into `reservation_invoice_line` select '".$resv->getIdReservation()."', il.idInvoice_Line from invoice_line il where il.Invoice_Id = " .$this->payResult->getIdInvoice() . " and il.Item_Id = '" . ItemId::LodgingMOA . "'");
+                    $insResvInvStmt2 = $dbh->prepare("INSERT IGNORE INTO `reservation_invoice_line` SELECT :idResv, `il`.`idInvoice_Line` FROM `invoice_line` `il` WHERE `il`.`Invoice_Id` = :idInvoice AND `il`.`Item_Id` = :itemLodgingMOA");
+                    $insResvInvStmt2->execute([
+                        ':idResv' => $resv->getIdReservation(),
+                        ':idInvoice' => $this->payResult->getIdInvoice(),
+                        ':itemLodgingMOA' => ItemId::LodgingMOA,
+                    ]);
                 }
             }
 

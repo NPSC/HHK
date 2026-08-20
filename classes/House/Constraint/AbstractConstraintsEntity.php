@@ -166,11 +166,13 @@ where c.Status = 'a' and c.Type = :tpe");
 
             if (isset($capturedConstraints[$id]) && $c['isActive'] == 0) {
 
-                $dbh->exec("insert Into `constraint_entity` (idConstraint, idEntity, `Type`) values ($id, ". $this->getIdEntity() . ", '" . $this->getConstraintType() . "' )");
+                $insStmt = $dbh->prepare("INSERT INTO `constraint_entity` (`idConstraint`, `idEntity`, `Type`) VALUES (:id, :idEntity, :type)");
+                $insStmt->execute([':id' => $id, ':idEntity' => $this->getIdEntity(), ':type' => $this->getConstraintType()]);
 
 
             } else if (isset($capturedConstraints[$id]) === FALSE && $c['isActive'] == 1) {
-                $dbh->exec("Delete from `constraint_entity` where idConstraint = $id and idEntity = ". $this->getIdEntity() . " and `Type` = '" . $this->getConstraintType() . "'");
+                $delStmt = $dbh->prepare("DELETE FROM `constraint_entity` WHERE `idConstraint` = :id AND `idEntity` = :idEntity AND `Type` = :type");
+                $delStmt->execute([':id' => $id, ':idEntity' => $this->getIdEntity(), ':type' => $this->getConstraintType()]);
 
             }
 

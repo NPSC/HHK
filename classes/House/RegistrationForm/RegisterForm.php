@@ -560,17 +560,19 @@ p.label {
                 $guests[] = $gst;
             }
 
-            $query = "select hs.idPatient, hs.Room, IFNULL(h.Title, '') from hospital_stay hs join visit v on hs.idHospital_stay = v.idHospital_Stay
-				left join hospital h on hs.idHospital = h.idHospital  where v.idVisit = " . intval($idVisit) . " group by v.idVisit limit 1";
+            $query = "SELECT `hs`.`idPatient`, `hs`.`Room`, IFNULL(`h`.`Title`, '') FROM `hospital_stay` `hs` JOIN `visit` `v` ON `hs`.`idHospital_stay` = `v`.`idHospital_Stay`
+				LEFT JOIN `hospital` `h` ON `hs`.`idHospital` = `h`.`idHospital`  WHERE `v`.`idVisit` = :idVisit GROUP BY `v`.`idVisit` LIMIT 1";
 
-            $stmt = $dbh->query($query);
+            $stmt = $dbh->prepare($query);
+            $stmt->execute([':idVisit' => intval($idVisit)]);
             $hospitalStay = $stmt->fetchAll(\PDO::FETCH_NUM);
 
         } else if ($idReservation > 0) {
 
-            $stmt = $dbh->query("Select rg.idGuest as GuestId, rg.Primary_Guest, r.* from reservation_guest rg join reservation r on rg.idReservation = r.idReservation JOIN registration reg ON r.idRegistration = reg.idRegistration
-        JOIN name_guest ng on reg.idPsg = ng.idPsg and rg.idGuest = ng.idName
-				where rg.idReservation = $idReservation order by rg.Primary_Guest desc");
+            $stmt = $dbh->prepare("SELECT `rg`.`idGuest` AS `GuestId`, `rg`.`Primary_Guest`, `r`.* FROM `reservation_guest` `rg` JOIN `reservation` `r` ON `rg`.`idReservation` = `r`.`idReservation` JOIN `registration` `reg` ON `r`.`idRegistration` = `reg`.`idRegistration`
+        JOIN `name_guest` `ng` ON `reg`.`idPsg` = `ng`.`idPsg` AND `rg`.`idGuest` = `ng`.`idName`
+				WHERE `rg`.`idReservation` = :idReservation ORDER BY `rg`.`Primary_Guest` DESC");
+            $stmt->execute([':idReservation' => $idReservation]);
             $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
             if(count($rows) == 0) {
@@ -613,10 +615,11 @@ p.label {
 
             }
 
-            $query = "select hs.idPatient, hs.Room, IFNULL(h.Title, '') from hospital_stay hs join reservation r on hs.idHospital_stay = r.idHospital_Stay
-				left join hospital h on hs.idHospital = h.idHospital where r.idReservation = " . intval($idReservation) . " limit 1";
+            $query = "SELECT `hs`.`idPatient`, `hs`.`Room`, IFNULL(`h`.`Title`, '') FROM `hospital_stay` `hs` JOIN `reservation` `r` ON `hs`.`idHospital_stay` = `r`.`idHospital_Stay`
+				LEFT JOIN `hospital` `h` ON `hs`.`idHospital` = `h`.`idHospital` WHERE `r`.`idReservation` = :idReservation LIMIT 1";
 
-            $stmt = $dbh->query($query);
+            $stmt = $dbh->prepare($query);
+            $stmt->execute([':idReservation' => intval($idReservation)]);
             $hospitalStay = $stmt->fetchAll(\PDO::FETCH_NUM);
 
         } else {
@@ -704,7 +707,8 @@ p.label {
 
         if ($uS->RegFormNoRm === FALSE) {
 
-            $stmt2 = $dbh->query("select Title from resource where idResource = " . $idResc . ";");
+            $stmt2 = $dbh->prepare("SELECT `Title` FROM `resource` WHERE `idResource` = :idResc;");
+            $stmt2->execute([':idResc' => $idResc]);
             $rows2 = $stmt2->fetchAll();
 
             foreach ($rows2 as $rw) {
@@ -731,8 +735,9 @@ p.label {
 
         $houseAddr = '';
 
-        $stmth = $dbh->query("select a.Address_1, a.Address_2, a.City, a.State_Province, a.Postal_Code
-    from name n left join name_address a on n.idName = a.idName and n.Preferred_Mail_Address = a.Purpose where n.idName = " . $uS->sId);
+        $stmth = $dbh->prepare("SELECT `a`.`Address_1`, `a`.`Address_2`, `a`.`City`, `a`.`State_Province`, `a`.`Postal_Code`
+    FROM `name` `n` LEFT JOIN `name_address` `a` ON `n`.`idName` = `a`.`idName` AND `n`.`Preferred_Mail_Address` = `a`.`Purpose` WHERE `n`.`idName` = :sId");
+        $stmth->execute([':sId' => $uS->sId]);
 
         $rows = $stmth->fetchAll(\PDO::FETCH_ASSOC);
 

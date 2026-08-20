@@ -29,7 +29,8 @@ class RelationshipMapper
      */
     public function __construct(\PDO $dbh) {
 
-        $rstmt = $dbh->query("Select * from map_relations;");
+        $rstmt = $dbh->prepare("SELECT * FROM `map_relations`;");
+        $rstmt->execute();
 
         $this->map = $rstmt->fetchAll(\PDO::FETCH_ASSOC);
 
@@ -63,7 +64,8 @@ class RelationshipMapper
 
     public function mapNeonTypes(\PDO $dbh, $listName = 'relationTypes') {
 
-        $stmtList = $dbh->query("Select * from neon_type_map where List_Name = '" . $listName . "'");
+        $stmtList = $dbh->prepare("SELECT * FROM `neon_type_map` WHERE `List_Name` = :listName");
+        $stmtList->execute([':listName' => $listName]);
         $items = $stmtList->fetchAll(\PDO::FETCH_ASSOC);
 
         $mappedItems = array();

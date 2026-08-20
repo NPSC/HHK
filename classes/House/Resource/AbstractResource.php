@@ -135,15 +135,18 @@ order by r.Util_Priority;", array(\PDO::ATTR_CURSOR => \PDO::CURSOR_FWDONLY));
         $rooms = $this->getRooms();
 
         // set the room priority
-        $dbh->query("update room set Util_Priority = '" . $this->getUtilPriority() . "' where idRoom = $id");
+        $updPriorityStmt = $dbh->prepare("UPDATE `room` SET `Util_Priority` = :priority WHERE `idRoom` = :id");
+        $updPriorityStmt->execute([':priority' => $this->getUtilPriority(), ':id' => $id]);
 
         if (count($rooms) == 0) {
             // add room
-            $dbh->query("insert into resource_room (idResource, idRoom) values (" . $this->getIdResource() . "," . $id . ")");
+            $insRoomStmt = $dbh->prepare("INSERT INTO `resource_room` (`idResource`, `idRoom`) VALUES (:idResource, :id)");
+            $insRoomStmt->execute([':idResource' => $this->getIdResource(), ':id' => $id]);
 
         } else if (isset($rooms[$id]) === FALSE) {
             // update to new room id.
-            $dbh->query("update resource_room set idRoom = " . $id . " where idResource = " . $this->getIdResource());
+            $updRoomStmt = $dbh->prepare("UPDATE `resource_room` SET `idRoom` = :id WHERE `idResource` = :idResource");
+            $updRoomStmt->execute([':id' => $id, ':idResource' => $this->getIdResource()]);
 
         } else {
             return;
