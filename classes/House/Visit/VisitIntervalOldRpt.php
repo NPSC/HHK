@@ -1455,6 +1455,7 @@ WHERE
             HouseLog::logDownload($dbh, 'Visit Report', "Excel", "Visit Report for " . $start . " - " . $end . " downloaded", $uS->username);
             $writer->download();
 
+            return null;
         }
 
     }

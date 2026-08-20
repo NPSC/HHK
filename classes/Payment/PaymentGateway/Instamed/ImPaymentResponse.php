@@ -66,7 +66,7 @@ class ImPaymentResponse extends AbstractCreditResponse {
         return $status;
     }
 
-    public function getErrorMessage() {
+    public function getErrorMessage(): string {
         return $this->response->getErrorMessage();
     }
 

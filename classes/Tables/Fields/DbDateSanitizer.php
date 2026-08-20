@@ -56,7 +56,7 @@ class DbDateSanitizer implements DbFieldSanitizerInterface {
      *
      * @return int
      */
-    public function getDbType() {
+    public function getDbType(): int {
         if ($this->isNull === false) {
             return \PDO::PARAM_STR;
         } else {

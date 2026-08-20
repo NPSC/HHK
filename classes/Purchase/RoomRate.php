@@ -132,7 +132,7 @@ class RoomRate {
             $title .= ': $' .$amt;
 
             if($rateAdjust != 0){
-                $adjustedAmt = round($amt * (1 + $rateAdjust/100), 2);
+                $adjustedAmt = round((float) str_replace(',', '', $amt) * (1 + $rateAdjust/100), 2);
                 $title .= " (Adjusted: $" . $adjustedAmt . ")";
             }
             

@@ -16,6 +16,7 @@ use HHK\Tables\EditRS;
 use HHK\Tables\Payment\{PaymentRS, Payment_AuthRS};
 use HHK\Tables\PaymentGW\Gateway_TransactionRS;
 use HHK\Exception\PaymentException;
+use HHK\HTMLControls\HTMLTable;
 
 /**
  * AbstractPaymentGateway.php
@@ -66,7 +67,7 @@ abstract class AbstractPaymentGateway {
 
     public abstract function processHostedReply(\PDO $dbh, $post, $ssoToken, $idInv, $payNotes, $payDate);
 
-    public abstract function selectPaymentMarkup(\PDO $dbh, &$payTable, $index = '');
+    public abstract function selectPaymentMarkup(\PDO $dbh, HTMLTable &$payTable, $index = '');
 
     public function hasVoidReturn() {
     	return TRUE;

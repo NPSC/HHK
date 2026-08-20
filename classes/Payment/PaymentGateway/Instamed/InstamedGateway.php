@@ -1187,7 +1187,7 @@ where r.idRegistration =" . $idReg);
         return new ImCofResponse($vcr, $idPayor, $idGroup);
     }
 
-    public function selectPaymentMarkup(\PDO $dbh, &$payTbl, $index = '') {
+    public function selectPaymentMarkup(\PDO $dbh, HTMLTable &$payTbl, $index = '') {
 
         $keyCb = HTMLContainer::generateMarkup("div", HTMLContainer::generateMarkup("span", "Swipe") .
             HTMLContainer::generateMarkup(

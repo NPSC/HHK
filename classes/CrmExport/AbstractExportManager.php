@@ -413,6 +413,10 @@ abstract class AbstractExportManager implements ExportManagerInterface{
         return $this->memberReplies;
     }
 
+    public function getHhReplies(): array {
+        return [];
+    }
+
     public function getReplies(): array
     {
         return $this->replies;

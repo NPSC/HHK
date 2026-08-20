@@ -851,10 +851,10 @@ order by pa.Timestamp desc");
     /**
      *
      * @param \PDO $dbh
-     * @param mixed $payTable
+     * @param HTMLTable $payTbl
      * @param mixed $index
      */
-    public function selectPaymentMarkup(\PDO $dbh, &$payTbl, $index = '') {
+    public function selectPaymentMarkup(\PDO $dbh, HTMLTable &$payTbl, $index = '') {
         $selArray = ['name'=>'selccgw'.$index, 'class'=>'hhk-feeskeys'.$index, 'style'=>'width:min-content;', 'title'=>'Select the Location'];
     	$manualArray =  ['type'=>'checkbox', 'name'=>'btnvrKeyNumber'.$index, 'class'=>'hhk-feeskeys'.$index, 'title'=>'Check to Key in credit account number'];
 

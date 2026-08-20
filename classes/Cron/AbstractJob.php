@@ -173,6 +173,11 @@ abstract class AbstractJob implements JobInterface
         }
     }
 
+    public function getIdJob(): int
+    {
+        return $this->idJob;
+    }
+
     public function getStatus()
     {
         return $this->status;

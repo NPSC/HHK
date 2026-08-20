@@ -17,7 +17,7 @@ abstract class AbstractGatewayResponse {
 
     /**
      *
-     * @var array
+     * @var array|object
      */
     protected $response;
     protected $errors;
@@ -35,7 +35,7 @@ abstract class AbstractGatewayResponse {
     /**
      * The child is expected to define $result.
      *
-     * @param array $response
+     * @param array|object $response
      * @param string $tranType
      * @throws PaymentException
      */

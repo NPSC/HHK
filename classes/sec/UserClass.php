@@ -360,7 +360,7 @@ class UserClass
         [$range, $netmask] = explode('/', $range, 2);
         $range_decimal = ip2long($range);
         $ip_decimal = ip2long($ip);
-        $wildcard_decimal = pow(2, (32 - $netmask)) - 1;
+        $wildcard_decimal = pow(2, (32 - (int) $netmask)) - 1;
         $netmask_decimal = ~ $wildcard_decimal;
         return (($ip_decimal & $netmask_decimal) == ($range_decimal & $netmask_decimal));
     }
@@ -607,10 +607,10 @@ class UserClass
      * Summary of getAuthProvider
      * @param \PDO $dbh
      * @param Session $uS
-     * @param string $username
+     * @param string|false $username
      * @return mixed
      */
-    public static function getAuthProvider(\PDO $dbh, Session $uS, $username = false)
+    public static function getAuthProvider(\PDO $dbh, Session $uS, string|false $username = false)
     {
         if($username === false){
             $username = $uS->username;
@@ -623,10 +623,10 @@ class UserClass
      * Summary of isLocalUser
      * @param \PDO $dbh
      * @param Session $uS
-     * @param string $username
+     * @param string|false $username
      * @return bool
      */
-    public static function isLocalUser(\PDO $dbh, $uS, $username = false): bool
+    public static function isLocalUser(\PDO $dbh, $uS, string|false $username = false): bool
     {
         $u = self::getUserCredentials($dbh, $username);
         return (isset($u['idIdp']) && $u['idIdp'] > 0 ? false : true);
@@ -840,12 +840,12 @@ class UserClass
      * Summary of insertUserLog
      * @param \PDO $dbh
      * @param string $action
-     * @param string $username
+     * @param string|false $username
      * @param mixed $date
      * @param bool $fromHHK
      * @return void
      */
-    public static function insertUserLog(\PDO $dbh, $action, $username = false, $date = false, $fromHHK = false)
+    public static function insertUserLog(\PDO $dbh, $action, string|false $username = false, $date = false, $fromHHK = false)
     {
         if (! $username) {
             $ssn = Session::getInstance();

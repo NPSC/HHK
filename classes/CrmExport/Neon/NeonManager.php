@@ -2144,7 +2144,7 @@ WHERE `n`.`External_Id` != :excludeTerm AND `n`.`Member_Status` = :memberStatus 
         return $msg;
     }
 
-    public function getHhReplies() {
+    public function getHhReplies(): array {
         return $this->hhReplies;
     }
 

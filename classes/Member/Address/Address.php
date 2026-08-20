@@ -161,7 +161,7 @@ class Address extends AbstractContactPoint{
      * @param string $code
      * @return boolean
      */
-    public function isRecordSetDefined($code) {
+    public function isRecordSetDefined($code): bool {
 
         $adrRS = $this->get_recordSet($code);
 

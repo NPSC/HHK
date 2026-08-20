@@ -464,7 +464,7 @@ class LocalGateway extends AbstractPaymentGateway {
 		return new LocalResponse ( $vcr, $idPayor, $idGroup, 0 );
 	}
 
-	public function selectPaymentMarkup(\PDO $dbh, &$payTbl, $index = '') {
+	public function selectPaymentMarkup(\PDO $dbh, HTMLTable &$payTbl, $index = '') {
 
 		// Charge card list
 		$ccs = Common::readGenLookupsPDO ( $dbh, 'Charge_Cards' );

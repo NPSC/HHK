@@ -51,5 +51,7 @@ Interface JobInterface {
 
     function getLogMsg();
 
+    function getIdJob(): int;
+
     function getParamTemplate():array;
 }

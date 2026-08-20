@@ -854,7 +854,7 @@ class VantivGateway extends AbstractPaymentGateway {
     	return $this->paymentPageLogoUrl;
     }
 
-    public function selectPaymentMarkup(\PDO $dbh, &$payTbl, $index = '') {
+    public function selectPaymentMarkup(\PDO $dbh, HTMLTable &$payTbl, $index = '') {
 
     	$selArray = ['name'=>'selccgw'.$index, 'class'=>'hhk-feeskeys'.$index, 'style'=>'width:min-content;', 'title'=>'Select the Location'];
     	$manualArray =  ['type'=>'checkbox', 'name'=>'btnvrKeyNumber'.$index, 'class'=>'hhk-feeskeys'.$index, 'title'=>'Check to Key in credit account number'];

@@ -123,9 +123,9 @@ abstract class AbstractContactPoint {
     /**
      * Summary of isRecordSetDefined
      * @param mixed $code
-     * @return void
+     * @return bool
      */
-    public abstract function isRecordSetDefined($code);
+    public abstract function isRecordSetDefined($code): bool;
 
 
     /**

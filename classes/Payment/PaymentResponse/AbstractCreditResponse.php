@@ -2,6 +2,7 @@
 
 namespace HHK\Payment\PaymentResponse;
 
+use HHK\Payment\GatewayResponse\GatewayResponseInterface;
 use HHK\Tables\Payment\Payment_AuthRS;
 use HHK\Tables\EditRS;
 
@@ -126,6 +127,18 @@ abstract class AbstractCreditResponse extends AbstractPaymentResponse {
      */
     public function getIdPaymentAuth() {
         return $this->idPaymentAuth;
+    }
+
+    /**
+     * Summary of getErrorMessage
+     * @return string
+     */
+    public function getErrorMessage(): string {
+        if ($this->response instanceof GatewayResponseInterface) {
+            return $this->response->getErrorMessage();
+        }
+
+        return '';
     }
 
     public function getParentIdPayment(){

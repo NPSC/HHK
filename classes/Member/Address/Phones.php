@@ -130,7 +130,7 @@ class Phones extends AbstractContactPoint {
      * @param mixed $code
      * @return bool
      */
-    public function isRecordSetDefined($code) {
+    public function isRecordSetDefined($code): bool {
 
         $adrRS = $this->get_recordSet($code);
 

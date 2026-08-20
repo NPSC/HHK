@@ -1,10 +1,10 @@
 parameters:
-    level: 1
+    level: 2
     paths:
         - classes
         - functions
         - public
-#    ignoreErrors:
-#        -
-#            identifier: property.notFound
-#            message: '#Access to an undefined property HHK\\sec\\Session::\$#'
+    ignoreErrors:
+        -
+            identifier: property.notFound
+            message: '#Access to an undefined property HHK\\sec\\Session::\$#'

@@ -113,7 +113,7 @@ $scheduler->run();
 
 //Gather results
 foreach($jobObjs as $jobObj){
-    $results[$jobObj->idJob] = ["status"=>$jobObj->status, "logMsg"=>$jobObj->logMsg];
+    $results[$jobObj->getIdJob()] = ["status"=>$jobObj->getStatus(), "logMsg"=>$jobObj->getLogMsg()];
 }
 
 //send results as json

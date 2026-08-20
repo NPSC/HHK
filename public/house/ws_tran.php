@@ -259,9 +259,9 @@ try {
 
             $filtered = filter_input_array(INPUT_POST, $arguments);
 
-            $num = $transfer->setExcludeMembers($dbh, $filtered['id']);
+            $num = $transfer->setExcludeMembers($dbh, [$filtered['id']]);
 
-            $events = ['result' => $num . ' records updated.'];
+            $events = ['result' => count($num) . ' records updated.'];
 
             break;
 

@@ -15,6 +15,8 @@ interface ExportManagerInterface {
 
     public function upsertMembers(\PDO $dbh, array $sourceIds, bool $trace = false, bool $linkRelatives = true): array;
 
+    public function getLinkRelatives(): bool;
+
     public function exportPayments(\PDO $dbh, string $startDateString, string $endDateString): array;
 
     public function exportVisits(\PDO $dbh, mixed $idPsg, array $rels): array;
@@ -80,6 +82,8 @@ interface ExportManagerInterface {
     public function getGatewayId(): mixed;
 
     public function getMemberReplies(): mixed;
+
+    public function getHhReplies(): array;
 
     public function getReplies(): mixed;
 
