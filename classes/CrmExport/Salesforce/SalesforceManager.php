@@ -64,7 +64,7 @@ class SalesforceManager extends AbstractExportManager {
 
     protected $transferResult;
     protected $errorResult;
-    protected ?SF_connector $webService = null;
+    protected ?SF_Connector $webService = null;
     private ?string $webServiceError = null;
 
     protected $uniqueGuests;
@@ -118,7 +118,7 @@ class SalesforceManager extends AbstractExportManager {
      * failed to initialize. Used to guard every call into the Salesforce API.
      * @throws RuntimeException
      */
-    protected function getWebService(): SF_connector {
+    protected function getWebService(): SF_Connector {
         if ($this->webService === null) {
             throw new RuntimeException('Salesforce connection is unavailable: ' . $this->webServiceError);
         }
@@ -611,7 +611,7 @@ class SalesforceManager extends AbstractExportManager {
      * Summary of upsertMembers Bulk insert/update of members
      * @param \PDO $dbh
      * @param array $sourceIds
-     * @param mixed $trace
+     * @param bool $trace
      * @param bool $linkRelatives
      * @return array
      */

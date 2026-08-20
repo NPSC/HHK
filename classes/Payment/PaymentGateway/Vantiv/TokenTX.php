@@ -37,8 +37,11 @@ class TokenTX {
      *
      * @param \PDO $dbh
      * @param int $idGuest
-     * @param string $gwName
+     * @param mixed $idReg
+     * @param VantivGateway $gway
      * @param CreditSaleTokenRequest $cstReq
+     * @param mixed $payNotes
+     * @param mixed $payDate
      * @return TokenResponse
      */
     public static function CreditSaleToken(\PDO $dbh, $idGuest, $idReg, VantivGateway $gway, CreditSaleTokenRequest $cstReq, $payNotes, $payDate) {

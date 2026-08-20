@@ -93,15 +93,9 @@ abstract class AbstractRole {
      * @var string
      */
     public $status = '';
-    /**
-     * Summary of checkinDate
-     * @var
-     */
+
     protected $checkinDate;
-    /**
-     * Summary of expectedCheckOut
-     * @var
-     */
+
     protected $expectedCheckOut;
     /**
      * Summary of incompleteEmergContact

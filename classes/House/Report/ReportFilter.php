@@ -62,166 +62,73 @@ class ReportFilter {
      * @var array
      */
     protected $calendarOptions;
-    /**
-     * Summary of selectedCalendar
-     * @var
-     */
+
     protected $selectedCalendar;
-    /**
-     * Summary of selectedMonths
-     * @var
-     */
+
     protected $selectedMonths;
-    /**
-     * Summary of selectedYear
-     * @var
-     */
+
     protected $selectedYear;
-    /**
-     * Summary of selectedStart
-     * @var
-     */
+
     protected $selectedStart;
-    /**
-     * Summary of selectedEnd
-     * @var
-     */
+
     protected $selectedEnd;
-    /**
-     * Summary of fyDiffMonths
-     * @var
-     */
+
     protected $fyDiffMonths;
 
-    /**
-     * Summary of hospitals
-     * @var
-     */
-    protected $hospitals;
-    /**
-     * Summary of hList
-     * @var
-     */
-    protected $hList;
-    /**
-     * Summary of aList
-     * @var
-     */
-    protected $aList;
-    /**
-     * Summary of selectedHosptials
-     * @var
-     */
-    protected $selectedHosptials;
-    /**
-     * Summary of selectedAssocs
-     * @var
-     */
-    protected $selectedAssocs;
 
-    /**
-     * Summary of selectedResourceGroups
-     * @var
-     */
-    protected $selectedResourceGroups;
-    /**
-     * Summary of resourceGroups
-     * @var
-     */
+    protected $hospitals;
+
+    protected $hList;
+
+    protected $aList;
+
+    protected array $selectedHosptials;
+
+    protected array $selectedAssocs;
+
+    protected array $selectedResourceGroups;
+
     protected $resourceGroups;
 
-    /**
-     * Summary of selectedDiagnoses
-     * @var
-     */
-    protected $selectedDiagnoses;
-    /**
-     * Summary of diagnsoses
-     * @var
-     */
+
+    protected array $selectedDiagnoses;
+
     public $diagnoses;
     protected $diagnosisCategories;
 
-    /**
-     * Summary of selectedBillingAgents
-     * @var 
-     */
-    protected $selectedBillingAgents;
-    /**
-     * Summary of billingAgents
-     * @var 
-     */
+
+    protected array $selectedBillingAgents;
+
     public $billingAgents;
 
-    /**
-     * Summary of selectedPayTypes
-     * @var 
-     */
-    protected $selectedPayTypes;
-    /**
-     * Summary of payTypes
-     * @var 
-     */
+
+    protected array $selectedPayTypes;
+
     protected $payTypes;
 
-    /**
-     * Summary of selectedPayStatuses
-     * @var 
-     */
-    protected $selectedPayStatuses;
-    /**
-     * Summary of payStatuses
-     * @var 
-     */
+
+    protected array $selectedPayStatuses;
+
     protected $payStatuses;
 
-    /**
-     * Summary of selectedPaymentGateways
-     * @var
-     */
-    protected $selectedPaymentGateways;
-    /**
-     * Summary of paymentGateways
-     * @var
-     */
+    protected array $selectedPaymentGateways;
+
     protected $paymentGateways;
 
-    /**
-     * Summary of selectedInvoiceStatuses
-     * @var
-     */
+
     protected $selectedInvoiceStatuses;
-    /**
-     * Summary of invoiceStatuses
-     * @var
-     */
+
     protected $invoiceStatuses;
 
-    /**
-     * Summary of selectedItems
-     * @var
-     */
-    protected $selectedItems;
-    /**
-     * Summary of items
-     * @var
-     */
+    protected array $selectedItems;
+
     protected $items;
 
-    /**
-     * Summary of reportStart
-     * @var
-     */
+
     protected $reportStart;
-    /**
-     * Summary of reportEnd
-     * @var
-     */
+
     protected $reportEnd;
-    /**
-     * Summary of queryEnd
-     * @var
-     */
+
     protected $queryEnd;
 
     /**
@@ -287,7 +194,7 @@ class ReportFilter {
      * @param mixed $prefix
      * @return HTMLTable
      */
-    public function timePeriodMarkup($prefix = '') {
+    public function timePeriodMarkup($prefix = ''): HTMLTable {
 
         $uS = Session::getInstance();
 
@@ -471,7 +378,7 @@ $ckdate";
         return $this;
     }
 
-    public static function getYearOptionsMarkup($slctd, $startYear, $fyMonths, $showAllYears = TRUE)
+    public static function getYearOptionsMarkup( $slctd,  $startYear,  $fyMonths, $showAllYears = TRUE)
     {
         $markup = "";
 
@@ -596,8 +503,7 @@ $ckdate";
 
     /**
      * Summary of createResourceGroups
-     * @param mixed $rescGroups
-     * @param mixed $defaultGroupBy
+     * @param \PDO $dbh
      * @return ReportFilter
      */
     public function createResourceGroups(\PDO $dbh) {
@@ -632,7 +538,7 @@ $ckdate";
      * Summary of resourceGroupsMarkup
      * @return HTMLTable
      */
-    public function resourceGroupsMarkup() {
+    public function resourceGroupsMarkup(): HTMLTable {
 
         $rooms = HTMLSelector::generateMarkup( HTMLSelector::doOptionsMkup($this->resourceGroups, $this->selectedResourceGroups, FALSE),
                 array('name'=>'selRoomGroup', 'size'=>(count($this->resourceGroups)), 'style'=>'min-width:60px;'));
@@ -688,7 +594,7 @@ $ckdate";
      * Summary of diagnosisMarkup
      * @return HTMLTable
      */
-    public function diagnosisMarkup() {
+    public function diagnosisMarkup(): HTMLTable {
 
         $diags = HTMLSelector::generateMarkup( HTMLSelector::doOptionsMkup($this->diagnoses, $this->selectedDiagnoses, FALSE),
         array('name'=>'selDiagnoses[]', 'size'=>(count($this->diagnoses)>12 ? '12' : count($this->diagnoses)), 'multiple'=>'multiple', 'style'=>'min-width:60px; width: 100%'));
@@ -808,7 +714,7 @@ $ckdate";
      * Summary of payTypesMarkup
      * @return HTMLTable
      */
-    public function payTypesMarkup() {
+    public function payTypesMarkup(): HTMLTable {
 
         $payTypeSelector = HTMLSelector::generateMarkup(
             HTMLSelector::doOptionsMkup($this->payTypes, $this->selectedPayTypes), array('name' => 'selPayType[]', 'size' => '7', 'multiple' => 'multiple'));
@@ -851,7 +757,7 @@ $ckdate";
      * Summary of payStatusMarkup
      * @return HTMLTable
      */
-    public function payStatusMarkup() {
+    public function payStatusMarkup(): HTMLTable {
 
         $statusSelector = HTMLSelector::generateMarkup(
             HTMLSelector::doOptionsMkup($this->payStatuses, $this->selectedPayStatuses), array('name' => 'selPayStatus[]', 'size' => '7', 'multiple' => 'multiple'));
@@ -894,7 +800,7 @@ $ckdate";
      * Summary of invoiceStatusMarkup
      * @return HTMLTable
      */
-    public function invoiceStatusMarkup() {
+    public function invoiceStatusMarkup(): HTMLTable {
 
         $statusSelector = HTMLSelector::generateMarkup(
             HTMLSelector::doOptionsMkup($this->invoiceStatuses, $this->selectedInvoiceStatuses), array('name' => 'selInvoiceStatus[]', 'size' => '4', 'multiple' => 'multiple', 'style'=>'width: 100%;'));
@@ -976,7 +882,7 @@ $ckdate";
      * Summary of itemsMarkup
      * @return HTMLTable
      */
-    public function itemsMarkup() {
+    public function itemsMarkup(): HTMLTable {
 
         $itemSelector = HTMLSelector::generateMarkup(
             HTMLSelector::doOptionsMkup($this->items, $this->selectedItems), array('name' => 'selItems[]', 'size' => (count($this->items) + 1), 'multiple' => 'multiple'));
@@ -1031,7 +937,7 @@ $ckdate";
      * Summary of paymentGatwaysMarkup
      * @return HTMLTable
      */
-    public function paymentGatewaysMarkup() {
+    public function paymentGatewaysMarkup(): HTMLTable {
 
         $gwSelector = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($this->paymentGateways, $this->selectedPaymentGateways), array('name' => 'selGateway[]', 'multiple' => 'multiple', 'size'=>(count($this->paymentGateways) + 1)));
 

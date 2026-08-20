@@ -48,7 +48,7 @@ class ActiveReservation extends Reservation {
      * @param \PDO $dbh
      * @return array
      */
-    public function createMarkup(\PDO $dbh) {
+    public function createMarkup(\PDO $dbh): array {
 
         // Checking In?
         if ($this->getGotoCheckingIn() === 'yes' && $this->reserveData->getIdResv() > 0) {
@@ -91,7 +91,7 @@ class ActiveReservation extends Reservation {
     /**
      * Summary of save
      * @param \PDO $dbh
-     * @return ActiveReservation
+     * @return static
      */
     public function save(\PDO $dbh) {
 

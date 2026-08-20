@@ -3,7 +3,6 @@
 namespace HHK\House\Report;
 
 use HHK\HTMLControls\HTMLContainer;
-use HHK\HTMLControls\HTMLInput;
 use HHK\sec\Session;
 use HHK\sec\Labels;
 
@@ -33,7 +32,7 @@ class CurrentGuestReport extends AbstractReport implements ReportInterface {
     /**
      * Summary of __construct
      * @param \PDO $dbh
-     * @param mixed $request
+     * @param array $request
      */
     public function __construct(\PDO $dbh, array $request = []){
         $uS = Session::getInstance();
@@ -138,7 +137,7 @@ class CurrentGuestReport extends AbstractReport implements ReportInterface {
 
     /**
      * Summary of generateMarkup
-     * @param mixed $outputType
+     * @param string $outputType
      * @return string
      */
     public function generateMarkup(string $outputType = ""){

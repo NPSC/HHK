@@ -193,7 +193,7 @@ class UserClass
     /**
      * Summary of doLogin
      * @param \PDO $dbh
-     * @param mixed $r
+     * @param array $r
      * @return bool
      */
     public function doLogin(\PDO $dbh, array $r){
@@ -509,7 +509,7 @@ class UserClass
     /**
      * Summary of isUserNew
      * @param \PDO $dbh
-     * @param mixed $uS
+     * @param Session $uS
      * @return bool
      */
     public static function isUserNew(\PDO $dbh, Session $uS): bool
@@ -527,7 +527,7 @@ class UserClass
     /**
      * Summary of isPassExpired
      * @param \PDO $dbh
-     * @param mixed $uS
+     * @param Session $uS
      * @return bool
      */
     public static function isPassExpired(\PDO $dbh, Session $uS): bool
@@ -589,7 +589,7 @@ class UserClass
      * @param string $username
      * @return bool|string
      */
-    public static function getDefaultOtpMethod(\PDO $dbh, $username): bool|string
+    public static function getDefaultOtpMethod(\PDO $dbh, string $username): bool|string
     {
         $u = self::getUserCredentials($dbh, $username);
         if ($u['totpSecret'] !== '') {
@@ -610,7 +610,7 @@ class UserClass
      * @param string $username
      * @return mixed
      */
-    public static function getAuthProvider(\PDO $dbh, $uS, $username = false)
+    public static function getAuthProvider(\PDO $dbh, Session $uS, $username = false)
     {
         if($username === false){
             $username = $uS->username;

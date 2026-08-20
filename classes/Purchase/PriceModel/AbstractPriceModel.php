@@ -272,7 +272,7 @@ abstract class AbstractPriceModel {
      * @param mixed $r
      * @param float|int $totalAmt
      * @param HTMLTable $tbl
-     * @param mixed $tiers
+     * @param array $tiers
      * @param \DateTime $startDT
      * @param string $separator
      * @param int $totalGuestNites

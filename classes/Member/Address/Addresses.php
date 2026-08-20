@@ -25,10 +25,10 @@ use HHK\Tables\Name\NamePhoneRS;
 class Addresses {
 
 
-    /** @var Emails/ContactPoint */
+    /** @var Emails */
     public $email;
 
-    /** @var Phones/ContactPoint */
+    /** @var Phones */
     public $phone;
 
     /**

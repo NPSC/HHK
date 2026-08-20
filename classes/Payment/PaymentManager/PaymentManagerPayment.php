@@ -138,10 +138,7 @@ class PaymentManagerPayment {
      * @var int
      */
     protected $idInvoicePayor;
-    /**
-     * Summary of invoicePayorTaxExempt
-     * @var
-     */
+
     protected $invoicePayorTaxExempt;
     /**
      * Summary of checkNumber

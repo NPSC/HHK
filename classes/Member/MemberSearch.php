@@ -27,45 +27,21 @@ use HHK\Exception\RuntimeException;
  */
 class MemberSearch {
 
-    /**
-     * Summary of Name_First
-     * @var
-     */
+
     protected $Name_First;
-    /**
-     * Summary of Name_Last
-     * @var
-     */
+
     protected $Name_Last;
-    /**
-     * Summary of Phone
-     * @var
-     */
+
     protected $Phone;
-    /**
-     * Summary of Company
-     * @var
-     */
+
     protected $Company;
-    /**
-     * Summary of MRN
-     * @var
-     */
+
     protected $MRN;
-    /**
-     * Summary of diag
-     * @var
-     */
+
     protected $diag;
-    /**
-     * Summary of twoParts
-     * @var
-     */
+
     protected $twoParts;
-    /**
-     * Summary of letters
-     * @var
-     */
+
     protected $letters;
 
     protected $limit;
@@ -1162,8 +1138,12 @@ where n.idName>0 and n.Member_Status='a' and n.Record_Member = 1 "
      * Duplicate prevention.
      *
      * @param \PDO $dbh
-     * @param array $post
-     * @throws RuntimeException::
+     * @param mixed $memDesignation
+     * @param mixed $nameLast
+     * @param mixed $nameFirst
+     * @param mixed $email
+     * @param mixed $phone
+     * @throws RuntimeException
      */
     public static function searchName(\PDO $dbh, $memDesignation, $nameLast, $nameFirst = '', $email = '', $phone = '') {
 

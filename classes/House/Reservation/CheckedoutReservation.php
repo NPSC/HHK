@@ -28,7 +28,7 @@ class CheckedoutReservation extends CheckingIn {
      * @throws RuntimeException
      * @return array
      */
-    public function createMarkup(\PDO $dbh) {
+    public function createMarkup(\PDO $dbh): array {
 
         if ($this->reserveData->getIdVisit() < 1 || $this->reserveData->getSpan() < 0) {
             throw new RuntimeException('The visit is not defined.');

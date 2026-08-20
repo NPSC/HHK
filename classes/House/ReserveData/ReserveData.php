@@ -110,9 +110,9 @@ class ReserveData {
     protected $intervalRepeatResv = 0;
     protected $numberRepeatResv = 0;
 
-    protected $rawPost;
+    protected array $rawPost;
 
-    public function __construct($rawPost, $reservationTitle = '') {
+    public function __construct(array $rawPost, $reservationTitle = '') {
 
         $uS = Session::getInstance();
         $labels = Labels::getLabels();
@@ -307,7 +307,7 @@ class ReserveData {
      * Summary of toArray
      * @return array
      */
-    public function toArray() {
+    public function toArray(): array {
 
         $rtnData =  array(
             'id' => $this->getId(),

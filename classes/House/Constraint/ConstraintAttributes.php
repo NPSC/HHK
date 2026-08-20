@@ -16,16 +16,9 @@ use HHK\Tables\Attribute\ConstraintAttributeRS;
 
 class ConstraintAttributes {
 
-    /**
-     *
-     * @var array
-     */
-    protected $attributes;
-    /**
-     *
-     * @var int
-     */
-    protected $constraint;
+    protected array $attributes;
+
+    protected Constraint $constraint;
 
     /**
      *
@@ -55,7 +48,7 @@ class ConstraintAttributes {
         return $roomAttrs;
     }
 
-    protected function loadAttributes(\PDO $dbh) {
+    protected function loadAttributes(\PDO $dbh): array {
 
         $attrs = array();
 

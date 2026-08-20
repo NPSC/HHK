@@ -23,46 +23,26 @@ use HHK\sec\Session;
 
 class SiteDbBackup {
 
-    /**
-     * Summary of return_var
-     * @var
-     */
+
     public $return_var;
-    /**
-     * Summary of bkupMessage
-     * @var
-     */
+
     protected $bkupMessage;
-    /**
-     * Summary of fileName
-     * @var
-     */
+
     protected $fileName;
-    /**
-     * Summary of filePath
-     * @var
-     */
-    protected $filePath;
-    /**
-     * Summary of dumpErrorFile
-     * @var
-     */
+
+    protected string $filePath;
+
     protected $dumpErrorFile;
-    /**
-     * Summary of clrFileSize
-     * @var
-     */
+
     protected $clrFileSize;
-    /**
-     * Summary of dbBkUpFlag
-     * @var
-     */
+
     protected $dbBkUpFlag;
+    
     /**
      * Summary of __construct
-     * @param mixed $filePath
+     * @param string $filePath
      */
-    function __construct($filePath) {
+    function __construct(string $filePath) {
 
         $this->filePath = $filePath;
         $this->clrFileSize = 0;
@@ -197,58 +177,4 @@ class SiteDbBackup {
         return $errorMessage;
 
     }
-
-    /**
-     * Summary of createFileList
-     * @return string
-     */
-    // protected function createFileList() {
-
-    //     // directory listing
-    //     $filelist = scandir($this->filePath);
-    //     $fileListMessage = "Files available on the web host server:\r\n";
-
-    //     // Check each file for freshness
-    //     foreach ($filelist as $f) {
-
-    //         $fullPath = $this->filePath . $f;
-
-    //         if (is_file($fullPath)) {
-
-    //             $fileListMessage .= $f . "\r\n";
-
-    //         }
-    //     }
-
-    //     return $fileListMessage;
-    // }
-
-    /**
-     * Summary of collectConfigSection
-     * @param mixed $config
-     * @param mixed $section
-     * @return mixed
-     */
-    // public static function collectConfigSection($config, $section) {
-
-    //     // Collect tables names to ignore.
-    //     foreach ($config as $secName => $secArray) {
-
-    //         if ($secName === $section) {
-    //             return $secArray;
-    //         }
-    //     }
-
-    //     return array();
-    // }
-
-    // /**
-    //  * Summary of getMessageFileList
-    //  * @return string
-    //  */
-    // public function getMessageFileList() {
-    //     return $this->createFileList();
-    // }
-
 }
-?>

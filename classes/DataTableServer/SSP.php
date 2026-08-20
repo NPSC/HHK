@@ -454,7 +454,7 @@ class SSP {
 	/**
 	 * Execute an SQL query on the database
 	 *
-	 * @param  \PDO $db  Database handler
+	 * @param  PDO $db  Database handler
 	 * @param  array    $bindings Array of PDO binding values from bind() to be
 	 *   used for safely escaping strings. Note that this can be given as the
 	 *   SQL query string if no bindings are required.
@@ -518,8 +518,8 @@ class SSP {
 	 * when executing a query with sql_exec()
 	 *
 	 * @param  array &$a    Array of bindings
-	 * @param  *      $val  Value to bind
-	 * @param  int    $type PDO field type
+	 * @param  mixed $val  Value to bind
+	 * @param  int $type PDO field type
 	 * @return string       Bound key to be used in the SQL where this parameter
 	 *   would be used.
 	 */

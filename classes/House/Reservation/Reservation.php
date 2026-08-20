@@ -54,10 +54,7 @@ class Reservation {
      */
     protected $payResult;
 
-    /**
-     * Summary of cofResult
-     * @var
-     */
+
     protected $cofResult;
     /**
      * Summary of gotoCheckingIn
@@ -68,7 +65,7 @@ class Reservation {
 
     /**
      * Summary of __construct
-     * @param \HHK\House\ReserveData\ReserveData $reserveData
+     * @param ReserveData $reserveData
      * @param mixed $reservRs
      * @param mixed $family
      */
@@ -82,10 +79,11 @@ class Reservation {
     /**
      * Summary of reservationFactoy
      * @param \PDO $dbh
-     * @throws \HHK\Exception\RuntimeException
+     * @param array $inputData
+     * @throws RuntimeException
      * @return ActiveReservation|CheckedoutReservation|DeletedReservation|Reservation|ReserveSearcher|StaticReservation|StayingReservation
      */
-    public static function reservationFactoy(\PDO $dbh, $inputData) {
+    public static function reservationFactoy(\PDO $dbh, array $inputData) {
 
         $uS = Session::getInstance();
 
@@ -149,8 +147,8 @@ class Reservation {
     /**
      * Summary of loadReservation
      * @param \PDO $dbh
-     * @param \HHK\House\ReserveData\ReserveData $rData
-     * @throws \HHK\Exception\NotFoundException
+     * @param ReserveData $rData
+     * @throws NotFoundException
      * @return ActiveReservation|CheckedoutReservation|DeletedReservation|StaticReservation|StayingReservation
      */
     public static function loadReservation(\PDO $dbh, ReserveData $rData) {
@@ -267,7 +265,7 @@ WHERE `r`.`idReservation` = :idResv");
      * @param \PDO $dbh
      * @return array
      */
-    public function createMarkup(\PDO $dbh) {
+    public function createMarkup(\PDO $dbh): array {
 
         // Add the family, hospital, etc sections.
         $this->createDatesMarkup();
@@ -281,7 +279,7 @@ WHERE `r`.`idReservation` = :idResv");
     /**
      * Summary of createFamilyMarkup
      * @param \PDO $dbh
-     * @param mixed $formUserData
+     * @param array $formUserData
      * @return array<string>|void
      */
     protected function createFamilyMarkup(\PDO $dbh, array $formUserData = []) {
@@ -350,7 +348,7 @@ WHERE `r`.`idReservation` = :idResv");
     /**
      * Summary of createHospitalMarkup
      * @param \PDO $dbh
-     * @param mixed $refHospital
+     * @param array $refHospital
      * @return void
      */
     protected function createHospitalMarkup(\PDO $dbh, array $refHospital = []) {
@@ -862,7 +860,7 @@ WHERE `r`.`idReservation` = :idResv");
     /**
      * Summary of vehicleMarkup
      * @param \PDO $dbh
-     * @param mixed $refVehicle
+     * @param array $refVehicle
      * @return string
      */
     protected function vehicleMarkup(\PDO $dbh, array $refVehicle = []) {
@@ -992,14 +990,15 @@ WHERE `rg`.`idReservation` = :idReservation");
     /**
      *
      * @param Reservation_1 $resv
-     * @param array $limResvStatuses
+     * @param array $resvStatuses
      * @param array $payTypes
      * @param string $psgCheckboxes  Markup
      * @param Labels $labels
      * @param bool $showPayWith
+     * @param mixed $moaBalance
      * @return string
      */
-    public function createStatusChooser(Reservation_1 $resv, array $resvStatuses, array $payTypes, $psgChecboxes, $labels, $showPayWith, $moaBalance = 0) {
+    public function createStatusChooser(Reservation_1 $resv, array $resvStatuses, array $payTypes, string $psgCheckboxes, Labels $labels, bool $showPayWith, $moaBalance = 0) {
 
         $uS = Session::getInstance();
         $tbl2 = new HTMLTable();
@@ -1066,17 +1065,17 @@ WHERE `rg`.`idReservation` = :idReservation");
                     HTMLContainer::generateMarkup('legend', $labels->getString('referral', 'statusLabel', 'Reservation Status'), array('style'=>'font-weight:bold;'))
                     . $tbl2->generateMarkup() . $mk2,
                     ['class'=>'hhk-panel'])
-            , ['class'=>'me-3 d-inline-block']) . $psgChecboxes;
+            , ['class'=>'me-3 d-inline-block']) . $psgCheckboxes;
 
     }
 
     /**
      * Summary of findConflictingStays
      * @param \PDO $dbh
-     * @param mixed $psgMembers
-     * @param mixed $arrivalDT
+     * @param array $psgMembers
+     * @param ?\DateTimeInterface $arrivalDT
      * @param mixed $idPsg
-     * @param mixed $departureDT
+     * @param ?\DateTimeInterface $departureDT
      * @param mixed $idVisit
      * @param mixed $idSpan
      * @return int
@@ -1180,7 +1179,7 @@ WHERE
      * @param \PDO $dbh
      * @param mixed $idPsg
      * @param mixed $idResv
-     * @param mixed $psgMembers
+     * @param array $psgMembers
      * @param mixed $arrivalDT
      * @param mixed $departDT
      * @param mixed $resvPrompt
@@ -1267,9 +1266,8 @@ WHERE
     /**
      * Summary of setRoomRate
      * @param \PDO $dbh
-     * @param \HHK\House\Registration $reg
-     * @param \HHK\House\Reservation\Reservation_1 $resv
-     * @param mixed $post
+     * @param Registration $reg
+     * @param Reservation_1 $resv
      * @return void
      */
     protected function setRoomRate(\PDO $dbh, Registration $reg, Reservation_1 &$resv) {

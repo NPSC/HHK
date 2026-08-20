@@ -57,11 +57,11 @@ class CheckingIn extends ActiveReservation {
     /**
      * Summary of reservationFactoy
      * @param \PDO $dbh
-     * @param mixed $inputData
+     * @param array $inputData
      * @throws RuntimeException
      * @return ActiveReservation|CheckedoutReservation|DeletedReservation|StaticReservation|StayingReservation
      */
-    public static function reservationFactoy(\PDO $dbh, $inputData) {
+    public static function reservationFactoy(\PDO $dbh, array $inputData) {
 
         $rData = new ReserveData($inputData, 'Check-in');
 
@@ -171,7 +171,7 @@ FROM `reservation` `r`
      * @param \PDO $dbh
      * @return array
      */
-    public function createMarkup(\PDO $dbh) {
+    public function createMarkup(\PDO $dbh): array {
 
     	$lastVisitMU = $this->findLastVisit($dbh);
 

@@ -12,7 +12,7 @@ use HHK\sec\{Labels};
 
 class DeletedReservation extends Reservation {
 
-    function createMarkup(\PDO $dbh) {
+    function createMarkup(\PDO $dbh): array {
 
         $labels = Labels::getLabels();
 

@@ -27,7 +27,7 @@ class CashTX {
     /**
      * Summary of cashSale
      * @param \PDO $dbh
-     * @param \HHK\Payment\PaymentResponse\CashResponse $pr
+     * @param CashResponse $pr
      * @param mixed $username
      * @param mixed $paymentDate
      * @return void
@@ -51,7 +51,7 @@ class CashTX {
      *
      * @param \PDO $dbh
      * @param CashResponse $pr
-     * @param string $userName
+     * @param string $username
      * @param string $paymentDate
      */
     public static function returnAmount(\PDO $dbh, CashResponse &$pr, $username, $paymentDate) {
@@ -104,9 +104,9 @@ class CashTX {
     /**
      * Summary of undoReturnPayment
      * @param \PDO $dbh
-     * @param \HHK\Payment\PaymentResponse\CashResponse $pr
+     * @param CashResponse $pr
      * @param mixed $username
-     * @param \HHK\Tables\Payment\PaymentRS $payRs
+     * @param PaymentRS $payRs
      * @return void
      */
     public static function undoReturnPayment(\PDO $dbh, CashResponse &$pr, $username, PaymentRS $payRs) {
@@ -130,7 +130,7 @@ class CashTX {
     /**
      * Summary of undoReturnAmount
      * @param \PDO $dbh
-     * @param \HHK\Payment\PaymentResponse\CashResponse $pr
+     * @param CashResponse $pr
      * @param mixed $idPayment
      * @return void
      */
@@ -147,6 +147,3 @@ class CashTX {
 
     }
 }
-
-
-?>

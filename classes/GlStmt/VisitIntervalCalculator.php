@@ -285,7 +285,6 @@ class VisitIntervalCalculator {
 	 *
 	 * @param float $charge
 	 * @param float $fullCharge
-	 * @param float $adjRatio
 	 * @param string $rateCategory
 	 */
 	public function updateIntervalCharge($charge, $fullCharge, $rateCategory) {

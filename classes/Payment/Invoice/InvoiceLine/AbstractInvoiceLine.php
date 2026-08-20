@@ -31,20 +31,14 @@ abstract class AbstractInvoiceLine {
      * @var int
      */
     protected $lineId;
-    /**
-     * Summary of amount
-     * @var
-     */
+
     protected $amount;
     /**
      * Summary of quantity
      * @var int
      */
     protected $quantity;
-    /**
-     * Summary of price
-     * @var
-     */
+
     protected $price;
     /**
      * Summary of itemId
@@ -75,26 +69,14 @@ abstract class AbstractInvoiceLine {
      * Summary of invLineRs
      * @var InvoiceLineRS
      */
-    protected $invLineRs;
-    /**
-     * Summary of var
-     * @var
-     */
+    protected InvoiceLineRS $invLineRs;
+
     protected $var;
-    /**
-     * Summary of carriedFrom
-     * @var
-     */
+
     protected $carriedFrom;
-    /**
-     * Summary of useDetail
-     * @var
-     */
+ 
     protected $useDetail;
-    /**
-     * Summary of isPercentage
-     * @var
-     */
+
     protected $isPercentage;
 
     /**
@@ -108,7 +90,7 @@ abstract class AbstractInvoiceLine {
 
     /**
      * Summary of loadRecord
-     * @param \HHK\Tables\Payment\InvoiceLineRS $invoiceLine
+     * @param InvoiceLineRS $invoiceLine
      * @return void
      */
     public function loadRecord(InvoiceLineRS $invoiceLine) {
@@ -164,7 +146,7 @@ abstract class AbstractInvoiceLine {
 
     /**
      * Summary of createNewLine
-     * @param \HHK\Purchase\Item $item
+     * @param Item $item
      * @param mixed $quantity
      * @param mixed $str1
      * @param mixed $str2
@@ -462,4 +444,3 @@ abstract class AbstractInvoiceLine {
     }
 
 }
-?>

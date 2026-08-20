@@ -29,43 +29,26 @@ class NewGuest
      */
     protected $endDT;
 
-    /**
-     * Summary of numberNewGuests
-     * @var
-     */
     protected int $numberNewGuests;
-    /**
-     * Summary of numberReturnGuests
-     * @var
-     */
+
     protected int $numberReturnGuests;
 
-    /**
-     * Summary of numberNewPSGs
-     * @var
-     */
     protected int $numberNewPSGs;
-    /**
-     * Summary of numberReturnPSGs
-     * @var
-     */
+
     protected int $numberReturnPSGs;
 
-    /**
-     * Summary of newGuestIds
-     * @var
-     */
     protected array $newGuestIds;
-    /**
-     * Summary of newPSGIds
-     * @var
-     */
+
     protected array $newPSGIds;
 
 
+    
     /**
+     * Summary of __construct
+     * @param \DateTimeInterface|string $startDate
+     * @param \DateTimeInterface|string $endDate
      */
-    public function __construct($startDate, $endDate)
+    public function __construct(\DateTimeInterface|string $startDate, \DateTimeInterface|string $endDate)
     {
         $this->setStartDT($startDate);
         $this->setEndDT($endDate);
@@ -80,10 +63,10 @@ class NewGuest
     /**
      * Summary of doNewGuestReport
      * @param \PDO $dbh
-     * @param \HHK\ColumnSelectors $colSelector
+     * @param ColumnSelectors $colSelector
      * @param mixed $whereStr
      * @param mixed $local
-     * @param \HHK\sec\Labels $labels
+     * @param Labels $labels
      * @return string|void
      */
     public function doNewGuestReport(\PDO $dbh, ColumnSelectors $colSelector, $whereStr, $local, Labels $labels, array $whereParams = []) {
@@ -209,7 +192,7 @@ class NewGuest
      * @param mixed $whereStr
      * @return string
      */
-    protected function queryNewGuests($pgTitle, $whereStr = '') {
+    protected function queryNewGuests($pgTitle, $whereStr = ''): string {
 
         return "SELECT
     s.idName,
@@ -472,9 +455,9 @@ ORDER BY `First Stay`";
     }
 
     /**
-     * @param \DateTimeInterface $startDT
+     * @param \DateTimeInterface|string $startDate 
      */
-    public function setStartDT($startDate)
+    public function setStartDT(\DateTimeInterface|string $startDate)
     {
         if ($startDate instanceof \DateTimeInterface) {
             $this->startDT = $startDate;
@@ -485,9 +468,9 @@ ORDER BY `First Stay`";
     }
 
     /**
-     * @param \DateTimeInterface $endDT
+     * @param \DateTimeInterface|string $endDate
      */
-    public function setEndDT($endDate)
+    public function setEndDT(\DateTimeInterface|string $endDate)
     {
         if ($endDate instanceof \DateTimeInterface) {
             $this->endDT = $endDate;

@@ -45,7 +45,7 @@ class VerifyCkOutRequest extends AbstractMercRequest{
     /**
      * Summary of execute
      * @param \SoapClient $txClient
-     * @param mixed $data
+     * @param array $data
      * @return VerifyCkOutResponse
      */
     protected function execute(\SoapClient $txClient, array $data): VerifyCkOutResponse {
@@ -62,4 +62,3 @@ class VerifyCkOutRequest extends AbstractMercRequest{
         return $this;
     }
 }
-?>

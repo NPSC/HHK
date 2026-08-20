@@ -336,7 +336,7 @@ abstract class AbstractRoleMember extends IndivMember {
     /**
      * Summary of saveChanges
      * @param \PDO $dbh
-     * @param mixed $post
+     * @param array $post
      * @return string
      */
     public function saveChanges(\PDO $dbh, array $post) {

@@ -33,13 +33,13 @@ abstract class AbstractMember {
      *
      * @var NameRS
      */
-    protected $nameRS;
+    protected NameRS $nameRS;
 
     /**
      *
      * @var NameDemogRS
      */
-    protected $demogRS;
+    protected NameDemogRS $demogRS;
 
     /**
      * Summary of idPrefix
@@ -189,7 +189,7 @@ abstract class AbstractMember {
      * @param \PDO $dbh
      * @param int $nid
      * @return NameRS
-     * @throws RuntimeException::
+     * @throws RuntimeException
      */
     protected static function loadNameRS(\PDO $dbh, $nid) {
         $nRS = new NameRS();

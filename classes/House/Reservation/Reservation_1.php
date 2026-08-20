@@ -622,12 +622,11 @@ class Reservation_1 {
     /**
      * Summary of deleteMe
      * @param \PDO $dbh
-     * @param bool $deleteHost
      * @param string $uname
-     * @throws \HHK\Exception\RuntimeException
+     * @throws RuntimeException
      * @return bool
      */
-    public function deleteMe(\PDO $dbh, $uname) {
+    public function deleteMe(\PDO $dbh, $uname): bool {
 
         if ($this->getStatus() == ReservationStatus::Staying || $this->getStatus() == ReservationStatus::Checkedout) {
             throw new RuntimeException('Reservation cannot be deleted.  Delete the Visit instead.');
@@ -941,7 +940,7 @@ class Reservation_1 {
      * @param mixed $expectedArrival
      * @param mixed $expectedDeparture
      * @param mixed $numOccupants
-     * @param mixed $resourceTypes
+     * @param array $resourceTypes
      * @param mixed $omitSelf
      * @return array
      */
@@ -1932,7 +1931,7 @@ WHERE $typeList AND (`rc`.`Retired_At` IS NULL OR DATE(`rc`.`Retired_At`) > :ret
 
     /**
      * Summary of setHospitalStay
-     * @param \HHK\House\Hospital\HospitalStay $v
+     * @param HospitalStay $v
      * @return Reservation_1
      */
     public function setHospitalStay(HospitalStay $v) {

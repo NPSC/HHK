@@ -71,9 +71,9 @@ class HouseServices {
      *
      * @param \PDO $dbh
      * @param int $idGuest Supply either this or the next
-     * @param int $idVisit
-     * @param int $span span = 'max' means load last visit span, otherwise load int value
-     * @param boolean $isAdmin Administrator flag
+     * @param int $idV
+     * @param int $idSpan span = 'max' means load last visit span, otherwise load int value
+     * @param bool $isAdmin Administrator flag
      * @param string $action Processing code with various settings.
      * @param array $coStayDates Dates for an early checkout. Adjusts the final payments
      * @return array
@@ -588,7 +588,7 @@ class HouseServices {
      * Summary of payInvoice
      * @param \PDO $dbh
      * @param int $idPayor
-     * @param mixed $post
+     * @param array $post
      * @return array
      */
     public static function payInvoice(\PDO $dbh, $idPayor, array $post) {
@@ -815,7 +815,7 @@ class HouseServices {
     /**
      * Summary of processPayments
      * @param \PDO $dbh
-     * @param \HHK\Payment\PaymentManager\PaymentManager $paymentManager
+     * @param PaymentManager $paymentManager
      * @param mixed $visit
      * @param mixed $postbackPage
      * @param mixed $idPayor
@@ -1673,7 +1673,9 @@ class HouseServices {
      *
      * @param \PDO $dbh
      * @param int $idVisit
-     * @param int $dayDelta
+     * @param int $span
+     * @param mixed $startDelta
+     * @param mixed $endDelta
      * @return array
      */
     public static function moveVisit(\PDO $dbh, $idVisit, $span, $startDelta, $endDelta) {

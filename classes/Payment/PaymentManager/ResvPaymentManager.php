@@ -53,8 +53,8 @@ class ResvPaymentManager extends PaymentManager
             $invLine = new HoldInvoiceLine(TRUE);
             $invLine->createNewLine(new Item($dbh, ItemId::LodgingMOA, $this->pmp->getRatePayment()), 1, Labels::getString("GuestEdit", "reservationTitle", "Reservation") . ' Pre-Payment');
 
-            $this->getInvoice($dbh, $idPayor, $resv->getIdRegistration(), 0, 0, $uS->username, '', $notes, $this->pmp->getPayDate());
-            $this->invoice->addLine($dbh, $invLine, $uS->username);
+            $invoice = $this->getInvoice($dbh, $idPayor, $resv->getIdRegistration(), 0, 0, $uS->username, '', $notes, $this->pmp->getPayDate());
+            $invoice->addLine($dbh, $invLine, $uS->username);
 
         }
 
@@ -72,8 +72,8 @@ class ResvPaymentManager extends PaymentManager
                 $invLine->appendDescription($notes);
                 $invLine->createNewLine(new Item($dbh, ItemId::LodgingMOA, (0 - $this->moaRefundAmt)), 1, Labels::getString("GuestEdit", "reservationTitle", "Reservation") . ' Pre-Payment Payout');
 
-                $this->getInvoice($dbh, $idPayor, $resv->getIdRegistration(), 0, 0, $uS->username, '', $notes, $this->pmp->getPayDate());
-                $this->invoice->addLine($dbh, $invLine, $uS->username);
+                $invoice = $this->getInvoice($dbh, $idPayor, $resv->getIdRegistration(), 0, 0, $uS->username, '', $notes, $this->pmp->getPayDate());
+                $invoice->addLine($dbh, $invLine, $uS->username);
             }
         }
 

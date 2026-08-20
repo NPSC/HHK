@@ -19,7 +19,7 @@ class ReserveSearcher extends ActiveReservation {
      * @param \PDO $dbh
      * @return array
      */
-    public function createMarkup(\PDO $dbh) {
+    public function createMarkup(\PDO $dbh): array {
 
         $data = $this->resvChooserMarkup($dbh);
 
@@ -60,7 +60,7 @@ class ReserveSearcher extends ActiveReservation {
      * @param \PDO $dbh
      * @return ActiveReservation
      */
-    public function save(\PDO $dbh) {
+    public function save(\PDO $dbh): ActiveReservation {
 
         $newResv = new ActiveReservation($this->reserveData, $this->reservRs, $this->family);
         $newResv->save($dbh);
@@ -72,7 +72,6 @@ class ReserveSearcher extends ActiveReservation {
     /**
      * Summary of resvChooserMarkup
      * @param \PDO $dbh
-     * @return array|null
      */
     protected function resvChooserMarkup(\PDO $dbh) {
         $ngRss = [];
@@ -161,4 +160,3 @@ class ReserveSearcher extends ActiveReservation {
     }
 
 }
-?>

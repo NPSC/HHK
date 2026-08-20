@@ -38,7 +38,7 @@ class Family
     protected $showInsurance;
 
 
-    public function __construct(\PDO $dbh, &$rData, $incldEmContact = FALSE)
+    public function __construct(\PDO $dbh, ReserveData &$rData, $incldEmContact = FALSE)
     {
 
         $uS = Session::getInstance();
@@ -633,7 +633,6 @@ class Family
      * Saves people, hospital and PSG only
      *
      * @param \PDO $dbh
-     * @param array $post
      * @param ReserveData $rData
      * @param string $userName
      * @return boolean
@@ -747,4 +746,3 @@ class Family
     }
 
 }
-?>
