@@ -415,7 +415,12 @@ ORDER BY s.idVisit , s.Visit_Span");
             0) as `TaxPending`,
     ifnull((select sum(il.Amount) from invoice_line il join invoice i on il.Invoice_Id = i.idInvoice
     where il.Deleted = 0 and i.Deleted = 0 and i.Status in ('" . InvoiceStatus::Paid . "', '" . InvoiceStatus::Carried . "') and il.Item_Id = " . ItemId::VisitFee . " and i.Order_Number = v.idVisit),
-            0) as `VisitFeePaid`
+            0) as `VisitFeePaid`,
+    IFNULL(`nph`.`Phone_Num`,'') as 'pg_phone',
+    IFNULL(`ne`.`Email`,'') as 'pg_email',
+    IFNULL(`npp`.`Phone_Num`,'') as 'pa_phone',
+    IFNULL(`npe`.`Email`,'') as 'pa_email'
+
 from
     visit v
         left join
@@ -448,6 +453,14 @@ from
     name_address na on ifnull(hs.idPatient, 0) = na.idName and np.Preferred_Mail_Address = na.Purpose
         left join
     name_address napg on n.idName = napg.idName and n.Preferred_Mail_Address = napg.Purpose
+        left join
+    name_email npe on np.idName = npe.idName and np.Preferred_Email = npe.Purpose
+        left join
+    name_phone npp on np.idName = npp.idName and np.Preferred_Phone = npp.Phone_Code
+        left join
+    name_email ne on n.idName = ne.idName and n.Preferred_Email = ne.Purpose
+        left join
+    name_phone nph on n.idName = nph.idName and n.Preferred_Phone = nph.Phone_Code
 where
     v.`Status` not in ('p', 'c')
     AND v.Arrival_Date < '$end'
