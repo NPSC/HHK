@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "fad7675ba8e8428bb2f93ba9eddedef2",
+    "content-hash": "7a48e4b5137a946e6681b52c551f6632",
     "packages": [
         {
             "name": "adamz01h/php-cron-scheduler",
