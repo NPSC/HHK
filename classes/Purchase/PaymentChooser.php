@@ -708,7 +708,7 @@ class PaymentChooser {
                         ['id'=> $i['Invoice_Number']. 'unpaidCb', 'name'=>'unpaidCb['.$i['Invoice_Number'].']', 'type'=>'checkbox', 'data-invnum'=>$i['Invoice_Number'], 'data-invamt'=>$i['Balance'], 'class'=>'hhk-feeskeys hhk-payInvCb', 'style'=>'margin-right:.4em;', 'title'=>'Check to pay this invoice.'])
                     .HTMLContainer::generateMarkup('span', '($'. number_format($i['Balance'], 2) . ')', ['style'=>'font-style: italic;']))
                 .HTMLTable::makeTd('$'.
-                    HTMLInput::generateMarkup('', ['type'=>'number', 'min'=>'0', 'step'=>'0.01', 'id' => $i['Invoice_Number'] . 'invPayAmt', 'name'=>'invPayAmt['.$i['Invoice_Number'].']', 'class'=>'hhk-feeskeys hhk-payInvAmt ml-1','style'=>'text-align:right;width:80px;', 'disabled'=>true]), ['style'=>'text-align:right;']);
+                    HTMLInput::generateMarkup('', ['type'=>'text', 'id' => $i['Invoice_Number'] . 'invPayAmt', 'name'=>'invPayAmt['.$i['Invoice_Number'].']', 'class'=>'hhk-feeskeys hhk-payInvAmt ml-1 hhk-money','style'=>'text-align:right;width:80px;', 'disabled'=>true]), ['style'=>'text-align:right;']);
 
             $trs[] = $unpaid;
         }
@@ -1094,7 +1094,7 @@ ORDER BY v.idVisit , v.Span;");
         	$feesTbl->addBodyTr(HTMLTable::makeTd($labels->getString('PaymentChooser', 'PayRmFees', 'Pay Room Fees').':', ['class'=>'tdlabel'])
                 .HTMLTable::makeTd($td, ["style"=>"text-align: center;min-width: 62px;"])
                 .HTMLTable::makeTd('$'.
-                    HTMLInput::generateMarkup('', ['type'=>'number', 'min'=>'0', 'step'=>'0.01', 'name'=>'feesPayment', 'class'=>'hhk-feeskeys ml-1','style'=>'text-align:right; width: 80px;'])
+                    HTMLInput::generateMarkup('', ['type'=>'text', 'name'=>'feesPayment', 'class'=>'hhk-feeskeys ml-1 hhk-money','style'=>'text-align:right; width: 80px;'])
                     , ['style'=>'text-align:right;', 'class'=>'hhk-feesPay']
                 )
                 , ['class'=>'hhk-RoomFees']
@@ -1232,7 +1232,7 @@ ORDER BY v.idVisit , v.Span;");
         // Cash Amt Tendered
         $payTbl->addBodyTr(
              HTMLTable::makeTd($labels->getString('PaymentChooser', 'amtTenderedPrompt', 'Amount Tendered') . ': ', ['colspan'=>'2', 'style'=>'text-align:right;', 'class'=>'tdlabel'])
-                     .HTMLTable::makeTd("$" . HTMLInput::generateMarkup('', ['type'=>'number', 'min'=>'0', 'step'=>'0.01', 'name'=>'txtCashTendered', 'style'=>'text-align:right; width:70px;', 'class'=>'hhk-feeskeys ml-1']), array('style'=>'text-align:right;'))
+                     .HTMLTable::makeTd("$" . HTMLInput::generateMarkup('', ['type'=>'text', 'name'=>'txtCashTendered', 'style'=>'text-align:right; width:70px;', 'class'=>'hhk-feeskeys ml-1 hhk-money']), array('style'=>'text-align:right;'))
                      , ['style'=>'display:none;', 'class'=>'hhk-cashTndrd']);
 
         $payTbl->addBodyTr(
