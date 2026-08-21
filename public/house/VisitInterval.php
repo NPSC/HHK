@@ -129,6 +129,8 @@ $filter->createResourceGroups($dbh);
 // array: title, ColumnName, checked, fixed, Excel Type, Excel Style, [td parms]
 $cFields[] = ['Visit Id', 'idVisit', 'checked', 'f', 'n', '', ['style' => 'text-align:center;']];
 $cFields[] = [$labels->getString('MemberType', 'primaryGuest', 'Primary Guest'), 'idPrimaryGuest', 'checked', '', 's', '', []];
+$cFields[] = [$labels->getString('MemberType', 'primaryGuest', 'Primary Guest') . ' Phone', 'pg_phone', '', '', 's', '', []];
+$cFields[] = [$labels->getString('MemberType', 'primaryGuest', 'Primary Guest') . ' Email', 'pg_email', '', '', 's', '', []];
 
 // PG address.
 $pgFields = ['pgAddr', 'pgCity'];
@@ -146,6 +148,8 @@ $cFields[] = array($pgTitles, $pgFields, '', '', 's', '', array());
 
 
 $cFields[] = [$labels->getString('MemberType', 'patient', 'Patient'), 'idPatient', 'checked', '', 's', '', []];
+$cFields[] = [$labels->getString('MemberType', 'patient', 'Patient') . ' Phone', 'pa_phone', '', '', 's', '', []];
+$cFields[] = [$labels->getString('MemberType', 'patient', 'Patient') . ' Email', 'pa_email', '', '', 's', '', []];
 
 // Patient address.
 if ($uS->PatientAddr) {
@@ -474,10 +478,9 @@ if ($uS->CoTod) {
                 </div>
                 <div style="text-align:center; margin-top: 10px;">
                     <span style="color:red; margin-right:1em;"><?php echo $errorMessage; ?></span>
-                    <input type="submit" name="btnStatsOnly" id="btnStatsOnly" value="Stats Only"
-                        style="margin-right: 1em;" />
-                    <input type="submit" name="btnHere" id="btnHere" value="Run Here" style="margin-right: 1em;" />
-                    <input type="submit" name="btnExcel" id="btnExcel" value="Download to Excel" />
+                    <input type="submit" name="btnStatsOnly" id="btnStatsOnly" value="Stats Only" class="ui-button ui-corner-all mx-2">
+                    <input type="submit" name="btnHere" id="btnHere" value="Run Here"  class="ui-button ui-corner-all mx-2">
+                    <input type="submit" name="btnExcel" id="btnExcel" value="Download to Excel" class="ui-button ui-corner-all mx-2">
                 </div>
             </form>
         </div>

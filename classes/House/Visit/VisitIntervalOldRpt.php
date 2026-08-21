@@ -426,7 +426,11 @@ ORDER BY `s`.`idVisit` , `s`.`Visit_Span`");
             0) AS `TaxPending`,
     IFNULL((SELECT SUM(`il`.`Amount`) FROM `invoice_line` `il` JOIN `invoice` `i` ON `il`.`Invoice_Id` = `i`.`idInvoice`
     WHERE `il`.`Deleted` = 0 AND `i`.`Deleted` = 0 AND `i`.`Status` IN (:stPaid8, :stCarried8) AND `il`.`Item_Id` = :itemVisitFee AND `i`.`Order_Number` = `v`.`idVisit`),
-            0) AS `VisitFeePaid`
+            0) AS `VisitFeePaid`,
+    IFNULL(`nph`.`Phone_Num`,'') AS 'pg_phone',
+    IFNULL(`ne`.`Email`,'') AS 'pg_email',
+    IFNULL(`npp`.`Phone_Num`,'') AS 'pa_phone',
+    IFNULL(`npe`.`Email`,'') AS 'pa_email'
 FROM
     `visit` `v`
         LEFT JOIN
@@ -458,7 +462,15 @@ FROM
         LEFT JOIN
     `name_address` `na` ON IFNULL(`hs`.`idPatient`, 0) = `na`.`idName` AND `np`.`Preferred_Mail_Address` = `na`.`Purpose`
         LEFT JOIN
-    `name_address` `napg` ON `n`.`idName` = `napg`.`idName` AND `n`.`Preferred_Mail_Address` = `napg`.`Purpose`
+    `name_address` `napg` ON `n`.`idName` = `napg`.`idName` AND `n`.`Preferred_Mail_Address` = `napg`.`Purpose`,
+        LEFT JOIN
+    `name_email` `npe` ON `np`.`idName` = `npe`.`idName` AND `np`.`Preferred_Email` = `npe`.`Purpose`
+        LEFT JOIN
+    `name_phone` `npp` ON `np`.`idName` = `npp`.`idName` AND `np`.`Preferred_Phone` = `npp`.`Phone_Code`
+        LEFT JOIN
+    `name_email` `ne` ON `n`.`idName` = `ne`.`idName` AND `n`.`Preferred_Email` = `ne`.`Purpose`
+        LEFT JOIN
+    `name_phone` `nph` ON `n`.`idName` = `nph`.`idName` AND `n`.`Preferred_Phone` = `nph`.`Phone_Code`
 WHERE
     `v`.`Status` NOT IN ('p', 'c')
     AND `v`.`Arrival_Date` < :end4
