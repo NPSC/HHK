@@ -7,7 +7,7 @@ use HHK\SysConst\GLTableNames;
 class SearchFor extends SearchNameData
 {
     protected $whereClause = '';
-    protected int $psgId;
+    protected ?int $psgId = null;
 
     /**
      * @return mixed
