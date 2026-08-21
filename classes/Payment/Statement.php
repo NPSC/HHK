@@ -1089,13 +1089,15 @@ where i.Deleted = 0 and il.Deleted = 0 and i.idGroup = $idRegistration order by 
 
         // Find patient name
         $patientName = '';
+        $patientDOB = '';
         $diags = [];
         if ($idPsg > 0){
 
-            $pstmt = $dbh->query("select n.Name_First, n.Name_Last, hs.idHospital, hs.idAssociation from name n left join hospital_stay hs on n.idName = hs.idPatient where hs.idPsg = $idPsg");
+            $pstmt = $dbh->query("select n.Name_First, n.Name_Last, n.BirthDate, hs.idHospital, hs.idAssociation from name n left join hospital_stay hs on n.idName = hs.idPatient where hs.idPsg = $idPsg");
             $rows = $pstmt->fetchAll(\PDO::FETCH_ASSOC);
             if (count($rows) > 0) {
                 $patientName = $rows[0]['Name_First'] . ' ' . $rows[0]['Name_Last'];
+                $patientDOB = $rows[0]['BirthDate'];
 
                 // Hospital
                 if ($rows[0]['idAssociation'] > 0 && isset($uS->guestLookups[GLTableNames::Hospital][$rows[0]['idAssociation']]) && $uS->guestLookups[GLTableNames::Hospital][$rows[0]['idAssociation']][1] != '(None)') {
@@ -1116,6 +1118,7 @@ where i.Deleted = 0 and il.Deleted = 0 and i.idGroup = $idRegistration order by 
         $rec .= self::makeSummaryDiv(
             '',
             $patientName,
+            $patientDOB,
             $hospital,
             $diags,
             $labels,
@@ -1219,11 +1222,12 @@ where i.Deleted = 0 and i.Order_Number = $idVisit order by il.Invoice_Id, ilt.Or
 
         // Find patient name
         $patientName = '';
+        $patientDOB = '';
         $diags = [];
         if ($idPsg > 0){
 
             $pstmt = $dbh->query("SELECT
-    n.Name_First, n.Name_Last, ifnull(g.Description, '') as Diagnosis, ifnull(g2.Description, '') as Diagnosis2
+    n.Name_First, n.Name_Last, n.BirthDate, ifnull(g.Description, '') as Diagnosis, ifnull(g2.Description, '') as Diagnosis2
 FROM
 	visit v
         LEFT JOIN
@@ -1239,6 +1243,7 @@ WHERE
             $rows = $pstmt->fetchAll(\PDO::FETCH_ASSOC);
             if (count($rows) > 0) {
                 $patientName = $rows[0]['Name_First'] . ' ' . $rows[0]['Name_Last'];
+                $patientDOB = $rows[0]['BirthDate'];
                 $diags[1] = $rows[0]['Diagnosis'];
                 $diags[2] = $rows[0]['Diagnosis2'];
             }
@@ -1253,6 +1258,7 @@ WHERE
         $rec .= self::makeSummaryDiv(
             $guestName,
             $patientName,
+            $patientDOB,
             $hospital,
             $diags,
             $labels,
@@ -1396,6 +1402,7 @@ WHERE
      * Summary of makeSummaryDiv
      * @param mixed $guestName
      * @param mixed $patientName
+     * @param mixed $patientDOB
      * @param mixed $hospital
      * @param array $diags
      * @param Labels $labels
@@ -1407,7 +1414,7 @@ WHERE
      * @param mixed $totalNights
      * @return string
      */
-    protected static function makeSummaryDiv($guestName, $patientName, $hospital, $diags, $labels, $totalCharge, $totalThirdPayments, $totalGuestPayments, $MOABalance, $prepayments, $depositBalance, $totalNights) {
+    protected static function makeSummaryDiv($guestName, $patientName, $patientDOB, $hospital, $diags, $labels, $totalCharge, $totalThirdPayments, $totalGuestPayments, $MOABalance, $prepayments, $depositBalance, $totalNights) {
 
         $uS = Session::getInstance();
         $tbl = new HTMLTable();
@@ -1417,6 +1424,10 @@ WHERE
         }
 
         $tbl->addBodyTr(HTMLTable::makeTd($labels->getString('MemberType', 'patient', 'Patient') . ':', array('class'=>'tdlabel')) . HTMLTable::makeTd($patientName));
+
+        if($uS->stmtShowBirthDate){
+            $tbl->addBodyTr(HTMLTable::makeTd($labels->getString('MemberType', 'patient', 'Patient') . ' DOB:', array('class'=>'tdlabel')) . HTMLTable::makeTd($patientDOB == '' ? '' : date('M j, Y', strtotime($patientDOB))));
+        }
 
         // Show diagnosis
         if ($uS->ShowDiagOnStmt && count($diags) > 0 && $diags[1] != '') {
