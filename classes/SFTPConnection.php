@@ -13,13 +13,13 @@ class SFTPConnection
 	 * @param int $port
 	 * @throws \Exception
 	 */
-	public function __construct($host, $port=22)
+	public function __construct(string $host, int $port = 22)
 	{
 		if (function_exists('ssh2_connect') === FALSE) {
 			throw new \Exception("ssh2_sftp is missing. ");
 		}
 
-		$this->connection = ssh2_connect($host, $port);
+		$this->connection = \ssh2_connect($host, $port);
 
 		if (! $this->connection) {
 			throw new \Exception("Could not connect to $host on port $port.");
@@ -28,12 +28,12 @@ class SFTPConnection
 
 	public function login($username, $password)
 	{
-		if (! ssh2_auth_password($this->connection, $username, $password)) {
+		if (! \ssh2_auth_password($this->connection, $username, $password)) {
 			throw new \Exception("Could not authenticate with username $username " .
 					"and password $password.");
 		}
 
-		$this->sftp = ssh2_sftp($this->connection);
+		$this->sftp = \ssh2_sftp($this->connection);
 
 		if (! $this->sftp) {
 			throw new \Exception("Could not initialize SFTP subsystem.");
