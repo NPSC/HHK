@@ -218,6 +218,11 @@ VALUES ('adjustFees','Adjust Fees','s','vi','','');
 INSERT IGNORE INTO `labels` (`Key`,`Value`,`Type`,`Category`,`Header`,`Description`)
 SELECT 'hospitals', CONCAT(`Value`, 's'), 's', 'h', '', '' FROM `labels` WHERE `Key` = 'hospital';
 
+
 UPDATE page
 SET File_Name = '_../index.php?log=lo'
 WHERE File_Name = '_index.php?log=lo';
+
+
+INSERT IGNORE INTO `sys_config`(`Key`,`Value`,`Type`,`Category`,`Description`,`Show`) VALUES 
+("stmtShowBirthDate", "false","b","f","Show Patient Birthdate on Statements","1");

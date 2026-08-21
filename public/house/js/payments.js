@@ -920,6 +920,24 @@ function setupPayments(rate, idVisit, visitSpan, $diagBox, strInvoiceBox) {
     chg = $(".hhk-mcred");
   }
 
+  // Strip non-numeric, non-decimal characters as the user types in money fields.
+  $(".hhk-money").on("input", function () {
+    var val = this.value;
+    var stripped = val.replace(/[^0-9.]/g, "");
+
+    if (stripped !== val) {
+      var pos = Math.max(0, this.selectionStart - (val.length - stripped.length));
+      this.value = stripped;
+      this.setSelectionRange(pos, pos);
+    }
+  });
+
+  // Format money fields to 2 decimal places once the user leaves the field.
+  $(".hhk-money").on("blur", function () {
+    var amt = parseFloat(this.value);
+    this.value = isNaN(amt) ? "" : amt.toFixed(2);
+  });
+
   if (ptsel.length > 0) {
     ptsel
       .on("change", function () {

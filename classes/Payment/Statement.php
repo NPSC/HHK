@@ -288,13 +288,13 @@ class Statement {
      * Summary of makeOrdersRatesTable
      * @param mixed $rates
      * @param mixed $totalAmt
-     * @param \HHK\Purchase\PriceModel\AbstractPriceModel $priceModel
+     * @param AbstractPriceModel $priceModel
      * @param mixed $labels
      * @param array $invLines
-     * @param \HHK\Purchase\ValueAddedTax $vat
+     * @param ValueAddedTax $vat
      * @param mixed $numberNites
-     * @param \HHK\Purchase\Item $moaItem
-     * @param \HHK\Purchase\Item $donateItem
+     * @param Item $moaItem
+     * @param Item $donateItem
      * @param mixed $showDetails
      * @return array
      */
@@ -1091,14 +1091,17 @@ WHERE `i`.`Deleted` = 0 AND `il`.`Deleted` = 0 AND `i`.`idGroup` = :idRegistrati
 
         // Find patient name
         $patientName = '';
+        $patientDOB = '';
         $diags = [];
         if ($idPsg > 0){
 
-            $pstmt = $dbh->prepare("SELECT `n`.`Name_First`, `n`.`Name_Last`, `hs`.`idHospital`, `hs`.`idAssociation` FROM `name` `n` LEFT JOIN `hospital_stay` `hs` ON `n`.`idName` = `hs`.`idPatient` WHERE `hs`.`idPsg` = :idPsg");
+            $pstmt = $dbh->prepare("SELECT `n`.`Name_First`, `n`.`Name_Last`, `n`.`BirthDate`, `hs`.`idHospital`, `hs`.`idAssociation` FROM `name` `n` LEFT JOIN `hospital_stay` `hs` ON `n`.`idName` = `hs`.`idPatient` WHERE `hs`.`idPsg` = :idPsg");
             $pstmt->execute([':idPsg' => $idPsg]);
+
             $rows = $pstmt->fetchAll(\PDO::FETCH_ASSOC);
             if (count($rows) > 0) {
                 $patientName = $rows[0]['Name_First'] . ' ' . $rows[0]['Name_Last'];
+                $patientDOB = $rows[0]['BirthDate'];
 
                 // Hospital
                 if ($rows[0]['idAssociation'] > 0 && isset($uS->guestLookups[GLTableNames::Hospital][$rows[0]['idAssociation']]) && $uS->guestLookups[GLTableNames::Hospital][$rows[0]['idAssociation']][1] != '(None)') {
@@ -1119,6 +1122,7 @@ WHERE `i`.`Deleted` = 0 AND `il`.`Deleted` = 0 AND `i`.`idGroup` = :idRegistrati
         $rec .= self::makeSummaryDiv(
             '',
             $patientName,
+            $patientDOB,
             $hospital,
             $diags,
             $labels,
@@ -1224,11 +1228,12 @@ WHERE `i`.`Deleted` = 0 AND `i`.`Order_Number` = :idVisit ORDER BY `il`.`Invoice
 
         // Find patient name
         $patientName = '';
+        $patientDOB = '';
         $diags = [];
         if ($idPsg > 0){
 
             $pstmt = $dbh->prepare("SELECT
-    `n`.`Name_First`, `n`.`Name_Last`, IFNULL(`g`.`Description`, '') AS `Diagnosis`, IFNULL(`g2`.`Description`, '') AS `Diagnosis2`
+    `n`.`Name_First`, `n`.`Name_Last`, `n`.`BirthDate`, IFNULL(`g`.`Description`, '') AS `Diagnosis`, IFNULL(`g2`.`Description`, '') AS `Diagnosis2`
 FROM
 	`visit` `v`
         LEFT JOIN
@@ -1245,6 +1250,7 @@ WHERE
             $rows = $pstmt->fetchAll(\PDO::FETCH_ASSOC);
             if (count($rows) > 0) {
                 $patientName = $rows[0]['Name_First'] . ' ' . $rows[0]['Name_Last'];
+                $patientDOB = $rows[0]['BirthDate'];
                 $diags[1] = $rows[0]['Diagnosis'];
                 $diags[2] = $rows[0]['Diagnosis2'];
             }
@@ -1259,6 +1265,7 @@ WHERE
         $rec .= self::makeSummaryDiv(
             $guestName,
             $patientName,
+            $patientDOB,
             $hospital,
             $diags,
             $labels,
@@ -1369,6 +1376,7 @@ WHERE
      * Summary of makeSummaryDiv
      * @param mixed $guestName
      * @param mixed $patientName
+     * @param mixed $patientDOB
      * @param mixed $hospital
      * @param array $diags
      * @param Labels $labels
@@ -1380,7 +1388,7 @@ WHERE
      * @param mixed $totalNights
      * @return string
      */
-    protected static function makeSummaryDiv($guestName, $patientName, $hospital, $diags, $labels, $totalCharge, $totalThirdPayments, $totalGuestPayments, $MOABalance, $prepayments, $depositBalance, $totalNights) {
+    protected static function makeSummaryDiv($guestName, $patientName, $patientDOB, $hospital, $diags, $labels, $totalCharge, $totalThirdPayments, $totalGuestPayments, $MOABalance, $prepayments, $depositBalance, $totalNights) {
 
         $uS = Session::getInstance();
         $tbl = new HTMLTable();
@@ -1390,6 +1398,10 @@ WHERE
         }
 
         $tbl->addBodyTr(HTMLTable::makeTd($labels->getString('MemberType', 'patient', 'Patient') . ':', array('class'=>'tdlabel')) . HTMLTable::makeTd($patientName));
+
+        if($uS->stmtShowBirthDate){
+            $tbl->addBodyTr(HTMLTable::makeTd($labels->getString('MemberType', 'patient', 'Patient') . ' DOB:', array('class'=>'tdlabel')) . HTMLTable::makeTd($patientDOB == '' ? '' : date('M j, Y', strtotime($patientDOB))));
+        }
 
         // Show diagnosis
         if ($uS->ShowDiagOnStmt && count($diags) > 0 && $diags[1] != '') {

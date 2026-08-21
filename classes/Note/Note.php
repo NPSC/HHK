@@ -214,19 +214,18 @@ class Note {
      */
     public function updateContents(\PDO $dbh, $noteText, $noteCategory, $updatedBy) {
 
-        $counter = 0;
-
-        if ($this->getIdNote() > 0 && $this->loadNote($dbh)) {
-
-            $this->noteRS->Note_Text->setNewVal($noteText);
-            $this->noteRS->Category->setNewVal($noteCategory);
-            $this->noteRS->Status->setNewVal(self::ActiveStatus);
-            $this->noteRS->Updated_By->setNewVal($updatedBy);
-            $this->noteRS->Last_Updated->setNewVal(date('Y-m-d H:i:s'));
-
-            $counter = EditRS::update($dbh, $this->noteRS, array($this->noteRS->idNote));
-            EditRS::updateStoredVals($this->noteRS);
+        if ($this->getIdNote() <= 0 || $this->loadNote($dbh) === false) {
+            throw new RuntimeException('Cannot update note contents: Note (Id = ' . $this->getIdNote() . ') was not found.');
         }
+
+        $this->noteRS->Note_Text->setNewVal($noteText);
+        $this->noteRS->Category->setNewVal($noteCategory);
+        $this->noteRS->Status->setNewVal(self::ActiveStatus);
+        $this->noteRS->Updated_By->setNewVal($updatedBy);
+        $this->noteRS->Last_Updated->setNewVal(date('Y-m-d H:i:s'));
+
+        $counter = EditRS::update($dbh, $this->noteRS, array($this->noteRS->idNote));
+        EditRS::updateStoredVals($this->noteRS);
 
         return ['counter'=>$counter, 'noteRS'=>$this->noteRS];
     }

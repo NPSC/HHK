@@ -8,7 +8,7 @@ class SearchFor extends SearchNameData
 {
     protected $whereClause = '';
     protected array $whereParams = [];
-    protected int $psgId;
+    protected ?int $psgId = null;
 
     /**
      * @return mixed

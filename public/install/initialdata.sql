@@ -3052,6 +3052,16 @@ Thank you
 		'1'
 	),
 	(
+		'stmtShowBirthDate', 
+		'false',
+		'b',
+		'f',
+		'',
+		'Show Patient Birthdate on Statements',
+		'',
+		'1'
+	),
+	(
 		'sId',
 		'11',
 		'i',
