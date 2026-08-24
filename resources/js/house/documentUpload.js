@@ -6,6 +6,8 @@ import XHRUpload from "@uppy/xhr-upload";
 import "@uppy/core/css/style.min.css";
 import "@uppy/dashboard/css/style.min.css";
 
+import { enableUppyTooltips } from "../common/uppyMicrotip.js";
+
 var ALLOWED_DOC_MIME_TYPES = [
   "application/pdf",
   "application/msword",
@@ -382,6 +384,8 @@ var MAX_DOC_FILE_SIZE = 5000000;
       $(".dataTables_filter").addClass("ignrSave");
       $(".dtBottom").addClass("ignrSave");
 
+      enableUppyTooltips();
+
       var uppy = new Uppy({
         restrictions: {
           maxFileSize: MAX_DOC_FILE_SIZE,
@@ -411,7 +415,7 @@ var MAX_DOC_FILE_SIZE = 5000000;
           closeModalOnClickOutside: true,
           closeAfterFinish: true,
           note: "Allowed filetypes: pdf, doc, docx, jpeg, png. Maximum file size: 5MB.",
-          metaFields: [{ id: "docTitle", name: "Title", placeholder: "Enter document title" }],
+          proudlyDisplayPoweredByUppy: false,
         })
         .use(XHRUpload, {
           endpoint: settings.serviceURL,
@@ -429,6 +433,8 @@ var MAX_DOC_FILE_SIZE = 5000000;
         } else {
           flagAlertMessage(data.error || "An unknown error occurred.", "error");
         }
+
+        uppy.cancelAll();
       });
 
       $wrapper.on("click", "#docUploadBtn", function () {

@@ -9,6 +9,8 @@ import "@uppy/dashboard/css/style.min.css";
 import "@uppy/webcam/css/style.min.css";
 import "@uppy/image-editor/css/style.min.css";
 
+import { enableUppyTooltips } from "./uppyMicrotip.js";
+
 var MAX_PHOTO_FILE_SIZE = 5000000;
 var ALLOWED_PHOTO_MIME_TYPES = ["image/jpeg", "image/png"];
 
@@ -61,6 +63,8 @@ export function initGuestPhoto(options) {
     );
   }
 
+  enableUppyTooltips();
+
   var uppy = new Uppy({
     restrictions: {
       maxFileSize: MAX_PHOTO_FILE_SIZE,
@@ -74,6 +78,7 @@ export function initGuestPhoto(options) {
       closeModalOnClickOutside: true,
       closeAfterFinish: true,
       proudlyDisplayPoweredByUppy: false,
+      autoOpen: "imageEditor",
       note: "JPEG or PNG. Crop to a square with the edit tool.",
     })
     .use(Webcam, { target: Dashboard, modes: ["picture"] })
@@ -83,6 +88,17 @@ export function initGuestPhoto(options) {
         aspectRatio: 1,
         viewMode: 1,
         autoCropArea: 1,
+      },
+      actions: {
+        revert: true,
+        rotate: true,
+        granularRotate: true,
+        flip: true,
+        zoomIn: true,
+        zoomOut: true,
+        cropSquare: false,
+        cropWidescreen: false,
+        cropWidescreenVertical: false,
       },
     })
     .use(XHRUpload, {

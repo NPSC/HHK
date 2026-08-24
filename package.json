@@ -8,6 +8,9 @@
     "lint": "vp lint .",
     "prepare": "vp config"
   },
+  "dependencies": {
+    "microtip": "^0.2.2"
+  },
   "devDependencies": {
     "@fullcalendar/resource-timeline": "^6.1",
     "@popperjs/core": "^2.11.8",
