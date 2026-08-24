@@ -958,6 +958,7 @@ class Statement {
 
                         $initialTd = HTMLTable::makeTd($r['i']['Order_Number'] . '-' . $r['i']['Suborder_Number'], array_merge($tdAttrs, array('rowspan'=>count($myLines)+$extraLine))
                         )
+                        .HTMLTable::makeTd($r['i']['Invoice_Number'], array_merge($tdAttrs, array('rowspan'=>count($myLines)+$extraLine)))
                         .HTMLTable::makeTd($payor, array_merge($tdAttrs, array('rowspan'=>count($myLines)+$extraLine)))
                         .HTMLTable::makeTd(($r['i']['Invoice_Date'] == '' ? '' : date('M j, Y', strtotime($r['i']['Invoice_Date']))), array_merge($mattrs, array('rowspan'=>count($myLines))));
 
@@ -996,13 +997,14 @@ class Statement {
         if ($numPayments > 0) {
             $tbl->addHeaderTr(
                 HTMLTable::makeTh('Visit Id', $tdAttrs)
+                .HTMLTable::makeTh('Invoice', $tdAttrs)
                 .HTMLTable::makeTh('Organization', $tdAttrs)
                 .HTMLTable::makeTh('Date', $tdAttrs)
                 .HTMLTable::makeTh('Item', array_merge($tdAttrs, array('colspan'=>'3')))
                 .HTMLTable::makeTh('Status', $tdAttrs)
                 .HTMLTable::makeTh($labels->getString('statement', 'paymentHeader', 'Payment'), $tdAttrs));
 
-            $tbl->addBodyTr(HTMLTable::makeTd('3rd Party Payment Total', array('colspan'=>'7', 'class'=>'tdlabel hhk-tdTotals '.$tdClass))
+            $tbl->addBodyTr(HTMLTable::makeTd('3rd Party Payment Total', array('colspan'=>'8', 'class'=>'tdlabel hhk-tdTotals '.$tdClass))
                 .HTMLTable::makeTd('$'. number_format($totalPment, 2), array('class'=>'hhk-tdTotals align-right '.$tdClass)));
 
         }

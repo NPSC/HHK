@@ -944,11 +944,11 @@ $columSelector = $colSelector->makeSelectorTable(TRUE)->generateMarkup(array('st
 
                 $('#btnHere, #btnExcel,  #cbColClearAll, #cbColSelAll, #btnInvGo, #btnSaveGlParms, #btnGlGo, #btnGlTx, #btnGlcsv').button();
 
-                $( "form[name=glform] input[type=checkbox]" ).checkboxradio({
+                $( "form[name=glParmsForm] input[type=checkbox]" ).checkboxradio({
                 icon: true
                 });
 
-                $("form[name=glform] .ui-checkboxradio-icon").removeClass('ui-state-hover');
+                $("form[name=glParmsForm] .ui-checkboxradio-icon").removeClass('ui-state-hover');
 
                 <?php echo $filter->getTimePeriodScript(); ?>
                 
@@ -1209,8 +1209,10 @@ $columSelector = $colSelector->makeSelectorTable(TRUE)->generateMarkup(array('st
 
             </div>
             <div id="vGl" class="hhk-tdbox hhk-visitdialog" style="display:none; font-size:0.8em;">
-                <form name="glform" method="post" action="InvoiceReport.php">
+                <form name="glParmsForm" method="post" action="InvoiceReport.php">
                 	<?php echo $glChooser;?>
+                </form>
+                <form name="glReportForm" method="post" action="InvoiceReport.php">
                 	<table style="float:left;">
                 	<tr><th>Month</th><th>Year</th>
                 	<tr>
