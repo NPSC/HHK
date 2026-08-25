@@ -8,6 +8,13 @@
  */
 
 import { verifyAddrs, verifyDocAgent } from "../common/addrPrefs";
+import { isIE } from "../common/pag.js";
+
+import {
+  createAutoComplete,
+  createRoleAutoComplete,
+  createZipAutoComplete,
+} from "../common/createAutoComplete.js";
 
 export class resvManager {
   constructor(initData, options) {

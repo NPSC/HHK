@@ -10,12 +10,9 @@
  * @link      https://github.com/NPSC
  */
 
-/**
- *
- * @param {int} orderNumber
- * @param {jquery} $diagBox
- * @returns {undefined}
- */
+import { flagAlertMessage, getDialogWidth, dateRender } from "../common/pag";
+import { createAutoComplete } from "../common/createAutoComplete.js";
+
 var gblAdjustData = [];
 
 var gblRtCalcParams = {
@@ -40,7 +37,7 @@ function roundTo(n, digits) {
   return Math.round(n) / multiplicator;
 }
 
-function getApplyDiscDiag(orderNumber, $diagBox) {
+export function getApplyDiscDiag(orderNumber, $diagBox) {
   "use strict";
 
   if (!orderNumber || orderNumber == "" || orderNumber == 0) {
@@ -76,9 +73,8 @@ function getApplyDiscDiag(orderNumber, $diagBox) {
           var buttons = {
             Save: function () {
               var amt = parseFloat($("#housePayment").val().replace("$", "").replace(",", "")),
-                tax = parseFloat($("#houseTax").val()),
                 vid = $("#housePayment").data("vid"),
-                item = "",
+                item,
                 adjDate = $.datepicker.formatDate(
                   "yy-mm-dd",
                   $("#housePaymentDate").datepicker("getDate"),
@@ -87,9 +83,6 @@ function getApplyDiscDiag(orderNumber, $diagBox) {
 
               if (isNaN(amt)) {
                 amt = 0;
-              }
-              if (isNaN(tax)) {
-                tax = 0;
               }
 
               if ($("#cbAdjustPmt1").prop("checked")) {
@@ -148,8 +141,8 @@ function getApplyDiscDiag(orderNumber, $diagBox) {
             if ($("#cbAdjustPmt2").prop("checked") && $("#houseTax").length > 0) {
               var tax = parseFloat($("#houseTax").data("tax")),
                 amt = parseFloat($("#housePayment").val().replace("$", "").replace(",", "")),
-                taxAmt = 0.0,
-                totalAmt = 0.0;
+                taxAmt,
+                totalAmt;
 
               if (isNaN(tax)) {
                 tax = 0;
@@ -754,7 +747,7 @@ function doHouseWaive(p, a) {
   }
 }
 
-function amtPaid() {
+export function amtPaid() {
   "use strict";
 
   var p = new PayCtrls(),
@@ -905,7 +898,7 @@ function amtPaid() {
  * @param {jquery} $diagBox
  * @returns {undefined}
  */
-function setupPayments(rate, idVisit, visitSpan, $diagBox, strInvoiceBox) {
+export function setupPayments(rate, idVisit, visitSpan, $diagBox, strInvoiceBox) {
   "use strict";
   var ptsel = $("#PayTypeSel");
   var chg = $(".tblCredit");
@@ -1149,7 +1142,6 @@ function setupPayments(rate, idVisit, visitSpan, $diagBox, strInvoiceBox) {
       fixed = parseFloat($("#txtFixedRate").val()),
       noGuests = parseInt($("#spnNumGuests").text()),
       feePayAmt = p.feePayAmt,
-      tax = parseFloat($("#spnRcTax").data("tax")),
       adjust = parseFloat($("#seladjAmount").find(":selected").data("amount"));
 
     $(this).val("");
@@ -1160,10 +1152,6 @@ function setupPayments(rate, idVisit, visitSpan, $diagBox, strInvoiceBox) {
 
     if (isNaN(fixed)) {
       fixed = 0;
-    }
-
-    if (isNaN(tax)) {
-      tax = 0;
     }
 
     if (isNaN(adjust)) {
@@ -1211,7 +1199,6 @@ function createInvChooser(idVisit, index) {
               }
               if (data && data.error) {
                 if (data.gotopage) {
-                  response();
                   window.open(data.gotopage);
                 }
                 data.value = data.error;
@@ -1235,7 +1222,16 @@ function createInvChooser(idVisit, index) {
   }
 }
 
-function daysCalculator(days, idRate, idVisit, fixedAmt, adjAmt, numGuests, idResv, rtnFunction) {
+export function daysCalculator(
+  days,
+  idRate,
+  idVisit,
+  fixedAmt,
+  adjAmt,
+  numGuests,
+  idResv,
+  rtnFunction,
+) {
   if (
     days > 0 &&
     (days != gblRtCalcParams.days ||
@@ -1300,7 +1296,7 @@ function daysCalculator(days, idRate, idVisit, fixedAmt, adjAmt, numGuests, idRe
   }
 }
 
-function verifyBalDisp() {
+export function verifyBalDisp() {
   if ($("#selexcpay").val() == "" && $("#txtOverPayAmt").val() != "") {
     $("#payChooserMsg").text('Set "Apply To" to the desired overpayment disposition. ').show();
     $("#selexcpay").addClass("ui-state-highlight");
@@ -1313,7 +1309,7 @@ function verifyBalDisp() {
   return true;
 }
 
-function verifyAmtTendrd() {
+export function verifyAmtTendrd() {
   "use strict";
   if ($("#PayTypeSel").length === 0) {
     return true;
@@ -1378,7 +1374,7 @@ function verifyAmtTendrd() {
  * @param billToEmail
  * @returns {undefined}
  */
-function showReceipt(dialogId, markup, title, width, paymentId = false, billToEmail = "") {
+export function showReceipt(dialogId, markup, title, width, paymentId = false, billToEmail = "") {
   var pRecpt = $(dialogId);
   const printBtn = $("<div class='ms-3'><i class='bi bi-printer-fill me-3'></i>Print</div>");
   const emailBtn = $("<div class='ms-3'><i class='bi bi-send-fill me-3'></i>Email</div>");
@@ -1487,7 +1483,7 @@ function showReceipt(dialogId, markup, title, width, paymentId = false, billToEm
  * @param {string} idDialg
  * @returns {undefined}
  */
-function reprintReceipt(pid, idDialg) {
+export function reprintReceipt(pid, idDialg) {
   $.post(
     "ws_ckin.php",
     {
@@ -1518,7 +1514,7 @@ function reprintReceipt(pid, idDialg) {
   );
 }
 
-function paymentRedirect(data, $xferForm, initialParams) {
+export function paymentRedirect(data, $xferForm, initialParams) {
   "use strict";
   if (data) {
     if (data.hostedError) {
@@ -1549,11 +1545,6 @@ function paymentRedirect(data, $xferForm, initialParams) {
 
       // openiframe(data.inctx, 600, 400, "Add New Card On File");
     } else if (data.deluxehpf) {
-      //var height = (data.useSwipe ? 200 : 400);
-      //var width = (data.useSwipe ? 400 : 650);
-      var height = 650;
-      var width = 650;
-
       var title =
         data.deluxehpf.cmd == "payment" ? "Enter Payment Details" : "Add New Card On File";
       var deluxeSmtBtnTxt =
@@ -1586,7 +1577,7 @@ function paymentRedirect(data, $xferForm, initialParams) {
         height: 450,
         autoOpen: true,
         title: title,
-        open: function (event, ui) {
+        open: function (_event, _ui) {
           var options = {
             containerId: "deluxeDialog",
             xtoken: data.deluxehpf.hpfToken,
@@ -1696,7 +1687,7 @@ function paymentRedirect(data, $xferForm, initialParams) {
             instance.renderHpf();
           });
         },
-        close: function (event, ui) {
+        close: function (_event, _ui) {
           //HostedForm.destroy();
           $(this).find("iframe").remove();
           $(this).dialog("destroy").empty();
@@ -1712,7 +1703,7 @@ function paymentRedirect(data, $xferForm, initialParams) {
  * @param {string} $idx
  * @returns {undefined}
  */
-function setupCOF($chgExpand, idx) {
+export function setupCOF($chgExpand, idx) {
   if (idx === undefined || idx === null) {
     idx = "";
   }
@@ -1795,7 +1786,7 @@ function setupCOF($chgExpand, idx) {
   }
 }
 
-function cardOnFile(id, idGroup, postBackPage, idx) {
+export function cardOnFile(id, idGroup, postBackPage, idx) {
   $("#tdChargeMsg" + idx)
     .text("")
     .hide();
@@ -1884,20 +1875,20 @@ function cardOnFile(id, idGroup, postBackPage, idx) {
   });
 }
 
-function paymentsTable(tableID, containerID, refreshPayments) {
-  var ptbl = $("#" + tableID).DataTable({
+export function paymentsTable(tableID, containerID, refreshPayments) {
+  $("#" + tableID).DataTable({
     columnDefs: [
       {
         targets: [9, 10],
         type: "date",
-        render: function (data, type, row) {
+        render: function (data, type, _row) {
           return dateRender(data, type);
         },
       },
       {
         targets: [12],
         type: "date",
-        render: function (data, type, row) {
+        render: function (data, type, _row) {
           return dateRender(data, type, "MMM D, YYYY h:mm a");
         },
       },
@@ -1996,3 +1987,16 @@ function paymentsTable(tableID, containerID, refreshPayments) {
     }
   });
 }
+
+window.getApplyDiscDiag = getApplyDiscDiag; // used by register.js, loaded alongside this bundle
+window.amtPaid = amtPaid; // used by visitDialog.js and resvManager.js, loaded alongside this bundle
+window.setupPayments = setupPayments; // used by visitDialog.js, resvManager.js and invoice.js, loaded alongside this bundle
+window.daysCalculator = daysCalculator; // used by resv.js, loaded alongside this bundle
+window.verifyBalDisp = verifyBalDisp; // used by visitDialog.js, loaded alongside this bundle
+window.verifyAmtTendrd = verifyAmtTendrd; // used by visitDialog.js, resvManager.js and invoice.js, loaded alongside this bundle
+window.showReceipt = showReceipt; // used by guestload.js, register.js, regForm.js, visitDialog.js and invoice.js, loaded alongside this bundle
+window.reprintReceipt = reprintReceipt; // used by regForm.js, loaded alongside this bundle
+window.paymentRedirect = paymentRedirect; // used by checkingIn.js, resvManager.js, visitDialog.js and invoice.js, loaded alongside this bundle
+window.setupCOF = setupCOF; // used by guestload.js and resvManager.js, loaded alongside this bundle
+window.cardOnFile = cardOnFile; // used by resvManager.js and guestload.js, loaded alongside this bundle
+window.paymentsTable = paymentsTable; // used by register.js and guestload.js, loaded alongside this bundle

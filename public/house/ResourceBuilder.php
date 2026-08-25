@@ -2653,12 +2653,10 @@ $formBuilderOptions = [
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <title><?php echo $wInit->pageTitle; ?></title>
 
-    <?php echo Vite::asset('resources/js/house.js'); ?>
+    <?php echo Vite::asset(['resources/js/house.js', 'resources/js/house/rescBuilder.js']); ?>
     
     <?php echo FAVICON; ?>
     <?php echo CSSVARS; ?>
-
-    <script type="text/javascript" src="<?php echo RESCBUILDER_JS; ?>" defer></script>
 </head>
 
 <body <?php if ($wInit->testVersion) {

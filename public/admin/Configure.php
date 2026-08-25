@@ -350,11 +350,9 @@ $authIdpList = SAML::getIdpList($dbh, false);
         <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
         <title><?php echo $wInit->pageTitle; ?></title>
 
-        <?php echo Vite::asset('resources/js/admin.js'); ?>
+        <?php echo Vite::asset(['resources/js/admin.js', 'resources/js/admin/configure.js']); ?>
         
         <?php echo FAVICON; ?>
-
-        <script type="text/javascript" src="<?php echo CONFIGURE_JS; ?>" defer></script>
     </head>
     <body <?php echo ($wInit->testVersion ? "class='testbody'": "") ?>>
         <?php echo $wInit->generatePageMenu(); ?>

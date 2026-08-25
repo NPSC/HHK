@@ -1,3 +1,4 @@
+// eslint-disable-next-line no-unused-vars -- public API: called from an inline <script> on the embedding page
 var gethhkVacancy = function (siteURL = "", targetID = "") {
   let hhkVacancy = document.getElementById(targetID);
 

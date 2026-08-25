@@ -431,16 +431,12 @@ if ($uS->CoTod) {
         <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
         <title><?php echo $wInit->pageTitle; ?></title>
 
-        <?php echo Vite::asset('resources/js/house.js'); ?>
-        
+        <?php echo Vite::asset(['resources/js/house.js', 'resources/js/house/resv.js', 'resources/js/house/payments.js', 'resources/js/house/invoice.js', 'resources/js/house/visitInterval.js']); ?>
+
         <?php echo FAVICON; ?>
         <?php echo CSSVARS; ?>
 
-        <script type="text/javascript" src="<?php echo RESV_JS; ?>" defer></script>
         <?php echo Vite::asset('resources/js/house/resvManager.js'); ?>
-        <script type="text/javascript" src="<?php echo PAYMENT_JS; ?>" defer></script>
-        <script type="text/javascript" src="<?php echo INVOICE_JS; ?>" defer></script>
-        <script type="text/javascript" src="<?php echo VISIT_INTERVAL_JS; ?>" defer></script>
         <?php if ($uS->PaymentGateway == AbstractPaymentGateway::INSTAMED) {echo INS_EMBED_JS;} ?>
         <?php
             if ($uS->PaymentGateway == AbstractPaymentGateway::DELUXE) {

@@ -1,6 +1,6 @@
-window.housekeeping = {};
+import { dateRender, getDialogWidth, flagAlertMessage } from "../common/pag";
 
-window.housekeeping.getDtBtns = function (title) {
+const getDtBtns = function (title) {
   return [
     {
       extend: "print",
@@ -15,7 +15,7 @@ window.housekeeping.getDtBtns = function (title) {
         return title;
       },
       messageBottom: function () {
-        var now = moment().format("MMM D, YYYY") + " at " + moment().format("h:mm a");
+        const now = moment().format("MMM D, YYYY") + " at " + moment().format("h:mm a");
         return (
           '<div style="padding-top: 10px; position: fixed; bottom: 0; right: 0">Printed on ' +
           now +
@@ -35,10 +35,10 @@ window.housekeeping.getDtBtns = function (title) {
 document.addEventListener("DOMContentLoaded", () => {
   "use strict";
 
-  var dateFormat = "ddd MMM D, YYYY";
-  var groupingTitle = $("#groupingTitle").val();
+  const dateFormat = "ddd MMM D, YYYY";
+  const groupingTitle = $("#groupingTitle").val();
 
-  housekeeping.cgCols = [
+  const cgCols = [
     { data: "Group_Title", title: groupingTitle, visible: false },
     {
       data: "Room",
@@ -50,7 +50,7 @@ document.addEventListener("DOMContentLoaded", () => {
       title: "Status",
       searchable: false,
       sortable: true,
-      createdCell: function (td, cellData, rowData, col) {
+      createdCell: function (td, cellData, rowData, _col) {
         if (rowData.StatusColor) {
           $(td).css("background-color", rowData.StatusColor);
         }
@@ -79,7 +79,7 @@ document.addEventListener("DOMContentLoaded", () => {
       data: "Checked_In",
       title: "Checked In",
       type: "date",
-      render: function (data, type, row) {
+      render: function (data, type, _row) {
         return dateRender(data, type, dateFormat);
       },
       searchable: true,
@@ -89,7 +89,7 @@ document.addEventListener("DOMContentLoaded", () => {
       data: "Expected_Checkout",
       title: "Expected Checkout",
       type: "date",
-      render: function (data, type, row) {
+      render: function (data, type, _row) {
         return dateRender(data, type, dateFormat);
       },
       searchable: true,
@@ -99,7 +99,7 @@ document.addEventListener("DOMContentLoaded", () => {
       data: "Next_Expected_Arrival",
       title: "Next Expected Arrival",
       type: "date",
-      render: function (data, type, row) {
+      render: function (data, type, _row) {
         return dateRender(data, type, dateFormat);
       },
       searchable: true,
@@ -109,7 +109,7 @@ document.addEventListener("DOMContentLoaded", () => {
       data: "Last_Cleaned",
       title: "Last Cleaned",
       type: "date",
-      render: function (data, type, row) {
+      render: function (data, type, _row) {
         return dateRender(data, type, dateFormat);
       },
       searchable: true,
@@ -119,7 +119,7 @@ document.addEventListener("DOMContentLoaded", () => {
       data: "Last_Deep_Clean",
       title: "Last Deep Clean",
       type: "date",
-      render: function (data, type, row) {
+      render: function (data, type, _row) {
         if (type == "print") {
           return $(data).val();
         } else {
@@ -134,7 +134,7 @@ document.addEventListener("DOMContentLoaded", () => {
       title: "Latest Note",
       searchable: true,
       sortable: false,
-      render: function (data, type, row) {
+      render: function (data, type, _row) {
         if (type == "print") {
           data = $(data);
           data.find(".hhk-noprint").remove();
@@ -146,7 +146,7 @@ document.addEventListener("DOMContentLoaded", () => {
     },
   ];
 
-  housekeeping.inCols = [
+  const inCols = [
     {
       data: "Primary Guest",
       title: window.labels.primaryGuest,
@@ -193,7 +193,7 @@ document.addEventListener("DOMContentLoaded", () => {
     },
   ];
 
-  housekeeping.outCols = [
+  const outCols = [
     {
       data: "Room",
       title: "Room",
@@ -240,7 +240,7 @@ document.addEventListener("DOMContentLoaded", () => {
     },
   ];
 
-  housekeeping.dtLogColDefs = [
+  const dtLogColDefs = [
     {
       targets: [0],
       data: "Room",
@@ -264,7 +264,7 @@ document.addEventListener("DOMContentLoaded", () => {
       targets: [3],
       data: "Last Cleaned",
       title: "Last Cleaned",
-      render: function (data, type, row) {
+      render: function (data, type, _row) {
         return dateRender(data, type, dateFormat);
       },
     },
@@ -272,7 +272,7 @@ document.addEventListener("DOMContentLoaded", () => {
       targets: [4],
       data: "Last Deep Clean",
       title: "Last Deep Clean",
-      render: function (data, type, row) {
+      render: function (data, type, _row) {
         return dateRender(data, type, dateFormat);
       },
     },
@@ -294,7 +294,7 @@ document.addEventListener("DOMContentLoaded", () => {
       targets: [7],
       data: "Timestamp",
       title: "Timestamp",
-      render: function (data, type, row) {
+      render: function (data, type, _row) {
         return dateRender(data, type, dateFormat);
       },
     },
@@ -324,12 +324,14 @@ document.addEventListener("DOMContentLoaded", () => {
       try {
         //refresh all tables with notes
         $("table#dirtyTable, table#outTable, table#roomTable").DataTable().ajax.reload();
-      } catch (e) {}
+      } catch {
+        // Tables may not be initialized yet; ignore.
+      }
     },
   });
 
-  $("#mainTabs").on("click", ".roomDetails", function (e) {
-    let $this = $(this);
+  $("#mainTabs").on("click", ".roomDetails", function (_e) {
+    const $this = $(this);
     $("#roomDetailsDialog").empty();
     $("#roomDetailsDialog").append('<div class="roomNotes hhk-tdbox"></div>');
 
@@ -345,7 +347,7 @@ document.addEventListener("DOMContentLoaded", () => {
     $("#roomDetailsDialog").dialog("open");
   });
 
-  window.housekeeping.setRoomStatus = function (idResc, status, srcTbl) {
+  const setRoomStatus = function (idResc, status, srcTbl) {
     try {
       fetch("ws_resc.php", {
         method: "POST",
@@ -378,7 +380,9 @@ document.addEventListener("DOMContentLoaded", () => {
         .catch((reason) => {
           flagAlertMessage(reason, "error");
         });
-    } catch (e) {}
+    } catch {
+      // fetch is unavailable or the request setup failed; ignore.
+    }
   };
 
   $(document).on("click", ".setRoomStat", function (e) {
@@ -386,7 +390,7 @@ document.addEventListener("DOMContentLoaded", () => {
     let idResc = $(e.target).data("idroom");
     let status = $(e.target).data("setstatus");
     let srcTbl = $(e.target).parents("table");
-    housekeeping.setRoomStatus(idResc, status, srcTbl);
+    setRoomStatus(idResc, status, srcTbl);
   });
 
   $("#mainTabs").tabs({
@@ -400,12 +404,12 @@ document.addEventListener("DOMContentLoaded", () => {
               url: "ws_resc.php?cmd=clnlog",
               type: "POST",
             },
-            columnDefs: housekeeping.dtLogColDefs,
+            columnDefs: dtLogColDefs,
             deferRender: true,
             order: [[7, "desc"]],
             pageLength: 50,
             lengthMenu: [25, 50, 100],
-            buttons: housekeeping.getDtBtns("Housekeeping - Cleaning Log"),
+            buttons: getDtBtns("Housekeeping - Cleaning Log"),
           });
         } else if (
           ui.newPanel.find("table#roomTable.dataTable").length > 0 ||
@@ -437,7 +441,7 @@ document.addEventListener("DOMContentLoaded", () => {
               "&enddte=" +
               $.datepicker.formatDate("yy-mm-dd", coDate),
           );
-        var updatedBtn = housekeeping.getDtBtns(
+        var updatedBtn = getDtBtns(
           "Housekeeping - " +
             labels.visitor +
             "s Checking In - " +
@@ -451,7 +455,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   $("#ckInDate").datepicker("setDate", coDate);
 
-  $("#inButtonSet.week-button-group").on("click", "button", function (e) {
+  $("#inButtonSet.week-button-group").on("click", "button", function (_e) {
     var btn = $(this);
     $(".week-button-group button").removeClass("ui-state-active");
     if (btn.data("weeks")) {
@@ -467,7 +471,7 @@ document.addEventListener("DOMContentLoaded", () => {
             "&enddte=" +
             $.datepicker.formatDate("yy-mm-dd", endDate),
         );
-      var updatedBtn = housekeeping.getDtBtns(
+      var updatedBtn = getDtBtns(
         "Housekeeping - " +
           labels.visitor +
           "s Checking In - " +
@@ -500,7 +504,7 @@ document.addEventListener("DOMContentLoaded", () => {
               "&enddte=" +
               $.datepicker.formatDate("yy-mm-dd", coDate),
           );
-        var updatedBtn = housekeeping.getDtBtns(
+        var updatedBtn = getDtBtns(
           "Housekeeping - " +
             labels.visitor +
             "s Checking Out - " +
@@ -514,7 +518,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   $("#ckoutDate").datepicker("setDate", coDate);
 
-  $("#outButtonSet.week-button-group").on("click", "button", function (e) {
+  $("#outButtonSet.week-button-group").on("click", "button", function (_e) {
     var btn = $(this);
     $(".week-button-group button").removeClass("ui-state-active");
     if (btn.data("weeks")) {
@@ -530,7 +534,7 @@ document.addEventListener("DOMContentLoaded", () => {
             "&enddte=" +
             $.datepicker.formatDate("yy-mm-dd", endDate),
         );
-      var updatedBtn = housekeeping.getDtBtns(
+      var updatedBtn = getDtBtns(
         "Housekeeping - " +
           labels.visitor +
           "s Checking Out - " +
@@ -550,10 +554,10 @@ document.addEventListener("DOMContentLoaded", () => {
       dataSrc: "roomTable",
     },
     deferRender: true,
-    columns: housekeeping.cgCols,
+    columns: cgCols,
     rowGroup: { dataSrc: "Group_Title" },
-    buttons: housekeeping.getDtBtns("Housekeeping - All Rooms"),
-    drawCallback: function (settings, json) {
+    buttons: getDtBtns("Housekeeping - All Rooms"),
+    drawCallback: function (_settings, _json) {
       $(".ckdate").datepicker({
         yearRange: startYear + ":+01",
         changeMonth: true,
@@ -573,10 +577,10 @@ document.addEventListener("DOMContentLoaded", () => {
       dataSrc: "dirtyTable",
     },
     deferRender: true,
-    columns: housekeeping.cgCols,
+    columns: cgCols,
     rowGroup: { dataSrc: "Group_Title" },
-    buttons: housekeeping.getDtBtns("Housekeeping - Rooms Not Ready"),
-    drawCallback: function (settings, json) {
+    buttons: getDtBtns("Housekeeping - Rooms Not Ready"),
+    drawCallback: function (_settings, _json) {
       $(".ckdate").datepicker({
         yearRange: startYear + ":+01",
         changeMonth: true,
@@ -599,8 +603,8 @@ document.addEventListener("DOMContentLoaded", () => {
       dataSrc: "outTable",
     },
     deferRender: true,
-    columns: housekeeping.outCols,
-    buttons: housekeeping.getDtBtns(
+    columns: outCols,
+    buttons: getDtBtns(
       "Housekeeping - " +
         labels.visitor +
         "s Checking Out - " +
@@ -619,8 +623,8 @@ document.addEventListener("DOMContentLoaded", () => {
       dataSrc: "inTable",
     },
     deferRender: true,
-    columns: housekeeping.inCols,
-    buttons: housekeeping.getDtBtns(
+    columns: inCols,
+    buttons: getDtBtns(
       "Housekeeping - " +
         labels.visitor +
         "s Checking In - " +

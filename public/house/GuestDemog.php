@@ -203,7 +203,7 @@ if ($cmd){
         <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
         <title><?php echo $pageTitle; ?></title>
 
-        <?php echo Vite::asset('resources/js/house.js'); ?>
+        <?php echo Vite::asset(['resources/js/house.js', 'resources/js/house/missingDemog.js']); ?>
         
         <?php echo FAVICON; ?>
         <?php echo CSSVARS; ?>
@@ -218,8 +218,6 @@ if ($cmd){
 		      font-size: 1em;
 		  }
 		</style>
-
-        <script type="text/javascript" src="<?php echo MISSINGDEMOG_JS; ?>" defer></script>
 
         <script type="text/javascript">
             document.addEventListener("DOMContentLoaded", () => {

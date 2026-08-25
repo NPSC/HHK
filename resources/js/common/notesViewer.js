@@ -1,5 +1,6 @@
 import $ from "./jquery.js";
 import DOMPurify from "dompurify";
+import { createRoleAutoComplete } from "../common/createAutoComplete.js";
 
 (function ($) {
   var uid;

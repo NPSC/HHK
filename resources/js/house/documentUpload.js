@@ -6,6 +6,8 @@ import XHRUpload from "@uppy/xhr-upload";
 import "@uppy/core/css/style.min.css";
 import "@uppy/dashboard/css/style.min.css";
 
+import { createAutoComplete } from "../common/createAutoComplete.js";
+
 import { enableUppyTooltips } from "../common/uppyMicrotip.js";
 
 var ALLOWED_DOC_MIME_TYPES = [
@@ -438,7 +440,7 @@ var MAX_DOC_FILE_SIZE = 5000000;
       });
 
       $wrapper.on("click", "#docUploadBtn", function () {
-        uppy.getPlugin("Dashboard").openModal();
+        void uppy.getPlugin("Dashboard").openModal();
       });
     }
   }

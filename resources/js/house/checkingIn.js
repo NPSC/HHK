@@ -1,7 +1,5 @@
-var fixedRate;
-var payFailPage;
-var dateFormat;
-var pageManager;
+import { getDialogWidth, isIE } from "../common/pag";
+import { resvManager } from "./resvManager";
 
 function ckedIn(data) {
   "use strict";
@@ -52,12 +50,10 @@ function ckedIn(data) {
 
 document.addEventListener("DOMContentLoaded", () => {
   "use strict";
-  var t = this;
   var resv = JSON.parse($("#resv").val());
   var pageManagerOptions = JSON.parse($("#resvManagerOptions").val());
-  fixedRate = $("#fixedRate").val();
-  payFailPage = $("#payFailPage").val();
-  dateFormat = $("#dateFormat").val();
+  window.fixedRate = $("#fixedRate").val(); // used by resv.js, resvManager.js and visitDialog.js, loaded alongside this bundle
+  window.payFailPage = $("#payFailPage").val(); // used by resvManager.js, loaded alongside this bundle
 
   $.widget("ui.autocomplete", $.ui.autocomplete, {
     _resizeMenu: function () {
@@ -117,7 +113,7 @@ document.addEventListener("DOMContentLoaded", () => {
     },
   });
 
-  pageManager = new resvManager(resv, pageManagerOptions);
+  window.pageManager = new resvManager(resv, pageManagerOptions); // used by visitDialog.js, loaded alongside this bundle
 
   // hide the alert on mousedown
   $(document).mousedown(function (event) {

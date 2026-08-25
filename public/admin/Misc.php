@@ -477,12 +477,9 @@ if ($stmt->execute() !== FALSE) {
         <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
         <title><?php echo $wInit->pageTitle; ?></title>
 
-        <?php echo Vite::asset('resources/js/admin.js'); ?>
+        <?php echo Vite::asset(['resources/js/admin.js','resources/js/misc.js']); ?>
         
         <?php echo FAVICON; ?>
-
-        <script type="text/javascript" src="<?php echo MISC_JS ?>" defer></script>
-
     </head>
     <body <?php if ($wInit->testVersion) echo "class='testbody'"; ?>>
 <?php echo $wInit->generatePageMenu(); ?>

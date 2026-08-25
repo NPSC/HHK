@@ -1,4 +1,4 @@
-/* global dateFormat */
+import { createRoleAutoComplete } from "../common/createAutoComplete";
 
 /**
  * checkin.js

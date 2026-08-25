@@ -23,10 +23,6 @@ window.bootstrap = { Collapse, Dropdown };
 import he from "he";
 window.he = he;
 
-//DOMPurify
-import DOMPurify from "dompurify";
-window.DOMPurify = DOMPurify;
-
 //buffer.js
 import Buffer from "buffer";
 window.buffer = Buffer;

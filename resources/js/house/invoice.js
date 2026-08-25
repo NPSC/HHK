@@ -1,4 +1,6 @@
-function invPay(id, pbp, dialg) {
+import { flagAlertMessage } from "../common/pag";
+
+function invPay(id, pbp, _dialg) {
   // cash payment
   if (verifyAmtTendrd() === false) {
     return;
@@ -71,7 +73,7 @@ function invPay(id, pbp, dialg) {
 }
 
 // Load the Invoice Payment dialog
-function invLoadPc(nme, id, iid) {
+export function invLoadPc(nme, id, iid) {
   "use strict";
   var buttons = {
     "Pay Fees": function () {
@@ -121,7 +123,7 @@ function invLoadPc(nme, id, iid) {
             dateFormat: "M d, yy",
           });
 
-          isCheckedOut = false;
+          window.isCheckedOut = false;
           setupPayments(data.resc, "", "", 0, $("#pmtRcpt"));
 
           $("#keysfees").dialog("option", "buttons", buttons);
@@ -134,7 +136,7 @@ function invLoadPc(nme, id, iid) {
   );
 }
 
-function invSetBill(inb, name, idDiag, idElement, billDate, notes, notesElement) {
+export function invSetBill(inb, name, idDiag, idElement, billDate, notes, notesElement) {
   "use strict";
   var dialg = $(idDiag);
   var buttons = {
@@ -200,7 +202,7 @@ function invSetBill(inb, name, idDiag, idElement, billDate, notes, notesElement)
   dialg.dialog("open");
 }
 
-function invoiceAction(idInvoice, action, eid, container, show) {
+export function invoiceAction(idInvoice, action, eid, container, show) {
   "use strict";
   $.post(
     "ws_resc.php",
@@ -264,5 +266,6 @@ function invoiceAction(idInvoice, action, eid, container, show) {
   );
 }
 
-// ,
-// of: $("#" + data.eid)
+window.invLoadPc = invLoadPc; // used by register.js, loaded alongside this bundle on this page
+window.invSetBill = invSetBill; // used by register.js, loaded alongside this bundle on this page
+window.invoiceAction = invoiceAction; // used by register.js and payments.js, loaded alongside this bundle

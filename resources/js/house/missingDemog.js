@@ -1,3 +1,5 @@
+import { flagAlertMessage } from "../common/pag";
+
 document.addEventListener("DOMContentLoaded", () => {
   "use strict";
 
@@ -9,11 +11,11 @@ document.addEventListener("DOMContentLoaded", () => {
   columns.forEach(function (column) {
     var title;
     var render;
-    var search = false;
+    var search;
     if (column.db == "idName") {
       title = column.dt;
       search = true;
-      render = function (data, type) {
+      render = function (data, _type) {
         return '<a href="GuestEdit.php?id=' + data + '">' + data + "</a>";
       };
     } else if (demos[column.dt]) {
@@ -37,7 +39,7 @@ document.addEventListener("DOMContentLoaded", () => {
     } else {
       title = column.dt;
       search = true;
-      render = function (data, type) {
+      render = function (data, _type) {
         return data;
       };
     }
@@ -61,7 +63,7 @@ document.addEventListener("DOMContentLoaded", () => {
     sortable: false,
     data: "idName",
     className: "dt-body-center",
-    render: function (data, type) {
+    render: function (_data, _type) {
       return $("<input>").attr({ type: "checkbox", class: "cbUnkn" })[0].outerHTML;
     },
   });
@@ -94,7 +96,7 @@ document.addEventListener("DOMContentLoaded", () => {
     /* "fixedHeader": {
         	headerOffset: 38,
         }, */
-    initComplete: function (settings, json) {
+    initComplete: function (_settings, _json) {
       $(".bottom").append(
         '<div class="savebtns" style="float:right; padding-top: 0.25em;"><button id="dt-cancel" style="padding:0.5em; margin-right: 2px;">Cancel</button><button id="dt-save" style="padding:0.5em; margin-left: 2px;">Save</button></div>',
       );
@@ -175,7 +177,7 @@ document.addEventListener("DOMContentLoaded", () => {
     },
   });
 
-  $("#dataTbl").on("change", ".cbUnkn", function (e) {
+  $("#dataTbl").on("change", ".cbUnkn", function (_e) {
     var cb = $(this);
     var row = cb.closest("tr");
     if (cb.prop("checked")) {
@@ -195,7 +197,7 @@ document.addEventListener("DOMContentLoaded", () => {
     row.find("select").trigger("change");
   });
 
-  $("#dataTbl").on("change", "select.demog", function (e) {
+  $("#dataTbl").on("change", "select.demog", function (_e) {
     $(".bottom .dataTables_paginate").hide();
     $(".bottom .savebtns").show();
   });

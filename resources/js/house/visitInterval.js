@@ -1,3 +1,5 @@
+import { flagAlertMessage, getDialogWidth, dateRender } from "../common/pag";
+
 function viewInsurance(idName, eventTarget, detailDiv) {
   "use strict";
   detailDiv.empty();
@@ -31,8 +33,6 @@ function viewInsurance(idName, eventTarget, detailDiv) {
   });
 }
 
-var fixedRate; // used by VisitDialog.hs
-
 document.addEventListener("DOMContentLoaded", () => {
   let startYear = $("#startYear").val(),
     columnDefs = JSON.parse($("#columnDefs").val()),
@@ -40,7 +40,9 @@ document.addEventListener("DOMContentLoaded", () => {
     makeTable = $("#makeTable").val(),
     dateFormat = $("#dateFormat").val(),
     rctMkup = $("#rctMkup").val(),
-    defaultFields = $("#defaultFields").val();
+    defaultFields = $("#defaultFields").val(),
+    receiptPaymentId = $("#receiptPaymentId").val(),
+    receiptBilledToEmail = $("#receiptBilledToEmail").val();
 
   $("#selCalendar").change(function () {
     $("#selIntYear").show();
@@ -113,7 +115,7 @@ document.addEventListener("DOMContentLoaded", () => {
       gid = $(this).data("gid"),
       span = $(this).data("span");
 
-    fixedRate = $("#fixedRate").val();
+    window.fixedRate = $("#fixedRate").val(); // used by visitDialog.js, loaded alongside this bundle on this page
 
     const buttons = {
       "Show Statement": function () {
@@ -140,7 +142,7 @@ document.addEventListener("DOMContentLoaded", () => {
         {
           targets: columnDefs,
           type: "date",
-          render: function (data, type, row) {
+          render: function (data, type, _row) {
             return dateRender(data, type, dateFormat);
           },
         },

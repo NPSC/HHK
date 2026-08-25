@@ -1,12 +1,11 @@
-var idPatient, idDoc;
-
 document.addEventListener("DOMContentLoaded", () => {
   "use strict";
 
-  var $btnDone = $("#btnDone");
+  let idPatient, _idDoc;
+  const $btnDone = $("#btnDone");
 
   idPatient = parseInt($("#idPatient").val());
-  idDoc = parseInt($("#idDoc").val());
+  _idDoc = parseInt($("#idDoc").val());
 
   $btnDone.button();
 

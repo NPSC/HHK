@@ -231,14 +231,11 @@ $resvObjEncoded = json_encode($resvAr);
         <title><?php echo $wInit->pageTitle; ?></title>
         <meta http-equiv="x-ua-compatible" content="IE=edge">
 
-        <?php echo Vite::asset('resources/js/house.js'); ?>
+        <?php echo Vite::asset(['resources/js/house.js', 'resources/js/house/payments.js', 'resources/js/house/invoice.js', 'resources/js/house/resv.js', 'resources/js/house/reserve.js']); ?>
 
         <?php echo CSSVARS; ?>
         <?php echo FAVICON; ?>
 
-        <script type="text/javascript" src="<?php echo PAYMENT_JS; ?>" defer></script>
-        <script type="text/javascript" src="<?php echo INVOICE_JS; ?>" defer></script>
-        <script type="text/javascript" src="<?php echo RESV_JS; ?>" defer></script>
         <?php echo Vite::asset('resources/js/house/resvManager.js'); ?>
         <?php if ($uS->PaymentGateway == AbstractPaymentGateway::INSTAMED) {echo INS_EMBED_JS;} ?>
         <?php
@@ -326,6 +323,5 @@ $resvObjEncoded = json_encode($resvAr);
         <input  type="hidden" id="receiptPaymentId" value='<?php echo $receiptPaymentId; ?>' />
         <input  type="hidden" id="receiptBilledToEmail" value='<?php echo $receiptBilledToEmail; ?>' />
         <input type="hidden" value='<?php echo $isRepeatHost; ?>' id="isRepeatReservHost"/>
-        <script type="text/javascript" src="<?php echo RESERVE_JS; ?>" defer></script>
     </body>
 </html>

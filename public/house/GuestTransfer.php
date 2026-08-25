@@ -580,15 +580,13 @@ $btnGetRecords = HTMLInput::generateMarkup('Get HHK ' . Labels::getString('membe
         <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
         <title><?php echo $pageTitle; ?></title>
 
-        <?php echo Vite::asset('resources/js/house.js'); ?>
-        
+        <?php echo Vite::asset(['resources/js/house.js', 'resources/js/house/guestTransfer.js']); ?>
+
         <?php echo FAVICON; ?>
 
         <style>
             #aLoginLink:hover {background-color: #337a8e; }
         </style>
-
-        <script type="text/javascript" src="<?php echo GUESTTRANSFER_JS; ?>" defer></script>
 
         <script stype="text/javascript">
             document.addEventListener("DOMContentLoaded", () => {

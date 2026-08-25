@@ -74,6 +74,9 @@ export default defineConfig({
       "package-lock.json",
       ".vscode/**",
       "resources/css/toastr.css",
+      "resources/js/common/SigWebTablet.js", // vendored Topaz SigWeb SDK; not written for strict/module linting
+      "resources/js/common/stateCountry.js", // vendored BFH Countries/States jQuery plugin
+      "resources/js/common/jquery.PrintArea.js", // vendored jQuery Print Area plugin
     ],
     overrides: [
       {
@@ -151,19 +154,23 @@ export default defineConfig({
           he: "readonly",
           buffer: "readonly",
           DataTable: "readonly",
+          InstaMed: "readonly", // InstaMed payment gateway embed script, INS_EMBED_JS
+          HostedForm: "readonly", // Deluxe payment gateway embed script, DELUXE_EMBED_JS / DELUXE_SANDBOX_EMBED_JS
+          grecaptcha: "readonly", // Google reCAPTCHA embed script
+          referralFormVars: "readonly", // page controller script, public/house/showReferral.php
+          isCheckedOut: "readonly", // set by resources/js/house/visitDialog.js, consumed by payments.js and invoice.js
+          isNumber: "readonly", // set by resources/js/house/register.js, consumed by payments.js
           flagAlertMessage: "readonly",
           dateRender: "readonly",
           dayRender: "readonly",
           hhkReportError: "readonly",
-          isIE: "readonly",
-          openiframe: "readonly",
           logoutTimer: "readonly",
           getDialogWidth: "readonly",
-          createAutoComplete: "readonly", // from public/js/createAutoComplete.js, loaded alongside these bundles
-          createRoleAutoComplete: "readonly",
-          createZipAutoComplete: "readonly",
+          verifyAddrs: "readonly", // resources/js/common.js exposes this from common/addrPrefs.js
           dateFormat: "readonly", // page controller script reads #dateFormat into this, e.g. public/admin/js/Configure.js
-          // public/house/js/payments.js, loaded alongside visitDialog.js on CheckingIn.php/Reserve.php/VisitInterval.php,
+          labels: "readonly", // page controller script reads window.labels into this, e.g. public/house/RoomStatus.php
+          startYear: "readonly", // public/house/RoomStatus.php reads window.startYear into this, used by housekeeping.js
+          // resources/js/house/payments.js, loaded alongside visitDialog.js on CheckingIn.php/Reserve.php/VisitInterval.php,
           // and alongside regForm.js on ShowRegForm.php
           showReceipt: "readonly",
           setupPayments: "readonly",
@@ -176,39 +183,30 @@ export default defineConfig({
           reprintReceipt: "readonly",
           setupCOF: "readonly",
           cardOnFile: "readonly",
-          // public/house/js/invoice.js, loaded alongside resources/js/register.js on register.php
+          daysCalculator: "readonly", // resources/js/house/payments.js, used by resv.js
+          // resources/js/house/invoice.js, loaded alongside resources/js/house/register.js on register.php
           invLoadPc: "readonly",
           invSetBill: "readonly",
           invoiceAction: "readonly",
-          // set by public/house/js/checkingIn.js, reserve.js, resources/js/register.js when present on the page
+          // set by resources/js/house/checkingIn.js, reserve.js, register.js when present on the page
           pageManager: "readonly",
           calendar: "readonly",
           fixedRate: "readonly",
           refreshdTables: "readonly",
-          getIncomeDiag: "readonly", // public/house/js/resv.js
-          // public/house/js/resv.js, loaded alongside regForm.js on ShowRegForm.php
+          getIncomeDiag: "readonly", // resources/js/house/resv.js
+          // resources/js/house/resv.js, loaded alongside regForm.js on ShowRegForm.php
           getRegistrationDialog: "readonly",
           showRegDialog: "readonly",
-          // public/house/js/resv.js, loaded alongside resources/js/house/resvManager.js
+          // resources/js/house/resv.js, loaded alongside resources/js/house/resvManager.js
           getAgent: "readonly",
           getDoc: "readonly",
           setupRates: "readonly",
-          // set by public/house/js/reserve.js, checkingIn.js, loaded alongside resources/js/house/resvManager.js
+          jsonFetch: "readonly", // resources/js/house/resv.js, used by checkingIn.js and reserve.js
+          // set by resources/js/house/reserve.js, checkingIn.js, loaded alongside resources/js/house/resvManager.js
           payFailPage: "readonly",
           // resources/js/house.js exposes these from house/visitDialog.js; consumed by resources/js/register.js
           viewVisit: "readonly",
           saveFees: "readonly",
-          // public/house/js/SigWebTablet.js, loaded alongside regForm.js on ShowRegForm.php when a signature pad is required
-          IsSigWebInstalled: "readonly",
-          GetSigWebVersion: "readonly",
-          ClearTablet: "readonly",
-          SetDisplayXSize: "readonly",
-          SetDisplayYSize: "readonly",
-          SetTabletState: "readonly",
-          SetJustifyMode: "readonly",
-          GetTabletState: "readonly",
-          NumberOfTabletPoints: "readonly",
-          Reset: "readonly",
         },
       },
       {
@@ -254,13 +252,31 @@ export default defineConfig({
         // Opt pages in incrementally by adding entries here and calling
         // HHK\Vite\Vite::asset('resources/js/<entry>.js') from the page.
         house: "resources/js/house.js",
+        housekeeping: "resources/js/house/housekeeping.js",
+        checkin: "resources/js/house/checkin.js",
+        checkingin: "resources/js/house/checkingIn.js",
+        missingdemog: "resources/js/house/missingDemog.js",
         register: "resources/js/house/register.js",
         resvManager: "resources/js/house/resvManager.js",
         guestLoad: "resources/js/house/guestload.js",
         regForm: "resources/js/house/regForm.js",
         referralform: "resources/js/house/referralform.js",
+        rescBuilder: "resources/js/house/rescBuilder.js",
+        resv: "resources/js/house/resv.js",
+        reserve: "resources/js/house/reserve.js",
+        payments: "resources/js/house/payments.js",
+        invoice: "resources/js/house/invoice.js",
+        guestReferral: "resources/js/house/guestReferral.js",
+        guestTransfer: "resources/js/house/guestTransfer.js",
+        visitInterval: "resources/js/house/visitInterval.js",
+        statement: "resources/js/house/statement.js",
         admin: "resources/js/admin.js",
+        accessLog: "resources/js/admin/accessLog.js",
+        configure: "resources/js/admin/configure.js",
+        duplicteMerger: "resources/js/admin/duplicateMerger.js",
+        misc: "resources/js/admin/misc.js",
         nameEdit: "resources/js/admin/nameEdit.js",
+        nameSch: "resources/js/admin/nameSch.js",
         root: "resources/js/root.js",
         login: "resources/js/login.js",
         // Server-side CSS bundles for generated PDFs

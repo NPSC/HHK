@@ -575,12 +575,11 @@ $columSelector = $colSelector->makeSelectorTable(TRUE)->generateMarkup(array('cl
         <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
         <title><?php echo $pageTitle; ?></title>
 
-        <?php echo Vite::asset('resources/js/house.js'); ?>
+        <?php echo Vite::asset(['resources/js/house.js', 'resources/js/house/invoice.js']); ?>
         
         <?php echo FAVICON; ?>
         <?php echo CSSVARS; ?>
 
-        <script type="text/javascript" src="<?php echo INVOICE_JS; ?>" defer></script>
 
         <script type="text/javascript">
             var deleteThisTr;

@@ -1,6 +1,3 @@
-/* global getDoc, memberData, rctMkup, psgTabIndex, getAgent, pmtMkup, $,
-  flagAlertMessage, saveFees, viewVisit, dateRender, dateFormat */
-
 /**
  * guestload.js
  *
@@ -25,10 +22,12 @@ import { viewVisit, saveFees } from "./visitDialog.js";
 import { initGuestPhoto } from "../common/guestPhoto.js";
 import { addrPrefs, verifyAddrs } from "../common/addrPrefs.js";
 
-function isNumber(n) {
-  "use strict";
-  return !isNaN(parseFloat(n)) && isFinite(n);
-}
+import {
+  createAutoComplete,
+  createRoleAutoComplete,
+  createZipAutoComplete,
+} from "../common/createAutoComplete.js";
+import { isNumber } from "../admin/genfunc.js";
 
 var dtCols = [
   {

@@ -269,7 +269,7 @@ $contrls = HTMLContainer::generateMarkup('div', $shoRegBtn . $shoStmtBtn . $regM
         <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
         <title><?php echo $pageTitle; ?></title>
 
-        <?php echo Vite::asset('resources/js/house/regForm.js'); ?>
+        <?php echo Vite::asset(['resources/js/house/resv.js', 'resources/js/house/payments.js', 'resources/js/house/regForm.js']); ?>
         
         <?php echo FAVICON; ?>
         <?php echo CSSVARS; ?>
@@ -281,10 +281,6 @@ $contrls = HTMLContainer::generateMarkup('div', $shoRegBtn . $shoStmtBtn . $regM
         </style>
 
         <?php echo $sty; ?>
-
-        <script type="text/javascript" src="<?php echo RESV_JS; ?>" defer></script>
-        <script type="text/javascript" src="<?php echo PAYMENT_JS; ?>" defer></script>
-        <?php echo ($isTopazRequired ? '<script type="text/javascript" src="' . TOPAZ_SIGWEB_JS . '" defer></script>': ''); ?>
 
         <script type='text/javascript'>
 

@@ -1,5 +1,7 @@
+import { flagAlertMessage } from "../common/pag";
+
 document.addEventListener("DOMContentLoaded", () => {
-  $("#searchSel").submit(function (e) {
+  $("#searchSel").on("submit", function (e) {
     e.preventDefault();
     $("#divExpansion").hide().children().remove();
     var formdata = $(this).serializeArray();

@@ -9,16 +9,9 @@
 
 import { Calendar } from "fullcalendar";
 import resourceTimelinePlugin from "@fullcalendar/resource-timeline";
+import { createRoleAutoComplete } from "../common/createAutoComplete.js";
+import { isNumber } from "../admin/genfunc.js";
 
-/**
- *
- * @param {mixed} n
- * @returns {Boolean}
- */
-function isNumber(n) {
-  "use strict";
-  return !isNaN(parseFloat(n)) && isFinite(n);
-}
 window.isNumber = isNumber; // used by payments.js, loaded alongside register.js on this page
 
 var $dailyTbl;
@@ -1680,7 +1673,7 @@ document.addEventListener("DOMContentLoaded", () => {
   var resizeTimer;
   window.onresize = function () {
     clearTimeout(resizeTimer);
-    resizeTimer = setTimeout(calendar.setOption("height", window.innerHeight - 187), 100);
+    resizeTimer = setTimeout(() => calendar.setOption("height", window.innerHeight - 187), 100);
   };
 
   if ($(".btnHosp").length > 0) {

@@ -17,7 +17,7 @@ var revokeBlobURL =
 var baseUri = makeUri();
 var ctx;
 
-function IsSigWebInstalled() {
+export function IsSigWebInstalled() {
   var xhr = new XMLHttpRequest();
   try {
     xhr.onreadystatechange = function () {
@@ -527,7 +527,7 @@ function measureText(pText, pFontSize, pStyle) {
   return lResult;
 }
 
-function GetSigWebVersion() {
+export function GetSigWebVersion() {
   var prop = "SigWebVersion";
 
   var xhr = SigWebcreateXHR();
@@ -578,14 +578,14 @@ function GetDaysUntilCertificateExpires() {
 //
 //			SigPlusNETSig.cs
 //
-function ClearTablet() {
+export function ClearTablet() {
   var Prop = "ClearSignature";
 
   Prop = Prop;
   return SigWebGetProperty(Prop);
 }
 
-function NumberOfTabletPoints() {
+export function NumberOfTabletPoints() {
   var Prop = "TotalPoints";
 
   Prop = Prop;
@@ -595,7 +595,7 @@ function NumberOfTabletPoints() {
 //		function  ExportSigFile(  FileName ) {}
 //		function  ImportSigFile(  FileName ) {}
 
-function SetSigString(sigStr, ctx) {
+export function SetSigString(sigStr, ctx) {
   var Prop = "SigString";
 
   Prop = Prop;
@@ -617,7 +617,7 @@ function SetSigString(sigStr, ctx) {
   return "";
 }
 
-function GetSigString() {
+export function GetSigString() {
   var Prop = "SigString";
 
   Prop = Prop;
@@ -626,28 +626,28 @@ function GetSigString() {
   return Str.slice(1, Str.length - 1);
 }
 
-function SetSigCompressionMode(v) {
+export function SetSigCompressionMode(v) {
   var Prop = "CompressionMode/";
 
   Prop = Prop + v;
   SigWebSetPropertySync(Prop);
 }
 
-function GetSigCompressionMode() {
+export function GetSigCompressionMode() {
   var Prop = "CompressionMode";
 
   Prop = Prop;
   return SigWebGetProperty(Prop);
 }
 
-function SetEncryptionMode(v) {
+export function SetEncryptionMode(v) {
   var Prop = "EncryptionMode/";
 
   Prop = Prop + v;
   SigWebSetPropertySync(Prop);
 }
 
-function GetEncryptionMode() {
+export function GetEncryptionMode() {
   var Prop = "EncryptionMode";
 
   Prop = Prop;
@@ -657,14 +657,14 @@ function GetEncryptionMode() {
 //		function  SetKey( Keydata ) {}
 //		function  GetKey( ) {}
 
-function SetKeyString(keyString) {
+export function SetKeyString(keyString) {
   var Prop = "KeyString";
 
   Prop = Prop;
   SigWebSetStreamProperty(Prop, keyString);
 }
 
-function GetKeyString() {
+export function GetKeyString() {
   var Prop = "KeyString";
 
   Prop = Prop;
@@ -886,7 +886,7 @@ function SetUseAmbientColors(v) {
 //
 //		SigPlusNETDisplay.cs
 //
-function SetDisplayXSize(v) {
+export function SetDisplayXSize(v) {
   var Prop = "DisplayXSize/";
 
   Prop = Prop + v;
@@ -900,7 +900,7 @@ function GetDisplayXSize() {
   return SigWebGetProperty(Prop);
 }
 
-function SetDisplayYSize(v) {
+export function SetDisplayYSize(v) {
   var Prop = "DisplayYSize/";
 
   Prop = Prop + v;
@@ -1237,7 +1237,7 @@ function GetJustifyY() {
   return SigWebGetProperty(Prop);
 }
 
-function SetJustifyMode(v) {
+export function SetJustifyMode(v) {
   var Prop = "JustifyMode/";
 
   Prop = Prop + v;
@@ -1547,7 +1547,7 @@ function SetRealTabletState(v) {
   SigWebSetPropertySync(Prop);
 }
 
-function GetTabletState() {
+export function GetTabletState() {
   var Prop = "TabletState";
 
   Prop = Prop;
@@ -1940,12 +1940,12 @@ function testRawData() {
   CloseTablet();
 }
 
-function Reset() {
+export function Reset() {
   var Prop = "Reset";
   SigWebSetProperty(Prop);
 }
 
-function SetTabletState(v, ctx, tv) {
+export function SetTabletState(v, ctx, tv) {
   var delay;
 
   if (tv) {

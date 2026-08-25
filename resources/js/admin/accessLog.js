@@ -1,9 +1,11 @@
+import { dateRender } from "../common/pag";
+
 document.addEventListener("DOMContentLoaded", () => {
   var usernames = JSON.parse($("#usernames").val());
   var actions = JSON.parse($("#actions").val());
 
   function getActionName(data) {
-    for (action of actions) {
+    for (let action of actions) {
       if (action.id == data) {
         return action.title;
       }
@@ -32,7 +34,7 @@ document.addEventListener("DOMContentLoaded", () => {
       searchable: true,
       sortable: true,
       data: "Action",
-      render: function (data, type) {
+      render: function (data, _type) {
         return getActionName(data);
       },
     },
@@ -62,12 +64,7 @@ document.addEventListener("DOMContentLoaded", () => {
     },
   ];
 
-  const tableAttrs = {
-    class: "display compact",
-    width: "100%",
-  };
-
-  const dtTable = $("#dtLog").DataTable({
+  $("#dtLog").DataTable({
     columnDefs: dtCols,
     serverSide: true,
     processing: true,
@@ -95,14 +92,14 @@ document.addEventListener("DOMContentLoaded", () => {
           if (column.index() == 0) {
             //username column
             filter = $('<select style="max-width: 100%" multiple></select>');
-            for (username of usernames) {
+            for (const username of usernames) {
               filter.append('<option value="' + username + '">' + username + "</option>");
             }
           } else if (column.index() == 2) {
             //actions column
             filter = $('<select style="max-width: 100%" multiple></select>');
 
-            for (action of actions) {
+            for (const action of actions) {
               filter.append('<option value="' + action.id + '">' + action.title + "</option>");
             }
           } else if (column.index() == 3) {
@@ -147,7 +144,7 @@ document.addEventListener("DOMContentLoaded", () => {
               });
             }
           } else {
-            filter = $("<div>&nbsp;</div>").appendTo($(column.header()));
+            $("<div>&nbsp;</div>").appendTo($(column.header()));
           }
         });
     },

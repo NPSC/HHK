@@ -183,12 +183,10 @@ if ($idDoc > 0) {
         <title><?php echo $wInit->pageTitle; ?></title>
         <meta http-equiv="x-ua-compatible" content="IE=edge">
 
-        <?php echo Vite::asset('resources/js/house.js'); ?>
-        
+        <?php echo Vite::asset(['resources/js/house.js', 'resources/js/house/resv.js', 'resources/js/house/guestReferral.js']); ?>
+
         <?php echo CSSVARS; ?>
         <?php echo FAVICON; ?>
-
-        <script type="text/javascript" src="<?php echo RESV_JS; ?>" defer></script>
 
     </head>
     <body <?php if ($wInit->testVersion) {echo "class='testbody'";} ?>>
@@ -244,6 +242,5 @@ if ($idDoc > 0) {
         <input type="hidden" value="<?php echo $labels->getString("momentFormats", "report", "MMM D, YYYY"); ?>" id="dateFormat"/>
         <input type="hidden" value="<?php echo $labels->getString('MemberType', 'visitor', 'Guest'); ?>" id="visitorLabel" />
         <input type="hidden" value="<?php echo $labels->getString('MemberType', 'guest', 'Guest'); ?>" id="guestLabel" />
-        <?php echo GUEST_REFERRAL_JS; ?>
     </body>
 </html>

@@ -1,26 +1,18 @@
-var fixedRate;
-var payFailPage;
-var dateFormat;
-var paymentMarkup;
-var pageManager;
-var receiptMarkup;
-var receiptBilledToEmail;
-var receiptPaymentId;
+import { getDialogWidth } from "../common/pag";
+import { createRoleAutoComplete } from "../common/createAutoComplete.js";
+import { resvManager } from "./resvManager";
 
 document.addEventListener("DOMContentLoaded", () => {
   "use strict";
-  var t = this;
   var $guestSearch = $("#gstSearch");
   var resv = JSON.parse($("#resv").val());
   var pageManagerOptions = JSON.parse($("#resvManagerOptions").val());
-  let isRepeatReservHost = $("#isRepeatReservHost").val();
-  fixedRate = $("#fixedRate").val();
-  payFailPage = $("#payFailPage").val();
-  dateFormat = $("#dateFormat").val();
-  paymentMarkup = $("#paymentMarkup").val();
-  receiptMarkup = $("#receiptMarkup").val();
-  receiptPaymentId = $("#receiptPaymentId").val();
-  receiptBilledToEmail = $("#receiptBilledToEmail").val();
+  window.fixedRate = $("#fixedRate").val(); // used by resv.js, resvManager.js and visitDialog.js, loaded alongside this bundle
+  window.payFailPage = $("#payFailPage").val(); // used by resvManager.js, loaded alongside this bundle
+  var paymentMarkup = $("#paymentMarkup").val();
+  var receiptMarkup = $("#receiptMarkup").val();
+  var receiptPaymentId = $("#receiptPaymentId").val();
+  var receiptBilledToEmail = $("#receiptBilledToEmail").val();
 
   // Dialog Boxes
   $("#resDialog").dialog({
@@ -150,10 +142,10 @@ document.addEventListener("DOMContentLoaded", () => {
     width: getDialogWidth(500),
     modal: true,
     title: resv.patLabel + " Chooser",
-    close: function (event, ui) {
+    close: function (_event, _ui) {
       $("div#submitButtons").show();
     },
-    open: function (event, ui) {
+    open: function (_event, _ui) {
       $("div#submitButtons").hide();
     },
   });
@@ -203,7 +195,7 @@ document.addEventListener("DOMContentLoaded", () => {
     );
   }
 
-  pageManager = new resvManager(resv, pageManagerOptions);
+  window.pageManager = new resvManager(resv, pageManagerOptions); // used by visitDialog.js, loaded alongside this bundle
 
   $(document).mousedown(function (event) {
     // hide the alert on mousedown

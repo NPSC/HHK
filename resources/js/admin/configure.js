@@ -1,3 +1,5 @@
+import { dateRender, flagAlertMessage } from "../common/pag";
+
 document.addEventListener("DOMContentLoaded", () => {
   var tabIndex = $("#tabIndex").val();
   var tbs;
@@ -160,10 +162,8 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   $(document).on("change", "#numAddrCalc", function () {
-    var ApiCost = $("#googleApiCostPerCall").val();
-    var numCalls = $("#numAddrCalc").val();
-    console.log(ApiCost);
-    console.log(numCalls);
+    const ApiCost = $("#googleApiCostPerCall").val();
+    const numCalls = $("#numAddrCalc").val();
     if (ApiCost > 0 && numCalls > 0) {
       $("#googleApiCost").text("$" + ApiCost * numCalls);
     }
@@ -328,7 +328,7 @@ document.addEventListener("DOMContentLoaded", () => {
       data: "Params",
       width: 200,
       className: "jobParams",
-      render: function (data, type) {
+      render: function (data, _type) {
         data = JSON.parse(data);
         var mkup = "";
         $.each(data, function (key, value) {
@@ -369,7 +369,7 @@ document.addEventListener("DOMContentLoaded", () => {
       searchable: true,
       sortable: true,
       data: "Interval",
-      render: function (data, type) {
+      render: function (data, _type) {
         return data.charAt(0).toUpperCase() + data.slice(1);
       },
       width: 50,
@@ -415,7 +415,7 @@ document.addEventListener("DOMContentLoaded", () => {
       searchable: true,
       sortable: true,
       data: "Status",
-      render: function (data, type) {
+      render: function (data, _type) {
         switch (data) {
           case "a":
             return "Active";
@@ -525,7 +525,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   });
 
-  $("#newJob").on("click", "#addJob", function (event) {
+  $("#newJob").on("click", "#addJob", function (_event) {
     var jobType = $("#newJob #newJobType").val();
     var fresh = $("table#cronJobs").find("button[data-job=-1]").length > 0 ? false : true;
     if (jobType && fresh) {
@@ -703,7 +703,7 @@ document.addEventListener("DOMContentLoaded", () => {
       });
       $(this).closest("tr").find("#editJobInterval").trigger("change");
 
-      $row.on("change", ".editParam[data-name=report]", function (e) {
+      $row.on("change", ".editParam[data-name=report]", function (_e) {
         $.ajax({
           url: "../house/ws_reportFilter.php",
           method: "post",
@@ -877,7 +877,7 @@ document.addEventListener("DOMContentLoaded", () => {
       searchable: true,
       sortable: true,
       data: "Status",
-      render: function (data, type) {
+      render: function (data, _type) {
         switch (data) {
           case "s":
             return "Success";
@@ -945,7 +945,7 @@ document.addEventListener("DOMContentLoaded", () => {
       targets: [6],
       title: "Details",
       data: "Log_Details",
-      render: function (data, type) {
+      render: function (data, _type) {
         var json = JSON.parse(data);
         var detailStr = "";
         $.each(json, function (k, v) {
@@ -1172,7 +1172,7 @@ document.addEventListener("DOMContentLoaded", () => {
   authTabs.tabs("option", "active", 0);
   $("#authTabs").show();
 
-  $(document).on("submit", "form#siteConfigForm", function (e) {
+  $(document).on("submit", "form#siteConfigForm", function (_e) {
     $(this)
       .find("textarea")
       .each(function () {
@@ -1183,10 +1183,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
   $(document).on("submit", "form.authForm", function (e) {
     e.preventDefault();
-    $this = $(this);
-    $submitbtn = $(this).find("input[type=submit]");
+    let $this = $(this);
+    let $submitbtn = $(this).find("input[type=submit]");
     $submitbtn.prop("disabled", true);
-    data = new FormData($(this)[0]);
+    let data = new FormData($(this)[0]);
     data.append("saveIdP", "true");
 
     $.ajax({

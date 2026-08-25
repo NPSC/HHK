@@ -193,7 +193,7 @@ $resvManagerOptionsEncoded = json_encode($resvManagerOptions);
         <title><?php echo $wInit->pageTitle; ?></title>
         <meta http-equiv="x-ua-compatible" content="IE=edge">
 
-        <?php echo Vite::asset('resources/js/house.js'); ?>
+        <?php echo Vite::asset(['resources/js/house.js', 'resources/js/house/resv.js', 'resources/js/house/payments.js', 'resources/js/house/checkingIn.js']); ?>
 
         <?php echo FAVICON; ?>
         <?php echo CSSVARS; ?>
@@ -203,9 +203,6 @@ $resvManagerOptionsEncoded = json_encode($resvManagerOptions);
             .ui-icon-background, .ui-state-active .ui-icon-background {background-color:#fff;}
         </style>
 
-        <script type="text/javascript" src="<?php echo PAYMENT_JS; ?>" defer></script>
-        <script type="text/javascript" src="<?php echo RESV_JS; ?>" defer></script>
-        <?php echo Vite::asset('resources/js/house/resvManager.js'); ?>
         <?php if ($uS->PaymentGateway == AbstractPaymentGateway::INSTAMED) {echo INS_EMBED_JS;} ?>
         <?php
             if ($uS->PaymentGateway == AbstractPaymentGateway::DELUXE) {
@@ -266,8 +263,6 @@ $resvManagerOptionsEncoded = json_encode($resvManagerOptions);
         <input  type="hidden" id="receiptBilledToEmail" value='<?php echo $receiptBilledToEmail; ?>' />
         <input type="hidden" value='<?php echo $resvManagerOptionsEncoded; ?>' id="resvManagerOptions"/>
         <?php if ($uS->PaymentGateway == AbstractPaymentGateway::DELUXE) { echo DeluxeGateway::getIframeMkup(); } ?>
-
-        <script type="text/javascript" src='<?php echo CHECKINGIN_JS; ?>' defer></script>
 
         <form name="xform" id="xform" method="post"><input type="hidden" name="CardID" id="CardID" value=""/></form>
     </body>

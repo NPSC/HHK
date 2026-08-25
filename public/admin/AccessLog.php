@@ -43,11 +43,9 @@ if ($stmt->rowCount() > 0) {
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
         <title><?php echo $wInit->pageTitle; ?></title>
-        <?php echo Vite::asset('resources/js/admin.js'); ?>
+        <?php echo Vite::asset(['resources/js/admin.js','resources/js/admin/accessLog.js']); ?>
 
         <?php echo FAVICON; ?>
-
-        <script type="text/javascript" src="<?php echo ACCESSLOG_JS ?>" defer></script>
     </head>
     <body <?php if ($wInit->testVersion) {echo "class='testbody'";} ?>>
 <?php echo $menuMarkup; ?>

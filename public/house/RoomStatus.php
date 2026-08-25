@@ -173,7 +173,7 @@ if (isset($rescGroups[$uS->CalResourceGroupBy])) {
         <meta name="theme-color" content="#5c9ccc">
         <title><?php echo $pageTitle; ?></title>
 
-        <?php echo Vite::asset('resources/js/house.js'); ?>
+        <?php echo Vite::asset(['resources/js/house.js', 'resources/js/house/housekeeping.js']); ?>
 
         <?php echo FAVICON; ?>
         <?php echo CSSVARS; ?>
@@ -182,8 +182,6 @@ if (isset($rescGroups[$uS->CalResourceGroupBy])) {
             #ckout {margin:0; padding:0; font: 12px Arial, Helvetica,"Lucida Grande", serif; color: #000;}
             @page { margin: 1cm; }
         </style>
-
-        <script type="text/javascript" src="<?php echo HOUSEKEEPING_JS; ?>" defer></script>
 
         <script type="text/javascript">
             window.labels = {

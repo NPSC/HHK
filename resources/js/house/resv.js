@@ -1,5 +1,6 @@
-// resv.js
-function getAgent(item) {
+import { flagAlertMessage, getDialogWidth } from "../common/pag";
+
+export function getAgent(item) {
   "use strict";
   var cid = parseInt(item.id, 10);
   if (isNaN(cid) === false && cid > 0) {
@@ -23,7 +24,7 @@ function getAgent(item) {
   }
   $(".hhk-agentInfo").show();
 }
-function getDoc(item) {
+export function getDoc(item) {
   "use strict";
   var cid = parseInt(item.id, 10);
   if (isNaN(cid) === false && cid > 0) {
@@ -57,7 +58,7 @@ function gotIncomeDiag(idResv, idReg, data) {
           function (data) {
             try {
               data = JSON.parse(data);
-            } catch (err) {
+            } catch {
               alert("Bad JSON Encoding");
               return;
             }
@@ -92,7 +93,7 @@ function gotIncomeDiag(idResv, idReg, data) {
 
     // add closer to visit dialog box
     if ($("#keysfees").length > 0) {
-      $("#keysfees").on("dialogclose", function (event, ui) {
+      $("#keysfees").on("dialogclose", function (_event, _ui) {
         // Close hospital stay dialog
         if ($("#faDialog").dialog("isOpen")) {
           $("#faDialog").dialog("close");
@@ -147,14 +148,14 @@ function gotIncomeDiag(idResv, idReg, data) {
     });
   }
 }
-function getIncomeDiag(idResv, idReg) {
+export function getIncomeDiag(idResv, idReg) {
   "use strict";
   $.getJSON("ws_ckin.php", { rid: idResv, rgId: idReg, cmd: "getincmdiag" }).done(function (data) {
     gotIncomeDiag(idResv, idReg, data);
   });
 }
 
-function setupRates(ckIn) {
+export function setupRates(ckIn) {
   "use strict";
   var $selRateCat = $("#selRateCategory");
   var $selResource = $("#selResource");
@@ -361,7 +362,7 @@ function setupRates(ckIn) {
   $selRateCat.change();
 }
 
-function getRegistrationDialog(idReg) {
+export function getRegistrationDialog(idReg) {
   "use strict";
   $.post("ws_ckin.php", { cmd: "getReg", reg: idReg }, function (data) {
     if (!data) {
@@ -370,7 +371,7 @@ function getRegistrationDialog(idReg) {
     }
     try {
       data = JSON.parse(data);
-    } catch (err) {
+    } catch {
       alert("Bad JSON Encoding");
       return;
     }
@@ -392,7 +393,7 @@ function getRegistrationDialog(idReg) {
  * @param {string} markup - The HTML markup to be inserted into the dialog.
  * @param {number} idReg - The registration ID associated with the dialog.
  */
-function showRegDialog(markup, idReg) {
+export function showRegDialog(markup, idReg) {
   "use strict";
   $("#regDialog").empty();
   $("#regDialog").append($(markup));
@@ -426,7 +427,7 @@ function showRegDialog(markup, idReg) {
           }
           try {
             data = JSON.parse(data);
-          } catch (err) {
+          } catch {
             alert("Bad JSON Encoding");
             return;
           }
@@ -458,7 +459,7 @@ function showRegDialog(markup, idReg) {
  *
  * @throws {Error} Throws an error if the response is not ok or if there is an issue during fetch or FormData conversion.
  */
-function jsonFetch(dataObject, url, processResults, options = {}) {
+export function jsonFetch(dataObject, url, processResults, options = {}) {
   const myHeaders = new Headers();
   myHeaders.append("Content-Type", "application/json");
 
@@ -488,3 +489,11 @@ function jsonFetch(dataObject, url, processResults, options = {}) {
       throw error; // Re-throw the error to be handled by the caller if needed
     });
 }
+
+window.getAgent = getAgent; // used by resvManager.js, loaded alongside this bundle
+window.getDoc = getDoc; // used by resvManager.js, loaded alongside this bundle
+window.getIncomeDiag = getIncomeDiag; // used by resvManager.js, loaded alongside this bundle
+window.setupRates = setupRates; // used by rescBuilder.js and resvManager.js, loaded alongside this bundle
+window.getRegistrationDialog = getRegistrationDialog; // used by regForm.js, loaded alongside this bundle on ShowRegForm.php
+window.showRegDialog = showRegDialog; // used by regForm.js, loaded alongside this bundle on ShowRegForm.php
+window.jsonFetch = jsonFetch; // used by checkingIn.js and reserve.js, loaded alongside this bundle

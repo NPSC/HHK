@@ -6,6 +6,19 @@ import "../../css/house/house.css";
 
 import SignaturePad from "signature_pad";
 
+import {
+  IsSigWebInstalled,
+  GetSigWebVersion,
+  ClearTablet,
+  NumberOfTabletPoints,
+  SetDisplayXSize,
+  SetDisplayYSize,
+  SetJustifyMode,
+  SetTabletState,
+  GetTabletState,
+  Reset,
+} from "../common/SigWebTablet.js";
+
 // page setup
 export function setupRegForm(
   idReg,

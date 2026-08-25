@@ -739,18 +739,13 @@ $uS->guestId = $id;
         <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
         <title><?php echo $wInit->pageTitle; ?></title>
         <meta http-equiv="x-ua-compatible" content="IE=edge">
-        <?php echo Vite::asset('resources/js/house/guestload.js'); ?>
+        <?php echo Vite::asset(['resources/js/house/guestload.js', 'resources/js/house/invoice.js', 'resources/js/house/payments.js', 'resources/js/house/resv.js', 'resources/js/house/statement.js']); ?>
 
         <?php echo FAVICON; ?>
         <?php echo CSSVARS; ?>
         <?php echo STATEMENT_CSS; ?>
 
-
-        <script type="text/javascript" src="<?php echo INVOICE_JS; ?>" defer></script>
-        <script type="text/javascript" src="<?php echo PAYMENT_JS; ?>" defer></script>
-        <script type="text/javascript" src="<?php echo RESV_JS; ?>" defer></script>
 		<?php echo Vite::asset('resources/js/house/resvManager.js'); ?>
-        <script type="text/javascript" src="js/statement.js" defer></script>
 
         <?php
             if ($uS->PaymentGateway == AbstractPaymentGateway::INSTAMED) {echo INS_EMBED_JS;}

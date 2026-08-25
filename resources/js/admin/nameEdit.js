@@ -17,6 +17,7 @@ import {
   manageRelation,
   dtCols,
 } from "./genfunc.js";
+import { createAutoComplete, createZipAutoComplete } from "../common/createAutoComplete.js";
 
 import { verifyAddrs, addrPrefs } from "../common/addrPrefs.js";
 

@@ -8,6 +8,7 @@
  */
 
 import { verifyDocAgent } from "../common/addrPrefs";
+import { createAutoComplete } from "../common/createAutoComplete.js";
 
 export function viewHospitalStay(idHs, idVisit, $hsDialog) {
   $.post("ws_resv.php", { cmd: "viewHS", idhs: idHs }, function (data) {

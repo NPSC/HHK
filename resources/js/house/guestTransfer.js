@@ -1,40 +1,7 @@
-// guestTransfer.js
-//
-var stopTransfer,
-  $visitButton,
-  $memberButton,
-  $upsertButton,
-  $psgCBs,
-  $excCBs,
-  $relSels,
-  cmsTitle,
-  username;
+import { flagAlertMessage, getDialogWidth, dateRender } from "../common/pag";
+import { createAutoComplete } from "../common/createAutoComplete.js";
 
-function updateLocal(id) {
-  var postUpdate = $.post("ws_tran.php", { cmd: "rmvAcctId", id: id });
-
-  postUpdate.done(function (incmg) {
-    $("div#retrieve").empty();
-
-    if (!incmg) {
-      alert("Bad Reply from Server");
-      return;
-    }
-
-    if (incmg.error) {
-      if (incmg.gotopage) {
-        window.open(incmg.gotopage, "_self");
-      }
-      // Stop Processing and return.
-      flagAlertMessage(incmg.error, true);
-      return;
-    }
-
-    if (incmg.result) {
-      flagAlertMessage(incmg.result, false);
-    }
-  });
-}
+var stopTransfer, $visitButton, $memberButton, $upsertButton, $psgCBs, $excCBs, cmsTitle, username;
 
 function upsert(transferIds, trace) {
   const parms = {
@@ -131,46 +98,6 @@ function updateRemote(id, accountId, useFlagAlert) {
       throttleMembers();
     }
   });
-}
-
-function fillTable(incmg, $mTbl) {
-  let tr = "";
-
-  if (incmg) {
-    if ($mTbl.length === 0) {
-      // Create header row
-      $mTbl = $('<table id="mTbl" style="margin-top:2px;"/>');
-
-      tr = "<thead><tr>";
-      for (let id in incmg) {
-        for (let key in incmg[id]) {
-          tr += "<th>" + key + "</th>";
-        }
-        tr += "</tr></thead><tbody></tbody>";
-        break;
-      }
-
-      $mTbl.append(tr);
-      let title = $('<h3 style="margin-top:10px;">Processed ' + cmsTitle + " Members</h3>");
-      $("#divMembers").append(title).append($mTbl).show();
-    }
-
-    let first = 'style="border-top: 2px solid #2E99DD;"';
-    for (let id in incmg) {
-      tr = "<tr " + first + ">";
-      first = "";
-
-      for (let key in incmg[id]) {
-        tr += "<td>" + incmg[id][key] + "</td>";
-      }
-      tr += "</tr>";
-    }
-
-    $mTbl.find("tbody").append(tr);
-    $("div#retrieve").empty().hide();
-
-    $("div#printArea").show();
-  }
 }
 
 function transferRemote(transferIds) {
@@ -383,7 +310,7 @@ function transferExcludes(psgs) {
       return;
     }
 
-    let tr = "";
+    let tr;
     let $eTbl = $("#eTbl");
 
     if (incmg.excludes) {
@@ -440,11 +367,11 @@ function transferVisits(idPsg, rels) {
       return;
     }
 
-    let tr = "";
+    let tr;
     let $vTbl = $("#vTbl");
     let $mTbl = $("#mTbl");
     let $hTbl = $("#hTbl");
-    let first = true;
+    let first;
 
     if (incmg.members) {
       if ($mTbl.length === 0) {
@@ -762,10 +689,11 @@ function setupLogViewer() {
     ajax: {
       url: "ws_tran.php",
       data: function (d) {
-        ((d.cmd = "viewLog"), (d.service = $("#cmsLogService").val()));
+        d.cmd = "viewLog";
+        d.service = $("#cmsLogService").val();
       },
     },
-    createdRow: function (row, data, dataIndex) {
+    createdRow: function (row, data, _dataIndex) {
       if (data.responseCode >= 400) {
         $(row).addClass("ui-state-error");
       }
@@ -810,7 +738,6 @@ document.addEventListener("DOMContentLoaded", () => {
   var makeTable = $("#hmkTable").val();
   var start = $("#hstart").val();
   var end = $("#hend").val();
-  var dateFormat = $("#hdateFormat").val();
   cmsTitle = $("#cmsTitle").val();
   username = $("#username").val();
 
@@ -1004,7 +931,6 @@ document.addEventListener("DOMContentLoaded", () => {
     $visitButton = $("#btnVisits");
     $psgCBs = $(".hhk-txPsgs");
     $excCBs = $(".hhk-exPsg");
-    $relSels = $(".hhk-selRel");
 
     $excCBs.change(function () {
       let $cbPsg = $("#cbIdPSG" + $(this).data("idpsg"));
@@ -1133,14 +1059,6 @@ document.addEventListener("DOMContentLoaded", () => {
       $(".hhk-tfmem").not(".hhk-tf-update").prop("checked", true);
       syncAllPatientAndPsg();
     });
-
-  $("#btnRelat").click(function () {
-    getRelate($("#txtRelat").val());
-  });
-
-  $("#btnSoql").click(function () {
-    getSOQL($("#txtSoqls").val(), $("#txtSoqlf").val(), $("#txtSoqlw").val());
-  });
 
   $("#selCalendar").change(function () {
     if ($(this).val() && $(this).val() !== "19") {

@@ -89,7 +89,7 @@ if ($stayingMarkup == '') {
         <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
         <title><?php echo $wInit->pageTitle; ?></title>
 
-        <?php echo Vite::asset('resources/js/house.js'); ?>
+        <?php echo Vite::asset(['resources/js/house.js', 'resources/js/house/checkin.js']); ?>
         
         <?php echo FAVICON; ?>
         <?php echo CSSVARS; ?>
@@ -117,6 +117,5 @@ if ($stayingMarkup == '') {
 
             <input type="hidden" id="dateFormat" value ="<?php echo $labels->getString("momentFormats", "reportDay", "ddd, MMM D YYYY"); ?>" />
         </div>  <!-- div id="contentDiv"-->
-        <script type="text/javascript" src="<?php echo CHECKIN_JS; ?>"></script>
     </body>
 </html>

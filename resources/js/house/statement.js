@@ -1,3 +1,5 @@
+import { flagAlertMessage } from "../common/pag";
+
 document.addEventListener("DOMContentLoaded", () => {
   $("#btnPrint, #btnEmail").button();
   $(document).on("click", "#stmtDiv #btnEmail", function () {
@@ -23,7 +25,7 @@ document.addEventListener("DOMContentLoaded", () => {
         $("#btnEmail").attr("disabled", false).removeClass("loading");
         try {
           data = JSON.parse(data);
-        } catch (err) {
+        } catch {
           alert("Bad JSON Encoding");
           return;
         }

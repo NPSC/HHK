@@ -36,12 +36,11 @@ $labels = Labels::getLabels();
         <title><?php echo $wInit->pageTitle; ?></title>
         <meta http-equiv="x-ua-compatible" content="IE=edge">
 
-        <?php echo Vite::asset('resources/js/house.js'); ?>
+        <?php echo Vite::asset(['resources/js/house.js', 'resources/js/house/resv.js']); ?>
         
         <?php echo FAVICON; ?>
         <?php echo CSSVARS; ?>
 
-        <script type="text/javascript" src="<?php echo RESV_JS; ?>" defer></script>
 
         <script type="text/javascript">
             document.addEventListener("DOMContentLoaded", () => {

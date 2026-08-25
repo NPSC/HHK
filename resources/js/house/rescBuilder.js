@@ -1,10 +1,12 @@
-function isNumber(n) {
-  "use strict";
-  return !isNaN(parseFloat(n)) && isFinite(n);
-}
+import { isNumber } from "../admin/genfunc";
+import { flagAlertMessage } from "../common/pag";
+import bootstrapIconGlyphs from "bootstrap-icons/font/bootstrap-icons.json";
 
-var fixedRate = $("#fixedRate").val();
+window.fixedRate = $("#fixedRate").val(); // used by visitDialog.js, loaded alongside this bundle
 var savedRow;
+
+// e.g. "bi bi-star-fill", matching the <i class="bi bi-..."> markup ResourceBldr.php renders
+const bsIconList = Object.keys(bootstrapIconGlyphs).map((name) => "bi bi-" + name);
 
 function getRoomFees(cat) {
   if (cat != "" && cat != fixedRate) {
@@ -278,7 +280,6 @@ document.addEventListener("DOMContentLoaded", () => {
     insTypes: JSON.parse($("#insTypes").val()),
   });
 
-  var tabIndex = parseInt($("#tabIndex").val());
   var tabActive = $("#tabActive").val();
   $(
     "#btnMulti, #btnkfSave, #btnNewK, #btnNewF, #btnAttrSave, #btnhSave, #btnItemSave, #btnTaxSave, .reNewBtn",
@@ -405,7 +406,7 @@ document.addEventListener("DOMContentLoaded", () => {
         $("#regTabDiv .ui-tabs-nav").sortable({
           axis: "x",
           items: "> li.hhk-sortable",
-          stop: function (event, ui) {
+          stop: function (_event, _ui) {
             $("#regTabDiv").tabs("refresh");
 
             var order = $("#regTabDiv .ui-tabs-nav").sortable("toArray", {
@@ -446,11 +447,11 @@ document.addEventListener("DOMContentLoaded", () => {
   });
   $("#selFormUpload").change();
 
-  $(document).on("click", ".uploadFormDiv form #docDelFm", function (e) {
+  $(document).on("click", ".uploadFormDiv form #docDelFm", function (_e) {
     $(".uploadFormDiv form input[name=docAction]").val("docDelete");
   });
 
-  $(document).on("click", ".uploadFormDiv form #docSaveFm", function (e) {
+  $(document).on("click", ".uploadFormDiv form #docSaveFm", function (_e) {
     $(".uploadFormDiv form input[name=docAction]").val("docUpload");
   });
 
@@ -533,7 +534,7 @@ document.addEventListener("DOMContentLoaded", () => {
           .sortable({
             items: "tr:not(.no-sort)",
             handle: ".sort-handle",
-            update: function (e, ui) {
+            update: function (_e, _ui) {
               $(this)
                 .find("tr")
                 .each(function (i) {
@@ -588,7 +589,7 @@ document.addEventListener("DOMContentLoaded", () => {
             .sortable({
               items: "tr:not(.no-sort)",
               handle: ".sort-handle",
-              update: function (e, ui) {
+              update: function (_e, _ui) {
                 $(this)
                   .find("tr")
                   .each(function (i) {
@@ -648,7 +649,7 @@ document.addEventListener("DOMContentLoaded", () => {
   $("#formdemo .sortable tbody, #rateTable .sortable tbody").sortable({
     items: "tr:not(.no-sort)",
     handle: ".sort-handle",
-    update: function (e, ui) {
+    update: function (_e, _ui) {
       $(this)
         .find("tr")
         .each(function (i) {
@@ -686,7 +687,7 @@ document.addEventListener("DOMContentLoaded", () => {
               .sortable({
                 items: "tr:not(.no-sort)",
                 handle: ".sort-handle",
-                update: function (e, ui) {
+                update: function (_e, _ui) {
                   $(this)
                     .find("tr")
                     .each(function (i) {
@@ -725,7 +726,7 @@ document.addEventListener("DOMContentLoaded", () => {
             .sortable({
               items: "tr:not(.no-sort)",
               handle: ".sort-handle",
-              update: function (e, ui) {
+              update: function (_e, _ui) {
                 $(this)
                   .find("tr")
                   .each(function (i) {
@@ -740,7 +741,7 @@ document.addEventListener("DOMContentLoaded", () => {
     );
   });
 
-  $(document).on("click", "#btnInsSave", function (e) {
+  $(document).on("click", "#btnInsSave", function (_e) {
     var $frm = $(this).closest("form");
 
     $.post(
