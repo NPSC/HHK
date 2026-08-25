@@ -1,12 +1,5 @@
 // common app functions/jquery plugins used accross all pages.
-import {
-  flagAlertMessage,
-  dateRender,
-  dayRender,
-  logoutTimer,
-  getDialogWidth,
-  hhkReportError,
-} from "./common/pag.js";
+import { flagAlertMessage, dateRender, getDialogWidth, hhkReportError } from "./common/pag.js";
 import {
   addrPrefs,
   verifyAddrs,
@@ -17,8 +10,6 @@ import { initGuestPhoto } from "./common/guestPhoto.js";
 
 window.flagAlertMessage = flagAlertMessage;
 window.dateRender = dateRender;
-window.dayRender = dayRender;
-window.logoutTimer = logoutTimer;
 window.getDialogWidth = getDialogWidth;
 window.hhkReportError = hhkReportError;
 

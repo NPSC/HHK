@@ -9,6 +9,7 @@
 
 import { viewHospitalStay } from "./hospitalStay.js";
 import { viewVehicleDialog } from "./vehicles.js";
+import { setupPayments } from "./payments.js";
 
 window.isCheckedOut = false;
 

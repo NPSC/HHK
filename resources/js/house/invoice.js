@@ -1,4 +1,5 @@
 import { flagAlertMessage } from "../common/pag";
+import { setupPayments } from "./payments";
 
 function invPay(id, pbp, _dialg) {
   // cash payment

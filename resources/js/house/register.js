@@ -12,8 +12,6 @@ import resourceTimelinePlugin from "@fullcalendar/resource-timeline";
 import { createRoleAutoComplete } from "../common/createAutoComplete.js";
 import { isNumber } from "../admin/genfunc.js";
 
-window.isNumber = isNumber; // used by payments.js, loaded alongside register.js on this page
-
 var $dailyTbl;
 function refreshdTables(data) {
   "use strict";

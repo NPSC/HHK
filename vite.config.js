@@ -153,18 +153,14 @@ export default defineConfig({
           moment: "readonly",
           he: "readonly",
           buffer: "readonly",
-          DataTable: "readonly",
           InstaMed: "readonly", // InstaMed payment gateway embed script, INS_EMBED_JS
           HostedForm: "readonly", // Deluxe payment gateway embed script, DELUXE_EMBED_JS / DELUXE_SANDBOX_EMBED_JS
           grecaptcha: "readonly", // Google reCAPTCHA embed script
           referralFormVars: "readonly", // page controller script, public/house/showReferral.php
           isCheckedOut: "readonly", // set by resources/js/house/visitDialog.js, consumed by payments.js and invoice.js
-          isNumber: "readonly", // set by resources/js/house/register.js, consumed by payments.js
           flagAlertMessage: "readonly",
           dateRender: "readonly",
-          dayRender: "readonly",
           hhkReportError: "readonly",
-          logoutTimer: "readonly",
           getDialogWidth: "readonly",
           verifyAddrs: "readonly", // resources/js/common.js exposes this from common/addrPrefs.js
           dateFormat: "readonly", // page controller script reads #dateFormat into this, e.g. public/admin/js/Configure.js
@@ -173,7 +169,6 @@ export default defineConfig({
           // resources/js/house/payments.js, loaded alongside visitDialog.js on CheckingIn.php/Reserve.php/VisitInterval.php,
           // and alongside regForm.js on ShowRegForm.php
           showReceipt: "readonly",
-          setupPayments: "readonly",
           paymentRedirect: "readonly",
           verifyAmtTendrd: "readonly",
           verifyBalDisp: "readonly",
@@ -181,7 +176,6 @@ export default defineConfig({
           getApplyDiscDiag: "readonly",
           paymentsTable: "readonly",
           reprintReceipt: "readonly",
-          setupCOF: "readonly",
           cardOnFile: "readonly",
           daysCalculator: "readonly", // resources/js/house/payments.js, used by resv.js
           // resources/js/house/invoice.js, loaded alongside resources/js/house/register.js on register.php

@@ -12,6 +12,7 @@
 
 import { flagAlertMessage, getDialogWidth, dateRender } from "../common/pag";
 import { createAutoComplete } from "../common/createAutoComplete.js";
+import { isNumber } from "../admin/genfunc.js";
 
 var gblAdjustData = [];
 
@@ -1990,13 +1991,11 @@ export function paymentsTable(tableID, containerID, refreshPayments) {
 
 window.getApplyDiscDiag = getApplyDiscDiag; // used by register.js, loaded alongside this bundle
 window.amtPaid = amtPaid; // used by visitDialog.js and resvManager.js, loaded alongside this bundle
-window.setupPayments = setupPayments; // used by visitDialog.js, resvManager.js and invoice.js, loaded alongside this bundle
 window.daysCalculator = daysCalculator; // used by resv.js, loaded alongside this bundle
 window.verifyBalDisp = verifyBalDisp; // used by visitDialog.js, loaded alongside this bundle
 window.verifyAmtTendrd = verifyAmtTendrd; // used by visitDialog.js, resvManager.js and invoice.js, loaded alongside this bundle
 window.showReceipt = showReceipt; // used by guestload.js, register.js, regForm.js, visitDialog.js and invoice.js, loaded alongside this bundle
 window.reprintReceipt = reprintReceipt; // used by regForm.js, loaded alongside this bundle
 window.paymentRedirect = paymentRedirect; // used by checkingIn.js, resvManager.js, visitDialog.js and invoice.js, loaded alongside this bundle
-window.setupCOF = setupCOF; // used by guestload.js and resvManager.js, loaded alongside this bundle
 window.cardOnFile = cardOnFile; // used by resvManager.js and guestload.js, loaded alongside this bundle
 window.paymentsTable = paymentsTable; // used by register.js and guestload.js, loaded alongside this bundle

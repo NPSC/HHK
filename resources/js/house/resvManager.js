@@ -15,6 +15,7 @@ import {
   createRoleAutoComplete,
   createZipAutoComplete,
 } from "../common/createAutoComplete.js";
+import { setupCOF, setupPayments } from "./payments.js";
 
 export class resvManager {
   constructor(initData, options) {
