@@ -1,4 +1,5 @@
 import $ from "./jquery.js";
+import moment from "moment";
 
 (function ($) {
   $.fn.smsDialog = function (options) {

@@ -7,10 +7,6 @@ import "jquery-boot";
 import "jquery-search";
 import "jquery-dirty";
 
-//moment.js
-import moment from "moment";
-window.moment = moment;
-
 //bootstrap + icons - only Collapse (navbar-toggler) and Dropdown (nav menus)
 import Collapse from "bootstrap/js/dist/collapse";
 import Dropdown from "bootstrap/js/dist/dropdown";
@@ -23,9 +19,9 @@ window.bootstrap = { Collapse, Dropdown };
 import he from "he";
 window.he = he;
 
-//buffer.js
-import Buffer from "buffer";
-window.buffer = Buffer;
+//daterangepicker requires moment on window
+import moment from "moment";
+window.moment = moment;
 
 //datatables v3, core + Responsive/Scroller/Buttons/FixedHeader/RowGroup.
 //jQuery UI styling integration.

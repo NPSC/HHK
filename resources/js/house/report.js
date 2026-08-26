@@ -12,6 +12,7 @@
 
 import $ from "jquery";
 import { dateRender, dayRender, flagAlertMessage } from "../common/pag.js";
+import moment from "moment";
 
 export function initTimePeriod(config, $scope) {
   var $ctx = $scope || $(document);

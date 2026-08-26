@@ -1,6 +1,8 @@
 import { getDialogWidth } from "../common/pag";
 import { createRoleAutoComplete } from "../common/createAutoComplete.js";
 import { resvManager } from "./resvManager";
+import { Buffer } from "buffer";
+import { jsonFetch } from "./resv.js";
 
 document.addEventListener("DOMContentLoaded", () => {
   "use strict";
@@ -238,7 +240,7 @@ document.addEventListener("DOMContentLoaded", () => {
       //diagnosis
       let txtDiagnosis = $("#txtDiagnosis").val();
       if (typeof txtDiagnosis === "string") {
-        txtDiagnosis = buffer.Buffer.from(txtDiagnosis).toString("base64");
+        txtDiagnosis = Buffer.from(txtDiagnosis).toString("base64");
       }
       formData.append("txtDiagnosis", txtDiagnosis);
 
@@ -325,7 +327,7 @@ document.addEventListener("DOMContentLoaded", () => {
       //diagnosis
       let txtDiagnosis = $("#txtDiagnosis").val();
       if (typeof txtDiagnosis === "string") {
-        txtDiagnosis = buffer.Buffer.from(txtDiagnosis).toString("base64");
+        txtDiagnosis = Buffer.from(txtDiagnosis).toString("base64");
       }
       formData.append("txtDiagnosis", txtDiagnosis);
 

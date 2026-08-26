@@ -6,9 +6,12 @@ import "../common.js";
 import "bootstrap/dist/css/bootstrap.min.css";
 
 import { createZipAutoComplete } from "../common/createAutoComplete.js";
+import { Buffer } from "buffer";
+import { verifyAddrs } from "../common/addrPrefs.js";
+import { hhkReportError } from "../common/pag.js";
 
 document.addEventListener("DOMContentLoaded", () => {
-  var previewFormData = buffer.Buffer.from(referralFormVars.formDataStr).toString("base64");
+  var previewFormData = Buffer.from(referralFormVars.formDataStr).toString("base64");
 
   var guestGroup = [];
   var addGuestPosition = 0;
@@ -35,7 +38,7 @@ document.addEventListener("DOMContentLoaded", () => {
           formData = JSON.parse(ajaxData.formData);
         } catch (e) {
           console.log(e);
-          formData = JSON.parse(buffer.Buffer.from(ajaxData.formData, "base64").toString("utf-8"));
+          formData = JSON.parse(Buffer.from(ajaxData.formData, "base64").toString("utf-8"));
         }
         formSuccessTitle = ajaxData.formSettings.successTitle;
         formSuccessContent = ajaxData.formSettings.successContent;
@@ -376,7 +379,7 @@ document.addEventListener("DOMContentLoaded", () => {
             type: "POST",
             data: {
               cmd: "submitform",
-              formRenderData: buffer.Buffer.from(formRenderData).toString("base64"),
+              formRenderData: Buffer.from(formRenderData).toString("base64"),
               recaptchaToken: token,
               template: referralFormVars.template,
             },

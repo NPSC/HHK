@@ -9,6 +9,8 @@
 
 import { verifyDocAgent } from "../common/addrPrefs";
 import { createAutoComplete } from "../common/createAutoComplete.js";
+import { Buffer } from "buffer";
+import { getAgent, getDoc } from "./resv.js";
 
 export function viewHospitalStay(idHs, idVisit, $hsDialog) {
   $.post("ws_resv.php", { cmd: "viewHS", idhs: idHs }, function (data) {
@@ -187,7 +189,7 @@ function saveHospitalStay(idHs, idVisit) {
   //diagnosis
   let txtDiagnosis = $("#txtDiagnosis").val();
   if (typeof txtDiagnosis == "string") {
-    txtDiagnosis = buffer.Buffer.from(txtDiagnosis).toString("base64");
+    txtDiagnosis = Buffer.from(txtDiagnosis).toString("base64");
   }
   parms.push({ name: "txtDiagnosis", value: txtDiagnosis });
 

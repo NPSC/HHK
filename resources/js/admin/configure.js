@@ -1,4 +1,5 @@
 import { dateRender, flagAlertMessage } from "../common/pag";
+import { Buffer } from "buffer";
 
 document.addEventListener("DOMContentLoaded", () => {
   var tabIndex = $("#tabIndex").val();
@@ -1176,7 +1177,7 @@ document.addEventListener("DOMContentLoaded", () => {
     $(this)
       .find("textarea")
       .each(function () {
-        let base64val = buffer.Buffer.from($(this).val()).toString("base64");
+        let base64val = Buffer.from($(this).val()).toString("base64");
         $(this).val(base64val);
       });
   });

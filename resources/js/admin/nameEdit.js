@@ -20,6 +20,7 @@ import {
 import { createAutoComplete, createZipAutoComplete } from "../common/createAutoComplete.js";
 
 import { verifyAddrs, addrPrefs } from "../common/addrPrefs.js";
+import { getAgent, getDoc } from "../house/resv.js";
 
 document.addEventListener("DOMContentLoaded", () => {
   "use strict";

@@ -150,9 +150,7 @@ export default defineConfig({
           jquery: true,
         },
         globals: {
-          moment: "readonly",
           he: "readonly",
-          buffer: "readonly",
           InstaMed: "readonly", // InstaMed payment gateway embed script, INS_EMBED_JS
           HostedForm: "readonly", // Deluxe payment gateway embed script, DELUXE_EMBED_JS / DELUXE_SANDBOX_EMBED_JS
           grecaptcha: "readonly", // Google reCAPTCHA embed script
@@ -160,9 +158,7 @@ export default defineConfig({
           isCheckedOut: "readonly", // set by resources/js/house/visitDialog.js, consumed by payments.js and invoice.js
           flagAlertMessage: "readonly",
           dateRender: "readonly",
-          hhkReportError: "readonly",
           getDialogWidth: "readonly",
-          verifyAddrs: "readonly", // resources/js/common.js exposes this from common/addrPrefs.js
           dateFormat: "readonly", // page controller script reads #dateFormat into this, e.g. public/admin/js/Configure.js
           labels: "readonly", // page controller script reads window.labels into this, e.g. public/house/RoomStatus.php
           startYear: "readonly", // public/house/RoomStatus.php reads window.startYear into this, used by housekeeping.js
@@ -187,15 +183,8 @@ export default defineConfig({
           calendar: "readonly",
           fixedRate: "readonly",
           refreshdTables: "readonly",
-          getIncomeDiag: "readonly", // resources/js/house/resv.js
-          // resources/js/house/resv.js, loaded alongside regForm.js on ShowRegForm.php
-          getRegistrationDialog: "readonly",
-          showRegDialog: "readonly",
           // resources/js/house/resv.js, loaded alongside resources/js/house/resvManager.js
-          getAgent: "readonly",
-          getDoc: "readonly",
           setupRates: "readonly",
-          jsonFetch: "readonly", // resources/js/house/resv.js, used by checkingIn.js and reserve.js
           // set by resources/js/house/reserve.js, checkingIn.js, loaded alongside resources/js/house/resvManager.js
           payFailPage: "readonly",
           // resources/js/house.js exposes these from house/visitDialog.js; consumed by resources/js/register.js

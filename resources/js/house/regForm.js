@@ -18,6 +18,8 @@ import {
   GetTabletState,
   Reset,
 } from "../common/SigWebTablet.js";
+import { hhkReportError } from "../common/pag.js";
+import { getRegistrationDialog, showRegDialog } from "./resv.js";
 
 // page setup
 export function setupRegForm(

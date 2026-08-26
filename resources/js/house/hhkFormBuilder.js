@@ -9,7 +9,7 @@
  * @link      https://github.com/NPSC/HHK
  */
 import $ from "../common/jquery.js";
-import buffer from "buffer";
+import { Buffer } from "buffer";
 import "formBuilder";
 
 (function ($) {
@@ -923,7 +923,7 @@ import "formBuilder";
           events: {
             click: function () {
               //var formData = btoa(JSON.stringify(settings.formBuilder.actions.getData()));
-              var formData = buffer.Buffer.from(
+              var formData = Buffer.from(
                 JSON.stringify(settings.formBuilder.actions.getData()),
               ).toString("base64");
               var f = $(
@@ -1492,7 +1492,7 @@ House Staff`,
                 JSON.parse(data.formTemplate);
                 formData = data.formTemplate;
               } catch {
-                formData = buffer.Buffer.from(data.formTemplate, "base64").toString("utf-8");
+                formData = Buffer.from(data.formTemplate, "base64").toString("utf-8");
               }
               settings.formBuilder = $wrapper
                 .find("#formBuilderContent")
@@ -1768,7 +1768,7 @@ House Staff`,
               cmd: "saveformtemplate",
               idDocument: idDocument,
               title: title,
-              doc: buffer.Buffer.from(JSON.stringify(formData)).toString("base64"),
+              doc: Buffer.from(JSON.stringify(formData)).toString("base64"),
               style: style,
               successTitle: successTitle,
               successContent: successContent,

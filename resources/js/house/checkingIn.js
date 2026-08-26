@@ -1,5 +1,7 @@
 import { getDialogWidth, isIE } from "../common/pag";
 import { resvManager } from "./resvManager";
+import { Buffer } from "buffer";
+import { jsonFetch } from "./resv";
 
 function ckedIn(data) {
   "use strict";
@@ -173,7 +175,7 @@ document.addEventListener("DOMContentLoaded", () => {
       //diagnosis
       let txtDiagnosis = $("#txtDiagnosis").val();
       if (typeof txtDiagnosis === "string") {
-        txtDiagnosis = buffer.Buffer.from(txtDiagnosis).toString("base64");
+        txtDiagnosis = Buffer.from(txtDiagnosis).toString("base64");
       }
       formData.append("txtDiagnosis", txtDiagnosis);
 

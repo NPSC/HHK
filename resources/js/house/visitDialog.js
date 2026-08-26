@@ -10,6 +10,7 @@
 import { viewHospitalStay } from "./hospitalStay.js";
 import { viewVehicleDialog } from "./vehicles.js";
 import { setupPayments } from "./payments.js";
+import { getIncomeDiag } from "./resv.js";
 
 window.isCheckedOut = false;
 

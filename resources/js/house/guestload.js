@@ -29,6 +29,7 @@ import {
 } from "../common/createAutoComplete.js";
 import { isNumber } from "../admin/genfunc.js";
 import { setupCOF } from "./payments.js";
+import { getIncomeDiag } from "./resv.js";
 
 var dtCols = [
   {

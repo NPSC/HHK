@@ -1,6 +1,8 @@
 import $ from "./jquery.js";
 import DOMPurify from "dompurify";
 import { createRoleAutoComplete } from "../common/createAutoComplete.js";
+import { Buffer } from "buffer";
+import { hhkReportError } from "./pag.js";
 
 (function ($) {
   var uid;
@@ -229,7 +231,7 @@ import { createRoleAutoComplete } from "../common/createAutoComplete.js";
 
         if (noteData != "") {
           //convert noteData to base64
-          let base64note = buffer.Buffer.from(noteData).toString("base64");
+          let base64note = Buffer.from(noteData).toString("base64");
 
           $("#note-newNote").attr("disabled", "disabled").text("Saving...");
 
@@ -404,7 +406,7 @@ import { createRoleAutoComplete } from "../common/createAutoComplete.js";
         //noteText = he.encode(noteText);
 
         //convert noteText to base64
-        let base64note = buffer.Buffer.from(noteText).toString("base64");
+        let base64note = Buffer.from(noteText).toString("base64");
 
         $.ajax({
           url: settings.serviceURL,

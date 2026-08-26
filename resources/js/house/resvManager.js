@@ -9,6 +9,8 @@
 
 import { verifyAddrs, verifyDocAgent } from "../common/addrPrefs";
 import { isIE } from "../common/pag.js";
+import moment from "moment";
+import { getAgent, getDoc, getIncomeDiag, setupRates } from "./resv.js";
 
 import {
   createAutoComplete,

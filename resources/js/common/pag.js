@@ -1,3 +1,5 @@
+import moment from "moment";
+
 //toastr
 import toastr from "toastr";
 import "../../css/toastr.css";

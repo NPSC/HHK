@@ -489,11 +489,3 @@ export function jsonFetch(dataObject, url, processResults, options = {}) {
       throw error; // Re-throw the error to be handled by the caller if needed
     });
 }
-
-window.getAgent = getAgent; // used by resvManager.js, loaded alongside this bundle
-window.getDoc = getDoc; // used by resvManager.js, loaded alongside this bundle
-window.getIncomeDiag = getIncomeDiag; // used by resvManager.js, loaded alongside this bundle
-window.setupRates = setupRates; // used by rescBuilder.js and resvManager.js, loaded alongside this bundle
-window.getRegistrationDialog = getRegistrationDialog; // used by regForm.js, loaded alongside this bundle on ShowRegForm.php
-window.showRegDialog = showRegDialog; // used by regForm.js, loaded alongside this bundle on ShowRegForm.php
-window.jsonFetch = jsonFetch; // used by checkingIn.js and reserve.js, loaded alongside this bundle

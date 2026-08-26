@@ -11,6 +11,7 @@ import { Calendar } from "fullcalendar";
 import resourceTimelinePlugin from "@fullcalendar/resource-timeline";
 import { createRoleAutoComplete } from "../common/createAutoComplete.js";
 import { isNumber } from "../admin/genfunc.js";
+import moment from "moment";
 
 var $dailyTbl;
 function refreshdTables(data) {
