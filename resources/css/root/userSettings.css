@@ -1,0 +1,18 @@
+#chgPasswordForm input {
+  width: 100%;
+}
+
+#chgPasswordForm input:disabled {
+  border: none;
+  background: transparent;
+}
+
+#chgPasswordForm input:disabled::placeholder {
+  color: #000;
+  opacity: 1 !important;
+}
+
+#chgPasswordForm td {
+  border: none;
+  background: transparent !important;
+}

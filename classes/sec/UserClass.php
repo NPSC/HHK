@@ -793,18 +793,21 @@ class UserClass
             		<div class="ui-widget-header ui-state-default ui-corner-top" style="padding: 5px;">' . $passwordTitle . '</div>
             		<div class="ui-corner-bottom hhk-tdbox ui-widget-content" style="padding: 5px;">
 
+                        <form id="chgPasswordForm">
+                        <input type="hidden" name="cmd" value="chgpw" />
                         <table style="width: 100%"><tr>
-                                <td class="tdlabel">Username:</td><td style="background-color: white;"><span id="utxtUserName">' . $uS->username . '</span></td>
+                                <td class="tdlabel">Username:</td><td style="background-color: white;"><input type="text" disabled id="utxtUserName" name="username" placeholder="' . $uS->username . '" autocomplete="username" /></td>
                             </tr><tr>
-                                <td class="tdlabel">Enter Old Password:</td><td class="hhk-flex"><input style="width: 100%" id="utxtOldPw" type="password" value=""  /><button class="showPw" style="font-size: .75em; margin-left: 1em;" tabindex="-1">Show</button></td>
+                                <td class="tdlabel">Current Password:</td><td class="hhk-flex"><input style="width: 100%" id="utxtOldPw" name="old" type="password" value="" autocomplete="current-password" /><button type="button" class="showPw" style="font-size: .75em; margin-left: 1em;" tabindex="-1">Show</button></td>
                             </tr><tr>
-                                <td class="tdlabel">Enter New Password:</td><td class="hhk-flex"><input style="width: 100%" id="utxtNewPw1" type="password" value=""  /><button class="showPw" style="font-size: .75em; margin-left: 1em;" tabindex="-1">Show</button></td>
+                                <td class="tdlabel">New Password:</td><td class="hhk-flex"><input style="width: 100%" id="utxtNewPw1" name="newer" type="password" value="" autocomplete="new-password" /><button type="button" class="showPw" style="font-size: .75em; margin-left: 1em;" tabindex="-1">Show</button></td>
                             </tr><tr>
-                                <td class="tdlabel">New Password Again:</td><td class="hhk-flex"><input style="width: 100%" id="utxtNewPw2" type="password" value=""  /><button class="showPw" style="font-size: .75em; margin-left: 1em;" tabindex="-1">Show</button></td>
+                                <td class="tdlabel">Confirm New Password:</td><td class="hhk-flex"><input style="width: 100%" id="utxtNewPw2" type="password" value=""  autocomplete="new-password" /><button type="button" class="showPw" style="font-size: .75em; margin-left: 1em;" tabindex="-1">Show</button></td>
                             </tr><tr>
                                 <td colspan ="2"><span style="font-size: smaller;">Passwords must have at least ' . $minPassLength . ' characters with at least 1 uppercase letter, 1 lowercase letter, a number and a symbol. It cannot include &lt; or &gt;. Do not use names or dictionary words</span></td>
                             </tr>
                         </table>
+                        </form>
                         <div id="pwChangeErrMsg" style="color:red; text-align:center;" class="mt-1"></div>
                     </div>
                 </div>

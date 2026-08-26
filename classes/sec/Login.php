@@ -252,7 +252,7 @@ class Login {
         $hdr = HTMLContainer::generateMarkup("div", "Login", array("class"=>"ui-widget-header ui-corner-top p-1", "id"=>"loginTitle"));
 
         $userRow = HTMLContainer::generateMarkup("div",
-            HTMLContainer::generateMarkup("label", 'Username:', array("class"=>"col-4 pr-0 tdlabel")) .
+            HTMLContainer::generateMarkup("label", 'Username:', array("class"=>"col-4 pr-0 tdlabel", "for"=>"txtUname")) .
             HTMLContainer::generateMarkup("div",
                 HTMLInput::generateMarkup($this->userName, array('id'=>'txtUname', "class"=>"w-100")) .
                 HTMLContainer::generateMarkup('span', '', array('id'=>'errUname', 'class'=>'hhk-logerrmsg'))
@@ -260,7 +260,7 @@ class Login {
         , array("class"=>"row mt-3 mx-0", "id"=>"userRow"));
 
         $pwRow = HTMLContainer::generateMarkup("div",
-            HTMLContainer::generateMarkup("label", 'Password:', array("class"=>"col-4 pr-0 tdlabel")) .
+            HTMLContainer::generateMarkup("label", 'Password:', array("class"=>"col-4 pr-0 tdlabel", "for"=>"txtPW")) .
             HTMLContainer::generateMarkup("div",
                 HTMLContainer::generateMarkup("div",
                     HTMLInput::generateMarkup("", array('id'=>'txtPW', 'type'=>"password", "class"=>"w-100")) .

@@ -21,6 +21,8 @@ toastr.options = {
   hideMethod: "slideUp",
 };
 
+import "../../css/root/userSettings.css";
+
 /**
  *
  * @param {string}
@@ -309,41 +311,32 @@ document.addEventListener("DOMContentLoaded", () => {
 
           pw1.removeClass("ui-state-error");
 
-          var oldpwval = oldpw.val();
-          var newpwval = pw1.val();
+          var postData = $("#chgPasswordForm").serialize();
           oldpw.val("");
           pw1.val("");
           pw2.val("");
 
-          $.post(
-            "../house/ws_admin.php",
-            {
-              cmd: "chgpw",
-              old: oldpwval,
-              newer: newpwval,
-            },
-            function (data) {
-              if (data) {
-                try {
-                  data = JSON.parse(data);
-                } catch (err) {
-                  alert("Parser error - " + err.message);
-                  return;
-                }
-                if (data.error) {
-                  if (data.gotopage) {
-                    window.open(data.gotopage, "_self");
-                  }
-                  flagAlertMessage(data.error, "error");
-                } else if (data.success) {
-                  flagAlertMessage(data.success, "success");
-                  $("#dchgPw").dialog("close");
-                } else if (data.warning) {
-                  $("#pwChangeErrMsg").html(data.warning);
-                }
+          $.post("../house/ws_admin.php", postData, function (data) {
+            if (data) {
+              try {
+                data = JSON.parse(data);
+              } catch (err) {
+                alert("Parser error - " + err.message);
+                return;
               }
-            },
-          );
+              if (data.error) {
+                if (data.gotopage) {
+                  window.open(data.gotopage, "_self");
+                }
+                flagAlertMessage(data.error, "error");
+              } else if (data.success) {
+                flagAlertMessage(data.success, "success");
+                $("#dchgPw").dialog("close");
+              } else if (data.warning) {
+                $("#pwChangeErrMsg").html(data.warning);
+              }
+            }
+          });
         }
         //$("#dchgPw").dialog('close');
       },
@@ -494,6 +487,12 @@ document.addEventListener("DOMContentLoaded", () => {
           }
         },
       );
+    });
+
+    //prevent native submit (e.g. Enter key) and reuse the Save button's logic
+    $("div#dchgPw").on("submit", "#chgPasswordForm", function (e) {
+      e.preventDefault();
+      chPwButtons["Save"]();
     });
 
     //submit + verify OTP
