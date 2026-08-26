@@ -590,7 +590,7 @@ $btnGetRecords = HTMLInput::generateMarkup('Get HHK ' . Labels::getString('membe
 
         <script stype="text/javascript">
             document.addEventListener("DOMContentLoaded", () => {
-                <?php echo $filter->getTimePeriodScript(); ?>
+                initTimePeriod(<?php echo json_encode($filter->getTimePeriodScriptConfig()); ?>);
             });
         </script>
     </head>

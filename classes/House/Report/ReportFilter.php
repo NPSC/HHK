@@ -86,7 +86,7 @@ class ReportFilter {
 
     protected array $selectedAssocs;
 
-    protected array $selectedResourceGroups;
+    protected string $selectedResourceGroups;
 
     protected $resourceGroups;
 
@@ -137,7 +137,7 @@ class ReportFilter {
     public function __construct() {
         $this->selectedAssocs = array();
         $this->selectedHosptials = array();
-        $this->selectedResourceGroups = array();
+        $this->selectedResourceGroups = '';
         $this->selectedDiagnoses = array();
         $this->selectedBillingAgents = array();
         $this->selectedPayStatuses = array();
@@ -231,41 +231,15 @@ class ReportFilter {
     }
 
     /**
-     * Summary of getTimePeriodScript
-     * @return string
+     * Summary of getTimePeriodScriptConfig
+     * @return array
      */
-    public function getTimePeriodScript() {
+    public function getTimePeriodScriptConfig(): array {
         $uS = Session::getInstance();
-        $ckdate = '';
 
-        if (isset($this->calendarOptions[self::DATES])) {
-            $ckdate = "$('.ckdate').datepicker({
-yearRange: '" . $uS->StartYear . ":+02',
-changeMonth: true,
-changeYear: true,
-autoSize: true,
-numberOfMonths: 1,
-dateFormat: 'yy-mm-dd'
-});";
-        }
-
-        return "$('#selCalendar').change(function () {
-    $('#selIntYear').show();
-    if ($(this).val() && $(this).val() != '19') {
-        $('#selIntMonth').hide();
-    } else {
-        $('#selIntMonth').show();
-    }
-    if ($(this).val() && $(this).val() != '18') {
-        $('.dates').hide();
-    } else {
-        $('.dates').show();
-        $('#selIntYear').hide();
-    }
-});
-$('#selCalendar').change();
-$ckdate";
-
+        return [
+            'startYear' => $uS->StartYear,
+        ];
     }
 
     /**

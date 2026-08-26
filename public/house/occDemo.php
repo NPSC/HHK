@@ -241,7 +241,7 @@ $diagnosisMarkup = $filter->diagnosisMarkup()->generateMarkup();
                     });
                 });
 
-                <?php echo $filter->getTimePeriodScript(); ?>;
+                initTimePeriod(<?php echo json_encode($filter->getTimePeriodScriptConfig()); ?>);
             });
         </script>
     </head>

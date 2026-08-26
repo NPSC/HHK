@@ -1312,7 +1312,7 @@ if ($uS->UseIncidentReports) {
                     });
                 }
 
-                <?php echo $filter->getTimePeriodScript(); ?>;
+                initTimePeriod(<?php echo json_encode($filter->getTimePeriodScriptConfig()); ?>);
 
                 $('input[name="rbReport"]').change(function () {
                     $('.hhk-IncdtRpt').hide();

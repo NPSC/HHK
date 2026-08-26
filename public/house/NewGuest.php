@@ -261,7 +261,7 @@ $columSelector = $colSelector->makeSelectorTable(TRUE)->generateMarkup(array('st
                 var dateFormat = '<?php echo $labels->getString("momentFormats", "report", "MMM D, YYYY"); ?>';
                 var columnDefs = JSON.parse('<?php echo json_encode($colSelector->getColumnDefs()); ?>');
                 var makeTable = '<?php echo $mkTable; ?>';
-                <?php echo $filter->getTimePeriodScript(); ?>
+                initTimePeriod(<?php echo json_encode($filter->getTimePeriodScriptConfig()); ?>);
                 $('#btnHere, #btnExcel, #cbColClearAll, #cbColSelAll').button();
 
                 $('#cbColClearAll').click(function () {

@@ -462,7 +462,7 @@ FROM
         LEFT JOIN
     `name_address` `na` ON IFNULL(`hs`.`idPatient`, 0) = `na`.`idName` AND `np`.`Preferred_Mail_Address` = `na`.`Purpose`
         LEFT JOIN
-    `name_address` `napg` ON `n`.`idName` = `napg`.`idName` AND `n`.`Preferred_Mail_Address` = `napg`.`Purpose`,
+    `name_address` `napg` ON `n`.`idName` = `napg`.`idName` AND `n`.`Preferred_Mail_Address` = `napg`.`Purpose`
         LEFT JOIN
     `name_email` `npe` ON `np`.`idName` = `npe`.`idName` AND `np`.`Preferred_Email` = `npe`.`Purpose`
         LEFT JOIN

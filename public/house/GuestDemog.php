@@ -224,7 +224,7 @@ if ($cmd){
                 "use strict";
                 $('#btnnotind').button();
 
-                <?php echo $filter->getTimePeriodScript(); ?>
+                initTimePeriod(<?php echo json_encode($filter->getTimePeriodScriptConfig()); ?>);
 
             });
         </script>

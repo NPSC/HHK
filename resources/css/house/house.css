@@ -227,11 +227,6 @@ table.dataTable tr.dtrg-group th {
   height: 16px;
   content-visibility: hidden;
 }
-.hhk-icon-redLight {
-  width: 16px;
-  height: 16px;
-  background: transparent url("../../images/RedLight.png") center center no-repeat;
-}
 .hhk-relations td {
   background-color: #ffffff;
 }

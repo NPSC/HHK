@@ -82,7 +82,7 @@ $emtableMarkupv = '';
         <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
         <title><?php echo $pageTitle; ?></title>
 
-        <?php echo Vite::asset('resources/js/house.js'); ?>
+        <?php echo Vite::asset(['resources/js/house.js', 'resources/js/house/guestView.js']); ?>
         
         <?php echo FAVICON; ?>
         <?php echo CSSVARS; ?>
@@ -92,54 +92,19 @@ $emtableMarkupv = '';
                 "use strict";
 
 
-                var dateFormat = '<?php echo $labels->getString("momentFormats", "report", "MMM d, YYYY"); ?>';
-                var tabReturn = '<?php echo $tab; ?>';
+                const dateFormat = '<?php echo $labels->getString("momentFormats", "report", "MMM d, YYYY"); ?>';
+                const tabReturn = '<?php echo $tab; ?>';
 
                 $('#btnEmail, #btnPrint, #btnEmailv, #btnPrintv').button();
-
-                <?php echo $currentGuestReport->generateReportScript() .
-                        $birthdayReport->generateReportScript() .
-                        $vehicleReport->generateReportScript() ?>
-
-                function dispVehicle(item) {
-
-                    if (item.id > 0) {
-
-                        var $tr = $('<tr />');
-
-                        $tr.append($('<td>' + item.License_Number + '</td>'))
-                            .append($('<td>' + item.Make + '</td>'))
-                            .append($('<td>' + item.Model + '</td>'))
-                            .append($('<td>' + item.Color + '</td>'))
-                            .append($('<td>' + item.State_Reg + '</td>'))
-                            .append($('<td><a href="GuestEdit.php?id=' + item.id + '">' + item.Patient + '</a></td>'))
-                            .append($('<td>' + item.Room + '</td>'));
-
-                        $('#tbl').append($tr);
-
-                    }
-                }
-
-                $.widget( "ui.autocomplete", $.ui.autocomplete, {
-                    _resizeMenu: function() {
-                var ul = this.menu.element;
-                ul.outerWidth( Math.max(
-
-                    // Firefox wraps long text (possibly a rounding bug)
-                    // so we add 1px to avoid the wrapping (#7513)
-                    ul.width( "" ).outerWidth() + 1,
-                    this.element.outerWidth()
-                ) * 1.1 );
-                    }
-                });
-                createAutoComplete($('#schTag'), 3, {cmd: 'vehsch'},
-                    dispVehicle,
-                    false, 'ws_resc.php'
-                );
 
                 $('#mainTabs').tabs();
                 $('#mainTabs').tabs("option", "active", tabReturn);
                 $('#mainTabs').show();
+
+                initReport(Object.assign(<?php echo json_encode($currentGuestReport->getReportScriptConfig()); ?>, { dateFormat: dateFormat }));
+                initReport(Object.assign(<?php echo json_encode($birthdayReport->getReportScriptConfig()); ?>, { dateFormat: dateFormat }));
+                initReport(Object.assign(<?php echo json_encode($vehicleReport->getReportScriptConfig()); ?>, { dateFormat: dateFormat }));
+
             });
         </script>
     </head>
@@ -158,13 +123,21 @@ $emtableMarkupv = '';
                     <?php } ?>
                 </ul>
                 <div id="tabGuest" class="hhk-tdbox hhk-visitdialog" style=" padding-bottom: 1.5em; display:none;">
-                	<?php echo $currentGuestReport->generateFilterMarkup() . $guestReportMkup; ?>
+                	<div id="<?php echo $currentGuestReport->getInputSetReportName(); ?>Report">
+                	    <?php echo $currentGuestReport->generateFilterMarkup(); ?>
+                	    <div class="rptResults"><?php echo $guestReportMkup; ?></div>
+                	</div>
                 </div>
                 <div id="tabBirthday" class="hhk-tdbox hhk-visitdialog" style=" padding-bottom: 1.5em; display:none;">
-                	<?php echo $birthdayReport->generateFilterMarkup() . $birthdayReportMkup; ?>
+                	<div id="<?php echo $birthdayReport->getInputSetReportName(); ?>Report">
+                	    <?php echo $birthdayReport->generateFilterMarkup(); ?>
+                	    <div class="rptResults"><?php echo $birthdayReportMkup; ?></div>
+                	</div>
                 </div>
                 <div id="tabVeh" class="hhk-tdbox" style="padding-bottom: 1.5em; display:none;">
-                    <?php echo $vehicleReportMkup; ?>
+                    <div id="<?php echo $vehicleReport->getInputSetReportName(); ?>Report">
+                        <div class="rptResults"><?php echo $vehicleReportMkup; ?></div>
+                    </div>
                 </div>
                 <div id="tabsrch" class="hhk-tdbox" style="padding-bottom: 1.5em; display:none;">
                     Search <?php echo $labels->getString('referral', 'licensePlate', 'License Plate'); ?>:

@@ -262,6 +262,7 @@ export default defineConfig({
         invoice: "resources/js/house/invoice.js",
         guestReferral: "resources/js/house/guestReferral.js",
         guestTransfer: "resources/js/house/guestTransfer.js",
+        guestView: "resources/js/house/guestView.js",
         visitInterval: "resources/js/house/visitInterval.js",
         statement: "resources/js/house/statement.js",
         admin: "resources/js/admin.js",

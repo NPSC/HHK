@@ -153,6 +153,28 @@ try {
             $events = ReportFieldSet::deleteFieldSet($dbh, intval($idFieldSet));
 
             break;
+
+        case 'runReport':
+
+            $reportClass = '';
+            if (isset($_REQUEST['reportClass'])) {
+                $reportClass = filter_var($_REQUEST['reportClass'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+            }
+
+            if (in_array($reportClass, AbstractReport::AVAILABLE_REPORTS, true)) {
+                $class = '\HHK\House\\Report\\' . $reportClass;
+                $reportObj = new $class($dbh, $_REQUEST);
+
+                $events = [
+                    'status' => 'success',
+                    'markup' => $reportObj->generateMarkup(),
+                    'config' => $reportObj->getReportScriptConfig(),
+                ];
+            } else {
+                throw new ErrorException($reportClass . " is not a valid report option");
+            }
+
+            break;
         default:
             $events = array("error" => "Bad Command: \"" . $c . "\"");
     }

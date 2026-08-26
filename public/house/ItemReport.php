@@ -97,7 +97,7 @@ if (isset($_POST['btnExcel-' . $report->getInputSetReportName()])) {
             var dateFormat = '<?php echo $labels->getString("momentFormats", "report", "MMM D, YYYY"); ?>';
             document.addEventListener("DOMContentLoaded", () => {
 
-                <?php echo $report->generateReportScript(); ?>
+                initReport(Object.assign(<?php echo json_encode($report->getReportScriptConfig()); ?>, { dateFormat: dateFormat }));
 
                 // disappear the pop-up room chooser.
                 $(document).mousedown(function (event) {
@@ -118,7 +118,10 @@ if (isset($_POST['btnExcel-' . $report->getInputSetReportName()])) {
         <?php echo $menuMarkup; ?>
         <div id="contentDiv">
         <h2><?php echo $wInit->pageHeading; ?></h2>
-            <?php echo $report->generateFilterMarkup() . $dataTableWrapper; ?>
+            <div id="<?php echo $report->getInputSetReportName(); ?>Report">
+                <?php echo $report->generateFilterMarkup(); ?>
+                <div class="rptResults"><?php echo $dataTableWrapper; ?></div>
+            </div>
         </div>
     </body>
 </html>

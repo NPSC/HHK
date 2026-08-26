@@ -133,7 +133,7 @@ $roomGrouping = HTMLSelector::generateMarkup(
                 var makeTable = '<?php echo $mkTable; ?>';
                 $('#btnHere, #btnExcel, #cbColClearAll, #cbColSelAll').button();
 
-                <?php echo $filter->getTimePeriodScript(); ?>
+                initTimePeriod(<?php echo json_encode($filter->getTimePeriodScriptConfig()); ?>);
 
                 $('#btnByGuest, #btnByRoom').button();
 

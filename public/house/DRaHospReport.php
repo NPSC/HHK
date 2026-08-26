@@ -417,7 +417,7 @@ $hospitalMarkup = $filter->hospitalMarkup()->generateMarkup(array('style'=>'disp
                     $('#btnExcel').show();
                 }
 
-                <?php echo $filter->getTimePeriodScript(); ?>
+                initTimePeriod(<?php echo json_encode($filter->getTimePeriodScriptConfig()); ?>);
             });
         </script>
     </head>

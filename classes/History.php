@@ -689,20 +689,6 @@ class History {
         $roomStatuses = Common::readGenLookupsPDO($dbh, 'Room_Status');
         $showHospital = self::activeHospitalCount($dbh) > 1;
 
-        $immobilityIcon = HTMLContainer::generateMarkup('ul'
-            , HTMLContainer::generateMarkup('li',
-                HTMLContainer::generateMarkup('span', '', array('class'=>'ui-icon', 'style'=>"background-image: url('../images/whlchr.jpg');"))
-                , array('class'=>'ui-state-default ui-corner-all m-0', 'style'=>'padding:1px;', 'title'=>"Immobile"))
-            , array('class'=>'ui-widget hhk-ui-icons ms-2'));
-
-        $blindIcon = HTMLContainer::generateMarkup('ul'
-            , HTMLContainer::generateMarkup('li',
-                HTMLContainer::generateMarkup('span', '', array('class'=>'ui-icon', 'style'=>"background-image: url('../images/whtcne.jpg');"))
-                , array('class'=>'ui-state-default ui-corner-all m-0', 'style'=>'padding:1px;', 'title'=>"Vision Impaired"))
-            , array('class'=>'ui-widget hhk-ui-icons ms-2'));
-
-
-
         while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
 
             $fixedRows = array();
@@ -727,15 +713,6 @@ class History {
 
             // Guest first name
             $fixedRows[Labels::getString('memberType', 'visitor', 'Guest') . ' First'] = ((isset($r['demogIcon']) && $r['demogIcon'] != "") ? HTMLContainer::generateMarkup("div", $r['Guest First'] . HTMLContainer::generateMarkup("i", "", ["class"=>"ms-3 " . $r["demogIcon"],"title"=>$r["demogTitle"], "style"=>"font-size: 1.3em"]), array("class"=>"hhk-flex", "style"=>"justify-content: space-between")) : $r['Guest First']);
-
-            /*
-            if (isset($r['ADA']) && $r['ADA'] == 'im') {
-                $fixedRows[Labels::getString('memberType', 'visitor', 'Guest') . ' First'] = HTMLContainer::generateMarkup("div", $r['Guest First'] . $immobilityIcon, array("class"=>"hhk-flex", "style"=>"justify-content: space-between"));
-            } else if (isset($r['ADA']) && $r['ADA'] == 'b') {
-                $fixedRows[Labels::getString('memberType', 'visitor', 'Guest') . ' First'] = HTMLContainer::generateMarkup("div", $r['Guest First'] . $blindIcon, array("class"=>"hhk-flex", "style"=>"justify-content: space-between"));
-            } else {
-                $fixedRows[Labels::getString('memberType', 'visitor', 'Guest') . ' First'] = $r['Guest First'];
-            }*/
 
 
             // Guest last name

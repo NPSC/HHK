@@ -411,11 +411,11 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel']) || isset($_POST['btnSt
 }
 
 // Setups for the page.
-$timePeriodMarkup = $filter->timePeriodMarkup()->generateMarkup(array('style' => 'float: left;'));
-$hospitalMarkup = $filter->hospitalMarkup()->generateMarkup(array('style' => 'float: left;margin-left:5px;'));
-$roomGroupMarkup = $filter->resourceGroupsMarkup()->generateMarkup(array('style' => 'float: left;margin-left:5px;'));
+$timePeriodMarkup = $filter->timePeriodMarkup()->generateMarkup();
+$hospitalMarkup = $filter->hospitalMarkup()->generateMarkup();
+$roomGroupMarkup = $filter->resourceGroupsMarkup()->generateMarkup();
 
-$columSelector = $colSelector->makeSelectorTable(TRUE)->generateMarkup(array('style' => 'float:left;margin-left:5px', 'id' => 'includeFields'));
+$columSelector = $colSelector->makeSelectorTable(TRUE)->generateMarkup(array('id' => 'includeFields'));
 
 $dateFormat = $labels->getString("momentFormats", "report", "MMM D, YYYY");
 
@@ -424,19 +424,18 @@ if ($uS->CoTod) {
 }
 
 ?>
-<!DOCTYPE html>
+<!doctype html>
 <html>
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
         <title><?php echo $wInit->pageTitle; ?></title>
 
-        <?php echo Vite::asset(['resources/js/house.js', 'resources/js/house/resv.js', 'resources/js/house/payments.js', 'resources/js/house/invoice.js', 'resources/js/house/visitInterval.js']); ?>
+        <?php echo Vite::asset(['resources/js/house.js', 'resources/js/house/resv.js', 'resources/js/house/payments.js', 'resources/js/house/invoice.js', 'resources/js/house/visitInterval.js', 'resources/js/house/resvManager.js']); ?>
 
         <?php echo FAVICON; ?>
         <?php echo CSSVARS; ?>
 
-        <?php echo Vite::asset('resources/js/house/resvManager.js'); ?>
         <?php if ($uS->PaymentGateway == AbstractPaymentGateway::INSTAMED) {echo INS_EMBED_JS;} ?>
         <?php
             if ($uS->PaymentGateway == AbstractPaymentGateway::DELUXE) {
@@ -461,7 +460,7 @@ if ($uS->CoTod) {
             class="ui-widget ui-widget-content ui-corner-all hhk-member-detail hhk-tdbox hhk-visitdialog"
             style="min-width: 400px; padding:10px;">
             <form id="fcat" action="VisitInterval.php" method="post">
-                <div class="ui-helper-clearfix">
+                <div class="hhk-flex" id="filterSelectors">
                     <?php
                     echo $timePeriodMarkup;
 
@@ -472,11 +471,11 @@ if ($uS->CoTod) {
                     echo $columSelector;
                     ?>
                 </div>
-                <div style="text-align:center; margin-top: 10px;">
+                <div id="filterBtns" class="mt-3">
                     <span style="color:red; margin-right:1em;"><?php echo $errorMessage; ?></span>
-                    <input type="submit" name="btnStatsOnly" id="btnStatsOnly" value="Stats Only" class="ui-button ui-corner-all mx-2">
-                    <input type="submit" name="btnHere" id="btnHere" value="Run Here"  class="ui-button ui-corner-all mx-2">
-                    <input type="submit" name="btnExcel" id="btnExcel" value="Download to Excel" class="ui-button ui-corner-all mx-2">
+                    <input type="submit" name="btnStatsOnly" id="btnStatsOnly" value="Stats Only" class="ui-button ui-corner-all">
+                    <input type="submit" name="btnHere" id="btnHere" value="Run Here"  class="ui-button ui-corner-all">
+                    <input type="submit" name="btnExcel" id="btnExcel" value="Download to Excel" class="ui-button ui-corner-all">
                 </div>
             </form>
         </div>

@@ -947,7 +947,7 @@ $columSelector = $colSelector->makeSelectorTable(TRUE)->generateMarkup(array('st
 
                 $("form[name=glParmsForm] .ui-checkboxradio-icon").removeClass('ui-state-hover');
 
-                <?php echo $filter->getTimePeriodScript(); ?>
+                initTimePeriod(<?php echo json_encode($filter->getTimePeriodScriptConfig()); ?>);
                 
                 $("#setBillDate").dialog({
                     autoOpen: false,

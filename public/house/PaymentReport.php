@@ -622,7 +622,7 @@ $columSelector = $colSelector->makeSelectorTable(TRUE)->generateMarkup(array('cl
 
                 $('#btnHere, #btnExcel, #cbColClearAll, #cbColSelAll').button();
                 
-                <?php echo $filter->getTimePeriodScript(); ?>
+                initTimePeriod(<?php echo json_encode($filter->getTimePeriodScriptConfig()); ?>);
 
                 $('#mainTabs').tabs({
                     beforeActivate: function (event, ui) {

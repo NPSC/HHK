@@ -177,7 +177,7 @@ if (filter_has_var(INPUT_POST, 'cmd')) {
                 var dateFormat = '<?php echo $labels->getString("momentFormats", "report", "MMM D, YYYY"); ?>';
                 var columnDefs = JSON.parse('<?php echo json_encode($occupancyReport->colSelector->getColumnDefs()); ?>');
 
-                <?php echo $occupancyReport->filter->getTimePeriodScript(); ?>;
+                initTimePeriod(<?php echo json_encode($occupancyReport->filter->getTimePeriodScriptConfig()); ?>);
 
                 $(document).on('click', '#print-<?php echo $occupancyReport->getInputSetReportName();?>', function(){
                 	$(this).closest('.ui-tabs-panel').find("#hhk-reportWrapper").printArea({

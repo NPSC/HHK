@@ -63,7 +63,7 @@ if (isset($_POST['btnExcel-' . $reservationReport->getInputSetReportName()])) {
                 var dateFormat = '<?php echo $labels->getString("momentFormats", "report", "MMM D, YYYY"); ?>';
                 var columnDefs = JSON.parse('<?php echo json_encode($reservationReport->colSelector->getColumnDefs()); ?>');
 
-                <?php echo $reservationReport->generateReportScript(); ?>
+                initReport(Object.assign(<?php echo json_encode($reservationReport->getReportScriptConfig()); ?>, { dateFormat: dateFormat }));
 
                 function viewInsurance(idName, eventTarget, detailDiv) {
                     "use strict";
@@ -119,7 +119,10 @@ if (isset($_POST['btnExcel-' . $reservationReport->getInputSetReportName()])) {
         <?php echo $menuMarkup; ?>
         <div id="contentDiv">
             <h2><?php echo $wInit->pageHeading; ?></h2>
-            <?php echo $reservationReport->generateFilterMarkup() . $dataTableWrapper; ?>
+            <div id="<?php echo $reservationReport->getInputSetReportName(); ?>Report">
+                <?php echo $reservationReport->generateFilterMarkup(); ?>
+                <div class="rptResults"><?php echo $dataTableWrapper; ?></div>
+            </div>
         </div>
     </body>
 </html>
