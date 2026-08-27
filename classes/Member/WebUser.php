@@ -393,7 +393,7 @@ class WebUser {
             if(isset($uS->sitePepper)){
                 $pwHash = password_hash($wUserPw . $uS->sitePepper, PASSWORD_ARGON2ID);
             }else{
-                $pwHash = md5($wUserPw);
+                $pwHash = password_hash($wUserPw, PASSWORD_ARGON2ID);
             }
 
             // Register the user

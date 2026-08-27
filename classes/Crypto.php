@@ -2,6 +2,8 @@
 
 namespace HHK;
 
+use Illuminate\Encryption\Encrypter;
+
 /**
  * Crypto.php
  * 
@@ -19,14 +21,47 @@ class Crypto {
 
     protected const IV = "fYfhHeDmf j98UUy4";
 
-    public static function encryptMessage(string $input): string
+    public const string CIPHER = "aes-256-gcm";
+
+    public static function encryptMessage(#[\SensitiveParameter] string $input): string
     {
-        return static::encrypt_decrypt('encrypt', $input, static::KEY, static::IV);
+        $encrypter = new Encrypter(static::decodeKey($_ENV["APP_KEY"]), static::CIPHER);
+        return $encrypter->encryptString($input);
     }
 
     public static function decryptMessage(string $encrypt): string
     {
-        return static::encrypt_decrypt('decrypt', $encrypt, static::KEY, static::IV);
+        try{
+            $encrypter = new Encrypter(static::decodeKey($_ENV['APP_KEY']), static::CIPHER);
+            
+            if(isset($_ENV['APP_PREVIOUS_KEYS'])){
+                $previousKeys = explode(',', $_ENV['APP_PREVIOUS_KEYS']);
+                
+                foreach($previousKeys as $k=>$key){
+                    $previousKeys[$k] = static::decodeKey($key);
+                }
+
+                $encrypter->previousKeys($previousKeys);
+            }
+
+            return $encrypter->decryptString($encrypt);
+        }catch(\Exception $e){
+            return static::encrypt_decrypt('decrypt', $encrypt, static::KEY, static::IV);
+        }
+        
+    }
+
+    protected static function decodeKey(#[\SensitiveParameter] string $key){
+        try{
+            if(str_starts_with($key, "base64:")){
+                $base64 = substr($key, strlen("base64:"));
+                return base64_decode($base64);
+            }
+        }catch(\Exception){
+
+        }
+
+        return "";
     }
 
     /**

@@ -31,7 +31,6 @@ function sendHhkLogin() {
   }
 
   const parms = {
-    //challenge: hex_md5(hex_md5($psw.val()) + $chall.val()),
     txtUname: $uname.val(),
     txtPass: $psw.val(),
     xf: $xf.val(),
