@@ -33,10 +33,10 @@ class Crypto {
     {
         try{
             $encrypter = new Encrypter(static::decodeKey($_ENV['APP_KEY']), static::CIPHER);
-            
+
             if(isset($_ENV['APP_PREVIOUS_KEYS'])){
                 $previousKeys = explode(',', $_ENV['APP_PREVIOUS_KEYS']);
-                
+
                 foreach($previousKeys as $k=>$key){
                     $previousKeys[$k] = static::decodeKey($key);
                 }
@@ -48,7 +48,7 @@ class Crypto {
         }catch(\Exception $e){
             return static::encrypt_decrypt('decrypt', $encrypt, static::KEY, static::IV);
         }
-        
+
     }
 
     protected static function decodeKey(#[\SensitiveParameter] string $key){

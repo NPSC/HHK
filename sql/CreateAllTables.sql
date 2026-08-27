@@ -2333,7 +2333,7 @@ CREATE TABLE
         `client_id` VARCHAR(32) NOT NULL,
         `idName` INT NULL,
         `name` VARCHAR(45) NULL,
-        `secret` VARCHAR(100) NULL,
+        `secret` VARCHAR(255) NULL,
         `revoked` TINYINT NULL,
         `updated_at` TIMESTAMP NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
         `Timestamp` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,

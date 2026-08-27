@@ -226,3 +226,8 @@ WHERE File_Name = '_index.php?log=lo';
 
 INSERT IGNORE INTO `sys_config`(`Key`,`Value`,`Type`,`Category`,`Description`,`Show`) VALUES 
 ("stmtShowBirthDate", "false","b","f","Show Patient Birthdate on Statements","1");
+
+
+ALTER TABLE `oauth_clients`
+  MODIFY COLUMN `secret` VARCHAR(255) NULL
+;
