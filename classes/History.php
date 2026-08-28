@@ -325,7 +325,7 @@ class History {
         $patientStayingIcon = HTMLContainer::generateMarkup('ul'
             , HTMLContainer::generateMarkup('li',
                 HTMLContainer::generateMarkup('span', '', array('class'=>'ui-icon ui-icon-suitcase'))
-                , array('class'=>'ui-state-default ui-corner-all m-0', 'style'=>'padding:1px;', 'title'=>"$patientTitle Planning to stay"))
+                , array('class'=>'ui-state-default ui-corner-all m-0', 'style'=>'padding:1px;', 'title'=>"$patientTitle planning to stay"))
             , array('class'=>'ui-widget hhk-ui-icons ms-2'));
 
         $colGates = self::buildColGates($dbh);
@@ -434,7 +434,7 @@ class History {
         $patientStayingIcon = HTMLContainer::generateMarkup('ul'
             , HTMLContainer::generateMarkup('li',
                 HTMLContainer::generateMarkup('span', '', array('class'=>'ui-icon ui-icon-suitcase'))
-                , array('class'=>'ui-state-default ui-corner-all m-0', 'style'=>'padding:1px;', 'title'=>"$patientTitle Planning to stay"))
+                , array('class'=>'ui-state-default ui-corner-all m-0', 'style'=>'padding:1px;', 'title'=>"$patientTitle planning to stay"))
             , array('class'=>'ui-widget hhk-ui-icons ms-2'));
 
         $returnRows = array();
@@ -465,7 +465,7 @@ class History {
                         . ($includeAction && ($status == ReservationStatus::Committed || $status == ReservationStatus::UnCommitted) ? HTMLContainer::generateMarkup('li', '-------') . HTMLContainer::generateMarkup('li', HTMLContainer::generateMarkup('div', $reservStatuses[ReservationStatus::Waitlist][1], array('class'=>'resvStat', 'data-stat'=>  ReservationStatus::Waitlist, 'data-rid'=>$r['idReservation']))) : '')
                         . ($includeAction && $uS->ShowUncfrmdStatusTab && $status == ReservationStatus::Committed ? HTMLContainer::generateMarkup('li', HTMLContainer::generateMarkup('div', $reservStatuses[ReservationStatus::UnCommitted][1], array('class'=>'resvStat', 'data-stat'=>  ReservationStatus::UnCommitted, 'data-rid'=>$r['idReservation']))) : '')
                         . ($includeAction && $status == ReservationStatus::UnCommitted ? HTMLContainer::generateMarkup('li', HTMLContainer::generateMarkup('div', $reservStatuses[ReservationStatus::Committed][1], array('class'=>'resvStat', 'data-stat'=>  ReservationStatus::Committed, 'data-rid'=>$r['idReservation']))) : '')
-                )), array('class' => 'gmenu'));
+                ), ['class'=>'px-1']), array('class' => 'gmenu'));
         }
 
         $fixedRows['Guest First'] = $r['Guest First'];
@@ -704,7 +704,7 @@ class History {
                           . HTMLContainer::generateMarkup('li', ($r['Room_Status'] == RoomState::Clean || $r['Room_Status'] == RoomState::Ready ? HTMLContainer::generateMarkup('div', 'Set Room '.$roomStatuses[RoomState::Dirty][1], array('class'=>'stcleaning', 'data-idroom'=>$r['RoomId'], 'data-clean'=>RoomState::Dirty)) : HTMLContainer::generateMarkup('div', 'Set Room '.$roomStatuses[RoomState::Clean][1], array('class'=>'stcleaning', 'data-idroom'=>$r['RoomId'], 'data-clean'=>  RoomState::Clean))))
                           . HTMLContainer::generateMarkup('li', HTMLContainer::generateMarkup('div', 'Change Rooms', array('class'=>'stchgrooms', 'data-name'=>$r['Guest'], 'data-id'=>$r['Id'], 'data-vid'=>$r['idVisit'], 'data-rid' => $r['idReservation'], 'data-spn'=>$r['Span'])))
                           . (SecurityComponent::is_Authorized('guestadmin') === FALSE || count($hdArry) == 0 ? '' : HTMLContainer::generateMarkup('li', HTMLContainer::generateMarkup('div', 'Apply Discount', array('class'=>'applyDisc', 'data-vid'=>$r['idVisit']))))
-                    )), array('class' => 'gmenu'));
+                    ),['class'=>'px-1']), array('class' => 'gmenu'));
             }
 
             if($uS->ShowGuestPhoto && $uS->showCurrentGuestPhotos && $includeAction && !$static){

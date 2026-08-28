@@ -12,7 +12,11 @@ document.addEventListener("DOMContentLoaded", () => {
   var cronLogTable;
   var dateFormat = $("#dateFormat").val();
   var notyMsg = $("#notymsg").val();
-  notyMsg = JSON.parse(notyMsg);
+  try {
+    notyMsg = JSON.parse(notyMsg);
+  } catch {
+    notyMsg = null;
+  }
 
   const dtCols = [
     {
@@ -171,8 +175,7 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   //display noty
-
-  if (notyMsg.type) {
+  if (notyMsg) {
     flagAlertMessage(notyMsg.text, notyMsg.type);
   }
 

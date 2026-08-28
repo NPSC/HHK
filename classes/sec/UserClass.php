@@ -711,7 +711,7 @@ class UserClass
         $mkup = '<div id="dchgPw" class="hhk-tdbox hhk-visitdialog" style="font-size: .9em; display:none;">';
         $passwordTitle = 'Change your Password';
 
-        if(self::isLocalUser($dbh, $uS)){
+        if(self::isLocalUser($dbh, $uS, $uS->username)){
 
             $ga = new GoogleAuthenticator($userAr);
             $email = new Email($userAr);

@@ -107,8 +107,8 @@ if (isset($_POST['btnByGuest']) || isset($_POST['btnByRoom'])) {
 
 
 // Setups for the page.
-$timePeriodMarkup = $filter->timePeriodMarkup()->generateMarkup(array('style'=>'float: left;'));
-$hospitalMarkup = $filter->hospitalMarkup()->generateMarkup(array('style'=>'float: left;margin-left:5px;'));
+$timePeriodMarkup = $filter->timePeriodMarkup()->generateMarkup();
+$hospitalMarkup = $filter->hospitalMarkup()->generateMarkup();
 
 $roomGrouping = HTMLSelector::generateMarkup(
         HTMLSelector::doOptionsMkup(HTMLSelector::removeOptionGroups($roomGroups), $groupingSelection, FALSE), array('name' => 'selGroup', 'size'=>'4'));
@@ -152,17 +152,17 @@ $roomGrouping = HTMLSelector::generateMarkup(
     <body <?php if ($wInit->testVersion) {echo "class='testbody'";} ?>>
             <?php echo $menuMarkup; ?>
         <div id="contentDiv">
-            <h1><?php echo $wInit->pageHeading; ?></h1>
-            <div class="ui-widget ui-widget-content ui-corner-all hhk-panel hhk-tdbox hhk-visitdialog" style="display:inline-block; font-size:0.9em;">
+            <h2><?php echo $wInit->pageHeading; ?></h1>
+            <div class="ui-widget ui-widget-content ui-corner-all hhk-tdbox hhk-visitdialog filterWrapper">
                 <form action="RoomUtilization.php" method="post"  id="form1" name="form1" >
-                    <div class="ui-helper-clearfix">
+                    <div id="filterSelectors" class="hhk-flex">
                     <?php echo $timePeriodMarkup; ?>
                     <?php
                         if (count($filter->getHospitals()) > 1) {
                             echo $hospitalMarkup;
                         }
                     ?>
-                    <table style="float: left;margin-left:5px;">
+                    <table>
                         <tr>
                             <th>Room Grouping</th>
                         </tr>

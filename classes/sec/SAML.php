@@ -39,7 +39,7 @@ use HHK\Tables\WebSec\W_idp_secgroupsRS;
 
 class SAML {
 
-    protected Auth $auth;
+    protected ?Auth $auth;
 
     protected $IdpId;
     protected $IdpConfig;
@@ -66,7 +66,7 @@ class SAML {
                 $this->auth = new Auth($this->getSettings());
                 $this->auditUser = "SAML: " . $this->IdpConfig["Name"];
             }catch(\Exception $e){
-
+throw $e;
             }
         }else if($idpId != 'new'){
             throw new \Exception("SSO Provider not found (idpId: " . $this->IdpId . ")");
@@ -117,6 +117,11 @@ class SAML {
             }
 
             if($u->doLogin($this->dbh, $userAr)){
+                // SSO can land on a session that never visited an ordinary site page,
+                // so siteList may not be cached yet - load it explicitly rather than
+                // relying on prior request history (was causing intermittent
+                // "no site available" errors for users with valid access).
+                SitePage::loadSiteList($this->dbh);
                 $pge = SecurityComponent::getAuthorizedDefaultPage();
 
                 // Per-user override of the landing page within house.

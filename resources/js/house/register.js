@@ -753,7 +753,14 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Current Guests
   let cgCols = [
-    { data: "Action", title: "Action", sortable: false, searchable: false, className: "noPrint" },
+    {
+      data: "Action",
+      title: "Action",
+      sortable: false,
+      searchable: false,
+      className: "noPrint",
+      width: "80px",
+    },
     { data: visitorLabel + " First", title: visitorLabel + " First" },
     { data: visitorLabel + " Last", title: visitorLabel + " Last" },
     {
@@ -846,7 +853,14 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Reservations
   let rvCols = [
-    { data: "Action", title: "Action", sortable: false, searchable: false, className: "noPrint" },
+    {
+      data: "Action",
+      title: "Action",
+      sortable: false,
+      searchable: false,
+      className: "noPrint",
+      width: "80px",
+    },
     { data: "Guest First", title: visitorLabel + " First" },
     { data: "Guest Last", title: visitorLabel + " Last" },
     {
@@ -898,7 +912,14 @@ document.addEventListener("DOMContentLoaded", () => {
 
   //Waitlist
   let wlCols = [
-    { data: "Action", title: "Action", sortable: false, searchable: false, className: "noPrint" },
+    {
+      data: "Action",
+      title: "Action",
+      sortable: false,
+      searchable: false,
+      className: "noPrint",
+      width: "80px",
+    },
     { data: "Guest First", title: visitorLabel + " First" },
     { data: "Guest Last", title: visitorLabel + " Last" },
   ];
@@ -2048,6 +2069,7 @@ document.addEventListener("DOMContentLoaded", () => {
       });
     },
     columns: cgCols,
+    autoWidth: false,
     layout: {
       top1Start: {
         buttons: getDtBtns(
@@ -2079,6 +2101,7 @@ document.addEventListener("DOMContentLoaded", () => {
       });
     },
     columns: rvCols,
+    autoWidth: false,
     layout: {
       top1Start: {
         buttons: getDtBtns(reservationTabLabel + " - " + moment().format("MMM D, YYYY")),
@@ -2107,6 +2130,7 @@ document.addEventListener("DOMContentLoaded", () => {
         });
       },
       columns: rvCols,
+      autoWidth: false,
       layout: {
         top1Start: {
           buttons: getDtBtns(unconfirmedResvTabLabel + " - " + moment().format("MMM D, YYYY")),
@@ -2136,6 +2160,7 @@ document.addEventListener("DOMContentLoaded", () => {
       });
     },
     columns: wlCols,
+    autoWidth: false,
     layout: {
       top1Start: {
         buttons: getDtBtns("Waitlist - " + moment().format("MMM D, YYYY")),

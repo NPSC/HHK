@@ -83,15 +83,18 @@ class SitePage extends SecurityComponent {
     }
 
     /**
-     * Summary of loadWebSite
+     * Loads all web sites into $uS->siteList, if not already loaded.
+     *
+     * Callers that need site/group info without a full SitePage context
+     * (e.g. SAML::acs(), which lands on a session that may never have
+     * visited an ordinary site page) must call this explicitly first -
+     * nothing else populates siteList on that path.
      * @param PDO $dbh
      * @throws RuntimeException
-     * @return mixed
      */
-    protected function loadWebSite(PDO $dbh) {
+    public static function loadSiteList(PDO $dbh) {
 
         $uS = Session::getInstance();
-
 
         // Load all the web sites.
         if (isset($uS->siteList) === FALSE) {
@@ -139,6 +142,19 @@ class SitePage extends SecurityComponent {
                 throw new RuntimeException("web_sites records not found.");
             }
         }
+    }
+
+    /**
+     * Summary of loadWebSite
+     * @param PDO $dbh
+     * @throws RuntimeException
+     * @return mixed
+     */
+    protected function loadWebSite(PDO $dbh) {
+
+        $uS = Session::getInstance();
+
+        self::loadSiteList($dbh);
 
         // Is our web site page list loaded?
         if (isset($uS->webSite) && $uS->webSite["Relative_Address"] == $this->getHhkSiteDir()) {
@@ -412,7 +428,7 @@ class SitePage extends SecurityComponent {
         //add user settings modal
         if($dbh instanceof PDO){
             $markup .= UserClass::createUserSettingsMarkup($dbh);
-            $markup .= '<input  type="hidden" id="showUserSettings" value="' . (UserClass::isPassExpired($dbh, $uS) || (UserClass::hasTOTP($dbh, $uS->username) == false && $uS->Enforce2fa && UserClass::isLocalUser($dbh, $uS))) . '" />';
+            $markup .= '<input  type="hidden" id="showUserSettings" value="' . (UserClass::isPassExpired($dbh, $uS) || (UserClass::hasTOTP($dbh, $uS->username) == false && $uS->Enforce2fa && UserClass::isLocalUser($dbh, $uS, $uS->username))) . '" />';
         }
 
         return $markup;
