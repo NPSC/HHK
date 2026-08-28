@@ -31,6 +31,7 @@ abstract class AbstractReport {
     public const AVAILABLE_REPORTS = [
         'ItemReport', 'BillingAgentReport', 'AdditionalChargesReport',
         'ReservationReport', 'CurrentGuestReport', 'BirthdayReport', 'VehiclesReport',
+        'NewGuestReport',
     ];
 
     protected \PDO $dbh;
