@@ -231,3 +231,6 @@ INSERT IGNORE INTO `sys_config`(`Key`,`Value`,`Type`,`Category`,`Description`,`S
 ALTER TABLE `oauth_clients`
   MODIFY COLUMN `secret` VARCHAR(255) NULL
 ;
+
+ALTER TABLE `w_idp`
+  ADD COLUMN IF NOT EXISTS `Show` BOOL DEFAULT TRUE AFTER `IdP_ManageRoles`;

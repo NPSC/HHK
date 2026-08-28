@@ -69,6 +69,7 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   var filterData = [];
+  var hasUnsavedChanges = false;
 
   var missingDemogTable = $("#dataTbl").DataTable({
     columnDefs: dtCols,
@@ -82,7 +83,6 @@ document.addEventListener("DOMContentLoaded", () => {
       [10, 25, 50],
       [10, 25, 50],
     ],
-    dom: '<"top fg-toolbar ui-toolbar ui-widget-header ui-helper-clearfix ui-corner-tl ui-corner-tr"lf><"hhk-overflow-x"rt><"bottom fg-toolbar ui-toolbar ui-widget-header ui-helper-clearfix ui-corner-bl ui-corner-br"ip>',
     ajax: {
       url: "GuestDemog.php",
       type: "post",
@@ -96,12 +96,15 @@ document.addEventListener("DOMContentLoaded", () => {
     /* "fixedHeader": {
         	headerOffset: 38,
         }, */
+    layout: {
+      top1End: {
+        buttons: getSaveBtns(),
+      },
+      bottom1End: {
+        buttons: getSaveBtns(),
+      },
+    },
     initComplete: function (_settings, _json) {
-      $(".bottom").append(
-        '<div class="savebtns" style="float:right; padding-top: 0.25em;"><button id="dt-cancel" style="padding:0.5em; margin-right: 2px;">Cancel</button><button id="dt-save" style="padding:0.5em; margin-left: 2px;">Save</button></div>',
-      );
-      $(".bottom .savebtns").buttonset().hide();
-
       this.api()
         .columns()
         .every(function () {
@@ -127,9 +130,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
           if (filter) {
             filter.appendTo($(column.header())).on("change", function () {
-              if ($(".bottom .savebtns").is(":visible")) {
+              if (hasUnsavedChanges) {
                 if (confirm("You have unsaved data, would you like to save first?")) {
-                  $(".savebtns #dt-save").click();
+                  saveDemog(missingDemogTable);
                 } else {
                   var prevValue = $(this).data("prevValue");
                   $(this).val(prevValue);
@@ -172,10 +175,48 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     },
     drawCallback: function () {
-      $(".bottom .savebtns").hide();
-      $(".bottom .dataTables_paginate").show();
+      hasUnsavedChanges = false;
     },
   });
+
+  function getSaveBtns() {
+    return [
+      {
+        text: "Cancel",
+        className: "dt-cancel-btn",
+        action: function (_e, dt, _node, _config) {
+          dt.ajax.reload(null, false);
+        },
+      },
+      {
+        text: "Save",
+        className: "dt-save-btn",
+        action: function (_e, dt, _node, _config) {
+          saveDemog(dt);
+        },
+      },
+    ];
+  }
+
+  function saveDemog(dt) {
+    var data = $("#dataTbl select").serializeArray();
+    data.push({ name: "cmd", value: "save" });
+    $.ajax({
+      type: "POST",
+      url: "GuestDemog.php",
+      data: data,
+      dataType: "json",
+      success: function (data) {
+        flagAlertMessage(data.success, "success");
+      },
+      error: function (data) {
+        flagAlertMessage(data.error, "error");
+      },
+      datatype: "json",
+    });
+
+    dt.ajax.reload(null, false);
+  }
 
   $("#dataTbl").on("change", ".cbUnkn", function (_e) {
     var cb = $(this);
@@ -198,34 +239,7 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   $("#dataTbl").on("change", "select.demog", function (_e) {
-    $(".bottom .dataTables_paginate").hide();
-    $(".bottom .savebtns").show();
-  });
-
-  $(document).on("click", ".savebtns #dt-cancel", function (e) {
-    e.preventDefault();
-    missingDemogTable.ajax.reload(null, false);
-  });
-
-  $(document).on("click", ".savebtns #dt-save", function (e) {
-    e.preventDefault();
-    var data = $("#dataTbl select").serializeArray();
-    data.push({ name: "cmd", value: "save" });
-    $.ajax({
-      type: "POST",
-      url: "GuestDemog.php",
-      data: data,
-      dataType: "json",
-      success: function (data) {
-        flagAlertMessage(data.success, "success");
-      },
-      error: function (data) {
-        flagAlertMessage(data.error, "error");
-      },
-      datatype: "json",
-    });
-
-    missingDemogTable.ajax.reload(null, false);
+    hasUnsavedChanges = true;
   });
 
   $(document).on("click", "#fcat #btnHere", function (e) {
@@ -242,7 +256,7 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   $(window).on("beforeunload", function () {
-    if ($(".bottom .savebtns").is(":visible")) {
+    if (hasUnsavedChanges) {
       return true; //prevent user from leaving
     }
   });

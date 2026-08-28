@@ -2237,6 +2237,7 @@ CREATE TABLE
         `expectIdPEncryption` BOOL DEFAULT 1,
         `enableSPSigning` BOOL DEFAULT 1,
         `IdP_ManageRoles` BOOL DEFAULT 1,
+        `Show` BOOL DEFAULT 1,
         `Status` VARCHAR(2) NOT NULL DEFAULT 'a',
         PRIMARY KEY (`idIdp`)
     ) ENGINE = InnoDB AUTO_INCREMENT = 10;

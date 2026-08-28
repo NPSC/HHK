@@ -21,6 +21,7 @@ use HHK\Tables\WebSec\W_idpRS;
 use HHK\Tables\EditRS;
 use HHK\Tables\WebSec\W_authRS;
 use HHK\AuditLog\NameLog;
+use HHK\Enums\SAMLCerts;
 use HHK\Tables\WebSec\W_idp_secgroupsRS;
 /**
  * SAML.php
@@ -417,6 +418,7 @@ throw $e;
                 "expectIdPSigning"=>"",
                 "expectIdPEncryption"=>"",
                 "IdP_ManageRoles"=>"",
+                "Show"=>"",
                 "Status"=>""
             ];
         }
@@ -633,15 +635,15 @@ throw $e;
         return $settings;
     }
 
-    private function getCertificateInfo($type, $certStr = ''){
+    private function getCertificateInfo(SAMLCerts $type, string $certStr = ''){
 
         $certData = match ($type) {
-            "idpSign" => $this->IdpConfig["IdP_SigningCert"],
-            "idpSign2" => $this->IdpConfig["IdP_SigningCert2"],
-            "idpEncryption" => $this->IdpConfig["IdP_EncryptionCert"],
-            "idpEncryption2" => $this->IdpConfig["IdP_EncryptionCert2"],
-            "sp" => $this->SPcert,
-            "sprollover" => $this->SPRolloverCert,
+            SAMLCerts::idpSign => $this->IdpConfig["IdP_SigningCert"],
+            SAMLCerts::idpSign2 => $this->IdpConfig["IdP_SigningCert2"],
+            SAMLCerts::idpEncryption => $this->IdpConfig["IdP_EncryptionCert"],
+            SAMLCerts::idpEncryption2 => $this->IdpConfig["IdP_EncryptionCert2"],
+            SAMLCerts::sp => $this->SPcert,
+            SAMLCerts::sprollover => $this->SPRolloverCert,
             default => $certStr,
         };
 
@@ -651,7 +653,7 @@ throw $e;
             $validToDate = date_create_from_format('ymdHise', $certInfo["validTo"]);
 
             return array(
-                "issuer"=>(isset($certInfo["issuer"]["O"]) ? $certInfo["issuer"]["O"]:""),
+                "issuer"=>(isset($certInfo["issuer"]['O']) ? $certInfo["issuer"]["O"]:""),
                 "validFrom"=>$validFromDate->format("M j, Y"),
                 "expires"=>$validToDate->format("M j, Y")
             );
@@ -662,12 +664,9 @@ throw $e;
 
     public function getEditMarkup($formOnly = false){
 
-        $idpSigningCertInfo = $this->getCertificateInfo("idpSign");
-        $idpRolloverSigningCertInfo = $this->getCertificateInfo("idpSign2");
-        $idpEncryptionCertInfo = $this->getCertificateInfo("idpEncryption");
-        $idpRolloverEncryptionCertInfo = $this->getCertificateInfo("idpEncryption2");
-        $spCertInfo = $this->getCertificateInfo("sp");
-        $spRolloverCertInfo = $this->getCertificateInfo("sprollover");
+        if($this->IdpId !== 'new' && !$this->IdpConfig['Show'] && !SecurityComponent::is_TheAdmin()){
+            return '';
+        }
 
         $tbl = new HTMLTable();
 
@@ -726,12 +725,7 @@ throw $e;
                     HTMLContainer::generateMarkup("textarea", $this->IdpConfig["IdP_SigningCert"], array("name"=>"idpConfig[" . $this->IdpId . "][idpSigningCert]", "rows"=>"4", "style"=>"width: 100%"))
                 ).
                 $tbl->makeTd(
-                    (is_array($idpSigningCertInfo) ?
-                    '<span style="font-weight: bold">Installed Certificate</span><br>' .
-                    '<span style="font-weight: bold">Issuer: </span>' . $idpSigningCertInfo["issuer"] . '</span><br>' .
-                    '<span style="font-weight: bold">Valid From: </span>' . $idpSigningCertInfo["validFrom"] . '</span><br>' .
-                    '<span style="font-weight: bold">Expires: </span>' . $idpSigningCertInfo["expires"] . '</span>'
-                    : '')
+                    $this->getCertInfoMkup(SAMLCerts::idpSign)
                 )
             );
 
@@ -741,12 +735,7 @@ throw $e;
                     HTMLContainer::generateMarkup("textarea", $this->IdpConfig["IdP_SigningCert2"], array("name"=>"idpConfig[" . $this->IdpId . "][idpSigningCert2]", "rows"=>"4", "style"=>"width: 100%"))
                     ).
                 $tbl->makeTd(
-                    (is_array($idpRolloverSigningCertInfo) ?
-                        '<span style="font-weight: bold">Installed Certificate</span><br>' .
-                        '<span style="font-weight: bold">Issuer: </span>' . $idpRolloverSigningCertInfo["issuer"] . '</span><br>' .
-                        '<span style="font-weight: bold">Valid From: </span>' . $idpRolloverSigningCertInfo["validFrom"] . '</span><br>' .
-                        '<span style="font-weight: bold">Expires: </span>' . $idpRolloverSigningCertInfo["expires"] . '</span>'
-                        : '')
+                    $this->getCertInfoMkup(SAMLCerts::idpSign2)
                     )
                 );
 
@@ -756,12 +745,7 @@ throw $e;
                     HTMLContainer::generateMarkup("textarea", $this->IdpConfig["IdP_EncryptionCert"], array("name"=>"idpConfig[" . $this->IdpId . "][idpEncryptionCert]", "rows"=>"4", "style"=>"width: 100%"))
                     ).
                 $tbl->makeTd(
-                    (is_array($idpEncryptionCertInfo) ?
-                        '<span style="font-weight: bold">Installed Certificate</span><br>' .
-                        '<span style="font-weight: bold">Issuer: </span>' . $idpEncryptionCertInfo["issuer"] . '</span><br>' .
-                        '<span style="font-weight: bold">Valid From: </span>' . $idpEncryptionCertInfo["validFrom"] . '</span><br>' .
-                        '<span style="font-weight: bold">Expires: </span>' . $idpEncryptionCertInfo["expires"] . '</span>'
-                        : '')
+                    $this->getCertInfoMkup(SAMLCerts::idpEncryption)
                     )
                 );
 
@@ -771,12 +755,7 @@ throw $e;
                     HTMLContainer::generateMarkup("textarea", $this->IdpConfig["IdP_EncryptionCert2"], array("name"=>"idpConfig[" . $this->IdpId . "][idpEncryptionCert2]", "rows"=>"4", "style"=>"width: 100%"))
                     ).
                 $tbl->makeTd(
-                    (is_array($idpRolloverEncryptionCertInfo) ?
-                        '<span style="font-weight: bold">Installed Certificate</span><br>' .
-                        '<span style="font-weight: bold">Issuer: </span>' . $idpRolloverEncryptionCertInfo["issuer"] . '</span><br>' .
-                        '<span style="font-weight: bold">Valid From: </span>' . $idpRolloverEncryptionCertInfo["validFrom"] . '</span><br>' .
-                        '<span style="font-weight: bold">Expires: </span>' . $idpRolloverEncryptionCertInfo["expires"] . '</span>'
-                        : '')
+                    $this->getCertInfoMkup(SAMLCerts::idpSign2)
                     )
                 );
 
@@ -820,6 +799,16 @@ throw $e;
                     HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($this->getSecurityGroups($this->dbh), $this->IdpConfig["defaultGroups"], true), array('multiple'=>'multiple', 'size'=>'10', 'name' => "idpConfig[" . $this->IdpId . "][defaultSecurityGroups][]"))
                     ) .
                 $tbl->makeTd("If the IdP doesn't define any security groups, new users will be provisioned with these.")
+                );
+
+            $tbl->addBodyTr(
+                $tbl->makeTd("Show on Login Page", array("class"=>"tdlabel")).
+                $tbl->makeTd(
+                    SecurityComponent::is_TheAdmin()
+                        ? HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($boolOpts, $this->IdpConfig['Show'], FALSE), array('name' => "idpConfig[" . $this->IdpId . "][Show]"))
+                        : ($this->IdpConfig['Show'] ? 'True' : 'False')
+                    ) .
+                $tbl->makeTd("If false, this Identity Provider will be hidden on the login page and is only editable by The Admin user.")
                 );
 
             $tbl->addBodyTr(
@@ -872,12 +861,7 @@ throw $e;
                     HTMLContainer::generateMarkup("textarea", $this->SPcert, array("readonly"=>"readonly", "rows"=>"4", "style"=>"width: 100%"))
                     ).
                 $tbl->makeTd(
-                    (is_array($spCertInfo) ?
-                    '<span style="font-weight: bold">Installed Certificate</span><br>' .
-                    '<span style="font-weight: bold">Issuer: </span>' . $spCertInfo["issuer"] . '</span><br>' .
-                    '<span style="font-weight: bold">Valid From: </span>' . $spCertInfo["validFrom"] . '</span><br>' .
-                    '<span style="font-weight: bold">Expires: </span>' . $spCertInfo["expires"] . '</span>'
-                    : '')
+                    $this->getCertInfoMkup(SAMLCerts::sp)
                     )
                 );
 
@@ -887,12 +871,7 @@ throw $e;
                     HTMLContainer::generateMarkup("textarea", $this->SPRolloverCert, array("readonly"=>"readonly", "rows"=>"4", "style"=>"width: 100%"))
                     ).
                 $tbl->makeTd(
-                    (is_array($spRolloverCertInfo) ?
-                        '<span style="font-weight: bold">Installed Certificate</span><br>' .
-                        '<span style="font-weight: bold">Issuer: </span>' . $spRolloverCertInfo["issuer"] . '</span><br>' .
-                        '<span style="font-weight: bold">Valid From: </span>' . $spRolloverCertInfo["validFrom"] . '</span><br>' .
-                        '<span style="font-weight: bold">Expires: </span>' . $spRolloverCertInfo["expires"] . '</span>'
-                        : '')
+                    $this->getCertInfoMkup(SAMLCerts::sprollover)
                     )
                 );
 
@@ -998,7 +977,29 @@ throw $e;
         }
     }
 
-    public function save($post, $files){
+    public function getCertInfoMkup(SAMLCerts $type){
+        $certInfo = $this->getCertificateInfo($type);
+        
+        return (is_array($certInfo ) ?
+                    '<span style="font-weight: bold">Installed Certificate</span><br>' .
+                    '<span style="font-weight: bold">Issuer: </span>' . $certInfo["issuer"] . '</span><br>' .
+                    '<span style="font-weight: bold">Valid From: </span>' . $certInfo["validFrom"] . '</span><br>' .
+                    '<span style="font-weight: bold">Expires: </span>' . $certInfo["expires"] . '</span>'
+                    : '');
+    }
+
+    /**
+     * Save Identity Provider
+     * @param array $post
+     * @param array $files
+     * @throws \ErrorException
+     * @return SAML
+     */
+    public function save(array $post, array $files): SAML{
+        if($this->IdpId !== 'new' && !$this->IdpConfig['Show'] && !SecurityComponent::is_TheAdmin()){
+            throw new \ErrorException("Only the Admin user may manage a hidden Identity Provider.");
+        }
+
         if(isset($post['idpConfig'][$this->IdpId])){
             $idpConfig = array(
                 'name'=>'',
@@ -1012,6 +1013,7 @@ throw $e;
                 'expectIdPSigning'=>false,
                 'expectIdPEncryption'=>false,
                 'IdP_ManageRoles'=>true,
+                'Show'=>($this->IdpId === 'new' ? true : (bool)$this->IdpConfig['Show']),
                 'status'=>'d'
             );
             $errorMsg = '';
@@ -1074,7 +1076,7 @@ throw $e;
                     $errorMsg.= "<br>Idp Signing Cert is required";
                 }else{
                     $formattedCert = Utils::formatCert($idpConfig['idpSigningCert'], true);
-                    if(!is_array($this->getCertificateInfo(false, $formattedCert))){
+                    if(!is_array($this->getCertificateInfo(SAMLCerts::any, $formattedCert))){
                         $errorMsg.="<br>Idp Signing Cert must be a valid certificate";
                     }else{
                         $idpConfig["idpSigningCert"] = $formattedCert;
@@ -1082,7 +1084,7 @@ throw $e;
                 }
                 if($idpConfig['idpSigningCert2'] != ''){
                     $formattedCert = Utils::formatCert($idpConfig['idpSigningCert2'], true);
-                    if(!is_array($this->getCertificateInfo(false, $formattedCert))){
+                    if(!is_array($this->getCertificateInfo(SAMLCerts::any, $formattedCert))){
                         $errorMsg.="<br>Idp Rollover Signing Cert must be a valid certificate";
                     }else{
                         $idpConfig["idpSigningCert2"] = $formattedCert;
@@ -1092,7 +1094,7 @@ throw $e;
                     $errorMsg.= "<br>Idp Encryption Cert is required";
                 }else{
                     $formattedCert = Utils::formatCert($idpConfig['idpEncryptionCert'], true);
-                    if(!is_array($this->getCertificateInfo(false, $formattedCert))){
+                    if(!is_array($this->getCertificateInfo(SAMLCerts::any, $formattedCert))){
                         $errorMsg.="<br>Idp Encryption Cert must be a valid certificate";
                     }else{
                         $idpConfig["idpEncryptionCert"] = $formattedCert;
@@ -1100,7 +1102,7 @@ throw $e;
                 }
                 if($idpConfig['idpEncryptionCert2'] != ''){
                     $formattedCert = Utils::formatCert($idpConfig['idpEncryptionCert2'], true);
-                    if(!is_array($this->getCertificateInfo(false, $formattedCert))){
+                    if(!is_array($this->getCertificateInfo(SAMLCerts::any, $formattedCert))){
                         $errorMsg.="<br>Idp Rollover Encryption Cert must be a valid certificate";
                     }else{
                         $idpConfig["idpEncryptionCert2"] = $formattedCert;
@@ -1126,6 +1128,10 @@ throw $e;
                 if(isset($post['idpConfig'][$this->IdpId]['Status'])){
                     $idpConfig['status'] = filter_var($post['idpConfig'][$this->IdpId]['Status']);
                 }
+
+                if(SecurityComponent::is_TheAdmin() && isset($post['idpConfig'][$this->IdpId]['Show'])){
+                    $idpConfig['Show'] = boolval(filter_var($post['idpConfig'][$this->IdpId]['Show'], FILTER_VALIDATE_BOOLEAN));
+                }
             }
             if($errorMsg !=''){
                 throw new \ErrorException($errorMsg);
@@ -1145,6 +1151,7 @@ throw $e;
             $wIdpRS->expectIdPSigning->setNewVal($idpConfig['expectIdPSigning']);
             $wIdpRS->expectIdPEncryption->setNewVal($idpConfig['expectIdPEncryption']);
             $wIdpRS->IdP_ManageRoles->setNewVal($idpConfig['IdP_ManageRoles']);
+            $wIdpRS->Show->setNewVal($idpConfig['Show']);
             $wIdpRS->Status->setNewVal($idpConfig['status']);
 
             //save default security groups
@@ -1170,8 +1177,8 @@ throw $e;
         }
     }
 
-    public static function getIdpMarkup(\PDO $dbh){
-        $IdPs = self::getIdpList($dbh);
+    public static function getIdpMarkup(\PDO $dbh): string{
+        $IdPs = self::getIdpList($dbh, true, true);
         $uS = Session::getInstance();
         $container = '';
 
@@ -1269,9 +1276,9 @@ throw $e;
         return $updtd;
     }
 
-    public static function getIdpList(\PDO $dbh, $onlyActive = true){
+    public static function getIdpList(\PDO $dbh, $onlyActive = true, $loginPage = false): array{
 
-        $query = "select * from `w_idp` " . ($onlyActive ? "where `Status` = 'a'": "");
+        $query = "select * from `w_idp` " . ($onlyActive ? "where `Status` = 'a'": "") . ($onlyActive && $loginPage ? " and `Show` = 1": "");
         $stmt = $dbh->prepare($query);
         $stmt->execute();
         $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);

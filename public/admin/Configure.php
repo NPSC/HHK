@@ -341,6 +341,9 @@ $localAuthMkup = SiteConfig::createMarkup($dbh, 'pr');
 $labels = SiteConfig::createLabelsMarkup($dbh)->generateMarkup();
 
 $authIdpList = SAML::getIdpList($dbh, false);
+if (!SecurityComponent::is_TheAdmin()) {
+    $authIdpList = array_filter($authIdpList, fn($idp) => $idp['Show']);
+}
 
 ?>
 <!DOCTYPE html>
@@ -402,14 +405,14 @@ $authIdpList = SAML::getIdpList($dbh, false);
                                 </div>
                             </form>
                         </div>
-<?php
-foreach ($authIdpList as $idp) {
-    $saml = new SAML($dbh, $idp['idIdp']);
-    echo $saml->getEditMarkup();
-}
-$newsaml = new SAML($dbh);
-echo $newsaml->getEditMarkup();
-?>
+                        <?php
+                        foreach ($authIdpList as $idp) {
+                            $saml = new SAML($dbh, $idp['idIdp']);
+                            echo $saml->getEditMarkup();
+                        }
+                        $newsaml = new SAML($dbh);
+                        echo $newsaml->getEditMarkup();
+                        ?>
 
                     </div>
                 </div>
