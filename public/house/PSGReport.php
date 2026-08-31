@@ -1117,7 +1117,7 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
         switch ($rptSetting) {
 
         	case 'psg':
-        	    $rptArry = getPsgReport($dbh, $local, $whHosp . $whDiags, $start, $filter->getQueryEnd(), $uS->guestLookups['Patient_Rel_Type'], $uS->guestLookups[GLTableNames::Hospital], $labels, $showAssoc, $showDiag, $uS->ShowDiagTB, $showLocation, $uS->ShowBirthDate, $uS->PatientAsGuest, $uS->county);
+        	    $rptArry = getPsgReport($dbh, (bool) $local, $whHosp . $whDiags, $start, $filter->getQueryEnd(), $uS->guestLookups['Patient_Rel_Type'], $uS->guestLookups[GLTableNames::Hospital], $labels, (bool) $showAssoc, (bool) $showDiag, (bool) $uS->ShowDiagTB, (bool) $showLocation, (bool) $uS->ShowBirthDate, (bool) $uS->PatientAsGuest, (bool) $uS->county);
                 $dataTable = $rptArry['table'];
                 $sTbl->addBodyTr(HTMLTable::makeTh($uS->siteName . ' ' . $labels->getString('statement', 'psgLabel', 'PSG') . ' Report', array('colspan'=>'4')));
                 $sTbl->addBodyTr(HTMLTable::makeTd('From', array('class'=>'tdlabel')) . HTMLTable::makeTd(date('M j, Y', strtotime($start))) . HTMLTable::makeTd('Thru', array('class'=>'tdlabel')) . HTMLTable::makeTd(date('M j, Y', strtotime($end))));
