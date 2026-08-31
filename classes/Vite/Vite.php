@@ -62,7 +62,36 @@ class Vite
      */
     public static function cssLink(string $entry): string
     {
-        return '<link rel="stylesheet" href="/build/' . self::resolveFile($entry) . '">';
+        return '<link rel="stylesheet" href="' . self::basePath() . '/build/' . self::resolveFile($entry) . '">';
+    }
+
+    /**
+     * The URL path prefix under which this instance is served, e.g. "/siteA"
+     * when reached via a shared vhost that rewrites {domain}/siteA/... to
+     * this instance's public/ dir, or "" when the instance is served from
+     * its own document root (e.g. a dedicated subdomain). Derived by
+     * comparing the request's URL (SCRIPT_NAME) against the executing
+     * script's known path relative to this instance's public/ dir, so it
+     * needs no per-deployment configuration.
+     */
+    private static function basePath(): string
+    {
+        $scriptName = $_SERVER['SCRIPT_NAME'] ?? '';
+        $scriptFile = str_replace('\\', '/', $_SERVER['SCRIPT_FILENAME'] ?? '');
+        $publicRoot = str_replace('\\', '/', rtrim(REL_BASE_DIR, DS) . '/public');
+
+        if ($scriptFile === '' || !str_starts_with($scriptFile, $publicRoot)) {
+            return '';
+        }
+
+        $relative = ltrim(substr($scriptFile, strlen($publicRoot)), '/');
+        $suffix = '/' . $relative;
+
+        if ($relative === '' || !str_ends_with($scriptName, $suffix)) {
+            return '';
+        }
+
+        return substr($scriptName, 0, -strlen($suffix));
     }
 
     private static function resolveFile(string $entry): string
@@ -117,16 +146,17 @@ class Vite
 
         $chunk = $manifest[$entry];
         $tags = '';
+        $basePath = self::basePath();
 
         foreach ($chunk['imports'] ?? [] as $import) {
             $tags .= self::renderPreload($manifest, $import, $preloaded);
         }
 
         foreach ($chunk['css'] ?? [] as $css) {
-            $tags .= '<link rel="stylesheet" href="/build/' . $css . '">';
+            $tags .= '<link rel="stylesheet" href="' . $basePath . '/build/' . $css . '">';
         }
 
-        $tags .= '<script type="module" src="/build/' . $chunk['file'] . '"></script>';
+        $tags .= '<script type="module" src="' . $basePath . '/build/' . $chunk['file'] . '"></script>';
 
         return $tags;
     }
@@ -140,16 +170,17 @@ class Vite
         $preloaded[$entry] = true;
         $chunk = $manifest[$entry];
         $tags = '';
+        $basePath = self::basePath();
 
         foreach ($chunk['imports'] ?? [] as $import) {
             $tags .= self::renderPreload($manifest, $import, $preloaded);
         }
 
         foreach ($chunk['css'] ?? [] as $css) {
-            $tags .= '<link rel="stylesheet" href="/build/' . $css . '">';
+            $tags .= '<link rel="stylesheet" href="' . $basePath . '/build/' . $css . '">';
         }
 
-        $tags .= '<link rel="modulepreload" href="/build/' . $chunk['file'] . '">';
+        $tags .= '<link rel="modulepreload" href="' . $basePath . '/build/' . $chunk['file'] . '">';
 
         return $tags;
     }

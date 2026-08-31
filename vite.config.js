@@ -225,7 +225,7 @@ export default defineConfig({
   },
   plugins: lazyPlugins(() => [hotFilePlugin()]),
   publicDir: false,
-  base: "/build/",
+  base: "./",
   build: {
     manifest: true,
     outDir: "public/build",
