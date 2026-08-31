@@ -128,7 +128,7 @@ if (SecurityComponent::isHTTPS()) {
         <title><?php echo $uS->siteName; ?></title>
         <?php echo Vite::asset('resources/js/login.js'); ?>
 
-        <?php echo FAVICON; ?>
+        <link rel="icon" type="image/svg+xml" href="favicon.svg<?php echo JSV; ?>" />
     </head>
     <body <?php if ($uS->testVersion) { echo "class='testbody'"; } ?>>
         <div id="page">
@@ -139,7 +139,7 @@ if (SecurityComponent::isHTTPS()) {
             <div id="contentDiv" class="container mx-auto">
             	<div class="row justify-content-center mb-3">
                     <div class="col-xl-4 col-md-6 my-auto">
-                        <a href="https://nonprofitsoftwarecorp.org/products-services/hospitality-housekeeper-software/" target="_blank"><img width="250" alt='Hospitality HouseKeeper Logo' src="../images/hhkLogo.png"></a>
+                        <a href="https://nonprofitsoftwarecorp.org/products-services/hospitality-housekeeper-software/" target="_blank"><img width="250" alt='Hospitality HouseKeeper Logo' src="images/hhkLogo.png"></a>
                     </div>
                     <div class="col-md-6 my-auto">
                     	<div>

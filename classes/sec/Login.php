@@ -319,13 +319,13 @@ class Login {
 
     }
 
-    public static function welcomeWidget($title, $rootURL = '..') {
+    public static function welcomeWidget($title, $rootURL = '') {
 
         $uS = Session::getInstance();
 
         $hdr = HTMLContainer::generateMarkup("div", $title, array("class"=>"ui-widget-header ui-corner-top p-1 center"));
 
-        $content = '<div id="hhk-loading-spinner" class="center p-3 ui-widget-content ui-corner-bottom"><img src="' . $rootURL . '/images/ui-anim_basic_16x16.gif"></div>';
+        $content = '<div id="hhk-loading-spinner" class="center p-3 ui-widget-content ui-corner-bottom"><img src="' . $rootURL . 'images/ui-anim_basic_16x16.gif"></div>';
         $content .= HTMLContainer::generateMarkup("div",HTMLContainer::generateMarkup("div", '', ['class'=>'welcomeContent']), ['id'=>'welcomeWidget', 'class'=>'d-none ui-widget-content ui-corner-bottom', 'data-url'=>$uS->loginFeedURL]);
         //$content .= '<iframe src="' . $uS->loginFeedURL . '" width="100%" height="320px" frameborder="0" marginwidth="0" marginheight="0" scrolling="no" id="welcomeWidget" class="d-none ui-widget-content ui-corner-bottom"></iframe>';
 

@@ -54,13 +54,8 @@ if (filter_has_var(INPUT_POST, 'btndec') && !empty($input['enctxt'])) {
                 <p><?php echo $clearTxt; ?></p>
                 <input type="submit" name="btndec" value="Decrypt" />
             </div>
-            <!-- <div style="margin:10px;">
-            	<input type="submit" name="btninfo" value="Php Info" />
-            </div> -->
         </div>
         </form>
-        <?php  //if (isset($_POST['btninfo'])) phpinfo(); ?>
-
     </body>
 </html>
 
