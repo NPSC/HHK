@@ -91,7 +91,7 @@ $uS = Session::getInstance();
     <body <?php if ($testVersion) echo "class='testbody'"; ?>>
             <?php echo $menuMarkup; ?>
         <div id="contentDiv">
-                <h1 style="margin: 10px 5px;">View Recent Changes to Member Information</h1>
+                <h1>View Recent Changes to Member Information</h1>
                 <form id="vrecent" class="ui-widget ui-widget-content ui-corner-all hhk-member-detail" >
                     <div style="margin-top: 15px;">
                         <table>

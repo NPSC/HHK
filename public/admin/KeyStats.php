@@ -313,7 +313,8 @@ function getPieChartMarkup($title, $chartId, $width = "335", $height = "120") {
     <body <?php if ($testVersion) echo "class='testbody'"; ?>>
             <?php echo $menuMarkup; ?>
         <div id="contentDiv">
-            <div id="tabs">
+            <h1><?php echo $wInit->pageHeading; ?></h1>
+            <div id="tabs" style="font-size:.9em;">
                 <ul>
                     <li><a href="#tabs-1">Member Statistics</a></li>
                     <li><a href="#tabs-2">Detailed Spreadsheet</a></li>

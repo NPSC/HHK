@@ -477,7 +477,7 @@ if ($stmt->execute() !== FALSE) {
         <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
         <title><?php echo $wInit->pageTitle; ?></title>
 
-        <?php echo Vite::asset(['resources/js/admin.js','resources/js/misc.js']); ?>
+        <?php echo Vite::asset(['resources/js/admin.js','resources/js/admin/misc.js']); ?>
         
         <?php echo FAVICON; ?>
     </head>
