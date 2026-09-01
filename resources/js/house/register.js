@@ -1860,7 +1860,7 @@ document.addEventListener("DOMContentLoaded", () => {
             $("#rptInvdiv .gmenu").menu("collapse");
           });
 
-          $("#InvTable").dataTable({
+          $("#InvTable").DataTable({
             columnDefs: [
               {
                 targets: [2, 4],
@@ -1870,6 +1870,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 },
               },
             ],
+            autoWidth: false,
             displayLength: 50,
             lengthMenu: [
               [20, 50, 100, -1],
@@ -1938,6 +1939,7 @@ document.addEventListener("DOMContentLoaded", () => {
           },
           order: [[0, "asc"]],
           columns: dailyCols,
+          autoWidth: false,
           infoCallback: function () {
             return (
               "Prepared: " +

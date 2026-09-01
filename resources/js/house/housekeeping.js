@@ -407,6 +407,7 @@ document.addEventListener("DOMContentLoaded", () => {
             },
             columnDefs: dtLogColDefs,
             deferRender: true,
+            autoWidth: false,
             order: [[7, "desc"]],
             pageLength: 50,
             lengthMenu: [25, 50, 100],
@@ -549,12 +550,13 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
-  $("#roomTable").dataTable({
+  $("#roomTable").DataTable({
     ajax: {
       url: "ws_resc.php?cmd=cleanStat&tbl=roomTable",
       dataSrc: "roomTable",
     },
     deferRender: true,
+    autoWidth: false,
     columns: cgCols,
     rowGroup: { dataSrc: "Group_Title" },
     buttons: getDtBtns("Housekeeping - All Rooms"),
@@ -571,13 +573,14 @@ document.addEventListener("DOMContentLoaded", () => {
     },
   });
 
-  $("#dirtyTable").dataTable({
+  $("#dirtyTable").DataTable({
     responsive: true,
     ajax: {
       url: "ws_resc.php?cmd=cleanStat&tbl=dirtyTable",
       dataSrc: "dirtyTable",
     },
     deferRender: true,
+    autoWidth: false,
     columns: cgCols,
     rowGroup: { dataSrc: "Group_Title" },
     buttons: getDtBtns("Housekeeping - Rooms Not Ready"),
@@ -604,6 +607,7 @@ document.addEventListener("DOMContentLoaded", () => {
       dataSrc: "outTable",
     },
     deferRender: true,
+    autoWidth: false,
     columns: outCols,
     buttons: getDtBtns(
       "Housekeeping - " +
@@ -624,6 +628,7 @@ document.addEventListener("DOMContentLoaded", () => {
       dataSrc: "inTable",
     },
     deferRender: true,
+    autoWidth: false,
     columns: inCols,
     buttons: getDtBtns(
       "Housekeeping - " +
@@ -635,8 +640,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
   inTbl.buttons().container().appendTo("#ckin .tbl-btns");
 
-  $("#atblgetter").dataTable({
+  $("#atblgetter").DataTable({
     responsive: true,
+    autoWidth: false,
     columnDefs: [
       {
         targets: [3, 4],

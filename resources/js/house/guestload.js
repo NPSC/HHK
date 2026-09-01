@@ -280,11 +280,12 @@ document.addEventListener("DOMContentLoaded", () => {
     beforeActivate: function (event, ui) {
       // Change Log
       if (ui.newTab.prop("id") === "chglog" && !listEvtTable) {
-        listEvtTable = $("#dataTbl").dataTable({
+        listEvtTable = $("#dataTbl").DataTable({
           columnDefs: dtCols,
           serverSide: true,
           processing: true,
           deferRender: true,
+          autoWidth: false,
           language: { search: "Search Log Text:" },
           sorting: [[0, "desc"]],
           displayLength: 25,

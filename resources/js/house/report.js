@@ -158,7 +158,7 @@ function initReportTable($container, config, dateFormat, drawCallback) {
     dtOptions.drawCallback = drawCallback;
   }
 
-  $table.dataTable(dtOptions);
+  $table.DataTable(dtOptions);
 
   $emailDialog.dialog({
     autoOpen: false,

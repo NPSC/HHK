@@ -666,7 +666,8 @@ function setupLogViewer() {
     },
   ];
 
-  let logTable = $("#transferLog").dataTable({
+  let $logTable = $("#transferLog");
+  let logTable = $logTable.DataTable({
     columnDefs: dtTransferLogCols,
     serverSide: true,
     processing: true,
@@ -700,9 +701,9 @@ function setupLogViewer() {
     },
   });
 
-  logTable.on("click", "td.dt-control", function (e) {
+  $logTable.on("click", "td.dt-control", function (e) {
     let tr = e.target.closest("tr");
-    let row = logTable.DataTable().row(tr);
+    let row = logTable.row(tr);
 
     if (row.child.isShown()) {
       // This row is already open - close it

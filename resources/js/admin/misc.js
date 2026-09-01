@@ -18,7 +18,7 @@ document.addEventListener("DOMContentLoaded", () => {
   $("#accordion").tabs();
   $("#accordion").tabs("option", "active", accordIndex);
   if (accordIndex === 3) {
-    $("#dataTbl").dataTable({
+    $("#dataTbl").DataTable({
       displayLength: 50,
       lengthMenu: [
         [25, 50, 100, -1],

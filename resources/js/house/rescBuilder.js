@@ -240,9 +240,10 @@ function saveResource(idresc, type, clas) {
           return;
         } else if (data.roomList) {
           $("#roomTable").children().remove().end().append($(data.roomList));
-          $("#tblroom").dataTable({
+          $("#tblroom").DataTable({
             displayLength: 50,
             order: [[1, "asc"]],
+            autoWidth: false,
             lengthMenu: [
               [20, 50, -1],
               [20, 50, "All"],
@@ -250,12 +251,13 @@ function saveResource(idresc, type, clas) {
           });
         } else if (data.rescList) {
           $("#rescTable").children().remove().end().append($(data.rescList));
-          $("#tblresc").dataTable({
+          $("#tblresc").DataTable({
             displayLength: 50,
             order: [
               [6, "asc"],
               [1, "asc"],
             ],
+            autoWidth: false,
             lengthMenu: [
               [20, 50, -1],
               [20, 50, "All"],
@@ -482,21 +484,23 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   });
 
-  $("#tblresc").dataTable({
+  $("#tblresc").DataTable({
     displayLength: 50,
     order: [
       [6, "asc"],
       [1, "asc"],
     ],
+    autoWidth: false,
     lengthMenu: [
       [20, 50, -1],
       [20, 50, "All"],
     ],
   });
 
-  $("#tblroom").dataTable({
+  $("#tblroom").DataTable({
     displayLength: 50,
     order: [[1, "asc"]],
+    autoWidth: false,
     lengthMenu: [
       [20, 50, -1],
       [20, 50, "All"],

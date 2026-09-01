@@ -69,6 +69,7 @@ document.addEventListener("DOMContentLoaded", () => {
     serverSide: true,
     processing: true,
     deferRender: true,
+    autoWidth: false,
     language: { sSearch: "Search Access Log :" },
     sorting: [[3, "desc"]],
     paging: true,

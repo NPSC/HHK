@@ -76,6 +76,7 @@ document.addEventListener("DOMContentLoaded", () => {
     serverSide: true,
     processing: true,
     deferRender: true,
+    autoWidth: false,
     language: { search: "Search missing demographics:" },
     sorting: [[0, "desc"]],
     displayLength: 25,

@@ -137,7 +137,7 @@ document.addEventListener("DOMContentLoaded", () => {
   if (makeTable === "1") {
     $("div#printArea, div#stats").css("display", "block");
 
-    $("#tblrpt").dataTable({
+    $("#tblrpt").DataTable({
       columnDefs: [
         {
           targets: columnDefs,

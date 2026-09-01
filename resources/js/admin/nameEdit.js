@@ -50,11 +50,12 @@ document.addEventListener("DOMContentLoaded", () => {
     beforeActivate: function (event, ui) {
       if (ui.newPanel.length > 0) {
         if (ui.newTab.prop("id") === "changelog" && !listEvtTable) {
-          listEvtTable = $("#dataTbl").dataTable({
+          listEvtTable = $("#dataTbl").DataTable({
             columnDefs: dtCols,
             serverSide: true,
             processing: true,
             deferRender: true,
+            autoWidth: false,
             language: { sSearch: "Search Log Text:" },
             sorting: [[0, "desc"]],
             displayLength: 25,

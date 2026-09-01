@@ -152,6 +152,7 @@
               columnDefs: settings.dtCronLogCols,
               serverSide: true,
               processing: true,
+              autoWidth: false,
               language: { sSearch: "Search Jobs:" },
               sorting: [[4, "desc"]],
               displayLength: 25,

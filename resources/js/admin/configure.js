@@ -195,11 +195,12 @@ document.addEventListener("DOMContentLoaded", () => {
       if (ui.newTab.prop("id") === "liLogs" && !logTable[pid]) {
         logTable[pid] = 1;
 
-        $("#table" + pid).dataTable({
+        $("#table" + pid).DataTable({
           columnDefs: dtCols,
           serverSide: true,
           processing: true,
           //"deferRender": true,
+          autoWidth: false,
           language: { sSearch: "Search Log:" },
           sorting: [[7, "desc"]],
           displayLength: 25,
@@ -234,6 +235,7 @@ document.addEventListener("DOMContentLoaded", () => {
             columnDefs: dtCronCols,
             serverSide: false,
             processing: true,
+            autoWidth: false,
             language: { sSearch: "Search Jobs:" },
             sorting: [[0, "asc"]],
             displayLength: 25,
@@ -267,6 +269,7 @@ document.addEventListener("DOMContentLoaded", () => {
             columnDefs: dtCronLogCols,
             serverSide: true,
             processing: true,
+            autoWidth: false,
             language: { sSearch: "Search Jobs:" },
             sorting: [[4, "desc"]],
             displayLength: 25,
@@ -1051,11 +1054,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
         //notification log
         if (pid == "linl") {
-          $("#table" + pid).dataTable({
+          $("#table" + pid).DataTable({
             columnDefs: dtNotificationLogCols,
             serverSide: true,
             processing: true,
             //"deferRender": true,
+            autoWidth: false,
             language: { sSearch: "Search Log:" },
             sorting: [[7, "desc"]],
             displayLength: 25,
@@ -1071,11 +1075,13 @@ document.addEventListener("DOMContentLoaded", () => {
             },
           });
         } else if (pid == "liapi") {
-          let table = $("#table" + pid).dataTable({
+          let $table = $("#table" + pid);
+          let table = $table.DataTable({
             columnDefs: dtAPIAccessLogCols,
             serverSide: true,
             processing: true,
             //"deferRender": true,
+            autoWidth: false,
             language: { sSearch: "Search Log:" },
             sorting: [[8, "desc"]],
             displayLength: 25,
@@ -1091,9 +1097,9 @@ document.addEventListener("DOMContentLoaded", () => {
             },
           });
 
-          table.on("click", "td.dt-control", function (e) {
+          $table.on("click", "td.dt-control", function (e) {
             let tr = e.target.closest("tr");
-            let row = table.DataTable().row(tr);
+            let row = table.row(tr);
 
             if (row.child.isShown()) {
               // This row is already open - close it
@@ -1104,11 +1110,12 @@ document.addEventListener("DOMContentLoaded", () => {
             }
           });
         } else {
-          $("#table" + pid).dataTable({
+          $("#table" + pid).DataTable({
             columnDefs: dtCols,
             serverSide: true,
             processing: true,
             //"deferRender": true,
+            autoWidth: false,
             language: { sSearch: "Search Log:" },
             sorting: [[7, "desc"]],
             displayLength: 25,
