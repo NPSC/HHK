@@ -30,12 +30,14 @@ class DeluxeOAuth extends AbstractOAuth{
         return $this->sendTokenRequest($requestOptions);
     }
 
-    protected function getTokenTtl(object $tokenResponse): int {
-        return max(60, (int)$tokenResponse->expires_in - 60);
+    protected function getExpiresAt(object $tokenResponse): int {
+        //tokenExpiry_time is a UTC timestamp, e.g. "2026-09-01T18:12:37Z"
+        $expiresAt = new \DateTimeImmutable($tokenResponse->tokenExpiry_time, new \DateTimeZone('UTC'));
+        return max(time() + 60, $expiresAt->getTimestamp() - 60);
     }
 
     public function validateTokenResponse($data): bool{
-        if(isset($data->access_token) && $data->expires_in > 0){
+        if(isset($data->access_token) && isset($data->tokenExpiry_time)){
             $this->accessToken = $data->access_token; // Valid access token
             return true;
         }else{
