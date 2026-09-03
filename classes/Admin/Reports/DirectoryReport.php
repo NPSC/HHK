@@ -235,6 +235,9 @@ class DirectoryReport
 
             if ($dlFlag) {
 
+                // Refresh the address staging table with current data before generating the list.
+                MailList::fillMailistTable($dbh, $guestBlackOutDays);
+
                 $wClause = '';
                 if ($mTypeList != "") {
                     $wClause .= " AND `vm`.`Member_Type` IN ($mTypeList) ";

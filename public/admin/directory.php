@@ -1,6 +1,5 @@
 <?php
 
-use HHK\MailList;
 use HHK\sec\{Session, WebInit};
 use HHK\HTMLControls\{chkBoxCtrl, selCtrl};
 use HHK\Admin\Reports\DirectoryReport;
@@ -41,31 +40,6 @@ $selDirType = new selCtrl($dbh, "Dir_Type_Selector_Code", false, "selDirType", f
 
 $cbEmpChecked = "";
 $dirmarkup = "";
-$refreshDate = 'Never';
-$affectedRows = 0;
-
-// create date of mail listing table
-$stmt = $dbh->prepare("SELECT `Description` FROM `gen_lookups` WHERE `Table_Name` = 'Mail_List' AND `Code` = 'Refresh_Date'");
-$stmt->execute();
-$rows = $stmt->fetchAll(PDO::FETCH_NUM);
-if (count($rows) > 0) {
-    $refreshDate = date('M j, Y', strtotime($rows[0][0]));
-}
-
-
-if (filter_has_var(INPUT_POST, 'btnPrep')) {
-
-    // Load the table with fresh data
-    $affectedRows = MailList::fillMailistTable($dbh, $uS->SolicitBuffer);
-
-    if ($affectedRows > 0) {
-        $replStmt = $dbh->prepare("REPLACE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`) VALUES ('Mail_List', 'Refresh_Date', :refreshDate)");
-        $replStmt->execute([':refreshDate' => date('Y-m-d')]);
-    }
-
-}
-
-
 
 if (filter_has_var(INPUT_POST, "btnExcel") || filter_has_var(INPUT_POST, "btnHere")) {
 
@@ -168,20 +142,11 @@ if (filter_has_var(INPUT_POST, "btnExcel") || filter_has_var(INPUT_POST, "btnHer
                             <td>
                                 <?php echo $cbBasisDir->createMarkup(); ?>
                             </td>
-<!--                            <td style="width:200px;" class="tdDisp">
-                                <?php //echo $cbRelationDir->createMarkup(); ?>
-                                <div style="padding: 0.2em;"><input type="checkbox" id="cbEmployee" value="emp" class="hhk-dirRel" name="cbEmployee" <?php //echo $cbEmpChecked; ?> />
-                                    <label for="cbEmployee">Employee</label></div>
-                                <div style="padding: 2px 5px; margin-top: 6px;"><input type="button" class="hhk-check-button" id="btnCkAll" value="Check All"/><input type="button" class="hhk-check-button" id="btnCkNone" style="margin-left:.5em;" value="Uncheck"/></div>
-                            </td>-->
-                        </tr>
-                        <tr>
-                            <td colspan="3">Last mail list refresh date: <span style="font-weight: bold;"><?php echo $refreshDate." "; ?><input type="submit" name="btnPrep" value="Prepare Address Table" /></span></td>
                         </tr>
                     </table>
-                    <div class="hhk-flex mt-3" style="justify-content: space-evenly;">
-                    	<input name="btnHere" id="btnHere" type="submit" value="Run Here" />
-                        <input id="btnExcel" name="btnExcel" type="submit" value="Download Excel File" />
+                    <div class="hhk-flex mt-3 justify-content-evenly">
+                    	<button name="btnHere" id="btnHere" type="submit" class="ui-button ui-widget ui-corner-all">Run Here</button>
+                        <button name="btnExcel" id="btnExcel" type="submit" class="ui-button ui-widget ui-corner-all">Download Excel</button>
                     </div>
                 </form>
             </div>

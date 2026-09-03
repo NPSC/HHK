@@ -111,7 +111,20 @@ class MailList {
 
     public static function fillMailistTable(\PDO $dbh, $guestBlackOutDays): int {
 
-        $dbh->exec("DELETE FROM `mail_listing`;");
+        $dbh->exec("DROP TEMPORARY TABLE IF EXISTS `mail_listing`;");
+        $dbh->exec("CREATE TEMPORARY TABLE `mail_listing` (
+            `id` INT (11) NOT NULL,
+            `mr` VARCHAR(5) NOT NULL DEFAULT '',
+            `adr_frag` VARCHAR(200) NOT NULL DEFAULT '',
+            `street` VARCHAR(200) NOT NULL DEFAULT '',
+            `city` VARCHAR(45) NOT NULL DEFAULT '',
+            `state` VARCHAR(45) NOT NULL DEFAULT '',
+            `zip` VARCHAR(15) NOT NULL DEFAULT '',
+            `sp` INT (11) NOT NULL DEFAULT '0',
+            `fm` INT (11) NOT NULL DEFAULT '0',
+            `rel` VARCHAR(5) NOT NULL DEFAULT '',
+            `cde` VARCHAR(5) NOT NULL DEFAULT ''
+        ) ENGINE = MyISAM;");
 
         // generare the address table
         $insStmt = $dbh->prepare("INSERT INTO `mail_listing`
