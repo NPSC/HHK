@@ -183,14 +183,14 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     }
   });
-  $("#btnSubmit, #btnReset, #btnCopy, #chgPW").button();
+  $("#btnSubmit, #btnReset, #btnCopy").button();
   createZipAutoComplete($("input.hhk-zipsearch"), "ws_gen.php");
 
   $("#dselCamp").change(function () {
     getCampaign($(this).val());
   });
 
-  $("#chgPW").click(function () {
+  function openResetPwDialog() {
     $("#achgPw").dialog("option", "title", "Reset Password for " + memData.memName);
     $("#txtOldPw").val("");
     $("#txtNewPw1").val("");
@@ -200,7 +200,7 @@ document.addEventListener("DOMContentLoaded", () => {
     $("#apwChangeErrMsg").text("").removeClass("ui-state-highlight");
     $("#apwNewPW").text("").hide();
     $("#txtOldPw").focus();
-  });
+  }
 
   $(document).on("mousedown", ".showPw", function () {
     var input = $(this).closest("td").find("input");
@@ -240,42 +240,46 @@ document.addEventListener("DOMContentLoaded", () => {
 
         oldpw.val("");
 
-        $.post(
-          "ws_gen.php",
-          {
-            cmd: "adchgpw",
-            adpw: oldpwval,
-            uid: memData.id,
-            uname: memData.webUserName,
+        var body = new URLSearchParams();
+        body.append("cmd", "adchgpw");
+        body.append("adpw", oldpwval);
+        body.append("uid", memData.id);
+        body.append("uname", memData.webUserName);
+
+        fetch("ws_gen.php", {
+          method: "POST",
+          headers: {
+            accept: "application/json",
           },
-          function (data) {
-            if (data) {
-              try {
-                data = JSON.parse(data);
-              } catch (err) {
-                alert("Parser error - " + err.message);
-                return;
+          body: body,
+        })
+          .then((response) => response.json())
+          .then((data) => {
+            if (data.error) {
+              if (data.gotopage) {
+                window.open(data.gotopage, "_self");
               }
-              if (data.error) {
-                if (data.gotopage) {
-                  window.open(data.gotopage, "_self");
-                }
-                updateTips(tips, data.error);
-              } else if (data.success) {
-                updateTips(tips, data.success);
-                if (data.tempPW) {
-                  tempPWmsg
-                    .html(
-                      '<strong>New Temporary Password:</strong> <span style="user-select:all;">' +
-                        data.tempPW +
-                        "</span>",
-                    )
-                    .show();
-                }
+              updateTips(tips, data.error);
+            } else if (data.success) {
+              updateTips(tips, data.success);
+              if (data.tempPW) {
+                tempPWmsg
+                  .html(
+                    '<strong>New Temporary Password:</strong> <span style="user-select:all;">' +
+                      data.tempPW +
+                      "</span>",
+                  )
+                  .show();
               }
             }
-          },
-        );
+          })
+          .catch((error) => {
+            if (error instanceof SyntaxError) {
+              alert("Parser error - " + error.message);
+            } else {
+              flagAlertMessage(error, "error");
+            }
+          });
       },
       Cancel: function () {
         $(this).dialog("close");
@@ -356,6 +360,119 @@ document.addEventListener("DOMContentLoaded", () => {
 
   $("#vwebUser").on("change", ".grpSec, #selwRole", filterDefaultPageOptions);
 
+  function saveWebUser() {
+    var parms = {},
+      tipmsg = $("#hhk-wuprompt");
+
+    $("#webContainer").hide().parent().hide();
+    tipmsg.text("").removeClass("ui-state-highlight");
+    $("#txtwUserName").removeClass("ui-state-error");
+
+    $(".grpSec").each(function () {
+      if ($(this).prop("checked")) {
+        parms[$(this).attr("id")] = "checked";
+      } else {
+        parms[$(this).attr("id")] = "unchecked";
+      }
+    });
+    if ($("#txtwUserName").length > 0) {
+      if (!checkLength($("#txtwUserName"), "Username", 6, 35, tipmsg, tipmsg.parent())) {
+        return;
+      }
+      parms["wuname"] = $("#txtwUserName").val();
+      parms["grpSec_v"] = "checked"; // check the volunteer auth code.
+    }
+
+    parms["role"] = $("#selwRole").val();
+    parms["defaultPage"] = $("#txtwDefaultPage").val();
+    parms["uid"] = memData.id;
+    parms["status"] = $("#selwStatus").val();
+    parms["admin"] = userData.userName;
+    parms["vaddr"] = $("#selwVerify").val();
+    parms["resetNext"] = $("#resetNew").prop("checked");
+    parms["resetMfa"] = $("#resetMfa").prop("checked");
+
+    var body = new URLSearchParams();
+    body.append("cmd", "save");
+    Object.keys(parms).forEach(function (key) {
+      body.append("parms[" + key + "]", parms[key]);
+    });
+
+    fetch("ws_gen.php", {
+      method: "POST",
+      headers: {
+        accept: "application/json",
+      },
+      body: body,
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        var mess = "";
+
+        if (data.fieldErrors) {
+          Object.keys(data.fieldErrors).forEach(function (field) {
+            if (field === "wuname") {
+              $("#txtwUserName").addClass("ui-state-error");
+              updateTips(tipmsg, data.fieldErrors[field].join(" "), tipmsg.parent());
+            }
+          });
+        }
+
+        if (data.error) {
+          if (data.gotopage) {
+            window.open(data.gotopage, "_self");
+          }
+
+          if (!data.fieldErrors) {
+            mess = "Alert: " + data.error;
+            $("#webResponse").removeClass("ui-state-error").addClass("ui-state-highlight");
+            $("#webIcon").removeClass("ui-icon-alert").addClass("ui-icon-info");
+          }
+        } else if (data.warning) {
+          $("webResponse").removeClass("ui-state-highlight").addClass("ui-state-error");
+          $("#webIcon").removeClass("ui-icon-info").addClass("ui-icon-alert");
+          mess = "Warning: " + data.warning;
+        } else if (data.success) {
+          mess = "Success: " + data.success;
+          if (data.tempPW) {
+            mess +=
+              '<div style="margin: 0.5em 0 0.5em 0">Temporary Password (click to select):</div><div style="user-select: all">' +
+              data.tempPW +
+              "</div>";
+          }
+          $("webResponse").removeClass("ui-state-highlight").addClass("ui-state-error");
+          $("#webIcon").removeClass("ui-icon-info").addClass("ui-icon-alert");
+        }
+
+        if (mess !== "") {
+          $("#webMessage").html(mess);
+          $("#webContainer").parent().show();
+          $("#webContainer").show("pulsate");
+        }
+      })
+      .catch((error) => {
+        if (error instanceof SyntaxError) {
+          alert("Parser error - " + error.message);
+        } else {
+          flagAlertMessage(error, "error");
+        }
+      });
+  }
+
+  var vwebUserButtons = {};
+  if ($("#canResetPw").length > 0) {
+    vwebUserButtons["Reset Password..."] = openResetPwDialog;
+  }
+  vwebUserButtons["Save"] = saveWebUser;
+  vwebUserButtons["Exit"] = function () {
+    $(this).dialog("close");
+  };
+
+  $("div#vwebUser").on("submit", "#vwebUserForm", function (e) {
+    e.preventDefault();
+    saveWebUser();
+  });
+
   $("#vwebUser").dialog({
     autoOpen: false,
     height: 500,
@@ -365,82 +482,7 @@ document.addEventListener("DOMContentLoaded", () => {
     open: function () {
       filterDefaultPageOptions();
     },
-    buttons: {
-      Save: function () {
-        var parms = {},
-          tipmsg = $("#hhk-wuprompt");
-
-        $("#webContainer").hide().parent().hide();
-
-        $(".grpSec").each(function () {
-          if ($(this).prop("checked")) {
-            parms[$(this).attr("id")] = "checked";
-          } else {
-            parms[$(this).attr("id")] = "unchecked";
-          }
-        });
-        if ($("#txtwUserName").length > 0) {
-          if (!checkLength($("#txtwUserName"), "Username", 6, 35, tipmsg, tipmsg.parent())) {
-            return;
-          }
-          parms["wuname"] = $("#txtwUserName").val();
-          parms["grpSec_v"] = "checked"; // check the volunteer auth code.
-        }
-
-        parms["role"] = $("#selwRole").val();
-        parms["defaultPage"] = $("#txtwDefaultPage").val();
-        parms["uid"] = memData.id;
-        parms["status"] = $("#selwStatus").val();
-        parms["admin"] = userData.userName;
-        parms["vaddr"] = $("#selwVerify").val();
-        parms["resetNext"] = $("#resetNew").prop("checked");
-        parms["resetMfa"] = $("#resetMfa").prop("checked");
-
-        //$('div.ui-dialog-buttonset').css("display", "none");
-        $.post("ws_gen.php", { cmd: "save", parms: parms }, function (rdata) {
-          var mess = "",
-            data = {};
-          try {
-            data = JSON.parse(rdata);
-          } catch (err) {
-            data.error = err.message;
-          }
-
-          if (data.error) {
-            if (data.gotopage) {
-              window.open(data.gotopage, "_self");
-            }
-
-            mess = "Alert: " + data.error;
-            $("#webResponse").removeClass("ui-state-error").addClass("ui-state-highlight");
-            $("#webIcon").removeClass("ui-icon-alert").addClass("ui-icon-info");
-          } else if (data.warning) {
-            $("webResponse").removeClass("ui-state-highlight").addClass("ui-state-error");
-            $("#webIcon").removeClass("ui-icon-info").addClass("ui-icon-alert");
-            mess = "Warning: " + data.warning;
-          } else if (data.success) {
-            mess = "Success: " + data.success;
-            if (data.tempPW) {
-              mess +=
-                '<div style="margin: 0.5em 0 0.5em 0">Temporary Password (click to select):</div><div style="user-select: all">' +
-                data.tempPW +
-                "</div>";
-            }
-            $("webResponse").removeClass("ui-state-highlight").addClass("ui-state-error");
-            $("#webIcon").removeClass("ui-icon-info").addClass("ui-icon-alert");
-          }
-
-          if (mess !== "") {
-            $("#webMessage").html(mess);
-            $("#webContainer").parent().show();
-            $("#webContainer").show("pulsate");
-          }
-        });
-      },
-      Exit: function () {
-        $(this).dialog("close");
-      },
-    },
+    buttons: vwebUserButtons,
     close: function () {
       $("body").css("cursor", "auto");
     },

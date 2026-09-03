@@ -554,7 +554,9 @@ $alertMessage = $alertMsg->createMarkup();
                 </table>
             </div>
             <div id="vwebUser" style="display:none; font-size: 0.9em;">
-                <?php echo $webUserDialogMarkup; ?>
+                <form id="vwebUserForm">
+                    <?php echo $webUserDialogMarkup; ?>
+                </form>
             </div>
         </div>  <!-- div id="page"-->
     </body>
