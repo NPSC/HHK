@@ -392,6 +392,7 @@ $plus5 = time() + (1 * 60 * 60);
 $squirm = Crypto::encryptMessage(date("Y/m/d H:i:s", $plus5));
 
 $PWresultMessage = "";
+$minPassLength = ($uS->minPassLength > 8 ? $uS->minPassLength : 8);
 
 // Instantiate the alert message control
 //$alertMsg = new alertMessage("divAlert1");
@@ -522,19 +523,49 @@ $alertMessage = $alertMsg->createMarkup();
                 </table>
             </div>
             <div id="achgPw" class="hhk-member-detail" style="display:none;font-size:0.95em;">
-            	<div style="margin: 0.5em 0 0.5em 0;">The user's password will be reset to a random temporary password. <br>They will be required to change their password when they log in.</div>
-                <table>
-                    <tr>
-                        <td class="tdlabel">Username</td><td><input id="txtUserName" type="text" value="<?php echo $userName; ?>" class="ro ignrSave" readonly="readonly" style="width: 100%" /></td>
-                    </tr><tr>
-                        <td class="tdlabel">Admin Password</td><td style="display: flex"><input id="txtOldPw" type="password" value="" title="Enter your password, not the users old password." /><button class="showPw" style="width: 1.75em; height: 1.75em; padding: 0; margin-left: 0.5em; display: inline-flex; align-items: center; justify-content: center;" tabindex="-1" title="Hold to show password"><i class="bi bi-eye-fill"></i></button></td>
-                    </tr><tr>
-                        <td colspan ="2">
-                        	<span id="apwChangeErrMsg"><?php echo $PWresultMessage; ?></span>
-                        	<div id="apwNewPW" style="display:hidden; margin: 0.5em 0 0.5em 0;"></div>
-                        </td>
-                    </tr>
-                </table>
+            	<div class="mb-2">User will be required to change their password the next time they log in.</div>
+                
+                <div class="row mx-0 mt-2">
+                    <label class="col-5 text-end" style="text-wrap: nowrap;" for="txtOldPw"><?php echo $uS->username; ?> Password:</label>
+                    <div class="col-7">
+                        <div class="hhk-flex">
+                            <input class="w-100" id="txtOldPw" type="password" value=""placeholder="Your current password" title="Enter your password, not the users old password." />
+                            <button type="button" class="showPw" style="width: 1.75em; height: 1.75em; padding: 0; margin-left: 0.5em; display: inline-flex; align-items: center; justify-content: center;" tabindex="-1" title="Show password"><i class="bi bi-eye-fill"></i></button>
+                        </div>
+                        <div id="apwOldPwErrMsg" class="fieldErrMsg" style="color:red; font-size: smaller;"></div>
+                    </div>
+                </div>
+                <div class="row mx-0 align-items-center">
+                    <label class="col-5 text-end" for="txtUserName">Username:</label>
+                    <div class="col-7"><input id="txtUserName" type="text" value="<?php echo $userName; ?>" class="ro ignrSave w-100" readonly="readonly" /></div>
+                </div>
+                <div class="row mx-0 mt-2">
+                    <label class="col-5 text-end" style="text-wrap: nowrap;" for="txtNewPw1">New Password:</label>
+                    <div class="col-7">
+                        <div class="hhk-flex">
+                            <input class="w-100" id="txtNewPw1" type="password" value="" placeholder="Leave blank for random password" title="Leave blank to generate a random temporary password." />
+                            <button type="button" class="showPw" style="width: 1.75em; height: 1.75em; padding: 0; margin-left: 0.5em; display: inline-flex; align-items: center; justify-content: center;" tabindex="-1" title="Show password"><i class="bi bi-eye-fill"></i></button>
+                        </div>
+                        <div id="apwNewPwErrMsg" class="fieldErrMsg" style="color:red; font-size: smaller;"></div>
+                    </div>
+                </div>
+                <div class="row mx-0 mt-2">
+                    <label class="col-5 text-end" style="text-wrap: nowrap;" for="txtNewPw2">Confirm New Password:</label>
+                    <div class="col-7">
+                        <div class="hhk-flex">
+                            <input class="w-100" id="txtNewPw2" type="password" value="" placeholder="Confirm new password" />
+                            <button type="button" class="showPw" style="width: 1.75em; height: 1.75em; padding: 0; margin-left: 0.5em; display: inline-flex; align-items: center; justify-content: center;" tabindex="-1" title="Show password"><i class="bi bi-eye-fill"></i></button>
+                        </div>
+                        <div id="apwConfirmPwErrMsg" class="fieldErrMsg" style="color:red; font-size: smaller;"></div>
+                    </div>
+                </div>
+                <div class="row mx-0 mt-2">
+                    <div class="col-12"><span style="font-size: smaller;">If specifying a new password, it must have at least <?php echo $minPassLength; ?> characters with at least 1 uppercase letter, 1 lowercase letter, a number and a symbol. It cannot include &lt; or &gt;. Do not use names or dictionary words</span></div>
+                </div>
+                <div style="color:red; text-align:center;" class="mt-1">
+                	<span id="apwChangeErrMsg"><?php echo $PWresultMessage; ?></span>
+                	<div id="apwNewPW" style="display:hidden; margin: 0.5em 0 0.5em 0;"></div>
+                </div>
             </div>
             <div id="vdon" style="display:none;font-size:0.9em;">
                 <?php echo $donateMkup; ?>

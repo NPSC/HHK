@@ -252,6 +252,7 @@ span.donlistingtotal {
 }
 input.ro {
   background-color: transparent;
+  border: none;
 }
 span.class_history {
   font-size: 0.85em;

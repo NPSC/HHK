@@ -387,10 +387,14 @@ class WebUser {
             $n = EditRS::update($dbh, $usersRS, array($usersRS->idName));
 
             if ($n == 1) {
-
                 NameLog::writeUpdate($dbh, $usersRS, $id, $admin);
-                $success .= "Updated web user.  ";
             }
+
+            // Report success even when nothing actually changed in the row (e.g. clearing
+            // already-empty MFA secrets, or saving with no fields touched) - the requested
+            // state was achieved either way, and EditRS::update() only issues an UPDATE
+            // (and only then can $n == 1) when a tracked field's value actually differs.
+            $success .= "Updated web user.  ";
 
         } else if ($wUserName != '' && $wUserPw != '' && $id > 0 && $maintFlag) {
 

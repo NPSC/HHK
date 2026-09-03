@@ -527,10 +527,12 @@ try {
             $post = filter_input_array(INPUT_POST, [
                 "adpw" => FILTER_UNSAFE_RAW,
                 "uid" => FILTER_SANITIZE_NUMBER_INT,
-                "uname" => FILTER_SANITIZE_FULL_SPECIAL_CHARS
+                "uname" => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
+                "newpw" => FILTER_UNSAFE_RAW,
+                "confirmpw" => FILTER_UNSAFE_RAW
             ]);
 
-            $events = adminChangePW($dbh, $post['adpw'], $post['uid'], $post['uname']);
+            $events = adminChangePW($dbh, $post['adpw'], $post['uid'], $post['uname'], $post['newpw'] ?? '', $post['confirmpw'] ?? '');
 
             break;
 
@@ -726,7 +728,7 @@ function searchZip(PDO $dbh, $zip) {
     return $events;
 }
 
-function adminChangePW(PDO $dbh, $adminPw, $wUserId, $uname) {
+function adminChangePW(PDO $dbh, $adminPw, $wUserId, $uname, $newPw = '', $confirmPw = '') {
 
     $event = array();
 
@@ -735,13 +737,22 @@ function adminChangePW(PDO $dbh, $adminPw, $wUserId, $uname) {
         $u = new UserClass();
         $uS = Session::getInstance();
 
-        $minPassLength = ($uS->minPassLength > 8 ? $uS->minPassLength : 8);
-        $newPw = $u->generateStrongPassword($minPassLength);
+        $isCustomPw = ($newPw !== '');
 
-        if ($u->updateDbPassword($dbh, $wUserId, $adminPw, $newPw, $uname, true) === TRUE) {
-            $event = array('success' => 'Password updated.', 'tempPW'=>$newPw);
+        if (!$isCustomPw) {
+            $minPassLength = ($uS->minPassLength > 8 ? $uS->minPassLength : 8);
+            $newPw = $u->generateStrongPassword($minPassLength);
+        }
+
+        // Only enforce the confirm-password match when the admin typed a password;
+        // the auto-generated password has nothing to confirm against.
+        if ($u->updateDbPassword($dbh, $wUserId, $adminPw, $newPw, $uname, true, $isCustomPw ? $confirmPw : null) === TRUE) {
+            $event = array('success' => 'Password updated.');
+            if (!$isCustomPw) {
+                $event['tempPW'] = $newPw;
+            }
         } else {
-            $event = array('error' => $u->logMessage .  '.  Password is unchanged.');
+            $event = array('error' => $u->logMessage .  '.  Password is unchanged.', 'fieldErrors' => $u->passwordErrors);
         }
     } else {
         $event = array('error' => 'Insufficient authorization.  Password is unchanged.');

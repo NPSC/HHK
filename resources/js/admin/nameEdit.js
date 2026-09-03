@@ -192,9 +192,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function openResetPwDialog() {
     $("#achgPw").dialog("option", "title", "Reset Password for " + memData.memName);
-    $("#txtOldPw").val("");
-    $("#txtNewPw1").val("");
-    $("#txtNewPw2").val("");
+    $("#txtOldPw, #txtNewPw1, #txtNewPw2").val("").removeClass("ui-state-error");
+    $("#achgPw .fieldErrMsg").empty();
 
     $("#achgPw").dialog("open");
     $("#apwChangeErrMsg").text("").removeClass("ui-state-highlight");
@@ -202,33 +201,46 @@ document.addEventListener("DOMContentLoaded", () => {
     $("#txtOldPw").focus();
   }
 
-  $(document).on("mousedown", ".showPw", function () {
-    var input = $(this).closest("td").find("input");
-    input.prop("type", "text");
-    $(this).find("i").removeClass("bi-eye-fill").addClass("bi-eye-slash-fill");
-  });
-
-  $(document).on("mouseup mouseleave", ".showPw", function () {
-    var input = $(this).closest("td").find("input");
-    input.prop("type", "password");
-    $(this).find("i").removeClass("bi-eye-slash-fill").addClass("bi-eye-fill");
+  $(document).on("click", ".showPw", function () {
+    var input = $(this).parent().find("input");
+    var icon = $(this).find("i");
+    if (input.prop("type") == "password") {
+      input.prop("type", "text");
+      icon.removeClass("bi-eye-fill").addClass("bi-eye-slash-fill");
+      $(this).attr("title", "Hide password");
+    } else {
+      input.prop("type", "password");
+      icon.removeClass("bi-eye-slash-fill").addClass("bi-eye-fill");
+      $(this).attr("title", "Show password");
+    }
   });
 
   $(".showPw").button();
 
   $("#achgPw").dialog({
     autoOpen: false,
-    width: "auto",
+    width: getDialogWidth(600),
     resizable: true,
     modal: true,
     buttons: {
       Save: function () {
         var tips = $("#apwChangeErrMsg"),
           tempPWmsg = $("#apwNewPW"),
-          oldpw = $("#txtOldPw");
+          oldpw = $("#txtOldPw"),
+          newpw = $("#txtNewPw1"),
+          confirmpw = $("#txtNewPw2"),
+          fieldMsgs = {
+            old: $("#apwOldPwErrMsg"),
+            newer: $("#apwNewPwErrMsg"),
+            confirm: $("#apwConfirmPwErrMsg"),
+          },
+          fieldInputs = { old: oldpw, newer: newpw, confirm: confirmpw };
 
-        oldpw.removeClass("ui-state-error");
         updateTips(tips, "");
+        $.each(fieldMsgs, function (field, $el) {
+          $el.empty();
+          fieldInputs[field].removeClass("ui-state-error");
+        });
 
         if (oldpw.val() == "") {
           oldpw.addClass("ui-state-error").focus();
@@ -236,15 +248,23 @@ document.addEventListener("DOMContentLoaded", () => {
           return;
         }
 
-        var oldpwval = oldpw.val();
+        var oldpwval = oldpw.val(),
+          newpwval = newpw.val(),
+          confirmpwval = confirmpw.val();
 
         oldpw.val("");
+        newpw.val("");
+        confirmpw.val("");
 
         var body = new URLSearchParams();
         body.append("cmd", "adchgpw");
         body.append("adpw", oldpwval);
         body.append("uid", memData.id);
         body.append("uname", memData.webUserName);
+        if (newpwval !== "") {
+          body.append("newpw", newpwval);
+          body.append("confirmpw", confirmpwval);
+        }
 
         fetch("ws_gen.php", {
           method: "POST",
@@ -255,11 +275,22 @@ document.addEventListener("DOMContentLoaded", () => {
         })
           .then((response) => response.json())
           .then((data) => {
+            if (data.fieldErrors) {
+              Object.keys(data.fieldErrors).forEach(function (field) {
+                if (fieldInputs[field] && fieldMsgs[field]) {
+                  fieldInputs[field].addClass("ui-state-error");
+                  fieldMsgs[field].html(data.fieldErrors[field].join("<br>"));
+                }
+              });
+            }
+
             if (data.error) {
               if (data.gotopage) {
                 window.open(data.gotopage, "_self");
               }
-              updateTips(tips, data.error);
+              if (!data.fieldErrors) {
+                updateTips(tips, data.error);
+              }
             } else if (data.success) {
               updateTips(tips, data.success);
               if (data.tempPW) {

@@ -411,7 +411,7 @@ class UserClass
         }
 
         // check if password has already been used
-        if ($this->isPasswordUsed($dbh, $newPw)) {
+        if ($this->isPasswordUsed($dbh, $newPw, $id)) {
             $this->logMessage .= "You cannot use any of your prior " . $priorPasswords . " passwords<br>";
             $this->passwordErrors['newer'][] = "You cannot use any of your prior " . $priorPasswords . " passwords";
             $success = false;
@@ -475,16 +475,21 @@ class UserClass
      * Summary of isPasswordUsed
      * @param \PDO $dbh
      * @param string $newPw
+     * @param int $id The user whose password history to check. Defaults to the current session user.
      * @return bool
      */
-    public function isPasswordUsed(\PDO $dbh, $newPw): bool
+    public function isPasswordUsed(\PDO $dbh, $newPw, $id = null): bool
     {
         $uS = Session::getInstance();
+
+        if ($id === null) {
+            $id = $uS->uid;
+        }
 
         // get prior password hashes
         $query = "SELECT `Enc_PW` FROM `w_user_passwords` WHERE `idUser` = :idUser ORDER BY `Timestamp` DESC LIMIT " . intval($uS->PriorPasswords) . ";";
         $stmt = $dbh->prepare($query);
-        $stmt->execute([':idUser' => $uS->uid]);
+        $stmt->execute([':idUser' => $id]);
         $hashes = $stmt->fetchAll(\PDO::FETCH_COLUMN);
 
         foreach($hashes as $hash){
