@@ -153,9 +153,9 @@ switch ($c) {
 
     case "chgpw":
 
-        $input = filter_input_array(INPUT_POST, ["old" => FILTER_UNSAFE_RAW, "newer" => FILTER_SANITIZE_ADD_SLASHES]);
+        $input = filter_input_array(INPUT_POST, ["old" => FILTER_UNSAFE_RAW, "newer" => FILTER_SANITIZE_ADD_SLASHES, "confirm" => FILTER_SANITIZE_ADD_SLASHES]);
 
-        $events = changePW($dbh, $input['old'], $input['newer'], $uS->username, $uS->uid);
+        $events = changePW($dbh, $input['old'], $input['newer'], $input['confirm'], $uS->username, $uS->uid);
 
         break;
 
@@ -341,13 +341,13 @@ function newRelationLink(PDO $dbh, int $id, int $rId, string $relCode) {
 }
 
 
-function changePW(PDO $dbh, $oldPw, $newPw, $uname, $id) {
+function changePW(PDO $dbh, $oldPw, $newPw, $confirmPw, $uname, $id) {
 
     $event = [];
 
     $u = new UserClass();
 
-    $event = ($u->updateDbPassword($dbh, $id, $oldPw, $newPw, $uname) === TRUE) ? ['success' => 'User Password updated.'] : ['warning' => $u->logMessage];
+    $event = ($u->updateDbPassword($dbh, $id, $oldPw, $newPw, $uname, 0, $confirmPw) === TRUE) ? ['success' => 'User Password updated.'] : ['warning' => $u->logMessage, 'fieldErrors' => $u->passwordErrors];
 
     return $event;
 }

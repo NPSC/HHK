@@ -21,6 +21,7 @@ toastr.options = {
   hideMethod: "slideUp",
 };
 
+import "bootstrap/dist/css/bootstrap-utilities.min.css";
 import "../../css/root/userSettings.css";
 
 /**
@@ -284,46 +285,51 @@ document.addEventListener("DOMContentLoaded", () => {
         var oldpw = $("#utxtOldPw"),
           pw1 = $("#utxtNewPw1"),
           pw2 = $("#utxtNewPw2"),
-          msg = $("#pwChangeErrMsg");
+          msg = $("#pwChangeErrMsg"),
+          fieldMsgs = {
+            old: $("#oldPwErrMsg"),
+            newer: $("#newPwErrMsg"),
+            confirm: $("#confirmPwErrMsg"),
+          },
+          fieldInputs = { old: oldpw, newer: pw1, confirm: pw2 };
+
         $("div#chgPassword").find("input").prop("type", "password");
-        $("div#chgPassword").find("button.showPw").text("Show");
+        $("div#chgPassword")
+          .find("button.showPw")
+          .attr("title", "Show password")
+          .find("i")
+          .removeClass("bi-eye-slash-fill")
+          .addClass("bi-eye-fill");
         msg.empty();
+        $.each(fieldMsgs, function (field, $el) {
+          $el.empty();
+          fieldInputs[field].removeClass("ui-state-error");
+        });
 
         if (oldpw.val() == "" && (pw1.val() != "" || pw2.val() != "")) {
-          msg.text("Old password is required");
+          oldpw.addClass("ui-state-error");
+          fieldMsgs.old.text("Old password is required");
           return;
         }
 
         // if intent is to change password
         if (oldpw.val() != "") {
-          if (pw1.val() !== pw2.val()) {
-            msg.text("New passwords do not match");
-            return;
-          }
-
-          if (oldpw.val() == pw1.val()) {
-            pw1.addClass("ui-state-error");
-            msg.text("The new password must be different from the old password");
-            pw1.focus();
-            pw2.val("");
-            return;
-          }
-
-          pw1.removeClass("ui-state-error");
-
-          var postData = $("#chgPasswordForm").serialize();
+          let cmd = "chgpw";
+          var postData = new FormData(document.getElementById("chgPasswordForm"));
+          postData.append("cmd", cmd);
           oldpw.val("");
           pw1.val("");
           pw2.val("");
 
-          $.post("../house/ws_admin.php", postData, function (data) {
-            if (data) {
-              try {
-                data = JSON.parse(data);
-              } catch (err) {
-                alert("Parser error - " + err.message);
-                return;
-              }
+          fetch("../house/ws_admin.php", {
+            method: "POST",
+            headers: {
+              accept: "application/json",
+            },
+            body: postData,
+          })
+            .then((response) => response.json())
+            .then((data) => {
               if (data.error) {
                 if (data.gotopage) {
                   window.open(data.gotopage, "_self");
@@ -333,10 +339,25 @@ document.addEventListener("DOMContentLoaded", () => {
                 flagAlertMessage(data.success, "success");
                 $("#dchgPw").dialog("close");
               } else if (data.warning) {
-                $("#pwChangeErrMsg").html(data.warning);
+                if (data.fieldErrors) {
+                  Object.keys(data.fieldErrors).forEach(function (field) {
+                    if (fieldInputs[field] && fieldMsgs[field]) {
+                      fieldInputs[field].addClass("ui-state-error");
+                      fieldMsgs[field].html(data.fieldErrors[field].join("<br>"));
+                    }
+                  });
+                } else {
+                  msg.html(data.warning);
+                }
               }
-            }
-          });
+            })
+            .catch((error) => {
+              if (error instanceof SyntaxError) {
+                alert("Parser error - " + error.message);
+              } else {
+                flagAlertMessage(error, "error");
+              }
+            });
         }
         //$("#dchgPw").dialog('close');
       },
@@ -540,6 +561,7 @@ document.addEventListener("DOMContentLoaded", () => {
         };
         $(".PassExpDesc").hide();
         $("div#dchgPw #chgPassword").find("input").removeClass("ui-state-error").val("");
+        $("div#dchgPw #chgPassword").find(".fieldErrMsg").empty();
         $("#pwChangeErrMsg").text("");
 
         $("div#dchgPw").find("button, input[type=submit]").button();
@@ -555,12 +577,15 @@ document.addEventListener("DOMContentLoaded", () => {
 
     $(document).on("click", ".showPw", function () {
       var input = $(this).parent().find("input");
+      var icon = $(this).find("i");
       if (input.prop("type") == "password") {
         input.prop("type", "text");
-        $(this).text("Hide");
+        icon.removeClass("bi-eye-fill").addClass("bi-eye-slash-fill");
+        $(this).attr("title", "Hide password");
       } else {
         input.prop("type", "password");
-        $(this).text("Show");
+        icon.removeClass("bi-eye-slash-fill").addClass("bi-eye-fill");
+        $(this).attr("title", "Show password");
       }
     });
 
@@ -581,6 +606,7 @@ document.addEventListener("DOMContentLoaded", () => {
       $(this).removeClass("ui-state-error");
       $(".hhk-alert").hide();
       $("#pwChangeErrMsg").text("");
+      $(this).closest("tr").next("tr").find(".fieldErrMsg").empty();
     });
 
     $("#dchgPw").dialog({

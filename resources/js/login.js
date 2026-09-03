@@ -210,12 +210,15 @@ document.addEventListener("DOMContentLoaded", () => {
 
   $(document).on("click", ".showPw", function () {
     var input = $(this).parent().find("input");
+    var icon = $(this).find("i");
     if (input.prop("type") == "password") {
       input.prop("type", "text");
-      $(this).text("Hide");
+      icon.removeClass("bi-eye-fill").addClass("bi-eye-slash-fill");
+      $(this).attr("title", "Hide password");
     } else {
       input.prop("type", "password");
-      $(this).text("Show");
+      icon.removeClass("bi-eye-slash-fill").addClass("bi-eye-fill");
+      $(this).attr("title", "Show password");
     }
   });
 });

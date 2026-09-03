@@ -264,7 +264,7 @@ class Login {
             HTMLContainer::generateMarkup("div",
                 HTMLContainer::generateMarkup("div",
                     HTMLInput::generateMarkup("", array('id'=>'txtPW', 'type'=>"password", "class"=>"w-100")) .
-                    '<button type="button" class="showPw mx-1 ui-button" tabindex="-1">Show</button>'
+                    '<button type="button" class="showPw mx-1 ui-button" tabindex="-1" title="Show password"><i class="bi bi-eye-fill"></i></button>'
                 , array("class"=>"d-flex")) .
                 HTMLContainer::generateMarkup('span', '', array('id'=>'errPW', 'class'=>'hhk-logerrmsg'))
             , array("class"=>"col-8"))

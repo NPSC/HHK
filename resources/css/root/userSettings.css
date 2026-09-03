@@ -11,8 +11,3 @@
   color: #000;
   opacity: 1 !important;
 }
-
-#chgPasswordForm td {
-  border: none;
-  background: transparent !important;
-}

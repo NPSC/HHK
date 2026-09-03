@@ -32,6 +32,13 @@ class UserClass
     public $logMessage = '';
 
     /**
+     * Validation errors from updateDbPassword(), keyed by form field name
+     * ('old', 'confirm', 'newer'), each an array of message strings.
+     * @var array<string, string[]>
+     */
+    public $passwordErrors = [];
+
+    /**
      * Summary of defaultPage
      * @var string
      */
@@ -373,43 +380,56 @@ class UserClass
      * @param string $newPw
      * @param string $uname
      * @param mixed $resetNextLogin
+     * @param string|null $confirmPw Retyped new password to confirm against $newPw. Pass null (default) to skip this check, e.g. for admin-initiated resets where no confirmation field exists.
      * @return bool
      */
-    public function updateDbPassword(\PDO $dbh, $id, $oldPw, $newPw, $uname, $resetNextLogin = 0): bool
+    public function updateDbPassword(\PDO $dbh, $id, $oldPw, $newPw, $uname, $resetNextLogin = 0, $confirmPw = null): bool
     {
         $ssn = Session::getInstance();
         $priorPasswords = SysConfig::getKeyValue($dbh, 'sys_config', 'PriorPasswords');
 
         $success = true;
+        $this->passwordErrors = [];
 
         // check old password
         if(!$this->_checkLogin($dbh, $ssn->username, $oldPw, false, false)){
-            $this->logMessage = "Your old password is incorrect<br>";
+            $this->logMessage = "Current Password is incorrect<br>";
+            $this->passwordErrors['old'][] = "Current Password is incorrect";
+            $success = false;
+        }
+
+        if ($confirmPw !== null && $newPw !== $confirmPw) {
+            $this->logMessage .= "Confirmed Password does not match<br>";
+            $this->passwordErrors['confirm'][] = "Confirmed Password does not match";
             $success = false;
         }
 
         if ($oldPw == $newPw) {
-            $this->logMessage .= "The new password must be different from the old one<br>";
+            $this->logMessage .= "New Password must be different from Current Password<br>";
+            $this->passwordErrors['newer'][] = "New Password must be different from Current Password";
             $success = false;
         }
 
         // check if password has already been used
         if ($this->isPasswordUsed($dbh, $newPw)) {
-            $this->logMessage .= "You cannot use any of the prior " . $priorPasswords . " passwords<br>";
+            $this->logMessage .= "You cannot use any of your prior " . $priorPasswords . " passwords<br>";
+            $this->passwordErrors['newer'][] = "You cannot use any of your prior " . $priorPasswords . " passwords";
             $success = false;
         }
 
         //check length
         $minPassLength = ($ssn->minPassLength > 8 ? $ssn->minPassLength : 8);
         if (strlen($newPw) < $minPassLength){
-            $this->logMessage .= "The new password must be at least " . $minPassLength . " characters<br>";
+            $this->logMessage .= "New Password must be at least " . $minPassLength . " characters<br>";
+            $this->passwordErrors['newer'][] = "New Password must be at least " . $minPassLength . " characters";
             $success = false;
         }
 
         //check strength
         $strongRegex = '/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*\W).{'.$minPassLength.',}$/';
         if (!preg_match($strongRegex, $newPw)) {
-            $this->logMessage .= "The new password does not meet the password complexity requirements.<br>";
+            $this->logMessage .= "New Password does not meet the password complexity requirements.<br>";
+            $this->passwordErrors['newer'][] = "New Password does not meet the password complexity requirements.";
             $success = false;
         }
 
@@ -794,19 +814,43 @@ class UserClass
             		<div class="ui-corner-bottom hhk-tdbox ui-widget-content" style="padding: 5px;">
 
                         <form id="chgPasswordForm">
-                        <input type="hidden" name="cmd" value="chgpw" />
-                        <table style="width: 100%"><tr>
-                                <td class="tdlabel">Username:</td><td style="background-color: white;"><input type="text" disabled id="utxtUserName" name="username" placeholder="' . $uS->username . '" autocomplete="username" /></td>
-                            </tr><tr>
-                                <td class="tdlabel">Current Password:</td><td class="hhk-flex"><input style="width: 100%" id="utxtOldPw" name="old" type="password" value="" autocomplete="current-password" /><button type="button" class="showPw" style="font-size: .75em; margin-left: 1em;" tabindex="-1">Show</button></td>
-                            </tr><tr>
-                                <td class="tdlabel">New Password:</td><td class="hhk-flex"><input style="width: 100%" id="utxtNewPw1" name="newer" type="password" value="" autocomplete="new-password" /><button type="button" class="showPw" style="font-size: .75em; margin-left: 1em;" tabindex="-1">Show</button></td>
-                            </tr><tr>
-                                <td class="tdlabel">Confirm New Password:</td><td class="hhk-flex"><input style="width: 100%" id="utxtNewPw2" type="password" value=""  autocomplete="new-password" /><button type="button" class="showPw" style="font-size: .75em; margin-left: 1em;" tabindex="-1">Show</button></td>
-                            </tr><tr>
-                                <td colspan ="2"><span style="font-size: smaller;">Passwords must have at least ' . $minPassLength . ' characters with at least 1 uppercase letter, 1 lowercase letter, a number and a symbol. It cannot include &lt; or &gt;. Do not use names or dictionary words</span></td>
-                            </tr>
-                        </table>
+                            <div class="row mx-0 align-items-center">
+                                <label class="col-5 text-end" for="utxtUserName">Username:</label>
+                                <div class="col-7" style="background-color: white;"><input type="text" disabled id="utxtUserName" name="username" placeholder="' . $uS->username . '" class="w-100" autocomplete="username" /></div>
+                            </div>
+                            <div class="row mx-0 mt-2">
+                                <label class="col-5 text-end" style="text-wrap: nowrap;" for="utxtOldPw">Current Password:</label>
+                                <div class="col-7">
+                                    <div class="hhk-flex">
+                                        <input class="w-100" id="utxtOldPw" name="old" type="password" value="" autocomplete="current-password" />
+                                        <button type="button" class="showPw" style="width: 1.75em; height: 1.75em; padding: 0; margin-left: 0.5em; display: inline-flex; align-items: center; justify-content: center;" tabindex="-1" title="Show password"><i class="bi bi-eye-fill"></i></button>
+                                    </div>
+                                    <div id="oldPwErrMsg" class="fieldErrMsg" style="color:red; font-size: smaller;"></div>
+                                </div>
+                            </div>
+                            <div class="row mx-0 mt-2">
+                                <label class="col-5 text-end" style="text-wrap: nowrap;" for="utxtNewPw1">New Password:</label>
+                                <div class="col-7">
+                                    <div class="hhk-flex">
+                                        <input class="w-100" id="utxtNewPw1" name="newer" type="password" value="" autocomplete="new-password" />
+                                        <button type="button" class="showPw" style="width: 1.75em; height: 1.75em; padding: 0; margin-left: 0.5em; display: inline-flex; align-items: center; justify-content: center;" tabindex="-1" title="Show password"><i class="bi bi-eye-fill"></i></button>
+                                    </div>
+                                    <div id="newPwErrMsg" class="fieldErrMsg" style="color:red; font-size: smaller;"></div>
+                                </div>
+                            </div>
+                            <div class="row mx-0 mt-2">
+                                <label class="col-5 text-end" style="text-wrap: nowrap;" for="utxtNewPw2">Confirm New Password:</label>
+                                <div class="col-7">
+                                    <div class="hhk-flex">
+                                        <input class="w-100" id="utxtNewPw2" name="confirm" type="password" value="" autocomplete="new-password" />
+                                        <button type="button" class="showPw" style="width: 1.75em; height: 1.75em; padding: 0; margin-left: 0.5em; display: inline-flex; align-items: center; justify-content: center;" tabindex="-1" title="Show password"><i class="bi bi-eye-fill"></i></button>
+                                    </div>
+                                    <div id="confirmPwErrMsg" class="fieldErrMsg" style="color:red; font-size: smaller;"></div>
+                                </div>
+                            </div>
+                            <div class="row mx-0 mt-2">
+                                <div class="col-12"><span style="font-size: smaller;">Passwords must have at least ' . $minPassLength . ' characters with at least 1 uppercase letter, 1 lowercase letter, a number and a symbol. It cannot include &lt; or &gt;. Do not use names or dictionary words</span></div>
+                            </div>
                         </form>
                         <div id="pwChangeErrMsg" style="color:red; text-align:center;" class="mt-1"></div>
                     </div>

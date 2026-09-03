@@ -205,11 +205,13 @@ document.addEventListener("DOMContentLoaded", () => {
   $(document).on("mousedown", ".showPw", function () {
     var input = $(this).closest("td").find("input");
     input.prop("type", "text");
+    $(this).find("i").removeClass("bi-eye-fill").addClass("bi-eye-slash-fill");
   });
 
-  $(document).on("mouseup", ".showPw", function () {
+  $(document).on("mouseup mouseleave", ".showPw", function () {
     var input = $(this).closest("td").find("input");
     input.prop("type", "password");
+    $(this).find("i").removeClass("bi-eye-slash-fill").addClass("bi-eye-fill");
   });
 
   $(".showPw").button();

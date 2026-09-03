@@ -63,7 +63,13 @@ body {
 }
 
 .showPw {
-  font-size: 0.75em !important;
+  width: 1.75em !important;
+  height: 1.75em !important;
+  padding: 0 !important;
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  margin-left: 0.5em !important;
 }
 
 .ui-icon-extlink {
