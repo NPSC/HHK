@@ -381,9 +381,11 @@ class DonorReport
                     $sumaryRows['Report Type'] = "First Donations Report";
                 }
 
-                $query = "FROM `vindividual_donations` `vd` $ljClause WHERE 1=1 $wclause $selClause GROUP BY `vd`.`id` " . ($totalClause != "" ? $totalClause . "AND " : "HAVING") . " MIN(`vd`.`Effective_Date`) >= :ftStart AND MIN(`vd`.`Effective_Date`) <= :ftEnd $oClause ";
-                $ftParams = $queryParams + [':ftStart' => $sDate, ':ftEnd' => $eDate];
-
+                $query = "FROM `vindividual_donations` `vd` $ljClause WHERE 1=1 $wclause $selClause GROUP BY `vd`.`id` " . ($totalClause != "" ? $totalClause . " AND " : "HAVING") . " MIN(`vd`.`Effective_Date`) >= :ftStart AND MIN(`vd`.`Effective_Date`) <= :ftEnd $oClause ";
+                $ftParams = $queryParams;
+                unset($ftParams[':effDateStart'], $ftParams[':effDateEnd']);
+                $ftParams[':ftStart'] = $sDate;
+                $ftParams[':ftEnd'] = $eDate;
                 $stmt = $dbh->prepare("SELECT `vd`.*, `vd`.`Amount` AS `Total`, `vd`.`Tax_Free` AS `Tot_TaxFree`, MIN(`vd`.`Effective_Date`)" . $query);
                 $stmt->execute($ftParams);
                 $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);

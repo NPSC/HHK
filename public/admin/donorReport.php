@@ -233,9 +233,13 @@ $CampOpt = Campaign::CampaignSelOptionMarkup($dbh, '', FALSE);
                         </tr>
                         <tr>
                             <td><?php echo $donSelMemberType->createMarkup(5, true); ?></td>
-                            <td>And<input type="radio" name="rb_dandOr" value="and" <?php echo $anddChecked; ?> />
-                                &nbsp;&nbsp;Or<input type="radio" name="rb_dandOr" value ="or" <?php echo $ordChecked; ?> />
-                                <input type="hidden" id="hdnseldDor" value="" /></td>
+                            <td>
+                                <input type="radio" name="rb_dandOr" value="and" id="rb_and" <?php echo $anddChecked; ?> />
+                                <label for="rb_and" class="me-2">And</label>
+                                <input type="radio" name="rb_dandOr" value ="or" id="rb_or" <?php echo $ordChecked; ?> />
+                                <label for="rb_or">Or</label>
+                                <input type="hidden" id="hdnseldDor" value="" />
+                            </td>
                             <td colspan="2"><input type="checkbox" name="exDeceased" id="exDeceased" <?php echo $exDeceasedChecked; ?>/><label for="exDeceased"> Include Deceased Members</label></td>
                         </tr>
                     </table>

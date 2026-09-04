@@ -42,40 +42,6 @@ $intro = "";
 $checked = "checked='checked'";
 $bchecked = "";
 
-$Zipauery = "Select     n.idName AS Id,
-    (case
-        when (n.Record_Company = 0) then concat(n.Name_Last, ', ', n.Name_First)
-        else n.Company
-    end) AS `Name`,
-
-    (case
-        when (na.Bad_Address <> '') then 'T'
-        else ''
-    end) AS `Bad Addr`,
-    (case
-        when
-            (ifnull(na.Address_2, '') <> '')
-        then
-            concat(ifnull(na.Address_1, ''),
-                    ', ',
-                    ifnull(na.Address_2, ''))
-        else ifnull(na.Address_1, '')
-    end) AS `Street Address`,
-    ifnull(na.City, '') AS City,
-    ifnull(na.State_Province, '') AS State,
-    ifnull(na.Postal_Code, '') AS Zip,
-	p.Zip_Code, p.City, p.State, p.Acceptable_Cities
-
-from
-    name_address na
-    left join name n ON n.idName = na.idName
-	left join postal_codes p on left(ifnull(na.Postal_Code, ''), 5) = p.Zip_Code
-where
-	(n.idName > 0) and (n.Member_Status in ('a','d', 'in')) and na.Country_Code = 'US' and na.Postal_Code <> ''
-	and (p.Zip_Code is null
-			or p.State != ifnull(na.State_Province, '')
-			or (replace(na.City, 'St.', 'Saint') != p.City and locate(replace(na.City, '.', ''), p.Acceptable_Cities) = 0)
-		)";
 /*
  *  Post-back
  */
@@ -124,10 +90,7 @@ if (filter_has_var(INPUT_POST, "btnRunHere") || filter_has_var(INPUT_POST, "btnD
 }
 
 
-function doReports(PDO $dbh, chkBoxCtrl $cbMemStatus, chkBoxCtrl $cbRptType, $isExcel, $prefOnly, $includeBad) {
-
-    $cbMemStatus->setReturnValues(isset($_POST[$cbMemStatus->get_htmlNameBase()]) ? $_POST[$cbMemStatus->get_htmlNameBase()] : []);
-    $cbRptType->setReturnValues(isset($_POST[$cbRptType->get_htmlNameBase()]) ? $_POST[$cbRptType->get_htmlNameBase()] : []);
+function doReports(PDO $dbh, chkBoxCtrl $cbMemStatus, chkBoxCtrl $cbRptType, bool $isExcel, bool $prefOnly, bool $includeBad): array {
 
     $uS = Session::getInstance();
     $uname = $uS->username;
@@ -164,8 +127,6 @@ function doReports(PDO $dbh, chkBoxCtrl $cbMemStatus, chkBoxCtrl $cbRptType, $is
 
         // Did we catch any reports?
         if (count($rpts) > 0) {
-            // Shave the last comma off the label list
-            $sumaryRows["Reports"] = substr($sumaryRows["Reports"], 0, -2);
 
             $rptClause = "";
             // Put the where clause together
@@ -200,27 +161,22 @@ function doReports(PDO $dbh, chkBoxCtrl $cbMemStatus, chkBoxCtrl $cbRptType, $is
 
     }
 
-    $wClause = "";
+    $conditions = [];
 
-    if ($statClause != "" && $rptClause != "") {
-        $wClause = " where " . $statClause . " and " . $rptClause;
-    } else if ($statClause != "" && $rptClause == "") {
-        $wClause = " where " . $statClause;
-    } else if ($statClause == "" && $rptClause != "") {
-        $wClause = " where " . $rptClause;
+    if ($statClause != "") {
+        $conditions[] = $statClause;
+    }
+    if ($rptClause != "") {
+        $conditions[] = $rptClause;
+    }
+    if ($prefOnly) {
+        $conditions[] = "Pref<>''";
+    }
+    if (!$includeBad) {
+        $conditions[] = "`Bad Addr` = ''";
     }
 
-    if ($prefOnly && $wClause == "") {
-        $wClause = " where Pref<>'' ";
-    } else if ($prefOnly && $wClause != "") {
-        $wClause .= " and Pref<>'' ";
-    }
-
-    if (!$includeBad && $wClause == "") {
-        $wClause = " where `Bad Addr` = '' ";
-    } else if (!$includeBad && $wClause != "") {
-        $wClause .= " and `Bad Addr` = '' ";
-    }
+    $wClause = count($conditions) > 0 ? " where " . implode(" and ", $conditions) : "";
 
     $query = "select * from vdump_badaddress " . $wClause;
 
@@ -390,8 +346,7 @@ function doReports(PDO $dbh, chkBoxCtrl $cbMemStatus, chkBoxCtrl $cbRptType, $is
                     </div>
                 </form>
             </div>
-            <div style="clear: both;"></div>
-            <div id="divTable" style="margin-top: 15px; display:<?php echo $divDisp; ?>;" class="ui-widget ui-widget-content ui-corner-all">
+            <div id="divTable" style="font-size: 0.9em; display:<?php echo $divDisp; ?>;" class="mt-3 ui-widget ui-widget-content ui-corner-all hhk-member-detail">
                 <?php echo $intro; ?>
                 <table id="tblCategory" class="display">
                     <?php echo $markup; ?>

@@ -204,14 +204,15 @@ $CampOpt = Campaign::CampaignSelOptionMarkup($dbh, '', FALSE);
                             <th>Member Basis</th>
                         </tr><tr>
                             <td rowspan="4">
-                                <select id="selDonCamp" name="selDonCamp[]" multiple="multiple" size="8"><option value='All' selected = 'selected'>All Campaigns</option><?php echo $CampOpt ?></select>
+                                <select id="selDonCamp" name="selDonCamp[]" multiple="multiple" size="8" aria-label="Campaigns"><option value='All' selected = 'selected'>All Campaigns</option><?php echo $CampOpt ?></select>
                                 <input type="hidden" id="donCampSelection" value="<?php echo $SelectDonCamp ?>" />
                             </td>
                             <td>
                                 <label for="txtmin" title="Whole Dollars Only">Min Amount: $</label><input type="text" class="dollarsOnly" title="Whole Dollars Only" name="txtmin" id="txtmin" size="7" value="<?php echo $minMkup; ?>" />
                             </td>
-                            <td>Starting:
-                                <input type="text" id ="sdate" name="sdate" class="ckdate" VALUE='<?php echo $sDate; ?>'/>
+                            <td>
+                                <label for="sdate">Starting:</label>
+                                <input type="text" id ="sdate" name="sdate" class="ckdate" value='<?php echo $sDate; ?>'/>
                             </td>
                             <td rowspan="4" style="vertical-align:top;"><?php echo $cbBasisDonor->createMarkup(); ?>
                             </td>
@@ -220,8 +221,9 @@ $CampOpt = Campaign::CampaignSelOptionMarkup($dbh, '', FALSE);
                             <td>
                                 <label for="txtmax" title="Whole Dollars Only">Max Amount: $</label><input type="text" class="dollarsOnly" title="Whole Dollars Only" name="txtmax" id="txtmax" size="7" value="<?php echo $maxMkup; ?>"/>
                             </td>
-                            <td>Ending:
-                                <INPUT TYPE='text' NAME='edate' id="edate" class="ckdate" VALUE='<?php echo $eDate; ?>'/>
+                            <td>
+                                <label for="edate">Ending:</label>
+                                <input type="text" name="edate" id="edate" class="ckdate" value='<?php echo $eDate; ?>'/>
                             </td>
                         </tr>
                         <tr>
@@ -229,7 +231,7 @@ $CampOpt = Campaign::CampaignSelOptionMarkup($dbh, '', FALSE);
                             <td style="max-height: 25px; min-width: 185px;"><input type="checkbox" id="overRideSal" name="overRideSal" <?php echo $overRideSalChecked ?>/><label for="overRideSal"> Over-ride Salutations</label></td>
                         </tr>
                         <tr>
-                            <td><select name="selrollup" id="selrollup" size="3">
+                            <td><select name="selrollup" id="selrollup" size="3" aria-label="Rollup Type">
                                     <option value="rd">Roll-up by Donor</option>
                                     <option value="in" selected="selected">Individual Donations</option>
                                     <option value="ft" >First Donation</option>
@@ -237,13 +239,13 @@ $CampOpt = Campaign::CampaignSelOptionMarkup($dbh, '', FALSE);
                                 <input type="hidden" id="hdnselrollup" value="<?php echo $selectRoll ?>" />
                             </td>
                             <td><div class="hhk-hideSalutation"><table>
-                                <tr><td style="border: none;"><?php echo "Sal:". $letterSalSelector->createMarkup(); ?></td></tr>
-                                <tr><td style="border: none;"><?php echo "Env:" . $envSalSelector->createMarkup(); ?></td></tr>
+                                <tr><td style="border: none;"><label for="letSal">Sal:</label><?php echo $letterSalSelector->createMarkup(); ?></td></tr>
+                                <tr><td style="border: none;"><label for="envSal">Env:</label><?php echo $envSalSelector->createMarkup(); ?></td></tr>
                                 </table></div>
                             </td>
                         </tr>
                         <tr>
-                            <td colspan="2" style="text-align: center;"><em>Optionally select categories</em></td>
+                            <td colspan="2" class="text-center"><em>Optionally select categories</em></td>
                         </tr>
                         <tr>
                             <th>Member Type</th>
@@ -251,10 +253,14 @@ $CampOpt = Campaign::CampaignSelOptionMarkup($dbh, '', FALSE);
                             <th colspan="2">Member Status</th>
                         </tr>
                         <tr>
-                            <td><?php echo $donSelMemberType->createMarkup(5, true); ?></td>
-                            <td>And<input type="radio" name="rb_dandOr" value="and" <?php echo $anddChecked; ?> />
-                                &nbsp;&nbsp;Or<input type="radio" name="rb_dandOr" value ="or" <?php echo $ordChecked; ?> />
-                                <input type="hidden" id="hdnseldDor" value="" /></td>
+                            <td><?php echo str_replace("<select ", "<select aria-label='Member Type' ", $donSelMemberType->createMarkup(5, true)); ?></td>
+                            <td>
+                                <input type="radio" name="rb_dandOr" value="and" id="rb_and" <?php echo $anddChecked; ?> />
+                                <label for="rb_and" class="me-2">And</label>
+                                <input type="radio" name="rb_dandOr" value ="or" id="rb_or" <?php echo $ordChecked; ?> />
+                                <label for="rb_or">Or</label>
+                                <input type="hidden" id="hdnseldDor" value="" />
+                            </td>
                             <td  colspan="3"><input type="checkbox" name="exDeceased" id="exDeceased" <?php echo $exDeceasedChecked; ?>/><label for="exDeceased"> Include Deceased Members</label></td>
                         </tr>
                     </table>
