@@ -1,14 +1,11 @@
 <?php
 
 use HHK\Common;
-use HHK\Donation\Campaign;
-use HHK\AlertControl\AlertMessage;
-use HHK\HTMLControls\HTMLSelector;
+use HHK\HTMLControls\{HTMLInput, HTMLSelector, HTMLTable};
 use HHK\SysConst\CampaignType;
 use HHK\Tables\EditRS;
 use HHK\Tables\Donate\CampaignRS;
 use HHK\sec\WebInit;
-use HHK\HTMLControls\selCtrl;
 use HHK\Vite\Vite;
 
 /**
@@ -22,197 +19,214 @@ use HHK\Vite\Vite;
 
  require ("AdminIncludes.php");
 
-function saveCampaign(PDO $dbh, $campCode, $type, $post) {
+/**
+ * Builds the editable table of all campaigns.
+ */
+function getCampaignsTable(\PDO $dbh): HTMLTable {
+
+    $campRS = new CampaignRS();
+    $rows = EditRS::select($dbh, $campRS, [], 'and', [$campRS->Status, $campRS->Title]);
+
+    $types = Common::readGenLookupsPDO($dbh, 'Campaign_Type');
+    $statuses = Common::readGenLookupsPDO($dbh, 'Campaign_Status');
+
+    $tbl = new HTMLTable();
+
+    $tbl->addHeaderTr(
+        HTMLTable::makeTh('ID')
+        . HTMLTable::makeTh('Title')
+        . HTMLTable::makeTh('Start Date')
+        . HTMLTable::makeTh('End Date')
+        . HTMLTable::makeTh('Min. Donation')
+        . HTMLTable::makeTh('Max. Donation')
+        . HTMLTable::makeTh('Goal')
+        . HTMLTable::makeTh('Type')
+        . HTMLTable::makeTh('Percent')
+        . HTMLTable::makeTh('Status')
+        . HTMLTable::makeTh('Category')
+        . HTMLTable::makeTh('Mail Merge Code')
+        . HTMLTable::makeTh('Description')
+        . HTMLTable::makeTh('Last Updated')
+        . HTMLTable::makeTh('Updated By')
+    );
+
+    foreach ($rows as $r) {
+
+        $code = $r['Campaign_Code'];
+
+        $tbl->addBodyTr(
+            HTMLTable::makeTd($code)
+            . HTMLTable::makeTd(HTMLInput::generateMarkup($r['Title'], ['name' => 'campTitle[' . $code . ']', 'size' => '25']))
+            . HTMLTable::makeTd(HTMLInput::generateMarkup($r['Start_Date'] != '' ? date('m/d/Y', strtotime($r['Start_Date'])) : '', ['name' => 'campStart[' . $code . ']', 'class' => 'ckdate', 'size' => '10']))
+            . HTMLTable::makeTd(HTMLInput::generateMarkup($r['End_Date'] != '' ? date('m/d/Y', strtotime($r['End_Date'])) : '', ['name' => 'campEnd[' . $code . ']', 'class' => 'ckdate', 'size' => '10']))
+            . HTMLTable::makeTd(HTMLInput::generateMarkup($r['Min_Donation'] > 0 ? number_format($r['Min_Donation'], 2) : '', ['name' => 'campMin[' . $code . ']', 'size' => '8', 'class' => 'hhk-money']))
+            . HTMLTable::makeTd(HTMLInput::generateMarkup($r['Max_Donation'] > 0 ? number_format($r['Max_Donation'], 2) : '', ['name' => 'campMax[' . $code . ']', 'size' => '8', 'class' => 'hhk-money']))
+            . HTMLTable::makeTd(HTMLInput::generateMarkup($r['Target'] > 0 ? number_format($r['Target'], 2) : '', ['name' => 'campTarget[' . $code . ']', 'size' => '8', 'class' => 'hhk-money']))
+            . HTMLTable::makeTd(HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($types, $r['Campaign_Type'], false), ['name' => 'campType[' . $code . ']', 'class' => 'campTypeSel']))
+            . HTMLTable::makeTd(HTMLInput::generateMarkup($r['Percent_Cut'] > 0 ? number_format($r['Percent_Cut'], 2) : '', ['name' => 'campPercent[' . $code . ']', 'size' => '6', 'class' => 'hhk-money']))
+            . HTMLTable::makeTd(HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($statuses, $r['Status'], false), ['name' => 'campStatus[' . $code . ']']))
+            . HTMLTable::makeTd(HTMLInput::generateMarkup($r['Category'], ['name' => 'campCat[' . $code . ']', 'size' => '10']))
+            . HTMLTable::makeTd(HTMLInput::generateMarkup($r['Campaign_Merge_Code'], ['name' => 'campMergeCode[' . $code . ']', 'size' => '10']))
+            . HTMLTable::makeTd(HTMLInput::generateMarkup($r['Description'], ['name' => 'campDesc[' . $code . ']', 'size' => '25']))
+            . HTMLTable::makeTd($r['Last_Updated'] != '' ? date('M j, Y', strtotime($r['Last_Updated'])) : '')
+            . HTMLTable::makeTd($r['Updated_By'])
+        );
+    }
+
+    // New campaign row
+    $tbl->addBodyTr(
+        HTMLTable::makeTd('New')
+        . HTMLTable::makeTd(HTMLInput::generateMarkup('', ['name' => 'campTitle[0]', 'size' => '25', 'placeholder' => 'New Campaign...']))
+        . HTMLTable::makeTd(HTMLInput::generateMarkup('', ['name' => 'campStart[0]', 'class' => 'ckdate', 'size' => '10']))
+        . HTMLTable::makeTd(HTMLInput::generateMarkup('', ['name' => 'campEnd[0]', 'class' => 'ckdate', 'size' => '10']))
+        . HTMLTable::makeTd(HTMLInput::generateMarkup('', ['name' => 'campMin[0]', 'size' => '8', 'class' => 'hhk-money']))
+        . HTMLTable::makeTd(HTMLInput::generateMarkup('', ['name' => 'campMax[0]', 'size' => '8', 'class' => 'hhk-money']))
+        . HTMLTable::makeTd(HTMLInput::generateMarkup('', ['name' => 'campTarget[0]', 'size' => '8', 'class' => 'hhk-money']))
+        . HTMLTable::makeTd(HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($types, CampaignType::Normal, false), ['name' => 'campType[0]', 'class' => 'campTypeSel']))
+        . HTMLTable::makeTd(HTMLInput::generateMarkup('', ['name' => 'campPercent[0]', 'size' => '6', 'class' => 'hhk-money']))
+        . HTMLTable::makeTd(HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($statuses, 'a', false), ['name' => 'campStatus[0]']))
+        . HTMLTable::makeTd(HTMLInput::generateMarkup('', ['name' => 'campCat[0]', 'size' => '10']))
+        . HTMLTable::makeTd(HTMLInput::generateMarkup('', ['name' => 'campMergeCode[0]', 'size' => '10']))
+        . HTMLTable::makeTd(HTMLInput::generateMarkup('', ['name' => 'campDesc[0]', 'size' => '25']))
+        . HTMLTable::makeTd('')
+        . HTMLTable::makeTd('')
+    );
+
+    return $tbl;
+}
+
+/**
+ * @return string '' on success, an error message on failure. Never deletes - Campaign_Code
+ * is referenced elsewhere (donations, activity) so rows are only ever added or edited.
+ */
+function saveCampaignRow(\PDO $dbh, string $campCode, array $row): string {
 
     $campRS = new CampaignRS();
 
-    if ($campCode != "vNew" && $campCode != "") {
+    if ($campCode !== '0' && $campCode !== '') {
 
         $campRS->Campaign_Code->setStoredVal($campCode);
         $cRows = EditRS::select($dbh, $campRS, array($campRS->Campaign_Code));
+
         if (count($cRows) > 0) {
             EditRS::loadRow($cRows[0], $campRS);
         } else {
-            return "The Campaign Code was not found.";
+            return 'Campaign Code "' . $campCode . '" was not found.';
         }
     }
 
-    // Campaign Type
-    if ($type == "") {
-        $type = CampaignType::Normal;       // normal.
-    }
-    $campRS->Campaign_Type->setNewVal($type);
+    $title = trim(filter_var($row['title'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
 
-    // Title
-    if (isset($post['txtTitle']) && $post['txtTitle'] != '') {
-        $campRS->Title->setNewVal(filter_var($post['txtTitle'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
-    } else {
-        return "The title must be specified.";
+    if ($title === '') {
+        return 'A Title is required for every campaign.';
     }
 
-    // Start and end dates
-    if (isset($post['sdate']) && isset($post['edate'])) {
+    $campRS->Title->setNewVal($title);
 
-        $stDateStr = filter_var($post["sdate"], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
-        $enDateStr = filter_var($post["edate"], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+    $type = filter_var($row['type'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+    $campRS->Campaign_Type->setNewVal($type != '' ? $type : CampaignType::Normal);
 
-        if ($stDateStr == '' || $enDateStr == '') {
-            return "Start and End dates must be specified.";
-        }
+    $stDateStr = filter_var($row['sdate'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+    $enDateStr = filter_var($row['edate'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
-        try {
-            $stDate = new \DateTime($stDateStr);
-            $endDate = new \DateTime($enDateStr);
-        } catch (Exception $ex) {
-            return "Undecipherable Start and/or End Dates.";
-        }
-
-        if ($stDate > $endDate) {
-            return "The End date must be after the Start date.";
-        }
-
-        $campRS->Start_Date->setNewVal($stDate->format('Y-m-d'));
-        $campRS->End_Date->setNewVal($endDate->format('Y-m-d'));
-    } else {
-        return "Start and End dates must be specified.";
+    if ($stDateStr == '' || $enDateStr == '') {
+        return '"' . $title . '": Start and End dates must be specified.';
     }
 
-    // Min & max
-    $min = filter_var($post["txtMin"], FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION);
-    $max = filter_var($post["txtMax"], FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION);
+    try {
+        $stDate = new \DateTime($stDateStr);
+        $endDate = new \DateTime($enDateStr);
+    } catch (\Exception $ex) {
+        return '"' . $title . '": Undecipherable Start and/or End Dates.';
+    }
 
-    // Some logic to manage max and min amounts
+    if ($stDate > $endDate) {
+        return '"' . $title . '": The End date must be after the Start date.';
+    }
+
+    $campRS->Start_Date->setNewVal($stDate->format('Y-m-d'));
+    $campRS->End_Date->setNewVal($endDate->format('Y-m-d'));
+
+    $min = filter_var($row['min'], FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION);
+    $max = filter_var($row['max'], FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION);
+
     if ($max < 0 || $min < 0) {
-        return "Use only positive values for Min and Max donations";
+        return '"' . $title . '": Use only positive values for Min and Max donations.';
     }
+
     if ($max > 0 && $min > $max) {
-        return "Check your minimum and maximum donation amounts (Min must be less than Max).";
+        return '"' . $title . '": Check the minimum and maximum donation amounts (Min must be less than Max).';
     }
 
     $campRS->Min_Donation->setNewVal($min);
     $campRS->Max_Donation->setNewVal($max);
+    $campRS->Target->setNewVal(filter_var($row['target'], FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION));
+    $campRS->Percent_Cut->setNewVal(filter_var($row['percent'], FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION));
+    $campRS->Status->setNewVal(filter_var($row['status'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
+    $campRS->Category->setNewVal(filter_var($row['cat'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
+    $campRS->Campaign_Merge_Code->setNewVal(filter_var($row['mergeCode'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
+    $campRS->Description->setNewVal(filter_var($row['desc'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
 
+    if ($campCode === '0' || $campCode === '') {
 
-    // Target and percent
-    if (isset($post['txtTarget'])) {
-        $campRS->Target->setNewVal(filter_var($post['txtTarget'], FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION));
-    }
-    if (isset($post['txtPercent'])) {
-        $campRS->Percent_Cut->setNewVal(filter_var($post['txtPercent'], FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION));
-    }
-
-    if (isset($post['selStatus'])) {
-        $campRS->Status->setNewVal(filter_var($post['selStatus'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
-    }
-    if (isset($post['txtCat'])) {
-        $campRS->Category->setNewVal(filter_var($post['txtCat'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
-    }
-    if (isset($post['txtMergeCode'])) {
-        $campRS->Campaign_Merge_Code->setNewVal(filter_var($post['txtMergeCode'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
-    }
-    if (isset($post['txtDesc'])) {
-        $campRS->Description->setNewVal(filter_var($post['txtDesc'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
-    }
-
-    // if a new code
-    if ($campCode == "vNew" || $campCode == '') {
-
-        $rptId = 0;
-        $dbh->prepare("CALL IncrementCounter('codes', @num);")->execute();
-        $numStmt = $dbh->prepare("SELECT @num");
-        $numStmt->execute();
-        foreach ($numStmt as $row) {
-            $rptId = $row[0];
-        }
-        if ($rptId == 0) {
-            return "Event Repeater counter not set up.";
-        }
-        $campCode  = 'cp'.$rptId;
-
-        $campRS->Campaign_Code->setNewVal($campCode);
+        $rptId = Common::incCounter($dbh, 'codes');
+        $campRS->Campaign_Code->setNewVal('cp' . $rptId);
         EditRS::insert($dbh, $campRS);
-        return "Record Inserted";
-
     } else {
-
         EditRS::update($dbh, $campRS, array($campRS->Campaign_Code));
-        return "Record Updated";
     }
 
-    return "";
-
+    return '';
 }
 
 $wInit = new WebInit();
 $dbh = $wInit->dbh;
 
-$pageTitle = $wInit->pageTitle;
-$testVersion = $wInit->testVersion;
-
-
 $menuMarkup = $wInit->generatePageMenu();
 
+$errors = [];
 
-$campCode = "";
-
-
-//Check GET
-if (isset($_GET["cp"])) {
-    $campCode = filter_var($_GET["cp"], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
-
-}
-
-
-$selType = new selCtrl($dbh, "Campaign_Type", false, "selType", false, "", "Code");
-$resultMessage = "";
-
-
-
-// form1 save button:
+// form save button:
 if (filter_has_var(INPUT_POST, "bttncamp")) {
-    // validate and if okay, save data
-    // if not okay, redisplay form with errors marked.
-    $campAlert = new AlertMessage("campAlert");
 
-    $selType->setReturnValues($_POST[$selType->get_htmlNameBase()]);
-    $type = filter_var($_POST[$selType->get_htmlNameBase()], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+    $titles = isset($_POST['campTitle']) ? $_POST['campTitle'] : [];
 
-    $campCode = filter_var($_POST['selCamp'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+    foreach ($titles as $code => $title) {
 
-    $mes = saveCampaign($dbh, $campCode, $type, $_POST);
+        $code = (string) $code;
 
-    $campAlert->set_Context(AlertMessage::Success);
-    $campAlert->set_Text($mes);
+        if ($code === '0' && trim(filter_var($title, FILTER_SANITIZE_FULL_SPECIAL_CHARS)) === '') {
+            continue;
+        }
 
-    $resultMessage = $campAlert->createMarkup();
+        $row = [
+            'title' => $title,
+            'type' => isset($_POST['campType'][$code]) ? $_POST['campType'][$code] : '',
+            'sdate' => isset($_POST['campStart'][$code]) ? $_POST['campStart'][$code] : '',
+            'edate' => isset($_POST['campEnd'][$code]) ? $_POST['campEnd'][$code] : '',
+            'min' => isset($_POST['campMin'][$code]) ? $_POST['campMin'][$code] : '',
+            'max' => isset($_POST['campMax'][$code]) ? $_POST['campMax'][$code] : '',
+            'target' => isset($_POST['campTarget'][$code]) ? $_POST['campTarget'][$code] : '',
+            'percent' => isset($_POST['campPercent'][$code]) ? $_POST['campPercent'][$code] : '',
+            'status' => isset($_POST['campStatus'][$code]) ? $_POST['campStatus'][$code] : '',
+            'cat' => isset($_POST['campCat'][$code]) ? $_POST['campCat'][$code] : '',
+            'mergeCode' => isset($_POST['campMergeCode'][$code]) ? $_POST['campMergeCode'][$code] : '',
+            'desc' => isset($_POST['campDesc'][$code]) ? $_POST['campDesc'][$code] : '',
+        ];
+
+        try {
+            $msg = saveCampaignRow($dbh, $code, $row);
+        } catch (\Exception $ex) {
+            $msg = $ex->getMessage();
+        }
+
+        if ($msg !== '') {
+            $errors[] = $msg;
+        }
+    }
 }
 
-
-
-
-//
-// Load the selector control with all the campaigns.
-$CampOpt = Campaign::CampaignSelOptionMarkup($dbh, $campCode, TRUE, TRUE);
-
-$campaign = new Campaign($dbh, $campCode);
-
-$campaignStatuses = Common::readGenLookupsPDO($dbh, "Campaign_Status");
-$statusOpt = HTMLSelector::doOptionsMkup($campaignStatuses, $campaign->get_status(), false);
-
-$stDate = "";
-$enDate = "";
-$lastDate = "";
-
-if ($campaign->get_startdate() != null){
-    $stDate = date("m/d/Y", strtotime($campaign->get_startdate()));
-}
-if ($campaign->get_enddate() != null){
-    $enDate = date("m/d/Y", strtotime($campaign->get_enddate()));
-}
-if ($campaign->get_lastupdated() != null){
-    $lastDate = date("m/d/Y", strtotime($campaign->get_lastupdated()));
-}
-$selType->set_value(TRUE, $campaign->get_type());
+$campaignsTable = getCampaignsTable($dbh);
 
 ?>
 <!DOCTYPE html >
@@ -220,148 +234,82 @@ $selType->set_value(TRUE, $campaign->get_type());
     <head>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-        <title><?php echo $pageTitle; ?></title>
-        
+        <title><?php echo $wInit->pageTitle; ?></title>
+
         <?php echo Vite::asset('resources/js/admin.js'); ?>
 
         <?php echo FAVICON; ?>
 
-        <script type="text/javascript">
-            function hidePercent(ctrl) {
-                if (ctrl.val() != 'pct') {
-                    // Hide the percent text box
-                    $('.hhk-hide-percent').css("display", "none");
-                } else {
-                    $('.hhk-hide-percent').css("display", "table-cell");
-                }
+        <style>
+            #campaignsTbl table td, #campaignsTbl table th {
+                padding: 4px 8px;
+                border: 1px solid #ddd;
             }
+            #campaignsTbl table {
+                border-collapse: collapse;
+            }
+        </style>
 
+        <script type="text/javascript">
             document.addEventListener("DOMContentLoaded", () => {
-                $( ".ckdate" ).datepicker({
+
+                $(".ckdate").datepicker({
                     changeMonth: true,
                     changeYear: true
                 });
-                $('#selType').change( function () {
-                    hidePercent($(this));
+
+                // Strip non-numeric, non-decimal characters as the user types in money fields.
+                $(".hhk-money").on("input", function () {
+                    var val = this.value;
+                    var stripped = val.replace(/[^0-9.]/g, "");
+
+                    if (stripped !== val) {
+                        var pos = Math.max(0, this.selectionStart - (val.length - stripped.length));
+                        this.value = stripped;
+                        this.setSelectionRange(pos, pos);
+                    }
                 });
-                hidePercent($('#selType'));
-                $('#selCamp').change(function () {
-                    window.location = "campaignEdit.php?cp=" + $(this).val();
+
+                // Format money fields to 2 decimal places once the user leaves the field.
+                $(".hhk-money").on("blur", function () {
+                    var amt = parseFloat(this.value);
+                    this.value = isNaN(amt) ? "" : amt.toFixed(2);
+                });
+
+                var togglePercent = function ($sel) {
+                    $sel.closest('tr').find('input[name^="campPercent"]').prop('disabled', $sel.val() !== 'pct');
+                };
+
+                $('.campTypeSel').each(function () {
+                    togglePercent($(this));
+                }).on('change', function () {
+                    togglePercent($(this));
                 });
             });
         </script>
     </head>
-    <body <?php if ($testVersion) echo "class='testbody'"; ?>>
+    <body <?php if ($wInit->testVersion) {
+            echo "class='testbody'";
+        } ?>>
             <?php echo $menuMarkup; ?>
         <div id="contentDiv">
 
             <h1><?php echo $wInit->pageHeading; ?></h1>
-            <div style="clear: both;">
-                <?php echo $resultMessage ?>
-            </div>
+
+            <?php if (count($errors) > 0) { ?>
+                <div class="ui-state-error ui-corner-all p-2 mb-2"><?php echo implode('<br>', $errors); ?></div>
+            <?php } ?>
+
             <div class="ui-widget ui-widget-content ui-corner-all hhk-widget-content mb-3">
                 <form id="campForm" name="campForm" action="campaignEdit.php" method="post">
-            	<div class="ui-widget ui-widget-content ui-corner-all hhk-widget-content mb-3">
-                    <span>Select a Campaign to Edit: </span>
-                    <select style="width:230px" name="selCamp" id="selCamp"><?php echo $CampOpt ?></select>
-            	</div>
-                    <table>
-                        <tr>
-                            <td>
-                                <div class="mainDiv">
-                                    <table>
-                                        <tr>
-                                            <td><h4>Campaign Details</h4></td>
-                                        </tr>
-                                        <tr>
-                                            <th>Title</th>
-                                            <th>Start Date</th>
-                                            <th>End Date</th>
-                                        </tr>
-                                        <tr>
-                                            <td><input id="txtTitle" name="txtTitle" type="text" size="40" value="<?php echo $campaign->get_title(); ?>" /></td>
-                                            <td><INPUT TYPE='text' NAME='sdate' class="ckdate" VALUE='<?php echo $stDate; ?>' size=10 />
-                                            </td>
-                                            <td><INPUT TYPE='text' NAME='edate' class="ckdate" VALUE='<?php echo $enDate; ?>' size=10 />
-                                            </td>
-                                        </tr>
-                                    </table>
-                                </div>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>
-                                <div class="mainDiv">
-                                    <table>
-                                        <tr>
-                                            <th>Min. Donation</th>
-                                            <th>Max. Donation</th>
-                                            <th>Goal</th>
-                                            <td>&nbsp;</td>
-                                            <th>Type</th>
-                                            <th class='hhk-hide-percent'>Value</th>
-
-<!--                                            <th class='ui-widget-header'><span class="lbl">Lump Sum Cost</span></th>-->
-                                        </tr>
-                                        <tr>
-                                            <td>$<input id="txtMin" name="txtMin" type="text" size="10" value="<?php if ($campaign->get_mindonation() > 0) echo number_format($campaign->get_mindonation(), 2); ?>" /></td>
-                                            <td>$<input id="txtMax" name="txtMax" type="text" size="10" value="<?php if ($campaign->get_maxdonation() > 0)echo number_format($campaign->get_maxdonation(), 2); ?>" /></td>
-                                            <td>$<input id="txtTarget" name="txtTarget" type="text" size="10" value="<?php if ($campaign->get_target() > 0)echo number_format($campaign->get_target(), 2); ?>" /></td>
-                                            <td>&nbsp;</td>
-                                            <td><?php echo $selType->createMarkup(1); ?></td>
-                                            <td class="hhk-hide-percent"><input id="txtPercent" name="txtPercent" type="text" size="10" value="<?php if ($campaign->get_percentCut() > 0) echo number_format($campaign->get_percentCut(), 2); ?>" />%</td>
-
-<!--                                             <td class="tdBox">$<input id="txtLumpsum" name="txtLumpsum" type="text" size="10" value=""/></td>-->
-                                        </tr>
-                                    </table>
-                                </div>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>
-                                <div class="mainDiv">
-                                    <table>
-                                        <tr>
-                                            <th>Status</th>
-                                            <th>Last Updated</th>
-                                            <th>Updated By</th>
-                                            <th>Category</th>
-                                            <th>Mail Merge Code</th>
-                                        </tr>
-                                        <tr>
-                                            <td><select id="selStatus" name="selStatus"><?php echo $statusOpt ?></select></td>
-                                            <td><input type="text" class="ro"  size="10" readonly="readonly" value="<?php echo $lastDate; ?>" /></td>
-                                            <td><input type="text" class="ro"  size="10" readonly="readonly" value="<?php echo $campaign->get_updatedby(); ?>"/></td>
-                                            <td><input id="txtCat" name="txtCat" type="text" value="<?php echo $campaign->get_category(); ?>" /></td>
-                                            <td><input id="txtMergeCode" name="txtMergeCode" type="text" value="<?php echo $campaign->get_mergeCode(); ?>" /></td>
-                                        </tr>
-                                    </table>
-                                </div>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>
-                                <div class="mainDiv">
-                                    <table>
-                                        <tr>
-                                            <th><span class="lbl">Description</span></th>
-                                        </tr>
-                                        <tr>
-                                            <td><textarea id="txtDesc" name="txtDesc" rows="1" cols="70" ><?php echo $campaign->get_description(); ?></textarea></td>
-                                        </tr>
-                                    </table>
-                                </div>
-                            </td>
-                        </tr>
-                    </table>
+                    <div id="campaignsTbl" style="overflow-x:auto;">
+                        <?php echo $campaignsTable->generateMarkup(); ?>
+                    </div>
                     <div class="hhk-flex mt-1" style="justify-content: space-evenly;">
-                    	<input type="reset" value="Reset" class="ui-button ui-widget ui-corner-all"/>
-                    	<input id="bttncamp" name="bttncamp" type="submit" value="Save" class="ui-button ui-widget ui-corner-all"/>
+                        <input id="bttncamp" name="bttncamp" type="submit" value="Save" class="ui-button ui-widget ui-corner-all"/>
                     </div>
                 </form>
             </div>
-
-            <div id="testdiv1" style="position:absolute;visibility:hidden;background-color:white;"></DIV>
         </div>
     </body>
 </html>

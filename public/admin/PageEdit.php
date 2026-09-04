@@ -150,19 +150,25 @@ $resultMessage = $alertMsg->createMarkup();
                             });
                         });
 
+                        // Paging/column-sort are disabled so the server-rendered row order
+                        // (grouped by Menu Parent) stays intact for drag-and-drop reordering below.
                         $('#tblPages').dataTable({
-                            columns: [
-                                { orderable: false },
-                                { orderable: true },
-                                { orderable: true },
-                                { orderable: false },
-                                { orderable: true },
-                                { orderable: false },
-                                { orderable: false },
-                                { orderable: false }
-                            ],
-                            "displayLength": 100,
-                            "lengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]]
+                            ordering: false,
+                            paging: false
+                        });
+
+                        $('#tblPages tbody').sortable({
+                            items: 'tr.menuPosRow',
+                            handle: '.menuPosHandle',
+                            axis: 'y',
+                            update: function (_e, ui) {
+                                var parent = ui.item.attr('data-parent');
+                                // Zero-padded so positions keep sorting correctly as plain strings
+                                // past 9 siblings, and stay comparable with legacy letter-coded positions.
+                                $('#tblPages tbody tr.menuPosRow[data-parent="' + parent + '"]').each(function (i) {
+                                    $(this).find('input[name^="txtParentPosition"]').val(String(i).padStart(3, '0'));
+                                });
+                            }
                         });
 
                     })
@@ -251,6 +257,12 @@ $resultMessage = $alertMsg->createMarkup();
                 text-align:right;
                 margin-right:1em;
                 bottom: 10px;
+            }
+            .menuPosHandle {
+                cursor: move;
+            }
+            tr.menuPosRow.ui-sortable-helper {
+                display: table;
             }
         </style>
     </head>

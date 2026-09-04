@@ -98,8 +98,6 @@ class Pages {
         }
 
         $pageTypes = Common::readGenLookupsPDO($dbh, 'Page_Type');
-        $positionMenus = [];
-
 
         foreach ($post['txtIdPage'] as $k => $v) {
 
@@ -172,24 +170,9 @@ class Pages {
 
                 $pageRs->Menu_Parent->setNewVal($post['selParentId'][$pageId]);
 
-                $menuParent = $post['selParentId'][$pageId];
-
-                // Menu Position
+                // Menu Position - kept in sequential order per Menu Parent by drag-and-drop on the client.
                 if (isset($post['txtParentPosition'][$pageId])) {
-
-                    $menuPosition = $post['txtParentPosition'][$pageId];
-
-                    if ($menuParent > 0) {
-                        if (isset($positionMenus[$menuParent][$menuPosition])) {
-                            // double on same position
-                            $pageErrors .= "Page Menu Position (" . $menuPosition . ") is already used, id= " . $pageId;
-
-                        } else {
-                            $positionMenus[$menuParent][$menuPosition] = 1;
-                        }
-                    }
-
-                    $pageRs->Menu_Position->setNewVal($menuPosition);
+                    $pageRs->Menu_Position->setNewVal($post['txtParentPosition'][$pageId]);
                 }
             }
 
@@ -282,14 +265,18 @@ gs.Title as Security_Description
 from page p left join page_securitygroup s on p.idPage = s.idPage
     left join gen_lookups gt on p.Type = gt.Code and gt.TABLE_NAME='Page_Type'
     left join w_groups gs on s.Group_Code = gs.Group_Code
+    left join page tp on tp.idPage = p.Menu_Parent and p.Menu_Parent > 0
     where p.Web_Site = :site
- order by p.idPage;";
+ order by
+    (case when p.Menu_Parent = '0' then p.Menu_Position when p.Menu_Parent > 0 then tp.Menu_Position else NULL end) is null,
+    (case when p.Menu_Parent = '0' then p.Menu_Position when p.Menu_Parent > 0 then tp.Menu_Position else NULL end),
+    (case when p.Menu_Parent = '0' then 0 else 1 end),
+    p.Menu_Parent, p.Menu_Position, p.idPage;";
 
         $stmt = $dbh->prepare($query);
         $stmt->execute(array(':site' => $site));
         $pageRows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
         $parentMenus = array();
-        $positionMenus = [];
 
         // collect menu parents
         foreach ($pageRows as $r) {
@@ -300,11 +287,6 @@ from page p left join page_securitygroup s on p.idPage = s.idPage
 
             if ($r['File_Name'] == 'index.php') {
                 $indexPageId = $r['idPage'];
-            }
-
-            // Save position value for each menu parent.
-            if ($r['Menu_Parent'] > 0 && !isset($positionMenus[$r['Menu_Parent']][$r["Menu_Position"]])) {
-                $positionMenus[$r['Menu_Parent']][$r["Menu_Position"]] = $r['idPage'];
             }
         }
 
@@ -334,6 +316,7 @@ from page p left join page_securitygroup s on p.idPage = s.idPage
 
         $pageId = 0;
         $lastRow = '';
+        $lastRowAttrs = array('class'=>'trPages');
         $auths = array();
 
         foreach ($pageRows as $rw) {
@@ -345,11 +328,18 @@ from page p left join page_securitygroup s on p.idPage = s.idPage
                     $lastRow .= HTMLTable::makeTd(
                         HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($secGroups, $auths, FALSE), array('name'=>'selSecCode[' . $pageId . '][]', 'class'=>'hhk-multisel', 'multiple'=>'multiple'))
                             );
-                    $tbl->addBodyTr( $lastRow, array('class'=>'trPages'));
+                    $tbl->addBodyTr( $lastRow, $lastRowAttrs);
 
                 }
 
                 $pageId = $rw['idPage'];
+                $isMenuPage = ($rw['Type'] == WebPageCode::Page && $rw['File_Name'] != 'index.php');
+
+                $lastRowAttrs = array('class'=>'trPages' . ($isMenuPage ? ' menuPosRow' : ''));
+
+                if ($isMenuPage) {
+                    $lastRowAttrs['data-parent'] = $rw['Menu_Parent'];
+                }
 
                 // Set up for new page entry
                 $lastRow = HTMLTable::makeTd(HTMLInput::generateMarkup($pageId, array('name'=>'txtIdPage[' . $pageId . ']', 'readonly'=>'readonly', 'style'=>'background-color:transparent;text-align:right;', 'size'=>'5')))
@@ -363,22 +353,17 @@ from page p left join page_securitygroup s on p.idPage = s.idPage
                     $hideAttr['checked'] = 'checked';
                 }
 
-                if ($rw['Type'] == WebPageCode::Page && $rw['File_Name'] != 'index.php') {
+                if ($isMenuPage) {
 
                     $lastRow .= HTMLTable::makeTd(HTMLInput::generateMarkup($rw["Title"], array('name'=>'txtPageTitle[' . $pageId . ']', 'size'=>'20')))
                         .HTMLTable::makeTd(HTMLInput::generateMarkup('', $hideAttr))
                         .HTMLTable::makeTd(HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($parentMenus, $rw["Menu_Parent"], FALSE), array('name'=>'selParentId[' . $pageId . ']', 'class'=>'hhk-selmenu')));
 
-
-                    $parray = array('name'=>'txtParentPosition[' . $pageId . ']', 'size'=>'2');
-
-                    if (isset($positionMenus[$rw["Menu_Parent"]][$rw["Menu_Position"]]) && $positionMenus[$rw["Menu_Parent"]][$rw["Menu_Position"]] != $pageId) {
-                        // Seen this menu position before
-                        $parray['class'] = 'ui-state-error';
-                        $parray['title'] = 'Already used by page id ' . $positionMenus[$rw["Menu_Parent"]][$rw["Menu_Position"]];
-                    }
-
-                    $lastRow .= HTMLTable::makeTd(HTMLInput::generateMarkup($rw["Menu_Position"], $parray));
+                    $lastRow .= HTMLTable::makeTd(
+                        HTMLContainer::generateMarkup('span', '', array('class'=>'ui-icon ui-icon-arrowthick-2-n-s menuPosHandle', 'title'=>'Drag to reorder'))
+                        . HTMLInput::generateMarkup($rw["Menu_Position"], array('name'=>'txtParentPosition[' . $pageId . ']', 'type'=>'hidden'))
+                        , array('class'=>'menuPosCell')
+                    );
 
                 } else {
 
@@ -401,7 +386,7 @@ from page p left join page_securitygroup s on p.idPage = s.idPage
             $lastRow .= HTMLTable::makeTd(
                         HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($secGroups, $auths, FALSE), array('name'=>'selSecCode[' . $pageId . '][]', 'class'=>'hhk-multisel', 'multiple'=>'multiple'))
                             );
-            $tbl->addBodyTr( $lastRow, array('class'=>'trPages'));
+            $tbl->addBodyTr( $lastRow, $lastRowAttrs);
 
         }
 
@@ -414,7 +399,7 @@ from page p left join page_securitygroup s on p.idPage = s.idPage
                 .HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name'=>'txtPageTitle[0]', 'size'=>'20')))
                 .HTMLTable::makeTd(HTMLInput::generateMarkup('', array('type'=>'checkbox', 'name'=>'cbHide[0]')))
                 .HTMLTable::makeTd(HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($parentMenus, '', FALSE), array('name'=>'selParentId[0]', 'class'=>'hhk-selmenu')))
-                .HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name'=>'txtParentPosition[0]', 'size'=>'2')))
+                .HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name'=>'txtParentPosition[0]', 'type'=>'hidden')))
                 . HTMLTable::makeTd(
                     HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($secGroups, '', FALSE), array('name'=>'selSecCode[0][]', 'class'=>'hhk-multisel', 'multiple'=>'multiple'))
                 );
