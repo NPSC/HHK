@@ -173,7 +173,9 @@ export function createAutoComplete(
     minLength: minChars,
     select: function (event, ui) {
       if (ui.item) {
-        selectFunction(ui.item);
+        if (selectFunction(ui.item) === false) {
+          event.preventDefault();
+        }
       }
     },
     delay: 120,

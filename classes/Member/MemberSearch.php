@@ -704,7 +704,7 @@ where n.idName>0 and n.Member_Status='a' and n.Record_Member = 1 "
         }
 
         if (count($events) == 0) {
-            $events[] = array("id" => 'x', 'value' => 'Nothing Returned');
+            $events[] = array("id" => 'x', 'value' => 'No one found');
         }
 
         return $events;

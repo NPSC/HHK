@@ -122,15 +122,10 @@ document.addEventListener("DOMContentLoaded", () => {
   // relationship dialog
   $("#submit").dialog({
     autoOpen: false,
-    resizable: true,
-    width: 400,
-    height: 500,
+    resizable: false,
+    width: "auto",
+    height: "auto",
     modal: true,
-    buttons: {
-      Exit: function () {
-        $(this).dialog("close");
-      },
-    },
   });
   // Relationship events
   $("div.hhk-relations").each(function () {
@@ -217,101 +212,108 @@ document.addEventListener("DOMContentLoaded", () => {
 
   $(".showPw").button();
 
+  function saveAdminChgPw() {
+    var tips = $("#apwChangeErrMsg"),
+      tempPWmsg = $("#apwNewPW"),
+      oldpw = $("#txtOldPw"),
+      newpw = $("#txtNewPw1"),
+      confirmpw = $("#txtNewPw2"),
+      fieldMsgs = {
+        old: $("#apwOldPwErrMsg"),
+        newer: $("#apwNewPwErrMsg"),
+        confirm: $("#apwConfirmPwErrMsg"),
+      },
+      fieldInputs = { old: oldpw, newer: newpw, confirm: confirmpw };
+
+    updateTips(tips, "");
+    $.each(fieldMsgs, function (field, $el) {
+      $el.empty();
+      fieldInputs[field].removeClass("ui-state-error");
+    });
+
+    if (oldpw.val() == "") {
+      oldpw.addClass("ui-state-error").focus();
+      updateTips(tips, "Enter your admin password");
+      return;
+    }
+
+    var oldpwval = oldpw.val(),
+      newpwval = newpw.val(),
+      confirmpwval = confirmpw.val();
+
+    oldpw.val("");
+    newpw.val("");
+    confirmpw.val("");
+
+    var body = new URLSearchParams();
+    body.append("cmd", "adchgpw");
+    body.append("adpw", oldpwval);
+    body.append("uid", memData.id);
+    body.append("uname", memData.webUserName);
+    if (newpwval !== "") {
+      body.append("newpw", newpwval);
+      body.append("confirmpw", confirmpwval);
+    }
+
+    fetch("ws_gen.php", {
+      method: "POST",
+      headers: {
+        accept: "application/json",
+      },
+      body: body,
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        if (data.fieldErrors) {
+          Object.keys(data.fieldErrors).forEach(function (field) {
+            if (fieldInputs[field] && fieldMsgs[field]) {
+              fieldInputs[field].addClass("ui-state-error");
+              fieldMsgs[field].html(data.fieldErrors[field].join("<br>"));
+            }
+          });
+        }
+
+        if (data.error) {
+          if (data.gotopage) {
+            window.open(data.gotopage, "_self");
+          }
+          if (!data.fieldErrors) {
+            updateTips(tips, data.error);
+          }
+        } else if (data.success) {
+          updateTips(tips, data.success);
+          if (data.tempPW) {
+            tempPWmsg
+              .html(
+                '<strong>New Temporary Password:</strong> <span style="user-select:all;">' +
+                  data.tempPW +
+                  "</span>",
+              )
+              .show();
+          }
+        }
+      })
+      .catch((error) => {
+        if (error instanceof SyntaxError) {
+          alert("Parser error - " + error.message);
+        } else {
+          flagAlertMessage(error, "error");
+        }
+      });
+  }
+
+  $("div#achgPw").on("submit", "#frmAChgPw", function (e) {
+    e.preventDefault();
+    saveAdminChgPw();
+  });
+
   $("#achgPw").dialog({
     autoOpen: false,
     width: getDialogWidth(600),
     resizable: true,
     modal: true,
     buttons: {
-      Save: function () {
-        var tips = $("#apwChangeErrMsg"),
-          tempPWmsg = $("#apwNewPW"),
-          oldpw = $("#txtOldPw"),
-          newpw = $("#txtNewPw1"),
-          confirmpw = $("#txtNewPw2"),
-          fieldMsgs = {
-            old: $("#apwOldPwErrMsg"),
-            newer: $("#apwNewPwErrMsg"),
-            confirm: $("#apwConfirmPwErrMsg"),
-          },
-          fieldInputs = { old: oldpw, newer: newpw, confirm: confirmpw };
-
-        updateTips(tips, "");
-        $.each(fieldMsgs, function (field, $el) {
-          $el.empty();
-          fieldInputs[field].removeClass("ui-state-error");
-        });
-
-        if (oldpw.val() == "") {
-          oldpw.addClass("ui-state-error").focus();
-          updateTips(tips, "Enter your admin password");
-          return;
-        }
-
-        var oldpwval = oldpw.val(),
-          newpwval = newpw.val(),
-          confirmpwval = confirmpw.val();
-
-        oldpw.val("");
-        newpw.val("");
-        confirmpw.val("");
-
-        var body = new URLSearchParams();
-        body.append("cmd", "adchgpw");
-        body.append("adpw", oldpwval);
-        body.append("uid", memData.id);
-        body.append("uname", memData.webUserName);
-        if (newpwval !== "") {
-          body.append("newpw", newpwval);
-          body.append("confirmpw", confirmpwval);
-        }
-
-        fetch("ws_gen.php", {
-          method: "POST",
-          headers: {
-            accept: "application/json",
-          },
-          body: body,
-        })
-          .then((response) => response.json())
-          .then((data) => {
-            if (data.fieldErrors) {
-              Object.keys(data.fieldErrors).forEach(function (field) {
-                if (fieldInputs[field] && fieldMsgs[field]) {
-                  fieldInputs[field].addClass("ui-state-error");
-                  fieldMsgs[field].html(data.fieldErrors[field].join("<br>"));
-                }
-              });
-            }
-
-            if (data.error) {
-              if (data.gotopage) {
-                window.open(data.gotopage, "_self");
-              }
-              if (!data.fieldErrors) {
-                updateTips(tips, data.error);
-              }
-            } else if (data.success) {
-              updateTips(tips, data.success);
-              if (data.tempPW) {
-                tempPWmsg
-                  .html(
-                    '<strong>New Temporary Password:</strong> <span style="user-select:all;">' +
-                      data.tempPW +
-                      "</span>",
-                  )
-                  .show();
-              }
-            }
-          })
-          .catch((error) => {
-            if (error instanceof SyntaxError) {
-              alert("Parser error - " + error.message);
-            } else {
-              flagAlertMessage(error, "error");
-            }
-          });
-      },
+      Save: saveAdminChgPw,
       Cancel: function () {
         $(this).dialog("close");
       },
@@ -583,14 +585,19 @@ document.addEventListener("DOMContentLoaded", () => {
       if (item.id === "i") {
         // New Individual
         window.location = "NameEdit.php?cmd=newind";
+        return;
       } else if (item.id === "o") {
         window.location = "NameEdit.php?cmd=neworg";
+        return;
       }
 
       var cid = parseInt(item.id, 10);
       if (isNumber(cid)) {
         window.location = "NameEdit.php?id=" + cid;
+        return;
       }
+
+      return false;
     },
     false,
     "liveNameSearch.php",
@@ -601,12 +608,17 @@ document.addEventListener("DOMContentLoaded", () => {
     3,
     { cmd: "srrel", id: memData.id, nonly: "1" },
     function (item) {
+      var rId = parseInt(item.id, 10);
+      if (!isNumber(rId)) {
+        return false;
+      }
       $("#submit").dialog("close");
       $.post(
         "ws_gen.php",
-        { rId: item.id, id: memData.id, rc: $("#hdnRelCode").val(), cmd: "newRel" },
+        { rId: rId, id: memData.id, rc: $("#hdnRelCode").val(), cmd: "newRel" },
         relationReturn,
       );
+      return false;
     },
     false,
     "liveNameSearch.php",

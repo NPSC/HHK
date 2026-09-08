@@ -90,7 +90,7 @@ export function initGuestPhoto(options) {
         autoCropArea: 1,
       },
       actions: {
-        revert: true,
+        revert: false,
         rotate: true,
         granularRotate: true,
         flip: true,

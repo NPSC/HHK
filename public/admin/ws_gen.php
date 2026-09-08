@@ -490,14 +490,21 @@ try {
             break;
 
         case "newRel":
-            
+
             $post = filter_input_array(INPUT_POST, [
                 "id" => FILTER_SANITIZE_NUMBER_INT,
                 "rId" => FILTER_SANITIZE_NUMBER_INT,
                 "rc" => FILTER_SANITIZE_FULL_SPECIAL_CHARS
             ]);
 
-            $events = newRelationLink($dbh, $post['id'], $post['rId'], $post['rc']);
+            $rId = intval($post['rId'], 10);
+
+            if ($rId <= 0) {
+                $events = array('error' => 'Please select a valid person from the search results.');
+                break;
+            }
+
+            $events = newRelationLink($dbh, $post['id'], $rId, $post['rc']);
             break;
 
         case "addcareof":

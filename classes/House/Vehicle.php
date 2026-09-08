@@ -104,7 +104,7 @@ WHERE
             }
 
             if (count($events) == 0) {
-                $events[] = array("id" => 0, "value" => "Nothing Returned");
+                $events[] = array("id" => 0, "value" => "No Vehicles Found");
             }
         }
 
