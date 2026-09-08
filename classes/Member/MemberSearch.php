@@ -599,7 +599,7 @@ where n.idName>0 and n.Member_Status='a' and n.Record_Member = 1 "
                 WHERE MATCH(n.`Name_Search`) AGAINST (:search in boolean mode) and n.Record_Member = 1
                 and n.Member_Status in ('a','d','in') and n.idName <> :id2 and r.idRelationship is null order by n.Member_Status, n.Name_Last, n.Name_First;";
                 $stmt = $dbh->prepare($query2);
-                $stmt->execute(array(':id' => $id, ':id2' => $id, ':search' => $this->$this->buildFulltextQuery($this->letters)));
+                $stmt->execute(array(':id' => $id, ':id2' => $id, ':search' => $this->buildFulltextQuery($this->letters)));
                 $rows = $stmt->fetchAll(\PDO::FETCH_NUM);
 
                 foreach ($rows as $row2) {
