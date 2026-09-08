@@ -654,7 +654,7 @@ where n.idName>0 and n.Member_Status='a' and n.Record_Member = 1 "
             case RelLinkType::Employee:
                 $query2 = "SELECT n.idName, n.Name_Last, n.Name_First, ifnull(n.Member_Status,'x'), ifnull(g.Description,'Undefined!')
             FROM name n left join gen_lookups g on g.Table_Name='mem_status' and g.Code = n.Member_Status
-            WHERE n.Company_Id = 0 and n.Member_Status in ('a','in') and n.Record_Member = 1 and n.idName <> :id and MATCH(n.`Name_Search`) AGAINST (:search in boolean mode) order by n.Member_Status, n.Name_Last, n.Name_First;";
+            WHERE n.Company_Id = 0 and n.Record_Company = 0 and n.Member_Status in ('a','in') and n.Record_Member = 1 and n.idName <> :id and MATCH(n.`Name_Search`) AGAINST (:search in boolean mode) order by n.Member_Status, n.Name_Last, n.Name_First;";
                 $stmt = $dbh->prepare($query2);
                 $stmt->execute(array(':id' => $id, ':search' => $this->buildFulltextQuery($this->letters)));
                 $rows = $stmt->fetchAll(\PDO::FETCH_NUM);
