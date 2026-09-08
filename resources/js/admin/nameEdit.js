@@ -739,13 +739,18 @@ document.addEventListener("DOMContentLoaded", () => {
   );
 
   // Warn when leaving the page with unsaved changes.
-  $("#form1").on("submit", function () {
-    $(this).data("submitting", true);
+  $("#form1").dirty({
+    preventLeaving: true,
+    leavingMessage:
+      "You have unsaved changes. Leaving this page will discard those changes. Are you sure you want to leave?",
   });
-  $(window).on("beforeunload", function () {
-    if (!$("#form1").data("submitting") && $("#form1").dirty()) {
-      return "You have unsaved changes";
-    }
+
+  // The Country/State selects (.bfh-countries/.bfh-states) are populated
+  // asynchronously on window "load" (see stateCountry.js), which happens
+  // after the dirty baseline above is captured on DOMContentLoaded. Without
+  // this, that population is mistaken for a user edit. Resync once it's done.
+  $(window).on("load", function () {
+    $("#form1").dirty("setAsClean");
   });
 
   //member photo

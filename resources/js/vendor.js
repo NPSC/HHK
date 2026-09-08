@@ -5,7 +5,7 @@ import "jquery-ui-dist/jquery-ui.js";
 import "jquery-serializejson";
 import "jquery-boot";
 import "jquery-search";
-import "jquery-dirty";
+import "jquery.dirty";
 
 //bootstrap + icons - only Collapse (navbar-toggler) and Dropdown (nav menus)
 import Collapse from "bootstrap/js/dist/collapse";
