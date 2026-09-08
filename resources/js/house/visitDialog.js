@@ -679,7 +679,11 @@ export function saveFees(idGuest, idVisit, visitSpan, rtnTbl, postbackPage) {
     if (data.success && data.success !== "") {
       flagAlertMessage(data.success, "success");
 
-      if (typeof calendar !== "undefined") {
+      if (
+        calendar &&
+        typeof calendar.refetchResources === "function" &&
+        typeof calendar.refetchEvents === "function"
+      ) {
         calendar.refetchResources();
         calendar.refetchEvents();
       }

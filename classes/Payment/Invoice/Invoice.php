@@ -688,16 +688,16 @@ WHERE
 		);
 		$emTbl->addBodyTr(
 			HTMLTable::makeTd('Subject', ['class'=>"tdlabel", 'style'=>"width: 110px"]) . 
-			HTMLTable::makeTd(HTMLInput::generateMarkup($emSubject, array('name' => 'txtSubject')))
+			HTMLTable::makeTd(HTMLInput::generateMarkup($emSubject, array('name' => 'txtSubject', 'class' =>'w-100')))
 		);
         $emTbl->addBodyTr(
 			HTMLTable::makeTd('To', ['class'=>"tdlabel"]) . 
-            HTMLTable::makeTd(HTMLInput::generateMarkup(implode(", ", $emAddrs), array('name' => 'txtEmail'))
+            HTMLTable::makeTd(HTMLInput::generateMarkup(implode(", ", $emAddrs), array('name' => 'txtEmail', 'class' => 'w-100'))
             . ($invNum !== null ? HTMLInput::generateMarkup($invNum, array('name' => 'hdninvnum', 'type' => 'hidden')): ""))
 		);
         $emTbl->addBodyTr(
 			HTMLTable::makeTd('Body', ['class'=>"tdlabel"]) . 
-            HTMLTable::makeTd(HTMLContainer::generateMarkup("textarea", $emBody, array('name' => 'txtBody', 'class' => 'hhk-autosize')))
+            HTMLTable::makeTd(HTMLContainer::generateMarkup("textarea", $emBody, array('name' => 'txtBody', 'class' => 'hhk-autosize w-100')))
 		);
 		$emTbl->addBodyTr(
 			HTMLTable::makeTd('Attachment', ['class'=>"tdlabel"]) . 
@@ -715,7 +715,7 @@ WHERE
 		$emtableMarkup .= HTMLContainer::generateMarkup("div", HTMLContainer::generateMarkup("h4", 'Email Invoice'), ['class' => "ui-widget ui-widget-header align-center ui-corner-top"]);
 
         $emtableMarkup .= HTMLContainer::generateMarkup("div", 
-			$emTbl->generateMarkup(array("class"=>"emTbl mb-2")) . 
+			$emTbl->generateMarkup(array("class"=>"emTbl mb-2 w-100")) . 
 			HTMLContainer::generateMarkup("div", 
 				HTMLContainer::generateMarkup('button', 'Send <i class="ms-2 bi bi-send-fill"></i>', array('style'=>'font-size: 0.9em;', 'class'=>'ui-button ui-corner-all ui-widget', 'name' => 'btnEmail', 'type' => 'submit')), ['class'=>'align-center']), ["class"=>"p-2 hhk-tdbox mb-3 ui-widget ui-widget-content ui-corner-bottom hhk-visitdialog"]);
 

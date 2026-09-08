@@ -1689,6 +1689,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
   calendar.render();
 
+  window.calendar = calendar; // used by visitDialog.js, loaded alongside register.js on this page
+
   //redraw calendar after finishing window resize
   var resizeTimer;
   window.onresize = function () {

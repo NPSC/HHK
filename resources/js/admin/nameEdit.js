@@ -663,15 +663,28 @@ document.addEventListener("DOMContentLoaded", () => {
   // Flag member status if not active
   $("#selStatus").change(function () {
     changeMemberStatus($(this));
+    // Keep the Deceased checkbox in sync so it can't silently override this selection on save.
+    if ($(this).val() === "d") {
+      $("#cbdeceased").prop("checked", true);
+      $("#disp_deceased").show("blind");
+    } else {
+      $("#cbdeceased").prop("checked", false);
+      $("#disp_deceased").hide("blind");
+    }
   });
 
   // Date of death
   $("#cbdeceased").change(function () {
     if ($(this).prop("checked")) {
       $("#disp_deceased").show("blind");
+      $("#selStatus").val("d");
     } else {
       $("#disp_deceased").hide("blind");
+      if ($("#selStatus").val() === "d") {
+        $("#selStatus").val("a");
+      }
     }
+    changeMemberStatus($("#selStatus"));
   });
 
   // Date of background check
