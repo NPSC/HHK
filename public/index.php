@@ -72,7 +72,7 @@ if (filter_has_var(INPUT_POST, 'txtUname')) {
     $pageRejected = isset($events['mess']) && str_starts_with($events['mess'], 'Unauthorized for page:');
 
     if ($pageRejected || ($events['page'] ?? '') === 'index.php') {
-        $defaultPage = SecurityComponent::getAuthorizedDefaultPage();
+        $defaultPage = SecurityComponent::getAuthorizedDefaultPage($dbh);
 
         if ($defaultPage != '') {
             $events = ['page' => $defaultPage];

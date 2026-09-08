@@ -167,18 +167,35 @@ class Login {
 
                 WebInit::resetSessionIdle(); //extend idle session to prevent double login
 
+                // A stored per-user default page can belong to either the Admin or House
+                // site (see WebUser's page picker), and is checked here before the browser
+                // has landed on either one - is_Authorized() can't see it, since it only
+                // reads $uS->webPages for whichever site is currently loaded (this shared
+                // login page's own site). resolveAuthorizedPage() looks the page's real
+                // site up directly and, on success, returns it already prefixed with that
+                // site's own relative path (e.g. "house/register.php") since a bare
+                // filename can't otherwise be routed to the right site.
                 if ($pge == $defaultPage && $u->getDefaultPage() != '') {
-                    $pge = $u->getDefaultPage();
-                }
 
-                try {
-                    if (SecurityComponent::is_Authorized($pge, true)) {
-                        $events['page'] = $pge;
+                    $resolvedPge = SecurityComponent::resolveAuthorizedPage($dbh, $u->getDefaultPage(), ['a', 'h']);
+
+                    if ($resolvedPge != '') {
+                        $events['page'] = $resolvedPge;
                     } else {
-                        $this->validateMsg .= "Unauthorized for page: " . $pge;
+                        $this->validateMsg .= "Unauthorized for page: " . $u->getDefaultPage();
                     }
-                }catch(AuthException $e){
-                    $this->validateMsg .= $e->getMessage();
+
+                } else {
+
+                    try {
+                        if (SecurityComponent::is_Authorized($pge, true)) {
+                            $events['page'] = $pge;
+                        } else {
+                            $this->validateMsg .= "Unauthorized for page: " . $pge;
+                        }
+                    }catch(AuthException $e){
+                        $this->validateMsg .= $e->getMessage();
+                    }
                 }
             }
 

@@ -2,7 +2,7 @@
 
 use HHK\CreateMarkupFromDB;
 use HHK\History;
-use HHK\sec\{Session, WebInit};
+use HHK\sec\{SecurityComponent, Session, WebInit};
 use HHK\SysConst\{WebSiteCode};
 use HHK\Vite\Vite;
 
@@ -30,7 +30,7 @@ $uS = Session::getInstance();
 
 try {
     $guestHistory = 'f';
-    if (isset($uS->siteList[WebSiteCode::House])) {
+    if (isset($uS->siteList[WebSiteCode::House]) && SecurityComponent::is_Authorized('GuestEdit.php', false, WebSiteCode::House, $dbh)) {
         // Guest History tab markup
         $guestHistory = CreateMarkupFromDB::generateHTML_Table(History::getCheckedInGuestMarkup($dbh, '../house/GuestEdit.php', FALSE, TRUE), 'curres');
     }

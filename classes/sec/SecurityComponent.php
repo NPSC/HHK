@@ -42,10 +42,17 @@ class SecurityComponent {
      * Summary of is_Authorized
      * @param mixed $name
      * @param bool $isLogin write log and throw exception if user flow is login
+     * @param string|null $webSite when given, checks $name as a page on this specific site via a
+     *  direct DB lookup instead of $uS->webPages - which SitePage only ever populates for the site
+     *  of the page currently being served, so a same-signature check for a page on some other site
+     *  would otherwise always silently return false. Costs a query; omit for the common same-site
+     *  case, where the request-scoped cache already has the answer for free.
+     * @param \PDO|null $dbh reused for both the $webSite lookup and (if $isLogin) the log insert;
+     *  a connection is opened via Common::initPDO() if not given.
      * @return bool
      * @throws AuthException
      */
-    public static function is_Authorized($name, $isLogin = false) {
+    public static function is_Authorized($name, $isLogin = false, ?string $webSite = null, ?\PDO $dbh = null) {
 
         if (self::is_Admin()) {
             return TRUE;
@@ -61,14 +68,30 @@ class SecurityComponent {
             $name = $parsedName["path"];
         }
 
-        // try reading the page table
-        if ($name != "" && isset($uS->webPages[$name])) {
-            $r = $uS->webPages[$name];
+        if ($webSite !== null) {
 
-            if (!is_null($r)) {
-                $pageCode = $r["Codes"];
-                $pageTitle = $r["Title"];
+            $dbh = $dbh ?? Common::initPDO(true);
+            $stmt = $dbh->prepare(
+                "SELECT `p`.`Title`, `s`.`Group_Code` FROM `page` `p`
+                    LEFT JOIN `page_securitygroup` `s` ON `p`.`idPage` = `s`.`idPage`
+                WHERE `p`.`File_Name` = :fileName AND `p`.`Web_Site` = :webSite AND `p`.`Hide` = 0;"
+            );
+            $stmt->execute([':fileName' => $name, ':webSite' => $webSite]);
+            $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+
+            if (count($rows) == 0) {
+                return FALSE;
             }
+
+            $pageCode = array_column($rows, 'Group_Code');
+            $pageTitle = $rows[0]['Title'];
+
+        } else if ($name != "" && isset($uS->webPages[$name]) && !is_null($uS->webPages[$name])) {
+
+            $r = $uS->webPages[$name];
+            $pageCode = $r["Codes"];
+            $pageTitle = $r["Title"];
+
         } else {
             return FALSE;
         }
@@ -83,7 +106,7 @@ class SecurityComponent {
             $errorMsg = "Unauthorized for page:" . ($pageTitle != '' ? $pageTitle : $name) . " at this location";
 
             if($isLogin){
-                $dbh = Common::initPDO(true);
+                $dbh = $dbh ?? Common::initPDO(true);
                 UserClass::insertUserLog($dbh, $errorMsg, ($uS->username != "" ? $uS->username : "<empty>"));
                 throw new AuthException($errorMsg);
             }
@@ -92,13 +115,44 @@ class SecurityComponent {
             $errorMsg = "Unauthorized for page: " . ($pageTitle != '' ? $pageTitle : $name);
 
             if($isLogin){
-                $dbh = Common::initPDO(true);
+                $dbh = $dbh ?? Common::initPDO(true);
                 UserClass::insertUserLog($dbh, $errorMsg, ($uS->username != "" ? $uS->username : "<empty>"));
                 throw new AuthException($errorMsg);
             }
             return false;
         }
 
+    }
+
+    /**
+     * Resolves a stored per-user default page (a bare File_Name that could belong to more than
+     * one site - WebUser's page picker lets an account be given a default from either Admin or
+     * House) into a browsable, site-relative path, but only if the current user is actually
+     * authorized for it. Site codes are tried in the order given; the first one the page is both
+     * found in and authorized for wins.
+     * @param \PDO $dbh
+     * @param string $fileName
+     * @param string[] $siteCodes candidate site codes, in priority order
+     * @return string relative path (e.g. "house/register.php"), or "" if $fileName isn't
+     *  authorized in any of the given sites.
+     */
+    public static function resolveAuthorizedPage(\PDO $dbh, string $fileName, array $siteCodes): string {
+
+        $uS = Session::getInstance();
+        $siteList = $uS->siteList ?? [];
+
+        foreach ($siteCodes as $siteCode) {
+
+            if (!isset($siteList[$siteCode])) {
+                continue;
+            }
+
+            if (self::is_Authorized($fileName, false, $siteCode, $dbh)) {
+                return $siteList[$siteCode]['Relative_Address'] . $fileName;
+            }
+        }
+
+        return '';
     }
 
     /**
@@ -217,10 +271,16 @@ class SecurityComponent {
      * (the shared login lives at the site root, so it can't rely on a single site's
      * own page list the way a site-scoped login page can). House takes priority;
      * any other non-root site the user is authorized for is used as a fallback.
+     * Site membership (web_sites.Required_Group_Code) and the specific Default_Page's
+     * own page-level permissions are two independent checks - a user can satisfy the
+     * former and still be blocked by the latter, so both are checked before a site's
+     * Default_Page is returned; otherwise the user would land past login with no
+     * error and then hit a bare "Unauthorized" on the page itself.
+     * @param \PDO $dbh
      * @return string relative path (e.g. "house/register.php"), or "" if the user
-     *  isn't authorized for any site.
+     *  isn't authorized for any site's Default_Page.
      */
-    public static function getAuthorizedDefaultPage(): string {
+    public static function getAuthorizedDefaultPage(\PDO $dbh): string {
 
         $uS = Session::getInstance();
         $siteList = $uS->siteList ?? [];
@@ -235,7 +295,10 @@ class SecurityComponent {
             $site = $siteList[$siteCode];
 
             if (self::is_Admin() || self::does_User_Code_Match($site['Groups'] ?? [])) {
-                return $site['Relative_Address'] . $site['Default_Page'];
+
+                if (self::is_Authorized($site['Default_Page'], false, $siteCode, $dbh)) {
+                    return $site['Relative_Address'] . $site['Default_Page'];
+                }
             }
         }
 

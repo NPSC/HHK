@@ -123,11 +123,19 @@ throw $e;
                 // relying on prior request history (was causing intermittent
                 // "no site available" errors for users with valid access).
                 SitePage::loadSiteList($this->dbh);
-                $pge = SecurityComponent::getAuthorizedDefaultPage();
+                $pge = SecurityComponent::getAuthorizedDefaultPage($this->dbh);
 
-                // Per-user override of the landing page within house.
-                if (str_starts_with($pge, 'house/') && $u->getDefaultPage() != '') {
-                    $pge = 'house/' . $u->getDefaultPage();
+                // Per-user override of the landing page - the stored default page can
+                // belong to either the Admin or House site (see WebUser's page picker),
+                // and isn't re-validated anywhere else, so it's resolved and authorized
+                // here rather than assumed to be a House page.
+                if ($u->getDefaultPage() != '') {
+
+                    $resolvedPge = SecurityComponent::resolveAuthorizedPage($this->dbh, $u->getDefaultPage(), ['a', 'h']);
+
+                    if ($resolvedPge != '') {
+                        $pge = $resolvedPge;
+                    }
                 }
 
                 if ($pge != '') {
