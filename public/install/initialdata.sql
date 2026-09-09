@@ -5567,7 +5567,7 @@ VALUES
 		2,
 		'Edit Categories',
 		'',
-		0,
+		1,
 		'a',
 		'34',
 		'd',

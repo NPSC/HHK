@@ -234,3 +234,6 @@ ALTER TABLE `oauth_clients`
 
 ALTER TABLE `w_idp`
   ADD COLUMN IF NOT EXISTS `Show` BOOL DEFAULT TRUE AFTER `IdP_ManageRoles`;
+
+
+update page set `Hide` = 1 where `File_Name` = "CategoryEdit.php";

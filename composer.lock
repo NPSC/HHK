@@ -71,16 +71,16 @@
         },
         {
             "name": "carbonphp/carbon-doctrine-types",
-            "version": "3.2.0",
+            "version": "3.2.1",
             "source": {
                 "type": "git",
                 "url": "https://github.com/CarbonPHP/carbon-doctrine-types.git",
-                "reference": "18ba5ddfec8976260ead6e866180bd5d2f71aa1d"
+                "reference": "5fa5eacafd9ef47c8c6ab9143fc901ba0194d3dc"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/CarbonPHP/carbon-doctrine-types/zipball/18ba5ddfec8976260ead6e866180bd5d2f71aa1d",
-                "reference": "18ba5ddfec8976260ead6e866180bd5d2f71aa1d",
+                "url": "https://api.github.com/repos/CarbonPHP/carbon-doctrine-types/zipball/5fa5eacafd9ef47c8c6ab9143fc901ba0194d3dc",
+                "reference": "5fa5eacafd9ef47c8c6ab9143fc901ba0194d3dc",
                 "shasum": ""
             },
             "require": {
@@ -95,6 +95,11 @@
                 "phpunit/phpunit": "^10.3"
             },
             "type": "library",
+            "extra": {
+                "branch-alias": {
+                    "dev-main": "3.x-dev"
+                }
+            },
             "autoload": {
                 "psr-4": {
                     "Carbon\\Doctrine\\": "src/Carbon/Doctrine/"
@@ -120,7 +125,7 @@
             ],
             "support": {
                 "issues": "https://github.com/CarbonPHP/carbon-doctrine-types/issues",
-                "source": "https://github.com/CarbonPHP/carbon-doctrine-types/tree/3.2.0"
+                "source": "https://github.com/CarbonPHP/carbon-doctrine-types/tree/3.2.1"
             },
             "funding": [
                 {
@@ -136,7 +141,7 @@
                     "type": "tidelift"
                 }
             ],
-            "time": "2024-02-09T16:56:22+00:00"
+            "time": "2026-09-06T14:11:38+00:00"
         },
         {
             "name": "cerdic/css-tidy",
@@ -634,16 +639,16 @@
         },
         {
             "name": "giggsey/libphonenumber-for-php",
-            "version": "9.0.37",
+            "version": "9.0.38",
             "source": {
                 "type": "git",
                 "url": "https://github.com/giggsey/libphonenumber-for-php.git",
-                "reference": "1469be46ee71678270987d925b34e6bc1c440af9"
+                "reference": "ba273135702a0d0c1f5954dc7291bfc4082da4f0"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/giggsey/libphonenumber-for-php/zipball/1469be46ee71678270987d925b34e6bc1c440af9",
-                "reference": "1469be46ee71678270987d925b34e6bc1c440af9",
+                "url": "https://api.github.com/repos/giggsey/libphonenumber-for-php/zipball/ba273135702a0d0c1f5954dc7291bfc4082da4f0",
+                "reference": "ba273135702a0d0c1f5954dc7291bfc4082da4f0",
                 "shasum": ""
             },
             "require": {
@@ -706,7 +711,7 @@
                 "issues": "https://github.com/giggsey/libphonenumber-for-php/issues",
                 "source": "https://github.com/giggsey/libphonenumber-for-php"
             },
-            "time": "2026-08-15T20:04:56+00:00"
+            "time": "2026-09-01T10:42:16+00:00"
         },
         {
             "name": "giggsey/locale",
@@ -1161,16 +1166,16 @@
         },
         {
             "name": "illuminate/collections",
-            "version": "v13.29.0",
+            "version": "v13.31.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/illuminate/collections.git",
-                "reference": "e89523328db4947d0a239de5607823402c414825"
+                "reference": "ed3a9da8ceab848cd5ed5bf1bd1236c412905522"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/illuminate/collections/zipball/e89523328db4947d0a239de5607823402c414825",
-                "reference": "e89523328db4947d0a239de5607823402c414825",
+                "url": "https://api.github.com/repos/illuminate/collections/zipball/ed3a9da8ceab848cd5ed5bf1bd1236c412905522",
+                "reference": "ed3a9da8ceab848cd5ed5bf1bd1236c412905522",
                 "shasum": ""
             },
             "require": {
@@ -1217,11 +1222,11 @@
                 "issues": "https://github.com/laravel/framework/issues",
                 "source": "https://github.com/laravel/framework"
             },
-            "time": "2026-08-07T13:46:56+00:00"
+            "time": "2026-09-03T14:32:12+00:00"
         },
         {
             "name": "illuminate/conditionable",
-            "version": "v13.29.0",
+            "version": "v13.31.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/illuminate/conditionable.git",
@@ -1267,16 +1272,16 @@
         },
         {
             "name": "illuminate/contracts",
-            "version": "v13.29.0",
+            "version": "v13.31.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/illuminate/contracts.git",
-                "reference": "52fd3118b71254dd083eca6acba39b3f7325ec9a"
+                "reference": "42b0c80ba672f3bfd404470d1e92af274ecc186b"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/illuminate/contracts/zipball/52fd3118b71254dd083eca6acba39b3f7325ec9a",
-                "reference": "52fd3118b71254dd083eca6acba39b3f7325ec9a",
+                "url": "https://api.github.com/repos/illuminate/contracts/zipball/42b0c80ba672f3bfd404470d1e92af274ecc186b",
+                "reference": "42b0c80ba672f3bfd404470d1e92af274ecc186b",
                 "shasum": ""
             },
             "require": {
@@ -1311,11 +1316,11 @@
                 "issues": "https://github.com/laravel/framework/issues",
                 "source": "https://github.com/laravel/framework"
             },
-            "time": "2026-08-10T17:21:54+00:00"
+            "time": "2026-09-06T21:12:06+00:00"
         },
         {
             "name": "illuminate/encryption",
-            "version": "v13.29.0",
+            "version": "v13.31.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/illuminate/encryption.git",
@@ -1366,7 +1371,7 @@
         },
         {
             "name": "illuminate/macroable",
-            "version": "v13.29.0",
+            "version": "v13.31.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/illuminate/macroable.git",
@@ -1412,7 +1417,7 @@
         },
         {
             "name": "illuminate/reflection",
-            "version": "v13.29.0",
+            "version": "v13.31.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/illuminate/reflection.git",
@@ -1463,16 +1468,16 @@
         },
         {
             "name": "illuminate/support",
-            "version": "v13.29.0",
+            "version": "v13.31.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/illuminate/support.git",
-                "reference": "e034c3ddd544e164c3f5d8baa879798907b96a28"
+                "reference": "c60f9633e91ddfb080928f6dcdeea7146c231a6d"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/illuminate/support/zipball/e034c3ddd544e164c3f5d8baa879798907b96a28",
-                "reference": "e034c3ddd544e164c3f5d8baa879798907b96a28",
+                "url": "https://api.github.com/repos/illuminate/support/zipball/c60f9633e91ddfb080928f6dcdeea7146c231a6d",
+                "reference": "c60f9633e91ddfb080928f6dcdeea7146c231a6d",
                 "shasum": ""
             },
             "require": {
@@ -1538,7 +1543,7 @@
                 "issues": "https://github.com/laravel/framework/issues",
                 "source": "https://github.com/laravel/framework"
             },
-            "time": "2026-08-25T15:03:19+00:00"
+            "time": "2026-09-07T12:04:08+00:00"
         },
         {
             "name": "laravel/serializable-closure",
@@ -3617,16 +3622,16 @@
         },
         {
             "name": "slim/slim",
-            "version": "4.15.2",
+            "version": "4.15.3",
             "source": {
                 "type": "git",
                 "url": "https://github.com/slimphp/Slim.git",
-                "reference": "e12cb05ca2a14e8f459d019e87a31dc915b80470"
+                "reference": "3675bf6baac66b07032575b7bef4200b60b7974b"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/slimphp/Slim/zipball/e12cb05ca2a14e8f459d019e87a31dc915b80470",
-                "reference": "e12cb05ca2a14e8f459d019e87a31dc915b80470",
+                "url": "https://api.github.com/repos/slimphp/Slim/zipball/3675bf6baac66b07032575b7bef4200b60b7974b",
+                "reference": "3675bf6baac66b07032575b7bef4200b60b7974b",
                 "shasum": ""
             },
             "require": {
@@ -3729,7 +3734,7 @@
                     "type": "tidelift"
                 }
             ],
-            "time": "2026-05-22T08:00:12+00:00"
+            "time": "2026-09-01T17:11:05+00:00"
         },
         {
             "name": "symfony/clock",
@@ -5216,11 +5221,11 @@
         },
         {
             "name": "phpstan/phpstan",
-            "version": "2.2.11",
+            "version": "2.2.13",
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/phpstan/phpstan/zipball/0eb899d48d9b784eee3f1b58a6c9dc79734cf811",
-                "reference": "0eb899d48d9b784eee3f1b58a6c9dc79734cf811",
+                "url": "https://api.github.com/repos/phpstan/phpstan/zipball/9ba9ac76ee9c5cf5b56d58eb5deec6315b7a0260",
+                "reference": "9ba9ac76ee9c5cf5b56d58eb5deec6315b7a0260",
                 "shasum": ""
             },
             "require": {
@@ -5276,7 +5281,7 @@
                     "type": "github"
                 }
             ],
-            "time": "2026-08-31T10:33:10+00:00"
+            "time": "2026-09-03T20:38:19+00:00"
         },
         {
             "name": "phpunit/php-code-coverage",
@@ -6840,16 +6845,16 @@
         },
         {
             "name": "staabm/phpstan-dba",
-            "version": "0.4.10",
+            "version": "0.4.11",
             "source": {
                 "type": "git",
                 "url": "https://github.com/staabm/phpstan-dba.git",
-                "reference": "72f7bed7f09c1122dfbbe09e28d291d31960d924"
+                "reference": "00ac4265b9b12fad228b465205fb433bbc6ad53d"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/staabm/phpstan-dba/zipball/72f7bed7f09c1122dfbbe09e28d291d31960d924",
-                "reference": "72f7bed7f09c1122dfbbe09e28d291d31960d924",
+                "url": "https://api.github.com/repos/staabm/phpstan-dba/zipball/00ac4265b9b12fad228b465205fb433bbc6ad53d",
+                "reference": "00ac4265b9b12fad228b465205fb433bbc6ad53d",
                 "shasum": ""
             },
             "require": {
@@ -6907,7 +6912,7 @@
             ],
             "support": {
                 "issues": "https://github.com/staabm/phpstan-dba/issues",
-                "source": "https://github.com/staabm/phpstan-dba/tree/0.4.10"
+                "source": "https://github.com/staabm/phpstan-dba/tree/0.4.11"
             },
             "funding": [
                 {
@@ -6915,7 +6920,7 @@
                     "type": "github"
                 }
             ],
-            "time": "2026-07-29T14:59:23+00:00"
+            "time": "2026-09-07T07:25:52+00:00"
         },
         {
             "name": "staabm/side-effects-detector",

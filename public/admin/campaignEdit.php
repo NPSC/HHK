@@ -69,7 +69,8 @@ function getCampaignsTable(\PDO $dbh): HTMLTable {
             . HTMLTable::makeTd(HTMLInput::generateMarkup($r['Campaign_Merge_Code'], ['name' => 'campMergeCode[' . $code . ']', 'size' => '10']))
             . HTMLTable::makeTd(HTMLInput::generateMarkup($r['Description'], ['name' => 'campDesc[' . $code . ']', 'size' => '25']))
             . HTMLTable::makeTd($r['Last_Updated'] != '' ? date('M j, Y', strtotime($r['Last_Updated'])) : '')
-            . HTMLTable::makeTd($r['Updated_By'])
+            . HTMLTable::makeTd($r['Updated_By']),
+            ['data-code' => $code]
         );
     }
 
@@ -89,73 +90,101 @@ function getCampaignsTable(\PDO $dbh): HTMLTable {
         . HTMLTable::makeTd(HTMLInput::generateMarkup('', ['name' => 'campMergeCode[0]', 'size' => '10']))
         . HTMLTable::makeTd(HTMLInput::generateMarkup('', ['name' => 'campDesc[0]', 'size' => '25']))
         . HTMLTable::makeTd('')
-        . HTMLTable::makeTd('')
+        . HTMLTable::makeTd(''),
+        ['data-code' => '0']
     );
 
     return $tbl;
 }
 
 /**
- * @return string '' on success, an error message on failure. Never deletes - Campaign_Code
- * is referenced elsewhere (donations, activity) so rows are only ever added or edited.
+ * Validates and saves one campaign row.
+ *
+ * @return array{ok:bool,errors?:array<string,string[]>,row?:array{code:string,lastUpdated:string,updatedBy:string}}
+ * Never deletes - Campaign_Code is referenced elsewhere (donations, activity) so rows are
+ * only ever added or edited.
  */
-function saveCampaignRow(\PDO $dbh, string $campCode, array $row): string {
+function saveCampaignRow(\PDO $dbh, string $campCode, array $row): array {
 
     $campRS = new CampaignRS();
 
     if ($campCode !== '0' && $campCode !== '') {
 
         $campRS->Campaign_Code->setStoredVal($campCode);
-        $cRows = EditRS::select($dbh, $campRS, array($campRS->Campaign_Code));
+        $cRows = EditRS::select($dbh, $campRS, [$campRS->Campaign_Code]);
 
         if (count($cRows) > 0) {
             EditRS::loadRow($cRows[0], $campRS);
         } else {
-            return 'Campaign Code "' . $campCode . '" was not found.';
+            return ['ok' => false, 'errors' => ['general' => ['Campaign Code "' . $campCode . '" was not found.']]];
         }
     }
+
+    $errors = [];
 
     $title = trim(filter_var($row['title'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
 
     if ($title === '') {
-        return 'A Title is required for every campaign.';
+        $errors['title'] = ['A Title is required for every campaign.'];
+    } else {
+        $campRS->Title->setNewVal($title);
     }
-
-    $campRS->Title->setNewVal($title);
 
     $type = filter_var($row['type'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
     $campRS->Campaign_Type->setNewVal($type != '' ? $type : CampaignType::Normal);
 
     $stDateStr = filter_var($row['sdate'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
     $enDateStr = filter_var($row['edate'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+    $stDate = null;
+    $endDate = null;
 
-    if ($stDateStr == '' || $enDateStr == '') {
-        return '"' . $title . '": Start and End dates must be specified.';
+    if ($stDateStr === '') {
+        $errors['sdate'] = ['A Start date is required.'];
+    } else {
+        try {
+            $stDate = new \DateTime($stDateStr);
+        } catch (\Exception $ex) {
+            $errors['sdate'] = ['Undecipherable Start date.'];
+        }
     }
 
-    try {
-        $stDate = new \DateTime($stDateStr);
-        $endDate = new \DateTime($enDateStr);
-    } catch (\Exception $ex) {
-        return '"' . $title . '": Undecipherable Start and/or End Dates.';
+    if ($enDateStr === '') {
+        $errors['edate'] = ['An End date is required.'];
+    } else {
+        try {
+            $endDate = new \DateTime($enDateStr);
+        } catch (\Exception $ex) {
+            $errors['edate'] = ['Undecipherable End date.'];
+        }
     }
 
-    if ($stDate > $endDate) {
-        return '"' . $title . '": The End date must be after the Start date.';
+    if ($stDate !== null && $endDate !== null) {
+        if ($stDate > $endDate) {
+            $errors['edate'] = ['The End date must be after the Start date.'];
+        } else {
+            $campRS->Start_Date->setNewVal($stDate->format('Y-m-d'));
+            $campRS->End_Date->setNewVal($endDate->format('Y-m-d'));
+        }
     }
 
-    $campRS->Start_Date->setNewVal($stDate->format('Y-m-d'));
-    $campRS->End_Date->setNewVal($endDate->format('Y-m-d'));
+    $min = (float) filter_var($row['min'], FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION);
+    $max = (float) filter_var($row['max'], FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION);
 
-    $min = filter_var($row['min'], FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION);
-    $max = filter_var($row['max'], FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION);
-
-    if ($max < 0 || $min < 0) {
-        return '"' . $title . '": Use only positive values for Min and Max donations.';
+    if ($min < 0) {
+        $errors['min'] = ['Use only positive values for the minimum donation.'];
     }
 
-    if ($max > 0 && $min > $max) {
-        return '"' . $title . '": Check the minimum and maximum donation amounts (Min must be less than Max).';
+    if ($max < 0) {
+        $errors['max'] = ['Use only positive values for the maximum donation.'];
+    }
+
+    if (!isset($errors['min']) && !isset($errors['max']) && $max > 0 && $min > $max) {
+        $errors['min'] = ['The minimum donation must be less than the maximum.'];
+        $errors['max'] = ['The minimum donation must be less than the maximum.'];
+    }
+
+    if (count($errors) > 0) {
+        return ['ok' => false, 'errors' => $errors];
     }
 
     $campRS->Min_Donation->setNewVal($min);
@@ -168,15 +197,29 @@ function saveCampaignRow(\PDO $dbh, string $campCode, array $row): string {
     $campRS->Description->setNewVal(filter_var($row['desc'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
 
     if ($campCode === '0' || $campCode === '') {
-
         $rptId = Common::incCounter($dbh, 'codes');
-        $campRS->Campaign_Code->setNewVal('cp' . $rptId);
+        $newCode = 'cp' . $rptId;
+        $campRS->Campaign_Code->setNewVal($newCode);
         EditRS::insert($dbh, $campRS);
     } else {
-        EditRS::update($dbh, $campRS, array($campRS->Campaign_Code));
+        $newCode = $campCode;
+        EditRS::update($dbh, $campRS, [$campRS->Campaign_Code]);
     }
 
-    return '';
+    // Re-select so Last_Updated/Updated_By reflect what the trigger/DB actually stored.
+    $freshRS = new CampaignRS();
+    $freshRS->Campaign_Code->setStoredVal($newCode);
+    $freshRows = EditRS::select($dbh, $freshRS, [$freshRS->Campaign_Code]);
+    $fresh = $freshRows[0] ?? [];
+
+    return [
+        'ok' => true,
+        'row' => [
+            'code' => $newCode,
+            'lastUpdated' => !empty($fresh['Last_Updated']) ? date('M j, Y', strtotime($fresh['Last_Updated'])) : '',
+            'updatedBy' => $fresh['Updated_By'] ?? '',
+        ],
+    ];
 }
 
 $wInit = new WebInit();
@@ -184,12 +227,12 @@ $dbh = $wInit->dbh;
 
 $menuMarkup = $wInit->generatePageMenu();
 
-$errors = [];
-
-// form save button:
+// form save button: always answers with JSON and stops before the HTML page renders.
 if (filter_has_var(INPUT_POST, "bttncamp")) {
 
-    $titles = isset($_POST['campTitle']) ? $_POST['campTitle'] : [];
+    $titles = $_POST['campTitle'] ?? [];
+    $errors = [];
+    $saved = [];
 
     foreach ($titles as $code => $title) {
 
@@ -201,29 +244,35 @@ if (filter_has_var(INPUT_POST, "bttncamp")) {
 
         $row = [
             'title' => $title,
-            'type' => isset($_POST['campType'][$code]) ? $_POST['campType'][$code] : '',
-            'sdate' => isset($_POST['campStart'][$code]) ? $_POST['campStart'][$code] : '',
-            'edate' => isset($_POST['campEnd'][$code]) ? $_POST['campEnd'][$code] : '',
-            'min' => isset($_POST['campMin'][$code]) ? $_POST['campMin'][$code] : '',
-            'max' => isset($_POST['campMax'][$code]) ? $_POST['campMax'][$code] : '',
-            'target' => isset($_POST['campTarget'][$code]) ? $_POST['campTarget'][$code] : '',
-            'percent' => isset($_POST['campPercent'][$code]) ? $_POST['campPercent'][$code] : '',
-            'status' => isset($_POST['campStatus'][$code]) ? $_POST['campStatus'][$code] : '',
-            'cat' => isset($_POST['campCat'][$code]) ? $_POST['campCat'][$code] : '',
-            'mergeCode' => isset($_POST['campMergeCode'][$code]) ? $_POST['campMergeCode'][$code] : '',
-            'desc' => isset($_POST['campDesc'][$code]) ? $_POST['campDesc'][$code] : '',
+            'type' => $_POST['campType'][$code] ?? '',
+            'sdate' => $_POST['campStart'][$code] ?? '',
+            'edate' => $_POST['campEnd'][$code] ?? '',
+            'min' => $_POST['campMin'][$code] ?? '',
+            'max' => $_POST['campMax'][$code] ?? '',
+            'target' => $_POST['campTarget'][$code] ?? '',
+            'percent' => $_POST['campPercent'][$code] ?? '',
+            'status' => $_POST['campStatus'][$code] ?? '',
+            'cat' => $_POST['campCat'][$code] ?? '',
+            'mergeCode' => $_POST['campMergeCode'][$code] ?? '',
+            'desc' => $_POST['campDesc'][$code] ?? '',
         ];
 
         try {
-            $msg = saveCampaignRow($dbh, $code, $row);
+            $result = saveCampaignRow($dbh, $code, $row);
         } catch (\Exception $ex) {
-            $msg = $ex->getMessage();
+            $result = ['ok' => false, 'errors' => ['general' => [$ex->getMessage()]]];
         }
 
-        if ($msg !== '') {
-            $errors[] = $msg;
+        if ($result['ok']) {
+            $saved[$code] = $result['row'];
+        } else {
+            $errors[$code] = $result['errors'];
         }
     }
+
+    header('Content-Type: application/json');
+    echo json_encode(['success' => count($errors) === 0, 'errors' => $errors, 'saved' => $saved]);
+    exit;
 }
 
 $campaignsTable = getCampaignsTable($dbh);
@@ -236,7 +285,7 @@ $campaignsTable = getCampaignsTable($dbh);
         <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
         <title><?php echo $wInit->pageTitle; ?></title>
 
-        <?php echo Vite::asset('resources/js/admin.js'); ?>
+        <?php echo Vite::asset(['resources/js/admin.js', 'resources/js/admin/campaignEdit.js']); ?>
 
         <?php echo FAVICON; ?>
 
@@ -248,45 +297,11 @@ $campaignsTable = getCampaignsTable($dbh);
             #campaignsTbl table {
                 border-collapse: collapse;
             }
+            #campaignsTbl input.ui-state-error, #campaignsTbl select.ui-state-error {
+                background: #fef1ec;
+                border-color: #cd0a0a;
+            }
         </style>
-
-        <script type="text/javascript">
-            document.addEventListener("DOMContentLoaded", () => {
-
-                $(".ckdate").datepicker({
-                    changeMonth: true,
-                    changeYear: true
-                });
-
-                // Strip non-numeric, non-decimal characters as the user types in money fields.
-                $(".hhk-money").on("input", function () {
-                    var val = this.value;
-                    var stripped = val.replace(/[^0-9.]/g, "");
-
-                    if (stripped !== val) {
-                        var pos = Math.max(0, this.selectionStart - (val.length - stripped.length));
-                        this.value = stripped;
-                        this.setSelectionRange(pos, pos);
-                    }
-                });
-
-                // Format money fields to 2 decimal places once the user leaves the field.
-                $(".hhk-money").on("blur", function () {
-                    var amt = parseFloat(this.value);
-                    this.value = isNaN(amt) ? "" : amt.toFixed(2);
-                });
-
-                var togglePercent = function ($sel) {
-                    $sel.closest('tr').find('input[name^="campPercent"]').prop('disabled', $sel.val() !== 'pct');
-                };
-
-                $('.campTypeSel').each(function () {
-                    togglePercent($(this));
-                }).on('change', function () {
-                    togglePercent($(this));
-                });
-            });
-        </script>
     </head>
     <body <?php if ($wInit->testVersion) {
             echo "class='testbody'";
@@ -296,9 +311,7 @@ $campaignsTable = getCampaignsTable($dbh);
 
             <h1><?php echo $wInit->pageHeading; ?></h1>
 
-            <?php if (count($errors) > 0) { ?>
-                <div class="ui-state-error ui-corner-all p-2 mb-2"><?php echo implode('<br>', $errors); ?></div>
-            <?php } ?>
+            <div id="campErrors" class="ui-state-error ui-corner-all p-2 mb-2" style="display:none;"></div>
 
             <div class="ui-widget ui-widget-content ui-corner-all hhk-widget-content mb-3">
                 <form id="campForm" name="campForm" action="campaignEdit.php" method="post">

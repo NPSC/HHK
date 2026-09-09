@@ -256,6 +256,7 @@ export default defineConfig({
         statement: "resources/js/house/statement.js",
         admin: "resources/js/admin.js",
         accessLog: "resources/js/admin/accessLog.js",
+        campaignEdit: "resources/js/admin/campaignEdit.js",
         configure: "resources/js/admin/configure.js",
         duplicteMerger: "resources/js/admin/duplicateMerger.js",
         misc: "resources/js/admin/misc.js",

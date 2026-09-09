@@ -31,22 +31,6 @@ $uS = Session::getInstance();
 // Array for responses
 $resp = array();
 
-// check security codes; exit if not secure
-if (filter_has_var(INPUT_POST, "sq")) {
-    $sq = filter_input(INPUT_POST, "sq", FILTER_SANITIZE_FULL_SPECIAL_CHARS);
-    $pw = Crypto::decryptMessage($sq);
-    $ts = strtotime($pw);
-    $tnow = time();
-
-    if ($ts < $tnow) {
-        $resp["error"] = "Timed out: timestamp=$pw";
-        echo (json_encode($resp));
-        exit();
-    }
-} else {
-    exit();
-}
-
 $uname = $uS->username;
 
 // use cmd to determine actions
@@ -353,7 +337,7 @@ function recordDonation(PDO $dbh, $maxDonationAmt, $id, $parms)
     return $reply;
 }
 
-function deleteDonation(PDO $dbh, $donId, $uname)
+function deleteDonation(PDO $dbh, $donId, $uname): array
 {
     $reply = array();
 
@@ -391,8 +375,8 @@ function genDonationMarkup(PDO $dbh, $id)
         'style' => 'width:70px;'
     )) . HTMLTable::makeTh('Campaign') . HTMLTable::makeTh('Amount') . HTMLTable::makeTh('Date') . HTMLTable::makeTh('X'));
 
-    $query = "SELECT iddonations, Donor_Id, Amount, Campaign_Code, Date_Entered, Record_Member, Care_Of_Id, Assoc_Id, Name_Last, Name_First, Donor_Name, Campaign_Type, Fund_Code, Note
-        FROM vdonation_view   WHERE Donor_Id = :id or Assoc_id = :id2 order by Date_Entered desc;";
+    $query = "SELECT `iddonations`, `Donor_Id`, `Amount`, `Campaign_Code`, `Date_Entered`, `Record_Member`, `Care_Of_Id`, `Assoc_Id`, `Name_Last`, `Name_First`, `Donor_Name`, `Campaign_Type`, `Fund_Code`, `Note`
+        FROM `vdonation_view` WHERE `Donor_Id` = :id or `Assoc_Id` = :id2 order by `Date_Entered` desc;";
     $stmt = $dbh->prepare($query, array(
         PDO::ATTR_CURSOR => PDO::CURSOR_FWDONLY
     ));
