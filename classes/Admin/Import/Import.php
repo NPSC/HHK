@@ -2,6 +2,7 @@
 namespace HHK\Admin\Import;
 
 
+use HHK\Common;
 use HHK\Member\AbstractMember;
 use HHK\Member\Role\Doctor;
 use HHK\Member\Role\Patient;
@@ -957,7 +958,7 @@ WHERE n.Name_First = '" . $newFirst . "' AND n.Name_Last = '" . $newLast . "'";
         foreach($this->genLookupMapping as $fieldName=>$genlookupTableName){
             if(!isset($this->genLookups[$genlookupTableName])){
                 $this->genLookups[$genlookupTableName] = [];
-                foreach(readGenLookupsPDO($this->dbh, $genlookupTableName) as $r) {
+                foreach(Common::readGenLookupsPDO($this->dbh, $genlookupTableName) as $r) {
                     $this->genLookups[$genlookupTableName][strtolower($r[1])] = $r[0];
                 }
             }
@@ -970,6 +971,8 @@ WHERE n.Name_First = '" . $newFirst . "' AND n.Name_Last = '" . $newLast . "'";
      * @return array
      */
     public function makeMissingGenLookups(string $importFieldName){
+        $uploadedGenLookups = [];
+
         if(isset($this->genLookupMapping[$importFieldName])){
             $uploadedGenLookups = (new ImportMarkup($this->dbh))->getGenLookupInfo($this->genLookupMapping[$importFieldName], $importFieldName);
         }
@@ -980,7 +983,7 @@ WHERE n.Name_First = '" . $newFirst . "' AND n.Name_Last = '" . $newLast . "'";
             foreach($uploadedGenLookups as $genLookup){
                 if($genLookup["id"] == null && $genLookup["Import Name"] != ''){
                     //insert new ethnicity
-                    $newCode = 'g' . incCounter($this->dbh, 'codes');
+                    $newCode = 'g' . Common::incCounter($this->dbh, 'codes');
 
                     $glRs = new GenLookupsRS();
                     $glRs->Table_Name->setNewVal($this->genLookupMapping[$importFieldName]);
