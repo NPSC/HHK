@@ -38,8 +38,8 @@ class Import {
     protected array $zipLookups;
     protected array $hospitals;
     protected array $rooms;
-    protected int $importedPatients;
-    protected int $importedGuests;
+    protected int $importedPatients = 0;
+    protected int $importedGuests = 0;
 
     /**
      * Mapping of import field to gen lookup table name
@@ -327,6 +327,7 @@ class Import {
         $hospitalTitles = array_keys($this->hospitals);
         $roomTitles = array_keys($this->rooms);
         $created = 0;
+        $skippedReservations = 0;
 
         for($i = 0; $i < $numGuests; $i++){
             try{
@@ -373,20 +374,38 @@ class Import {
                 }
 
                 if($guest instanceof Guest && $patArray["hospStay"] instanceof HospitalStay){
-                    $arrival = $faker->dateTimeBetween('-6 months', '-1 week');
-                    $departure = (clone $arrival)->modify('+' . $faker->numberBetween(1, 10) . ' days');
+                    $roomTitle = null;
+                    $arrival = null;
+                    $departure = null;
 
-                    $resvRow = array(
-                        "RoomNum" => $faker->randomElement($roomTitles),
-                        "ArrivalDate" => $arrival->format("Y-m-d"),
-                        "DepartureDate" => $departure->format("Y-m-d"),
-                        "Notes" => ($faker->boolean(30) ? $faker->sentence() : ""),
-                    );
+                    for($attempt = 0; $attempt < 20; $attempt++){
+                        $tryRoomTitle = $faker->randomElement($roomTitles);
+                        $tryArrival = $faker->dateTimeBetween('-6 months', '-1 week');
+                        $tryDeparture = (clone $tryArrival)->modify('+' . $faker->numberBetween(1, 10) . ' days');
 
-                    $guestArr = array(array("idName"=>$guest->getIdName(), "PrimaryGuest"=>"Yes"));
+                        if($this->isRoomAvailable($this->findIdResource($tryRoomTitle), $tryArrival, $tryDeparture)){
+                            $roomTitle = $tryRoomTitle;
+                            $arrival = $tryArrival;
+                            $departure = $tryDeparture;
+                            break;
+                        }
+                    }
 
-                    $resvId = $this->addReservation($guestArr, $patArray["reg"], $patArray["hospStay"], $resvRow);
-                    $this->addVisit($resvRow, $guestArr, $patArray["reg"], $patArray["hospStay"], $resvId);
+                    if($roomTitle !== null){
+                        $resvRow = array(
+                            "RoomNum" => $roomTitle,
+                            "ArrivalDate" => $arrival->format("Y-m-d"),
+                            "DepartureDate" => $departure->format("Y-m-d"),
+                            "Notes" => ($faker->boolean(30) ? $faker->sentence() : ""),
+                        );
+
+                        $guestArr = array(array("idName"=>$guest->getIdName(), "PrimaryGuest"=>"Yes"));
+
+                        $resvId = $this->addReservation($guestArr, $patArray["reg"], $patArray["hospStay"], $resvRow);
+                        $this->addVisit($resvRow, $guestArr, $patArray["reg"], $patArray["hospStay"], $resvId);
+                    }else{
+                        $skippedReservations++;
+                    }
                 }
 
                 $created++;
@@ -396,11 +415,49 @@ class Import {
                 if($this->dbh->inTransaction()){
                     $this->dbh->rollBack();
                 }
-                return array("error"=>$e->getMessage(), "created"=>$created);
+                return array("error"=>$e->getMessage(), "created"=>$created, "skippedReservations"=>$skippedReservations);
             }
         }
 
-        return array("success"=>true, "created"=>$created);
+        return array("success"=>true, "created"=>$created, "skippedReservations"=>$skippedReservations);
+    }
+
+    /**
+     * Check whether a room/resource is free for the given date range, based on the same
+     * rules used by RoomChooser::hasOverlappingReservationOrVisit() - i.e. no overlapping
+     * non-cancelled reservation or visit already occupies the room.
+     *
+     * @param int $idResource
+     * @param \DateTime $arrival
+     * @param \DateTime $departure
+     * @return bool
+     */
+    private function isRoomAvailable(int $idResource, \DateTime $arrival, \DateTime $departure): bool
+    {
+        if($idResource <= 0){
+            return false;
+        }
+
+        $query = "select 1 from `reservation` r
+            where r.idResource = :idResource1
+              and r.Status in ('" . ReservationStatus::Committed . "','" . ReservationStatus::UnCommitted . "')
+              and DATE(r.Expected_Arrival) < DATE(:departure1)
+              and DATE(r.Expected_Departure) > DATE(:arrival1)
+            union
+            select 1 from `visit` v
+            where v.idResource = :idResource2
+              and v.Status not in ('" . VisitStatus::Pending . "','" . VisitStatus::Cancelled . "')
+              and DATE(v.Arrival_Date) < DATE(:departure2)
+              and ifnull(DATE(v.Span_End), DATE(v.Expected_Departure)) > DATE(:arrival2)
+            limit 1";
+
+        $stmt = $this->dbh->prepare($query);
+        $stmt->execute(array(
+            ":idResource1"=>$idResource, ":departure1"=>$departure->format("Y-m-d"), ":arrival1"=>$arrival->format("Y-m-d"),
+            ":idResource2"=>$idResource, ":departure2"=>$departure->format("Y-m-d"), ":arrival2"=>$arrival->format("Y-m-d"),
+        ));
+
+        return $stmt->fetchColumn() === false;
     }
 
     private function addPatient(array $r, bool $update = true){

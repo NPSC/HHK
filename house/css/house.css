@@ -1314,3 +1314,71 @@ input:checked + .hhk-slider:before {
 	background-color: transparent;
 	border: none;
 }
+
+/* Bootstrap utility classes (subset copied from bootstrap.min.css - loading the
+   full stylesheet resets/conflicts with jQuery UI and DataTables styling used
+   throughout the app, so only the classes actually used are included here) */
+.badge {
+	display: inline-block;
+	padding: .35em .65em;
+	font-size: .75em;
+	font-weight: 700;
+	line-height: 1;
+	color: #fff;
+	text-align: center;
+	white-space: nowrap;
+	vertical-align: baseline;
+	border-radius: .25rem;
+	position: relative;
+	top: -1px;
+}
+
+.rounded-pill {
+	border-radius: 50rem !important;
+}
+
+.bg-secondary {
+	background-color: #6c757d !important;
+}
+
+.bg-danger {
+	background-color: #dc3545 !important;
+}
+
+.bg-light {
+	background-color: #f8f9fa !important;
+}
+
+.text-white {
+	color: #fff !important;
+}
+
+.text-dark {
+	color: #212529 !important;
+}
+
+.d-inline-flex {
+	display: inline-flex !important;
+}
+
+.align-items-center {
+	align-items: center !important;
+}
+
+.gap-1 {
+	gap: .25rem !important;
+}
+
+.text-decoration-none {
+	text-decoration: none !important;
+}
+
+.hhk-guest-pill {
+	margin: 0 .25em .25em 0;
+}
+
+.hhk-guest-pill-link:hover {
+	filter: brightness(0.9);
+	text-decoration: underline !important;
+	cursor: pointer;
+}

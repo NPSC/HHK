@@ -34,13 +34,18 @@ class GuestCensusReport extends AbstractReport implements ReportInterface {
     /** @var array<string,string> cancel-type ReservStatus codes => Title, e.g. ['c' => 'Guest Canceled', ...] */
     private array $cancelCodes = [];
 
+    /** @var string "excel" or "here" - the guest roster renders as plain text for Excel, HTML pills on screen. */
+    private string $dispType;
+
     public function __construct(\PDO $dbh, array $request = []){
         $uS = Session::getInstance();
 
         $this->reportTitle = $uS->siteName . ' ' . Labels::getString('memberType', 'guest', 'Guest') . ' Census Report';
         $this->inputSetReportName = "guestcensus";
 
-        foreach (Common::readLookups($dbh, 'ReservStatus', 'Code', TRUE) as $status) {
+        $this->dispType = (filter_has_var(INPUT_POST, "btnExcel-" . $this->inputSetReportName) ? "excel" : "here");
+
+        foreach (Common::readLookups($dbh, 'ReservStatus', 'Code', FALSE) as $status) {
             if ($status['Type'] == ReservationStatusType::Cancelled) {
                 $this->cancelCodes[$status['Code']] = $status['Title'];
             }
@@ -140,13 +145,34 @@ class GuestCensusReport extends AbstractReport implements ReportInterface {
                 }
 
                 $primaryName = $room['primaryLastName'] != '' ? $room['primaryLastName'] : 'Unknown';
-                $entry = htmlspecialchars($primaryName) . ' (' . $guestCount . ')';
 
-                if (!$room['isPaid']) {
-                    $entry = HTMLContainer::generateMarkup('span', $entry, ['style'=>'color:red;']);
+                if ($this->dispType == 'excel') {
+
+                    // Excel can't render the HTML pills, so fall back to plain text.
+                    $rosterParts[] = $primaryName . ' (' . $guestCount . ')';
+
+                } else {
+
+                    // Bootstrap's own "badge in a badge" pattern for a labeled count.
+                    $pillContent = htmlspecialchars($primaryName) . ' '
+                        . HTMLContainer::generateMarkup('span', $guestCount, ['class'=>'badge rounded-pill bg-light text-dark']);
+
+                    $pillClass = 'badge rounded-pill d-inline-flex align-items-center gap-1 text-decoration-none hhk-guest-pill '
+                        . ($room['isPaid'] ? 'bg-secondary text-white' : 'bg-danger text-white');
+
+                    if ($room['primaryIdName'] > 0) {
+                        $entry = HTMLContainer::generateMarkup('a', $pillContent, [
+                            'href' => 'GuestEdit.php?id=' . $room['primaryIdName'],
+                            'target' => '_blank',
+                            'title' => "Go to $primaryName's Guest Edit page",
+                            'class' => $pillClass . ' hhk-guest-pill-link',
+                        ]);
+                    } else {
+                        $entry = HTMLContainer::generateMarkup('span', $pillContent, ['class'=>$pillClass]);
+                    }
+
+                    $rosterParts[] = $entry;
                 }
-
-                $rosterParts[] = $entry;
             }
 
             $row = [
@@ -158,7 +184,7 @@ class GuestCensusReport extends AbstractReport implements ReportInterface {
                 'RoomsUnpaid' => $roomsUnpaid,
                 'RoomsOccupied' => count($rooms),
                 'PeopleInHouse' => $peopleInHouse,
-                'GuestRoster' => implode(', ', $rosterParts),
+                'GuestRoster' => implode($this->dispType == 'excel' ? ', ' : '', $rosterParts),
             ];
 
             foreach (array_keys($this->cancelCodes) as $code) {
@@ -192,14 +218,21 @@ class GuestCensusReport extends AbstractReport implements ReportInterface {
     (case when s.idName = v.idPrimaryGuest then 1 else 0 end) as isPrimary,
     date(s.Span_Start_Date) as SpanStart,
     date(ifnull(s.Span_End_Date, datedefaultnow(s.Expected_Co_Date))) as SpanEnd,
-    (case when ifnull((
+    ifnull((
         select sum(il.Amount)
         from invoice_line il
             join invoice i on il.Invoice_Id = i.idInvoice
         where i.Deleted = 0 and il.Deleted = 0 and i.Order_Number = v.idVisit
             and il.Item_Id in (" . ItemId::Lodging . ", " . ItemId::LodgingReversal . ")
-            and i.`Status` <> '" . InvoiceStatus::Paid . "'
-    ), 0) > 0 then 0 else 1 end) as isPaid
+    ), 0) as LodgingCharged,
+    ifnull((
+        select sum(il.Amount)
+        from invoice_line il
+            join invoice i on il.Invoice_Id = i.idInvoice
+        where i.Deleted = 0 and il.Deleted = 0 and i.Order_Number = v.idVisit
+            and il.Item_Id in (" . ItemId::Lodging . ", " . ItemId::LodgingReversal . ")
+            and i.`Status` in ('" . InvoiceStatus::Paid . "', '" . InvoiceStatus::Carried . "')
+    ), 0) as LodgingPaid
 from stays s
     join visit v on s.idVisit = v.idVisit and s.Visit_Span = v.Span
     join name n on s.idName = n.idName
@@ -222,6 +255,11 @@ order by v.idVisit, v.Span";
                 continue;
             }
 
+            // A visit is only "paid" if it has actually been charged for lodging
+            // and that charge has been fully covered - no invoice at all (nothing
+            // charged yet) counts as unpaid, same as a partially-paid invoice.
+            $isPaid = $r['LodgingCharged'] > 0 && $r['LodgingPaid'] >= $r['LodgingCharged'];
+
             $curDate = new \DateTime($spanStart);
             $endDt = new \DateTime($spanEndExcl);
 
@@ -231,8 +269,9 @@ order by v.idVisit, v.Span";
 
                 if (!isset($dayRooms[$d][$key])) {
                     $dayRooms[$d][$key] = [
-                        'isPaid' => $r['isPaid'] == 1,
+                        'isPaid' => $isPaid,
                         'primaryLastName' => '',
+                        'primaryIdName' => 0,
                         'guests' => [],
                     ];
                 }
@@ -241,6 +280,7 @@ order by v.idVisit, v.Span";
 
                 if ($r['isPrimary'] == 1) {
                     $dayRooms[$d][$key]['primaryLastName'] = $r['Name_Last'];
+                    $dayRooms[$d][$key]['primaryIdName'] = $r['idName'];
                 }
             }
         }

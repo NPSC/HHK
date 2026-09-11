@@ -303,7 +303,11 @@ if(filter_has_var(INPUT_POST, "cmd") && $cmd = filter_input(INPUT_POST, "cmd", F
 						dataType:"json",
 						success: function(data){
 							if(data.success){
-								flagAlertMessage(data.created + " fake guest(s), reservation(s) and visit(s) created.", false);
+								var msg = data.created + " fake guest(s) created.";
+								if(data.skippedReservations){
+									msg += " " + data.skippedReservations + " couldn't be given a reservation/visit (no open room/date slot found).";
+								}
+								flagAlertMessage(msg, false);
 							}else if(data.error){
 								flagAlertMessage(data.error, true);
 							}

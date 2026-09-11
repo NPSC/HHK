@@ -4,17 +4,15 @@ use HHK\House\Report\GuestCensusReport;
 use HHK\sec\{Session, WebInit, Labels};
 
 /**
- * ReservReport.php
+ * GuestCensusReport.php
  *
- * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
+ * @author    Will Ireland <wireland@nonprofitsoftwarecorp.org>
  * @copyright 2010-2020 <nonprofitsoftwarecorp.org>
  * @license   MIT
  * @link      https://github.com/NPSC/HHK
  */
 
 require ("homeIncludes.php");
-
-// 7/1/2021 - Added "Days" column.  EKC
 
 try {
     $wInit = new WebInit();
@@ -59,6 +57,7 @@ if (isset($_POST['btnExcel-' . $report->getInputSetReportName()])) {
         <?php echo NOTY_CSS; ?>
         <?php echo NAVBAR_CSS; ?>
         <?php echo CSSVARS; ?>
+        <?php echo BOOTSTRAP_ICONS_CSS; ?>
 
         <script type="text/javascript" src="<?php echo JQ_JS ?>"></script>
         <script type="text/javascript" src="<?php echo JQ_UI_JS ?>"></script>
