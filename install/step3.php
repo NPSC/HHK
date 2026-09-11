@@ -182,4 +182,3 @@ $modelSel = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($rPrices, '
         </div>
     </body>
 </html>
-
