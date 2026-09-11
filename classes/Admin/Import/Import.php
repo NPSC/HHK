@@ -300,6 +300,109 @@ class Import {
 
     }
 
+    /**
+     * Generate fake patients, guests, reservations and visits using fakerphp/faker.
+     * Dev-mode only - caller is responsible for enforcing that restriction.
+     *
+     * @param int $numGuests Number of fake patient/guest/reservation/visit sets to create
+     * @return array{success: bool, created: int}|array{error: string, created: int}
+     */
+    public function generateFakeData(int $numGuests = 10){
+
+        if($numGuests <= 0){
+            return array("error"=>"Number of guests must be > 0");
+        }
+
+        $this->getHospitals();
+        $this->getRooms();
+
+        if(empty($this->hospitals)){
+            return array("error"=>"No hospitals found. Please add a hospital before generating fake data.");
+        }
+        if(empty($this->rooms)){
+            return array("error"=>"No rooms found. Please add a room before generating fake data.");
+        }
+
+        $faker = \Faker\Factory::create('en_US');
+        $hospitalTitles = array_keys($this->hospitals);
+        $roomTitles = array_keys($this->rooms);
+        $created = 0;
+
+        for($i = 0; $i < $numGuests; $i++){
+            try{
+                $this->dbh->beginTransaction();
+
+                $patientRow = array(
+                    "FirstName" => $faker->firstName(),
+                    "Middle" => "",
+                    "LastName" => $faker->unique()->lastName(),
+                    "Phone" => $faker->numerify('##########'),
+                    "Mobile" => $faker->numerify('##########'),
+                    "Email" => $faker->unique()->safeEmail(),
+                    "Address" => $faker->streetAddress(),
+                    "Address2" => "",
+                    "City" => $faker->city(),
+                    "County" => "",
+                    "State" => $faker->stateAbbr(),
+                    "ZipCode" => $faker->postcode(),
+                    "Hospital" => $faker->randomElement($hospitalTitles),
+                    "importId" => 0,
+                );
+
+                $patArray = $this->addPatient($patientRow, false);
+
+                $guest = false;
+                if($patArray["psg"] instanceof PSG){
+                    $guestRow = array(
+                        "FirstName" => $faker->firstName(),
+                        "LastName" => $faker->unique()->lastName(),
+                        "Middle" => "",
+                        "Phone" => $patientRow["Phone"],
+                        "Mobile" => $patientRow["Mobile"],
+                        "Email" => $faker->unique()->safeEmail(),
+                        "Address" => $patientRow["Address"],
+                        "Address2" => "",
+                        "City" => $patientRow["City"],
+                        "County" => "",
+                        "State" => $patientRow["State"],
+                        "ZipCode" => $patientRow["ZipCode"],
+                        "importId" => 0,
+                    );
+
+                    $guest = $this->addGuest($guestRow, $patArray["psg"]);
+                }
+
+                if($guest instanceof Guest && $patArray["hospStay"] instanceof HospitalStay){
+                    $arrival = $faker->dateTimeBetween('-6 months', '-1 week');
+                    $departure = (clone $arrival)->modify('+' . $faker->numberBetween(1, 10) . ' days');
+
+                    $resvRow = array(
+                        "RoomNum" => $faker->randomElement($roomTitles),
+                        "ArrivalDate" => $arrival->format("Y-m-d"),
+                        "DepartureDate" => $departure->format("Y-m-d"),
+                        "Notes" => ($faker->boolean(30) ? $faker->sentence() : ""),
+                    );
+
+                    $guestArr = array(array("idName"=>$guest->getIdName(), "PrimaryGuest"=>"Yes"));
+
+                    $resvId = $this->addReservation($guestArr, $patArray["reg"], $patArray["hospStay"], $resvRow);
+                    $this->addVisit($resvRow, $guestArr, $patArray["reg"], $patArray["hospStay"], $resvId);
+                }
+
+                $created++;
+                $this->dbh->commit();
+
+            }catch(\Exception $e){
+                if($this->dbh->inTransaction()){
+                    $this->dbh->rollBack();
+                }
+                return array("error"=>$e->getMessage(), "created"=>$created);
+            }
+        }
+
+        return array("success"=>true, "created"=>$created);
+    }
+
     private function addPatient(array $r, bool $update = true){
 
         // New Patient
@@ -919,6 +1022,7 @@ WHERE n.Name_First = '" . $newFirst . "' AND n.Name_Last = '" . $newLast . "'";
     }
 
     private function getHospitals(){
+        $this->hospitals = [];
         $stmt = $this->dbh->query("Select idHospital, Title from hospital");
         while ($h = $stmt->fetch(\PDO::FETCH_ASSOC)) {
             $this->hospitals[strtolower($h['Title'])] = $h['idHospital'];
@@ -926,6 +1030,7 @@ WHERE n.Name_First = '" . $newFirst . "' AND n.Name_Last = '" . $newLast . "'";
     }
 
     private function getRooms(){
+        $this->rooms = [];
         $stmt = $this->dbh->query("Select idResource, Title from resource");
         while ($h = $stmt->fetch(\PDO::FETCH_ASSOC)) {
             $this->rooms[trim(strtolower($h['Title']))] = $h['idResource'];

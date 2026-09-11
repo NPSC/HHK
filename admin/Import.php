@@ -3,7 +3,7 @@
 use HHK\CreateMarkupFromDB;
 use HHK\History;
 use HHK\sec\{Session, WebInit};
-use HHK\SysConst\{WebSiteCode};
+use HHK\SysConst\{WebSiteCode, Mode};
 use HHK\Admin\Import\Upload;
 use HHK\Admin\Import\ImportMarkup;
 use HHK\Admin\Import\Import;
@@ -29,6 +29,7 @@ $testVersion = $wInit->testVersion;
 $menuMarkup = $wInit->generatePageMenu();
 
 $uS = Session::getInstance();
+$isDevMode = ($uS->mode === Mode::Dev);
 
 //load import in progress
 $import = new ImportMarkup($dbh);
@@ -43,20 +44,6 @@ if(isset($_FILES['csvFile']) && file_exists($_FILES['csvFile']['tmp_name'])){
 
     try{
         $upload = new Upload($dbh, $_FILES['csvFile']);
-
-        if($upload->upload()){
-            $import = new ImportMarkup($dbh);
-            $importTbl = $import->generateMkup();
-        }
-
-    }catch (\Exception $e){
-        $errorMsg = $e->getMessage();
-    }
-}else if(isset($_POST["numFakeMembers"])){
-	try{
-		$numMembers = intval(filter_input(INPUT_POST, 'numFakeMembers', FILTER_SANITIZE_NUMBER_INT));
-
-        $upload = new Upload($dbh, $numMembers);
 
         if($upload->upload()){
             $import = new ImportMarkup($dbh);
@@ -91,6 +78,29 @@ if(isset($_POST["startImport"]) && isset($_POST["limit"])){
 		$return = ["error"=>$e->getMessage()];
 	}
     
+    if(is_array($return)){
+        echo json_encode($return);
+        exit;
+    }else{
+        echo json_encode(array("error"=>"Invalid Response"));
+        exit;
+    }
+}
+
+if(isset($_POST["generateFakeData"])){
+    if(!$isDevMode){
+        echo json_encode(array("error"=>"Fake data generation is only available in dev mode."));
+        exit;
+    }
+
+    $numGuests = min(500, max(0, intval(filter_input(INPUT_POST, 'numFakeGuests', FILTER_SANITIZE_NUMBER_INT))));
+    $import = new Import($dbh);
+    try{
+        $return = $import->generateFakeData($numGuests);
+    }catch(\Exception $e){
+        $return = array("error"=>$e->getMessage());
+    }
+
     if(is_array($return)){
         echo json_encode($return);
         exit;
@@ -279,6 +289,31 @@ if(filter_has_var(INPUT_POST, "cmd") && $cmd = filter_input(INPUT_POST, "cmd", F
 					getWorkerProgress();
 				});
 
+				$(document).on("click", "#generateFakeData", function(){
+					var numGuests = parseInt($("#numFakeGuests").val()) || 10;
+					$("#generateFakeData").prop("disabled", true);
+
+					$.ajax({
+						url: "Import.php",
+						method: "post",
+						data:{
+							generateFakeData: true,
+							numFakeGuests: numGuests
+						},
+						dataType:"json",
+						success: function(data){
+							if(data.success){
+								flagAlertMessage(data.created + " fake guest(s), reservation(s) and visit(s) created.", false);
+							}else if(data.error){
+								flagAlertMessage(data.error, true);
+							}
+						},
+						complete: function(){
+							$("#generateFakeData").prop("disabled", false);
+						}
+					});
+				});
+
 				$(document).on("click", "#undo", function(){
     				$.ajax({
     					url: "Import.php",
@@ -351,12 +386,6 @@ if(filter_has_var(INPUT_POST, "cmd") && $cmd = filter_input(INPUT_POST, "cmd", F
 						<label for="csvFile">Upload CSV File:</label>
 						<input type="file" id="csvFile" name="csvFile" accept=".csv">
 					</div>
-					<!--
-					<div>
-					<label for="numFakeMembers">OR - Number of fake records:</label>
-						<input type="number" id="numFakeMembers" name="numFakeMembers">
-					</div>
-					-->
 					<?php if(isset($errorMsg)){ ?>
 					<div>
 						<?php echo $errorMsg; ?>
@@ -366,6 +395,13 @@ if(filter_has_var(INPUT_POST, "cmd") && $cmd = filter_input(INPUT_POST, "cmd", F
 						<input type="submit" value="Upload" class="ui-button ui-corner-all">
 					</div>
 				</form>
+				<?php if($isDevMode){ ?>
+				<div class="mt-3">
+					<label for="numFakeGuests">OR - Generate fake guests, reservations &amp; visits (dev mode only):</label>
+					<input type="number" id="numFakeGuests" name="numFakeGuests" min="1" max="500" value="10" style="width:70px;">
+					<button type="button" id="generateFakeData" class="ui-button ui-corner-all">Generate Fake Data</button>
+				</div>
+				<?php } ?>
             </div>
 
 			<?php if(isset($importTbl)){ ?>

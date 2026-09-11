@@ -10,16 +10,9 @@ class Upload {
     protected array $rawData;
     const TBL_NAME = "import";
 
-    public function __construct(\PDO $dbh, array|int $file) {
+    public function __construct(\PDO $dbh, array $file) {
         $this->dbh = $dbh;
-        
-        if(is_array($file)){
-            $this->rawData = $this->parseFile($file);
-        //}elseif(is_int($file) && $file > 0){
-        //    $this->rawData = $this->makeFakeMembers($file);
-        }else{
-            throw new ErrorException("CSV file or number of fake members is required");
-        }
+        $this->rawData = $this->parseFile($file);
     }
 
     public function upload(){
@@ -98,38 +91,6 @@ class Upload {
 
         }else{
             throw new ErrorException("Uploaded file is not a CSV file. Type is " . $csvFile['type']);
-        }
-    }
-
-    /**
-     * Generate an array of fake people instead of reading CSV
-     * 
-     * @param int $numMembers Number of fake people to create
-     * @throws \ErrorException
-     * @return array
-     */
-    private function makeFakeMembers(int $numMembers){
-
-        $faker = \Faker\Factory::create('en_US');
-        
-        if ($numMembers > 0) {
-            $members = [];
-            for ($i = 0; $i < $numMembers; $i++){
-                $members[] = [
-                    "FirstName"=>$faker->unique()->firstName(),
-                    "LastName" =>$faker->lastName(),
-                    "Email"    =>$faker->email(),
-                    "Phone"    =>$faker->phoneNumber(),
-                    "Street"   =>$faker->buildingNumber() . " " . $faker->streetName(),
-                    "City"     =>$faker->city(),
-                    "State"    =>$faker->state(),
-                    "ZipCode"  =>$faker->postcode(),
-                ];
-            }
-
-            return $members;
-        }else{
-            throw new ErrorException("Number of members must be > 0");
         }
     }
 
