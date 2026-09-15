@@ -224,3 +224,7 @@ SELECT 'hospitals', CONCAT(`Value`, 's'), 's', 'h', '', '' FROM `labels` WHERE `
 
 INSERT IGNORE INTO `sys_config`(`Key`,`Value`,`Type`,`Category`,`Description`,`Show`) VALUES 
 ("stmtShowBirthDate", "false","b","f","Show Patient Birthdate on Statements","1");
+
+
+INSERT IGNORE INTO `sys_config`(`Key`,`Value`,`Type`,`Category`,`Description`,`Show`) VALUES 
+('InsistMRN','false','b','p','Insist on user filling in the patients MRN',1);

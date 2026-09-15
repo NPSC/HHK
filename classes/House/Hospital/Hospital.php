@@ -85,7 +85,7 @@ class Hospital
             (count($aList) > 0 && $hstay->getHospitalId() != $assocNoneId ? HTMLTable::makeTh(HTMLContainer::generateMarkup('label', $labels->getString('hospital', 'association', 'Association'), ['for' => 'selAssoc'])) : '')
             . HTMLTable::makeTh(HTMLContainer::generateMarkup("label", $labels->getString('hospital', 'hospital', 'Hospital'), ['for' => "selHospital"]) . HTMLContainer::generateMarkup('span', "*", ['class' => 'hhk-text-red ml-1']))
             . HTMLTable::makeTh(HTMLContainer::generateMarkup('label', $labels->getString('hospital', 'roomNumber', 'Room'), ['for' => 'psgRoom']))
-            . ($mrn == '' ? '' : HTMLTable::makeTh(HTMLContainer::generateMarkup('label', $mrn, ['for' => 'psgMrn'])))
+            . ($mrn == '' ? '' : HTMLTable::makeTh(HTMLContainer::generateMarkup('label', $mrn, ['for' => 'psgMrn']) . ($uS->InsistMRN ? HTMLContainer::generateMarkup('span', "*", ['class' => 'hhk-text-red ml-1']) : '')))
         );
 
         $table->addBodyTr(
@@ -110,7 +110,7 @@ class Hospital
             . ($mrn == '' ? '' : HTMLTable::makeTd(
                 HTMLInput::generateMarkup(
                     (isset($referralHospitalData['mrn']) && $referralHospitalData['mrn'] != '' ? $referralHospitalData['mrn'] : $hstay->getMrn()),
-                    array('name' => 'psgMrn', 'size' => '14', 'class' => 'ignrSave hospital-stay')
+                    array('name' => 'psgMrn', 'size' => '14', 'class' => 'ignrSave hospital-stay') + ($uS->InsistMRN ? array('required' => 'required') : array())
                 )
             ))
         );

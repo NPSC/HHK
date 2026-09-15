@@ -2199,6 +2199,16 @@ VALUES
 		1
 	),
 	(
+		'InsistMRN',
+		'false',
+		'b',
+		'p',
+		'',
+		'Insist on user filling in the patients MRN',
+		'',
+		1
+	),
+	(
 		'InsuranceChooser',
 		'false',
 		'b',
