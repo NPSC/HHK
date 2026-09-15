@@ -131,6 +131,7 @@ abstract class AbstractContacts
                 unset($contacts[$k]);
             }
         }
+        $contacts = array_values($contacts);
     }
     
 }
