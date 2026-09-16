@@ -92,7 +92,7 @@ class SitePage extends SecurityComponent {
      * @param PDO $dbh
      * @throws RuntimeException
      */
-    public static function loadSiteList(PDO $dbh) {
+    public static function loadSiteList(PDO $dbh): void {
 
         $uS = Session::getInstance();
 
@@ -254,7 +254,7 @@ class SitePage extends SecurityComponent {
      * Summary of Authorize_Or_Die
      * @return void
      */
-    public function Authorize_Or_Die() {
+    public function Authorize_Or_Die(): void {
 
         $this->die_if_not_Logged_In($this->get_Page_Type(), $this->get_Login_Page());
 
@@ -337,7 +337,7 @@ class SitePage extends SecurityComponent {
      * @param PDO|bool $dbh
      * @return string
      */
-    public function generateMenu(string $pageHeader, PDO|bool $dbh = false) {
+    public function generateMenu(string $pageHeader, PDO|bool $dbh = false): string {
         // only generate menu for pages, not services or components
         if ($this->get_Page_Type() != WebPageCode::Page) {
             return '';
@@ -439,7 +439,7 @@ class SitePage extends SecurityComponent {
      * @param array $siteList
      * @return string
      */
-    protected function getSiteIcons($siteList) {
+    protected function getSiteIcons($siteList): string {
 
         $mu = "<ul id='ulIcons' class='ui-widget hhk-ui-icons'>";
         $siteCount = 0;

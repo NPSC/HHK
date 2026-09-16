@@ -203,7 +203,7 @@ class UserClass
      * @param array $r
      * @return bool
      */
-    public function doLogin(\PDO $dbh, array $r){
+    public function doLogin(\PDO $dbh, array $r): bool{
         // Regenerate session ID to prevent session fixation attacks
         $ssn = Session::getInstance();
         $ssn->regenSessionId();
@@ -253,7 +253,7 @@ class UserClass
      * @param mixed $pcName
      * @return string
      */
-    public static function setPCAccess(\PDO $dbh, $pcName = null)
+    public static function setPCAccess(\PDO $dbh, $pcName = null): string
     {
         if (! self::checkPCAccess($dbh)) {
 
@@ -286,7 +286,7 @@ class UserClass
      * @param mixed $ipAddr
      * @return string
      */
-    public static function revokePCAccess(\PDO $dbh, $ipAddr)
+    public static function revokePCAccess(\PDO $dbh, $ipAddr): string
     {
         if ($ipAddr) { // if $ipAddr exists
             $ipRS = new W_auth_ipRS();
@@ -326,7 +326,7 @@ class UserClass
      * @param mixed $gc
      * @return bool
      */
-    public static function checkPCAccess(\PDO $dbh, $gc = false)
+    public static function checkPCAccess(\PDO $dbh, $gc = false): bool
     {
         $remoteIp = self::getRemoteIp();
         $params = [];

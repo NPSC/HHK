@@ -16,8 +16,8 @@ namespace HHK\sec;
 
 class Session
 {
-    const SESSION_STARTED = TRUE;
-    const SESSION_NOT_STARTED = FALSE;
+    private const bool SESSION_STARTED = TRUE;
+    private const bool SESSION_NOT_STARTED = FALSE;
 
     // The state of the session
     private bool $sessionState = self::SESSION_NOT_STARTED;
@@ -72,7 +72,7 @@ class Session
     *
     *    @return    bool    TRUE if the session id is regenerated, else FALSE.
     **/
-    public function regenSessionId() {
+    public function regenSessionId(): bool {
         return session_regenerate_id();
     }
 
@@ -126,7 +126,7 @@ class Session
      * @param bool $delCookie
      * @return void
      */
-    public function destroy($delCookie = FALSE)
+    public function destroy(bool $delCookie = FALSE): void
     {
         if ( $this->sessionState == self::SESSION_STARTED ) {
             $this->sessionState = !session_destroy();

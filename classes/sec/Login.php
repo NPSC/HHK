@@ -2,6 +2,7 @@
 namespace HHK\sec;
 
 
+use DebugBar\DataCollector\PDO\TraceablePDO;
 use HHK\AlertControl\AlertMessage;
 use HHK\Common;
 use HHK\Crypto;
@@ -33,12 +34,12 @@ class Login {
     protected $validateMsg = '';
 
 
-    public static function initHhkSession() {
+    public static function initHhkSession(): \PDO|TraceablePDO {
 
         // get session instance
-    	$ssn = Session::getInstance();
+    	$uS = Session::getInstance();
 
-        $ssn->sitePepper = $_ENV['SITE_PEPPER'] ?? '';
+        $uS->sitePepper = $_ENV['SITE_PEPPER'] ?? '';
 
         try {
             self::dbParmsToSession();
@@ -47,20 +48,12 @@ class Login {
         	exit('<h3>' . $hex->getMessage() . '; <a href="index.php">Continue</a></h3>');
         }
 
-        // Deprecated 7/23 EKC.
-         // Check site maintenance
-//        $ssn->Site_Maintenance = SysConfig::getKeyValue($dbh, 'sys_config', 'Site_Maintenance', false);
-//
-//        if ($ssn->Site_Maintenance === TRUE) {
-//             exit("<h1>HHK is offline for maintenance.  Try again later.</h1>");
-//        }
-
 
 		// Check SsL
-        $ssn->ssl = SysConfig::getKeyValue($dbh, 'sys_config', 'SSL', false);
+        $uS->ssl = SysConfig::getKeyValue($dbh, 'sys_config', 'SSL', false);
         $secureComp = new SecurityComponent();
 
-        if ($ssn->ssl === TRUE) {
+        if ($uS->ssl === TRUE) {
 
             // Must access pages through SSL
             if ($secureComp->isHTTPS() === FALSE) {
@@ -69,22 +62,22 @@ class Login {
         }
 
 
-        $ssn->mode = strtolower(SysConfig::getKeyValue($dbh, 'sys_config', 'mode', 'demo'));
-        $ssn->testVersion = SysConfig::getKeyValue($dbh, 'sys_config', 'Run_As_Test', false);
-        $ssn->resourceURL = $secureComp->getRootURL();
-        $ssn->ver = CodeVersion::VERSION . '.' . CodeVersion::BUILD;
+        $uS->mode = strtolower(SysConfig::getKeyValue($dbh, 'sys_config', 'mode', 'demo'));
+        $uS->testVersion = SysConfig::getKeyValue($dbh, 'sys_config', 'Run_As_Test', false);
+        $uS->resourceURL = $secureComp->getRootURL();
+        $uS->ver = CodeVersion::VERSION . '.' . CodeVersion::BUILD;
 
         // Initialize role code
-        if (isset($ssn->rolecode) === FALSE) {
-        	$ssn->rolecode = WebRole::Guest;
+        if (isset($uS->rolecode) === FALSE) {
+        	$uS->rolecode = WebRole::Guest;
         }
 
-        SysConfig::getCategory($dbh, $ssn, ["a", "f", "es", "ga", "pr", "ha", "sms", "g"], WebInit::SYS_CONFIG);
+        SysConfig::getCategory($dbh, $uS, ["a", "f", "es", "ga", "pr", "ha", "sms", "g"], WebInit::SYS_CONFIG);
         
         return $dbh;
     }
 
-    public static function dbParmsToSession() {
+    public static function dbParmsToSession(): void {
 
         // get session instance
         $ssn = Session::getInstance();
@@ -101,7 +94,7 @@ class Login {
         }
     }
 
-    public function checkPost(\PDO $dbh, $post, $defaultPage) {
+    public function checkPost(\PDO $dbh, array $post, string $defaultPage): array {
 
         $otpMsgs = [
             'authenticator'=>'Enter the one-time <strong>Authenticator</strong> code',
@@ -206,35 +199,7 @@ class Login {
 
     }
 
-    public static function IEMsg(){
-        try {
-            if ($userAgentArray = @get_browser(NULL, TRUE)) {
-
-                if (is_array($userAgentArray)) {
-
-                    $browserName = $userAgentArray['parent'];
-
-                    if($browserName && $browserName == "IE 11.0 for Desktop"){
-                        // Instantiate the alert message control
-                        $alertMsg = new AlertMessage("IEAlert");
-                        $alertMsg->set_DisplayAttr("block");
-                        $alertMsg->set_Context(AlertMessage::Alert);
-                        $alertMsg->set_iconId("alrIcon");
-                        $alertMsg->set_styleId("alrResponse");
-                        $alertMsg->set_txtSpanId("alrMessage");
-                        $alertMsg->set_Text("Internet Explorer 11 detected<span style='margin-top: 0.5em; display: block'>HHK may not function as intended. For the best experience, consider using a supported browser such as Edge, Chrome or Firefox. If you are required to continue using IE 11, and are having trouble with HHK, please contact NPSC.</span>");
-
-                        return HTMLContainer::generateMarkup("div", HTMLContainer::generateMarkup('div', HTMLContainer::generateMarkup("div", $alertMsg->createMarkup()), array("class"=>"col-xl-10")), array("class"=>"row justify-content-center mb-3"));
-                    }
-                }
-            }
-        } catch (\Exception $d) {
-        }
-
-        return '';
-    }
-
-    public static function trainingMsg(){
+    public static function trainingMsg(): string{
         $uS = Session::getInstance();
 
         if($uS->testVersion){
@@ -252,7 +217,7 @@ class Login {
         }
     }
 
-    public function loginForm($uname = '') {
+    public function loginForm($uname = ''): string {
 
         if ($uname != '' && $this->userName == '') {
             $this->setUserName($uname);
@@ -326,17 +291,7 @@ class Login {
 
     }
 
-    public static function rssWidget($title) {
-
-        $hdr = HTMLContainer::generateMarkup("div", $title, array("class"=>"ui-widget-header ui-corner-top p-1 center"));
-
-        $content = '<div id="hhk-loading-spinner" class="center p-3"><img src="../images/ui-anim_basic_16x16.gif"></div>';
-
-        return HTMLContainer::generateMarkup("div", HTMLContainer::generateMarkup('div', HTMLContainer::generateMarkup("div", $hdr . HTMLContainer::generateMarkup("div", $content, array("class"=>"ui-widget-content ui-corner-bottom")), array("class"=>"ui-widget")), array('class'=>'col-12')), array("class"=>"row justify-content-center mb-3 rssWidget",));
-
-    }
-
-    public static function welcomeWidget($title, $rootURL = '') {
+    public static function welcomeWidget(string $title, $rootURL = ''): string {
 
         $uS = Session::getInstance();
 
@@ -350,19 +305,7 @@ class Login {
 
     }
 
-    public static function getRssData($feedurl) {
-        $content = @file_get_contents($feedurl);
-        if($content !== false){
-            header("Content-Type: text/xml");
-            echo $content;
-        }else{
-            http_response_code(503);
-            echo "Unable to Fetch data";
-        }
-        exit;
-    }
-
-    public static function getLinksMarkup(Session $uS, \PDO $dbh){
+    public static function getLinksMarkup(\PDO $dbh): string{
         $tutorialSiteURL = SysConfig::getKeyValue($dbh, 'sys_config', 'Tutorial_URL');
         $trainingSiteURL = SysConfig::getKeyValue($dbh, 'sys_config', 'Training_URL');
         $extLinkIcon = "<span class='ui-icon ui-icon-extlink'></span>";
@@ -383,7 +326,7 @@ class Login {
         return $linkMkup;
     }
 
-    public static function getNewsletterMarkup(){
+    public static function getNewsletterMarkup(): string{
 
         $uS = Session::getInstance();
 
@@ -401,7 +344,7 @@ class Login {
         }
     }
 
-    public static function getFooterMarkup(){
+    public static function getFooterMarkup(): string{
         $copyYear = date('Y');
 
         return HTMLContainer::generateMarkup("div",

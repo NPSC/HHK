@@ -128,10 +128,6 @@ table {
   background-color: #63a0ce;
 }
 
-.rssWidget .item {
-  border-bottom: 1px solid #a6c9e2;
-}
-
 .welcomeWidgetContainer #hhk-loading-spinner {
   display: flex;
   align-items: center;

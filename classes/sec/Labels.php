@@ -14,9 +14,7 @@ use HHK\Common;
  */
 
 /**
- * Labels Class
- *
- *
+ * Loads labels from the database and provides a static method to retrieve them.
  */
 
 class Labels {
@@ -28,13 +26,13 @@ class Labels {
      * @return \HHK\sec\Labels
      */
     
-    public static function getLabels(){
+    public static function getLabels(): Labels{
         
          return new Labels();
     }
 
     
-    public static function initLabels(\PDO $dbh){
+    public static function initLabels(\PDO $dbh): array{
 
         $labels = [];
         // get labels form DB
@@ -48,7 +46,7 @@ class Labels {
 
     }
 
-    public static function getString($sec, $key, $default = null){
+    public static function getString(string $sec, string $key, ?string $default = null): string{
         
         $uS = Session::getInstance();
         
@@ -69,4 +67,3 @@ class Labels {
     }
 
 }
-?>

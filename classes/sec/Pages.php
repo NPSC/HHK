@@ -414,7 +414,7 @@ from page p left join page_securitygroup s on p.idPage = s.idPage
         return array('site'=>$site, "success" => $mkup);
     }
 
-    public static function editSite(\PDO $dbh, $fields) {
+    public static function editSite(\PDO $dbh, array $fields): array {
         $siteCode = '';
 
         if (isset($fields["inSiteCode"])) {
@@ -423,43 +423,43 @@ from page p left join page_securitygroup s on p.idPage = s.idPage
             return array("error" => "Bad Site Code. ");
         }
 
-        $siteRs = new Web_SitesRS();
-        $siteRs->Site_Code->setStoredVal($siteCode);
-        $siteRows = EditRS::select($dbh, $siteRs, array($siteRs->Site_Code));
+        $siteRS = new Web_SitesRS();
+        $siteRS->Site_Code->setStoredVal($siteCode);
+        $siteRows = EditRS::select($dbh, $siteRS, array($siteRS->Site_Code));
 
         if (count($siteRows) != 1) {
             return array("error" => "Site Code not found. ");
         }
 
-        EditRS::loadRow($siteRows[0], $siteRs);
+        EditRS::loadRow($siteRows[0], $siteRS);
 
         if (isset($fields["inDescription"])) {
-            $siteRs->Description->setNewVal(filter_var($fields["inDescription"], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
+            $siteRS->Description->setNewVal(filter_var($fields["inDescription"], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
         }
 
         if (isset($fields["inHostAddr"])) {
-            $siteRs->HTTP_Host->setNewVal(filter_var($fields["inHostAddr"], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
+            $siteRS->HTTP_Host->setNewVal(filter_var($fields["inHostAddr"], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
         }
 
         if (isset($fields["inRelAddr"])) {
-            $siteRs->Relative_Address->setNewVal(filter_var($fields["inRelAddr"], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
+            $siteRS->Relative_Address->setNewVal(filter_var($fields["inRelAddr"], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
         }
 
         if (isset($fields["inCss"])) {
-            $siteRs->Path_To_CSS->setNewVal(filter_var($fields["inCss"], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
+            $siteRS->Path_To_CSS->setNewVal(filter_var($fields["inCss"], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
         }
 
         if (isset($fields["inJs"])) {
-            $siteRs->Path_To_JS->setNewVal(filter_var($fields["inJs"], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
+            $siteRS->Path_To_JS->setNewVal(filter_var($fields["inJs"], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
         }
 
         if (isset($fields["inDefault"])) {
-            $siteRs->Default_Page->setNewVal(filter_var($fields["inDefault"], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
+            $siteRS->Default_Page->setNewVal(filter_var($fields["inDefault"], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
         }
 
 
         if (isset($fields["inIndex"])) {
-            $siteRs->Index_Page->setNewVal(filter_var($fields["inIndex"], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
+            $siteRS->Index_Page->setNewVal(filter_var($fields["inIndex"], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
         }
 
         if (isset($fields["siteSecCode"])) {
@@ -472,18 +472,18 @@ from page p left join page_securitygroup s on p.idPage = s.idPage
                     $codeCDS .= ',' . $c;
                 }
             }
-            $siteRs->Required_Group_Code->setNewVal($codeCDS);
+            $siteRS->Required_Group_Code->setNewVal($codeCDS);
         }
 
-        EditRS::update($dbh, $siteRs, array($siteRs->Site_Code));
+        EditRS::update($dbh, $siteRS, array($siteRS->Site_Code));
 
-        $events = array("success" => "Updated Site: " . $siteRs->Description->getStoredVal());
+        $events = array("success" => "Updated Site: " . $siteRS->Description->getStoredVal());
 
 
         return $events;
     }
 
-    public function getPageErrors() {
+    public function getPageErrors(): string {
         return $this->pageErrors;
     }
 }

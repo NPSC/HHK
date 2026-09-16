@@ -120,15 +120,6 @@ class WebInit {
             $this->pageTitle = strtoupper($uS->mode) . " - " . $this->siteName;
         }
 
-        // Deprecated 7/23
-        /*
-        * if test version, put a big TEST on the page
-        */
-//        if ($this->testVersion !== FALSE) {
-            //$this->menuTitle = "TEST VERSION";
-           //$this->pageTitle = "TEST - " . $this->siteName;
-//        }
-
 
         $this->pageHeading = $this->page->get_Page_Title();
 
@@ -192,7 +183,7 @@ class WebInit {
      * Summary of generatePageMenu
      * @return string
      */
-    public function generatePageMenu() {
+    public function generatePageMenu(): string {
         // generate menu markup if page type = 'p'
         return $this->page->generateMenu($this->menuTitle, $this->dbh);
 
@@ -221,7 +212,7 @@ class WebInit {
      * @param Session $uS
      * @return void
      */
-    public static function loadNameLookups(\PDO $dbh, $uS){
+    public static function loadNameLookups(\PDO $dbh, Session $uS): void{
         $query = "SELECT `Table_Name`, `Code`, `Description`, `Substitute` FROM `gen_lookups`
             WHERE `Table_Name` IN ('Address_Purpose','Email_Purpose','rel_type', 'NoReturnReason', 'Member_Basis','mem_status','Name_Prefix','Name_Suffix','Phone_Type', 'Pay_Type', 'Salutation', 'Role_Codes', 'Referral_Form_Status') ORDER BY `Table_Name`, `Code`;";
         $stmt = $dbh->prepare($query);
@@ -383,7 +374,7 @@ class WebInit {
         }
     }
 
-    public static function isAJAX(){
+    public static function isAJAX(): bool{
         return (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && $_SERVER['HTTP_X_REQUESTED_WITH'] == "XMLHttpRequest");
     }
 }

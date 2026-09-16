@@ -105,7 +105,7 @@ class Remember
         return $rowCount;
     }
 
-    public function getTokens(\PDO $dbh)
+    public function getTokens(\PDO $dbh): array
     {
         $sql = "SELECT `IP_Address`, `Expires`, `Timestamp` FROM w_user_tokens where `idName` = :idName and `Expires` > :now";
 

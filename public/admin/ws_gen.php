@@ -24,6 +24,8 @@ use HHK\Payment\PaymentGateway\Deluxe\DeluxeGateway;
 use HHK\Payment\PaymentGateway\Deluxe\Request\SearchPaymentRequest;
 use HHK\Payment\PaymentGateway\Deluxe\Request\VoidRequest;
 
+use function PHPUnit\Framework\isArray;
+
 /**
  * ws_gen.php
  *
@@ -112,7 +114,7 @@ try {
 
             $parms = $_REQUEST["parms"];
 
-            if (($parms = filter_var_array($parms)) === false) {
+            if (!is_array($parms = filter_var_array($parms))) {
                 $events = array("error" => "Bad input");
             } else if (SecurityComponent::is_TheAdmin()) {
                 $pages = new Pages();

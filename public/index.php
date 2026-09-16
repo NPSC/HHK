@@ -101,7 +101,7 @@ $loginMkup = $login->loginForm();
 $samlMkup = SAML::getIdpMarkup($dbh);
 
 $announcementWidget = $login->welcomeWidget("Tip of the Week");
-$linkMkup = $login->getLinksMarkup($uS, $dbh);
+$linkMkup = $login->getLinksMarkup($dbh);
 $newsletterMkup = $login->getNewsletterMarkup();
 $row2 = HTMLContainer::generateMarkup("div", HTMLContainer::generateMarkup('div', $linkMkup, array("class"=>"col-lg-7 mb-3")) . HTMLContainer::generateMarkup("div", $newsletterMkup, array("class"=>"col-lg-5")),array("class"=>"row justify-content-center mb-3"));
 
@@ -119,7 +119,7 @@ if (SecurityComponent::isHTTPS()) {
 }
 
 ?>
-<!DOCTYPE HTML>
+<!doctype html>
 <html lang="en">
     <head>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
