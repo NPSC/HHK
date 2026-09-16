@@ -75,7 +75,7 @@ $finalPage = $houseUrl . $transferPageStr . (count($forwardPageParms) > 0 ? '?' 
             document.addEventListener("DOMContentLoaded", () => {
                 "use strict";
 
-                const w = opener;
+                let w = opener;
 
                 w = (!w ? parent.window : opener.window);
 
