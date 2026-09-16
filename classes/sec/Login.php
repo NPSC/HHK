@@ -175,7 +175,7 @@ class Login {
                     if ($resolvedPge != '') {
                         $events['page'] = $resolvedPge;
                     } else {
-                        $this->validateMsg .= "Unauthorized for page: " . $u->getDefaultPage();
+                        $this->validateMsg .= "Unauthorized for page: " . SecurityComponent::getPageTitle($u->getDefaultPage(), $dbh);
                     }
 
                 } else {
@@ -184,7 +184,7 @@ class Login {
                         if (SecurityComponent::is_Authorized($pge, true)) {
                             $events['page'] = $pge;
                         } else {
-                            $this->validateMsg .= "Unauthorized for page: " . $pge;
+                            $this->validateMsg .= "Unauthorized for page: " . SecurityComponent::getPageTitle($pge, $dbh);
                         }
                     }catch(AuthException $e){
                         $this->validateMsg .= $e->getMessage();

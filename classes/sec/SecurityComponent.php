@@ -42,12 +42,9 @@ class SecurityComponent {
      * Summary of is_Authorized
      * @param mixed $name
      * @param bool $isLogin write log and throw exception if user flow is login
-     * @param string|null $webSite when given, checks $name as a page on this specific site via a
-     *  direct DB lookup instead of $uS->webPages - which SitePage only ever populates for the site
-     *  of the page currently being served, so a same-signature check for a page on some other site
-     *  would otherwise always silently return false. Costs a query; omit for the common same-site
-     *  case, where the request-scoped cache already has the answer for free.
-     * @param \PDO|null $dbh reused for both the $webSite lookup and (if $isLogin) the log insert;
+     * @param string|null $webSite when given, checks $name as a page on this specific site
+     *  instead of the site currently being served. Omit for the common same-site case.
+     * @param \PDO|null $dbh reused for a cache-miss lookup and (if $isLogin) the log insert;
      *  a connection is opened via Common::initPDO() if not given.
      * @return bool
      * @throws AuthException
@@ -68,7 +65,29 @@ class SecurityComponent {
             $name = $parsedName["path"];
         }
 
-        if ($webSite !== null) {
+        $wsCode = $webSite !== null ? strtolower($webSite) : (isset($uS->webSite['Site_Code']) ? strtolower($uS->webSite['Site_Code']) : '');
+
+        if ($name == "" || $wsCode == '') {
+            return FALSE;
+        }
+
+        // $uS->webPages[siteCode] is populated by SitePage::loadWebSite() for every configured
+        // site up front, so this is a plain cache lookup for both the current-site case and a
+        // $webSite-given cross-site case. Only fall back to a direct query when it's genuinely
+        // not cached (e.g. this session never went through an ordinary site page, such as
+        // SAML::acs() landing straight on a fresh session).
+        if (isset($uS->webPages[$wsCode][$name]) && !is_null($uS->webPages[$wsCode][$name])) {
+
+            $r = $uS->webPages[$wsCode][$name];
+            $pageCode = $r["Codes"];
+            $pageTitle = $r["Title"];
+
+        } else if (isset($uS->webPages[$wsCode])) {
+
+            // Site is cached, page just isn't in it.
+            return FALSE;
+
+        } else {
 
             $dbh = $dbh ?? Common::initPDO(true);
             $stmt = $dbh->prepare(
@@ -76,7 +95,7 @@ class SecurityComponent {
                     LEFT JOIN `page_securitygroup` `s` ON `p`.`idPage` = `s`.`idPage`
                 WHERE `p`.`File_Name` = :fileName AND `p`.`Web_Site` = :webSite AND `p`.`Hide` = 0;"
             );
-            $stmt->execute([':fileName' => $name, ':webSite' => $webSite]);
+            $stmt->execute([':fileName' => $name, ':webSite' => $wsCode]);
             $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
             if (count($rows) == 0) {
@@ -85,15 +104,6 @@ class SecurityComponent {
 
             $pageCode = array_column($rows, 'Group_Code');
             $pageTitle = $rows[0]['Title'];
-
-        } else if ($name != "" && isset($uS->webPages[$name]) && !is_null($uS->webPages[$name])) {
-
-            $r = $uS->webPages[$name];
-            $pageCode = $r["Codes"];
-            $pageTitle = $r["Title"];
-
-        } else {
-            return FALSE;
         }
 
         // check authorization codes.
@@ -153,6 +163,52 @@ class SecurityComponent {
         }
 
         return '';
+    }
+
+    /**
+     * Looks up a page's Title for display in messages (e.g. "Unauthorized for page: ..."),
+     * since those callers only have a file name or path on hand and may not know (or the page
+     * may not belong to) the site currently loaded - e.g. a per-user default page, or an 'xf'
+     * target hit on the shared root login page before login. Accepts a bare file name or a
+     * path/URL (e.g. "house/register.php?xf=..."); only the base file name is used to look it
+     * up. Every configured site's pages are checked, since $uS->webPages is nested by site
+     * code precisely to allow that.
+     * @param string $fileNameOrPath
+     * @param \PDO|null $dbh when given, used to look the page up directly if it isn't found in
+     *  $uS->webPages (e.g. this session never went through an ordinary site page yet). Omit to
+     *  skip that fallback and only check the session.
+     * @return string the page's Title, or $fileNameOrPath if no title can be found.
+     */
+    public static function getPageTitle(string $fileNameOrPath, ?\PDO $dbh = null): string {
+
+        $uS = Session::getInstance();
+
+        $parsedName = parse_url($fileNameOrPath);
+        $path = ($parsedName !== FALSE && isset($parsedName['path'])) ? $parsedName['path'] : $fileNameOrPath;
+        $fileName = basename($path);
+
+        if ($fileName == '') {
+            return $fileNameOrPath;
+        }
+
+        foreach (($uS->webPages ?? []) as $sitePages) {
+
+            if (isset($sitePages[$fileName]) && !is_null($sitePages[$fileName]) && $sitePages[$fileName]['Title'] != '') {
+                return $sitePages[$fileName]['Title'];
+            }
+        }
+
+        if ($dbh !== null) {
+            $stmt = $dbh->prepare("SELECT `Title` FROM `page` WHERE `File_Name` = :fileName AND `Hide` = 0 LIMIT 1;");
+            $stmt->execute([':fileName' => $fileName]);
+            $title = $stmt->fetchColumn();
+
+            if ($title !== FALSE && $title !== '') {
+                return $title;
+            }
+        }
+
+        return $fileNameOrPath;
     }
 
     /**

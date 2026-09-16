@@ -65,9 +65,11 @@ class SitePage extends SecurityComponent {
         // try reading the page table
         if ($this->siteCode != "" && $this->getFileName() != "") {
 
-            if (isset($uS->webPages[$this->getFileName()]) && !is_null($uS->webPages[$this->getFileName()])) {
+            $wsCode = strtolower($this->siteCode);
 
-                $page = $uS->webPages[$this->getFileName()];
+            if (isset($uS->webPages[$wsCode][$this->getFileName()]) && !is_null($uS->webPages[$wsCode][$this->getFileName()])) {
+
+                $page = $uS->webPages[$wsCode][$this->getFileName()];
 
                 $this->pageCodes = $page["Codes"];
                 $this->pageTitle = $page["Title"];
@@ -156,15 +158,18 @@ class SitePage extends SecurityComponent {
 
         self::loadSiteList($dbh);
 
-        // Is our web site page list loaded?
-        if (isset($uS->webSite) && $uS->webSite["Relative_Address"] == $this->getHhkSiteDir()) {
+        // Is our web site page list loaded? Also require the current site's nested webPages
+        // entry, not just $uS->webSite - a session already mid-flight when webPages' shape
+        // changed (flat File_Name-keyed -> nested by site code) would otherwise keep its
+        // stale flat cache forever, since nothing else forces a reload once webSite matches.
+        if (isset($uS->webSite) && $uS->webSite["Relative_Address"] == $this->getHhkSiteDir()
+            && isset($uS->webPages[strtolower($uS->webSite["Site_Code"])])) {
 
             return $uS->webSite;
         }
 
         // Load Site
         unset($uS->webSite);
-        unset($uS->webPages);
 
         foreach ($uS->siteList as $ws) {
 
@@ -177,69 +182,32 @@ class SitePage extends SecurityComponent {
 
         if (isset($uS->webSite)) {
 
-            $wsCode = strtolower($uS->webSite["Site_Code"]);
-            $where = " WHERE `p`.`Web_Site` = :wsCode AND `p`.`Hide` = 0 ";
-            $orderBy = " ORDER BY `p`.`Type`, `p`.`Menu_Parent`, `p`.`Menu_Position`";
+            $myWsCode = strtolower($uS->webSite["Site_Code"]);
 
-            // Get list of pages
-            $query = "SELECT
-                `p`.`idPage` AS `idPage`,
-                `p`.`File_Name`,
-                `p`.`Title` AS `Title`,
-                `p`.`Type` AS `Type`,
-                `p`.`Menu_Parent`,
-                `p`.`Menu_Position`,
-                CASE
-                    WHEN `p`.`Login_Page_Id` > 0 THEN `p1`.`File_Name`
-                    ELSE ''
-                END AS `Login_Page`,
-                IFNULL(`s`.`Group_Code`, '') AS `Group_Code`
-            FROM
-                `page` `p`
-                    LEFT JOIN
-                `page` `p1` ON `p`.`Login_Page_Id` = `p1`.`idPage`
-                    LEFT JOIN
-                `page_securitygroup` `s` ON `p`.`idPage` = `s`.`idPage`";
+            // Load this site's pages, plus every other configured site's, into
+            // $uS->webPages[siteCode][fileName] - nested per site (rather than one flat
+            // File_Name-keyed array) so a File_Name reused across sites (e.g. "register.php"
+            // in both House and Admin) can't collide and corrupt another site's authorization
+            // check. Caching every site up front (not just this one) lets pages on other
+            // sites - a per-user default page, or an 'xf' redirect target hit before login -
+            // be looked up (for authorization or just their Title) without a fresh query.
+            // Session's __get/__set can't mutate a nested array in place, so build the whole
+            // array locally and assign it back in one shot.
+            $wp = is_array($uS->webPages) ? $uS->webPages : array();
 
-            try {
-                $stmt = $dbh->prepare($query . $where . $orderBy);
-                $stmt->execute([':wsCode' => $wsCode]);
-            } catch (\PDOException $pex) {
-                $where = " WHERE `p`.`Web_Site` = :wsCode ";
-                $stmt = $dbh->prepare($query . $where . $orderBy);
-                $stmt->execute([':wsCode' => $wsCode]);
-            }
+            foreach ($uS->siteList as $ws) {
 
-            if ($stmt->rowCount() > 0) {
-                $wp = array();
-                $lastId = 0;
+                $wsCode = strtolower($ws["Site_Code"]);
 
-                while ($r = $stmt->fetch(PDO::FETCH_ASSOC)) {
-
-                    if ($lastId == $r['idPage']) {
-
-                        $wp[$r['File_Name']]['Codes'][] = $r['Group_Code'];
-
-                    } else {
-
-                        $wp[$r['File_Name']] = array(
-                            'idPage' => $r['idPage'],
-                            'Title' => $r['Title'],
-                            'Type' => $r['Type'],
-                            'Parent' => $r['Menu_Parent'],
-                            'Position' => $r['Menu_Position'],
-                            'Login' => $r['Login_Page'],
-                            'Codes' => array($r['Group_Code'])
-                        );
-                    }
-
-                    $lastId = $r['idPage'];
+                if (isset($wp[$wsCode])) {
+                    continue;
                 }
 
-                $uS->webPages = $wp;
-            } else {
-                throw new RuntimeException("Web pages list not found.");
+                $wp[$wsCode] = $this->loadSitePages($dbh, $wsCode, $wsCode == $myWsCode);
             }
+
+            $uS->webPages = $wp;
+
         } else {
 
             throw new RuntimeException("web_sites not found.  Host: " . $this->getRootURL() . "  Doc Root: " . $this->getHhkSiteDir());
@@ -247,6 +215,88 @@ class SitePage extends SecurityComponent {
 
         return $uS->webSite;
 
+    }
+
+    /**
+     * Queries the page list for one site. A pure read - the caller merges the result into
+     * $uS->webPages, since Session's magic __get/__set can't mutate a nested array in place.
+     * @param PDO $dbh
+     * @param string $wsCode lower-cased Site_Code
+     * @param bool $required throw if this site has no visible pages, instead of caching an
+     *  empty list - use for the site actually being served, where that indicates a real
+     *  configuration error, not just an unrelated site with nothing (yet) marked visible.
+     * @return array<string, array> pages for this site, keyed by File_Name
+     * @throws RuntimeException
+     */
+    private function loadSitePages(PDO $dbh, string $wsCode, bool $required): array {
+
+        $where = " WHERE `p`.`Web_Site` = :wsCode AND `p`.`Hide` = 0 ";
+        $orderBy = " ORDER BY `p`.`Type`, `p`.`Menu_Parent`, `p`.`Menu_Position`";
+
+        // Get list of pages
+        $query = "SELECT
+            `p`.`idPage` AS `idPage`,
+            `p`.`File_Name`,
+            `p`.`Title` AS `Title`,
+            `p`.`Type` AS `Type`,
+            `p`.`Menu_Parent`,
+            `p`.`Menu_Position`,
+            CASE
+                WHEN `p`.`Login_Page_Id` > 0 THEN `p1`.`File_Name`
+                ELSE ''
+            END AS `Login_Page`,
+            IFNULL(`s`.`Group_Code`, '') AS `Group_Code`
+        FROM
+            `page` `p`
+                LEFT JOIN
+            `page` `p1` ON `p`.`Login_Page_Id` = `p1`.`idPage`
+                LEFT JOIN
+            `page_securitygroup` `s` ON `p`.`idPage` = `s`.`idPage`";
+
+        try {
+            $stmt = $dbh->prepare($query . $where . $orderBy);
+            $stmt->execute([':wsCode' => $wsCode]);
+        } catch (\PDOException $pex) {
+            $where = " WHERE `p`.`Web_Site` = :wsCode ";
+            $stmt = $dbh->prepare($query . $where . $orderBy);
+            $stmt->execute([':wsCode' => $wsCode]);
+        }
+
+        if ($stmt->rowCount() == 0) {
+
+            if ($required) {
+                throw new RuntimeException("Web pages list not found.");
+            }
+
+            return array();
+        }
+
+        $wp = array();
+        $lastId = 0;
+
+        while ($r = $stmt->fetch(PDO::FETCH_ASSOC)) {
+
+            if ($lastId == $r['idPage']) {
+
+                $wp[$r['File_Name']]['Codes'][] = $r['Group_Code'];
+
+            } else {
+
+                $wp[$r['File_Name']] = array(
+                    'idPage' => $r['idPage'],
+                    'Title' => $r['Title'],
+                    'Type' => $r['Type'],
+                    'Parent' => $r['Menu_Parent'],
+                    'Position' => $r['Menu_Position'],
+                    'Login' => $r['Login_Page'],
+                    'Codes' => array($r['Group_Code'])
+                );
+            }
+
+            $lastId = $r['idPage'];
+        }
+
+        return $wp;
     }
 
 
@@ -347,7 +397,7 @@ class SitePage extends SecurityComponent {
         $uS = Session::getInstance();
         $pageAnchors = [];
 
-        foreach ($uS->webPages as $fn => $r) {
+        foreach (($uS->webPages[strtolower($this->siteCode)] ?? []) as $fn => $r) {
 
             if ($r['Type'] != WebPageCode::Page) {
                 continue;
