@@ -41,7 +41,7 @@ Class VoidRequest extends AbstractDeluxeRequest {
 
         //send request
         try{
-            $resp = $this->GuzzleClient->post(self::ENDPOINT, [
+            $resp = $this->post(self::ENDPOINT, [
                 \GuzzleHttp\RequestOptions::JSON => $requestData
             ]);
 

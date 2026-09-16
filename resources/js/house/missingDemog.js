@@ -110,17 +110,18 @@ document.addEventListener("DOMContentLoaded", () => {
         .columns()
         .every(function () {
           var column = this;
-          var filter = false;
+          let filter = false;
           //get column title from columns object
+          let columnTitle;
           if (columns[column.index()]) {
-            var columnTitle = columns[column.index()].dt;
+            columnTitle = columns[column.index()].dt;
           } else {
-            var columnTitle = dtCols[column.index()].title;
+            columnTitle = dtCols[column.index()].title;
           }
 
           if (demos[columnTitle]) {
             //if(column.index() > 2){
-            var filter = $("<select>").prop("multiple", "multiple").addClass("filter");
+            filter = $("<select>").prop("multiple", "multiple").addClass("filter");
             var option = $("<option>").prop("value", "").text("Not set");
             filter.append(option);
             $.each(demos[columnTitle].list, function (key, item) {
@@ -147,13 +148,14 @@ document.addEventListener("DOMContentLoaded", () => {
 
               var data = $(this).val();
 
+              let searchStr;
               if ($.isArray(data)) {
                 $.each(data, function (i, v) {
                   data[i] = v ? "^" + v + "$" : "^$";
                 });
-                var searchStr = data.join("|");
+                searchStr = data.join("|");
               } else {
-                var searchStr = data ? "^" + $.fn.dataTable.util.escapeRegex(data) + "$" : "^$";
+                searchStr = data ? "^" + $.fn.dataTable.util.escapeRegex(data) + "$" : "^$";
               }
 
               column.search(searchStr, true, false).draw();

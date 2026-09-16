@@ -590,10 +590,11 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     var chgPW = $("input#showUserSettings").val();
+    let autoOpen;
     if (chgPW) {
-      var autoOpen = true;
+      autoOpen = true;
     } else {
-      var autoOpen = false;
+      autoOpen = false;
       chPwButtons["Cancel"] = function () {
         $(this).dialog("close");
       };

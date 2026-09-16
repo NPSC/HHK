@@ -22,7 +22,7 @@ jobs:
 
       # 3. Set up Node.js environment for Vite
       - name: Set up Vite+ and JS runtime
-        uses: voidzero-dev/setup-vp@v1
+        uses: voidzero-dev/setup-vp@v1.20.0
         with:
           node-version: "24"
           cache: true

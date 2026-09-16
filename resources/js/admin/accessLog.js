@@ -111,17 +111,18 @@ document.addEventListener("DOMContentLoaded", () => {
           if (filter) {
             filter.appendTo($(column.header())).on("change", function () {
               var data = $(this).val();
+              let searchStr;
               if ($.isArray(data)) {
                 $.each(data, function (i, v) {
                   data[i] = v ? "^" + v + "$" : "";
                 });
-                var searchStr = data.join("|");
+                searchStr = data.join("|");
               } else if ($(this).hasClass("autoCal")) {
                 var d = $.datepicker.parseDate("M d, yy", data);
                 var date = $.datepicker.formatDate("yy-mm-dd", d);
-                var searchStr = data ? "^" + $.fn.dataTable.util.escapeRegex(date) : "";
+                searchStr = data ? "^" + $.fn.dataTable.util.escapeRegex(date) : "";
               } else {
-                var searchStr = data ? "^" + $.fn.dataTable.util.escapeRegex(data) + "$" : "";
+                searchStr = data ? "^" + $.fn.dataTable.util.escapeRegex(data) + "$" : "";
               }
 
               column.search(searchStr, true, false).draw();

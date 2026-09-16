@@ -55,7 +55,7 @@ Class AuthorizeRequest extends AbstractDeluxeRequest {
 
         //send request
         try{
-            $resp = $this->GuzzleClient->post(self::ENDPOINT, [
+            $resp = $this->post(self::ENDPOINT, [
                 \GuzzleHttp\RequestOptions::JSON => $requestData
             ]);
 
@@ -64,7 +64,7 @@ Class AuthorizeRequest extends AbstractDeluxeRequest {
 
             $this->responseBody = json_decode($resp->getBody()->getContents(), true);
             $this->responseCode = (isset($this->responseBody["responseCode"]) ? $this->responseBody["responseCode"] : $resp->getStatusCode());
-            
+
             if(is_array($this->responseBody["responseMessage"])){
                 $this->responseMsg = implode(", ", $this->responseBody["responseMessage"]);
             }else if(isset($this->responseBody["responseMessage"])){

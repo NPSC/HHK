@@ -37,12 +37,12 @@
     "signature_pad": "^5.1.4",
     "toastr": "2.1.4",
     "uppy": "^5.2.4",
-    "vite": "npm:@voidzero-dev/vite-plus-core@0.2.7",
-    "vite-plus": "0.2.7"
+    "vite": "npm:@voidzero-dev/vite-plus-core@0.3.2",
+    "vite-plus": "0.3.2"
   },
   "overrides": {
     "preact": "10.29.7",
-    "vite": "npm:@voidzero-dev/vite-plus-core@0.2.7"
+    "vite": "npm:@voidzero-dev/vite-plus-core@0.3.2"
   },
   "devEngines": {
     "packageManager": {

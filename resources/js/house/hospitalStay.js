@@ -179,12 +179,12 @@ export function viewHospitalStay(idHs, idVisit, $hsDialog) {
 }
 
 function saveHospitalStay(idHs, idVisit) {
-  var parms = [
+  let parms = [
     { name: "cmd", value: "saveHS" },
     { name: "idhs", value: idHs },
     { name: "idv", value: idVisit },
   ];
-  var parms = parms.concat($(".hospital-stay:not(#txtDiagnosis)").serializeArray());
+  parms = parms.concat($(".hospital-stay:not(#txtDiagnosis)").serializeArray());
 
   //diagnosis
   let txtDiagnosis = $("#txtDiagnosis").val();

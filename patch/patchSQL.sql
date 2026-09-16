@@ -237,3 +237,5 @@ ALTER TABLE `w_idp`
 
 
 update page set `Hide` = 1 where `File_Name` = "CategoryEdit.php";
+INSERT IGNORE INTO `sys_config`(`Key`,`Value`,`Type`,`Category`,`Description`,`Show`) VALUES 
+('InsistMRN','false','b','p','Insist on user filling in the patients MRN',1);

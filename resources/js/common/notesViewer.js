@@ -215,13 +215,14 @@ import { hhkReportError } from "./pag.js";
         var noteTextarea = $("#" + settings.newNoteAttrs.id);
         var noteData = noteTextarea.val();
 
+        let noteCategory, guestId;
         if (settings.linkType == "staff") {
-          var noteCategory = $wrapper.find("#noteCategory").val();
-          var guestId = $("#noteGuest").data("guestId");
+          noteCategory = $wrapper.find("#noteCategory").val();
+          guestId = $("#noteGuest").data("guestId");
           console.log(guestId);
         } else {
-          var noteCategory = "";
-          var guestId = "";
+          noteCategory = "";
+          guestId = "";
         }
 
         if (settings.linkId < 0) {
@@ -293,8 +294,9 @@ import { hhkReportError } from "./pag.js";
       .prop("title", "Flag this note to bold it and make it stay at the top of the list")
       .text("Flag");
 
+    let flagEl;
     if (flagged == "1") {
-      var flagEl = $(
+      flagEl = $(
         '<input type="checkbox" name="flag" checked="true" id="flag-' +
           uid +
           "-" +
@@ -302,7 +304,7 @@ import { hhkReportError } from "./pag.js";
           '" />',
       ).addClass("flag");
     } else {
-      var flagEl = $(
+      flagEl = $(
         '<input type="checkbox" name="flag" id="flag-' + uid + "-" + row.NoteId + '" />',
       ).addClass("flag");
     }

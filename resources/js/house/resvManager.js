@@ -21,50 +21,49 @@ import { setupCOF, setupPayments } from "./payments.js";
 
 export class resvManager {
   constructor(initData, options) {
-    var t = this;
+    const t = this;
 
-    var patLabel = initData.patLabel;
-    var visitorLabel = initData.visitorLabel;
-    var primaryGuestLabel = initData.primaryGuestLabel;
-    var resvTitle = initData.resvTitle;
-    var saveButtonLabel = initData.saveButtonLabel;
-    var patBirthDate = initData.patBD;
-    var gstBirthDate = initData.gstBD;
-    var patAddrRequired = initData.patAddr;
-    var gstAddrRequired = initData.gstAddr;
-    var patAsGuest = initData.patAsGuest;
-    var fillEmergencyContact =
+    const patLabel = initData.patLabel;
+    const visitorLabel = initData.visitorLabel;
+    const primaryGuestLabel = initData.primaryGuestLabel;
+    const resvTitle = initData.resvTitle;
+    const saveButtonLabel = initData.saveButtonLabel;
+    const patBirthDate = initData.patBD;
+    const gstBirthDate = initData.gstBD;
+    const patAddrRequired = initData.patAddr;
+    const gstAddrRequired = initData.gstAddr;
+    const patAsGuest = initData.patAsGuest;
+    const fillEmergencyContact =
       initData.emergencyContact === undefined ? false : initData.emergencyContact;
-    var isCheckin = initData.isCheckin === undefined ? false : initData.isCheckin;
-    var addrPurpose = initData.addrPurpose;
-    var idPsg = initData.idPsg;
-    var idResv = initData.rid;
-    var idName = initData.id;
-    var idVisit = initData.vid;
-    var span = initData.span;
-    var arrival = initData.arrival;
-    var insistPayFilledIn = initData.insistPayFilledIn;
-    var prePaymtAmt = initData.prePaymt;
-    var datePickerButtons = initData.datePickerButtons;
-    var closedDays = options.closedDays;
+    const isCheckin = initData.isCheckin === undefined ? false : initData.isCheckin;
+    const addrPurpose = initData.addrPurpose;
+    let idPsg = initData.idPsg;
+    let idResv = initData.rid;
+    let idName = initData.id;
+    let idVisit = initData.vid;
+    let span = initData.span;
+    const arrival = initData.arrival;
+    const insistPayFilledIn = initData.insistPayFilledIn;
+    let prePaymtAmt = initData.prePaymt;
+    const datePickerButtons = initData.datePickerButtons;
+    const closedDays = options.closedDays;
 
-    var insistCkinDemog = false;
-    var insistCkinEmail = initData.insistCkinEmail;
-    var insistCkinPhone = initData.insistCkinPhone;
-    var insistCkinAddress = initData.insistCkinAddress;
-    var rooms = [];
-    var people = new Items();
-    var addrs = new Items();
-    var emergContacts = new Items();
-    var familySection = new FamilySection($("#famSection"));
-    var resvSection = new ResvSection($("#resvSection"));
-    var hospSection = new HospitalSection($("#hospitalSection"));
-    var expDatesSection = new ExpDatesSection();
-    var updateRescChooser = new updateRescChooser();
-    var $pWarning = $("#pWarnings");
-    var options = options;
-    var resvStatusType = "";
-    var guestSearchTerm = "";
+    let insistCkinDemog = false;
+    const insistCkinEmail = initData.insistCkinEmail;
+    const insistCkinPhone = initData.insistCkinPhone;
+    const insistCkinAddress = initData.insistCkinAddress;
+    let rooms = [];
+    const people = new Items();
+    const addrs = new Items();
+    const emergContacts = new Items();
+    const familySection = new FamilySection($("#famSection"));
+    const resvSection = new ResvSection($("#resvSection"));
+    const hospSection = new HospitalSection($("#hospitalSection"));
+    const expDatesSection = new ExpDatesSection();
+    const updateRescChooser = new UpdateRescChooser();
+    const $pWarning = $("#pWarnings");
+    let resvStatusType = "";
+    let guestSearchTerm = "";
 
     // Exports
     t.getReserve = getReserve;
@@ -1284,8 +1283,8 @@ export class resvManager {
           nameErr = false,
           ecIgnoreCount = 0,
           pRelFlag = false,
-          isValid = true;
-        let msgs = [];
+          isValid = true,
+          msgs = [];
 
         // Flag blank Relationships
         $(".patientRelch").removeClass("ui-state-error");
@@ -1308,7 +1307,7 @@ export class resvManager {
         findStaysChecked();
 
         // Compute number of guests and patients
-        for (var i in people.list()) {
+        for (let i in people.list()) {
           numFamily++;
 
           // Patients
@@ -1343,7 +1342,7 @@ export class resvManager {
         } else if (numPat > 1) {
           msgs.push("Only 1 " + patLabel + " is allowed.");
 
-          for (var i in people.list()) {
+          for (let i in people.list()) {
             if (people.list()[i].role === "p") {
               $("#" + i + "selPatRel").addClass("ui-state-error");
             }
@@ -1362,7 +1361,7 @@ export class resvManager {
 
         if (numPriGuests === 0 && numFamily === 1) {
           // Set the only guest as primary guest
-          for (var i in people.list()) {
+          for (let i in people.list()) {
             people.list()[i].pri = "1";
           }
         } else if (numPriGuests === 0) {
@@ -1445,7 +1444,10 @@ export class resvManager {
             // Guests
           } else {
             // Check guest birthdate
-            if (gstBirthDate & ($("#" + p + "txtBirthDate").val() === "")) {
+            if (
+              gstBirthDate & ($("#" + p + "txtBirthDate").val() === "") &&
+              $("#" + p + "cbStay").prop("checked") === true
+            ) {
               $("#" + p + "txtBirthDate").addClass("ui-state-error");
               msgs.push(visitorLabel + " is missing the Birth Date.");
               openSection(true);
@@ -1493,7 +1495,7 @@ export class resvManager {
 
           // Check Emergen
           if (fillEmergencyContact && ecIgnoreCount < 1) {
-            var pMessage = verifyEmergencyContacts(p);
+            let pMessage = verifyEmergencyContacts(p);
 
             if (pMessage !== "") {
               msgs.push(pMessage);
@@ -1514,7 +1516,7 @@ export class resvManager {
 
           // Check Demographic responses
           if (getInsistCkinDemog()) {
-            var pMessage = verifyCheckinDemog(p);
+            let pMessage = verifyCheckinDemog(p);
 
             if (pMessage !== "") {
               msgs.push(pMessage);
@@ -1838,7 +1840,7 @@ export class resvManager {
       }
     }
 
-    function updateRescChooser() {
+    function UpdateRescChooser() {
       var t = this;
       var cbRS = {};
 

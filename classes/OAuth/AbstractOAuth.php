@@ -26,10 +26,12 @@ abstract class AbstractOAuth implements OAuthInterface {
     }
 
     /**
-     * Return the TTL (in seconds) for a token response from this provider.
-     * Subclasses may use $tokenResponse->expires_in or return a constant.
+     * Return the absolute Unix timestamp at which the token from this provider expires
+     * (with any safety margin already applied). Subclasses may derive this from
+     * $tokenResponse->expires_in, an absolute field such as $tokenResponse->tokenExpiry_time,
+     * or a constant offset from now.
      */
-    abstract protected function getTokenTtl(object $tokenResponse): int;
+    abstract protected function getExpiresAt(object $tokenResponse): int;
 
     /**
      * Session key unique to this provider + credential set. Includes every credential
@@ -78,7 +80,7 @@ abstract class AbstractOAuth implements OAuthInterface {
             $uS->{$key} = [
                 'access_token' => $this->accessToken,
                 'instance_url' => $this->instanceURL ?? '',
-                'expires_at'   => time() + $this->getTokenTtl($tokenResponse),
+                'expires_at'   => $this->getExpiresAt($tokenResponse),
             ];
         }
 

@@ -1650,8 +1650,8 @@ House Staff`,
 
       //check if initial is less than max
       var initial = parseInt($("input[name=initialGuests]").val());
-      var max = parseInt($("input[name=maxGuests]").val());
-      if (initial > max) {
+      var maxGuestsVal = parseInt($("input[name=maxGuests]").val());
+      if (initial > maxGuestsVal) {
         //console.log("initial>max true");
         settingsDialog
           .find("#guestErrorMsg")
@@ -1681,13 +1681,14 @@ House Staff`,
 
     var onSave = function (data) {
       settings.formBuilder.actions.closeAllFieldEdit();
+      let idDocument, title;
       if (data == "new") {
         //duplicate form
-        var idDocument = 0;
-        var title = $wrapper.find("#formTitle").val() + " (copy)";
+        idDocument = 0;
+        title = $wrapper.find("#formTitle").val() + " (copy)";
       } else {
-        var idDocument = $wrapper.find("#selectform").val();
-        var title = $wrapper.find("#formTitle").val();
+        idDocument = $wrapper.find("#selectform").val();
+        title = $wrapper.find("#formTitle").val();
       }
       var style = settingsDialog.find("textarea#formStyle").val();
       var successTitle = settingsDialog.find("input#formSuccessTitle").val();

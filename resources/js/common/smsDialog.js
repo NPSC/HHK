@@ -150,21 +150,22 @@ import moment from "moment";
       var msgMkup = $(this).parent(".newMsg").find("textarea").attr("disabled", true);
       var msgText = msgMkup.val();
 
+      let data;
       if (settings.visitId > 0) {
-        var data = {
+        data = {
           cmd: "sendVisitMsg",
           idVisit: settings.visitId,
           idSpan: settings.spanId,
           msgText: msgText,
         };
       } else if (settings.resvId > 0) {
-        var data = {
+        data = {
           cmd: "sendResvMsg",
           idResv: settings.resvId,
           msgText: msgText,
         };
       } else {
-        var data = {};
+        data = {};
       }
 
       $.ajax({
@@ -317,19 +318,20 @@ import moment from "moment";
 
     //if is visit, resv or single guest
     if (settings.visitId || settings.resvId || settings.guestId) {
+      let data;
       if (settings.visitId) {
-        var data = {
+        data = {
           cmd: "getVisitMsgsDialog",
           idVisit: settings.visitId,
           idSpan: settings.spanId,
         };
       } else if (settings.resvId) {
-        var data = {
+        data = {
           cmd: "getResvMsgsDialog",
           idResv: settings.resvId,
         };
       } else if (settings.guestId) {
-        var data = {
+        data = {
           cmd: "getGuestMsgsDialog",
           idName: settings.guestId,
         };
