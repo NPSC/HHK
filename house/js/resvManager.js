@@ -1395,7 +1395,7 @@ function resvManager(initData, options) {
                 } else {
 
                     // Check guest birthdate
-                    if (gstBirthDate & $('#' + p + 'txtBirthDate').val() === '') {
+                    if (gstBirthDate & $('#' + p + 'txtBirthDate').val() === '' && $('#' + p + 'cbStay').prop('checked') === true) {
                         $('#' + p + 'txtBirthDate').addClass('ui-state-error');
                         msgs.push(visitorLabel + ' is missing the Birth Date.');
                         openSection(true);
