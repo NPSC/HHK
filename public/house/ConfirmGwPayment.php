@@ -70,11 +70,11 @@ $finalPage = $houseUrl . $transferPageStr . (count($forwardPageParms) > 0 ? '?' 
         <title></title>
 
         <script type="text/javascript">
-            var forwardURL = '<?php echo $finalPage; ?>';
 
             document.addEventListener("DOMContentLoaded", () => {
                 "use strict";
 
+                const forwardURL = '<?php echo $finalPage; ?>';
                 let w = opener;
 
                 w = (!w ? parent.window : opener.window);
