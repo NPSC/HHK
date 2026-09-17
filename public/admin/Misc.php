@@ -9,6 +9,7 @@ use HHK\SysConst\GLTableNames;
 use HHK\Tables\EditRS;
 use HHK\Tables\Name\NameRS;
 use HHK\Admin\SiteDbBackup;
+use HHK\HTMLControls\HTMLContainer;
 use HHK\Member\AbstractMember;
 use HHK\SysConst\CodeVersion;
 use HHK\Vite\Vite;
@@ -47,27 +48,31 @@ function getChangeLog(\PDO $dbh, $naIndex, $stDate = "", $endDate = "") {
     $whDates = "";
     $whereName = "";
     $logParams = [];
+    $actParams = [];
 
     if ($stDate != "") {
         $logDates = " AND `Date_Time` >= :logStart ";
         $whDates = " AND `a`.`Effective_Date` >= :actStart ";
         $logParams[':logStart'] = $stDate;
-        $logParams[':actStart'] = $stDate;
+        $actParams[':actStart'] = $stDate;
     }
 
     if ($endDate != "") {
         $logDates .= " AND `Date_Time` <= :logEnd ";
         $whDates .= " AND `a`.`Effective_Date` <= :actEnd ";
         $logParams[':logEnd'] = $endDate;
-        $logParams[':actEnd'] = $endDate;
+        $actParams[':actEnd'] = $endDate;
     }
 
     if ($naIndex != 0) {
         $whereName = " AND `idName` = :naIndex1 ";
         $logParams[':naIndex1'] = $naIndex;
+        $actParams[':naIndex1'] = $naIndex;
     }
 
-    $result2 = $dbh->prepare("SELECT * FROM `name_log` WHERE 1=1 " . $whereName . $logDates . " ORDER BY `Date_Time` DESC LIMIT 200;");
+    $query = "SELECT * FROM `name_log` WHERE 1=1 " . $whereName . $logDates . " ORDER BY `Date_Time` DESC LIMIT 200;";
+
+    $result2 = $dbh->prepare($query);
     $result2->execute($logParams);
 
     $data = "<table id='dataTbl' class='display'><thead><tr>
@@ -98,7 +103,7 @@ LEFT JOIN `gen_lookups` `g3` ON `g3`.`Table_Name` = 'Vol_Rank' AND `g3`.`Code` =
         WHERE `a`.`Type` = 'vol' $whereName $whDates ORDER BY `a`.`Effective_Date` DESC LIMIT 100;";
 
     $result3 = $dbh->prepare($query);
-    $result3->execute($logParams);
+    $result3->execute($actParams);
 
     while ($row2 = $result3->fetch(\PDO::FETCH_ASSOC)) {
 
@@ -259,7 +264,7 @@ if (isset($_POST['btnClnPhone'])) {
         $n += $updPhoneStmt->rowCount();
     }
 
-    $cleanMsg = $n . " phone records cleaned.";
+    $cleanMsg = $n . " phone records formatted.";
 }
 
 // CLean names
@@ -324,7 +329,7 @@ if (isset($_POST['btnClnNames'])) {
         }
     }
 
-    $cleanMsg .= $c . " name records cleaned.";
+    $cleanMsg = $c . " name records formatted.";
 }
 
 
@@ -348,7 +353,7 @@ foreach ($igtables as $t => $n) {
 
     // Don;t show generated tables.
     if ( ! stristr($t, 'Generated') && ! stristr($t, 'Zip')) {
-        $ignoreTableMarkup .= "<tr><td>`$n`</td><td>$t</td></tr>";
+        $ignoreTableMarkup .= "<div class='d-flex'><div class='w-25'>`$n`</div><div>$t</div></div>";
     }
 }
 
@@ -366,6 +371,10 @@ if (isset($_POST["btnDoBackup"])) {
 
         SiteLog::logDbDownload($dbh, $logText, CodeVersion::GIT_Id);
 
+        if (isset($_POST['downloadToken']) && $_POST['downloadToken'] !== '') {
+            setcookie('fileDownloadToken', $_POST['downloadToken'], time() + 60, '/');
+        }
+
         $dbBack->downloadFile();  // exits here.
     } else {
 
@@ -373,7 +382,7 @@ if (isset($_POST["btnDoBackup"])) {
         SiteLog::logDbDownload($dbh, $logText, CodeVersion::GIT_Id);
     }
 
-    $bkupMsg = $bkupAlert->createMarkup($dbBack->getErrors());
+    $bkupMsg = HTMLContainer::generateMarkup('div', $bkupAlert->createMarkup($dbBack->getErrors()), ['class' => 'mt-3']);
 }
 
 /*
@@ -490,7 +499,7 @@ if ($stmt->execute() !== FALSE) {
                     <ul>
                         <li><a href="#lookups">Lookups</a></li>
                         <li><a href="#clean">Clean Data</a></li>
-                        <li><a href="#backup">Dump Database</a></li>
+                        <li><a href="#backup">Download Database</a></li>
                         <li><a href="#changlog">Member Change Log</a></li>
                         <li><a href="#delid">Delete Member Records</a></li>
                     </ul>
@@ -532,24 +541,15 @@ if ($stmt->execute() !== FALSE) {
                         </table>
                     </div>
                     <div id="backup" class="ui-tabs-hide" >
-                        <table>
-                            <tr>
-                                <td colspan="2"><h3>Dump Database</h3></td>
-                            </tr>
-                            <tr>
-                                <td colspan="2"><span style="font-weight:bold;">The following tables are not included in the dump:</span></td>
-                            </tr>
-<?php echo $ignoreTableMarkup; ?>
-                            <tr>
-                            <tr><td>&nbsp;</td></tr>
-                            <tr>
-                                <td colspan="2" style="text-align:right;"><input type="submit" name="btnDoBackup" value="Run Database Dump"/></td>
-
-                            </tr>
-                            <tr>
-                                <td colspan="2"><?php echo $bkupMsg; ?></td>
-                            </tr>
-                        </table>
+                        <h3>Download Database</h3></td>
+                        <p class="mb-3">This tool will download a copy of the database in .sql format for backup or exporting purposes.</p>    
+                        <p style="font-weight:bold;">The following tables are not included in the database download:</p>
+                        <?php echo $ignoreTableMarkup; ?>
+                        <div id="backupBtnContainer" class="mt-3 text-center">
+                            <input type="hidden" name="downloadToken" id="downloadToken" value=""/>
+                            <input type="submit" name="btnDoBackup" value="Download Database"/>
+                            <?php echo $bkupMsg; ?>
+                        </div>
                     </div>
                     <div id="changlog" class="ui-tabs-hide" >
                         <table>
@@ -598,8 +598,7 @@ if ($stmt->execute() !== FALSE) {
                             <tr><td colspan="2" style="background-color: transparent;"><h3>Clean Data</h3></td></tr>
                             <tr>
                                 <td style="text-align:right;">
-                                    <input type="submit" name="btnClnPhone" value="Clean up Phone Numbers"/>
-                                    <input type="submit" name="btnAddrs" value="Verify Addresses" style="margin-left:10px;"/>
+                                    <input type="submit" name="btnClnPhone" value="Clean up Phone Number Formatting"/>
                                 </td>
                             </tr>
                         </table>

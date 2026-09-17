@@ -4,7 +4,7 @@ namespace HHK\Admin;
 
 use HHK\Crypto;
 use HHK\sec\Session;
-
+use Ifsnop\Mysqldump\Mysqldump;
 
 /**
  * SiteDbBackup.php
@@ -32,8 +32,6 @@ class SiteDbBackup {
 
     protected string $filePath;
 
-    protected $dumpErrorFile;
-
     protected $clrFileSize;
 
     protected $dbBkUpFlag;
@@ -58,25 +56,20 @@ class SiteDbBackup {
      * @param bool|null $zipIt
      * @return bool
      */
-    public function backupSchema($ignoreTables = array(), $zipIt = TRUE) {
+    public function backupSchema($ignoreTables = array(), bool $zipIt = TRUE) {
 
         $this->dbBkUpFlag = FALSE;
         $this->bkupMessage = '';
-        $zipPipe = '';
 
-        if (strtoupper($_ENV['DBMS'] ?? '') != 'MYSQL') {
-            $this->bkupMessage = 'This backup only works for MySQL/Maria Databases.  ';
-            return FALSE;
-        }
+        $uS = Session::getInstance();
 
-        $dbuser = $_ENV['BACKUP_USER'] ?? '';
-        $dbpwd = Crypto::decryptMessage($_ENV['BACKUP_PASSWORD'] ?? '');
+        $dbUrl = $uS->databaseURL;
+        $dbname = $uS->databaseName;
+        $dbuser = $uS->databaseUName;
+        $dbpwd = $uS->databasePWord;
 
-        $dbUrl = $_ENV['DB_URL'] ?? '';
-        $dbname = $_ENV['DB_SCHEMA'] ?? '';
-
-        if ($dbuser == '' || $dbpwd == '' || $dbname == '' || $dbUrl == '' || $this->filePath == '') {
-            $this->bkupMessage = 'Database Backup parameters are not set in .env.  ';
+        if ($dbuser == '' || $dbpwd == '' || $dbname == '' || $dbUrl == '') {
+            $this->bkupMessage = 'Database parameters are not set.  ';
             return FALSE;
         }
 
@@ -84,36 +77,27 @@ class SiteDbBackup {
             $dbUrl = '127.0.0.1';
         }
 
-        if ($zipIt) {
-            $this->fileName = $this->filePath . $dbname . ".sql.zip";
-            $zipPipe = '| gzip';
-        } else {
-            $this->fileName = $this->filePath . $dbname . ".sql";
-            $zipPipe = '';
-        }
+        $this->fileName = $this->filePath . $dbname . '_' . date('Y-m-d_His') . '.sql' . ($zipIt ? '.gz' : '');
 
-        $this->dumpErrorFile = $this->filePath . $dbname . "_errors.txt";
-
-        if (file_exists($this->fileName)) {
-            unlink($this->fileName);
-        }
-
-        if (file_exists($this->dumpErrorFile)) {
-            unlink($this->dumpErrorFile);
-        }
-
-        // ignore tables
-        $igtables = '';
-        foreach ($ignoreTables as $t) {
-            $igtables .= " --ignore-table=$dbname.$t";
-        }
+        $dumpSettings = [
+            'compress' => ($zipIt ? Mysqldump::GZIP : Mysqldump::NONE),
+            'exclude-tables' => $ignoreTables,
+            'single-transaction' => true,
+            'lock-tables' => false,
+            'skip-definer' => true,
+            'skip-comments' => true,
+        ];
 
         $this->return_var = 0;
 
-        // Backup database
-        $command = 'mysqldump ';
-        $params = " --single-transaction --skip-lock-tables $igtables --log-error=" . $this->dumpErrorFile . " --host='$dbUrl' --user=$dbuser --password='$dbpwd' $dbname | grep -v DEFINER $zipPipe > " . $this->fileName;
-        passthru($command . $params, $this->return_var);
+        try {
+            $dumper = new Mysqldump("mysql:host=$dbUrl;dbname=$dbname", $dbuser, $dbpwd, $dumpSettings);
+            $dumper->start($this->fileName);
+        } catch (\Exception $e) {
+            $this->bkupMessage = 'mysqldump error: ' . $e->getMessage();
+            $this->return_var = 1;
+            return FALSE;
+        }
 
         // Analyze result
         if (file_exists($this->fileName)) {
@@ -127,6 +111,7 @@ class SiteDbBackup {
 
             } else {
                 $this->bkupMessage .= 'Database Dump file too small: ' . $this->clrFileSize . ' bytes.  ';
+                unlink($this->fileName);
             }
 
         } else {
@@ -159,6 +144,8 @@ class SiteDbBackup {
 
         readfile($this->fileName);
 
+        unlink($this->fileName);
+
         exit();
     }
 
@@ -168,13 +155,7 @@ class SiteDbBackup {
      */
     public function getErrors() {
 
-        $errorMessage = 'Schema Backup (' . $this->return_var . ').  ' . $this->bkupMessage;
-
-        if (file_exists($this->dumpErrorFile)) {
-            $errorMessage .= '  mysqldump errors: ' . file_get_contents($this->dumpErrorFile);
-        }
-
-        return $errorMessage;
+        return 'Schema Backup (' . $this->return_var . ').  ' . $this->bkupMessage;
 
     }
 }
