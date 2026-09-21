@@ -267,7 +267,7 @@ if (isset($_POST['btnClnPhone'])) {
     $cleanMsg = $n . " phone records formatted.";
 }
 
-// CLean names
+// Clean names
 if (isset($_POST['btnClnNames'])) {
     // Clean up
     $accordIndex = 1;
@@ -351,7 +351,7 @@ $igtables = array(
 $ignoreTableMarkup = '';
 foreach ($igtables as $t => $n) {
 
-    // Don;t show generated tables.
+    // Don't show generated tables.
     if ( ! stristr($t, 'Generated') && ! stristr($t, 'Zip')) {
         $ignoreTableMarkup .= "<div class='d-flex'><div class='w-25'>`$n`</div><div>$t</div></div>";
     }
@@ -390,11 +390,11 @@ if (isset($_POST["btnDoBackup"])) {
  */
 $delIdListing = "";
 
-$res3 = $dbh->prepare("SELECT `idName` FROM `name` WHERE `name`.`Member_Status` IN ('u','TBD');");
+$res3 = $dbh->prepare("SELECT `idName`, CONCAT(`Name_Full`, ' ', `Company`) AS `Name_Full` FROM `name` WHERE `name`.`Member_Status` IN ('u','TBD');");
 $res3->execute();
 
 while ($r = $res3->fetch(\PDO::FETCH_NUM)) {
-    $delIdListing .= "<a href='NameEdit.php?id=" . $r[0] . "'>" . $r[0] . "</a> ";
+    $delIdListing .= "<a href='NameEdit.php?id=" . $r[0] . "'>" . $r[0] . " - " . $r[1] . "</a> <br>";
 }
 
 if ($delIdListing == "") {
@@ -491,7 +491,7 @@ if ($stmt->execute() !== FALSE) {
         <?php echo FAVICON; ?>
     </head>
     <body <?php if ($wInit->testVersion) echo "class='testbody'"; ?>>
-<?php echo $wInit->generatePageMenu(); ?>
+        <?php echo $wInit->generatePageMenu(); ?>
         <div id="contentDiv">
             <h1><?php echo $wInit->pageHeading; ?></h1>
             <form action="Misc.php" method="post" id="frmLookups" name="frmLookups">
@@ -552,46 +552,24 @@ if ($stmt->execute() !== FALSE) {
                         </div>
                     </div>
                     <div id="changlog" class="ui-tabs-hide" >
-                        <table>
-                            <tr><td colspan="2" style="background-color: transparent;"><h3>View the All Member Change Log</h3>
-                                </td></tr>
-                            <tr>
-                                <td>Starting:
-                                    <input type="text" id ="sdate" class="autoCal" name="sdate" VALUE='' />
-                                </td>
-                                <td>Ending:
-                                    <INPUT TYPE='text' NAME='edate' id="edate" class="autoCal"  VALUE='' />
-                                </td>
-                                <td style="text-align:right;"><input type="submit" name="btnGenLog" value="Run"/></td>
-                            </tr>
-                        </table>
+                        <h3>View the All Member Change Log</h3>
+                        <div class="d-flex align-items-center">
+                            <span class="me-1">Starting: </span><input type="text" id ="sdate" class="autoCal" name="sdate" value='' />
+                            <span class="ms-3 me-1">Ending: </span><input type='text' name='edate' id="edate" class="autoCal"  value='' />
+                            <input type="submit" name="btnGenLog" value="Run" class="ms-3"/>
+                        </div>
                         <div id="divMkup" style="margin-top: 10px;">
                             <?php echo $chgLogMkup; ?>
                         </div>
                     </div>
                     <div id="delid" class="ui-tabs-hide" >
-                        <table>
-                            <tr><td style="background-color: transparent;"><h3>Delete Member Records</h3></td></tr>
-                            <tr>
-                                <td>
-                                    <p>Deletes Name Records and all connected records including phone, address and email.  Before you do this, reassign all donations to appropriate surviving members.</p>
-                                    <p>Deletes only those records marked as 'Duplicate' and 'To Be Deleted' for member-status.  There is no way to undo this without retrieving a backup copy of the database.</p>
-                                </td></tr>
-                            <tr>
-                                <td>
-                                    These are the records marked for deletion:
-                                </td>
-                            </tr>
-                            <tr>
-                                <td><?php echo $delIdListing ?></td>
-                            </tr>
-                            <tr>
-                                <td ><input type="submit" name="btnDelIds"  value="Delete Name Records"/></td>
-                            </tr>
-                            <tr>
-                                <td><?php echo $delNamesMsg; ?></td>
-                            </tr>
-                        </table>
+                        <h3>Delete Member Records</h3>
+                        <p class="mb-3">Deletes Name Records and all connected records including phone, address and email.  Before you do this, reassign all donations to appropriate surviving members.</p>
+                        <p class="mb-3">Deletes only those records marked as <strong>Duplicate</strong> and <strong>To Be Deleted</strong> for member-status.  There is no way to undo this without retrieving a backup copy of the database.</p>
+                        <p>These are the records marked for deletion:</p>
+                        <p class="mb-3"><?php echo $delIdListing ?></p>
+                        <input type="submit" name="btnDelIds"  value="Delete Member Records"/>
+                        <div class="mt-3"><?php echo $delNamesMsg; ?></div>
                     </div>
                     <div id="clean" class="ui-tabs-hide" >
                         <table>
@@ -602,7 +580,7 @@ if ($stmt->execute() !== FALSE) {
                                 </td>
                             </tr>
                         </table>
-<?php echo $cleanMsg; ?>
+                        <?php echo $cleanMsg; ?>
                     </div>
                 </div>
                 <input id="accordIndex" type="hidden" value="<?php echo $accordIndex; ?>"/>

@@ -2,7 +2,6 @@
 
 namespace HHK\Admin;
 
-use HHK\Crypto;
 use HHK\sec\Session;
 use Ifsnop\Mysqldump\Mysqldump;
 
@@ -16,7 +15,7 @@ use Ifsnop\Mysqldump\Mysqldump;
  */
 
 /**
- * Description of DbBackup
+ * SiteDbBackup
  *
  * @author Eric Crane <ecrane at nonprofitsoftwarecorp.org>
  */
@@ -24,39 +23,32 @@ use Ifsnop\Mysqldump\Mysqldump;
 class SiteDbBackup {
 
 
-    public $return_var;
+    public int $return_var;
 
-    protected $bkupMessage;
+    protected string $bkupMessage;
 
-    protected $fileName;
+    protected string $fileName;
 
-    protected string $filePath;
+    protected int $clrFileSize = 0;
 
-    protected $clrFileSize;
-
-    protected $dbBkUpFlag;
+    protected bool $dbBkUpFlag = false;
     
     /**
-     * Summary of __construct
      * @param string $filePath
      */
-    function __construct(string $filePath) {
-
-        $this->filePath = $filePath;
-        $this->clrFileSize = 0;
+    public function __construct(protected string $filePath) {
         $uS = Session::getInstance();
-
-        $timezone = $uS->tz;
-        date_default_timezone_set($timezone);
+        date_default_timezone_set($uS->tz);
     }
 
     /**
-     * Summary of backupSchema
-     * @param array|null $ignoreTables
-     * @param bool|null $zipIt
+     * Generate a database schema backup file.
+     * 
+     * @param array $ignoreTables
+     * @param bool $zipIt
      * @return bool
      */
-    public function backupSchema($ignoreTables = array(), bool $zipIt = TRUE) {
+    public function backupSchema(array $ignoreTables = array(), bool $zipIt = TRUE): bool {
 
         $this->dbBkUpFlag = FALSE;
         $this->bkupMessage = '';
@@ -122,8 +114,8 @@ class SiteDbBackup {
     }
 
     /**
-     * Summary of downloadFile
-     * @return bool
+     * Stream the backup file to the browser for download and delete it from the server.
+     * 
      */
     public function downloadFile() {
 
@@ -150,10 +142,11 @@ class SiteDbBackup {
     }
 
     /**
-     * Summary of getErrors
+     * Get the error message from the backup process.
+     * 
      * @return string
      */
-    public function getErrors() {
+    public function getErrors(): string {
 
         return 'Schema Backup (' . $this->return_var . ').  ' . $this->bkupMessage;
 
