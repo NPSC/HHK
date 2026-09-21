@@ -1,6 +1,7 @@
 <?php
 
 
+use HHK\Common;
 use HHK\Payment\PaymentGateway\Deluxe\DeluxeGateway;
 use HHK\Payment\PaymentGateway\Deluxe\Request\Reports\CcReconciliationReport;
 use HHK\Payment\PaymentGateway\Deluxe\Request\Reports\CcTransactionReport;
@@ -8,7 +9,7 @@ use HHK\sec\{Session, WebInit};
 use HHK\SysConst\GLTableNames;
 use HHK\ColumnSelectors;
 use HHK\HTMLControls\{HTMLContainer, HTMLTable, HTMLSelector};
-use HHK\SysConst\PaymentStatusCode;
+use HHK\SysConst\{PaymentMethod, PaymentStatusCode};
 use HHK\Payment\Statement;
 use HHK\House\Report\PaymentReport;
 use HHK\ExcelHelper;
@@ -32,7 +33,7 @@ use HHK\TableLog\HouseLog;
 require ("homeIncludes.php");
 
 try {
-    $wInit = new webInit();
+    $wInit = new WebInit();
 } catch (Exception $exw) {
     die("arrg!  " . $exw->getMessage());
 }
@@ -64,9 +65,7 @@ $statusSelections = array();
 $payTypeSelections = array();
 $billingAgentSelections = array();
 $calSelection = '19';
-$gwList = array();
 $gwSelector = '';
-$gwSelections = array();
 
 $year = date('Y');
 $months = array(date('n'));       // logically overloaded.
@@ -263,7 +262,7 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
 		$hospList = $filter->getHospitals();
 
         if (count($hospList) > 0) {
-            $headerTable->addBodyTr(HTMLTable::makeTd($labels->getString('hospital', 'hospital', 'Hospital') . 's: ', ['class' => 'tdlabel']) . HTMLTable::makeTd($hdrHosps));
+            $headerTable->addBodyTr(HTMLTable::makeTd($labels->getString('hospital', 'hospitals', 'Hospitals') . ': ', ['class' => 'tdlabel']) . HTMLTable::makeTd($hdrHosps));
         }
 
         if (count($filter->getAList()) > 1) {
@@ -318,28 +317,32 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
 
 		$whType = '';
 		$payTypeText = '';
-        $payTypes = $filter->getPayTypes();
+        $payTypes = $payTypes = Common::readGenLookupsPDO($dbh, GLTableNames::PayType, 'Order');
+        $standardMethodIds = [];
+        $externalTypeCodes = [];
 		foreach ($filter->getSelectedPayTypes() as $s) {
-			if ($s != '') {
-				// Set up query where part.
-				if ($whType == '') {
-					$whType = "'" . $s . "'";
-				} else {
-					$whType .= ",'".$s . "'";
-				}
-
-				if ($payTypeText == '') {
-					$payTypeText .= (isset($payTypes[$s][1]) ? $payTypes[$s][1] : '');
-				} else {
-
-					$payTypeText .= (isset($payTypes[$s][1]) ? ', ' . $payTypes[$s][1] : '');
-				}
+			if ($s !== '') {
+                $payType = $payTypes[$s] ?? null;
+                if ($payType !== null) {
+                    if ((int)$payType[2] === PaymentMethod::External) {
+                        $externalTypeCodes[] = "'" . $s . "'";
+                    } else {
+                        $standardMethodIds[] = (int)$payType[2];
+                    }
+                    $payTypeText .= ($payTypeText === '' ? '' : ', ') . $payType[1];
+                }
 			}
-
 		}
 
-        if ($whType != '') {
-            $whType = " and lp.idPayment_Method in (" . $whType . ") ";
+        $typeConditions = [];
+        if (!empty($standardMethodIds)) {
+            $typeConditions[] = "lp.idPayment_Method IN (" . implode(',', array_unique($standardMethodIds)) . ")";
+        }
+        if (!empty($externalTypeCodes)) {
+            $typeConditions[] = "(lp.idPayment_Method = " . PaymentMethod::External . " AND tx.Payment_Type IN (" . implode(',', $externalTypeCodes) . "))";
+        }
+        if (!empty($typeConditions)) {
+            $whType = " AND (" . implode(' OR ', $typeConditions) . ") ";
         } else {
             $payTypeText = 'All';
         }
@@ -348,6 +351,8 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
 
         $whGw = '';
         $gwText = '';
+        $gwList = $filter->getPaymentGateways();
+        $gwSelections = $filter->getSelectedPaymentGateways();
 
         if (count($gwSelections) > 0) {
 
@@ -383,6 +388,7 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
 
     $query = "Select
     lp.*,
+    " . Statement::externalPaymentTitleSelectSql('lp') . ",
     ifnull(n.Name_First, '') as `First`,
     ifnull(n.Name_Last, '') as `Last`,
     ifnull(n.Company, '') as `Company`,
@@ -404,6 +410,7 @@ from
     hospital_stay hs ON v.idHospital_stay = hs.idHospital_stay
         left join
     name np on hs.idPatient = np.idName
+        " . Statement::externalPaymentTitleJoinSql('lp') . "
 where lp.idPayment > 0
   $where ";
 
@@ -415,6 +422,7 @@ where lp.idPayment > 0
 
     $fltrdTitles = $colSelector->getFilteredTitles();
     $fltrdFields = $colSelector->getFilteredFields();
+    $writer = null;
 
     if ($local) {
         $tbl = new HTMLTable();
@@ -499,7 +507,7 @@ where lp.idPayment > 0
 
     } else {
         HouseLog::logDownload($dbh, 'Payment Report', "Excel", "Payment Report for " . $filter->getReportStart() . " - " . $filter->getReportEnd() . " downloaded", $uS->username);
-        $writer->download();
+        $writer?->download();
     }
 
 }

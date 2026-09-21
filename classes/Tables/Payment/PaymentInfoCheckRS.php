@@ -15,12 +15,12 @@ use HHK\Tables\Fields\{DB_Field, DbIntSanitizer, DbStrSanitizer, DbDateSanitizer
 
 class PaymentInfoCheckRS extends AbstractTableRS {
     
-    public $idpayment_info_Check;   // int(11) NOT NULL AUTO_INCREMENT,
-    public $idPayment;   // int(11) NOT NULL,
-    public $Bank;   // varchar(45) NOT NULL DEFAULT '',
-    public $Check_Number;   // varchar(45) NOT NULL DEFAULT '',
-    public $Check_Date;   // date DEFAULT NULL,
-    public $Timestamp;   // timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    public DB_Field $idpayment_info_Check;   // int(11) NOT NULL AUTO_INCREMENT,
+    public DB_Field $idPayment;   // int(11) NOT NULL,
+    public DB_Field $Bank;   // varchar(45) NOT NULL DEFAULT '',
+    public DB_Field $Check_Number;   // varchar(45) NOT NULL DEFAULT '',
+    public DB_Field $Check_Date;   // date DEFAULT NULL,
+    public DB_Field $Timestamp;   // timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
     
     function __construct($TableName = "payment_info_check") {
         

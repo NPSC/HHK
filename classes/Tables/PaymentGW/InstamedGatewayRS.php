@@ -20,26 +20,26 @@ use HHK\Tables\Fields\{DB_Field, DbStrSanitizer, DbIntSanitizer, DbDateSanitizer
  */
 class InstamedGatewayRS extends AbstractTableRS {
     
-    public $idcc_gateway;  // int(11) NOT NULL AUTO_INCREMENT,
-    public $Gateway_Name;  // VARCHAR(45) NOT NULL DEFAULT ''
-    public $cc_name;  // varchar(45) NOT NULL,
-    public $account_Id;  // varchar(45) NOT NULL DEFAULT '',
-    public $security_Key;  // varchar(245) NOT NULL DEFAULT '',
-    public $password;
-    public $sso_Alias;  // varchar(145) NOT NULL DEFAULT '',
-    public $merchant_Id;  // varchar(145) NOT NULL DEFAULT '',
-    public $store_Id;  // varchar(145) NOT NULL DEFAULT '',
-    public $providersSso_Url;  // varchar(145) NOT NULL DEFAULT '',
-    public $nvp_Url;  // varchar(145) NOT NULL DEFAULT '',
-    public $terminal_Id;  // varchar(145) NOT NULL DEFAULT '',
-    public $WorkStation_Id;  // varchar(145) NOT NULL DEFAULT '',
-    public $Use_AVS_Flag;  // bit(1) NOT NULL DEFAULT b'0',
-    public $Use_Ccv_Flag;  // bit(1) NOT NULL DEFAULT b'0',
-    public $Retry_Count;  // int(11) NOT NULL DEFAULT '0',
-    public $Updated_By;  // varchar(45) NOT NULL DEFAULT '',
-    public $Last_Updated;  // datetime DEFAULT NULL,
-    public $Timestamp;  // timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    
+    public DB_Field $idcc_gateway;  // int(11) NOT NULL AUTO_INCREMENT,
+    public DB_Field $Gateway_Name;  // VARCHAR(45) NOT NULL DEFAULT ''
+    public DB_Field $cc_name;  // varchar(45) NOT NULL,
+    public DB_Field $account_Id;  // varchar(45) NOT NULL DEFAULT '',
+    public DB_Field $security_Key;  // varchar(245) NOT NULL DEFAULT '',
+    public DB_Field $password;
+    public DB_Field $sso_Alias;  // varchar(145) NOT NULL DEFAULT '',
+    public DB_Field $merchant_Id;  // varchar(145) NOT NULL DEFAULT '',
+    public DB_Field $store_Id;  // varchar(145) NOT NULL DEFAULT '',
+    public DB_Field $providersSso_Url;  // varchar(145) NOT NULL DEFAULT '',
+    public DB_Field $nvp_Url;  // varchar(145) NOT NULL DEFAULT '',
+    public DB_Field $terminal_Id;  // varchar(145) NOT NULL DEFAULT '',
+    public DB_Field $WorkStation_Id;  // varchar(145) NOT NULL DEFAULT '',
+    public DB_Field $Use_AVS_Flag;  // bit(1) NOT NULL DEFAULT b'0',
+    public DB_Field $Use_Ccv_Flag;  // bit(1) NOT NULL DEFAULT b'0',
+    public DB_Field $Retry_Count;  // int(11) NOT NULL DEFAULT '0',
+    public DB_Field $Updated_By;  // varchar(45) NOT NULL DEFAULT '',
+    public DB_Field $Last_Updated;  // datetime DEFAULT NULL,
+    public DB_Field $Timestamp;  // timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
     function __construct($TableName = "cc_hosted_gateway") {
         $this->idcc_gateway = new DB_Field("idcc_gateway", 0, new DbIntSanitizer(), TRUE, TRUE);
         $this->Gateway_Name = new DB_Field("Gateway_Name", "", new DbStrSanitizer(45), TRUE, TRUE);

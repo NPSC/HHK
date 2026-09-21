@@ -74,7 +74,7 @@ class SSP {
 	 *     * db   - database name
 	 *     * user - user name
 	 *     * pass - user password
-	 *  @return resource PDO connection
+	 *  @return PDO PDO connection
 	 */
 	static function db ( $conn )
 	{
@@ -201,10 +201,10 @@ class SSP {
 				 $str != '' ) {
 					if(!empty($column['db'])){
                         if($requestColumn['search']['regex']){
-                            $binding = self::bind( $bindings, $str, \PDO::PARAM_STR );
+                            $binding = self::bind( $bindings, $str, PDO::PARAM_STR );
                             $columnSearch[] = "`".$column['db']."` REGEXP ".$binding;
                         }else{
-                            $binding = self::bind( $bindings, '%'.$str.'%', \PDO::PARAM_STR );
+                            $binding = self::bind( $bindings, '%'.$str.'%', PDO::PARAM_STR );
                             $columnSearch[] = "`".$column['db']."` LIKE ".$binding;
                         }
 					}
@@ -275,7 +275,7 @@ class SSP {
 		$recordsFiltered = $resFilterLength[0][0];
 
 		// Total data set length
-		$resTotalLength = self::sql_exec( $db,
+		$resTotalLength = self::sql_exec( $db, $bindings,
 			"SELECT COUNT(`{$primaryKey}`)
 			 FROM   `$table`"
 		);
@@ -429,26 +429,25 @@ class SSP {
 	 *     * db   - database name
 	 *     * user - user name
 	 *     * pass - user password
-	 * @return resource Database connection handle
+	 * @return 	PDO Database connection handle
 	 */
-	static function sql_connect ( $sql_details )
+	static function sql_connect ( $sql_details ): ?PDO
 	{
 		try {
-			$db = @new PDO(
+			return @new PDO(
 				"mysql:host={$sql_details['host']};dbname={$sql_details['db']}",
 				$sql_details['user'],
 				$sql_details['pass'],
 				array( PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION )
 			);
 		}
-		catch (PDOException $e) {
+		catch (\PDOException $e) {
 			self::fatal(
 				"An error occurred while connecting to the database. ".
 				"The error reported by the server was: ".$e->getMessage()
 			);
 		}
-
-		return $db;
+		return null;
 	}
 
 

@@ -2,6 +2,7 @@
 namespace HHK\OAuth;
 
 use GuzzleHttp\{Client, RequestOptions};
+use HHK\CrmExport\Salesforce\SalesforceManager;
 use HHK\Exception\RuntimeException;
 
 
@@ -13,27 +14,29 @@ use HHK\Exception\RuntimeException;
  */
 class SalesForceOAuth extends AbstractOAuth{
 
-    public function __construct(Credentials $credentials){
-        parent::__construct($credentials);
+    public function __construct(\PDO $dbh, Credentials $credentials){
+        parent::__construct($dbh, $credentials);
     }
 
-    protected function requestToken(){
+    public function requestToken(){
 
         $requestOptions = [
             RequestOptions::AUTH => [$this->credentials->getClientId(), $this->credentials->getClientSecret()],
             RequestOptions::FORM_PARAMS => [
-                'grant_type' => 'password',
+                'grant_type' => 'client_credentials',
                 'client_id'=> $this->credentials->getClientId(),
-                'client_secret' => $this->credentials->getClientSecret(),
-                'username' => $this->credentials->getUsername(),
-                'password' => $this->credentials->getPassword() . $this->credentials->getSecurityToken(),
+                'client_secret' => $this->credentials->getClientSecret()
             ]
         ];
 
         return $this->sendTokenRequest($requestOptions);
     }
 
-    protected function validateTokenResponse($data){
+    protected function getExpiresAt(object $_tokenResponse): int {
+        return time() + 6600; // 110 min — conservative, below Salesforce's 2-hr default session
+    }
+
+    public function validateTokenResponse($data): bool{
         $hash = hash_hmac(
             'sha256',
             $data->id . $data->issued_at,
@@ -46,5 +49,9 @@ class SalesForceOAuth extends AbstractOAuth{
         $this->accessToken = $data->access_token; // Valid access token
         $this->instanceURL = $data->instance_url;  //
         return true;
+    }
+
+    public function getLogServiceName(): string{
+        return SalesforceManager::LOG_SERVICE_NAME;
     }
 }

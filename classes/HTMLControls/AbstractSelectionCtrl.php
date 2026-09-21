@@ -1,6 +1,8 @@
 <?php
 namespace HHK\HTMLControls;
 
+use HHK\Common;
+
 /**
  * selectionCtrlClass.php
  *
@@ -40,7 +42,7 @@ abstract class AbstractSelectionCtrl {
 
     function __Construct($dbcon, $genLkupTabelName, $defaultVal, $htmlNameBase, $emptyOption, $title = "", $orderBy = "Description" ) {
 
-        $genRcrds = readGenLookupsPDO($dbcon, $genLkupTabelName, $orderBy);
+        $genRcrds = Common::readGenLookupsPDO($dbcon, $genLkupTabelName, $orderBy);
         if ($emptyOption) {
             $this->rows = count($genRcrds) + 1;
             $this->labelArray[""] = "";

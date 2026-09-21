@@ -192,7 +192,7 @@ class Statement {
 						'idPayment'=>$p['idPayment'],
                         'Payment_Amount'=>$p['Payment_Amount'],
                         'idPayment_Method'=>$p['idPayment_Method'],
-                        'Payment_Method_Title'=>$p['Payment_Method_Title'],
+                        'Payment_Method_Title'=>(isset($p['External_Payment_Method_Title']) && $p['External_Payment_Method_Title'] != '' ? $p['External_Payment_Method_Title'] : $p['Payment_Method_Title']),
                         'Payment_Status'=>$p['Payment_Status'],
                         'Payment_Status_Title'=>$p['Payment_Status_Title'],
                         'Payment_Date'=>$p['Payment_Date'],
@@ -205,7 +205,8 @@ class Statement {
                         'Payment_Created_By'=>$p['Payment_Created_By'],
                         'Check_Number'=>$p['Check_Number'],
                         'Payment_External_Id'=>$p['Payment_External_Id'],
-                        'Payment_Note'=>$p['Payment_Note']
+                        'Payment_Note'=>$p['Payment_Note'],
+                        'Pay_Type_Code'=>$p['Pay_Type_Code'] ?? null
                     ];
 
                     $idPA = 0;
@@ -258,6 +259,16 @@ class Statement {
 
         return $invoices;
 
+    }
+
+    public static function externalPaymentTitleSelectSql($paymentAlias = 'lp') {
+        return "IF(`$paymentAlias`.`idPayment_Method` = " . PaymentMethod::External . " AND IFNULL(`ptx`.`Description`, '') != '', `ptx`.`Description`, `$paymentAlias`.`Payment_Method_Title`) AS `External_Payment_Method_Title`";
+    }
+
+    public static function externalPaymentTitleJoinSql($paymentAlias = 'lp') {
+        return "LEFT JOIN `payment` `pext` ON `$paymentAlias`.`idPayment` = `pext`.`idPayment`
+        LEFT JOIN `trans` `tx` ON `pext`.`idTrans` = `tx`.`idTrans`
+        LEFT JOIN `gen_lookups` `ptx` ON `ptx`.`Table_Name` = 'Pay_Type' AND `ptx`.`Code` = `tx`.`Payment_Type`";
     }
 
     /**
@@ -770,7 +781,7 @@ class Statement {
                     $p['Payment_Method_Title'] = 'Credit Card';
 
 
-                } else if ($p['idPayment_Method'] == PaymentMethod::Check || $p['idPayment_Method'] == PaymentMethod::Transfer) {
+                } else if ($p['idPayment_Method'] == PaymentMethod::Check || $p['idPayment_Method'] == PaymentMethod::Transfer || $p['idPayment_Method'] == PaymentMethod::External) {
 
                     $addnl = ($p['Check_Number'] == '' ? ' ' : '#' . $p['Check_Number']);
                 }
@@ -947,6 +958,7 @@ class Statement {
 
                         $initialTd = HTMLTable::makeTd($r['i']['Order_Number'] . '-' . $r['i']['Suborder_Number'], array_merge($tdAttrs, array('rowspan'=>count($myLines)+$extraLine))
                         )
+                        .HTMLTable::makeTd($r['i']['Invoice_Number'], array_merge($tdAttrs, array('rowspan'=>count($myLines)+$extraLine)))
                         .HTMLTable::makeTd($payor, array_merge($tdAttrs, array('rowspan'=>count($myLines)+$extraLine)))
                         .HTMLTable::makeTd(($r['i']['Invoice_Date'] == '' ? '' : date('M j, Y', strtotime($r['i']['Invoice_Date']))), array_merge($mattrs, array('rowspan'=>count($myLines))));
 
@@ -985,13 +997,14 @@ class Statement {
         if ($numPayments > 0) {
             $tbl->addHeaderTr(
                 HTMLTable::makeTh('Visit Id', $tdAttrs)
+                .HTMLTable::makeTh('Invoice', $tdAttrs)
                 .HTMLTable::makeTh('Organization', $tdAttrs)
                 .HTMLTable::makeTh('Date', $tdAttrs)
                 .HTMLTable::makeTh('Item', array_merge($tdAttrs, array('colspan'=>'3')))
                 .HTMLTable::makeTh('Status', $tdAttrs)
                 .HTMLTable::makeTh($labels->getString('statement', 'paymentHeader', 'Payment'), $tdAttrs));
 
-            $tbl->addBodyTr(HTMLTable::makeTd('3rd Party Payment Total', array('colspan'=>'7', 'class'=>'tdlabel hhk-tdTotals '.$tdClass))
+            $tbl->addBodyTr(HTMLTable::makeTd('3rd Party Payment Total', array('colspan'=>'8', 'class'=>'tdlabel hhk-tdTotals '.$tdClass))
                 .HTMLTable::makeTd('$'. number_format($totalPment, 2), array('class'=>'hhk-tdTotals align-right '.$tdClass)));
 
         }
@@ -1043,12 +1056,13 @@ class Statement {
         $labels = Labels::getLabels();
 
         // Payments
-        $query = "select lp.*, ifnull(n.Name_First, '') as `First`,
+        $query = "select lp.*, " . self::externalPaymentTitleSelectSql('lp') . ", ifnull(n.Name_First, '') as `First`,
     ifnull(n.Name_Last, '') as `Last`,
     ifnull(n.Company, '') as `Company`
 from vlist_inv_pments lp
     left join
     `name` n ON lp.Sold_To_Id = n.idName
+    " . self::externalPaymentTitleJoinSql('lp') . "
  where lp.idGroup = $idRegistration and lp.Deleted = 0 ORDER BY lp.idInvoice";
         $stmt = $dbh->query($query);
 
@@ -1077,13 +1091,15 @@ where i.Deleted = 0 and il.Deleted = 0 and i.idGroup = $idRegistration order by 
 
         // Find patient name
         $patientName = '';
+        $patientDOB = '';
         $diags = [];
         if ($idPsg > 0){
 
-            $pstmt = $dbh->query("select n.Name_First, n.Name_Last, hs.idHospital, hs.idAssociation from name n left join hospital_stay hs on n.idName = hs.idPatient where hs.idPsg = $idPsg");
+            $pstmt = $dbh->query("select n.Name_First, n.Name_Last, n.BirthDate, hs.idHospital, hs.idAssociation from name n left join hospital_stay hs on n.idName = hs.idPatient where hs.idPsg = $idPsg");
             $rows = $pstmt->fetchAll(\PDO::FETCH_ASSOC);
             if (count($rows) > 0) {
                 $patientName = $rows[0]['Name_First'] . ' ' . $rows[0]['Name_Last'];
+                $patientDOB = $rows[0]['BirthDate'];
 
                 // Hospital
                 if ($rows[0]['idAssociation'] > 0 && isset($uS->guestLookups[GLTableNames::Hospital][$rows[0]['idAssociation']]) && $uS->guestLookups[GLTableNames::Hospital][$rows[0]['idAssociation']][1] != '(None)') {
@@ -1104,6 +1120,7 @@ where i.Deleted = 0 and il.Deleted = 0 and i.idGroup = $idRegistration order by 
         $rec .= self::makeSummaryDiv(
             '',
             $patientName,
+            $patientDOB,
             $hospital,
             $diags,
             $labels,
@@ -1170,8 +1187,9 @@ where i.Deleted = 0 and il.Deleted = 0 and i.idGroup = $idRegistration order by 
         }
 
         // Payments
-        $stmt = $dbh->query("select lp.*, ifnull(n.Name_First, '') as `First`, ifnull(n.Name_Last, '') as `Last`, ifnull(n.Company, '') as `Company`
+        $stmt = $dbh->query("select lp.*, " . self::externalPaymentTitleSelectSql('lp') . ", ifnull(n.Name_First, '') as `First`, ifnull(n.Name_Last, '') as `Last`, ifnull(n.Company, '') as `Company`
 from vlist_inv_pments `lp` left join `name` n ON lp.Sold_To_Id = n.idName
+ " . self::externalPaymentTitleJoinSql('lp') . "
  where lp.Order_Number = $idVisit and lp.Deleted = 0 ORDER BY lp.idInvoice ");
 
         $pments = self::processPayments($stmt, array('Last', 'First', 'Company'));
@@ -1206,11 +1224,12 @@ where i.Deleted = 0 and i.Order_Number = $idVisit order by il.Invoice_Id, ilt.Or
 
         // Find patient name
         $patientName = '';
+        $patientDOB = '';
         $diags = [];
         if ($idPsg > 0){
 
             $pstmt = $dbh->query("SELECT
-    n.Name_First, n.Name_Last, ifnull(g.Description, '') as Diagnosis, ifnull(g2.Description, '') as Diagnosis2
+    n.Name_First, n.Name_Last, n.BirthDate, ifnull(g.Description, '') as Diagnosis, ifnull(g2.Description, '') as Diagnosis2
 FROM
 	visit v
         LEFT JOIN
@@ -1226,6 +1245,7 @@ WHERE
             $rows = $pstmt->fetchAll(\PDO::FETCH_ASSOC);
             if (count($rows) > 0) {
                 $patientName = $rows[0]['Name_First'] . ' ' . $rows[0]['Name_Last'];
+                $patientDOB = $rows[0]['BirthDate'];
                 $diags[1] = $rows[0]['Diagnosis'];
                 $diags[2] = $rows[0]['Diagnosis2'];
             }
@@ -1240,6 +1260,7 @@ WHERE
         $rec .= self::makeSummaryDiv(
             $guestName,
             $patientName,
+            $patientDOB,
             $hospital,
             $diags,
             $labels,
@@ -1383,6 +1404,7 @@ WHERE
      * Summary of makeSummaryDiv
      * @param mixed $guestName
      * @param mixed $patientName
+     * @param mixed $patientDOB
      * @param mixed $hospital
      * @param array $diags
      * @param Labels $labels
@@ -1394,7 +1416,7 @@ WHERE
      * @param mixed $totalNights
      * @return string
      */
-    protected static function makeSummaryDiv($guestName, $patientName, $hospital, $diags, $labels, $totalCharge, $totalThirdPayments, $totalGuestPayments, $MOABalance, $prepayments, $depositBalance, $totalNights) {
+    protected static function makeSummaryDiv($guestName, $patientName, $patientDOB, $hospital, $diags, $labels, $totalCharge, $totalThirdPayments, $totalGuestPayments, $MOABalance, $prepayments, $depositBalance, $totalNights) {
 
         $uS = Session::getInstance();
         $tbl = new HTMLTable();
@@ -1404,6 +1426,10 @@ WHERE
         }
 
         $tbl->addBodyTr(HTMLTable::makeTd($labels->getString('MemberType', 'patient', 'Patient') . ':', array('class'=>'tdlabel')) . HTMLTable::makeTd($patientName));
+
+        if($uS->stmtShowBirthDate){
+            $tbl->addBodyTr(HTMLTable::makeTd($labels->getString('MemberType', 'patient', 'Patient') . ' DOB:', array('class'=>'tdlabel')) . HTMLTable::makeTd($patientDOB == '' ? '' : date('M j, Y', strtotime($patientDOB))));
+        }
 
         // Show diagnosis
         if ($uS->ShowDiagOnStmt && count($diags) > 0 && $diags[1] != '') {
@@ -1494,4 +1520,3 @@ WHERE
     }
 
 }
-

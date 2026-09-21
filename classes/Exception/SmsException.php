@@ -18,7 +18,7 @@ namespace HHK\Exception;
 class SmsException extends \RuntimeException {
     protected array $responseData;
 
-    public function __construct(string $message = "", int $code = 0, \Throwable $previous = null, array $responseData = []){
+    public function __construct(string $message = "", int $code = 0, \Throwable|null $previous = null, array $responseData = []){
         $this->responseData = $responseData;
         parent::__construct($message, $code, $previous);
     }

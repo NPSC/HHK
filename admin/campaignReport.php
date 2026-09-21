@@ -1,6 +1,8 @@
 <?php
 
 use HHK\sec\{Session, WebInit};
+use HHK\House\Report\ReportFilter;
+
 /**
  * campaignReport.php
  *
@@ -28,13 +30,12 @@ $startYear = '2013';
 $rb_fyChecked = "checked='checked'";
 $rb_cyChecked = "";
 
-
 if (filter_has_var(INPUT_POST, "selYears")) {
     $yearSelected = filter_input(INPUT_POST, "selYears", FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 } else {
     $yearSelected = "all";
 }
-$selYearOptions = getYearOptionsMarkup($yearSelected, $startYear, $fyMonths);
+$selYearOptions = ReportFilter::getYearOptionsMarkup($yearSelected, $startYear, $fyMonths);
 
 ?>
 <!DOCTYPE html>

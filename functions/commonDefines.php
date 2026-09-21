@@ -4,45 +4,35 @@
  * Find my place and determine paths.
  */
 define( 'DS', DIRECTORY_SEPARATOR );
-define('P_ROOT', dirname(__FILE__) . DS );
-define('REL_BASE_DIR', '..' . DS);
-define('REL_BASE_SITE', '../');
-
+define('P_ROOT', __DIR__ . DS );
+define('REL_BASE_DIR', dirname(P_ROOT) . DS);
+define('REL_BASE_SITE', '..'.DS);
 
 // Find the vendor directory
-$dirxx = '../vendor';
-if (file_exists($dirxx) === FALSE) {
-    $dirxx = '../' . $dirxx;
-    if (file_exists($dirxx) === FALSE) {
-        $dirxx = '../' . $dirxx;
-        if (file_exists($dirxx) === FALSE) {
-            $dirxx = '../' . $dirxx;
-            if (file_exists($dirxx) === FALSE) {
+$dirxx = 'vendor';
+if (file_exists(REL_BASE_DIR . $dirxx) === FALSE) {
+    $dirxx = '..'.DS . $dirxx;
+    if (file_exists(REL_BASE_DIR . $dirxx) === FALSE) {
+        $dirxx = '..'.DS . $dirxx;
+        if (file_exists(REL_BASE_DIR . $dirxx) === FALSE) {
+            $dirxx = '..'.DS . $dirxx;
+            if (file_exists(REL_BASE_DIR . $dirxx) === FALSE) {
                 throw new Exception('Cannot find the vendor directory.');
             }
         }
     }
 }
 
-define('THIRD_PARTY', $dirxx . DS);
+define('THIRD_PARTY', REL_BASE_DIR . $dirxx . DS);
 
 // Configuration filename and paths
 define('CONF_PATH', REL_BASE_DIR . 'conf' . DS);
 define('ciCFG_FILE', 'site.cfg' );
 
-// Common Directory Names
-define('ADMIN_DIR', REL_BASE_DIR . 'admin' . DS);
-define('CLASSES', REL_BASE_DIR . 'classes' . DS);
-define('DB_TABLES', CLASSES . 'tables' . DS);
-define('MEMBER', CLASSES . 'member' . DS);
-define('HOUSE', CLASSES . 'house' . DS);
-define('SEC', CLASSES . 'sec' . DS);
-define('PMT', CLASSES . 'Payment' . DS);
-define('FUNCTIONS', REL_BASE_DIR . 'functions' .DS);
 
-require(FUNCTIONS . 'errorHandler.php');
-require (THIRD_PARTY . '/autoload.php');
-require (FUNCTIONS . 'commonFunc.php');
+require(REL_BASE_DIR . 'functions' . DS . 'errorHandler.php');
+require (THIRD_PARTY . 'autoload.php');
+HHK\Debug\DebugBarSupport::bootstrap();
 
 define('JSV', '?v=' . HHK\SysConst\CodeVersion::BUILD);
 

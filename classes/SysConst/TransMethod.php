@@ -16,6 +16,7 @@ class TransMethod {
     const Cash = 'cash';
     const Check = 'check';
     const Transfer = 'txfer';
+    const External = 'ext';
     const Webhook = 'wh';
 }
 ?>

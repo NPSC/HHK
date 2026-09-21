@@ -4,6 +4,7 @@ namespace HHK\Payment\PaymentGateway\Vantiv;
 
 use HHK\Payment\{CreditToken, Transaction};
 use HHK\Payment\PaymentGateway\AbstractPaymentGateway;
+use HHK\Payment\PaymentGateway\Vantiv\VantivGateway;
 use HHK\Payment\PaymentGateway\CreditPayments\SaleReply;
 use HHK\Payment\PaymentGateway\Vantiv\Request\{InitCkOutRequest, VerifyCkOutRequest};
 use HHK\Payment\PaymentGateway\Vantiv\Response\{InitCkOutResponse, VerifyCkOutResponse};
@@ -26,12 +27,12 @@ class HostedCheckout {
     /**
      * Summary of sendToPortal
      * @param \PDO $dbh
-     * @param \HHK\Payment\PaymentGateway\Vantiv\VantivGateway $gway
+     * @param VantivGateway $gway
      * @param int $idPayor
      * @param int $idGroup
      * @param string $invoiceNumber
-     * @param \HHK\Payment\PaymentGateway\Vantiv\Request\InitCkOutRequest $initCoRequest
-     * @throws \HHK\Exception\PaymentException
+     * @param InitCkOutRequest $initCoRequest
+     * @throws PaymentException
      * @return array
      */
     public static function sendToPortal(\PDO $dbh, VantivGateway $gway, $idPayor, $idGroup, $invoiceNumber, InitCkOutRequest $initCoRequest) {
@@ -85,7 +86,7 @@ class HostedCheckout {
     /**
      * Summary of portalReply
      * @param \PDO $dbh
-     * @param \HHK\Payment\PaymentGateway\Vantiv\VantivGateway $gway
+     * @param VantivGateway $gway
      * @param mixed $cidInfo
      * @param string $payNotes
      * @param string $payDate
@@ -125,14 +126,12 @@ class HostedCheckout {
 
         // Record transaction
         try {
-
-            if ($verifyResponse->getTranType() == MpTranType::ReturnAmt) {
-                $trType = TransType::Retrn;
-            } else if ($verifyResponse->getTranType() == MpTranType::Sale) {
-                $trType = TransType::Sale;
-            } else if ($verifyResponse->getTranType() == MpTranType::ZeroAuth) {
-                $trType = TransType::ZeroAuth;
-            }
+            
+            $trType = match ($verifyResponse->getTranType()) {
+                MpTranType::ReturnAmt => TransType::Retrn,
+                MpTranType::Sale => TransType::Sale,
+                MpTranType::ZeroAuth => TransType::ZeroAuth,
+            };
 
             $transRs = Transaction::recordTransaction($dbh, $vr, $gway->getGatewayType(), $trType, TransMethod::HostedPayment);
             $vr->setIdTrans($transRs->idTrans->getStoredVal());
@@ -170,4 +169,3 @@ class HostedCheckout {
     }
 
 }
-?>

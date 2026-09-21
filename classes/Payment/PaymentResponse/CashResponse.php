@@ -60,7 +60,7 @@ class CashResponse extends AbstractPaymentResponse {
                 $tbl->addBodyTr(HTMLTable::makeTd(Labels::getString('Receipt', 'changeGiven', 'Change') . ":", array('class'=>'tdlabel')) . HTMLTable::makeTd(number_format(abs($change), 2)));
             }
 
-            $tbl->addBodyTr(HTMLTable::makeTd("Cash Paid:", array('class'=>'tdlabel')) . HTMLTable::makeTd(number_format(abs($this->getAmount()), 2)));
+            $tbl->addBodyTr(HTMLTable::makeTd($this->getPaymentTypeTitle($dbh) . " Paid:", array('class'=>'tdlabel')) . HTMLTable::makeTd(number_format(abs($this->getAmount()), 2)));
         }
 
     }

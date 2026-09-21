@@ -28,7 +28,7 @@ class Partner extends AbstractRelation {
 
     }
 
-    protected function getPdoStmt(\PDO $dbh) {
+    protected function getPdoStmt(\PDO $dbh): \PDOStatement|bool {
 
         $query = "Select
     v.Id,

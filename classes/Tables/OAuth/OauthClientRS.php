@@ -16,14 +16,14 @@ use HHK\Tables\Fields\DbBitSanitizer;
 
 class OauthClientRS extends AbstractTableRS {
 
-    public $client_id;  // VARCHAR(32)
-    public $idName;  // VARCHAR(45) NOT NULL,
-    public $name; //VARCHAR(45) NOT NULL UNIQUE,
-    public $secret;
-    public $revoked;  // VARCHAR(45) NOT NULL DEFAULT '',
-    public $Updated_at;
+    public DB_Field $client_id;  // VARCHAR(32)
+    public DB_Field $idName;  // VARCHAR(45) NOT NULL,
+    public DB_Field $name; //VARCHAR(45) NOT NULL UNIQUE,
+    public DB_Field $secret;
+    public DB_Field $revoked;  // VARCHAR(45) NOT NULL DEFAULT '',
+    public DB_Field $Updated_at;
 
-    public $Timestamp;  // TIMESTAMP NOT NULL DEFAULT now(),
+    public DB_Field $Timestamp;  // TIMESTAMP NOT NULL DEFAULT now(),
 
     function __construct($TableName = "oauth_clients") {
 

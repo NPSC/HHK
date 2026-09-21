@@ -1,4 +1,5 @@
 <?php
+use HHK\Common;
 use HHK\Exception\NotFoundException;
 use HHK\Exception\SmsException;
 use HHK\Exception\ValidationException;
@@ -80,7 +81,7 @@ if (stripos($contentType, 'application/json') !== false   && strtoupper($_SERVER
 
     // convert string representations of arrays into an array
     try {
-        $inputData = parseKeysToArray($inputEncoded);
+        $inputData = Common::parseKeysToArray($inputEncoded);
         
     } catch (UnexpectedValueException $ex) {
         $events = ["error" => "posted data input failure."];    //failure
@@ -244,11 +245,11 @@ try {
                 $idV = intval(filter_input(INPUT_POST, 'idV', FILTER_SANITIZE_NUMBER_INT), 10);
             }
 
-            $vehStmt = $dbh->prepare("select idReservation, idRegistration from visit where idVisit = :idv limit 1");
+            $vehStmt = $dbh->prepare("select v.idReservation, v.idRegistration, r.No_Vehicle from visit v join reservation r on v.idReservation = r.idReservation where v.idVisit = :idv limit 1");
             $vehStmt->execute([':idv' => $idV]);
             $row = $vehStmt->fetch(PDO::FETCH_ASSOC);
 
-            $mkup = Vehicle::createVehicleMarkup($dbh, $row["idRegistration"], $row["idReservation"], false);
+            $mkup = Vehicle::createVehicleMarkup($dbh, $row["idRegistration"], $row["idReservation"], $row["No_Vehicle"]);
 
             $events = ['success' => $mkup, 'title' => "Edit Vehicles"];
 
@@ -279,7 +280,7 @@ try {
         $idLink = 0;
 
         if (isset($_GET['linkType'])) {
-            $linkType = filter_input(INPUT_GET, 'linkType');
+            $linkType = filter_input(INPUT_GET, 'linkType', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         }
 
         if (isset($_GET['linkId'])) {
@@ -348,9 +349,13 @@ try {
 
             $note = new Note($noteId);
             $updateAr = $note->updateContents($dbh, $data, $noteCategory, $uS->username);
+            
+            $events = ['update' => $updateAr['counter'], 'idNote' => $noteId, 'noteText'=>$updateAr['noteRS']->Note_Text->getStoredVal()];
+        }else{
+            $events = ['update' => 0, 'idNote' => $noteId, 'noteText'=>''];
         }
 
-        $events = ['update' => $updateAr['counter'], 'idNote' => $noteId, 'noteText'=>$updateAr['noteRS']->Note_Text->getStoredVal()];
+        
 
         break;
 
@@ -396,6 +401,7 @@ try {
 
         $noteId = 0;
         $flagCount = 0;
+        $flag = 0;
 
         if (isset($_POST['idNote'])) {
             $noteId = intval(filter_input(INPUT_POST, 'idNote', FILTER_SANITIZE_NUMBER_INT), 10);

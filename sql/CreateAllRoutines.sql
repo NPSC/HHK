@@ -456,7 +456,6 @@ BEGIN
     delete ec from emergency_contact ec join tids n on ec.idName = n.idName;
 
 	delete na from name_address na join tids n on na.idName = n.idName;
-	delete na from name_crypto na join tids n on na.idName = n.idName;
 	delete na from name_demog na join tids n on na.idName = n.idName;
 	delete na from name_email na join tids n on na.idName = n.idName;
 	delete na from name_phone na join tids n on na.idName = n.idName;
@@ -893,7 +892,7 @@ END -- ;
 
 drop procedure IF EXISTS `sync_referral_resv_status`; -- ;
 
-CREATE PROCEDURE `sync_referral_resv_status` ()
+CREATE PROCEDURE `sync_referral_resv_status`()
 BEGIN
 
 	UPDATE `document` `d`
@@ -1239,7 +1238,7 @@ END -- ;
 
 DROP procedure IF EXISTS `delImediateResv`; -- ;
 
-CREATE PROCEDURE `delImediateResv` ()
+CREATE PROCEDURE `delImediateResv`()
 BEGIN
 	delete from reservation_guest
 		where idReservation in (Select r.idReservation from reservation r where r.`Status` = 'im' and DATE(r.Expected_Arrival) < DATE(now()));

@@ -55,7 +55,6 @@ abstract class AbstractContactPoint {
     /**
      * Summary of setPreferredCode
      * @param mixed $code
-     * @return string
      */
     public abstract function setPreferredCode($code);
 
@@ -108,7 +107,7 @@ abstract class AbstractContactPoint {
     /**
      * Summary of savePost
      * @param \PDO $dbh
-     * @param mixed $post
+     * @param array $post
      * @param mixed $user
      * @return void
      */

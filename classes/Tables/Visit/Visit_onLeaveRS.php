@@ -15,15 +15,15 @@ use HHK\Tables\Fields\{DB_Field, DbIntSanitizer, DbStrSanitizer, DbDateSanitizer
 
 class Visit_onLeaveRS extends AbstractTableRS {
     
-    public $idVisit;  // int(11) NOT NULL,
-    public $Span;  // int(11) NOT NULL DEFAULT '0',
-    public $Pledged_Rate;  // decimal(10,2) NOT NULL DEFAULT '0.00',
-    public $Rate_Category;  // varchar(5) NOT NULL DEFAULT '',
-    public $idRoom_rate;  // int(11) not null default 0,
-    public $Rate_Glide_Credit;  // int(11) NOT NULL DEFAULT '0',
-    public $Rate_Adjust;  // decimal(10,4) NOT NULL DEFAULT '0.0000',
-    public $idRateAdjust; // varchar(5) NULL DEFAULT '0',
-    public $Timestamp;  // timestamp NULL DEFAULT NULL,
+    public DB_Field $idVisit;  // int(11) NOT NULL,
+    public DB_Field $Span;  // int(11) NOT NULL DEFAULT '0',
+    public DB_Field $Pledged_Rate;  // decimal(10,2) NOT NULL DEFAULT '0.00',
+    public DB_Field $Rate_Category;  // varchar(5) NOT NULL DEFAULT '',
+    public DB_Field $idRoom_rate;  // int(11) not null default 0,
+    public DB_Field $Rate_Glide_Credit;  // int(11) NOT NULL DEFAULT '0',
+    public DB_Field $Rate_Adjust;  // decimal(10,4) NOT NULL DEFAULT '0.0000',
+    public DB_Field $idRateAdjust; // varchar(5) NULL DEFAULT '0',
+    public DB_Field $Timestamp;  // timestamp NULL DEFAULT NULL,
     
     function __construct($TableName = 'visit_onleave') {
         

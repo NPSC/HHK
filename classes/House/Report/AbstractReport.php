@@ -34,23 +34,24 @@ abstract class AbstractReport {
     public array $filteredTitles;
     public ColumnSelectors $colSelector;
     protected $defaultFields;
-    protected array $cFields;
+    protected array $fields;
     public array $fieldSets;
     public array $resultSet = [];
     protected string $query = "";
     public string $filterMkup = "";
     public string $filterOptsMkup = "";
-    protected $request;
+    public array $filterOpts = [];
+    protected array $request;
     protected string $reportTitle = "";
     protected string $description = "";
     protected string $inputSetReportName = "";
     protected bool $rendered = false;
     protected string $statsMkup = "";
+    protected int $defaultSortCol = 0;
 
     /**
      * @param \PDO $dbh
      * @param string $report - used to build fieldset list (ReportFieldSet::listFieldSets())
-     * @param array $cFields
      * @param array $request
      */
     public function __construct(\PDO $dbh, string $report = "", array $request = []){
@@ -62,11 +63,11 @@ abstract class AbstractReport {
         $this->filter->createTimePeriod(date('Y'), '19', $uS->fy_diff_Months);
         $this->filter->createHospitals();
 
-        $this->cFields = $this->makeCFields();
+        $this->fields = $this->makeFields();
 
         $this->fieldSets = ReportFieldSet::listFieldSets($this->dbh, $report, true);
         $fieldSetSelection = (isset($request['fieldset']) ? $request['fieldset']: '');
-        $this->colSelector = new ColumnSelectors($this->cFields, $report . '-selFld', true, $this->fieldSets, $fieldSetSelection);
+        $this->colSelector = new ColumnSelectors($this->fields, $report . '-selFld', true, $this->fieldSets, $fieldSetSelection);
 
         // set the selected filters
         $this->colSelector->setColumnSelectors($request);
@@ -76,7 +77,7 @@ abstract class AbstractReport {
         $this->filteredFields = $this->colSelector->getFilteredFields();
 
         //default fields
-        foreach($this->cFields as $field){
+        foreach($this->fields as $field){
             if($field[2] == 'checked'){
                 $this->defaultFields[] = $field[1];
             }
@@ -172,9 +173,18 @@ abstract class AbstractReport {
             $tbl->addBodyTr($tr);
         }
 
+        $this->makeFooterMkup($tbl);
+
         $this->rendered = true;
 
         return HTMLContainer::generateMarkup('form', HTMLContainer::generateMarkup("div", $this->generateSummaryMkup() . $tbl->generateMarkup(array('id'=>'tbl' . $this->inputSetReportName . 'rpt', 'class'=>'display', 'style'=>'width:100%;')), array('class'=>"ui-widget ui-widget-content ui-corner-all hhk-tdbox", 'id'=>'hhk-reportWrapper')), array('autocomplete'=>'off'));
+    }
+
+    /**
+     * Optional hook for subclasses to add a footer row (eg. totals) to the report table.
+     * No-op by default.
+     */
+    protected function makeFooterMkup(HTMLTable $tbl): void {
     }
 
     public function generateSummaryMkup():string {
@@ -192,6 +202,8 @@ abstract class AbstractReport {
     public function generateReportScript(){
         $jsonColumnDefs = json_encode($this->colSelector->getColumnDefs());
         $dateTimeColumnDefs = json_encode($this->colSelector->getDateTimeColumnDefs());
+        $dayColumnDefs = json_encode($this->colSelector->getDayColumnDefs());
+
         $uS = Session::getInstance();
 
         return '
@@ -207,10 +219,15 @@ abstract class AbstractReport {
             {"targets": ' . $dateTimeColumnDefs . ',
             "type": "date",
             "render": function ( data, type, row ) {return dateRender(data, type, dateFormat + " h:mm a");}
+            },
+            {"targets": ' . $dayColumnDefs . ',
+            "type": "date",
+            "render": function ( data, type, row ) {return dayRender(data, type, "MMM Do");}
             }
             ],
             "displayLength": 50,
             "lengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]],
+            "order": [[' . $this->defaultSortCol . ', "asc"]],
             "dom": "<\"top ui-toolbar ui-helper-clearfix\"Bif><\"hhk-overflow-x\"rt><\"bottom ui-toolbar ui-helper-clearfix\"lp>",
             "buttons": [
             {
@@ -382,7 +399,7 @@ abstract class AbstractReport {
         return HTMLContainer::generateMarkup("div", $emTbl->generateMarkup(), array("id"=>"em" . $this->inputSetReportName . "RptDialog", "class"=>"emRptDialog", "style"=>"display:none;"));
     }
 
-    public function sendEmail(\PDO $dbh, string $emailAddress = "", string $subject = "", bool $cronDryRun = false){
+    public function sendEmail(\PDO $dbh, string $emailAddress = "", string $subject = "", bool $cronDryRun = false): array{
         $uS = Session::getInstance();
 
         $errors = array();
@@ -413,7 +430,7 @@ abstract class AbstractReport {
             return array("error"=>implode("<br>", $errors));
         }
 
-        if(count($errors) == 0 && $body !=''){
+        if(count($errors) == 0 && $body !='' && isset($addresses) &&is_array($addresses)){
 
             try{
                 $mail = new HHKMailer($dbh);
@@ -442,6 +459,7 @@ abstract class AbstractReport {
             }
 
         }
+        return [];
     }
 
     protected function actions(\PDO $dbh, array $request):void{
@@ -474,7 +492,7 @@ abstract class AbstractReport {
 
     public abstract function makeSummaryMkup();
 
-    public abstract function makeCFields();
+    public abstract function makeFields();
 
     public abstract function makeQuery();
 
@@ -482,11 +500,22 @@ abstract class AbstractReport {
         return $this->defaultFields;
     }
 
-    public function makeFilterOptsMkup(){
+    public function makeFilterOptsMkup(): string{
+        foreach($this->filterOpts as $key=>$opt) {
+            $attrs = array("type"=>$opt["type"], "id"=>$key, "name"=>$key);
+            if(isset($this->request[$key])){
+                $attrs['checked'] = 'checked';
+            }
 
+            $this->filterOptsMkup .= HTMLContainer::generateMarkup("div",
+                HTMLInput::generateMarkup("", $attrs) .
+                HTMLContainer::generateMarkup("label", $opt['title'], array("for"=>$key))
+            );
+        }
+        return $this->filterOptsMkup;
     }
 
-    public function getInputSetReportName(){
+    public function getInputSetReportName(): string{
         return $this->inputSetReportName;
     }
 

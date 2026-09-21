@@ -1,5 +1,6 @@
 <?php
 
+use HHK\Common;
 use HHK\sec\{Session, WebInit};
 use HHK\HTMLControls\{HTMLContainer, HTMLInput, HTMLTable, HTMLSelector};
 use HHK\Tables\EditRS;
@@ -8,16 +9,15 @@ use HHK\Tables\VolCalendar\ShellEventsRS;
 /**
  * EventShells.php
  *
--- @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
--- @copyright 2010-2018 <nonprofitsoftwarecorp.org>
--- @license   MIT
--- @link      https://github.com/NPSC/HHK
+ * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
+ * @copyright 2010-2018 <nonprofitsoftwarecorp.org>
+ * @license   MIT
+ * @link      https://github.com/NPSC/HHK
  */
 
 require("AdminIncludes.php");
-//require(DB_TABLES . 'volCalendarRS.php');
 
-$wInit = new webInit();
+$wInit = new WebInit();
 $dbh = $wInit->dbh;
 $uS = Session::getInstance();
 
@@ -104,7 +104,7 @@ if (isset($_POST['txtTitle'])) {
 // Create markup
 $tbl = new HTMLTable();
 $dayAttrs = array('style'=>'text-align:center');
-$gattrs = readGenLookupsPDO($dbh, 'E_Shell_Status');
+$gattrs = Common::readGenLookupsPDO($dbh, 'E_Shell_Status');
 
 // Get Vol Categories
 $stmtCat = $dbh->query("SELECT `Code`, `Description`, '' FROM `gen_lookups` WHERE `Table_Name` = 'Vol_Category';");

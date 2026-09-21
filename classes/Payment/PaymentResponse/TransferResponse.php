@@ -4,6 +4,8 @@ namespace HHK\Payment\PaymentResponse;
 
 use HHK\SysConst\PaymentMethod;
 use HHK\HTMLControls\HTMLTable;
+use HHK\SysConst\PayType;
+use Override;
 
 /**
  * TransferResponse.php
@@ -16,6 +18,11 @@ use HHK\HTMLControls\HTMLTable;
 
 class TransferResponse extends CheckResponse {
 
+    public function __construct($amount, $idPayor, $invoiceNumber, $checkNumber = '', $payNotes = '')
+    {
+        parent::__construct($amount, $idPayor, $invoiceNumber, $checkNumber, $payNotes);
+        $this->paymentType = PayType::Transfer;
+    }
 
     /**
      * Summary of getPaymentMethod
@@ -33,8 +40,8 @@ class TransferResponse extends CheckResponse {
      */
     public function receiptMarkup(\PDO $dbh, &$tbl) {
 
-        $tbl->addBodyTr(HTMLTable::makeTd("Transfer:", array('class'=>'tdlabel')) . HTMLTable::makeTd(number_format($this->getAmount(), 2)));
-        $tbl->addBodyTr(HTMLTable::makeTd('Transfer Acct:', array('class'=>'tdlabel')) . HTMLTable::makeTd($this->getCheckNumber()));
+        $tbl->addBodyTr(HTMLTable::makeTd($this->getPaymentTypeTitle($dbh) . ":", array('class'=>'tdlabel')) . HTMLTable::makeTd(number_format($this->getAmount(), 2)));
+        $tbl->addBodyTr(HTMLTable::makeTd($this->getPaymentTypeTitle($dbh) . " Acct:", array('class'=>'tdlabel')) . HTMLTable::makeTd($this->getCheckNumber()));
 
     }
 

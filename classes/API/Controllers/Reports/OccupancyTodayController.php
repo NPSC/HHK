@@ -20,7 +20,7 @@ class OccupancyTodayController
         $this->container = $container;
     }
 
-    public function occupancyToday(ServerRequestInterface $request, ResponseInterface $response, array $args = []): ResponseInterface
+    public function __invoke(ServerRequestInterface $request, ResponseInterface $response, array $args = []): ResponseInterface
     {
         $dbh = $this->container->get("dbh");
 
@@ -30,7 +30,13 @@ class OccupancyTodayController
         $returnData = [];
         $returnData["houseName"] = html_entity_decode(SysConfig::getKeyValue($dbh, "sys_config", "siteName"));
         $returnData["date"] = (new \DateTime())->format("Y-m-d");
-        $returnData["occupancy"] = $rawData[0];
+        $returnData["occupancy"] = array_map(function ($val) {
+            if (is_numeric($val)) {
+                return (float) $val;
+            } else {
+                return $val;
+            }
+        }, $rawData[0]);
         $returnData["generated"] = (new \DateTime())->format(\DateTime::RFC3339);
 
 

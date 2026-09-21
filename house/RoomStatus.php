@@ -1,5 +1,7 @@
 <?php
 
+use HHK\Common;
+use HHK\ExcelHelper;
 use HHK\sec\{SecurityComponent, Session, WebInit};
 use HHK\House\ResourceView;
 use HHK\SysConst\RoomState;
@@ -18,7 +20,7 @@ require ("homeIncludes.php");
 
 
 try {
-    $wInit = new webInit();
+    $wInit = new WebInit();
 } catch (Exception $exw) {
     die($exw->getMessage());
 }
@@ -43,7 +45,7 @@ if (isset($_POST['btnExcelAll'])) {
 
     // download to excel
     $rows = ResourceView::roomsClean($dbh, '', $guestAdmin, true);
-    doExcelDownLoad($rows, 'Show All Rooms');
+    ExcelHelper::doExcelDownLoad($rows, 'Show All Rooms');
 }
 
 if (isset($_POST['btnSubmitTable']) or isset($_POST['btnSubmitClean'])) {
@@ -150,9 +152,10 @@ if (isset($_POST['btnSubmitTable']) or isset($_POST['btnSubmitClean'])) {
 }
 
 //Resource grouping controls
-$rescGroups = readGenLookupsPDO($dbh, 'Room_Group');
+$rescGroups = Common::readGenLookupsPDO($dbh, 'Room_Group');
 
 $rescGroupBy = '';
+$groupingTitle = '';
 
 if (isset($rescGroups[$uS->CalResourceGroupBy])) {
     $rescGroupBy = $uS->CalResourceGroupBy;

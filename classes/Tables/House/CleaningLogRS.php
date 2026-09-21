@@ -15,15 +15,15 @@ use HHK\Tables\Fields\{DB_Field, DbIntSanitizer, DbStrSanitizer, DbDateSanitizer
 
 class CleaningLogRS extends AbstractTableRS {
 
-    public $idResource;   // int(11) NOT NULL DEFAULT '0',
-    public $idRoom;   // int(11) NOT NULL DEFAULT '0',
-    public $Type;   // varchar(45) NOT NULL DEFAULT '',
-    public $Status;   // varchar(5) NOT NULL DEFAULT '',
-    public $Notes;
-    public $Last_Cleaned;   // datetime DEFAULT NULL,
-    public $Last_Deep_Clean;   // datetime DEFAULT NULL,
-    public $Username;   // varchar(45) NOT NULL DEFAULT ''
-    public $Timestamp;   // TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+    public DB_Field $idResource;   // int(11) NOT NULL DEFAULT '0',
+    public DB_Field $idRoom;   // int(11) NOT NULL DEFAULT '0',
+    public DB_Field $Type;   // varchar(45) NOT NULL DEFAULT '',
+    public DB_Field $Status;   // varchar(5) NOT NULL DEFAULT '',
+    public DB_Field $Notes;
+    public DB_Field $Last_Cleaned;   // datetime DEFAULT NULL,
+    public DB_Field $Last_Deep_Clean;   // datetime DEFAULT NULL,
+    public DB_Field $Username;   // varchar(45) NOT NULL DEFAULT ''
+    public DB_Field $Timestamp;   // TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 
     function __construct($TableName = 'cleaning_log') {
         $this->idResource = new DB_Field('idResource', 0, new DbIntSanitizer());

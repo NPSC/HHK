@@ -1,10 +1,9 @@
 <?php
 
 use HHK\AlertControl\AlertMessage;
-use HHK\Exception\DuplicateException;
+use HHK\HTMLControls\HTMLSelector;
 use HHK\sec\Pages;
 use HHK\sec\{SecurityComponent, WebInit};
-use HHK\Exception\RuntimeException;
 
 /**
  * PageEdit.php
@@ -16,12 +15,8 @@ use HHK\Exception\RuntimeException;
  */
 
 require ("AdminIncludes.php");
-// require (DB_TABLES . 'WebSecRS.php');
 
-// require(SEC . 'Pages.php');
-// require(REL_BASE_DIR . "classes" . DS . "selCtrl.php");
-
-$wInit = new webInit();
+$wInit = new WebInit();
 
 $dbh = $wInit->dbh;
 $pageTitle = $wInit->pageTitle;
@@ -72,6 +67,8 @@ if (filter_has_var(INPUT_POST, "btnSubmit")) {
     }
 }
 
+$securityCodes = "";
+
 // create web site table
 $stmt = $dbh->query("Select * from web_sites");
 
@@ -99,7 +96,7 @@ if ($stmt->rowCount() > 0) {
 
     $stmtp = $dbh->query("select Group_Code as Code, Title as Description from w_groups");
     $grps = $stmtp->fetchAll(\PDO::FETCH_NUM);
-    $securityCodes = doOptionsMkup($grps, false, false);
+    $securityCodes = HTMLSelector::doOptionsMkup($grps, false, false);
 
 
 } else {

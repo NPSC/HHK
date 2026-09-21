@@ -4,9 +4,7 @@ namespace HHK\Member;
 
 use HHK\HTMLControls\{HTMLContainer, HTMLInput, HTMLTable};
 use HHK\Member\Address\AbstractContactPoint;
-use HHK\Member\Address\Phones;
 use HHK\SysConst\{GLTableNames, MemDesignation, MemStatus};
-use HHK\SysConst\MemBasis;
 use HHK\Tables\EditRS;
 use HHK\Tables\Name\{NameDemogRS, NameRS};
 use HHK\sec\Session;
@@ -67,10 +65,10 @@ abstract class AbstractMember {
      * @param \PDO $dbh
      * @param string $defaultMemberBasis
      * @param int $nid
-     * @param NameRS $nRS
-     * @throws RuntimeException
+     * @param ?NameRS $nRS
+     * @throws RuntimeException 
      */
-    public function __construct(\PDO $dbh, $defaultMemberBasis, $nid = 0, NameRS $nRS = null) {
+    public function __construct(\PDO $dbh, $defaultMemberBasis, $nid = 0, NameRS|null $nRS = null) {
 
         $uS = Session::getInstance();
 
@@ -471,16 +469,16 @@ abstract class AbstractMember {
         // Exclude CMS
         if ($uS->ContactManager != '') {
 
-            $CmsManager = AbstractExportManager::factory($dbh, $uS->ContactManager);
+            $cmsTitle = AbstractExportManager::getCmsTitle($dbh, $uS->ContactManager);
 
-            $exNeonAttr = array('name'=>'exCms', 'type'=>'checkbox', 'class'=>'hhk-ex', 'title'=>'Check to exclude '. $CmsManager->getServiceTitle() .' Transfers');
+            $exNeonAttr = array('name'=>'exCms', 'type'=>'checkbox', 'class'=>'hhk-ex', 'title'=>'Check to exclude '. $cmsTitle .' Transfers');
 
             if ($this->get_ExternalId() == AbstractExportManager::EXCLUDE_TERM) {
                 $exNeonAttr['checked'] = 'checked';
                 $insertTabIcon = TRUE;
             }
             $table->addBodyTr(
-                HTMLTable::makeTd(HTMLContainer::generateMarkup('label', 'Exclude ' . $CmsManager->getServiceTitle(), array('for'=>'exCms')), array('class'=>'tdlabel'))
+                HTMLTable::makeTd(HTMLContainer::generateMarkup('label', 'Exclude ' . $cmsTitle, array('for'=>'exCms')), array('class'=>'tdlabel'))
                 . HTMLTable::makeTd(
                     HTMLInput::generateMarkup(
                         '',
@@ -878,7 +876,7 @@ abstract class AbstractMember {
     /**
      * Summary of verifyPreferredAddress
      * @param \PDO $dbh
-     * @param \HHK\Member\Address\AbstractContactPoint $cp
+     * @param AbstractContactPoint $cp
      * @param mixed $uname
      * @return string
      */
@@ -995,7 +993,7 @@ abstract class AbstractMember {
 
     /**
      * Summary of getMemberDesignation
-     * @return void
+     * @return string
      */
     public abstract function getMemberDesignation();
 

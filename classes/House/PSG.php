@@ -169,7 +169,7 @@ where r.idPsg = :idPsg and s.idName = :idGuest and DATEDIFF(s.Span_End_Date, s.S
         // Members section
         $relListLessSlf = $relList;
         unset($relListLessSlf[RelLinkType::Self]);
-        $relListLessSlf = removeOptionGroups($relListLessSlf);
+        $relListLessSlf = HTMLSelector::removeOptionGroups($relListLessSlf);
 
 
         $mTable = new HTMLTable();

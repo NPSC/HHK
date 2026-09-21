@@ -3,12 +3,15 @@
 declare(strict_types=1);
 
 use DI\Container;
-use HHK\API\Controllers\Calendar\ViewCalendarController;
+use HHK\API\Controllers\CalendarController;
+use HHK\API\Controllers\LookupsController;
+use HHK\API\Controllers\RoomsController;
 use HHK\API\Controllers\Oauth\RequestTokenController;
 use HHK\API\Controllers\Reports\OccupancyAllTimeController;
 use HHK\API\Controllers\Reports\OccupancyTodayController;
 use HHK\API\Controllers\Widgets\VacancyWidgetController;
 use HHK\API\Handlers\ErrorHandler;
+use HHK\Common;
 use HHK\sec\Session;
 use HHK\sec\Login;
 use HHK\API\OAuth\OAuthServer;
@@ -33,7 +36,7 @@ require ("../house/homeIncludes.php");
 $login = new Login();
 $login->initHhkSession(CONF_PATH, ciCFG_FILE);
 $uS = Session::getInstance();
-$dbh = initPDO(TRUE);
+$dbh = Common::initPDO(TRUE);
 $oAuthServer = new OAuthServer($dbh);
 $debugMode = ($uS->mode == "dev");
     
@@ -87,7 +90,18 @@ if(SysConfig::getKeyValue($dbh, "sys_config", "useAPI", false)){
 
             // Calendar
             // Endpoint: /api/v1/calendar
-            $group->get('/calendar', ViewCalendarController::class)->add(new AccessTokenHasScopeMiddleware("calendar:read"));
+            $group->get('/calendar', [CalendarController::class, 'index'])->add(new AccessTokenHasScopeMiddleware("calendar:read"));
+
+            // Rooms
+            // Endpoint: /api/v1/rooms
+            $group->get('/rooms', [RoomsController::class, 'index'])->add(new AccessTokenHasScopeMiddleware("rooms:read"));
+            $group->get('/rooms/{id}', [RoomsController::class, 'show'])->add(new AccessTokenHasScopeMiddleware("rooms:read"));
+            $group->put('/rooms/{id}', [RoomsController::class, 'update'])->add(new AccessTokenHasScopeMiddleware("rooms:write"));
+
+            // Lookups
+            // Endpoint: /api/v1/lookups
+            $group->get('/lookups', [LookupsController::class, 'index'])->add(new AccessTokenHasScopeMiddleware("lookups:read"));
+            $group->get('/lookups/{table_name}', [LookupsController::class, 'show'])->add(new AccessTokenHasScopeMiddleware("lookups:read"));
 
         })->add(new LogMiddleware($dbh))->add(new ResourceServerMiddleware($oAuthServer->getResourceServer()));
     });

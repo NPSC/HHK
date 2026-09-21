@@ -95,7 +95,7 @@ abstract class AbstractMercTokenRequest extends AbstractMercRequest {
     /**
      * Summary of setCardHolderName
      * @param mixed $v
-     * @return AbstractMercTokenRequest
+     * @return static
      */
     public function setCardHolderName($v) {
         if ($v != '') {
@@ -116,7 +116,7 @@ abstract class AbstractMercTokenRequest extends AbstractMercRequest {
     /**
      * Summary of setFrequency
      * @param mixed $frequency
-     * @return AbstractMercTokenRequest
+     * @return static
      */
     public function setFrequency($frequency) {
         if ($frequency == 'Recurring' || $frequency == 'OneTime') {
@@ -128,7 +128,7 @@ abstract class AbstractMercTokenRequest extends AbstractMercRequest {
     /**
      * Summary of setInvoice
      * @param mixed $v
-     * @return AbstractMercTokenRequest
+     * @return static
      */
     public function setInvoice($v) {
         if ($v != '') {
@@ -141,9 +141,9 @@ abstract class AbstractMercTokenRequest extends AbstractMercRequest {
     /**
      * Summary of setToken
      * @param mixed $v
-     * @return AbstractMercTokenRequest
+     * @return static
      */
-    public function setToken($v) {
+    public function setToken($v): static {
         if ($v != '') {
             $a = substr($v, 0, 100);
             $this->fields["Token"] = $a;
@@ -154,9 +154,9 @@ abstract class AbstractMercTokenRequest extends AbstractMercRequest {
     /**
      * Summary of setTokenId
      * @param int $idToken
-     * @return AbstractMercTokenRequest
+     * @return static
      */
-    public function setTokenId($idToken) {
+    public function setTokenId($idToken): static {
         $this->tokenId = $idToken;
         return $this;
     }
@@ -172,9 +172,9 @@ abstract class AbstractMercTokenRequest extends AbstractMercRequest {
     /**
      * Summary of setMemo
      * @param mixed $v
-     * @return AbstractMercTokenRequest
+     * @return static
      */
-    public function setMemo($v) {
+    public function setMemo($v): static {
         if ($v != '') {
             $a = substr($v, 0, 40);
             $this->fields["Memo"] = $a;
@@ -185,9 +185,9 @@ abstract class AbstractMercTokenRequest extends AbstractMercRequest {
     /**
      * Summary of setOperatorID
      * @param mixed $v
-     * @return AbstractMercTokenRequest
+     * @return static
      */
-    public function setOperatorID($v) {
+    public function setOperatorID($v): static {
         if ($v != '') {
             $a = substr($v, 0, 10);
             $this->fields["OperatorID"] = $a;
@@ -209,9 +209,9 @@ abstract class AbstractMercTokenRequest extends AbstractMercRequest {
     /**
      * Summary of setTerminalName
      * @param mixed $v
-     * @return AbstractMercTokenRequest
+     * @return static
      */
-    public function setTerminalName($v) {
+    public function setTerminalName($v): static {
         if ($v != '') {
             $a = substr($v, 0, 20);
             $this->fields["TerminalName"] = $a;

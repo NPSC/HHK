@@ -21,11 +21,10 @@ class ResvPaymentManager extends PaymentManager
 
     /**
      *
-     * @param
-     *            $pmp
+     * @param PaymentManagerPayment $pmp
      *
      */
-    public function __construct($pmp)
+    public function __construct(PaymentManagerPayment $pmp)
     {
         parent::__construct($pmp);
     }

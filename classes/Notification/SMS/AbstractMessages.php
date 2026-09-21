@@ -2,7 +2,7 @@
 
 namespace HHK\Notification\SMS;
 
-use GuzzleHttp\Exception\ClientException;
+use HHK\Common;
 use HHK\Exception\SmsException;
 use HHK\Member\Address\Phones;
 use HHK\Member\IndivMember;
@@ -17,7 +17,7 @@ use HHK\SysConst\VisitStatus;
 use HHK\Notification\SMS\SimpleTexting\Contacts;
 use HHK\TableLog\NotificationLog;
 
-abstract class AbstractMessages
+abstract class AbstractMessages implements MessagesInterface
 {
 
     protected \PDO $dbh;
@@ -116,21 +116,23 @@ WHERE
         $uS = Session::getInstance();
         $filterField = "";
         $filterOptions = [];
+        $filterBy = null;
 
         //Resource grouping
-        $rescGroups = readGenLookupsPDO($this->dbh, 'Room_Group');
+        $rescGroups = Common::readGenLookupsPDO($this->dbh, 'Room_Group');
         if (isset($rescGroups[$uS->CalResourceGroupBy])) {
             $filterField = $uS->CalResourceGroupBy;
-            $filterOptions = readGenLookupsPDO($this->dbh, $rescGroups[$uS->CalResourceGroupBy]["Substitute"]);
+            $filterBy = $rescGroups[$uS->CalResourceGroupBy];
+            $filterOptions = Common::readGenLookupsPDO($this->dbh, $rescGroups[$uS->CalResourceGroupBy]["Substitute"]);
         }
 
         switch ($status){
             case "checked_in":
-                return ["status"=>$status, "title"=>"Current " . Labels::getString('MemberType', 'visitor', 'Guest') . "s", "filterBy"=> $rescGroups[$uS->CalResourceGroupBy], "filterOptions"=>$filterOptions, "contacts"=>$contacts->getCheckedInGuestPhones($filterField, $filterVal)];
+                return ["status"=>$status, "title"=>"Current " . Labels::getString('MemberType', 'visitor', 'Guest') . "s", "filterBy"=> $filterBy, "filterOptions"=>$filterOptions, "contacts"=>$contacts->getCheckedInGuestPhones($filterField, $filterVal)];
             case "confirmed_reservation":
-                return ["status" => $status, "title" => Labels::getString('register', 'reservationTab', 'Confirmed Reservations'), "filterBy"=> $rescGroups[$uS->CalResourceGroupBy], "filterOptions"=>$filterOptions, "contacts" => $contacts->getConfirmedReservationGuestPhones($filterField, $filterVal)];
+                return ["status" => $status, "title" => Labels::getString('register', 'reservationTab', 'Confirmed Reservations'), "filterBy"=> $filterBy, "filterOptions"=>$filterOptions, "contacts" => $contacts->getConfirmedReservationGuestPhones($filterField, $filterVal)];
             case "unconfirmed_reservation":
-                return ["status" => $status, "title" => Labels::getString('register', 'unconfirmedTab', 'UnConfirmed Reservations'), "filterBy"=> $rescGroups[$uS->CalResourceGroupBy], "filterOptions"=>$filterOptions, "contacts" => $contacts->getUnConfirmedReservationGuestPhones($filterField, $filterVal)];
+                return ["status" => $status, "title" => Labels::getString('register', 'unconfirmedTab', 'UnConfirmed Reservations'), "filterBy"=> $filterBy, "filterOptions"=>$filterOptions, "contacts" => $contacts->getUnConfirmedReservationGuestPhones($filterField, $filterVal)];
             case "waitlist":
                 return ["status" => $status, "title" => Labels::getString('register', 'waitlistTab', 'Wait List'), "contacts" => $contacts->getWaitlistReservationGuestPhones()];
             default:

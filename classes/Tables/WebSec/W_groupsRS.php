@@ -15,18 +15,18 @@ use HHK\Tables\Fields\{DB_Field, DbStrSanitizer, DbIntSanitizer, DbDateSanitizer
 
 class W_groupsRS extends AbstractTableRS {
     
-    public $Group_Code;  // varchar(5) NOT NULL DEFAULT '',
-    public $Title;  // varchar(45) NOT NULL DEFAULT '',
-    public $Description;  // varchar(255) NOT NULL DEFAULT '',
-    public $Default_Access_Level;  // varchar(5) NOT NULL DEFAULT '',
-    public $Max_Level;  // varchar(5) NOT NULL DEFAULT '',
-    public $Min_Access_Level;  // varchar(5) NOT NULL DEFAULT '',
-    public $Cookie_Restricted;  // bit(1) NOT NULL DEFAULT b'0',
-    public $IP_Restricted; // tinyint NOT NULL DEFAULT 0,
-    public $Password_Policy;  // varchar(45) NOT NULL DEFAULT '',
-    public $Last_Updated;  // datetime DEFAULT NULL,
-    public $Updated_By;  // varchar(45) NOT NULL DEFAULT '',
-    public $Timestamp;  // timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    public DB_Field $Group_Code;  // varchar(5) NOT NULL DEFAULT '',
+    public DB_Field $Title;  // varchar(45) NOT NULL DEFAULT '',
+    public DB_Field $Description;  // varchar(255) NOT NULL DEFAULT '',
+    public DB_Field $Default_Access_Level;  // varchar(5) NOT NULL DEFAULT '',
+    public DB_Field $Max_Level;  // varchar(5) NOT NULL DEFAULT '',
+    public DB_Field $Min_Access_Level;  // varchar(5) NOT NULL DEFAULT '',
+    public DB_Field $Cookie_Restricted;  // bit(1) NOT NULL DEFAULT b'0',
+    public DB_Field $IP_Restricted; // tinyint NOT NULL DEFAULT 0,
+    public DB_Field $Password_Policy;  // varchar(45) NOT NULL DEFAULT '',
+    public DB_Field $Last_Updated;  // datetime DEFAULT NULL,
+    public DB_Field $Updated_By;  // varchar(45) NOT NULL DEFAULT '',
+    public DB_Field $Timestamp;  // timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
     
     function __construct($TableName = "w_groups") {
         

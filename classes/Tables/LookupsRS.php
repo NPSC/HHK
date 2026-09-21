@@ -19,14 +19,14 @@ use HHK\Tables\Fields\{DB_Field, DbStrSanitizer, DbDateSanitizer};
  */
 class LookupsRS extends AbstractTableRS {
 
-    public $Category;   // varchar(45) NOT NULL,
-    public $Code;   // varchar(45) NOT NULL DEFAULT '',
-    public $Title;   // varchar(255) NOT NULL DEFAULT '',
-    public $Use;   // varchar(2) NOT NULL DEFAULT '',
-    public $Show;  // varchar(4) NOT NULL DEFAULT '',
-    public $Type;  // varchar(255) NOT NULL DEFAULT '',
-    public $Other; // varchar(255) NOT NULL DEFAULT '',
-    public $Timestamp;   // timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+    public DB_Field $Category;   // varchar(45) NOT NULL,
+    public DB_Field $Code;   // varchar(45) NOT NULL DEFAULT '',
+    public DB_Field $Title;   // varchar(255) NOT NULL DEFAULT '',
+    public DB_Field $Use;   // varchar(2) NOT NULL DEFAULT '',
+    public DB_Field $Show;  // varchar(4) NOT NULL DEFAULT '',
+    public DB_Field $Type;  // varchar(255) NOT NULL DEFAULT '',
+    public DB_Field $Other; // varchar(255) NOT NULL DEFAULT '',
+    public DB_Field $Timestamp;   // timestamp NULL DEFAULT CURRENT_TIMESTAMP,
 
 
     function __construct($TableName = "lookups") {

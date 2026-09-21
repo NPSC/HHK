@@ -19,19 +19,21 @@ use HHK\HTMLControls\HTMLContainer;
  * @author Eric
  */
 
-class Notes {
-    public static function markupShell($notesText, $taId, $txtboxRows = '1', $taClass = 'hhk-feeskeys') {
+class Notes
+{
+    public static function markupShell($notesText, $taId, $txtboxRows = '1', $taClass = 'hhk-feeskeys')
+    {
 
         if (is_null($notesText)) {
             $notesText = '';
         }
 
         $inputTa = HTMLContainer::generateMarkup(
-                     'textarea',
-                     '',
-                     array('name'=>$taId, 'rows'=>$txtboxRows, 'class'=>$taClass)
-                     );
-        $notesBtn = HTMLContainer::generateMarkup("button", "View Room Notes", ['type'=>'button', 'class'=>"roomDetails ui-button ui-corner-all", "data-idRoom"=>$taId]);
+            'textarea',
+            '',
+            array('name' => $taId, 'rows' => $txtboxRows, 'class' => $taClass)
+        );
+        $notesBtn = HTMLContainer::generateMarkup("button", "View Room Notes", ['type' => 'button', 'class' => "roomDetails ui-button ui-corner-all", "data-idRoom" => $taId]);
 
         // reverse output
         $lines = explode("\n", $notesText);
@@ -41,17 +43,18 @@ class Notes {
             $reverse .= $lines[$i] . "<br/>";
         }
 
-        $output = HTMLContainer::generateMarkup('div', $reverse, array('class'=>'hhk-existgNotes ui-corner-all mb-2'));
+        $output = HTMLContainer::generateMarkup('div', $reverse, array('class' => 'hhk-existgNotes ui-corner-all mb-2'));
 
-        return HTMLContainer::generateMarkup('div', $output  . $inputTa, array('class'=>'hhk-noteBox'));
+        return HTMLContainer::generateMarkup('div', $output . $inputTa, array('class' => 'hhk-noteBox'));
 
     }
 
 
-    public static function getNotesDiv($notesText, $class = 'hhk-currentNotes') {
+    public static function getNotesDiv($notesText, $class = 'hhk-currentNotes')
+    {
 
         // reverse output
-        $lines = (!empty($notesText) ? explode("\n", $notesText): array());
+        $lines = (!empty($notesText) ? explode("\n", $notesText) : array());
         $reverse = "";
 
         for ($i = (count($lines) - 1); $i >= 0; $i--) {
@@ -59,6 +62,6 @@ class Notes {
         }
 
 
-        return HTMLContainer::generateMarkup('div', $reverse, array('class'=>$class));
+        return HTMLContainer::generateMarkup('div', $reverse, array('class' => $class));
     }
 }

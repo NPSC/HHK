@@ -31,7 +31,7 @@ Class Messages extends AbstractMessages {
      * @throws \HHK\Exception\SmsException
      * @return array
      */
-    public function fetchMessages(string $contactPhone, int $limit = 20, string $since = ""){
+    public function fetchMessages(string $contactPhone, int $limit = 20, string $since = ""):array{
         $client = $this->settings->getClient();
 
         $queryParams = [

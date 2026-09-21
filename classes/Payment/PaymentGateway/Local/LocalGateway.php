@@ -2,6 +2,7 @@
 
 namespace HHK\Payment\PaymentGateway\Local;
 
+use HHK\Common;
 use HHK\Member\Role\Guest;
 use HHK\Member\AbstractMember;
 use HHK\Payment\{CreditToken, Receipt, Transaction};
@@ -9,7 +10,7 @@ use HHK\Payment\Invoice\Invoice;
 use HHK\Payment\PaymentGateway\AbstractPaymentGateway;
 use HHK\Payment\PaymentGateway\CreditPayments\{ReturnReply, SaleReply, VoidReply};
 use HHK\Payment\PaymentManager\PaymentManagerPayment;
-use HHK\Payment\PaymentResult\{PaymentResult, ReturnResult, RefundResult};
+use HHK\Payment\PaymentResult\{PaymentResult, RefundResult};
 use HHK\SysConst\{MemBasis, MpTranType, PaymentMethod, PaymentStatusCode, TransMethod, TransType};
 use HHK\Tables\EditRS;
 use HHK\Tables\Payment\{PaymentRS, Payment_AuthRS};
@@ -60,8 +61,8 @@ class LocalGateway extends AbstractPaymentGateway {
 	/**
 	 * Summary of creditSale
 	 * @param \PDO $dbh
-	 * @param \HHK\Payment\PaymentManager\PaymentManagerPayment $pmp
-	 * @param \HHK\Payment\Invoice\Invoice $invoice
+	 * @param PaymentManagerPayment $pmp
+	 * @param Invoice $invoice
 	 * @param mixed $postbackUrl
 	 * @return PaymentResult
 	 */
@@ -69,7 +70,7 @@ class LocalGateway extends AbstractPaymentGateway {
 		$uS = Session::getInstance ();
 
 		// Lookup the charge card types
-		$chgTypes = readGenLookupsPDO ( $dbh, 'Charge_Cards' );
+		$chgTypes = Common::readGenLookupsPDO ( $dbh, 'Charge_Cards' );
 		if (isset ( $chgTypes [$pmp->getChargeCard ()] )) {
 			$pmp->setChargeCard ( $chgTypes [$pmp->getChargeCard ()] [1] );
 		}
@@ -222,9 +223,9 @@ class LocalGateway extends AbstractPaymentGateway {
 	/**
 	 * Summary of _returnPayment
 	 * @param \PDO $dbh
-	 * @param \HHK\Payment\Invoice\Invoice $invoice
-	 * @param \HHK\Tables\Payment\PaymentRS $payRs
-	 * @param \HHK\Tables\Payment\Payment_AuthRS $pAuthRs
+	 * @param Invoice $invoice
+	 * @param PaymentRS $payRs
+	 * @param Payment_AuthRS $pAuthRs
 	 * @param mixed $retAmount
 	 * @param mixed $bid
 	 * @return array{bid: mixed|string[]}
@@ -284,7 +285,7 @@ class LocalGateway extends AbstractPaymentGateway {
  /**
   * Summary of returnAmount
   * @param \PDO $dbh
-  * @param \HHK\Payment\Invoice\Invoice $invoice
+  * @param Invoice $invoice
   * @param mixed $rtnTokenId
   * @param string $paymentNotes
   * @return RefundResult
@@ -396,7 +397,7 @@ class LocalGateway extends AbstractPaymentGateway {
 		return $dataArray;
 	}
 
-	public function undoReturnAmount(\PDO $dbh, $invoice, PaymentRs $payRs, Payment_AuthRS $pAuthRs, $bid) {
+	public function undoReturnAmount(\PDO $dbh, Invoice $invoice, PaymentRS $payRs, Payment_AuthRS $pAuthRs, $bid) {
 
 		$uS = Session::getInstance();
 		$dataArray = array('bid' => $bid);
@@ -463,7 +464,8 @@ class LocalGateway extends AbstractPaymentGateway {
 	public function selectPaymentMarkup(\PDO $dbh, &$payTbl, $index = '') {
 
 		// Charge card list
-		$ccs = readGenLookupsPDO ( $dbh, 'Charge_Cards' );
+		$ccs = Common::readGenLookupsPDO ( $dbh, 'Charge_Cards' );
+		$cardNames = [];
 
 		foreach ( $ccs as $v ) {
 		    $v[0] = $v[1];
@@ -473,7 +475,7 @@ class LocalGateway extends AbstractPaymentGateway {
 		$tbl = new HTMLTable();
 		$tbl->addBodyTr ( HTMLTable::makeTd ( 'New Card: ', array (
 				'class' => 'tdlabel'
-		) ) . HTMLTable::makeTd ( HTMLSelector::generateMarkup ( HTMLSelector::doOptionsMkup ( removeOptionGroups ( $cardNames ), '', TRUE ), array (
+		) ) . HTMLTable::makeTd ( HTMLSelector::generateMarkup ( HTMLSelector::doOptionsMkup ( HTMLSelector::removeOptionGroups ( $cardNames ), '', TRUE ), array (
 				'name' => 'selChargeType' . $index,
 				'class' => 'hhk-feeskeys' . $index
 		) ) ) . HTMLTable::makeTd ( HTMLInput::generateMarkup ( '', array (

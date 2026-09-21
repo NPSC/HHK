@@ -943,10 +943,13 @@ function saveFees(idGuest, idVisit, visitSpan, rtnTbl, postbackPage) {
         }
     });
 
-    $('#keysfees').css('background-color', 'white');
+    var $keysfees = $('#keysfees');
+    var $savedDialogContent = $keysfees.children().detach();
+
+    $keysfees.css('background-color', 'white');
 
     // show working icon
-    $('#keysfees').empty().append('<div id="hhk-loading-spinner" style="width: 100%; height: 100%; padding-top: 100px; text-align: center"><img src="../images/ui-anim_basic_16x16.gif"><p>Working...</p></div>');
+    $keysfees.append('<div id="hhk-loading-spinner" style="width: 100%; height: 100%; padding-top: 100px; text-align: center"><img src="../images/ui-anim_basic_16x16.gif"><p>Working...</p></div>');
 
     $.post('ws_ckin.php', parms,
         function(data) {
@@ -964,7 +967,10 @@ function saveFees(idGuest, idVisit, visitSpan, rtnTbl, postbackPage) {
                 }
 
                 flagAlertMessage(data.error, 'error');
-                $('#keysfees').dialog("close");
+
+                // Keep dialog open on errors and restore original content.
+                $keysfees.children().remove();
+                $keysfees.append($savedDialogContent);
 
                 if (data.receipt && data.receipt !== '') {
                     const idPayment = (typeof data.idPayment == 'number' ? data.idPayment:false);

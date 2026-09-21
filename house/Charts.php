@@ -1,5 +1,6 @@
 <?php
 
+use HHK\Common;
 use HHK\House\Report\DailyOccupancyReport;
 use HHK\House\Report\QuarterlyOccupancyReport;
 use HHK\House\Report\RoomReport;
@@ -18,7 +19,7 @@ use HHK\sec\Labels;
 require ("homeIncludes.php");
 
 try {
-    $wInit = new webInit();
+    $wInit = new WebInit();
 } catch (Exception $exw) {
     die("arrg!  " . $exw->getMessage());
 }
@@ -101,7 +102,7 @@ function todData(\PDO $dbh) {
  */
 function rmNiteData(\PDO $dbh, $year) {
 
-    $rescStatuses = readGenLookupsPDO($dbh, "Resource_Status");
+    $rescStatuses = Common::readGenLookupsPDO($dbh, "Resource_Status");
 
     $y = intval($year, 10);
     if ($y < 1990) {
@@ -212,7 +213,7 @@ if (filter_has_var(INPUT_POST, 'cmd')) {
 
     $cmd = filter_input(INPUT_POST, 'cmd', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
-    if ($cmd = 'getRoomNights') {
+    if ($cmd == 'getRoomNights') {
 
         $data = array('info'=>rmNiteData($dbh, date('Y')));
         echo(json_encode($data));

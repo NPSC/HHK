@@ -302,12 +302,37 @@ $(document).ready(function () {
         }
     });
     
+    function filterDefaultPageOptions() {
+        var $sel = $('#txtwDefaultPage');
+        if ($('#selwRole').val() === '10') {
+            $sel.find('option').show().prop('disabled', false);
+            return;
+        }
+        var checkedCodes = [];
+        $('.grpSec:checked').each(function () {
+            checkedCodes.push($(this).attr('id').replace('grpSec_', ''));
+        });
+        $sel.find('option[value!=""]').each(function () {
+            var groups = ($(this).data('groups') || '').split(',');
+            var visible = checkedCodes.length === 0 || checkedCodes.some(function (c) { return groups.indexOf(c) >= 0; });
+            $(this).toggle(visible).prop('disabled', !visible);
+        });
+        if ($sel.find('option:selected').prop('disabled')) {
+            $sel.val('');
+        }
+    }
+
+    $('#vwebUser').on('change', '.grpSec, #selwRole', filterDefaultPageOptions);
+
     $('#vwebUser').dialog({
         autoOpen: false,
         height: 500,
         width: 'auto', // 732
         resizable: true,
         modal: true,
+        open: function () {
+            filterDefaultPageOptions();
+        },
         buttons: {
             "Save": function (event) {
                 var parms = {},
@@ -326,12 +351,7 @@ $(document).ready(function () {
                     if (!checkLength($('#txtwUserName'), 'User Name', 6, 35, tipmsg, tipmsg.parent())) {
                         return;
                     }
-//                    if (!checkStrength($('#txtwUserPW'))) {
-//                        updateTips(tipmsg, 'Password must have 8 or more characters including at least one uppercase and one lower case letter, one number and one symbol.', tipmsg.parent());
-//                        return;
-//                    }
                     parms['wuname'] = $('#txtwUserName').val();
-//                    parms['wupw'] = $('#txtwUserPW').val();
                     parms['grpSec_v'] = 'checked';  // check the volunteer auth code.
                     
                 }

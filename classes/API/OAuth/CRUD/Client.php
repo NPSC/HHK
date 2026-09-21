@@ -2,6 +2,8 @@
 namespace HHK\API\OAuth\CRUD;
 
 use ErrorException;
+use HHK\Common;
+use HHK\Crypto;
 use HHK\Exception\RuntimeException;
 use HHK\sec\SecurityComponent;
 use HHK\sec\Session;
@@ -40,7 +42,7 @@ class Client {
             $client["scopes"] = explode(",", $client["scopes"]);
 
             if($includeSecret){
-                $client["secret"] = decryptMessage($client["secret"]);
+                $client["secret"] = Crypto::decryptMessage($client["secret"]);
             }else{
                 unset($client["secret"]);
             }
@@ -102,11 +104,11 @@ class Client {
         $client = new OauthClientRS();
         $client->client_id->setNewVal($clientId);
         $client->name->setNewVal($name);
-        $client->secret->setNewVal(encryptMessage($clientSecret));
+        $client->secret->setNewVal(Crypto::encryptMessage($clientSecret));
         $client->revoked->setNewVal(0);
         EditRS::insert($this->dbh, $client);
 
-        $availableScopes = readGenLookupsPDO($this->dbh, "Oauth_Scopes");
+        $availableScopes = Common::readGenLookupsPDO($this->dbh, "Oauth_Scopes");
         $stmt = $this->dbh->prepare("INSERT IGNORE INTO `oauth_client_scopes` (`oauth_client`, `oauth_scope`) VALUES (:client_id, :scope)");
         foreach($scopes as $scope){
             if(isset($availableScopes[$scope])){

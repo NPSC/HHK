@@ -83,13 +83,11 @@ class PaymentGatewayResponse extends AbstractGatewayResponse implements GatewayR
     }
     
     public function getAuthorizedAmount() {
-        if (isset($this->result['amountApproved']) && $this->result['amountApproved'] > 0) {
+        if (isset($this->result['amountApproved']) && $this->result['amountApproved'] >= 0) {
             return $this->result['amountApproved'];
-        }else if(isset($this->result['amountRequested'])){
-            return $this->result['amountRequested'];
         }
 
-        return '';
+        return 0;
     }
     
     public function getCardType() {
@@ -199,7 +197,7 @@ class PaymentGatewayResponse extends AbstractGatewayResponse implements GatewayR
     }
     
     public function getRequestAmount() {
-        return '';
+        return $this->result['amountRequested'] ?? 0;
     }
     
     public function getAVSResult() {

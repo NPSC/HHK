@@ -1,5 +1,6 @@
 <?php
 
+use HHK\Notification\Mail\HHKMailer;
 use HHK\sec\{Session, WebInit};
 use HHK\SysConst\WebPageCode;
 use HHK\Member\MemberSearch;
@@ -27,7 +28,7 @@ use HHK\SysConst\GLTableNames;
 require ("homeIncludes.php");
 
 // Set page type for AdminPageCommon
-$wInit = new webInit(WebPageCode::Service);
+$wInit = new WebInit(WebPageCode::Service);
 
 $dbh = $wInit->dbh;
 
@@ -38,6 +39,8 @@ $uS = Session::getInstance();
 
 if (isset($_REQUEST["cmd"])) {
     $c = filter_var($_REQUEST["cmd"], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+}else {
+    $c = "";
 }
 
 $events = [];
@@ -48,76 +51,60 @@ switch ($c) {
 
     case "delRel":
 
-        $id = 0;
-        $rId = 0;
+        $post = filter_input_array(INPUT_POST, [
+            'id' => FILTER_SANITIZE_NUMBER_INT,
+            'rId' => FILTER_SANITIZE_NUMBER_INT,
+            'rc' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
+        ]);
 
-        if (isset($_POST['id'])) {
-            $id = intval(filter_var($_POST['id'], FILTER_SANITIZE_NUMBER_INT), 10);
-        }
-        if (isset($_POST['rId'])) {
-            $rId = intval(filter_var($_POST['rId'], FILTER_SANITIZE_NUMBER_INT), 10);
-        }
-
-        if (isset($_POST['rc'])) {
-            $rc = filter_var($_POST['rc'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
-        }
+        $id = intval($post['id'], 10);
+        $rId = intval($post['rId'], 10);
+        $rc = $post['rc'] ?? '';
 
         $events = deleteRelationLink($dbh, $id, $rId, $rc);
         break;
 
     case "newRel":
 
-        $id = 0;
-        $rId = 0;
+        $post = filter_input_array(INPUT_POST, [
+            'id' => FILTER_SANITIZE_NUMBER_INT,
+            'rId' => FILTER_SANITIZE_NUMBER_INT,
+            'rc' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
+        ]);
 
-        if (isset($_POST['id'])) {
-            $id = intval(filter_var($_POST['id'], FILTER_SANITIZE_NUMBER_INT), 10);
-        }
-        if (isset($_POST['rId'])) {
-            $rId = intval(filter_var($_POST['rId'], FILTER_SANITIZE_NUMBER_INT), 10);
-        }
-
-        if (isset($_POST['rc'])) {
-            $rc = filter_var($_POST['rc'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
-        }
+        $id = intval($post['id'], 10);
+        $rId = intval($post['rId'], 10);
+        $rc = $post['rc'] ?? '';
 
         $events = newRelationLink($dbh, $id, $rId, $rc);
         break;
 
     case "addcareof":
 
-        $id = 0;
-        $rId = 0;
+        $post = filter_input_array(INPUT_POST, [
+            'id' => FILTER_SANITIZE_NUMBER_INT,
+            'rId' => FILTER_SANITIZE_NUMBER_INT,
+            'rc' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
+        ]);
 
-        if (isset($_POST['id'])) {
-            $id = intval(filter_var($_POST['id'], FILTER_SANITIZE_NUMBER_INT), 10);
-        }
-        if (isset($_POST['rId'])) {
-            $rId = intval(filter_var($_POST['rId'], FILTER_SANITIZE_NUMBER_INT), 10);
-        }
-
-        if (isset($_POST['rc'])) {
-            $rc = filter_var($_POST['rc'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
-        }
+        $id = intval($post['id'], 10);
+        $rId = intval($post['rId'], 10);
+        $rc = $post['rc'] ?? '';
 
         $events = changeCareOfFlag($dbh, $id, $rId, $rc, TRUE);
         break;
 
     case "delcareof":
 
-        $id = 0;
-        $rId = 0;
+        $post = filter_input_array(INPUT_POST, [
+            'id' => FILTER_SANITIZE_NUMBER_INT,
+            'rId' => FILTER_SANITIZE_NUMBER_INT,
+            'rc' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
+        ]);
 
-        if (isset($_POST['id'])) {
-            $id = intval(filter_var($_POST['id'], FILTER_SANITIZE_NUMBER_INT), 10);
-        }
-        if (isset($_POST['rId'])) {
-            $rId = intval(filter_var($_POST['rId'], FILTER_SANITIZE_NUMBER_INT), 10);
-        }
-
-        if (isset($_POST['rc'])) {
-            $rc = filter_var($_POST['rc'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
-        }
+        $id = intval($post['id'], 10);
+        $rId = intval($post['rId'], 10);
+        $rc = $post['rc'] ?? '';
 
         $events = changeCareOfFlag($dbh, $id, $rId, $rc, FALSE);
         break;
@@ -226,6 +213,9 @@ switch ($c) {
 
         if(isset($mfa)){
             $success = $mfa->disable($dbh);
+            if ($success) {
+                unset($uS->userCredentials); // stale now that the MFA secret changed
+            }
             $events = ["success" => $success, "mkup" => $mfa->getEditMarkup($dbh)];
         }else{
             $events = ["error" => "Invalid method"];
@@ -301,7 +291,7 @@ function getCounties(PDO $dbh, $state) {
     return $events;
 }
 
-function changeCareOfFlag(PDO $dbh, $id, $rId, $relCode, $flag) {
+function changeCareOfFlag(PDO $dbh, int $id, int $rId, string $relCode, bool $flag) {
 
     $rel = AbstractRelation::instantiateRelation($dbh, $relCode, $id);
 
@@ -317,7 +307,7 @@ function changeCareOfFlag(PDO $dbh, $id, $rId, $relCode, $flag) {
 
 }
 
-function deleteRelationLink(PDO $dbh, $id, $rId, $relCode) {
+function deleteRelationLink(PDO $dbh, int $id, int $rId, string $relCode) {
 
     $rel = AbstractRelation::instantiateRelation($dbh, $relCode, $id);
 
@@ -333,7 +323,7 @@ function deleteRelationLink(PDO $dbh, $id, $rId, $relCode) {
 
 }
 
-function newRelationLink(PDO $dbh, $id, $rId, $relCode) {
+function newRelationLink(PDO $dbh, int $id, int $rId, string $relCode) {
 
     $uS = Session::getInstance();
 
@@ -351,7 +341,7 @@ function newRelationLink(PDO $dbh, $id, $rId, $relCode) {
 }
 
 
-function changePW(\PDO $dbh, $oldPw, $newPw, $uname, $id) {
+function changePW(PDO $dbh, $oldPw, $newPw, $uname, $id) {
 
     $event = [];
 
@@ -362,18 +352,7 @@ function changePW(\PDO $dbh, $oldPw, $newPw, $uname, $id) {
     return $event;
 }
 
-function changeQuestions(\PDO $dbh, array $questions) {
-
-    $event = [];
-
-    $u = new UserClass();
-
-    $event = ($u->updateSecurityQuestions($dbh, $questions) === TRUE) ? ['success' => 'User Security Questions Updated.'] : ['warning' => $u->logMessage];
-
-    return $event;
-}
-
-function generateTwoFA($dbh, $uname, string $method, array $post = []){
+function generateTwoFA(PDO $dbh, string $uname, string $method, array $post = []){
 
     $uS = Session::getInstance();
 
@@ -408,6 +387,9 @@ function generateTwoFA($dbh, $uname, string $method, array $post = []){
             }catch(Exception $e){
                 $event = ['error' => $e->getMessage()];
             }
+            break;
+        default:
+            $event = ['error' => 'Invalid method'];
     }
 
 
@@ -415,7 +397,7 @@ function generateTwoFA($dbh, $uname, string $method, array $post = []){
     return $event;
 }
 
-function saveTwoFA(\PDO $dbh, $secret, $OTP, $method){
+function saveTwoFA(PDO $dbh, $secret, $OTP, $method){
     $uS = Session::getInstance();
 
     switch ($method) {
@@ -429,6 +411,7 @@ function saveTwoFA(\PDO $dbh, $secret, $OTP, $method){
                 if($ga->verifyCode($dbh, $OTP) == false){
                     $events = ['error' => "One Time Code is invalid"];
                 }elseif($backup->saveSecret($dbh) && $ga->saveSecret($dbh)){
+                    unset($uS->userCredentials); // stale now that the MFA secrets changed
                     $events = ['success' => 'Two Factor Authentication enabled', 'backupCodes' => $backup->getCode()];
                 }else{
                     $events = ['error' => "Unable to enable Two factor Authentication"];
@@ -444,11 +427,15 @@ function saveTwoFA(\PDO $dbh, $secret, $OTP, $method){
             if($email->verifyCode($dbh, $OTP) == false){
                 $events = ['error' => "One Time Code is invalid"];
             }elseif($email->saveSecret($dbh)){
+                unset($uS->userCredentials); // stale now that the MFA secret changed
                 $events = ['success' => 'Two Factor Authentication enabled'];
             }else{
                 $events = ['error' => "Unable to enable Two factor Authentication"];
             }
             break;
+
+        default:
+            $events = ['error' => 'Invalid method'];
     }
 
     return $events;
@@ -472,7 +459,7 @@ function getTwoFA(\PDO $dbh, $username){
 function reportError(string $message, array $info){
     $uS = Session::getInstance();
 
-    $body = "New bug report received from " . getSiteName() . "\r\n\r\n";
+    $body = "New bug report received from " . $uS->siteName . "\r\n\r\n";
     $body .= "Request Type: AJAX\r\n\r\n";
     $body .= "Details: \r\n\r\n";
     $body .= "Message: " . $message . "\r\n\r\n";
@@ -481,5 +468,9 @@ function reportError(string $message, array $info){
         $body .= $k . ": " . $v . "\r\n\r\n";
     }
 
-    sendMail($body);
+    $subject = "New bug report received from " . $uS->siteName;
+    $headers = "From: BugReporter<noreply@nonprofitsoftwarecorp.org>\r\n";
+
+    mail('support@nonprofitsoftwarecorp.org', $subject, $body, $headers);
+
 }

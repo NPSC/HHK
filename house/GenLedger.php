@@ -1,4 +1,5 @@
 <?php
+use HHK\Common;
 use HHK\Notification\Mail\HHKMailer;
 use HHK\sec\Login;
 use HHK\Exception\InvalidArgumentException;
@@ -42,7 +43,7 @@ if(!$u->isCron()){
 
 // DB login
 try {
-	$dbh = initPDO(TRUE);
+	$dbh = Common::initPDO(TRUE);
 } catch (RuntimeException $hex) {
 	exit($hex->getMessage());
 }

@@ -19,7 +19,7 @@ namespace HHK;
 class CreateMarkupFromDB {
 
 
-    public static function generateHTML_Table(array $rows, $tableId, $tdClassIndicator = '') {
+    public static function generateHTML_Table(array $rows, string $tableId, string $tdClassIndicator = ''): string {
 
         $thead = "";
         $tbody = "";
@@ -78,34 +78,7 @@ class CreateMarkupFromDB {
 
     }
 
-    public static function generateTRs(array $rows, $tdClassIndicator = '') {
-
-        $tbodys = array();
-
-        foreach ($rows as $r) {
-
-            $mkupRow = "";
-            $tdClass = '';
-
-            if ($tdClassIndicator != '' && isset($r[$tdClassIndicator])) {
-                $tdClass = ' class="' .$r[$tdClassIndicator] . '"';
-                unset($r[$tdClassIndicator]);
-            }
-
-            foreach ($r as $col) {
-
-                $mkupRow .= "<td$tdClass>" . ($col == '' ? '&nbsp;' : $col) . "</td>";
-            }
-
-            $tbodys[] = "<tr>" . $mkupRow . "</tr>";
-
-        }
-
-        return $tbodys;
-
-    }
-
-    public static function generateHTMLSummary($sumaryRows, $reportTitle) {
+    public static function generateHTMLSummary(array $sumaryRows, string $reportTitle): string {
         $summaryRowsTxt = "";
         $txtHeader = "<tr><th colspan='2'>" . $reportTitle . " <input id='Print_Button' type='button' value='Print'/></th></tr>";
 
@@ -120,7 +93,4 @@ class CreateMarkupFromDB {
         return "<table style='margin-top:40px; margin-bottom:10px; min-width: 350px;'>" . $txtHeader . $summaryRowsTxt . "</table>";
     }
 
-
 }
-
-?>

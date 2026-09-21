@@ -6,6 +6,8 @@ use HHK\HTMLControls\HTMLTable;
 use HHK\Payment\PaymentGateway\CreditPayments\AbstractCreditPayments;
 use HHK\Payment\PaymentResponse\AbstractCreditResponse;
 use HHK\SysConst\PaymentMethod;
+use HHK\SysConst\PayType;
+use PDO;
 
 /**
  * LocalResponse.php
@@ -41,6 +43,7 @@ class LocalResponse extends AbstractCreditResponse {
         $this->invoiceNumber = $gwResp->getInvoiceNumber();
         $this->amount = $gwResp->getAuthorizedAmount();
         $this->setPaymentStatusCode($paymentStatusCode);
+        $this->paymentType = PayType::Charge;
 
     }
 
@@ -54,13 +57,14 @@ class LocalResponse extends AbstractCreditResponse {
 
     /**
      * Summary of receiptMarkup: adds receipt markup to $tbl
-     * @param \PDO $dbh
+     * @param PDO $dbh
      * @param mixed $tbl
      * @return void
      */
-    public function receiptMarkup(\PDO $dbh, &$tbl) {
+    public function receiptMarkup(PDO $dbh, &$tbl) {
 
-        $tbl->addBodyTr(HTMLTable::makeTd("Credit Card:", array('class'=>'tdlabel')) . HTMLTable::makeTd(number_format($this->getAmount(), 2)));
+        $payTypeTitle = $this->getPaymentTypeTitle($dbh);
+        $tbl->addBodyTr(HTMLTable::makeTd(($payTypeTitle != "" ? $payTypeTitle : "Credit Card") . ":", array('class'=>'tdlabel')) . HTMLTable::makeTd(number_format($this->getAmount(), 2)));
         $tbl->addBodyTr(HTMLTable::makeTd($this->response->getCardType() . ':', array('class'=>'tdlabel')) . HTMLTable::makeTd("xxx...". $this->response->getMaskedAccount()));
 
         if ($this->response->getCardHolderName() != '') {

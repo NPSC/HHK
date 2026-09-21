@@ -52,8 +52,6 @@ use HHK\Update\UpdateSite;
  */
 require ("AdminIncludes.php");
 
-require (FUNCTIONS . 'mySqlFunc.php');
-
 
 $uS = Session::getInstance();
 

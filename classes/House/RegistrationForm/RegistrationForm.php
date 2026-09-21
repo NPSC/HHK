@@ -28,7 +28,7 @@ use HHK\sec\Labels;
  */
 class RegistrationForm {
 
-    public $labels;
+    public Labels $labels;
 
     public function getDocument(\PDO $dbh, Guest $priGuest, Guest $billGuest, array $addtionalGuests, $patientName, $hospitalName, $roomTitle,
             $cardName, $cardType, $cardNumber, $logoUrl, $logoWidth, $instructionFileName, $agreement, $expectedPayType = '', $note = '', $todaysDate = '') {

@@ -2,6 +2,7 @@
 
 namespace HHK\House\Report;
 
+use HHK\Common;
 use HHK\HTMLControls\HTMLContainer;
 use HHK\HTMLControls\HTMLSelector;
 use HHK\HTMLControls\HTMLTable;
@@ -43,7 +44,7 @@ class BillingAgentReport extends AbstractReport implements ReportInterface {
         $this->description = "This report shows all patients who stayed in the time period and were invoiced to a specific billing agent";
         $this->inputSetReportName = "billingAgent";
 
-        $this->demogs = readGenLookupsPDO($dbh, 'Demographics');
+        $this->demogs = Common::readGenLookupsPDO($dbh, 'Demographics');
         $this->billingAgents = $this->loadBillingAgents($dbh);
         if (filter_has_var(INPUT_POST, 'selBillingAgents')) {
             $this->selectedBillingAgents = filter_input(INPUT_POST, 'selBillingAgents', FILTER_SANITIZE_NUMBER_INT, FILTER_REQUIRE_ARRAY);
@@ -210,21 +211,15 @@ where i.Deleted = 0 and " . $whDates . $whBilling . " group by v.idVisit, v.Span
         $this->filterMkup .= $this->getColSelectorMkup();
     }
 
-    
-
-    public function makeFilterOptsMkup():void{
-
-    }
-
-    public function makeCFields():array{
+    public function makeFields():array{
         $labels = Labels::getLabels();
         $uS = Session::getInstance();
         
         //$cFields[] = array("Invoice", 'Invoice_Number', 'checked', '', 'string', '15');
-        $cFields[] = array("Visit ID", 'idVisit', 'checked', '', 'string', '20');
-        $cFields[] = array($labels->getString("MemberType", "patient", "Patient") . " ID", 'pId', 'checked', '', 'string', '20');
-        $cFields[] = array($labels->getString("MemberType", "patient", "Patient") . " First", 'Name_First', 'checked', '', 'string', '20');
-        $cFields[] = array($labels->getString("MemberType", "patient", "Patient") . " Last", 'Name_Last', 'checked', '', 'string', '20');
+        $fields[] = array("Visit ID", 'idVisit', 'checked', '', 'string', '20');
+        $fields[] = array($labels->getString("MemberType", "patient", "Patient") . " ID", 'pId', 'checked', '', 'string', '20');
+        $fields[] = array($labels->getString("MemberType", "patient", "Patient") . " First", 'Name_First', 'checked', '', 'string', '20');
+        $fields[] = array($labels->getString("MemberType", "patient", "Patient") . " Last", 'Name_Last', 'checked', '', 'string', '20');
 
         // Address.
         $pFields = array('pAddr', 'pCity');
@@ -238,32 +233,32 @@ where i.Deleted = 0 and " . $whDates . $whBilling . " group by v.idVisit, v.Span
         $pFields = array_merge($pFields, array('pState', 'pCountry', 'pZip'));
         $pTitles = array_merge($pTitles, array($labels->getString("MemberType", "patient", "Patient") . ' State', $labels->getString("MemberType", "patient", "Patient") . ' Country', $labels->getString("MemberType", "patient", "Patient") . ' Zip'));
 
-        $cFields[] = array($pTitles, $pFields, '', '', 'string', '15', array());
+        $fields[] = array($pTitles, $pFields, '', '', 'string', '15', array());
 
-        $cFields[] = array($labels->getString("MemberType", "patient", "Patient") . " DOB", 'DOB', '', '', 'MM/DD/YYYY', '15', array(), 'date');
-        $cFields[] = array($labels->getString("MemberType", "patient", "Patient") . " Age", 'Age', '', '', 'string', '15');
-        $cFields[] = array($labels->getString("MemberType", "patient", "Patient") . " Diagnosis", 'Diagnosis', '', '', 'string', '20');
+        $fields[] = array($labels->getString("MemberType", "patient", "Patient") . " DOB", 'DOB', '', '', 'MM/DD/YYYY', '15', array(), 'date');
+        $fields[] = array($labels->getString("MemberType", "patient", "Patient") . " Age", 'Age', '', '', 'string', '15');
+        $fields[] = array($labels->getString("MemberType", "patient", "Patient") . " Diagnosis", 'Diagnosis', '', '', 'string', '20');
 
         //demographics
         foreach ($this->demogs as $d) {
             if (strtolower($d[2]) == 'y'){
-                $cFields[] = array($labels->getString("MemberType", "patient", "Patient") . " " . $d[1], $d[0], '', '', 'string', '20');
+                $fields[] = array($labels->getString("MemberType", "patient", "Patient") . " " . $d[1], $d[0], '', '', 'string', '20');
             }
         }
 
-        $cFields[] = array("Visit Span Arrival", 'Arrival', 'checked', '', 'MM/DD/YYYY', '15', array(), 'date');
-        $cFields[] = array("Visit Span Departure", 'Departure', 'checked', '', 'MM/DD/YYYY', '15', array(), 'date');
-        $cFields[] = array($labels->getString("MemberType", "primaryGuest", "Primary Guest") . " First", 'pgFirst', 'checked', '', 'string', '20');
-        $cFields[] = array($labels->getString("MemberType", "primaryGuest", "Primary Guest") . " Last", 'pgLast', 'checked', '', 'string', '20');
-        $cFields[] = array("Visit Status", 'Status_Title', 'checked', '', 'string', '15');
-        $cFields[] = array("Invoice", 'Invoice_Number', 'checked', '', 'string', '15');
-        $cFields[] = array("Billed To", 'Billed To', 'checked', '', 'string', '20');
-        //$cFields[] = array("Nights Billed", "PaidNights", 'checked', '', 'string', '20');
-        $cFields[] = array("Amount", 'Invoice_Amount', 'checked', '', 'string', '15');
-        //$cFields[] = array("Invoice Status", 'Invoice_Status_Title', 'checked', '', 'string', '15');
+        $fields[] = array("Visit Span Arrival", 'Arrival', 'checked', '', 'MM/DD/YYYY', '15', array(), 'date');
+        $fields[] = array("Visit Span Departure", 'Departure', 'checked', '', 'MM/DD/YYYY', '15', array(), 'date');
+        $fields[] = array($labels->getString("MemberType", "primaryGuest", "Primary Guest") . " First", 'pgFirst', 'checked', '', 'string', '20');
+        $fields[] = array($labels->getString("MemberType", "primaryGuest", "Primary Guest") . " Last", 'pgLast', 'checked', '', 'string', '20');
+        $fields[] = array("Visit Status", 'Status_Title', 'checked', '', 'string', '15');
+        $fields[] = array("Invoice", 'Invoice_Number', 'checked', '', 'string', '15');
+        $fields[] = array("Billed To", 'Billed To', 'checked', '', 'string', '20');
+        //$fields[] = array("Nights Billed", "PaidNights", 'checked', '', 'string', '20');
+        $fields[] = array("Amount", 'Invoice_Amount', 'checked', '', 'string', '15');
+        //$fields[] = array("Invoice Status", 'Invoice_Status_Title', 'checked', '', 'string', '15');
 
 
-        return $cFields;
+        return $fields;
     }
 
     public function makeSummaryMkup():string {

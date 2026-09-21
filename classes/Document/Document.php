@@ -36,7 +36,7 @@ class Document {
 
     // MimeTypes
 
-    protected $mimeTypes = [
+    protected array $mimeTypes = [
         'image/jpeg' => 'jpg',
         'image/png' => 'png',
         'application/pdf' => 'pdf',
@@ -46,24 +46,24 @@ class Document {
     ];
 
     // Document record field vars
-    protected $idDocument = 0;
-    protected $title = '';
-    protected $name = '';
-    protected $category = '';
-    protected $type = '';
-    protected $mimeType = '';
-    protected $folder = '';
-    protected $language = '';
-    protected $abstract = '';
+    protected int $idDocument = 0;
+    protected string $title = '';
+    protected string $name = '';
+    protected string $category = '';
+    protected string $type = '';
+    protected string $mimeType = '';
+    protected string $folder = '';
+    protected string $language = '';
+    protected string $abstract = '';
     protected $doc = '';
-    protected $userData = '';
-    protected $style = '';
-    protected $status = '';
-    protected $createdBy = '';
-    protected $lastUpdated = null;
-    protected $updatedBy = '';
+    protected string $userData = '';
+    protected string $style = '';
+    protected string $status = '';
+    protected string $createdBy = '';
+    protected ?string $lastUpdated = null;
+    protected string $updatedBy = '';
     protected $createdOn = '';
-    private $documentRS;
+    private DocumentRS$documentRS;
 
     /**
      *
@@ -106,6 +106,7 @@ class Document {
                 $this->setUserData($documentRS->UserData->getStoredVal());
                 $this->setStyle($documentRS->Style->getStoredVal());
                 $this->setCreatedBy($documentRS->Created_By->getStoredVal());
+                $this->createdOn = $documentRS->Timestamp->getStoredVal();
                 $this->setUpdatedBy($documentRS->Updated_By->getstoredVal());
                 $this->setLastUpdated($documentRS->Last_Updated->getStoredVal());
 
@@ -129,7 +130,7 @@ class Document {
      * @throws RuntimeException
      * @return \HHK\Document\Document
      */
-    public static function createNew($title, $mimeType, $doc, $username, $documentType = self::FileType, $docStatus = Document::ActiveStatus) {
+    public static function createNew(string $title, string $mimeType, $doc, string $username, string $documentType = self::FileType, string $docStatus = Document::ActiveStatus) {
 
         if ($title != '' && $mimeType != '' && $doc != '') {
 
@@ -152,41 +153,39 @@ class Document {
     /**
      *
      * @param \PDO $dbh
-     * @return boolean
      */
     public function saveNew(\PDO $dbh) {
 
-        if ($this->isValid() === FALSE) {
-            return FALSE;
-        }
+        if ($this->isValid()) {
 
-        // Insert
-        $documentRS = new DocumentRS();
-        $documentRS->Title->setNewVal($this->getTitle());
-        $documentRS->Mime_Type->setNewVal($this->getMimeType());
-        $documentRS->Doc->setNewVal($this->getDoc());
-        $documentRS->UserData->setNewVal($this->getUserData());
-        $documentRS->Abstract->setNewVal($this->getAbstract());
-        $documentRS->Style->setNewVal($this->getStyle());
-        $documentRS->Type->setNewVal($this->getType());
-        $documentRS->Category->setNewVal($this->getCategory());
-        $documentRS->Status->setNewVal($this->getStatus());
-        $documentRS->Created_By->setNewVal($this->getCreatedBy());
-        $documentRS->Last_Updated->setNewVal($this->getLastUpdated());
-        $documentRS->Updated_By->setNewVal($this->getUpdatedBy());
+            // Insert
+            $documentRS = new DocumentRS();
+            $documentRS->Title->setNewVal($this->getTitle());
+            $documentRS->Mime_Type->setNewVal($this->getMimeType());
+            $documentRS->Doc->setNewVal($this->getDoc());
+            $documentRS->UserData->setNewVal($this->getUserData());
+            $documentRS->Abstract->setNewVal($this->getAbstract());
+            $documentRS->Style->setNewVal($this->getStyle());
+            $documentRS->Type->setNewVal($this->getType());
+            $documentRS->Category->setNewVal($this->getCategory());
+            $documentRS->Status->setNewVal($this->getStatus());
+            $documentRS->Created_By->setNewVal($this->getCreatedBy());
+            $documentRS->Last_Updated->setNewVal($this->getLastUpdated());
+            $documentRS->Updated_By->setNewVal($this->getUpdatedBy());
 
-        $this->idDocument = EditRS::insert($dbh, $documentRS);
-        if($this->idDocument > 0){
-            $logText = DocumentLog::getInsertText($documentRS);
-            DocumentLog::logDocument($dbh, $this->idDocument, 0, 0, 0, $logText, "insert", $this->getCreatedBy());
-        }
-        $documentRS->idDocument->setNewVal($this->idDocument);
-        EditRS::updateStoredVals($documentRS);
+            $this->idDocument = EditRS::insert($dbh, $documentRS);
+            if($this->idDocument > 0){
+                $logText = DocumentLog::getInsertText($documentRS);
+                DocumentLog::logDocument($dbh, $this->idDocument, 0, 0, 0, $logText, "insert", $this->getCreatedBy());
+            }
+            $documentRS->idDocument->setNewVal($this->idDocument);
+            EditRS::updateStoredVals($documentRS);
 
-        $this->documentRS = $documentRS;
+            $this->documentRS = $documentRS;
 
-        if($this->documentRS->Mime_Type->getStoredVal() == "application/pdf"){
-            $this->savePDFTitle($dbh);
+            if($this->documentRS->Mime_Type->getStoredVal() == "application/pdf"){
+                $this->savePDFTitle($dbh);
+            }
         }
     }
 
@@ -292,9 +291,9 @@ class Document {
      *
      * @param \PDO $dbh
      * @param string $status
-     * @return number
+     * @return int
      */
-    public function updateStatus(\PDO $dbh, $status) {
+    public function updateStatus(\PDO $dbh, $status): int {
 
         $counter = 0;
 
@@ -316,7 +315,7 @@ class Document {
         return $counter;
     }
 
-    public function updateUserData(\PDO $dbh, $userData) {
+    public function updateUserData(\PDO $dbh, $userData): int {
 
         $counter = 0;
 
@@ -343,7 +342,7 @@ class Document {
         return $counter;
     }
 
-    public function updateAbstract(\PDO $dbh, $abstract) {
+    public function updateAbstract(\PDO $dbh, $abstract): int {
 
         $counter = 0;
 
@@ -378,7 +377,7 @@ class Document {
      * @param string $username
      * @return int the number of records updated.
      */
-    public function save(\PDO $dbh, $title, $doc, $style, $abstract, $mimeType, $username) {
+    public function save(\PDO $dbh, $title, $doc, $style, $abstract, $mimeType, $username): int {
 
         $counter = 0;
 
@@ -446,7 +445,7 @@ class Document {
      * @param string $username
      * @return int the number of rows affected
      */
-    public function undoDeleteDocument(\PDO $dbh, $username) {
+    public function undoDeleteDocument(\PDO $dbh, $username): int {
 
         $counter = 0;
 
@@ -531,6 +530,10 @@ class Document {
 
     public function getCreatedBy() {
         return $this->createdBy;
+    }
+
+    public function getCreatedOn(){
+        return $this->createdOn;
     }
 
     public function getUpdatedBy() {

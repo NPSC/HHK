@@ -12,7 +12,7 @@ function fatal_handler() {
     $error = error_get_last();
 
     //split error object into vars
-    if ($error !== NULL) {
+    if (is_array($error)) {
 
         formHandler($error);
 
@@ -28,7 +28,7 @@ function fatal_handler() {
     }
 }
 
-function formHandler($error) {
+function formHandler(array $error) {
 
     //if post data exists, send email
     if ($_POST && isset($_POST['name'], $_POST['email'], $_POST['message'])) {
@@ -63,7 +63,7 @@ function getSiteName(){
     }
 }
 
-function sendMail($message) {
+function sendMail(string $message) {
     if ($message) {
         //get report email address
         $subject = "New bug report received from " . getSiteName();
@@ -73,7 +73,7 @@ function sendMail($message) {
     }
 }
 
-function returnJSON($error, $type = "AJAX") {
+function returnJSON(array $error, $type = "AJAX") {
 
 
     $message = "New bug report received from " . getSiteName() . "\r\n\r\n";

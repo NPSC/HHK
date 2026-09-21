@@ -3,6 +3,7 @@
 namespace HHK\House\Reservation;
 
 use HHK\Checklist;
+use HHK\Common;
 use HHK\House\Family\Family;
 use HHK\House\Registration;
 use HHK\House\Vehicle;
@@ -134,6 +135,7 @@ class ActiveReservation extends Reservation {
             'selResource' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
             'taNewNote' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
             'cbRebook' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
+            'cbVerbalConf'=> FILTER_SANITIZE_FULL_SPECIAL_CHARS,
             'newGstDate' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
             'selexcpay' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
             'cbRS'  =>  [
@@ -162,7 +164,7 @@ class ActiveReservation extends Reservation {
         // Determine Reservation Status
         $reservStatus = ReservationStatus::Waitlist;
 
-        $reservStatuses = readLookups($dbh, "reservStatus", "Code");
+        $reservStatuses = Common::readLookups($dbh, "reservStatus", "Code");
 
         if (isset($post['selResvStatus']) && $post['selResvStatus'] != '') {
 
@@ -203,8 +205,8 @@ class ActiveReservation extends Reservation {
         $reg->saveRegistrationRs($dbh, $this->reserveData->getIdPsg(), $uS->username);
 
         // Save any vehicles
-        if ($uS->TrackAuto && $reg->getNoVehicle() == 0) {
-            Vehicle::saveVehicle($dbh, $this->reserveData->getRawPost(), $reg->getIdRegistration(), $this->reservRs->idReservation->getStoredVal());
+        if ($uS->TrackAuto) {
+            Vehicle::saveVehicle($dbh, $this->reserveData->getRawPost(), $reg->getIdRegistration(), $this->reservRs->idReservation->getStoredVal(), $this->reservRs);
         }
 
         // Save Checklists
@@ -242,7 +244,7 @@ class ActiveReservation extends Reservation {
         }
 
         // Verbal Confirmation Flag
-        if (isset($_POST['cbVerbalConf']) && $resv->getVerbalConfirm() != 'v') {
+        if (isset($post['cbVerbalConf']) && $resv->getVerbalConfirm() != 'v') {
             $resv->setVerbalConfirm('v');
             LinkNote::save($dbh, 'Verbal Confirmation is Set.', $resv->getIdReservation(), Note::ResvLink, '', $uS->username, $uS->ConcatVisitNotes);
         } else {
@@ -421,7 +423,7 @@ class ActiveReservation extends Reservation {
         }
 
         $resv = Reservation_1::instantiateFromIdReserv($dbh, $idResv);
-        $reservStatuses = readLookups($dbh, "reservStatus", "Code");
+        $reservStatuses = Common::readLookups($dbh, "reservStatus", "Code");
 
         if ($resv->isActive($reservStatuses)) {
 

@@ -66,8 +66,8 @@ class CheckResponse extends AbstractPaymentResponse {
      */
     public function receiptMarkup(\PDO $dbh, &$tbl) {
 
-        $tbl->addBodyTr(HTMLTable::makeTd("Check:", array('class'=>'tdlabel')) . HTMLTable::makeTd(number_format(abs($this->getAmount()), 2)));
-        $tbl->addBodyTr(HTMLTable::makeTd('Check Number:', array('class'=>'tdlabel')) . HTMLTable::makeTd($this->getCheckNumber()));
+        $tbl->addBodyTr(HTMLTable::makeTd($this->getPaymentTypeTitle($dbh) . ":", array('class'=>'tdlabel')) . HTMLTable::makeTd(number_format(abs($this->getAmount()), 2)));
+        $tbl->addBodyTr(HTMLTable::makeTd($this->getPaymentTypeTitle($dbh) . " Number:", array('class'=>'tdlabel')) . HTMLTable::makeTd($this->getCheckNumber()));
     }
 
     /**

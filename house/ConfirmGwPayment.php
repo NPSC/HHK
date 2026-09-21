@@ -1,4 +1,5 @@
 <?php
+use HHK\Crypto;
 use HHK\sec\SecurityComponent;
 use HHK\sec\Session;
 use HHK\Payment\PaymentGateway\Instamed\InstamedGateway;
@@ -25,7 +26,7 @@ if ($resultStr == '') {
 
 } else {
 
-    $resultVars = decryptMessage($resultStr);
+    $resultVars = Crypto::decryptMessage($resultStr);
 
 
     parse_str($resultVars, $resultParms);

@@ -1,30 +1,8 @@
 <?php
 
-use HHK\sec\WebInit;
-use HHK\SysConst\WebPageCode;
-use HHK\sec\SecurityComponent;
 use HHK\sec\Session;
 use HHK\sec\Login;
 use HHK\sec\ScriptAuthClass;
-use HHK\Photo;
-use HHK\Update\SiteConfig;
-use HHK\Document\ListDocuments;
-use HHK\Document\Document;
-use HHK\House\Vehicle;
-use HHK\HTMLControls\HTMLContainer;
-use HHK\House\Report\ActivityReport;
-use HHK\SysConst\GLTableNames;
-use HHK\House\ResourceView;
-use HHK\House\Constraint\Constraints;
-use HHK\History;
-use HHK\House\Report\RoomReport;
-use HHK\SysConst\ReservationStatus;
-use HHK\House\Room\Room;
-use HHK\SysConst\RoomState;
-use HHK\Payment\Invoice\Invoice;
-use HHK\HTMLControls\HTMLTable;
-use HHK\Payment\Receipt;
-use HHK\Exception\PaymentException;
 use HHK\Exception\CsrfException;
 use HHK\Document\FormTemplate;
 use HHK\Document\FormDocument;
@@ -49,12 +27,6 @@ try {
     $login = new Login();
     $dbh = $login->initHhkSession(CONF_PATH, ciCFG_FILE);
 
-	//$csrfToken = '';
-	//if(isset($_REQUEST['csrfToken'])){
-		//$csrfToken = filter_var($_REQUEST['csrfToken'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
-	//}
-	//$login->verifyCSRF($csrfToken);
-
 } catch (InvalidArgumentException $pex) {
     exit ("<h3>Database Access Error.   <a href='index.php'>Continue</a></h3>");
 } catch (CsrfException $e) {
@@ -68,6 +40,7 @@ try {
 try {
     $page = new ScriptAuthClass($dbh);
 } catch (Exception $ex) {
+    $uS = Session::getInstance();
     $uS->destroy(true);
     exit('<h2>Page not in database.</h2>');
 }
@@ -118,7 +91,7 @@ try {
              if(!$uS->logged){
                  $events['error'] = "Unauthorized for page: Please login";
              }else{
-                 $id = filter_var($_GET["id"], FILTER_SANITIZE_NUMBER_INT);
+                 $id = intval(filter_var($_GET["id"], FILTER_SANITIZE_NUMBER_INT), 10);
                  if($id > 0){
                      $formDocument = new FormDocument();
                      if($formDocument->loadDocument($dbh, $id)){
@@ -137,34 +110,36 @@ try {
 
          case 'previewform':
 
-             $style = "";
-             $formData = "";
-             if(isset($_REQUEST['style'])){
-                 $style = filter_var($_REQUEST['style'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
-             }
-             if(isset($_REQUEST['initialGuests'])){
-                 $initialGuests = filter_var($_REQUEST['initialGuests'], FILTER_SANITIZE_NUMBER_INT);
-             }
-             if(isset($_REQUEST['maxGuests'])){
-                 $maxGuests = filter_var($_REQUEST['maxGuests'], FILTER_SANITIZE_NUMBER_INT);
-             }
-             if(isset($_REQUEST['formData'])){
-                $formData = filter_var($_REQUEST['formData'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
-             }
+            $style = "";
+            $formData = "";
+            $initialGuests = 1;
+            $maxGuests = 4;
+            if(isset($_REQUEST['style'])){
+                $style = filter_var($_REQUEST['style'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+            }
+            if(isset($_REQUEST['initialGuests'])){
+                $initialGuests = filter_var($_REQUEST['initialGuests'], FILTER_SANITIZE_NUMBER_INT);
+            }
+            if(isset($_REQUEST['maxGuests'])){
+                $maxGuests = filter_var($_REQUEST['maxGuests'], FILTER_SANITIZE_NUMBER_INT);
+            }
+            if(isset($_REQUEST['formData'])){
+               $formData = filter_var($_REQUEST['formData'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+            }
 
-             if(!$uS->logged){
-                 $events['error'] = "Unauthorized for page: Please login";
-             }else{
-                 $events['formData'] = $formData;
-                 $events['formSettings']['formStyle'] = $style;
-                 $events['formSettings']['enableRecaptcha'] = false;
-                 $events['formSettings']['initialGuests'] = $initialGuests;
-                 $events['formSettings']['maxGuests'] = $maxGuests;
-                 $events['lookups'] = FormTemplate::getLookups($dbh);
-             }
-             break;
+            if(!$uS->logged){
+                $events['error'] = "Unauthorized for page: Please login";
+            }else{
+                $events['formData'] = $formData;
+                $events['formSettings']['formStyle'] = $style;
+                $events['formSettings']['enableRecaptcha'] = false;
+                $events['formSettings']['initialGuests'] = $initialGuests;
+                $events['formSettings']['maxGuests'] = $maxGuests;
+                $events['lookups'] = FormTemplate::getLookups($dbh);
+            }
+            break;
 
-         case "submitform" :
+        case "submitform" :
 
 			$recaptchaToken = '';
 			if(isset($_POST['recaptchaToken'])){
@@ -173,7 +148,7 @@ try {
 
 			$recaptcha = new Recaptcha();
 			if(($uS->mode == 'demo' || $uS->mode == 'live') && $recaptchaToken != ''){
-			     $score = $recaptcha->verify($recaptchaToken);
+			    $score = $recaptcha->verify($recaptchaToken);
 			}else{
 			    $score = 1.0;
 			}
@@ -185,13 +160,16 @@ try {
                     $fields = json_decode($jsonStr);
                     if(!is_array($fields)){
                         try{
-                            $body = "New bug report received from " . getSiteName() . "\r\n\r\n";
+                            $body = "New bug report received from " . $uS->siteName . "\r\n\r\n";
                             $body .= "Request Type: AJAX\r\n\r\n";
                             $body .= "Details: \r\n\r\n";
                             $body .= "Message: fields variable is null\r\n\r\n";
                             $body .= "doc: " .$_POST['formRenderData'];
             
-                            sendMail($body);
+                            $subject = "New bug report received from " . $uS->siteName;
+                            $headers = "From: BugReporter<noreply@nonprofitsoftwarecorp.org>\r\n";
+                            mail("support@nonprofitsoftwarecorp.org", $subject, $body, $headers);
+                            
                         }catch(\Exception $e){}
 
                         $events = ['status'=>'error', 'errors'=>['server'=>'Unable to read form, check your submission for special characters and try again.']];

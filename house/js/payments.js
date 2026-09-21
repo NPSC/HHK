@@ -167,7 +167,7 @@ function getApplyDiscDiag(orderNumber, $diagBox) {
                         }
 
                         $diagBox.dialog('option', 'buttons', buttons);
-                        $diagBox.dialog('option', 'title', 'Adjust Fees');
+                        $diagBox.dialog('option', 'title', data.dialogTitle);
                         $diagBox.dialog('option', 'width', getDialogWidth(430));
                         $diagBox.dialog('open');
                     }
@@ -238,7 +238,7 @@ function saveDiscountPayment(orderNumber, item, amt, discount, addnlCharge, adjD
  *
  * @param {object} item
  * @param {int} orderNum
- * @param (integer) index
+ * @param {int} index
  * @returns {undefined}
  */
 function getInvoicee(item, orderNum, index) {
@@ -949,10 +949,32 @@ function setupPayments(rate, idVisit, visitSpan, $diagBox, strInvoiceBox) {
     var chg = $('.tblCredit');
     var $chrgExpand = $('.tblCreditExpand');//$('#trvdCHName');
     var p = new PayCtrls();
+    var isExternalPayType = function ($sel) {
+        var externalPayTypes = ($sel.data('external-pay-types') || '').toString().split(',');
+        return $sel.val() === 'ex' || externalPayTypes.indexOf($sel.val()) > -1;
+    };
 
     if (chg.length === 0) {
         chg = $('.hhk-mcred');
     }
+
+    // Strip non-numeric, non-decimal characters as the user types in money fields.
+    $('.hhk-money').on('input', function () {
+        var val = this.value;
+        var stripped = val.replace(/[^0-9.]/g, '');
+
+        if (stripped !== val) {
+            var pos = Math.max(0, this.selectionStart - (val.length - stripped.length));
+            this.value = stripped;
+            this.setSelectionRange(pos, pos);
+        }
+    });
+
+    // Format money fields to 2 decimal places once the user leaves the field.
+    $('.hhk-money').on('blur', function () {
+        var amt = parseFloat(this.value);
+        this.value = isNaN(amt) ? '' : amt.toFixed(2);
+    });
 
     if (ptsel.length > 0) {
         ptsel.on('change', function () {
@@ -961,6 +983,7 @@ function setupPayments(rate, idVisit, visitSpan, $diagBox, strInvoiceBox) {
             $('#tblInvoice').hide();
             getInvoicee('', idVisit, '');
             $('.hhk-transfer').hide();
+            $('.hhk-external').hide();
             $('.hhk-tfnum').hide();
             chg.hide();
             $chrgExpand.hide();
@@ -983,6 +1006,9 @@ function setupPayments(rate, idVisit, visitSpan, $diagBox, strInvoiceBox) {
                 $('.paySelectNotes').hide();
             } else if ($(this).val() === 'tf') {
                 $('.hhk-transfer').show('fade');
+            } else if (isExternalPayType($(this))) {
+                $('.hhk-external').find('.hhk-external-type-name').text($(this).find('option:selected').text());
+                $('.hhk-external').show('fade');
             } else {
                 $('.hhk-cashTndrd').show('fade');
             }
@@ -1006,6 +1032,7 @@ function setupPayments(rate, idVisit, visitSpan, $diagBox, strInvoiceBox) {
         rtnsel.change(function () {
             rtnchg.hide();
             $('.hhk-transferr').hide();
+            $('.hhk-externalr').hide();
             $('.payReturnNotes').show();
             $('.hhk-cknumr').hide();
 
@@ -1015,6 +1042,9 @@ function setupPayments(rate, idVisit, visitSpan, $diagBox, strInvoiceBox) {
                 $('.hhk-cknumr').show('fade');
             } else if ($(this).val() === 'tf') {
                 $('.hhk-transferr').show('fade');
+            } else if (isExternalPayType($(this))) {
+                $('.hhk-externalr').find('.hhk-external-type-name').text($(this).find('option:selected').text());
+                $('.hhk-externalr').show('fade');
             }
         });
         rtnsel.change();

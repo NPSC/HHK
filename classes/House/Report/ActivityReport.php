@@ -1,6 +1,7 @@
 <?php
 namespace HHK\House\Report;
 
+use HHK\Common;
 use HHK\HTMLControls\{HTMLContainer, HTMLInput, HTMLTable};
 use HHK\Payment\{Statement, PostPayment};
 use HHK\Payment\PaymentGateway\AbstractPaymentGateway;
@@ -272,8 +273,8 @@ class ActivityReport {
         }
 
 
-        $diagnoses = readGenLookupsPDO($dbh, 'Diagnosis');
-        $locations = readGenLookupsPDO($dbh, 'Location');
+        $diagnoses = Common::readGenLookupsPDO($dbh, 'Diagnosis');
+        $locations = Common::readGenLookupsPDO($dbh, 'Location');
         $psgId = 0;
 
         $stmtd = $dbh->query("select n.idName, n.Name_Full from `name` n join name_volunteer2 nv on n.idName = nv.idName where nv.Vol_Category = 'Vol_Type' and nv.Vol_Code = 'doc'");
@@ -483,14 +484,6 @@ class ActivityReport {
 
         $labels = Labels::getLabels();
 
-        // The following section doesnt make sense.
-        // $config = $_ENV;
-
-        // // Show the external payment ID for houses with CMS integration
-        // if(!empty($config['Service_Name'])) {
-        //     $showExternlId = TRUE;
-        // }
-
         $gateway = AbstractPaymentGateway::factory($dbh, $uS->PaymentGateway, AbstractPaymentGateway::getCreditGatewayNames($dbh, 0, 0, 0));
 
         // Dates
@@ -509,7 +502,7 @@ class ActivityReport {
             $active = 'n';
         }
 
-        foreach (readGenLookupsPDO($dbh, 'Payment_Status') as $s) {
+        foreach (Common::readGenLookupsPDO($dbh, 'Payment_Status') as $s) {
             $totals[$s[0]] = ['amount' => 0.00, 'count' => 0, 'title' => $s[1], 'active' => $active];
         }
 
@@ -550,12 +543,9 @@ class ActivityReport {
         }
 
 
-        // Set up pay tpes totals array
-        if (count($selectedPayTypes) === 1 && $selectedPayTypes[0] == '') {
-            $active = 'y';
-        } else {
-            $active = 'n';
-        }
+        // Set up pay types totals array
+        $allSelected = (count($selectedPayTypes) === 1 && $selectedPayTypes[0] == '');
+        $active = $allSelected ? 'y' : 'n';
 
         // get payment methods
         $stmtp = $dbh->query("select * from payment_method");
@@ -565,28 +555,59 @@ class ActivityReport {
             }
         }
 
+        $payTypeLookup = Common::readGenLookupsPDO($dbh, GLTableNames::PayType, 'Order') ?? [];
+        unset($payTypeLookup['in']); // remove "invoice" type since it is not a real payment type and only used for internal processing of invoices in PostPayment
+
+        // Reverse map: idPayment_Method integer → Pay_Type code and title (standard/non-external types only)
+        $methodToPayTypeCode = [];
+        $methodToTitle = [];
+        foreach ($payTypeLookup as $code => $entry) {
+            $methodId = (int)$entry[2];
+            if ($methodId !== PaymentMethod::External && !isset($methodToPayTypeCode[$methodId])) {
+                $methodToPayTypeCode[$methodId] = $code;
+                $methodToTitle[$methodId] = $entry[1];
+            }
+        }
+
+        // Per-Pay_Type code totals for the summary display (parallel to $payTypeTotals which PostPayment needs)
+        $payCodeTotals = [];
+        foreach ($payTypeLookup as $code => $entry) {
+            $payCodeTotals[$code] = ['amount' => 0.00, 'count' => 0, 'title' => $entry[1], 'active' => $allSelected ? 'y' : 'n'];
+        }
+
+        $standardMethodIds = [];
+        $externalTypeCodes = [];
 
         foreach ($selectedPayTypes as $s) {
-
-            if ($s != '') {
-                // Set up query where part.
-                if ($whType == '') {
-                    $whType = $s;
-                } else {
-                    $whType .= ",$s";
-                }
-
-                $payTypeTotals[$s]['active'] = 'y';
-                if ($payTypeText == '') {
-                    $payTypeText .= $payTypeTotals[$s]['title'];
-                } else {
-                    $payTypeText .= ', ' . $payTypeTotals[$s]['title'];
+            if ($s !== '') {
+                $entry = $payTypeLookup[$s] ?? null;
+                if ($entry !== null) {
+                    $methodId = (int)$entry[2];
+                    if ($methodId === PaymentMethod::External) {
+                        $externalTypeCodes[] = "'" . $s . "'";
+                    } else {
+                        $standardMethodIds[] = $methodId;
+                    }
+                    if (isset($payTypeTotals[$methodId])) {
+                        $payTypeTotals[$methodId]['active'] = 'y';
+                    }
+                    if (isset($payCodeTotals[$s])) {
+                        $payCodeTotals[$s]['active'] = 'y';
+                    }
+                    $payTypeText .= ($payTypeText === '' ? '' : ', ') . $entry[1];
                 }
             }
         }
 
-        if ($whType != '') {
-            $whType = " and `lp`.`idPayment_Method` in ($whType) ";
+        $typeConditions = [];
+        if (!empty($standardMethodIds)) {
+            $typeConditions[] = "`lp`.`idPayment_Method` IN (" . implode(',', array_unique($standardMethodIds)) . ")";
+        }
+        if (!empty($externalTypeCodes)) {
+            $typeConditions[] = "(`lp`.`idPayment_Method` = " . PaymentMethod::External . " AND `tx`.`Payment_Type` IN (" . implode(',', $externalTypeCodes) . "))";
+        }
+        if (!empty($typeConditions)) {
+            $whType = " AND (" . implode(' OR ', $typeConditions) . ") ";
         }
 
         // Guest id selector
@@ -600,6 +621,8 @@ class ActivityReport {
 
         $query = "Select
     lp.*,
+    " . Statement::externalPaymentTitleSelectSql('lp') . ",
+    `tx`.`Payment_Type` as `Pay_Type_Code`,
     ifnull(`n`.`Name_First`, '') as `First`,
     ifnull(`n`.`Name_Last`, '') as `Last`,
     ifnull(`n`.`Company`, '') as `Company`,
@@ -617,6 +640,7 @@ from
     `resource` `r` ON `v`.`idResource` = `r`.`idResource`
         left join
     `registration` `re` on `v`.`idRegistration` = `re`.`idRegistration`
+        " . Statement::externalPaymentTitleJoinSql('lp') . "
 where `lp`.`idPayment` > 0
  $whDates $whStatus $whType $whId Order By lp.idInvoice;";
 
@@ -625,18 +649,19 @@ where `lp`.`idPayment` > 0
 
         $rowCount = $stmt->rowCount();
 
+        
         // Create header
-        $hdrTbl = new HTMLTable();
-        $hdrTbl->addBodyTr(HTMLTable::makeTh('Records:', ['style' => 'text-align:right;']) . HTMLTable::makeTd($rowCount));
+        $sumTbl = new HTMLTable();
+        $sumTbl->addBodyTr(HTMLTable::makeTh('Records:', ['style' => 'text-align:right;']) . HTMLTable::makeTd($rowCount));
 
         if ($startDT != NULL && $endDT != NULL) {
-            $hdrTbl->addBodyTr(HTMLTable::makeTh('Dates:', ['style' => 'text-align:right;']) . HTMLTable::makeTd($startDT->format('M j, Y') . ' to ' . $endDT->format('M j, Y')));
+            $sumTbl->addBodyTr(HTMLTable::makeTh('Dates:', ['style' => 'text-align:right;']) . HTMLTable::makeTd($startDT->format('M j, Y') . ' to ' . $endDT->format('M j, Y')));
         }
 
-        $hdrTbl->addBodyTr(HTMLTable::makeTh('Payment Statuses:', ['style' => 'text-align:right;']) . HTMLTable::makeTd($payStatusText == '' ? 'All' : $payStatusText));
-        $hdrTbl->addBodyTr(HTMLTable::makeTh('Payment Types:', ['style' => 'text-align:right;']) . HTMLTable::makeTd($payTypeText == '' ? 'All' : $payTypeText));
+        $sumTbl->addBodyTr(HTMLTable::makeTh('Payment Statuses:', ['style' => 'text-align:right;']) . HTMLTable::makeTd($payStatusText == '' ? 'All' : $payStatusText));
+        $sumTbl->addBodyTr(HTMLTable::makeTh('Payment Types:', ['style' => 'text-align:right;']) . HTMLTable::makeTd($payTypeText == '' ? 'All' : $payTypeText));
 
-        $header = HTMLContainer::generateMarkup('h2', $title, ['class' => 'ui-widget-header']) . $hdrTbl->generateMarkup(['style' => 'margin-bottom:10px;float:left; ']);
+        $header = HTMLContainer::generateMarkup('h2', $title, ['class' => 'ui-widget-header ui-corner-top']);
 
         // Main fees listing table
         $tbl = new HTMLTable();
@@ -705,9 +730,12 @@ where `lp`.`idPayment` > 0
                 $actionContent = PostPayment::actionButton($gateway, $p, $r['Invoice_Status'], $payTypeTotals, $stat, $amt, $attr);
 
 
-                $payTypeTitle = $p['Payment_Method_Title'];
+                // For External, Payment_Method_Title is already the gen_lookups description (set by processPayments).
+                // For all other types, look up the description from gen_lookups by matching idPayment_Method.
+                $payTypeTitle = (int)$p['idPayment_Method'] !== PaymentMethod::External
+                    ? ($methodToTitle[(int)$p['idPayment_Method']] ?? $p['Payment_Method_Title'])
+                    : $p['Payment_Method_Title'];
                 if ($p['idPayment_Method'] == PaymentMethod::Charge) {
-                    $payTypeTitle = 'Credit Card';
                     $attr['readonly'] = 'readonly';
                 }
 
@@ -753,7 +781,7 @@ where `lp`.`idPayment` > 0
                             }
                         }
                     }
-                } else if ($p['idPayment_Method'] == PaymentMethod::Check || $p['idPayment_Method'] == PaymentMethod::Transfer) {
+                } else if ($p['idPayment_Method'] == PaymentMethod::Check || $p['idPayment_Method'] == PaymentMethod::Transfer || $p['idPayment_Method'] == PaymentMethod::External) {
 
                     $payDetail = $p['Check_Number'];
                 }
@@ -783,6 +811,14 @@ where `lp`.`idPayment` > 0
                 $totals[$p['Payment_Status']]['amount'] += $amt;
                 $totals[$p['Payment_Status']]['count'] ++;
                 $payTypeTotals[$p['idPayment_Method']]['count'] ++;
+
+                $payTypeCode = ($p['idPayment_Method'] == PaymentMethod::External)
+                    ? ($p['Pay_Type_Code'] ?? null)
+                    : ($methodToPayTypeCode[$p['idPayment_Method']] ?? null);
+                if ($payTypeCode !== null && isset($payCodeTotals[$payTypeCode])) {
+                    $payCodeTotals[$payTypeCode]['count']++;
+                    $payCodeTotals[$payTypeCode]['amount'] += $amt;
+                }
             }
 
             // Add House payments
@@ -832,8 +868,8 @@ where `lp`.`idPayment` > 0
             $pType = new HTMLTable();
             $pType->addBodyTr(HTMLTable::makeTh('Payment Type', ['colspan' => '3']));
 
-            // Payment type totals
-            foreach ($payTypeTotals as $pt) {
+            // Payment type totals (per user-defined Pay_Type code)
+            foreach ($payCodeTotals as $pt) {
 
                 if ($pt['active'] == 'y') {
                     $pType->addBodyTr(HTMLTable::makeTd($pt['title']) . HTMLTable::makeTd($pt['count']) . HTMLTable::makeTd(number_format($pt['amount'], 2), ['style' => 'text-align:right;']));
@@ -841,14 +877,20 @@ where `lp`.`idPayment` > 0
 
             }
 
-
-            $summary = HTMLContainer::generateMarkup('div', $summ->generateMarkup(), ['style' => 'float:left; margin-left:.8em;']);
-            $summary .= HTMLContainer::generateMarkup('div', $pType->generateMarkup(), ['style' => 'float:left; margin-left:.8em;']);
+            // build summary block
+            $summary = HTMLContainer::generateMarkup('div', $summ->generateMarkup(), ['class'=>'mb-3 mr-3'])
+                . HTMLContainer::generateMarkup('div', $pType->generateMarkup(), ['class'=>'mb-3']);
         }
 
-        $refresh = HTMLInput::generateMarkup("Refresh", ['type' => 'button', 'id' => 'btnPayHistRef', 'style' => 'float:right; margin-right:0.8em;margin-top:1em;']);
+        $summary = HTMLContainer::generateMarkup('div', 
+            $sumTbl->generateMarkup(['class' => 'mb-3 mr-3'])
+            . $summary 
+            . HTMLInput::generateMarkup("Refresh", ['type' => 'button', 'id' => 'btnPayHistRef', 'class'=>'ml-auto mt-3 mr-2'])
+        , ['class' => 'hhk-flex hhk-flex-wrap']);
 
-        return HTMLContainer::generateMarkup('div', "$header$summary$refresh$listing", ['style' => 'min-width:100%;']);
+        $content = HTMLContainer::generateMarkup('div', "$summary $listing");
+
+        return HTMLContainer::generateMarkup('div', "$header $content");
     }
 
     /**
@@ -916,7 +958,7 @@ where i.Deleted = 0 and i.`Status` = '" . InvoiceStatus::Unpaid . "';";
             . HTMLTable::makeTh('Notes')
         );
 
-        $invStatuses = readGenLookupsPDO($dbh, 'Invoice_Status');
+        $invStatuses = Common::readGenLookupsPDO($dbh, 'Invoice_Status');
 
         $stmt = $dbh->query($query);
 

@@ -1,11 +1,11 @@
 <?php
 namespace HHK\Payment\PaymentGateway\Deluxe;
 
+use HHK\Crypto;
+use HHK\Errors\ErrorHandler;
 use HHK\Exception\PaymentException;
 use HHK\Exception\RuntimeException;
 use HHK\House\HouseServices;
-use HHK\House\Reservation\Reservation;
-use HHK\House\Reservation\Reservation_1;
 use HHK\HTMLControls\HTMLContainer;
 use HHK\HTMLControls\HTMLInput;
 use HHK\HTMLControls\HTMLSelector;
@@ -25,13 +25,10 @@ use HHK\Payment\PaymentGateway\Deluxe\Request\Webhooks\SubscribeEventRequest;
 use HHK\Payment\PaymentGateway\Deluxe\Response\AuthorizeCreditResponse;
 use HHK\Payment\PaymentGateway\Deluxe\Response\PaymentCreditResponse;
 use HHK\Payment\PaymentGateway\Deluxe\Response\RefundCreditResponse;
-use HHK\Payment\PaymentGateway\Deluxe\Response\RefundGatewayResponse;
 use HHK\Payment\PaymentGateway\Deluxe\Response\VoidCreditResponse;
 use HHK\Payment\PaymentManager\PaymentManagerPayment;
 use HHK\Payment\PaymentResponse\AbstractCreditResponse;
-use HHK\Payment\PaymentResult\CofResult;
 use HHK\Payment\PaymentResult\PaymentResult;
-use HHK\Payment\PaymentResult\ReturnResult;
 use HHK\Payment\PaymentResult\RefundResult;
 use HHK\Payment\Receipt;
 use HHK\Payment\Transaction;
@@ -42,7 +39,6 @@ use HHK\SysConst\PaymentStatusCode;
 use HHK\SysConst\PayType;
 use HHK\SysConst\TransMethod;
 use HHK\SysConst\TransType;
-use HHK\SysConst\VisitStatus;
 use HHK\TableLog\AbstractTableLog;
 use HHK\TableLog\HouseLog;
 use HHK\Tables\EditRS;
@@ -155,7 +151,7 @@ class DeluxeGateway extends AbstractPaymentGateway
         $oAuthSecret = $gwRs->Password->getStoredVal();
         unset($rows[0]['Password']);
         if ($oAuthSecret != '') {
-        	$rows[0]['oAuthSecret'] = decryptMessage($oAuthSecret);
+        	$rows[0]['oAuthSecret'] = Crypto::decryptMessage($oAuthSecret);
         }
 
         $merchantId = $gwRs->Merchant_Id->getStoredVal();
@@ -167,7 +163,7 @@ class DeluxeGateway extends AbstractPaymentGateway
         $hpfAccessToken = $gwRs->Credit_Url->getStoredVal();
         unset($rows[0]['Credit_Url']);
         if ($hpfAccessToken != '') {
-        	$rows[0]['hpfAccessToken'] = decryptMessage($hpfAccessToken);
+        	$rows[0]['hpfAccessToken'] = Crypto::decryptMessage($hpfAccessToken);
         }
 
         return $rows[0];
@@ -300,6 +296,7 @@ class DeluxeGateway extends AbstractPaymentGateway
         $uS = Session::getInstance();
         $billingFirstName = "";
         $billingLastName = "";
+        $result = [];
 
         //log hosted payment form response
         try {
@@ -325,32 +322,41 @@ class DeluxeGateway extends AbstractPaymentGateway
             $billingLastName = isset($cardHolder[1]) ? $cardHolder[1] : "";
         };
 
-        //authorize $1 to make sure card is real
-        $authRequest = new AuthorizeRequest($dbh, $this);
-        $response = $authRequest->submit(1.00, $data["token"], $data["expDate"], $data["cardType"], $data["maskedPan"], $data["nameOnCard"], $billingFirstName, $billingLastName);
+        try{
+            //authorize $1 to make sure card is real
+            $authRequest = new AuthorizeRequest($dbh, $this);
+            $response = $authRequest->submit(1.00, $data["token"], $data["expDate"], $data["cardType"], $data["maskedPan"], $data["nameOnCard"], $billingFirstName, $billingLastName);
 
-        $respBody = $authRequest->getResponseBody();
-        $respBody['InvoiceNumber'] = 0;
-        $respBody['cardHolderName'] = $data["nameOnCard"];
-        $respBody["expDate"] = $data["expDate"];
-        $respBody["cardType"] = $data["cardType"];
-        $respBody["maskedAcct"] = substr($data["maskedPan"], -4);
+            $respBody = $authRequest->getResponseBody();
+            $respBody['InvoiceNumber'] = 0;
+            $respBody['cardHolderName'] = $data["nameOnCard"];
+            $respBody["expDate"] = $data["expDate"];
+            $respBody["cardType"] = $data["cardType"];
+            $respBody["maskedAcct"] = substr($data["maskedPan"], -4);
 
-        if($respBody["amountApproved"] == "1" && isset($respBody["paymentId"])){
-            $voidRequest = new VoidRequest($dbh, $this);
-            $voidResponse = $voidRequest->submit($respBody["paymentId"]);
+            if($respBody["amountApproved"] == "1" && isset($respBody["paymentId"])){
+                $vr = new AuthorizeCreditResponse($response, $data['id'], $data['psg']);
+                if($vr->getStatus() == AbstractCreditPayments::STATUS_APPROVED){
+                    // save token
+                    $idToken = CreditToken::storeToken($dbh, $vr->idRegistration, $vr->idPayor, $response);
+
+                    $result["success"] = "New Card saved successfully";
+                    $result["COFmkup"] = HouseServices::guestEditCreditTable($dbh, $data['psg'], $data['id'], 'g');
+                    $result['idx'] = 'g';
+                }else{
+                    $result["warning"] = $vr->response->getResponseMessage();
+                }
+
+                sleep(2); //prevent possible race condition with auth/void
+                $voidRequest = new VoidRequest($dbh, $this);
+                $voidResponse = $voidRequest->submit($respBody["paymentId"]);
+            }
+        }catch(PaymentException $e){
+            ErrorHandler::reportException( $dbh, $e);
+            $result["warning"] = $e->getMessage();
         }
 
-        $vr = new AuthorizeCreditResponse($response, $data['id'], $data['psg']);
-        $responseMessage = "";
-        if($vr->getStatus() == AbstractCreditPayments::STATUS_APPROVED){
-            // save token
-            $idToken = CreditToken::storeToken($dbh, $vr->idRegistration, $vr->idPayor, $response);
-
-            return ["success" => "New Card saved successfully","COFmkup"=> HouseServices::guestEditCreditTable($dbh, $data['psg'], $data['id'], 'g'), 'idx'=>'g'];
-        }else{
-            return ["warning" => $vr->response->getResponseMessage()];
-        }
+        return $result;
     }
 
     public function creditSale(\PDO $dbh, PaymentManagerPayment $pmp, Invoice $invoice, $postbackUrl) {
@@ -1103,7 +1109,7 @@ order by pa.Timestamp desc");
                 $accessToken = filter_var($post[$indx . '_txtaccesstoken'], FILTER_UNSAFE_RAW);
 
                 if ($accessToken != '' && $accessToken != self::PW_PLACEHOLDER) {
-                    $ccRs->Credit_Url->setNewVal(encryptMessage($accessToken));
+                    $ccRs->Credit_Url->setNewVal(Crypto::encryptMessage($accessToken));
                 } else if ($accessToken == '') {
                     $ccRs->Credit_Url->setNewVal('');
                 }
@@ -1120,7 +1126,7 @@ order by pa.Timestamp desc");
                 $pw = filter_var($post[$indx . '_txtsecret'], FILTER_UNSAFE_RAW);
 
                 if ($pw != '' && $pw != self::PW_PLACEHOLDER) {
-                    $ccRs->Password->setNewVal(encryptMessage($pw));
+                    $ccRs->Password->setNewVal(Crypto::encryptMessage($pw));
                 } else if ($pw == '') {
                     $ccRs->Password->setNewVal('');
                 }
@@ -1141,7 +1147,7 @@ order by pa.Timestamp desc");
                         }
                     }
 
-                    if ($success) {
+                    if (isset($success) && $success) {
                         $msg .= HTMLContainer::generateMarkup('p', $ccRs->Gateway_Name->getStoredVal() . " - Webhooks configured successfully");
                         $ccRs->Trans_Url->setNewVal(json_encode($response["events"]));
                     }else{

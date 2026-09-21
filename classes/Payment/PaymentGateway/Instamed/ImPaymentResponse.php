@@ -54,7 +54,7 @@ class ImPaymentResponse extends AbstractCreditResponse {
             $status = AbstractCreditPayments::STATUS_DECLINED;
 
         } else if ($this->response->getTransactionStatus() == InstamedGateway::CAPTURED_APPROVED
-                || $this->response->getTransactionStatus() == InstaMedGateway::SAVE_ON_FILE_APPROVAL
+                || $this->response->getTransactionStatus() == InstamedGateway::SAVE_ON_FILE_APPROVAL
         		|| $this->response->getResponseCode() == '000') {
 
         		    $status = AbstractCreditPayments::STATUS_APPROVED;

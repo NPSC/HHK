@@ -15,13 +15,12 @@ use HHK\Tables\Fields\{DB_Field, DbIntSanitizer, DbStrSanitizer, DbDateSanitizer
 
 class Name_LanguageRS extends AbstractTableRS {
     
-    public $idName;   // int(11) NOT NULL,
-    public $Language_Id;   // int(11) NOT NULL,
-    public $Mother_Tongue;   // INT(1) NOT NULL DEFAULT 0,
-    public $Proficiency;   // varchar(4) NOT NULL DEFAULT '',
-    
-    public $Updated_By;   // varchar(45) NOT NULL DEFAULT '',
-    public $Timestamp;   // timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    public DB_Field $idName;   // int(11) NOT NULL,
+    public DB_Field $Language_Id;   // int(11) NOT NULL,
+    public DB_Field $Mother_Tongue;   // INT(1) NOT NULL DEFAULT 0,
+    public DB_Field $Proficiency;   // varchar(4) NOT NULL DEFAULT '',
+    public DB_Field $Updated_By;   // varchar(45) NOT NULL DEFAULT '',
+    public DB_Field $Timestamp;   // timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
     
     
     function __construct($TableName = "name_language") {

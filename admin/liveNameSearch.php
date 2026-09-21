@@ -17,7 +17,7 @@ use HHK\Tables\WebSec\FbxRS;
  */
 require ("AdminIncludes.php");
 
-$wInit = new webInit(WebPageCode::Service);
+$wInit = new WebInit(WebPageCode::Service);
 $dbh = $wInit->dbh;
 
 // get session instance
@@ -132,9 +132,6 @@ switch ($c) {
         if (isset($_GET["fid"])) {
             $fid = filter_var(urldecode($_GET["fid"]), FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         }
-
-        //require_once (CLASSES . 'PDOdata.php');
-        //require_once (DB_TABLES . 'WebSecRS.php');
 
         $fbRs = new FbxRS();
         $fbRs->fb_id->setStoredVal($fid);

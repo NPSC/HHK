@@ -190,8 +190,6 @@ class Phones extends AbstractContactPoint {
 
         if ($p[0] == $this->get_preferredCode()) {
             $prefAttr['checked'] = 'checked';
-        } else {
-            unset($prefAttr['checked']);
         }
 
         if ($showPrefCheckbox === FALSE) {
@@ -227,7 +225,7 @@ class Phones extends AbstractContactPoint {
                     unset($attr['class']);
                 }
                 $tdContents .=  'x'.HTMLInput::generateMarkup($this->rSs[$p[0]]->Phone_Extension->getStoredVal(), $attr);
-            } else if ($uS->smsProvider && ($p[0] == PhonePurpose::Cell || $p[0] == PhonePurpose::Cell2)) {
+            } else if ($uS->smsProvider && $p[0] == PhonePurpose::Cell) {
                 $smsOptions = [[" ",""],["opt_in", "Opt In"],["opt_out", "Opt Out"]];
                 $smsOptInMkup = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($smsOptions, $this->rSs[$p[0]]->SMS_status->getStoredVal(), true, "SMS?"), ["name" => $idPrefix . 'selSMS[' . $p[0] . ']', 'id' => $idPrefix . 'selSMS' . $p[0], "class" => "ml-2 mr-1"]);
                 
@@ -261,8 +259,6 @@ class Phones extends AbstractContactPoint {
 
         if ($roomPhoneCkd) {
             $prefAttr['checked'] = 'checked';
-        } else {
-            unset($prefAttr['checked']);
         }
 
         $tdContents .= HTMLInput::generateMarkup($prefCode, $prefAttr);
@@ -277,7 +273,7 @@ class Phones extends AbstractContactPoint {
     /**
      * Summary of savePost
      * @param \PDO $dbh
-     * @param mixed $post
+     * @param array $post
      * @param mixed $user
      * @param mixed $idPrefix
      * @return string
@@ -375,8 +371,8 @@ class Phones extends AbstractContactPoint {
 
     /**
      * Summary of loadPostData
-     * @param \HHK\Tables\Name\NamePhoneRS $a
-     * @param mixed $p
+     * @param NamePhoneRS $a
+     * @param array $p
      * @param mixed $typeCode
      * @param mixed $uname
      * @param mixed $idPrefix

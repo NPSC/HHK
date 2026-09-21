@@ -3,6 +3,7 @@
 namespace HHK\House\Reservation;
 
 use HHK\AuditLog\NameLog;
+use HHK\Common;
 use HHK\Exception\RuntimeException;
 use HHK\HTMLControls\HTMLContainer;
 use HHK\House\Family\{Family, FamilyAddGuest};
@@ -56,8 +57,8 @@ class CheckingIn extends ActiveReservation {
     /**
      * Summary of reservationFactoy
      * @param \PDO $dbh
-     * @param mixed $post
-     * @throws \HHK\Exception\RuntimeException
+     * @param mixed $inputData
+     * @throws RuntimeException
      * @return ActiveReservation|CheckedoutReservation|DeletedReservation|StaticReservation|StayingReservation
      */
     public static function reservationFactoy(\PDO $dbh, $inputData) {
@@ -76,8 +77,8 @@ class CheckingIn extends ActiveReservation {
     /**
      * Summary of loadReservation
      * @param \PDO $dbh
-     * @param \HHK\House\ReserveData\ReserveData $rData
-     * @throws \HHK\Exception\NotFoundException
+     * @param ReserveData $rData
+     * @throws NotFoundException
      * @return ActiveReservation|CheckedoutReservation|CheckingIn|DeletedReservation|StaticReservation|StayingReservation
      */
     public static function loadReservation(\PDO $dbh, ReserveData $rData) {
@@ -117,10 +118,11 @@ FROM reservation r
             ->setSpanStatus($rows[0]['SpanStatus'])
             ->setSpanStartDT($rows[0]['SpanStart'])
             ->setSpanEndDT($rows[0]['SpanEnd'])
-            ->setResvStatusCode($rows[0]['Status']);
+            ->setResvStatusCode($rows[0]['Status'])
+            ->setIdHospital_Stay($rows[0]['idHospital_Stay']);
 
         // Get Resv status codes
-        $reservStatuses = readLookups($dbh, "ReservStatus", "Code");
+        $reservStatuses = Common::readLookups($dbh, "ReservStatus", "Code");
 
         if (isset($reservStatuses[$rData->getResvStatusCode()])) {
             $rData->setResvStatusType($reservStatuses[$rData->getResvStatusCode()]['Type']);
@@ -320,7 +322,7 @@ FROM reservation r
     /**
      * Summary of saveCheckIn
      * @param \PDO $dbh
-     * @throws \HHK\Exception\RuntimeException
+     * @throws RuntimeException
      * @return void
      */
     protected function saveCheckIn(\PDO $dbh) {
@@ -569,7 +571,7 @@ FROM reservation r
     /**
      * Summary of savePayment
      * @param \PDO $dbh
-     * @param \HHK\House\Visit\Visit $visit
+     * @param Visit $visit
      * @param AbstractResource $resc
      * @param mixed $idRegistration
      * @return void

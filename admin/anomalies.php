@@ -81,8 +81,8 @@ where
 if (filter_has_var(INPUT_POST, "btnRunHere") || filter_has_var(INPUT_POST, "btnDlExcel")) {
     
     // set the return values into the controls
-    $cbMemStatus->setReturnValues($_POST[$cbMemStatus->get_htmlNameBase()]);
-    $cbRptType->setReturnValues($_POST[$cbRptType->get_htmlNameBase()]);
+    $cbMemStatus->setReturnValues(isset($_POST[$cbMemStatus->get_htmlNameBase()]) ? $_POST[$cbMemStatus->get_htmlNameBase()] : []);
+    $cbRptType->setReturnValues(isset($_POST[$cbRptType->get_htmlNameBase()]) ? $_POST[$cbRptType->get_htmlNameBase()] : []);
 
     $isExcel = false;
     if (filter_has_var(INPUT_POST, "btnDlExcel")) {
@@ -125,8 +125,8 @@ if (filter_has_var(INPUT_POST, "btnRunHere") || filter_has_var(INPUT_POST, "btnD
 
 function doReports(PDO $dbh, chkBoxCtrl $cbMemStatus, chkBoxCtrl $cbRptType, $isExcel, $prefOnly, $includeBad) {
 
-    $cbMemStatus->setReturnValues($_POST[$cbMemStatus->get_htmlNameBase()]);
-    $cbRptType->setReturnValues($_POST[$cbRptType->get_htmlNameBase()]);
+    $cbMemStatus->setReturnValues(isset($_POST[$cbMemStatus->get_htmlNameBase()]) ? $_POST[$cbMemStatus->get_htmlNameBase()] : []);
+    $cbRptType->setReturnValues(isset($_POST[$cbRptType->get_htmlNameBase()]) ? $_POST[$cbRptType->get_htmlNameBase()] : []);
 
     $uS = Session::getInstance();
     $uname = $uS->username;
@@ -236,9 +236,9 @@ function doReports(PDO $dbh, chkBoxCtrl $cbMemStatus, chkBoxCtrl $cbRptType, $is
 
     $txtIntro = '';
 
+    $file = "AddrExceptions";
+    $writer = new ExcelHelper($file);
     if ($isExcel) {
-        $file = "AddrExceptions";
-        $writer = new ExcelHelper($file);
         $writer->setAuthor($uname);
         $writer->setTitle("Address Exception Report");
 
@@ -296,6 +296,7 @@ function doReports(PDO $dbh, chkBoxCtrl $cbMemStatus, chkBoxCtrl $cbRptType, $is
 
 
         // Fields
+        $flds = [];
         foreach ($rows[$i] as $k => $v) {
 
             if ($k == "Id" && !$isExcel) {
@@ -324,26 +325,6 @@ function doReports(PDO $dbh, chkBoxCtrl $cbMemStatus, chkBoxCtrl $cbRptType, $is
 
 
     if ($isExcel) {
-
-        //Summary table
-        /* $sHdr = array(
-            "Filter"=>"string",
-            "Parameters"=>"string"
-        );
-        $sColWidths = array(
-            '50',
-            '50'
-        );
-
-        $sHdrStyle = $writer->getHdrStyle($sColWidths);
-
-        $writer->writeSheetHeader("Constraints", $sHdr, $sHdrStyle);
-
-        $flds = array();
-        foreach ($sumaryRows as $key=>$val){
-            $flds[] = array($key, $val);
-        }
-        $writer->writeSheet($flds, "Constraints"); */
 
         $writer->download();
 

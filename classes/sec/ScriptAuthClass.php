@@ -5,7 +5,8 @@ use HHK\Exception\RuntimeException;
 use HHK\HTMLControls\{HTMLContainer};
 use HHK\SysConst\WebPageCode;
 use HHK\SysConst\{WebSiteCode, Mode};
-
+use HHK\Common;
+use PDO;
 
 /**
  * ScriptAuthClass.php
@@ -34,9 +35,9 @@ class ScriptAuthClass extends SecurityComponent {
 
     /**
      * Summary of __construct
-     * @param \PDO $dbh
+     * @param PDO $dbh
      */
-    function __construct(\PDO $dbh) {
+    function __construct(PDO $dbh) {
 
         parent::__construct();
         $uS = Session::getInstance();
@@ -83,11 +84,11 @@ class ScriptAuthClass extends SecurityComponent {
 
     /**
      * Summary of loadWebSite
-     * @param \PDO $dbh
-     * @throws \HHK\Exception\RuntimeException
+     * @param PDO $dbh
+     * @throws RuntimeException
      * @return mixed
      */
-    protected function loadWebSite(\PDO $dbh) {
+    protected function loadWebSite(PDO $dbh) {
 
         $uS = Session::getInstance();
 
@@ -102,7 +103,7 @@ class ScriptAuthClass extends SecurityComponent {
 
             if ($stmt->rowCount() > 0) {
 
-                while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
+                while ($r = $stmt->fetch(PDO::FETCH_ASSOC)) {
 
                     if ($r['Site_Code'] == WebSiteCode::Volunteer && !$uS->Volunteers) {
                         continue;
@@ -194,7 +195,7 @@ class ScriptAuthClass extends SecurityComponent {
                 $wp = array();
                 $lastId = 0;
 
-                while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
+                while ($r = $stmt->fetch(PDO::FETCH_ASSOC)) {
 
                     if ($lastId == $r['idPage']) {
 
@@ -243,7 +244,7 @@ class ScriptAuthClass extends SecurityComponent {
 
             if (self::does_User_Code_Match($this->pageCodes) === FALSE) {
 
-                $dbh = initPDO(true);
+                $dbh = Common::initPDO(true);
                 $uS = Session::getInstance();
                 UserClass::insertUserLog($dbh, "Unauthorized for page: " . $this->get_Page_Title(), ($uS->username != "" ? $uS->username : "<empty>"));
 
@@ -314,10 +315,10 @@ class ScriptAuthClass extends SecurityComponent {
     /**
      * Summary of generateMenu
      * @param string $pageHeader
-     * @param \PDO $dbh
+     * @param PDO|bool $dbh
      * @return string
      */
-    public function generateMenu($pageHeader, $dbh = false) {
+    public function generateMenu(string $pageHeader, PDO|bool $dbh = false) {
         // only generate menu for pages, not services or components
         if ($this->get_Page_Type() != WebPageCode::Page) {
             return '';
@@ -406,7 +407,7 @@ class ScriptAuthClass extends SecurityComponent {
             <div id='version'><span class='hideMobile'>$disclaimer Build:" . $uS->ver . "</span> <button id='userSettingsBtn' style='margin-left: .5em' class='ui-button ui-corner-all ui-widget'>Hello, " . $uS->username . "</button></div>";
 
         //add user settings modal
-        if($dbh && isset($uS)){
+        if($dbh instanceof PDO){
             $markup .= UserClass::createUserSettingsMarkup($dbh);
             $markup .= '<input  type="hidden" id="showUserSettings" value="' . (UserClass::isPassExpired($dbh, $uS) || (UserClass::hasTOTP($dbh, $uS->username) == false && $uS->Enforce2fa && UserClass::isLocalUser($dbh, $uS))) . '" />';
         }

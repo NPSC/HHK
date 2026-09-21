@@ -121,7 +121,7 @@ class FinAssistance {
         $tbl = new HTMLTable();
         $tbl->addBodyTr(HTMLTable::makeTh('Status') . HTMLTable::makeTh('Status Date') . HTMLTable::makeTh('Approved By', array('colspan'=>'2')));
         $tbl->addBodyTr(
-                HTMLTable::makeTd(HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup(removeOptionGroups($uS->guestLookups['FinAppStatus']), $this->getFaStatus(), TRUE), array('name'=>'SelFaStatus')), array('style'=>'text-align:center;'))
+                HTMLTable::makeTd(HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup(HTMLSelector::removeOptionGroups($uS->guestLookups['FinAppStatus']), $this->getFaStatus(), TRUE), array('name'=>'SelFaStatus')), array('style'=>'text-align:center;'))
                 .HTMLTable::makeTd(HTMLInput::generateMarkup(($this->getFaStatusDate() == '' ? '' : date('M j, Y', strtotime($this->getFaStatusDate()))), array('name'=>'txtFaStatusDate', 'readonly'=>'readonly', 'style'=>'width: 100%; border: none; text-align:center;')))
                 .HTMLTable::makeTd($this->getApprovedId(), array('style'=>'text-align:center;'))
                 );
@@ -316,18 +316,6 @@ class FinAssistance {
     public function getAppliedDate() {
         return $this->finAppRs->FA_Applied_Date->getStoredVal();
     }
-
-    /**
-     * Summary of getEstAmount
-     * @param \PDO $dbh
-     * @param int $days
-     * @param string $category
-     * @param mixed $pledgedRate
-     * @return mixed
-     */
-//    public function getEstAmount(\PDO $dbh, $days, $category, $pledgedRate = 0) {
-//        return self::amountCalculator($dbh, $days, $category, $pledgedRate);
-//    }
 
     public function getIdRoomRate() {
         return $this->idRoomRate;

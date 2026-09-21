@@ -3,6 +3,7 @@
 namespace HHK\House\Report;
 
 use HHK\Checklist;
+use HHK\Common;
 use HHK\HTMLControls\HTMLContainer;
 use HHK\HTMLControls\HTMLSelector;
 use HHK\sec\Session;
@@ -43,12 +44,12 @@ class ReservationReport extends AbstractReport implements ReportInterface {
 
         $this->reportTitle = $uS->siteName . ' ' . Labels::getString('guestEdit', 'reservationTitle', 'Reservation') . ' Report';
         $this->inputSetReportName = "reserv";
-        $this->locations = readGenLookupsPDO($dbh, 'Location');
-        $this->diags = readGenLookupsPDO($dbh, 'Diagnosis');
-        $this->resvStatuses = removeOptionGroups(readLookups($dbh, "ReservStatus", "Code", FALSE));
+        $this->locations = Common::readGenLookupsPDO($dbh, 'Location');
+        $this->diags = Common::readGenLookupsPDO($dbh, 'Diagnosis');
+        $this->resvStatuses = HTMLSelector::removeOptionGroups(Common::readLookups($dbh, "ReservStatus", "Code", FALSE));
 
-        $this->checklistItems = readGenLookupsPDO($dbh, ChecklistType::PSG);
-        $this->checklistTypes = readGenLookupsPDO($dbh, Checklist::ChecklistRootTablename);
+        $this->checklistItems = Common::readGenLookupsPDO($dbh, ChecklistType::PSG);
+        $this->checklistTypes = Common::readGenLookupsPDO($dbh, Checklist::ChecklistRootTablename);
 
         if (filter_has_var(INPUT_POST, 'selResvStatus')) {
             $this->selectedResvStatuses = filter_input(INPUT_POST, 'selResvStatus', FILTER_SANITIZE_FULL_SPECIAL_CHARS, FILTER_REQUIRE_ARRAY);
@@ -157,6 +158,8 @@ class ReservationReport extends AbstractReport implements ReportInterface {
     ifnull(a.Title, '') as 'Assoc',
     nd.Name_Full as `Name_Doctor`,
     nr.Name_Full as `Name_Agent`,
+    npat.Name_First as `Name_First_Patient`,
+    npat.Name_Last as `Name_Last_Patient`,
     ifnull(gl.`Description`, hs.Diagnosis) as `Diagnosis`,
     hs.Diagnosis2,
     ifnull(group_concat(i.Title order by it.List_Order separator ', '), '') as Insurance,
@@ -193,6 +196,8 @@ from
         left join
     name nr ON hs.idReferralAgent = nr.idName
         left join
+    name npat ON hs.idPatient = npat.idName
+        left join
     room_rate rr ON r.idRoom_rate = rr.idRoom_rate
         left join resource_room rer on r.idResource = rer.idResource
         left join room rm on rer.idRoom = rm.idRoom
@@ -220,19 +225,6 @@ where s.Key = 'AcceptResvPaymt' AND " . $whDates . $whHosp . $whAssoc . $whStatu
         $this->filterMkup .= $this->getColSelectorMkup();
     }
 
-    /* public function makeFilterOptsMkup():void{
-        $showAllAttrs = array("type"=>"checkbox", "id"=>"cbShowAll", "name"=>"cbShowAll");
-        if(isset($this->request["cbShowAll"])){
-            $showAllAttrs['checked'] = 'checked';
-        }
-
-        $this->filterOptsMkup .= HTMLContainer::generateMarkup("div",
-            HTMLInput::generateMarkup("", $showAllAttrs) .
-            HTMLContainer::generateMarkup("label", "Show all " . Labels::getString('MemberType', 'visitor', 'Guest') . 's', array("for"=>"cbShowAll"))
-        );
-
-    } */
-
     protected function getResvStatusMkup(){
 
         $resvStatusSelector = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($this->resvStatuses, $this->selectedResvStatuses), array('name' => 'selResvStatus[]', 'size'=>(count($this->resvStatuses) < 13 ? count($this->resvStatuses) + 1 : '13'), 'multiple'=>'multiple'));
@@ -248,50 +240,53 @@ where s.Key = 'AcceptResvPaymt' AND " . $whDates . $whHosp . $whAssoc . $whStatu
 
     }
 
-    public function makeCFields():array{
+    public function makeFields():array{
         $labels = Labels::getLabels();
         $uS = Session::getInstance();
 
-        $cFields[] = array('Resv Id', 'idReservation', 'checked', 'f', 'string', '10');
-        $cFields[] = array("Room", 'Room', 'checked', '', 'string', '15');
+        $fields[] = array('Resv Id', 'idReservation', 'checked', 'f', 'string', '10');
+        $fields[] = array("Room", 'Room', 'checked', '', 'string', '15');
 
         if ((count($this->filter->getAList()) + count($this->filter->getHList())) > 1) {
 
-            $cFields[] = array($labels->getString('hospital', 'hospital', 'Hospital'), 'Hospital', 'checked', '', 'string', '20');
+            $fields[] = array($labels->getString('hospital', 'hospital', 'Hospital'), 'Hospital', 'checked', '', 'string', '20');
 
             if (count($this->filter->getAList()) > 0) {
-                $cFields[] = array($labels->getString('hospital', 'association', 'Association'), 'Assoc', 'checked', '', 'string', '20');
+                $fields[] = array($labels->getString('hospital', 'association', 'Association'), 'Assoc', 'checked', '', 'string', '20');
             }
         }
 
 
         if (count($this->locations) > 0) {
-            $cFields[] = array($labels->getString('hospital', 'location', 'Location'), 'Location', 'checked', '', 'string', '20', array());
+            $fields[] = array($labels->getString('hospital', 'location', 'Location'), 'Location', 'checked', '', 'string', '20', array());
         }
 
 
         if (count($this->diags) > 0) {
-            $cFields[] = array($labels->getString('hospital', 'diagnosis', 'Diagnosis'), 'Diagnosis', 'checked', '', 'string', '20', array());
+            $fields[] = array($labels->getString('hospital', 'diagnosis', 'Diagnosis'), 'Diagnosis', 'checked', '', 'string', '20', array());
         }
 
         if($uS->ShowDiagTB){
-            $cFields[] = array($labels->getString('hospital', 'diagnosisDetail', 'Diagnosis Details'), 'Diagnosis2', 'checked', '', 'string', '20', array());
+            $fields[] = array($labels->getString('hospital', 'diagnosisDetail', 'Diagnosis Details'), 'Diagnosis2', 'checked', '', 'string', '20', array());
         }
 
         if ($uS->Doctor) {
-            $cFields[] = array("Doctor", 'Name_Doctor', '', '', 'string', '20');
+            $fields[] = array("Doctor", 'Name_Doctor', '', '', 'string', '20');
         }
 
         if ($uS->InsuranceChooser) {
-            $cFields[] = array($labels->getString('MemberType', 'patient', 'Patient') . " Insurance", 'Insurance', '', '', 's', '', array());
+            $fields[] = array($labels->getString('MemberType', 'patient', 'Patient') . " Insurance", 'Insurance', '', '', 's', '', array());
         }
 
         if ($uS->ReferralAgent) {
-            $cFields[] = array($labels->getString('hospital', 'referralAgent', 'Referral Agent'), 'Name_Agent', '', '', 'string', '20');
+            $fields[] = array($labels->getString('hospital', 'referralAgent', 'Referral Agent'), 'Name_Agent', '', '', 'string', '20');
         }
 
-        $cFields[] = array("Primary " . $labels->getString('MemberType', 'visitor', 'Guest') . " First", 'Name_First', 'checked', '', 'string', '20');
-        $cFields[] = array("Primary " . $labels->getString('MemberType', 'visitor', 'Guest') . " Last", 'Name_Last', 'checked', '', 'string', '20');
+        $fields[] = array($labels->getString('MemberType', 'patient', 'Patient') . " First", 'Name_First_Patient', '', '', 'string', '20');
+        $fields[] = array($labels->getString('MemberType', 'patient', 'Patient') . " Last", 'Name_Last_Patient', '', '', 'string', '20');
+
+        $fields[] = array("Primary " . $labels->getString('MemberType', 'visitor', 'Guest') . " First", 'Name_First', 'checked', '', 'string', '20');
+        $fields[] = array("Primary " . $labels->getString('MemberType', 'visitor', 'Guest') . " Last", 'Name_Last', 'checked', '', 'string', '20');
 
         // Address.
         $pFields = array('gAddr', 'gCity');
@@ -305,21 +300,21 @@ where s.Key = 'AcceptResvPaymt' AND " . $whDates . $whHosp . $whAssoc . $whStatu
         $pFields = array_merge($pFields, array('gState', 'gCountry', 'gZip'));
         $pTitles = array_merge($pTitles, array('State', 'Country', 'Zip'));
 
-        $cFields[] = array($pTitles, $pFields, '', '', 'string', '15', array());
+        $fields[] = array($pTitles, $pFields, '', '', 'string', '15', array());
 
-        $cFields[] = array("Room Phone", 'Phone', '', '', 'string', '20');
-        $cFields[] = array("Primary " . $labels->getString('MemberType', 'visitor', 'Guest')." Phone", 'Phone_Num', '', '', 'string', '20');
-        $cFields[] = array("Primary " . $labels->getString('MemberType', 'visitor', 'Guest')." Email", 'Email', '', '', 'string', '20');
-        $cFields[] = array("Primary " . $labels->getString('MemberType', 'visitor', 'Guest')." Birth Date", 'BirthDate', '', '', 'MM/DD/YYYY', '15', array(), 'date');
-        $cFields[] = array("Arrive", 'Arrival', 'checked', '', 'MM/DD/YYYY', '15', array(), 'date');
-        $cFields[] = array("Depart", 'Departure', 'checked', '', 'MM/DD/YYYY', '15', array(), 'date');
-        $cFields[] = array("Nights", 'Nights', 'checked', '', 'integer', '10');
-        $cFields[] = array("Days", 'Days', '', '', 'integer', '10');
-        $cFields[] = array("Rate", 'FA_Category', 'checked', '', 'string', '20');
+        $fields[] = array("Room Phone", 'Phone', '', '', 'string', '20');
+        $fields[] = array("Primary " . $labels->getString('MemberType', 'visitor', 'Guest')." Phone", 'Phone_Num', '', '', 'string', '20');
+        $fields[] = array("Primary " . $labels->getString('MemberType', 'visitor', 'Guest')." Email", 'Email', '', '', 'string', '20');
+        $fields[] = array("Primary " . $labels->getString('MemberType', 'visitor', 'Guest')." Birth Date", 'BirthDate', '', '', 'MM/DD/YYYY', '15', array(), 'date');
+        $fields[] = array("Arrive", 'Arrival', 'checked', '', 'MM/DD/YYYY', '15', array(), 'date');
+        $fields[] = array("Depart", 'Departure', 'checked', '', 'MM/DD/YYYY', '15', array(), 'date');
+        $fields[] = array("Nights", 'Nights', 'checked', '', 'integer', '10');
+        $fields[] = array("Days", 'Days', '', '', 'integer', '10');
+        $fields[] = array("Rate", 'FA_Category', 'checked', '', 'string', '20');
 
         // Reservation pre-payment
         if ($uS->AcceptResvPaymt) {
-            $cFields[] = array('Pre-Paymt', 'PrePaymt', 'checked', '', 's', '_(* #,##0.00_);_(* \(#,##0.00\);_(* "-"??_);_(@_)');
+            $fields[] = array('Pre-Paymt', 'PrePaymt', 'checked', '', 's', '_(* #,##0.00_);_(* \(#,##0.00\);_(* "-"??_);_(@_)');
         }
 
         if ($uS->useChecklists && count($this->checklistItems) > 0) {
@@ -332,14 +327,14 @@ where s.Key = 'AcceptResvPaymt' AND " . $whDates . $whHosp . $whAssoc . $whStatu
                 $ciTitles[] = $item[1];
             }
 
-            $cFields[] = array($ciTitles, $ciFields, '', '', 'MM/DD/YYYY', '15', array(), 'date', 'selOptionTitle' => (isset($this->checklistTypes[ChecklistType::PSG]["Description"]) ? $this->checklistTypes[ChecklistType::PSG]["Description"] . " Checklist" : "PSG Checklist"));
+            $fields[] = array($ciTitles, $ciFields, '', '', 'MM/DD/YYYY', '15', array(), 'date', 'selOptionTitle' => (isset($this->checklistTypes[ChecklistType::PSG]["Description"]) ? $this->checklistTypes[ChecklistType::PSG]["Description"] . " Checklist" : "PSG Checklist"));
         }
         
-        $cFields[] = array("Status", 'Status_Title', 'checked', '', 'string', '15');
-        $cFields[] = array("Created Date", 'Created_Date', 'checked', '', 'MM/DD/YYYY h:mm AM/PM', '25', array(), 'datetime');
-        $cFields[] = array("Last Updated", 'Last_Updated', '', '', 'MM/DD/YYYY h:mm AM/PM', '25', array(), 'datetime');
+        $fields[] = array("Status", 'Status_Title', 'checked', '', 'string', '15');
+        $fields[] = array("Created Date", 'Created_Date', 'checked', '', 'MM/DD/YYYY h:mm AM/PM', '25', array(), 'datetime');
+        $fields[] = array("Last Updated", 'Last_Updated', '', '', 'MM/DD/YYYY h:mm AM/PM', '25', array(), 'datetime');
 
-        return $cFields;
+        return $fields;
     }
 
     public function makeSummaryMkup():string {
@@ -371,9 +366,9 @@ where s.Key = 'AcceptResvPaymt' AND " . $whDates . $whHosp . $whAssoc . $whStatu
         if ($hospitalTitles != '') {
             $h = trim($hospitalTitles);
             $hospitalTitles = substr($h, 0, strlen($h) - 1);
-            $mkup .= HTMLContainer::generateMarkup('p', Labels::getString('hospital', 'hospital', 'Hospital').'s: ' . $hospitalTitles);
+            $mkup .= HTMLContainer::generateMarkup('p', Labels::getString('hospital', 'hospitals', 'Hospitals') . ': ' . $hospitalTitles);
         } else {
-            $mkup .= HTMLContainer::generateMarkup('p', 'All '. Labels::getString('hospital', 'hospital', 'Hospital').'s');
+            $mkup .= HTMLContainer::generateMarkup('p', 'All '. Labels::getString('hospital', 'hospitals', 'Hospitals'));
         }
 
         $statusTitles = '';
@@ -403,6 +398,7 @@ where s.Key = 'AcceptResvPaymt' AND " . $whDates . $whHosp . $whAssoc . $whStatu
             $r['Insurance'] = ($r['Insurance'] != '' ? HTMLContainer::generateMarkup('span','', array('class'=>'ui-icon ui-icon-comment insAction', 'style'=>'cursor:pointer;', 'data-idName'=>$r['idPatient'], 'id'=>'insAction' . $r['idPatient'], 'title'=>'View Insurance')) . $r["Insurance"] : $r["Insurance"]);
             $r['Status_Title'] = $r["hasVisit"] ? $r['Status_Title'] : HTMLContainer::generateMarkup('a', $r['Status_Title'], array('href'=>$uS->resourceURL . 'house/Reserve.php?rid=' . $r['idReservation']));
             $r['Name_Last'] = HTMLContainer::generateMarkup('a', $r['Name_Last'], array('href'=>$uS->resourceURL . 'house/GuestEdit.php?id=' . $r['idGuest'] . '&psg=' . $r['idPsg']));
+            $r['Name_Last_Patient'] = HTMLContainer::generateMarkup('a', $r['Name_Last_Patient'], array('href'=>$uS->resourceURL . 'house/GuestEdit.php?id=' . $r['idPatient'] . '&psg=' . $r['idPsg']));
             if($uS->AcceptResvPaymt){ $r['PrePaymt'] = ($r['PrePaymt'] == 0 ? '' : '$' . number_format($r['PrePaymt'], 0)); }
         }
 

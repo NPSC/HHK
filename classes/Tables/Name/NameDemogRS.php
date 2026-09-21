@@ -16,32 +16,32 @@ use HHK\Tables\Fields\DbBitSanitizer;
 
 class NameDemogRS extends AbstractTableRS {
 
-    public $idName;  // int(11) NOT NULL,
-    public $Gen_Notes;  // text,
-    public $Contact_Date;  // date DEFAULT NULL,
-    public $Orientation_Date;  // date DEFAULT NULL,
-    public $Confirmed_Date;  // DATETIME NULL DEFAULT NULL
-    public $Age_Bracket;
-    public $Income_Bracket;
-    public $Education_Level;  // varchar(5) NOT NULL DEFAULT '',
-    public $Newsletter;
-    public $Photo_Permission;
-    public $Guest_Photo_Id;
-    public $No_Return;  // VARCHAR(5) NOT NULL DEFAULT ''
-    public $Ethnicity;  // varchar(5) NOT NULL DEFAULT '',
-    public $Media_Source;  // varchar(5) NOT NULL DEFAULT '',
-    public $Special_Needs;  // varchar(5) NOT NULL DEFAULT '',
-    public $Covid;  // varchar(5) NOT NULL DEFAULT '',
+    public DB_Field $idName;  // int(11) NOT NULL,
+    public DB_Field $Gen_Notes;  // text,
+    public DB_Field $Contact_Date;  // date DEFAULT NULL,
+    public DB_Field $Orientation_Date;  // date DEFAULT NULL,
+    public DB_Field $Confirmed_Date;  // DATETIME NULL DEFAULT NULL
+    public DB_Field $Age_Bracket;
+    public DB_Field $Income_Bracket;
+    public DB_Field $Education_Level;  // varchar(5) NOT NULL DEFAULT '',
+    public DB_Field $Newsletter;
+    public DB_Field $Photo_Permission;
+    public DB_Field $Guest_Photo_Id;
+    public DB_Field $No_Return;  // VARCHAR(5) NOT NULL DEFAULT ''
+    public DB_Field $Ethnicity;  // varchar(5) NOT NULL DEFAULT '',
+    public DB_Field $Media_Source;  // varchar(5) NOT NULL DEFAULT '',
+    public DB_Field $Special_Needs;  // varchar(5) NOT NULL DEFAULT '',
+    public DB_Field $Covid;  // varchar(5) NOT NULL DEFAULT '',
 
-    public $ADA; // `ADA` VARCHAR(5) NOT NULL DEFAULT ''
-    public $Gl_Code_Debit;  // VARCHAR(25) NOT NULL DEFAULT ''
-    public $Gl_Code_Credit;  // VARCHAR(25) NOT NULL DEFAULT ''
-    public $Tax_Exempt; // TINYINT(1) NOT NULL DEFAULT 0
-    public $Background_Check_Date;
-    public $Is_Minor;  // TINYINT(4) NOT NULL DEFAULT 0
-    public $Last_Updated;  // datetime DEFAULT NULL,
-    public $Updated_By;  // varchar(45) NOT NULL DEFAULT '',
-    public $Timestamp;  // timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    public DB_Field $ADA; // `ADA` VARCHAR(5) NOT NULL DEFAULT ''
+    public DB_Field $Gl_Code_Debit;  // VARCHAR(25) NOT NULL DEFAULT ''
+    public DB_Field $Gl_Code_Credit;  // VARCHAR(25) NOT NULL DEFAULT ''
+    public DB_Field $Tax_Exempt; // TINYINT(1) NOT NULL DEFAULT 0
+    public DB_Field $Background_Check_Date;
+    public DB_Field $Is_Minor;  // TINYINT(4) NOT NULL DEFAULT 0
+    public DB_Field $Last_Updated;  // datetime DEFAULT NULL,
+    public DB_Field $Updated_By;  // varchar(45) NOT NULL DEFAULT '',
+    public DB_Field $Timestamp;  // timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
 
     function __construct($TableName = "name_demog") {

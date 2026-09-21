@@ -1,4 +1,5 @@
 <?php
+use HHK\Common;
 use HHK\Exception\UnexpectedValueException;
 use HHK\sec\WebInit;
 use HHK\SysConst\WebPageCode;
@@ -103,12 +104,17 @@ try {
                 $rescId = intval(filter_var($_POST['selRescId'], FILTER_SANITIZE_NUMBER_INT), 10);
             }
 
+            $expectedDeparture = '';
+            if (isset($_POST['expDep'])) {
+                $expectedDeparture = filter_var($_POST['expDep'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+            }
+
             $span = 0;
             if (isset($_POST['span'])) {
                 $span = intval(filter_var($_POST['span'], FILTER_SANITIZE_NUMBER_INT), 10);
             }
 
-            $events = HouseServices::changeRoomList($dbh, $idVisit, $span, $changeDate, $rescId);
+            $events = HouseServices::changeRoomList($dbh, $idVisit, $span, $changeDate, $rescId, $expectedDeparture);
 
             break;
 
@@ -150,7 +156,12 @@ try {
                 $replaceRoom = filter_var($_POST['replaceRoom'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
             }
 
-            $events = HouseServices::changeRooms($dbh, $idVisit, $span, $idRoom, $replaceRoom, $useDefaultRate, $changeDate);
+            $expectedDeparture = '';
+            if (isset($_POST['expectedDeparture'])) {
+                $expectedDeparture = filter_var($_POST['expectedDeparture'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+            }
+
+            $events = HouseServices::changeRooms($dbh, $idVisit, $span, $idRoom, $replaceRoom, $useDefaultRate, $changeDate, $expectedDeparture);
 
             break;
 
@@ -450,8 +461,12 @@ try {
             $edelta = intval(filter_var($_POST['edelta'], FILTER_SANITIZE_NUMBER_INT), 10);
         }
 
+        $idResc = null;
+        if (isset($_POST['idResc'])) {
+            $idResc = intval(filter_var($_POST['idResc'], FILTER_SANITIZE_NUMBER_INT), 10);
+        }
 
-        $events = ReservationSvcs::moveReserv($dbh, $idVisit, $sdelta, $edelta);
+        $events = ReservationSvcs::moveReserv($dbh, $idVisit, $sdelta, $edelta, $idResc);
         break;
 
     case "visitMove":
@@ -601,8 +616,8 @@ try {
             $ordNum = intval(filter_var($_POST['ord'], FILTER_SANITIZE_NUMBER_INT), 10);
             $arrDate = '';
 
-            $discounts = readGenLookupsPDO($dbh, 'House_Discount');
-            $addnls = readGenLookupsPDO($dbh, 'Addnl_Charge');
+            $discounts = Common::readGenLookupsPDO($dbh, 'House_Discount');
+            $addnls = Common::readGenLookupsPDO($dbh, 'Addnl_Charge');
 
             foreach ($discounts as $n) {
                 $events['disc'][$n[0]] = $n[2];
@@ -618,8 +633,8 @@ try {
 
             $vat = new ValueAddedTax($dbh);
 
-            $events['markup'] = PaymentChooser::createHousePaymentMarkup($discounts, $addnls, $ordNum, $vat->getTaxedItemSums($ordNum, 0), $arrDate);
-
+            $events['markup'] = PaymentChooser::createHousePaymentMarkup($dbh, $discounts, $addnls, $ordNum, $vat->getTaxedItemSums($ordNum, 0), $arrDate);
+            $events['dialogTitle'] = Labels::getString('visit', 'adjustFees', 'Adjust Fees');
         } else {
             $events = ['error' => 'Visit Id is missing.  '];
         }

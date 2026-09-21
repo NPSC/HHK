@@ -43,7 +43,7 @@ function flagAlertMessage(mess, wasError, $txtCtrl, title = '') {
 		return;
 	}
 
-	$txtCtrl.text(mess).show();
+	$txtCtrl.html(mess).show();
 }
 function dateRender(data, type, format) {
 	// If display or filter data is requested, format the date
@@ -76,20 +76,40 @@ function dateRender(data, type, format) {
 	return data;
 }
 
+function dayRender(data, type, format) {
+	// If display or filter data is requested, format the date
+	if (type === 'display' || type === 'filter' || type === 'print') {
+
+		if (data === undefined || data === null || data === '') {
+			return '';
+		}
+
+		data = data.trim();
+
+		if (data === null || data === '') {
+			return '';
+		}
+
+		if (moment(data, 'MM-DD').isValid()===false) {
+			return data;
+		}
+
+		if (!format || format === '') {
+			format = 'MMM D';
+		}
+
+		return moment(data, 'MM-DD').format(format);
+	}
+
+	// Otherwise the data type requested (`type`) is type detection or
+	// sorting data, for which we want to use the integer, so just return
+	// that, unaltered
+	return data;
+}
+
 function isIE() {
 	var ua = window.navigator.userAgent;
 	return /MSIE|Trident/.test(ua);
-}
-
-function checkStrength(pwCtrl) {
-	const strongRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*\W).{8,}$/;
-	if (strongRegex.test(pwCtrl.val())) {
-		pwCtrl.removeClass("ui-state-error");
-		return true;
-	} else {
-		pwCtrl.addClass("ui-state-error");
-		return false;
-	}
 }
 
 function openiframe(src, width, height, title, buttons) {
@@ -260,13 +280,6 @@ $(document).ready(
 							return;
 						}
 
-						if (checkStrength(pw1) === false) {
-							pw1.addClass("ui-state-error");
-							msg.html('Password must have at least 8 characters including at least <br>one uppercase, one lower case letter, one number and one symbol.');
-							pw1.focus();
-							return;
-						}
-
 						pw1.removeClass("ui-state-error");
 
 						var oldpwval = oldpw.val();
@@ -303,7 +316,7 @@ $(document).ready(
 									$("#dchgPw").dialog('close');
 
 								} else if (data.warning) {
-									$('#pwChangeErrMsg').text(
+									$('#pwChangeErrMsg').html(
 											data.warning);
 								}
 							}

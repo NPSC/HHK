@@ -1,4 +1,5 @@
 <?php
+use HHK\Crypto;
 use HHK\sec\{Session,WebInit};
 use HHK\SysConst\{ActivityTypes, AddressPurpose, CampaignType, GLTableNames, MemBasis, MemDesignation, MemStatus, SalutationCodes, WebPageCode};
 use HHK\Tables\EditRS;
@@ -21,19 +22,7 @@ use HHK\Donation\Campaign;
 
 require ("AdminIncludes.php");
 
-/*
- * require (DB_TABLES . 'nameRS.php');
- * require (DB_TABLES . 'ActivityRS.php');
- * require (DB_TABLES . 'DonateRS.php');
- *
- * require (CLASSES . 'Campaign.php');
- */
-// require (MEMBER . 'Member.php');
-// require (MEMBER . 'IndivMember.php');
-// require (MEMBER . 'OrgMember.php');
-// require (MEMBER . 'Addresses.php');
-
-$wInit = new webInit(WebPageCode::Service);
+$wInit = new WebInit(WebPageCode::Service);
 $dbh = $wInit->dbh;
 
 // get session instance
@@ -45,7 +34,7 @@ $resp = array();
 // check security codes; exit if not secure
 if (filter_has_var(INPUT_POST, "sq")) {
     $sq = filter_input(INPUT_POST, "sq", FILTER_SANITIZE_FULL_SPECIAL_CHARS);
-    $pw = decryptMessage($sq);
+    $pw = Crypto::decryptMessage($sq);
     $ts = strtotime($pw);
     $tnow = time();
 
@@ -398,9 +387,7 @@ function genDonationMarkup(PDO $dbh, $id)
 
     $tbl = new HTMLTable();
     // Table header row
-    $tbl->addHeaderTr(HTMLTable::makeTh('', array(
-        'style' => 'width:25px;'
-    )) . HTMLTable::makeTh('Source', array(
+    $tbl->addHeaderTr(HTMLTable::makeTh('Source', array(
         'style' => 'width:70px;'
     )) . HTMLTable::makeTh('Campaign') . HTMLTable::makeTh('Amount') . HTMLTable::makeTh('Date') . HTMLTable::makeTh('X'));
 
@@ -496,9 +483,7 @@ function genDonationMarkup(PDO $dbh, $id)
             'class' => 'ui-button ui-corner-all ui-widget ui-button-icon-only hhk-edit-donation'
         ));
 
-        $tbl->addBodyTr(HTMLTable::makeTd(HTMLContainer::generateMarkup('span', $editIcon, array(
-            'class' => 'donlisting'
-        ))) . HTMLTable::makeTd(HTMLContainer::generateMarkup('span', $src, array(
+        $tbl->addBodyTr(HTMLTable::makeTd(HTMLContainer::generateMarkup('span', $src, array(
             'class' => 'donlisting',
             'title' => $srcTitle
         ))) . HTMLTable::makeTd(HTMLContainer::generateMarkup('span', $row2['Campaign_Code'], array(
@@ -517,7 +502,7 @@ function genDonationMarkup(PDO $dbh, $id)
         if ($row2['Note'] != '') {
             $tbl->addBodyTr(HTMLTable::makeTd('Note:', array(
                 'class' => 'tdlabel',
-                'colspan' => '2',
+                'colspan' => '1',
                 'style' => 'font-size:small;'
             )) . HTMLTable::makeTd($row2['Note'], array(
                 'colspan' => '4',

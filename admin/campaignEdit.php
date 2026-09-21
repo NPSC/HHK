@@ -1,7 +1,9 @@
 <?php
 
+use HHK\Common;
 use HHK\Donation\Campaign;
 use HHK\AlertControl\AlertMessage;
+use HHK\HTMLControls\HTMLSelector;
 use HHK\SysConst\CampaignType;
 use HHK\Tables\EditRS;
 use HHK\Tables\Donate\CampaignRS;
@@ -114,6 +116,7 @@ function saveCampaign(PDO $dbh, $campCode, $type, $post) {
     // if a new code
     if ($campCode == "vNew" || $campCode == '') {
 
+        $rptId = 0;
         $dbh->query("CALL IncrementCounter('codes', @num);");
         foreach ($dbh->query("SELECT @num") as $row) {
             $rptId = $row[0];
@@ -137,7 +140,7 @@ function saveCampaign(PDO $dbh, $campCode, $type, $post) {
 
 }
 
-$wInit = new webInit();
+$wInit = new WebInit();
 $dbh = $wInit->dbh;
 
 $pageTitle = $wInit->pageTitle;
@@ -190,7 +193,9 @@ $CampOpt = Campaign::CampaignSelOptionMarkup($dbh, $campCode, TRUE, TRUE);
 
 $campaign = new Campaign($dbh, $campCode);
 
-$statusOpt = doLookups($dbh, "Campaign_Status", $campaign->get_status(), false);
+$campaignStatuses = Common::readGenLookupsPDO($dbh, "Campaign_Status");
+$statusOpt = HTMLSelector::doOptionsMkup($campaignStatuses, $campaign->get_status(), false);
+
 $stDate = "";
 $enDate = "";
 $lastDate = "";

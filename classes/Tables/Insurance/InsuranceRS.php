@@ -15,15 +15,11 @@ use HHK\Tables\Fields\{DB_Field, DbIntSanitizer, DbStrSanitizer, DbDateSanitizer
 
 class InsuranceRS extends AbstractTableRS {
 
-    public $idInsurance;   // INT(11) NOT NULL PRIMARY KEY,
-
-    public $idInsuranceType;   // int(3) NOT NULL DEFAULT 0,
-
-    public $Title; // varchar(45) NOT NULL DEFAULT '',
-
-    public $Order; // INT(3) NOT NULL DEFAULT 0,
-
-    public $Timestamp; //TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    public DB_Field $idInsurance;   // INT(11) NOT NULL PRIMARY KEY,
+    public DB_Field $idInsuranceType;   // int(3) NOT NULL DEFAULT 0,
+    public DB_Field $Title; // varchar(45) NOT NULL DEFAULT '',
+    public DB_Field $Order; // INT(3) NOT NULL DEFAULT 0,
+    public DB_Field $Timestamp; //TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
 
     /**

@@ -1,31 +1,13 @@
 <?php
 
+use HHK\Common;
 use HHK\House\Distance\DistanceFactory;
 use HHK\House\Distance\GoogleDistance;
-use HHK\sec\{
-    SecurityComponent,
-    Session,
-    WebInit,
-    Labels,
-    SAML
-};
-use HHK\SysConst\{
-    WebRole,
-    CodeVersion
-};
-use HHK\Update\{
-    SiteConfig,
-    UpdateSite,
-    SiteLog,
-    Patch
-};
+use HHK\sec\{SecurityComponent, Session, WebInit, Labels, SAML};
+use HHK\SysConst\{WebRole, CodeVersion};
+use HHK\Update\{SiteConfig, UpdateSite, SiteLog, Patch};
 use HHK\CreateMarkupFromDB;
-use HHK\HTMLControls\{
-    HTMLContainer,
-    HTMLSelector,
-    HTMLTable
-};
-use HHK\Exception\UploadException;
+use HHK\HTMLControls\{HTMLContainer, HTMLSelector};
 use HHK\CrmExport\AbstractExportManager;
 
 /**
@@ -37,10 +19,9 @@ use HHK\CrmExport\AbstractExportManager;
  * @link      https://github.com/NPSC/HHK
  */
 require "AdminIncludes.php";
-require FUNCTIONS . 'mySqlFunc.php';
 
 try {
-    $wInit = new webInit();
+    $wInit = new WebInit();
 } catch (\Exception $exw) {
     die($exw->getMessage());
 }
@@ -97,13 +78,13 @@ if (filter_has_var(INPUT_POST, "btnExtCnf") && $CmsManager !== NULL) {
     $tabIndex = 9;
 
     try {
-        $externalErrMsg = $CmsManager->saveConfig($dbh);
-    } catch (UploadException $ex) {
+        $notymsg = $CmsManager->saveConfig($dbh);
+    } catch (Exception $ex) {
         $externalErrMsg = "Save Configuration Error: " . $ex->getMessage();
     }
 
     if ($externalErrMsg != '') {
-        $externalErrMsg = HTMLContainer::generateMarkup('p', $externalErrMsg, array('class'=>'ui-state-error'));
+        $externalErrMsg = HTMLContainer::generateMarkup('p', $externalErrMsg, array('class'=>'ui-corner-all ui-state-error p-2 mb-3'));
     }
 }
 
@@ -345,7 +326,12 @@ foreach ($logSelRows as $r) {
 $ul = HTMLContainer::generateMarkup('ul', $li, array());
 $tabControl = HTMLContainer::generateMarkup('div', $ul . $tabContent, array('id' => 'logsTabDiv'));
 
-$conf = SiteConfig::createMarkup($dbh, NULL, array('pr'));
+$hiddenCategories = ['pr'];
+if(!SecurityComponent::is_TheAdmin()){
+    $hiddenCategories[] = 'es';
+}
+
+$conf = SiteConfig::createMarkup($dbh, NULL, $hiddenCategories);
 
 $localAuthMkup = SiteConfig::createMarkup($dbh, 'pr');
 
@@ -366,6 +352,7 @@ $authIdpList = SAML::getIdpList($dbh, false);
 <?php echo JQ_DT_CSS; ?>
 <?php echo NOTY_CSS; ?>
 <?php echo GRID_CSS; ?>
+<?php echo BOOTSTRAP_ICONS_CSS; ?>
 <?php echo NAVBAR_CSS; ?>
 
         <script type="text/javascript" src="<?php echo JQ_JS; ?>"></script>
@@ -454,7 +441,7 @@ echo $newsaml->getEditMarkup();
                                     <label for="newJobType"><strong>Add New Job:</strong></label>
                                     <select id="newJobType" class="mr-2">
                                         <option value="" selected disabled>Select Job Type</option>
-    <?php echo HTMLSelector::doOptionsMkup(readGenLookupsPDO($dbh, "cronJobTypes", "Description"), '', false); ?>
+    <?php echo HTMLSelector::doOptionsMkup(Common::readGenLookupsPDO($dbh, "cronJobTypes", "Description"), '', false); ?>
                                     </select>
                                     <button type="button" id="addJob">Add Job</button>
                                 </div>

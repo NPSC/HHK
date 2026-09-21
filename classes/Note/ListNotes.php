@@ -24,23 +24,23 @@ class ListNotes {
     /**
      * Summary of loadList
      * @param \PDO $dbh
-     * @param mixed $linkId
+     * @param int $linkId
      * @param mixed $linkType
-     * @param mixed $parms
+     * @param array $parms
      * @param mixed $concatNotes
      * @return array
      */
-    public static function loadList (\PDO $dbh, $linkId, $linkType, $parms, $concatNotes = FALSE) {
+    public static function loadList (\PDO $dbh, int $linkId, $linkType, array $parms, $concatNotes = FALSE): array {
 
-        $columns = array(
-            array( 'db' => 'Timestamp',  'dt' => 'Date' ),
-            array( 'db' => 'User_Name',   'dt' => 'User' ),
-            array( 'db' => 'Note_Text', 'dt' => 'Note'),
-            array( 'db' => 'Title', 'dt' => 'Title'),
-            array( 'db' => 'Note_Id', 'dt' => 'NoteId'),
-            array( 'db' => 'Action', 'dt' => 'Action'),
-            array( 'db' => 'flag', 'dt' => 'Flag'),
-        );
+        $columns = [
+            ['db' => 'Timestamp',  'dt' => 'Date'],
+            ['db' => 'User_Name',   'dt' => 'User'],
+            ['db' => 'Note_Text', 'dt' => 'Note'],
+            ['db' => 'Title', 'dt' => 'Title'],
+            ['db' => 'Note_Id', 'dt' => 'NoteId'],
+            ['db' => 'Action', 'dt' => 'Action'],
+            ['db' => 'flag', 'dt' => 'Flag'],
+        ];
 
         $dbView = '';
         $whereField = '';

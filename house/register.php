@@ -1,19 +1,19 @@
 <?php
 
+use HHK\Common;
+use HHK\ExcelHelper;
 use HHK\Exception\RuntimeException;
 use HHK\History;
-use HHK\House\GuestRegister;
 use HHK\House\OperatingHours;
 use HHK\House\Report\PaymentReport;
+use HHK\House\Report\ReportFilter;
 use HHK\House\Report\RoomReport;
 use HHK\HTMLControls\{HTMLContainer, HTMLInput, HTMLSelector};
 use HHK\Payment\PaymentGateway\AbstractPaymentGateway;
 use HHK\Payment\PaymentGateway\Deluxe\DeluxeGateway;
-use HHK\Payment\PaymentResult\PaymentResult;
 use HHK\Payment\PaymentSvcs;
 use HHK\sec\{SecurityComponent, Session, WebInit};
 use HHK\sec\Labels;
-use HHK\SysConst\GLTableNames;
 use HHK\SysConst\ItemPriceCode;
 use HHK\SysConst\Mode;
 use HHK\SysConst\ReservationStatus;
@@ -30,7 +30,7 @@ use HHK\US_Holidays;
  */
 require ("homeIncludes.php");
 
-$wInit = new webInit();
+$wInit = new WebInit();
 
 $dbh = $wInit->dbh;
 
@@ -107,26 +107,43 @@ try {
 // Page Return
 if (isset($_POST['btnDlCurGuests'])) {
     // Current guests
-    $rows = History::getCheckedInGuestMarkup($dbh, '', FALSE);
-    doExcelDownLoad($rows, 'CurrentGuests');
+    $rows = History::getCheckedInGuestMarkup($dbh, '', FALSE, FALSE, $labels->getString('MemberType', 'patient', 'Patient'), $labels->getString('hospital', 'hospital', 'Hospital'));
+    ExcelHelper::doExcelDownLoad($rows, 'CurrentGuests');
 }
+
+// Site labels used to match the on-screen DataTable headers for reservation/waitlist exports
+$exportLabels = [
+    'Guest First' => $labels->getString('MemberType', 'visitor', 'Guest') . ' First',
+    'Guest Last' => $labels->getString('MemberType', 'visitor', 'Guest') . ' Last',
+    'Patient' => $labels->getString('MemberType', 'patient', 'Patient'),
+    'Hospital' => $labels->getString('hospital', 'hospital', 'Hospital'),
+    'Location' => $labels->getString('hospital', 'location', 'Location'),
+    'Diagnosis' => $labels->getString('hospital', 'diagnosis', 'Diagnosis'),
+    'PrePaymt' => 'Pre-Paymt',
+    'State_Province' => 'State',
+    'Miles_From_House' => 'Miles away',
+    'WL Notes' => $labels->getString('referral', 'waitlistNotesLabel', 'WL Notes'),
+    'Timestamp' => 'Created On',
+    'Updated_By' => 'Updated By',
+];
+
 if (isset($_POST['btnDlConfRes'])) {
     // Confirmed Reservations
     $history = new History();
     $rows = $history->getReservedGuestsMarkup($dbh, ReservationStatus::Committed, FALSE, '', 1, TRUE);
-    doExcelDownLoad($rows, 'ConfirmedResv');
+    ExcelHelper::doExcelDownLoad(History::relabelExportKeys($rows, $exportLabels), 'ConfirmedResv');
 }
 if (isset($_POST['btnDlUcRes'])) {
     // Unconfirmed Reservations
     $history = new History();
     $rows = $history->getReservedGuestsMarkup($dbh, ReservationStatus::UnCommitted, FALSE, '', 1, TRUE);
-    doExcelDownLoad($rows, 'UnconfirmedResv');
+    ExcelHelper::doExcelDownLoad(History::relabelExportKeys($rows, $exportLabels), 'UnconfirmedResv');
 }
 if (isset($_POST['btnDlWlist'])) {
     // Waitlist
     $history = new History();
-    $rows = $history->getReservedGuestsMarkup($dbh, ReservationStatus::Waitlist, FALSE, '', 1, TRUE);
-    doExcelDownLoad($rows, 'Waitlist');
+    $rows = $history->getReservedGuestsMarkup($dbh, ReservationStatus::Waitlist, FALSE, '', 1, TRUE, 'order by Expected_Arrival asc');
+    ExcelHelper::doExcelDownLoad(History::relabelExportKeys($rows, $exportLabels), 'Waitlist');
 }
 if (isset($_POST['btnFeesDl'])) {
     // Dailey report
@@ -155,8 +172,8 @@ if (isset($_GET['gamess'])) {
 
 }
 
-$locations = readGenLookupsPDO($dbh, 'Location');
-$diags = readGenLookupsPDO($dbh, 'Diagnosis');
+$locations = Common::readGenLookupsPDO($dbh, 'Location');
+$diags = Common::readGenLookupsPDO($dbh, 'Diagnosis');
 
 
 
@@ -189,13 +206,6 @@ if ($uS->ShowUncfrmdStatusTab) {
     $uncommittedReservations = HTMLContainer::generateMarkup('h3', '<span>' . $labels->getString('register', 'unconfirmedTab', 'UnConfirmed Reservations') . '</span>' . HTMLInput::generateMarkup('Excel Download', ['type' => 'submit', 'name' => 'btnDlUcRes', 'style' => 'font-size:.9em;', 'class' => 'ml-5']) . ($uS->smsProvider ? HTMLContainer::generateMarkup('button', 'Text ' . $labels->getString('MemberType', 'visitor', 'Guest') . 's', ['role' => 'button', 'id' => "btnTextUnConfResvGuests", 'class' => 'ml-5', 'style' => 'font-size:.9em;']): "") . HTMLContainer::generateMarkup('button', 'View all Notes', ['role' => 'button', 'class' => 'ml-5 btnRegNotes', 'data-title'=>'All Notes for Unconfirmed Reservations','data-linktype'=>'unconfirmed', 'style' => 'font-size:.9em;']), ['style' => 'background-color:#D3D3D3;', 'class' => 'p-2'])
         . HTMLContainer::generateMarkup('div', "<table id='unreserv' class='display' style='width:100%;'cellpadding='0' cellspacing='0' border='0'></table>", ['id' => 'divunreserv']);
 }
-
-
-// make waitlist print button
-//$wlButton = HTMLContainer::generateMarkup('span', 'Date: ' . HTMLInput::generateMarkup(date('M j, Y'), array('id'=>'regwldate', 'class'=>'ckdate hhk-prtWL ml-2 mr-3'))
-//        . HTMLInput::generateMarkup('Print Wait List', array('id'=>'btnPrintWL', 'type'=>'button', 'data-page'=>'PrtWaitList.php', 'class'=>'hhk-prtWL mt-3 mt-md-0', 'style'=>'font-size:.85em;'))
-//        , array('style'=>'padding:9px;border:solid 1px #62A0CE;background-color:#E8E5E5; align-items:baseline;', "class"=>"hhk-flex hhk-flex-wrap my-3 my-md-0 ml-md-5"));
-
 
 $waitlist = HTMLContainer::generateMarkup('h3', '<span>' . $labels->getString('register', 'waitlistTab', 'Wait List') . '</span>' .
         HTMLInput::generateMarkup('Excel Download', ['type' => 'submit', 'name' => 'btnDlWlist', 'style' => 'font-size:.9em;', "class" => "ml-5"]) . ($uS->smsProvider ? HTMLContainer::generateMarkup('button', 'Text ' . $labels->getString('MemberType', 'visitor', 'Guest') . 's', ['role' => 'button', 'id' => "btnTextWaitlistGuests", 'class' => 'ml-5', 'style' => 'font-size:.9em;']): "") . HTMLContainer::generateMarkup('button', 'View all Notes', ['role' => 'button', 'class' => 'ml-5 btnRegNotes', 'data-title'=>'All Notes for Waitlist Reservations','data-linktype'=>'waitlist', 'style' => 'font-size:.9em;'])
@@ -289,7 +299,7 @@ if($uS->Show_Closed){
     $closedDays = $operatingHours->getClosedDays();
 }
 //Resource grouping controls
-$rescGroups = readGenLookupsPDO($dbh, 'Room_Group');
+$rescGroups = Common::readGenLookupsPDO($dbh, 'Room_Group');
 
 if (isset($rescGroups[$uS->CalResourceGroupBy])) {
     $resourceGroupBy = $uS->CalResourceGroupBy;
@@ -297,10 +307,10 @@ if (isset($rescGroups[$uS->CalResourceGroupBy])) {
     $resourceGroupBy = '';
 }
 
-$rescGroupSel = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup(removeOptionGroups($rescGroups), $resourceGroupBy, FALSE), ['id' => 'selRoomGroupScheme']);
+$rescGroupSel = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup(HTMLSelector::removeOptionGroups($rescGroups), $resourceGroupBy, FALSE), ['id' => 'selRoomGroupScheme']);
 
 $showCharges = TRUE;
-$addnl = readGenLookupsPDO($dbh, 'Addnl_Charge');
+$addnl = Common::readGenLookupsPDO($dbh, 'Addnl_Charge');
 
 // decide to show payments and invoices
 if ($uS->RoomPriceModel == ItemPriceCode::None && count($addnl) == 0 && $uS->VisitFee == FALSE && $uS->KeyDeposit == FALSE) {
@@ -309,22 +319,10 @@ if ($uS->RoomPriceModel == ItemPriceCode::None && count($addnl) == 0 && $uS->Vis
 } else {
 
     // Prepare controls
-    $statusList = readGenLookupsPDO($dbh, 'Payment_Status');
-    $statusSelector = HTMLSelector::generateMarkup(
-            HTMLSelector::doOptionsMkup($statusList, ''),
-        ['name' => 'selPayStatus[]', 'id' => 'selPayStatus', 'size' => '7', 'multiple' => 'multiple']);
-
-    $payTypes = [];
-
-    foreach ($uS->nameLookups[GLTableNames::PayType] as $p) {
-        if ($p[2] != '') {
-            $payTypes[$p[2]] = [$p[2], $p[1]];
-        }
-    }
-
-    $payTypeSelector = HTMLSelector::generateMarkup(
-            HTMLSelector::doOptionsMkup($payTypes, ''),
-        ['name' => 'selPayType[]', 'id' => 'selPayType', 'size' => '5', 'multiple' => 'multiple']);
+    $feeFilter = new ReportFilter();
+    $feeFilter->createPayStatuses($dbh)->createPayTypes($dbh);
+    $statusSelector = $feeFilter->payStatusMarkup()->generateMarkup(['class' => 'mb-2 mr-2']);
+    $payTypeSelector = $feeFilter->payTypesMarkup()->generateMarkup(['class' => 'mb-2']);
 
     // Count unpaid invoices
 
@@ -344,7 +342,7 @@ if ($uS->UseWLnotes) {
 
 $referralStatuses = "";
 if($uS->useOnlineReferral){
-    $referralStatuses = json_encode(readGenLookupsPDO($dbh, 'Referral_Form_Status', 'Order'));
+    $referralStatuses = json_encode(Common::readGenLookupsPDO($dbh, 'Referral_Form_Status', 'Order'));
 }
 
 
@@ -429,9 +427,19 @@ if($uS->useOnlineReferral){
                 background-color: #dbfcb5;
                 opacity: .6;
             }
+            .fc-timeline-slot-label.hhk-fcslot-holiday {
+                opacity: 1;
+            }
             .hhk-fcslot-closed {
-                background-color: #fcb5b5;
+                background-color: #dadada;
                 opacity: .6;
+            }
+            .fc-timeline-slot-label.hhk-fcslot-closed {
+                opacity: 1;
+            }
+
+            :root {
+                --fc-neutral-bg-color: hsla(0, 0%, 82%, .5); /* sets room group header background */
             }
 
         </style>
@@ -519,25 +527,27 @@ if($uS->useOnlineReferral){
                 <?php } ?>
                 <?php if ($isGuestAdmin) { ?>
                 <div id="vfees" class="hhk-tdbox hhk-visitdialog" style="display:none; ">
-                    <table>
-                        <tr>
-                            <th>Date Range</th>
-                            <th>Status</th>
-                            <th>Pay Type</th>
-                        </tr><tr>
-                            <td>Starting: <input type="text" id="txtfeestart" name="stDate" class="ckdate" value="" /></td>
-                            <td rowspan="2"><?php echo $statusSelector; ?></td>
-                            <td rowspan="2"><?php echo $payTypeSelector; ?></td>
-                        </tr><tr>
-                            <td>Ending: <input type="text" id="txtfeeend" name="enDate" class="ckdate" value="" /></td>
-
-                        </tr>
-                        <tr>
-                            <td><label for="fcbdinv">Show Deleted Invoices </label><input type='checkbox' id='fcbdinv' name="fcbdinv"/></td>
-                            <td colspan="2" style="text-align:right;"><input type="submit" name="btnFeesDl" value="Excel Download" style="margin-right:20px;"/><input type="button" id="btnFeesGo" value="Run"/></td>
-                        </tr>
-                    </table>
-                    <div id="rptfeediv" class="hhk-visitdialog"><p id="rptFeeLoading" class="ui-state-active" style="font-size: 1.1em; float:left; display:none; margin:20px; padding: 5px;">Loading Payment Report...</p></div>
+                    <div style="max-width: fit-content;" class="ui-widget ui-widget-content ui-corner-all p-2 mb-2">
+                        <div class="hhk-flex hhk-flex-wrap">
+                            <table class="mb-2 mr-2">
+                                <thead><tr><th>Date Range</th></tr></thead>
+                                <tbody>
+                                    <tr><td>Starting: <input type="text" id="txtfeestart" name="stDate" class="ckdate" value="" /></td></tr>
+                                    <tr><td>Ending: <input type="text" id="txtfeeend" name="enDate" class="ckdate" value="" /></td></tr>
+                                </tbody>
+                            </table>
+                            <?php echo $statusSelector; ?>
+                            <?php echo $payTypeSelector; ?>
+                        </div>
+                        <div class="mt-3 hhk-flex justify-content-between align-items-baseline">
+                            <div class="ml-1">
+                                <input type='checkbox' id='fcbdinv' name="fcbdinv"/>
+                                <label for="fcbdinv">Show Deleted Invoices</label>
+                            </div>
+                            <div><input type="submit" name="btnFeesDl" value="Excel Download" class="mr-3"/><input type="button" id="btnFeesGo" value="Run"/></div>
+                        </div>
+                        <div id="rptfeediv" class="hhk-visitdialog"><p id="rptFeeLoading" class="ui-state-active" style="font-size: 1.1em; display:none; margin:20px; padding: 5px;">Loading Payment Report...</p></div>
+                    </div>
                 </div>
                 <div id="vInv" class="hhk-tdbox hhk-visitdialog" style="display:none;">
                     <input type="button" id="btnInvGo" value="Refresh"/>
@@ -611,13 +621,14 @@ if($uS->useOnlineReferral){
         <input  type="hidden" id="wlTitle" value='<?php echo $labels->getString('referral', 'waitlistNotesLabel', 'WL Notes'); ?>' />
         <input  type="hidden" id="showCharges" value='<?php echo $showCharges ?>' />
         <input  type="hidden" id="acceptResvPay" value='<?php echo $uS->AcceptResvPaymt; ?>' />
+        <input  type="hidden" id="showCityOnRegister" value='<?php echo $uS->showCityOnRegister; ?>' />
         <input  type="hidden" id="defaultEventColor" value='<?php echo $uS->DefaultCalEventColor; ?>' />
         <input  type="hidden" id="defCalEventTextColor" value='<?php echo $uS->DefCalEventTextColor; ?>' />
         <input  type="hidden" id="resourceGroupBy" value='<?php echo $resourceGroupBy; ?>' />
         <input  type="hidden" id="resourceColumnWidth" value='<?php echo $uS->CalRescColWidth; ?>' />
         <input  type="hidden" id="defaultView" value='<?php echo $defaultView; ?>' />
         <input  type="hidden" id="expandResources" value='<?php echo $uS->CalExpandResources; ?>' />
-        <input  type="hidden" id="staffNoteCats" value='<?php echo json_encode(readGenLookupsPDO($dbh, 'Staff_Note_Category', 'Order')); ?>' />
+        <input  type="hidden" id="staffNoteCats" value='<?php echo json_encode(Common::readGenLookupsPDO($dbh, 'Staff_Note_Category', 'Order')); ?>' />
         <input  type="hidden" id="holidays" value='<?php echo json_encode($holidays); ?>' />
         <input type="hidden" id="closedDays" value='<?php echo json_encode($closedDays); ?>' />
 		<input  type="hidden" id="showCurrentGuestPhotos" value='<?php echo ($uS->showCurrentGuestPhotos && $uS->ShowGuestPhoto); ?>' />

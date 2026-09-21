@@ -15,18 +15,18 @@ use HHK\Tables\Fields\{DB_Field, DbIntSanitizer, DbStrSanitizer, DbDateSanitizer
 
 class EmergContactRS extends AbstractTableRS {
     
-    public $idEmergency_contact;   // int(11) NOT NULL AUTO_INCREMENT,
-    public $idName;   // int(11) NOT NULL,
-    public $Name_Last;   // varchar(45) NOT NULL DEFAULT '',
-    public $Name_First;   // varchar(45) NOT NULL DEFAULT '',
-    public $Relationship;   // varchar(5) NOT NULL DEFAULT '',
-    public $Phone_Home;   // varchar(15) NOT NULL DEFAULT '',
-    public $Phone_Mobile;   // varchar(15) NOT NULL DEFAULT '',
-    public $Phone_Alternate;   // varchar(15) NOT NULL DEFAULT '',
-    //public $Notes;   // text,
-    public $Last_Updated;   // datetime DEFAULT NULL,
-    public $Updated_By;   // varchar(45) NOT NULL DEFAULT '',
-    protected $Timestamp;   // timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    public DB_Field $idEmergency_contact;   // int(11) NOT NULL AUTO_INCREMENT,
+    public DB_Field $idName;   // int(11) NOT NULL,
+    public DB_Field $Name_Last;   // varchar(45) NOT NULL DEFAULT '',
+    public DB_Field $Name_First;   // varchar(45) NOT NULL DEFAULT '',
+    public DB_Field $Relationship;   // varchar(5) NOT NULL DEFAULT '',
+    public DB_Field $Phone_Home;   // varchar(15) NOT NULL DEFAULT '',
+    public DB_Field $Phone_Mobile;   // varchar(15) NOT NULL DEFAULT '',
+    public DB_Field $Phone_Alternate;   // varchar(15) NOT NULL DEFAULT '',
+    //public DB_Field $Notes;   // text,
+    public DB_Field $Last_Updated;   // datetime DEFAULT NULL,
+    public DB_Field $Updated_By;   // varchar(45) NOT NULL DEFAULT '',
+    protected DB_Field $Timestamp;   // timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
     
     
     function __construct($TableName = "emergency_contact") {

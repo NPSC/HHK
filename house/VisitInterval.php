@@ -1,6 +1,7 @@
 <?php
 
 use HHK\ColumnSelectors;
+use HHK\Common;
 use HHK\House\Visit\VisitIntervalOldRpt;
 use HHK\Exception\RuntimeException;
 use HHK\House\Report\ReportFieldSet;
@@ -9,6 +10,7 @@ use HHK\HTMLControls\HTMLContainer;
 use HHK\Payment\PaymentGateway\AbstractPaymentGateway;
 use HHK\Payment\PaymentGateway\Deluxe\DeluxeGateway;
 use HHK\Payment\PaymentSvcs;
+use HHK\Purchase\Item;
 use HHK\sec\{
     Session,
     WebInit,
@@ -36,7 +38,7 @@ use HHK\SysConst\Mode;
 require "homeIncludes.php";
 
 try {
-    $wInit = new webInit();
+    $wInit = new WebInit();
 } catch (Exception $exw) {
     die("Arrg!  " . $exw->getMessage());
 }
@@ -103,7 +105,7 @@ $dataTable = '';
 $statsTable = '';
 $errorMessage = '';
 $cFields = [];
-$rescGroups = readGenLookupsPDO($dbh, 'Room_Group');
+$rescGroups = Common::readGenLookupsPDO($dbh, 'Room_Group');
 $useTaxes = FALSE;
 $eachTaxPaid = [];
 $eachTaxSQL = '';
@@ -134,7 +136,27 @@ $filter->createResourceGroups($dbh);
 // array: title, ColumnName, checked, fixed, Excel Type, Excel Style, [td parms]
 $cFields[] = ['Visit Id', 'idVisit', 'checked', 'f', 'n', '', ['style' => 'text-align:center;']];
 $cFields[] = [$labels->getString('MemberType', 'primaryGuest', 'Primary Guest'), 'idPrimaryGuest', 'checked', '', 's', '', []];
+$cFields[] = [$labels->getString('MemberType', 'primaryGuest', 'Primary Guest') . ' Phone', 'pg_phone', '', '', 's', '', []];
+$cFields[] = [$labels->getString('MemberType', 'primaryGuest', 'Primary Guest') . ' Email', 'pg_email', '', '', 's', '', []];
+
+// PG address.
+$pgFields = ['pgAddr', 'pgCity'];
+$pgTitles = [$labels->getString('MemberType', 'primaryGuest', 'Primary Guest') . ' Address', $labels->getString('MemberType', 'primaryGuest', 'Primary Guest') . ' City'];
+
+if ($uS->county) {
+    $pgFields[] = 'pgCounty';
+    $pgTitles[] = $labels->getString('MemberType', 'primaryGuest', 'Primary Guest') . ' County';
+}
+
+$pgFields = array_merge($pgFields, array('pgState', 'pgCountry', 'pgZip'));
+$pgTitles = array_merge($pgTitles, [$labels->getString('MemberType', 'primaryGuest', 'Primary Guest') . ' State', $labels->getString('MemberType', 'primaryGuest', 'Primary Guest') . ' Country', $labels->getString('MemberType', 'primaryGuest', 'Primary Guest') . ' Zip']);
+
+$cFields[] = array($pgTitles, $pgFields, '', '', 's', '', array());
+
+
 $cFields[] = [$labels->getString('MemberType', 'patient', 'Patient'), 'idPatient', 'checked', '', 's', '', []];
+$cFields[] = [$labels->getString('MemberType', 'patient', 'Patient') . ' Phone', 'pa_phone', '', '', 's', '', []];
+$cFields[] = [$labels->getString('MemberType', 'patient', 'Patient') . ' Email', 'pa_email', '', '', 's', '', []];
 
 // Patient address.
 if ($uS->PatientAddr) {
@@ -180,12 +202,12 @@ if ($uS->Doctor) {
     $cFields[] = array("Doctor", 'Doctor', '', '', 's', '', array());
 }
 
-$locations = readGenLookupsPDO($dbh, 'Location');
+$locations = Common::readGenLookupsPDO($dbh, 'Location');
 if (count($locations) > 0) {
     $cFields[] = array($labels->getString('hospital', 'location', 'Location'), 'Location', 'checked', '', 's', '', array());
 }
 
-$diags = readGenLookupsPDO($dbh, 'Diagnosis');
+$diags = Common::readGenLookupsPDO($dbh, 'Diagnosis');
 if (count($diags) > 0) {
     $cFields[] = array($labels->getString('hospital', 'diagnosis', 'Diagnosis'), 'Diagnosis', 'checked', '', 's', '', array());
 }
@@ -206,12 +228,13 @@ if ($uS->VisitFee) {
     $cFields[] = array($labels->getString('statement', 'cleaningFeeLabel', "Clean Fee"), 'visitFee', 'checked', '', 's', '', array('style' => 'text-align:right;'));
 }
 
-$adjusts = readGenLookupsPDO($dbh, 'Addnl_Charge');
+$adjusts = Common::readGenLookupsPDO($dbh, 'Addnl_Charge');
 if (count($adjusts) > 0) {
-    $cFields[] = array("Addnl Charge", 'adjch', 'checked', '', 's', '', array('style' => 'text-align:right;'));
+    $addnlChargeLabel = (new Item($dbh, ItemId::AddnlCharge))->getDescription();
+    $cFields[] = array($addnlChargeLabel, 'adjch', 'checked', '', 's', '', array('style' => 'text-align:right;'));
 
     if ($useTaxes) {
-        $cFields[] = ["Addnl Tax", 'adjchtx', 'checked', '', 's', '', ['style' => 'text-align:right;']];
+        $cFields[] = array($addnlChargeLabel . " Tax", 'adjchtx', 'checked', '', 's', '', array('style' => 'text-align:right;'));
     }
 }
 
@@ -383,9 +406,9 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel']) || isset($_POST['btnSt
         if ($hospitalTitles != '') {
             $h = trim($hospitalTitles);
             $hospitalTitles = substr($h, 0, strlen($h) - 1);
-            $headerTable .= HTMLContainer::generateMarkup('p', $labels->getString('hospital', 'hospital', 'Hospital') . 's: ' . $hospitalTitles);
+            $headerTable .= HTMLContainer::generateMarkup('p', $labels->getString('hospital', 'hospitals', 'Hospitals') . ': ' . $hospitalTitles);
         } else {
-            $headerTable .= HTMLContainer::generateMarkup('p', 'All ' . $labels->getString('hospital', 'hospital', 'Hospital') . 's');
+            $headerTable .= HTMLContainer::generateMarkup('p', 'All ' . $labels->getString('hospital', 'hospitals', 'Hospitals'));
         }
 
     } else {
@@ -428,6 +451,7 @@ if ($uS->CoTod) {
         <script type="text/javascript" src="<?php echo JQ_DT_JS ?>"></script>
         <script type="text/javascript" src="<?php echo PRINT_AREA_JS ?>"></script>
         <script type="text/javascript" src="<?php echo RESV_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo RESV_MANAGER_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo PAYMENT_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo VISIT_DIALOG_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo BUFFER_JS; ?>"></script>
@@ -482,10 +506,9 @@ if ($uS->CoTod) {
                 </div>
                 <div style="text-align:center; margin-top: 10px;">
                     <span style="color:red; margin-right:1em;"><?php echo $errorMessage; ?></span>
-                    <input type="submit" name="btnStatsOnly" id="btnStatsOnly" value="Stats Only"
-                        style="margin-right: 1em;" />
-                    <input type="submit" name="btnHere" id="btnHere" value="Run Here" style="margin-right: 1em;" />
-                    <input type="submit" name="btnExcel" id="btnExcel" value="Download to Excel" />
+                    <input type="submit" name="btnStatsOnly" id="btnStatsOnly" value="Stats Only" class="ui-button ui-corner-all mx-2">
+                    <input type="submit" name="btnHere" id="btnHere" value="Run Here"  class="ui-button ui-corner-all mx-2">
+                    <input type="submit" name="btnExcel" id="btnExcel" value="Download to Excel" class="ui-button ui-corner-all mx-2">
                 </div>
             </form>
         </div>

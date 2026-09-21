@@ -339,7 +339,15 @@ function showChangeRoom(gname, id, idVisit, span) {
 
             }
 
-            let sDate = new Date(data.start)
+            let sDate = new Date(data.start);
+            let eDate = data.end ? new Date(data.end) : null;
+            let tomorrow = new Date();
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            tomorrow.setHours(0, 0, 0, 0);
+
+            if (eDate === null || Number.isNaN(eDate.getTime())) {
+                eDate = new Date(tomorrow);
+            }
 
             let $diagbox = $('#chgRoomDialog');
 
@@ -348,6 +356,8 @@ function showChangeRoom(gname, id, idVisit, span) {
 
 			let $selResource = $diagbox.find('#selResource');
             let $changeDate = $('#resvChangeDate');
+            let $expectedDepDate = $('#resvExpDepDate');
+            let $curExpDepDate = $('#spnCurExpDepDate');
             let $replaceRoom = $('input[name=rbReplaceRoom]');
             let $cbUseDefaultRate = $('#cbUseDefaultRate');
 
@@ -364,19 +374,50 @@ function showChangeRoom(gname, id, idVisit, span) {
 
             $changeDate.datepicker('setDate', new Date());
 
+            $expectedDepDate.datepicker({
+                yearRange: '-00:+02',
+                changeMonth: true,
+                changeYear: true,
+                autoSize: true,
+                numberOfMonths: 1,
+                minDate: tomorrow,
+                dateFormat: 'M d, yy'
+            });
+
+            $expectedDepDate.datepicker('setDate', eDate);
+
+            if (data.curExpDep) {
+            	let curExpDepDate = new Date(data.curExpDep);
+            	if (!Number.isNaN(curExpDepDate.getTime())) {
+            		$curExpDepDate.text($.datepicker.formatDate('M d, yy', curExpDepDate));
+            	}
+            }
+
             // room changer radiobutton
-            $replaceRoom.change(function () {
+			$replaceRoom.change(function () {
 				if($(this).val() == 'new' && $changeDate.val() !== '') {
-					getVisitRoomList(idVisit, span, $changeDate.datepicker( "getDate" ), $selResource);
+					getVisitRoomList(idVisit, span, $changeDate.datepicker( "getDate" ), $selResource, $expectedDepDate.datepicker("getDate"));
 				} else if ($(this).val() == 'rpl') {
-					getVisitRoomList(idVisit, span, sDate, $selResource);
+					getVisitRoomList(idVisit, span, sDate, $selResource, $expectedDepDate.datepicker("getDate"));
 				}
 			});
 
             // Date Control
             $changeDate.change(function (){
 				$('input[name=rbReplaceRoomnew]').prop('checked', true);
-				getVisitRoomList(idVisit, span, $changeDate.datepicker( "getDate" ), $selResource);
+				getVisitRoomList(idVisit, span, $changeDate.datepicker( "getDate" ), $selResource, $expectedDepDate.datepicker("getDate"));
+			});
+
+            $expectedDepDate.change(function (){
+				let changeDate = $changeDate.datepicker("getDate");
+
+				if ($('input[name="rbReplaceRoom"]:checked').val() === 'rpl') {
+					changeDate = sDate;
+				}
+
+				if (changeDate) {
+					getVisitRoomList(idVisit, span, changeDate, $selResource, $expectedDepDate.datepicker("getDate"));
+				}
 			});
 
             //init room selector data
@@ -413,7 +454,11 @@ function showChangeRoom(gname, id, idVisit, span) {
 		    let buttons = {
 		        "Change Rooms": function() {
 		        	if($('#selResource').val() > 0){
-		            	changeRooms(idVisit, span, $selResource.val(), $('input[name="rbReplaceRoom"]:checked').val(), $cbUseDefaultRate.prop('checked'), $changeDate.datepicker( "getDate" ).toUTCString());
+		            	let expectedDeparture = '';
+		            	if ($expectedDepDate.datepicker("getDate")) {
+		            		expectedDeparture = $expectedDepDate.datepicker("getDate").toUTCString();
+		            	}
+		            	changeRooms(idVisit, span, $selResource.val(), $('input[name="rbReplaceRoom"]:checked').val(), $cbUseDefaultRate.prop('checked'), $changeDate.datepicker( "getDate" ).toUTCString(), expectedDeparture);
 		            	$(this).dialog("close");
 		            }else{
 		            	$('#rmDepMessage').text('Choose a room').show();
@@ -432,9 +477,18 @@ function showChangeRoom(gname, id, idVisit, span) {
         }
     });
 
-	function changeRooms(idVisit, span, idRoom, replaceRoom, useDefaultRate, changeDate) {
+	function changeRooms(idVisit, span, idRoom, replaceRoom, useDefaultRate, changeDate, expectedDeparture) {
 
-		let parms = {cmd: 'doChangeRooms', idVisit: idVisit, span: span, idRoom: idRoom, replaceRoom: replaceRoom, useDefault: useDefaultRate, changeDate: changeDate};
+		let parms = {
+			cmd: 'doChangeRooms',
+			idVisit: idVisit,
+			span: span,
+			idRoom: idRoom,
+			replaceRoom: replaceRoom,
+			useDefault: useDefaultRate,
+			changeDate: changeDate,
+			expectedDeparture: expectedDeparture
+		};
 
 		$.post('ws_ckin.php', parms,
 			function (data) {
@@ -470,7 +524,7 @@ function showChangeRoom(gname, id, idVisit, span) {
 
 	}
 
-    function getVisitRoomList(idVisit, visitSpan, changeDate, $rescSelector) {
+    function getVisitRoomList(idVisit, visitSpan, changeDate, $rescSelector, expectedDeparture) {
 
 	    $rescSelector.prop('disabled', true);
 	    $('#hhk-roomChsrtitle').addClass('hhk-loading');
@@ -479,7 +533,14 @@ function showChangeRoom(gname, id, idVisit, span) {
 	    d = new Date();
 
 
-	    let parms = {cmd:'chgRoomList', idVisit:idVisit, span:visitSpan, chgDate:changeDate.toDateString(), selRescId:$rescSelector.val()};
+	    let parms = {
+	    	cmd:'chgRoomList',
+	    	idVisit:idVisit,
+	    	span:visitSpan,
+	    	chgDate:changeDate.toDateString(),
+	    	selRescId:$rescSelector.val(),
+	    	expDep: (expectedDeparture ? expectedDeparture.toDateString() : '')
+	    };
 
 	    $.post('ws_ckin.php', parms,
 	        function (data) {
@@ -522,15 +583,20 @@ function showChangeRoom(gname, id, idVisit, span) {
 
 }
 
-function moveVisit(mode, idVisit, visitSpan, startDelta, endDelta, updateCal) {
-    $.post('ws_ckin.php',
-            {
-                cmd: mode,
-                idVisit: idVisit,
-                span: visitSpan,
-                sdelta: startDelta,
-                edelta: endDelta
-},
+function moveVisit(mode, idVisit, visitSpan, startDelta, endDelta, updateCal, idResc) {
+    const params = {
+        cmd: mode,
+        idVisit: idVisit,
+        span: visitSpan,
+        sdelta: startDelta,
+        edelta: endDelta
+    };
+
+    if (isNumber(idResc)) {
+        params.idResc = idResc;
+    }
+
+    return $.post('ws_ckin.php', params,
     function(data) {
         if (data) {
             try {
@@ -549,7 +615,8 @@ function moveVisit(mode, idVisit, visitSpan, startDelta, endDelta, updateCal) {
             } else if (data.success) {
                 flagAlertMessage(data.success, 'success');
             }
-            if (updateCal === undefined || updateCal === true) {
+
+            if (updateCal !== false) {
                 calendar.refetchResources();
                 calendar.refetchEvents();
                 refreshdTables(data);
@@ -591,7 +658,7 @@ function getRoomList(idResv, eid, targetEl) {
                     }
 
                     if (confirm('Change room to ' + $('#selRoom option:selected').text() + '?')) {
-                        setRoomTo(data.rid, $('#selRoom').val());
+                        moveVisit('reservMove', data.rid, 0, 0, 0, true, $('#selRoom').val());
                     }
                     contr.remove();
                 });
@@ -674,6 +741,7 @@ var hindx = 0,
     wlTitle = $('#wlTitle').val(),
     showCharges = $('#showCharges').val(),
 	acceptResvPay = $('#acceptResvPay').val(),
+    showCityOnRegister = $('#showCityOnRegister').val(),
 	holidays = $.parseJSON($('#holidays').val()),
     closedDays = $.parseJSON($('#closedDays').val()),
 	showCurrentGuestPhotos = $("#showCurrentGuestPhotos").val(),
@@ -772,6 +840,12 @@ $(document).ready(function () {
 
             rvCols.push({data: 'Occupants', title: 'Occupants', className: 'hhk-justify-c'});
 
+            if(showCityOnRegister){
+                rvCols.push({data: 'City', title: visitorLabel+' City'});
+				rvCols.push({data: 'State_Province', title: 'State'});
+				rvCols.push({data: 'Miles_From_House', title: 'Miles away'});
+            }
+
             if (acceptResvPay) {
 				rvCols.push({data: 'PrePaymt', title: 'Pre-Paymt', className: 'hhk-justify-c'});
 			}
@@ -795,6 +869,7 @@ $(document).ready(function () {
             {data: 'Guest First', title: visitorLabel+' First'},
             {data: 'Guest Last', title: visitorLabel+' Last'}];
 
+            
             if (showCreatedDate) {
                 wlCols.push({data: 'Timestamp', title: 'Created On', render: function (data, type) {return dateRender(data, type, "MMM D, YYYY H:mm")}});
 				wlCols.push({data: 'Updated_By', title: 'Updated By'});
@@ -804,6 +879,12 @@ $(document).ready(function () {
             wlCols.push({data: 'Nights', title: 'Nights', className: 'hhk-justify-c'});
             wlCols.push({data: 'Expected Departure', title: 'Expected Departure', render: function (data, type) {return dateRender(data, type, dateFormat);}});
             wlCols.push({data: 'Occupants', title: 'Occupants', className: 'hhk-justify-c'});
+
+            if(showCityOnRegister){
+                wlCols.push({data: 'City', title: visitorLabel+' City'});
+				wlCols.push({data: 'State_Province', title: 'State'});
+				wlCols.push({data: 'Miles_From_House', title: 'Miles away'});
+            }
 
             if (acceptResvPay) {
 				wlCols.push({data: 'PrePaymt', title: 'Pre-Paymt', className: 'hhk-justify-c'});
@@ -830,7 +911,18 @@ $(document).ready(function () {
     let dailyCols = [
             {data: 'titleSort', 'visible': false },
             {data: 'Title', title: 'Room', 'orderData': [0, 1], className: 'hhk-justify-c'},
-            {data: 'Status', title: 'Status', searchable:false},
+            {
+            'data': 'Status',
+            'title': 'Status',
+            'searchable': false,
+            'sortable': true,
+            'createdCell': function(td, cellData, rowData, col){
+                if(rowData.StatusColor){
+                    $(td).css("background-color", rowData.StatusColor);
+                }
+            }
+
+        },
             {data: 'Guests', title: visitorLabel+'s'},
             {data: 'Patient_Name', title: patientLabel}];
 
@@ -1115,8 +1207,19 @@ $(document).ready(function () {
             right: 'timeline1weeks,timeline2weeks,timeline3weeks,timeline4weeks refresh,today prevMonth,prev,next,nextMonth'
         },
 
-        slotLabelClassNames: 'hhk-fc-slot-title',
+        slotLabelClassNames: function (info) {
+            let strDay = info.date.getFullYear() + '-' + (info.date.getMonth() + 1) + '-' + info.date.getDate();
+            
+			if (holidays.includes(strDay)) {
+				return 'hhk-fcslot-holiday';
+			}
+            if(closedDays.includes(info.date.getDay())){
+                return 'hhk-fcslot-closed';
+            }
+            
+            return 'hhk-fc-slot-title';
 
+        },
 		slotLaneClassNames: function (info) {
 			if (info.isToday) {
 				return 'hhk-fcslot-today';
@@ -1127,7 +1230,7 @@ $(document).ready(function () {
 					return 'hhk-fcslot-holiday';
 				}
                 if(closedDays.includes(info.date.getDay())){
-                    return 'fc-cell-shaded';
+                    return 'hhk-fcslot-closed';
                 }
 			}
 		},
@@ -1190,12 +1293,14 @@ $(document).ready(function () {
             $(".hhk-alert").hide();
 
             let event = info.event;
+            let sentMoveRequest = false;
 
             // visit
             if (event.extendedProps.idVisit > 0 && info.delta.days !== 0) {
                 if (confirm('Move Visit to a new start date?')) {
-                    moveVisit('visitMove', event.extendedProps.idVisit, event.extendedProps.Span, info.delta.days, info.delta.days);
-                	return;
+                    moveVisit('visitMove', event.extendedProps.idVisit, event.extendedProps.Span, info.delta.days, info.delta.days, true);
+                    sentMoveRequest = true;
+                	//return;
                 }
             }
 
@@ -1204,42 +1309,57 @@ $(document).ready(function () {
 
                 let resources = event.getResources();
                 let resource = resources[0];
+                let targetRescId = resource.extendedProps.idResc;
+                let movedDates = info.delta.days !== 0;
+                let changedRoom = targetRescId !== event.extendedProps.idResc;
+                let shouldMoveDates = false;
 
-                // move by date?
-                if (info.delta.days !== 0 && resource.extendedProps.idResc === event.extendedProps.idResc) {
-
-                    if (confirm('Move Reservation to a new start date?')) {
-                        moveVisit('reservMove', event.extendedProps.idReservation, 0, info.delta.days, info.delta.days);
-                        return;
+                // move by date and room in a single call
+                if (movedDates && changedRoom) {
+                    let moveMssg = 'Move Reservation to a new start date and room?';
+                    if (targetRescId == 0) {
+                        moveMssg = 'Move Reservation to a new start date and waitlist?';
                     }
-                } else if (info.delta.days !== 0) {
+
+                    if (confirm(moveMssg)) {
+                        moveVisit('reservMove', event.extendedProps.idReservation, 0, info.delta.days, info.delta.days, true, targetRescId);
+                        shouldMoveDates = true;
+                        sentMoveRequest = true;
+                    }
+                } else if (movedDates) {
 
                     if (confirm('Move Reservation to a new start date?')) {
-                        moveVisit('reservMove', event.extendedProps.idReservation, 0, info.delta.days, info.delta.days, false);
+                        moveVisit('reservMove', event.extendedProps.idReservation, 0, info.delta.days, info.delta.days, true);
+                        shouldMoveDates = true;
+                        sentMoveRequest = true;
                     }
 				}
 
                 // Change rooms?
-                if (resource.extendedProps.idResc !== event.extendedProps.idResc) {
+                if (!shouldMoveDates && changedRoom) {
 
-                	let mssg = 'Move Reservation to a new room?';
+                	let mssg = 'Move Reservation to a new room for the same dates?';
 
-                	if (resource.extendedProps.idResc == 0) {
-                		mssg = 'Move Reservation to the waitlist?'
+                	if (targetRescId == 0) {
+                		mssg = 'Move Reservation to the waitlist for the same dates?';
+                	} else if (resource.title) {
+                		mssg = 'Move Reservation to room ' + resource.title + ' for the same dates?';
                 	}
 
                     if (confirm(mssg)) {
-                        if (setRoomTo(event.extendedProps.idReservation, resource.extendedProps.idResc)) {
-                        	return;
-                        }
+                        moveVisit('reservMove', event.extendedProps.idReservation, 0, 0, 0, true, targetRescId);
+                        sentMoveRequest = true;
                     }
                 }
             }
-            info.revert();
+            if (!sentMoveRequest) {
+                info.revert();
+            }
         },
 
         eventResize: function (info) {
             $(".hhk-alert").hide();
+            let sentMoveRequest = false;
 
             if (info.endDelta === undefined) {
                 info.revert();
@@ -1247,17 +1367,21 @@ $(document).ready(function () {
             }
             if (info.event.extendedProps.idVisit > 0) {
                 if (confirm('Move check out date?')) {
-                    moveVisit('visitMove', info.event.extendedProps.idVisit, info.event.extendedProps.Span, 0, info.endDelta.days);
-                    return;
+                    moveVisit('visitMove', info.event.extendedProps.idVisit, info.event.extendedProps.Span, 0, info.endDelta.days, true);
+                    sentMoveRequest = true;
+                    //return;
                 }
             }
             if (info.event.extendedProps.idReservation > 0) {
                 if (confirm('Move expected end date?')) {
-                    moveVisit('reservMove', info.event.extendedProps.idReservation, 0, 0, info.endDelta.days);
-                    return;
+                    moveVisit('reservMove', info.event.extendedProps.idReservation, 0, 0, info.endDelta.days, true);
+                    sentMoveRequest = true;
+                    //return;
                 }
             }
-            info.revert();
+            if (!sentMoveRequest) {
+                info.revert();
+            }
         },
 
         eventClick: function (info) {
@@ -1374,6 +1498,8 @@ $(document).ready(function () {
                 // Out of service
                 } else if (info.event.extendedProps.kind === 'oos') {
                     info.el.title = info.event.extendedProps.reason;
+                }else if (info.event.extendedProps.description && (info.event.extendedProps.kind === 'bo')) {
+                    info.el.title = info.event.extendedProps.description;
                 }
 
 				info.event.setProp('display', 'auto');
@@ -1420,8 +1546,8 @@ $(document).ready(function () {
         if (edDate === null) {
             edDate = new Date();
         }
-        let statuses = $('#selPayStatus').val() || [];
-        let ptypes = $('#selPayType').val() || [];
+        let statuses = $('#vfees select[name="selPayStatus[]"]').val() || [];
+        let ptypes = $('#vfees select[name="selPayType[]"]').val() || [];
 
         let parms = {
             cmd: 'actrpt',
@@ -1676,8 +1802,8 @@ $(document).ready(function () {
            dataSrc: 'curres'
        },
        drawCallback: function (settings) {
-           let ncur = this.api().rows().data().length;
-           $('#spnNumCurrent').text(this.api().rows().data().length);
+           let ncur = this.api().table().page.info().recordsTotal;
+           $('#spnNumCurrent').text(this.api().table().page.info().recordsTotal);
            $('#spnCurrentS').text('s');
            if (ncur == 1) {
                $('#spnCurrentS').text('');
@@ -1701,12 +1827,13 @@ $(document).ready(function () {
 
 
     $('#reservs').DataTable({
+        "processing": true,
+        "serverSide": true,
        ajax: {
-           url: 'ws_resc.php?cmd=getHist&tbl=reservs',
-           dataSrc: 'reservs'
+           url: 'ws_resc.php?cmd=getHist&tbl=reservs'
        },
        drawCallback: function (settings) {
-           $('#spnNumConfirmed').text(this.api().rows().data().length);
+           $('#spnNumConfirmed').text(this.api().table().page.info().recordsTotal);
            $('#reservs .gmenu').menu({
            		focus:function(e, ui){
            			$("#reservs .gmenu").not(this).menu("collapseAll", null, true);
@@ -1725,12 +1852,13 @@ $(document).ready(function () {
 
     if ($('#unreserv').length > 0) {
         $('#unreserv').DataTable({
+            "processing": true,
+            "serverSide": true,
            ajax: {
-               url: 'ws_resc.php?cmd=getHist&tbl=unreserv',
-               dataSrc: 'unreserv'
+               url: 'ws_resc.php?cmd=getHist&tbl=unreserv'
            },
            drawCallback: function (settings) {
-                $('#spnNumUnconfirmed').text(this.api().rows().data().length);
+                $('#spnNumUnconfirmed').text(this.api().table().page.info().recordsTotal);
                 $('#unreserv .gmenu').menu({
            			focus:function(e, ui){
            				$("#unreserv .gmenu").not(this).menu("collapseAll", null, true);
@@ -1749,13 +1877,14 @@ $(document).ready(function () {
     }
 
     $('#waitlist').DataTable({
+        "processing": true,
+        "serverSide": true,
        ajax: {
-           url: 'ws_resc.php?cmd=getHist&tbl=waitlist',
-           dataSrc: 'waitlist'
+           url: 'ws_resc.php?cmd=getHist&tbl=waitlist'
        },
        order: [[ (showCreatedDate ? 5 : 3), 'asc' ]],
        drawCallback: function () {
-            $('#spnNumWaitlist').text(this.api().rows().data().length);
+            $('#spnNumWaitlist').text(this.api().table().page.info().recordsTotal);
             $('#waitlist .gmenu').menu({
            		focus:function(e, ui){
            			$("#waitlist .gmenu").not(this).menu("collapseAll", null, true);

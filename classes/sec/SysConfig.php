@@ -1,7 +1,9 @@
 <?php
 namespace HHK\sec;
+use HHK\Crypto;
 use HHK\Exception\RuntimeException;
 use HHK\TableLog\HouseLog;
+use HHK\Update\SiteConfig;
 
 /**
  * SysConfig.php
@@ -26,11 +28,9 @@ class SysConfig {
      * @param Session $uS
      * @param string|array $category
      * @param string $tableName
-     * @param bool $returnArray
      * @throws RuntimeException
-     * @return void || array
      */
-    public static function getCategory(\PDO $dbh, Session $uS, $category, $tableName)
+    public static function getCategory(\PDO $dbh, Session $uS, array|string $category, string $tableName): void
     {
 
         if ($tableName == '' || $category == '') {
@@ -46,24 +46,23 @@ class SysConfig {
             $category = "'" . $category . "'";
         }
 
+        $rows = [];
         try {
             $stmt = $dbh->query("select `Key`,`Value`,`Type` from `" . $tableName . "` where Category in ($category) order by `Key`");
             $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+        
+            foreach ($rows as $r) {
+
+                $val = self::getTypedVal($r['Type'], $r['Value']);
+                $key = $r['Key'];
+                $uS->$key = $val;
+            }
+
         }catch(\PDOException $e){
             if($e->getCode() === "42S02"){ //table doesn't exist
                 throw new RuntimeException("Error: " . $e->errorInfo[2] . ": It looks like HHK isn't installed properly. Try running the installer.");
             }
         }
-
-        foreach ($rows as $r) {
-
-            $val = self::getTypedVal($r['Type'], $r['Value']);
-            $key = $r['Key'];
-            $uS->$key = $val;
-        }
-
-        unset($rows);
-        $stmt = NULL;
 
     }
 
@@ -73,10 +72,10 @@ class SysConfig {
      * @param string $tableName
      * @param string $key
      * @param mixed $default
-     * @throws \HHK\Exception\RuntimeException
+     * @throws RuntimeException
      * @return mixed
      */
-    public static function getKeyValue(\PDO $dbh, $tableName, $key, $default = null) {
+    public static function getKeyValue(\PDO $dbh, string $tableName, string $key, $default = null) {
 
         if ($tableName == '' || $key == '') {
             throw new RuntimeException('System Configuration database table name or key not specified.  ');
@@ -104,10 +103,10 @@ class SysConfig {
      * @param \PDO $dbh
      * @param string $tableName
      * @param string $key
-     * @throws \HHK\Exception\RuntimeException
+     * @throws RuntimeException
      * @return mixed
      */
-    public static function getKeyRecord(\PDO $dbh, $tableName, $key) {
+    public static function getKeyRecord(\PDO $dbh, string $tableName, string $key) {
 
         if ($tableName == '' || $key == '') {
             throw new RuntimeException('System Configuration database table name or key not specified.  ');
@@ -139,10 +138,10 @@ class SysConfig {
      * @param string $key
      * @param mixed $value
      * @param string $category
-     * @throws \HHK\Exception\RuntimeException
+     * @throws RuntimeException
      * @return void
      */
-    public static function saveKeyValue(\PDO $dbh, $tableName, $key, $value, $category = null) {
+    public static function saveKeyValue(\PDO $dbh, string $tableName, string $key, $value, ?string $category = null) {
 
         if ($tableName == '' || $key == '') {
             throw new RuntimeException('System Configuration database table name or key not specified.  ');
@@ -157,6 +156,10 @@ class SysConfig {
         $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
         if (count($rows) == 1) {
+
+            if($rows[0]['Type'] == 'ob' && $value == SiteConfig::PW_PLACEHOLDER){
+                return;
+            }
 
             $value = self::setValueByType($value, $rows[0]['Type']);
 
@@ -211,7 +214,7 @@ class SysConfig {
                 $val = filter_var($value, FILTER_VALIDATE_BOOLEAN);
                 break;
             case 'ob':
-                $val = decryptMessage($value);
+                $val = Crypto::decryptMessage($value);
                 break;
             default:
                 $val = $value;
@@ -241,7 +244,7 @@ class SysConfig {
                 }
                 break;
             case 'ob':
-                $val = encryptMessage($value);
+                $val = trim($value) !== '' ? Crypto::encryptMessage($value):'';
                 break;
             default:
                 $val = $value;

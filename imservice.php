@@ -1,4 +1,5 @@
 <?php
+use HHK\Common;
 use HHK\sec\Login;
 use HHK\Exception\RuntimeException;
 use HHK\sec\UserClass;
@@ -21,14 +22,12 @@ use HHK\Payment\PaymentSvcs;
 define('ciCFG_FILE', 'site.cfg' );
 define('CONF_PATH', 'conf/');
 
-require ('functions/commonFunc.php');
-
 if (file_exists('vendor/autoload.php')) {
     require('vendor/autoload.php');
 } else {
     exit("Unable to laod dependancies, be sure to run 'composer install'");
 }
-$sequence = getRandomString();
+$sequence = Common::getRandomString();
 
 try {
     $login = new Login();
@@ -41,7 +40,7 @@ try {
 }
 
 try {
-    $dbh = initPDO(TRUE);
+    $dbh = Common::initPDO(TRUE);
 } catch (RuntimeException $hex) {
     // Databasae not set up.  Nothing we can do.
     http_response_code(200);

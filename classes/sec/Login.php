@@ -3,6 +3,8 @@ namespace HHK\sec;
 
 
 use HHK\AlertControl\AlertMessage;
+use HHK\Common;
+use HHK\Crypto;
 use HHK\Exception\AuthException;
 use HHK\Exception\CsrfException;
 use HHK\Exception\RuntimeException;
@@ -48,7 +50,7 @@ class Login {
 
         try {
             self::dbParmsToSession($confPath, $confFile);
-        	$dbh = initPDO(TRUE);
+        	$dbh = Common::initPDO(TRUE);
         } catch (RuntimeException $hex) {
         	exit('<h3>' . $hex->getMessage() . '; <a href="index.php">Continue</a></h3>');
         }
@@ -95,19 +97,17 @@ class Login {
         // get session instance
         $ssn = Session::getInstance();
 
-        if(!isset($config["db"]["URL"])){
-            try {
-                $config = parse_ini_file($confPath . $confFile, true);
-            } catch (\Exception $e) {
-                $ssn->destroy();
-                throw new RuntimeException("Database configuration parameters are missing.", 1, $e);
-            }
+        try {
+            $config = parse_ini_file($confPath . $confFile, true);
+        } catch (\Exception $e) {
+            $ssn->destroy();
+            throw new RuntimeException("Database configuration parameters are missing.", 1, $e);
         }
 
-        if (isset($config["db"]["URL"]) && isset($config["db"]["User"]) && isset($config["db"]["Password"]) && isset($config["db"]["Schema"]) && isset($config["db"]["DBMS"])) {
+        if (isset($config["db"]["URL"], $config["db"]["User"], $config["db"]["Password"], $config["db"]["Schema"], $config["db"]["DBMS"])) {
             $ssn->databaseURL = $config["db"]['URL'];
             $ssn->databaseUName = $config["db"]['User'];
-            $ssn->databasePWord = decryptMessage($config["db"]['Password']);
+            $ssn->databasePWord = Crypto::decryptMessage($config["db"]['Password']);
             $ssn->databaseName = $config["db"]['Schema'];
             $ssn->dbms = $config["db"]['DBMS'];
         } else {

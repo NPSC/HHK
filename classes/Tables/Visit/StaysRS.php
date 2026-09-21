@@ -15,24 +15,24 @@ use HHK\Tables\Fields\{DB_Field, DbIntSanitizer, DbStrSanitizer, DbDateSanitizer
 
 class StaysRS extends AbstractTableRS {
 
-    public $idStays;    // INT NOT NULL AUTO_INCREMENT ,
-    public $idVisit;    // INT NOT NULL ,
-    public $Visit_Span;    // int(11) NOT NULL,
-    public $idRoom;   // INT NOT NULL ,
-    public $idName;    // INT NOT NULL ,
-    public $Checkin_Date;    // DATETIME NULL ,
-    public $Checkout_Date;    // DATETIME NULL ,
-    public $Expected_Co_Date;  // DATETIME NULL,
-    public $Span_Start_Date;  // datetime DEFAULT NULL,
-    public $Span_End_Date;  // datetime DEFAULT NULL,
-    public $Activity_Id;    // INT NOT NULL DEFAULT 0 ,
-    public $On_Leave;  // INT NOT NULL DEFAULT 0
-    public $Status;    // VARCHAR(5) NOT NULL DEFAULT '' ,
-    Public $Recorded;  //INT(1) NOT NULL DEFAULT 0
+    public DB_Field $idStays;    // INT NOT NULL AUTO_INCREMENT ,
+    public DB_Field $idVisit;    // INT NOT NULL ,
+    public DB_Field $Visit_Span;    // int(11) NOT NULL,
+    public DB_Field $idRoom;   // INT NOT NULL ,
+    public DB_Field $idName;    // INT NOT NULL ,
+    public DB_Field $Checkin_Date;    // DATETIME NULL ,
+    public DB_Field $Checkout_Date;    // DATETIME NULL ,
+    public DB_Field $Expected_Co_Date;  // DATETIME NULL,
+    public DB_Field $Span_Start_Date;  // datetime DEFAULT NULL,
+    public DB_Field $Span_End_Date;  // datetime DEFAULT NULL,
+    public DB_Field $Activity_Id;    // INT NOT NULL DEFAULT 0 ,
+    public DB_Field $On_Leave;  // INT NOT NULL DEFAULT 0
+    public DB_Field $Status;    // VARCHAR(5) NOT NULL DEFAULT '' ,
+    Public DB_Field $Recorded;  //INT(1) NOT NULL DEFAULT 0
 
-    public $Updated_By;    // VARCHAR(45) NOT NULL DEFAULT '' ,
-    public $Last_Updated;    // DATETIME NULL ,
-    public $Timestamp;    // TIMESTAMP NOT NULL DEFAULT  CURRENT_TIMESTAMP ,
+    public DB_Field $Updated_By;    // VARCHAR(45) NOT NULL DEFAULT '' ,
+    public DB_Field $Last_Updated;    // DATETIME NULL ,
+    public DB_Field $Timestamp;    // TIMESTAMP NOT NULL DEFAULT  CURRENT_TIMESTAMP ,
 
     function __construct($TableName = "stays") {
 

@@ -16,23 +16,23 @@ use HHK\Tables\Fields\{DB_Field, DbIntSanitizer, DbStrSanitizer, DbDateSanitizer
 class NameVolunteerRS extends AbstractTableRS {
     
     // Only DB_Field types can be public
-    public $idName;
-    public $Vol_Category;
-    public $Vol_Code;
-    public $Vol_Status;
-    public $Vol_Availability;
-    public $Vol_Notes;
-    public $Vol_Begin;
-    public $Vol_End;
-    public $Vol_Check_Date;
-    public $Dormant_Code;
-    public $Vol_Rank;
-    public $Vol_License;
-    public $Vol_Training_Date;
-    public $Vol_Trainer;
-    public $Last_Updated;
-    public $Updated_By;
-    public $Timestamp;
+    public DB_Field $idName;
+    public DB_Field $Vol_Category;
+    public DB_Field $Vol_Code;
+    public DB_Field $Vol_Status;
+    public DB_Field $Vol_Availability;
+    public DB_Field $Vol_Notes;
+    public DB_Field $Vol_Begin;
+    public DB_Field $Vol_End;
+    public DB_Field $Vol_Check_Date;
+    public DB_Field $Dormant_Code;
+    public DB_Field $Vol_Rank;
+    public DB_Field $Vol_License;
+    public DB_Field $Vol_Training_Date;
+    public DB_Field $Vol_Trainer;
+    public DB_Field $Last_Updated;
+    public DB_Field $Updated_By;
+    public DB_Field $Timestamp;
     
     function __construct($TableName = 'name_volunteer2') {
         

@@ -9,7 +9,7 @@ use HHK\Payment\Invoice\Invoice;
 use HHK\Payment\GatewayResponse\StandInGwResponse;
 use HHK\Payment\PaymentGateway\AbstractPaymentGateway;
 use HHK\Payment\PaymentManager\PaymentManagerPayment;
-use HHK\Payment\PaymentResponse\{CashResponse, CheckResponse, TransferResponse};
+use HHK\Payment\PaymentResponse\{CashResponse, CheckResponse, ExternalResponse, TransferResponse};
 use HHK\Payment\PaymentResult\{PaymentResult, ReturnResult, CofResult};
 use HHK\SysConst\{InvoiceStatus, PayType, PaymentStatusCode, PaymentMethod};
 use HHK\sec\Session;
@@ -17,7 +17,6 @@ use HHK\Tables\EditRS;
 use HHK\Tables\Payment\{PaymentRS, Payment_AuthRS, PaymentInfoCheckRS};
 use HHK\HTMLControls\{HTMLContainer};
 use HHK\Exception\PaymentException;
-use HHK\Tables\Payment\TransRS;
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception as PHPMailerException;
 use RuntimeException;
@@ -45,8 +44,8 @@ class PaymentSvcs {
     /**
      * Summary of payAmount
      * @param \PDO $dbh
-     * @param \HHK\Payment\Invoice\Invoice $invoice
-     * @param \HHK\Payment\PaymentManager\PaymentManagerPayment $pmp
+     * @param Invoice $invoice
+     * @param PaymentManagerPayment $pmp
      * @param string $postbackUrl
      * @return PaymentResult|null
      */
@@ -142,6 +141,21 @@ class PaymentSvcs {
 
             break;
 
+          case PayType::External:
+
+            $exResp = new ExternalResponse($amount, $invoice->getSoldToId(), $invoice->getInvoiceNumber(), $pmp->getExternalId(), $pmp->getPayNotes(), $pmp->getExternalPaymentTypeCode(), $pmp->getExternalPaymentTypeTitle());
+
+            ExternalTX::sale($dbh, $exResp, $uS->username, $pmp->getPayDate());
+
+            // Update invoice
+            $invoice->updateInvoiceBalance($dbh, $exResp->getAmount(), $uS->username);
+
+            $payResult = new PaymentResult($invoice->getIdInvoice(), $invoice->getIdGroup(), $invoice->getSoldToId());
+            $payResult->feePaymentAccepted($dbh, $uS, $exResp, $invoice);
+            $payResult->setDisplayMessage('Payment by ' . $exResp->getPaymentTypeTitle($dbh) . '.  ');
+
+            break;
+
           case PayType::Invoice:
 
             $payResult = new PaymentResult($invoice->getIdInvoice(), $invoice->getIdGroup(), $invoice->getSoldToId());
@@ -159,8 +173,8 @@ class PaymentSvcs {
      * @param \PDO $dbh
      * @param Invoice $invoice
      * @param PaymentManagerPayment $pmp
-     * @param string $postPage
      * @param string $paymentDate
+     * @param $resvId
      * @return ReturnResult
      */
     public static function returnAmount(\PDO $dbh, Invoice $invoice, PaymentManagerPayment $pmp, $paymentDate = '', $resvId = 0) {
@@ -242,6 +256,36 @@ class PaymentSvcs {
                 $rtnResult->feePaymentInvoiced($dbh, $invoice);
                 $rtnResult->setDisplayMessage('Return Amount Invoiced.  ');
                 break;
+            
+            case PayType::Transfer:
+
+                $ckResp = new TransferResponse($amount, $invoice->getSoldToId(), $invoice->getInvoiceNumber(), $pmp->getTransferAcct(), $pmp->getPayNotes());
+
+                TransferTX::returnAmount($dbh, $ckResp, $uS->username, $pmp->getPayDate());
+
+                // Update invoice
+                $invoice->updateInvoiceBalance($dbh, (0 - $ckResp->getAmount()), $uS->username);
+
+                $rtnResult = new ReturnResult($invoice->getIdInvoice(), $invoice->getIdGroup(), $invoice->getSoldToId());
+                $rtnResult->feePaymentAccepted($dbh, $uS, $ckResp, $invoice);
+                $rtnResult->setDisplayMessage('Return by Transfer.  ');
+
+            break;
+
+            case PayType::External:
+
+                $exResp = new ExternalResponse($amount, $invoice->getSoldToId(), $invoice->getInvoiceNumber(), $pmp->getRtnExternalId(), $pmp->getPayNotes(), $pmp->getRtnExternalPaymentTypeCode(), $pmp->getRtnExternalPaymentTypeTitle());
+
+                ExternalTX::returnAmount($dbh, $exResp, $uS->username, $pmp->getPayDate());
+
+                // Update invoice
+                $invoice->updateInvoiceBalance($dbh, (0 - $exResp->getAmount()), $uS->username);
+
+                $rtnResult = new ReturnResult($invoice->getIdInvoice(), $invoice->getIdGroup(), $invoice->getSoldToId());
+                $rtnResult->feePaymentAccepted($dbh, $uS, $exResp, $invoice);
+                $rtnResult->setDisplayMessage('Return by ' . $exResp->getPaymentTypeTitle($dbh) . '.  ');
+
+            break;
 
         }
 
@@ -297,7 +341,7 @@ class PaymentSvcs {
 
         $dataArray = $gateway->voidSale($dbh, $invoice, $payRs, $$pAuths, $bid);
 
-        if(isset($dataArray['receipt'], $dataArray['success'], $invoice) && $invoice instanceof Invoice){
+        if(isset($dataArray['receipt'], $dataArray['success']) && $invoice instanceof Invoice){
             $autoEmailAr = PaymentResult::isAutoEmailEligible($dbh, $invoice->getIdGroup(), $invoice->getSoldToId());
 
             if ($autoEmailAr['autoEmail'] == true) {
@@ -315,6 +359,8 @@ class PaymentSvcs {
             $dataArray["billToEmail"] = $invoice->getBillToEmail($dbh);
             $dataArray["idPayment"] = $idPayment;
         }
+
+        return $dataArray;
 
     }
 
@@ -367,7 +413,7 @@ class PaymentSvcs {
 
         $dataArray = $gateway->reverseSale($dbh, $invoice, $payRs, $pAuthRs, $bid);
 
-        if(isset($dataArray['receipt'], $dataArray['success'], $invoice) && $invoice instanceof Invoice){
+        if(isset($dataArray['receipt'], $dataArray['success']) && $invoice instanceof Invoice){
             $autoEmailAr = PaymentResult::isAutoEmailEligible($dbh, $invoice->getIdGroup(), $invoice->getSoldToId());
 
             if ($autoEmailAr['autoEmail'] == true) {
@@ -395,7 +441,7 @@ class PaymentSvcs {
      * @param \PDO $dbh
      * @param int $idPayment
      * @param string $bid
-     * @throws \HHK\Exception\PaymentException
+     * @throws PaymentException
      * @return array
      */
     public static function returnPayment(\PDO $dbh, $idPayment, $bid) {
@@ -519,11 +565,37 @@ class PaymentSvcs {
                 $dataArray['receipt'] = HTMLContainer::generateMarkup('div', nl2br(Receipt::createReturnMarkup($dbh, $cashResp, $uS->siteName, $uS->sId)));
                 break;
 
+            case PaymentMethod::External:
+
+                // Find the detail record.
+                $pAuthRs = new PaymentInfoCheckRS();
+                $pAuthRs->idPayment->setStoredVal($payRs->idPayment->getStoredVal());
+                $arows = EditRS::select($dbh, $pAuthRs, array($pAuthRs->idPayment));
+
+                if (count($arows) != 1) {
+                    throw new PaymentException('Payment Detail record not found. ');
+                }
+
+                EditRS::loadRow($arows[0], $pAuthRs);
+
+                $cashResp = new ExternalResponse($payRs->Amount->getStoredVal(), $payRs->idPayor->getStoredVal(), $invoice->getInvoiceNumber(), $pAuthRs->Check_Number->getStoredVal(), '', self::getExternalPaymentTypeCode($dbh, $payRs));
+
+                ExternalTX::externalReturn($dbh, $cashResp, $uS->username, $payRs);
+
+                // Update invoice
+                $invoice->updateInvoiceBalance($dbh, 0 - $cashResp->getAmount(), $uS->username);
+
+                $dataArray['success'] = 'Payment is Returned.  ';
+
+                $cashResp->idVisit = $invoice->getOrderNumber();
+                $dataArray['receipt'] = HTMLContainer::generateMarkup('div', nl2br(Receipt::createReturnMarkup($dbh, $cashResp, $uS->siteName, $uS->sId)));
+                break;
+
             default:
                 throw new PaymentException('Unknown pay type.  ');
         }
 
-        if(isset($dataArray['receipt'], $dataArray['success'], $invoice) && $invoice instanceof Invoice){
+        if(isset($dataArray['receipt'], $dataArray['success']) && $invoice instanceof Invoice){
             $autoEmailAr = PaymentResult::isAutoEmailEligible($dbh, $invoice->getIdGroup(), $invoice->getSoldToId());
 
             if ($autoEmailAr['autoEmail'] == true) {
@@ -596,7 +668,7 @@ class PaymentSvcs {
         $gateway = AbstractPaymentGateway::factory($dbh, $uS->PaymentGateway, $pAuthRs->Merchant->getStoredVal());
         $dataArray =  array_merge($dataArray,  $gateway->voidReturn($dbh, $invoice, $payRs, $pAuthRs, $bid));
 
-        if(isset($dataArray['receipt'], $dataArray['success'], $invoice) && $invoice instanceof Invoice){
+        if(isset($dataArray['receipt'], $dataArray['success']) && $invoice instanceof Invoice){
             $autoEmailAr = PaymentResult::isAutoEmailEligible($dbh, $invoice->getIdGroup(), $invoice->getSoldToId());
 
             if ($autoEmailAr['autoEmail'] == true) {
@@ -623,7 +695,7 @@ class PaymentSvcs {
      * @param \PDO $dbh
      * @param mixed $idPayment
      * @param mixed $bid
-     * @throws \HHK\Exception\PaymentException
+     * @throws PaymentException
      * @return array
      */
     public static function undoReturnFees(\PDO $dbh, $idPayment, $bid) {
@@ -676,6 +748,22 @@ class PaymentSvcs {
 
                 $dataArray['success'] = 'Check return is undone.  ';
                 $dataArray['receipt'] = Receipt::createSaleMarkup($dbh, $invoice, $uS->siteName, $uS->sId, $ckResp);
+
+                break;
+
+            case PaymentMethod::External:
+
+                $exResp = new ExternalResponse($payRs->Amount->getStoredVal(), $invoice->getSoldToId(), $invoice->getInvoiceNumber(), '', '', self::getExternalPaymentTypeCode($dbh, $payRs));
+
+                ExternalTX::undoExternalReturn($dbh, $exResp, $uS->username, $payRs);
+
+                // Update invoice
+                $invoice->updateInvoiceBalance($dbh, $exResp->getAmount(), $uS->username);
+
+                $exResp->idVisit = $invoice->getOrderNumber();
+
+                $dataArray['success'] = $exResp->getPaymentTypeTitle($dbh) . ' return is undone.  ';
+                $dataArray['receipt'] = Receipt::createSaleMarkup($dbh, $invoice, $uS->siteName, $uS->sId, $exResp);
 
                 break;
 
@@ -740,7 +828,7 @@ class PaymentSvcs {
                 throw new PaymentException('The pay type is ineligible.  ');
         }
 
-        if(isset($dataArray['receipt'], $dataArray['success'], $invoice) && $invoice instanceof Invoice){
+        if(isset($dataArray['receipt'], $dataArray['success']) && $invoice instanceof Invoice){
             $autoEmailAr = PaymentResult::isAutoEmailEligible($dbh, $invoice->getIdGroup(), $invoice->getSoldToId());
 
             if ($autoEmailAr['autoEmail'] == true) {
@@ -769,7 +857,7 @@ class PaymentSvcs {
      * @param mixed $idPaymentMethod
      * @param mixed $paymentAmount
      * @param mixed $bid
-     * @throws \HHK\Exception\PaymentException
+     * @throws PaymentException
      * @return array
      */
     protected static function undoReturnAmount(\PDO $dbh, $idPayment, $idPaymentMethod, $paymentAmount, $bid) {
@@ -809,6 +897,20 @@ class PaymentSvcs {
                 $invoice->deleteInvoice($dbh, $uS->username);
 
                 $dataArray['success'] = 'Transfer refund is undone.  ';
+
+                break;
+
+            case PaymentMethod::External:
+
+                $exResp = new ExternalResponse($paymentAmount, $invoice->getSoldToId(), $invoice->getInvoiceNumber(), '', '', self::getExternalPaymentTypeCode($dbh, $idPayment));
+
+                ExternalTX::undoReturnAmount($dbh, $exResp, $idPayment);
+
+                $invoice->updateInvoiceBalance($dbh, $exResp->getAmount(), $uS->username);
+                // delete invoice
+                $invoice->deleteInvoice($dbh, $uS->username);
+
+                $dataArray['success'] = $exResp->getPaymentTypeTitle($dbh) . ' refund is undone.  ';
 
                 break;
 
@@ -870,7 +972,7 @@ class PaymentSvcs {
                 throw new PaymentException('This pay type is ineligible for Undo Refund Amount.  ');
         }
 
-        if(isset($dataArray['receipt'], $dataArray['success'], $invoice) && $invoice instanceof Invoice){
+        if(isset($dataArray['receipt'], $dataArray['success']) && $invoice instanceof Invoice){
             $autoEmailAr = PaymentResult::isAutoEmailEligible($dbh, $invoice->getIdGroup(), $invoice->getSoldToId());
 
             if ($autoEmailAr['autoEmail'] == true) {
@@ -929,7 +1031,6 @@ class PaymentSvcs {
 
         $uS = Session::getInstance();
 
-        //Quick exti?
         if ($uS->PaymentGateway == '' || $uS->ccgw == '') {
             return NULL;
         }
@@ -957,6 +1058,7 @@ class PaymentSvcs {
             unset($uS->imtoken);
         }
 
+        // Vantiv stores invoice ID in paymentIds; Instamed looks it up from DB
         if (isset($uS->paymentIds[$tokenId])) {
             $idInv = $uS->paymentIds[$tokenId];
         }
@@ -1005,6 +1107,21 @@ class PaymentSvcs {
                 $transRS = Transaction::getTransactionRS($dbh, $payRs->idTrans->getStoredVal());
 
                 $payResp = new CashResponse($payRs->Amount->getStoredVal(), $payRs->idPayor->getStoredVal(), $invoice->getInvoiceNumber(), $payRs->Notes, $transRS->Amount_Tendered->getStoredVal());
+                $payResp->paymentRs = $payRs;
+                break;
+
+            case PaymentMethod::External:
+
+                $ckRs = new PaymentInfoCheckRS();
+                $ckRs->idPayment->setStoredVal($payRs->idPayment->getStoredVal());
+                $rows = EditRS::select($dbh, $ckRs, array($ckRs->idPayment));
+
+                if (count($rows) != 1) {
+                    return array('warning'=>'External payment record not found.');
+                }
+
+                EditRS::loadRow($rows[0], $ckRs);
+                $payResp = new ExternalResponse($payRs->Amount->getStoredVal(), $payRs->idPayor->getStoredVal(), $invoice->getInvoiceNumber(), $rows[0]['Check_Number'], '', self::getExternalPaymentTypeCode($dbh, $payRs));
                 $payResp->paymentRs = $payRs;
                 break;
 
@@ -1187,6 +1304,29 @@ class PaymentSvcs {
         }else{
             throw new RuntimeException("Reciept not found");
         }
+    }
+
+    protected static function getExternalPaymentTypeCode(\PDO $dbh, $payment) {
+
+        if ($payment instanceof PaymentRS) {
+            $idTrans = $payment->idTrans->getStoredVal();
+        } else {
+            $payRs = new PaymentRS();
+            $payRs->idPayment->setStoredVal($payment);
+            $pments = EditRS::select($dbh, $payRs, array($payRs->idPayment));
+
+            if (count($pments) != 1) {
+                return PayType::External;
+            }
+
+            EditRS::loadRow($pments[0], $payRs);
+            $idTrans = $payRs->idTrans->getStoredVal();
+        }
+
+        $transRs = Transaction::getTransactionRS($dbh, $idTrans);
+        $code = $transRs->Payment_Type->getStoredVal();
+
+        return $code == '' || is_numeric($code) ? PayType::External : $code;
     }
 
 }

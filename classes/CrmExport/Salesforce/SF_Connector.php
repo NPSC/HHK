@@ -6,13 +6,13 @@ use GuzzleHttp\Client;
 use GuzzleHttp\Pool;
 use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\RequestOptions;
+use HHK\Integrations\GuzzleAPILogger;
 use HHK\OAuth\SalesForceOAuth;
 use HHK\OAuth\Credentials;
-use HHK\Exception\{RuntimeException, UploadException};
+use HHK\Exception\RuntimeException;
 use GuzzleHttp\Exception\BadResponseException;
 use HHK\sec\Session;
 use HHK\TableLog\ExternalAPILog;
-use HHK\TableLog\HouseLog;
 use Psr\Http\Message\ResponseInterface;
 
 
@@ -23,46 +23,64 @@ use Psr\Http\Message\ResponseInterface;
  */
 class SF_Connector {
 
-    /**
-     * Summary of oAuth
-     * @var SalesForceOauth|null
-     */
-    protected SalesForceOAuth|null $oAuth;
-
+    protected SalesForceOAuth $oAuth;
     protected \PDO $dbh;
-    /**
-     * Summary of credentials
-     * @var Credentials
-     */
-    protected $credentials;
-    
+    protected Credentials $credentials;
+    protected ?Client $client = null;
+
     /**
      * The number of concurrent async requests to send at one time
      * @const CONCURRENT_REQUESTS
      */
-    protected const CONCURRENT_REQUESTS = 5;
+    protected const int CONCURRENT_REQUESTS = 5;
 
     public function __construct(\PDO $dbh, Credentials $credentials) {
 
         $this->dbh = $dbh;
         $this->credentials = $credentials;
-        $this->oAuth = NULL;
+        $this->oAuth = new SalesForceOAuth($this->dbh, $credentials);
+        $this->oAuth->login();
+        $this->buildClient();
+    }
+
+    protected function buildClient(): void {
+        $this->client = new Client([
+            'base_uri' => $this->credentials->getBaseURI(),
+            'handler' => GuzzleAPILogger::createStack($this->dbh, SalesforceManager::LOG_SERVICE_NAME),
+            'headers' => [
+                'Authorization' => 'Bearer ' . $this->oAuth->getAccessToken(),
+                'Content-Type' => 'application/json',
+            ]
+        ]);
+    }
+
+    protected function reauthorize(): void {
+        $this->oAuth->clearCachedToken();
+        $this->oAuth->login();
+        $this->buildClient();
     }
 
     /**
-     * Instantiate OAuth object and authenticate to endpoint
-     *
-     * Access Bearer token via $this->oAuth->getAccessToken();
+     * Runs $fn(). On a 401 reauthorizes and retries once; all other errors go through checkErrors().
      */
-    public function login() {
+    protected function withReauth(callable $fn): mixed {
+        try {
+            return $fn();
+        } catch (BadResponseException $e) {
+            if ($e->getResponse()->getStatusCode() !== 401) {
+                $this->checkErrors($e);
+                return null;
+            }
+        }
 
-        $this->oAuth = new SalesForceOAuth($this->credentials);
+        $this->reauthorize();
 
-        $this->oAuth->login();
-    }
-
-    public function logout () {
-        $this->oAuth = NULL;
+        try {
+            return $fn();
+        } catch (BadResponseException $e) {
+            $this->checkErrors($e);
+            return null;
+        }
     }
 
     /**
@@ -72,63 +90,25 @@ class SF_Connector {
      * @param string $endpoint
      * @return mixed
      */
-    public function search($query, $endpoint) {
-
-        try{
-            if(!$this->oAuth instanceof SalesForceOAuth){
-                $this->login();
-            }
-
-            $client = new Client(['base_uri' => $this->oAuth->getInstanceURL()]);
-
-            $response = $client->request('GET', $endpoint, [
-                RequestOptions::HEADERS => [
-                    'Authorization' => 'Bearer ' . $this->oAuth->getAccessToken(),
-                    'X-PrettyPrint' => 1,
-                ],
-                RequestOptions::QUERY => [
-                    'q' => $query
-                ]
+    public function search(string $query, string $endpoint) {
+        return $this->withReauth(function () use ($query, $endpoint) {
+            $response = $this->client->request('GET', $endpoint, [
+                RequestOptions::QUERY => ['q' => $query]
             ]);
-
-            $result = json_decode($response->getBody(), true);
-
-        } catch (BadResponseException $exception) {
-            $this->checkErrors($exception);
-        }
-
-        return $result;
+            return json_decode($response->getBody(), true);
+        });
     }
 
     /**
      * Summary of goUrl
-     * @param mixed $endpoint
+     * @param string $endpoint
      * @return mixed
      */
-    public function goUrl($endpoint) {
-
-        try{
-            if(!$this->oAuth instanceof SalesForceOauth){
-                $this->login();
-            }
-
-            $client = new Client(['base_uri' => $this->oAuth->getInstanceURL()]);
-
-            $response = $client->request('GET', $endpoint, [
-                RequestOptions::HEADERS => [
-                    'Authorization' => 'Bearer ' . $this->oAuth->getAccessToken(),
-                    'X-PrettyPrint' => 1,
-                ]
-            ]);
-
-            $result = json_decode($response->getBody(), true);
-
-        } catch (BadResponseException $exception) {
-            $this->checkErrors($exception);
-
-        }
-
-        return $result;
+    public function goUrl(string $endpoint) {
+        return $this->withReauth(function () use ($endpoint) {
+            $response = $this->client->request('GET', $endpoint);
+            return json_decode($response->getBody(), true);
+        });
     }
 
     /**
@@ -138,39 +118,12 @@ class SF_Connector {
      * @param array $params
      * @return mixed
      */
-    public function postUrl($endpoint, array $params, $isUpdate = FALSE) {
-
-       try{
-            if(!$this->oAuth instanceof SalesForceOAuth){
-                $this->login();
-            }
-
-            $client = new Client(['base_uri' => $this->oAuth->getInstanceURL()]);
-
-            $headers = [
-                    'Authorization' => 'Bearer ' . $this->oAuth->getAccessToken(),
-                    'Content-Type' => 'application/json',
-            ];
-
-            $request = new Request('POST', $endpoint, $headers, json_encode($params));
-
-            $response = $client->send($request);
-
-            $result = json_decode($response->getBody(), true);
-
-        } catch (BadResponseException $exception) {
-            $this->checkErrors($exception);
-        }
-
-        //log transaction
-        try{
-            $uS = Session::getInstance();
-            ExternalAPILog::log($this->dbh, SalesforceManager::LOG_SERVICE_NAME, "graph", $request, $response, $uS->username);
-        }catch(Exception $e){
-            //do nothing
-        }
-
-        return $result;
+    public function postUrl(string $endpoint, array $params, bool $isUpdate = FALSE) {
+        return $this->withReauth(function () use ($endpoint, $params) {
+            $request = new Request('POST', $endpoint, [], json_encode($params));
+            $response = $this->client->send($request);
+            return json_decode($response->getBody(), true);
+        });
     }
 
     /**
@@ -180,61 +133,53 @@ class SF_Connector {
      * @param array $jsonBodies An array of request bodies to be sent asyncronously
      * @return array An array of batchRequests and batchResults
      */
-    public function postUrlAsync($endpoint, array $jsonBodies, $isUpdate = FALSE) {
+    public function postUrlAsync(string $endpoint, array $jsonBodies, bool $isUpdate = FALSE) {
 
-       try{
-            if(!$this->oAuth instanceof SalesForceOAuth){
-                $this->login();
-            }
-
-            $client = new Client(['base_uri' => $this->oAuth->getInstanceURL()]);
-
-            $headers = [
-                'Authorization' => 'Bearer ' . $this->oAuth->getAccessToken(),
-                'Content-Type' => 'application/json',
-            ];
-
+        try {
             $batchRequests = [];
-            $batchResults = [];
-
-            foreach($jsonBodies as $batchId=>$params){
-                $batchRequests[$batchId] = new Request('POST', $endpoint, $headers, json_encode($params));
+            foreach ($jsonBodies as $batchId => $params) {
+                $batchRequests[$batchId] = new Request('POST', $endpoint, [], json_encode($params));
             }
-
-            $pool = new Pool($client, $batchRequests, [
-                'concurrency' => self::CONCURRENT_REQUESTS,
-                'fulfilled' =>function (ResponseInterface $response, $batchId) use ($batchRequests, &$batchResults){ //if the response is success
-                    //log transaction
-                    try{
-                        $uS = Session::getInstance();
-                        ExternalAPILog::log($this->dbh, SalesforceManager::LOG_SERVICE_NAME, "graph", $batchRequests[$batchId], $response, $uS->username);
-                    }catch(Exception $e){
-                        //do nothing
-                    }
-
-                    $batchResults[$batchId] = ['success'=>json_decode($response->getBody(), true)];
-                },
-                'rejected' => function (BadResponseException $exception, $batchId) use (&$batchResults) { //if the response is not success
-                    try{
-                        $this->checkErrors($exception);
-                    }catch(Exception $e){
-                        $batchResults[$batchId] = ['error'=>$e->getMessage()];
-                    }
-                }
-            ]);
-
-            // Initiate the transfers and create a promise
-            $promise = $pool->promise();
-
-            // Wait for the pool of requests to complete.
-            $promise->wait();
-
-
+            return $this->runPool($batchRequests);
         } catch (Exception $exception) {
             throw new RuntimeException($exception->getMessage());
         }
+    }
 
-        return ['batchRequests'=>$batchRequests, 'batchResults'=>$batchResults];
+    /**
+     * Executes a Guzzle Pool against $this->client.
+     * On a 401, reauthorizes and retries the full pool once ($allowReauth prevents loops).
+     */
+    private function runPool(array $batchRequests, bool $allowReauth = true): array {
+        $batchResults = [];
+        $needsReauth = false;
+
+        $pool = new Pool($this->client, $batchRequests, [
+            'concurrency' => self::CONCURRENT_REQUESTS,
+            'fulfilled' => function (ResponseInterface $response, $batchId) use (&$batchResults) {
+                $batchResults[$batchId] = ['success' => json_decode($response->getBody(), true)];
+            },
+            'rejected' => function (BadResponseException $exception, $batchId) use (&$batchResults, &$needsReauth, $allowReauth) {
+                if ($allowReauth && $exception->getResponse()->getStatusCode() === 401) {
+                    $needsReauth = true;
+                    return;
+                }
+                try {
+                    $this->checkErrors($exception);
+                } catch (Exception $e) {
+                    $batchResults[$batchId] = ['error' => $e->getMessage()];
+                }
+            }
+        ]);
+
+        $pool->promise()->wait();
+
+        if ($needsReauth) {
+            $this->reauthorize();
+            return $this->runPool($batchRequests, false);
+        }
+
+        return ['batchRequests' => $batchRequests, 'batchResults' => $batchResults];
     }
 
     /**
@@ -244,40 +189,12 @@ class SF_Connector {
      * @param array $params
      * @return mixed
      */
-    public function patchUrl($endpoint, array $params)
-    {
-
-        try {
-            if (!$this->oAuth instanceof SalesForceOAuth) {
-                $this->login();
-            }
-
-
-            $client = new Client(['base_uri' => $this->oAuth->getInstanceURL()]);
-
-            $headers = [
-                    'Authorization' => 'Bearer ' . $this->oAuth->getAccessToken(),
-                    'Content-Type' => 'application/json',
-            ];
-
-            $request = new Request('PATCH', $endpoint, $headers, json_encode($params));
-
-            $response = $client->send($request);
-
-            $result = json_decode($response->getBody(), true);
-        } catch (BadResponseException $exception) {
-            $this->checkErrors($exception);
-        }
-
-        //log transaction
-        try{
-            $uS = Session::getInstance();
-            ExternalAPILog::log($this->dbh, "SalesForce", "", $request, $response, $uS->username);
-        }catch(Exception $e){
-            //do nothing
-        }
-
-        return $result;
+    public function patchUrl(string $endpoint, array $params) {
+        return $this->withReauth(function () use ($endpoint, $params) {
+            $request = new Request('PATCH', $endpoint, [], json_encode($params));
+            $response = $this->client->send($request);
+            return json_decode($response->getBody(), true);
+        });
     }
 
 
@@ -286,7 +203,7 @@ class SF_Connector {
      * @param mixed $errorJson
      * @return string
      */
-    protected function collectErrors($errorJson){
+    protected function collectErrors($errorJson): string {
         $errors = '';
         if(is_array($errorJson)){
             foreach($errorJson as $error){
@@ -297,11 +214,11 @@ class SF_Connector {
     }
 
     /**
-     * Log and handle Salesforce Response errrors
+     * Log and handle Salesforce Response errors
      * @param BadResponseException $exception
      * @throws RuntimeException
      */
-    protected function checkErrors(BadResponseException $exception) {
+    protected function checkErrors(BadResponseException $exception): void {
 
         $uS = Session::getInstance();
         $errorResponse = $exception->getResponse();
@@ -324,6 +241,4 @@ class SF_Connector {
 
     }
 
-
 }
-

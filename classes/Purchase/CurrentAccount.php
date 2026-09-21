@@ -503,7 +503,7 @@ class CurrentAccount {
      * @param mixed $reimburseTax
      * @return static
      */
-    public function setReimburseTax($taxingId, $reimburseTax) {
+    public function setReimburseTax($taxingId, $reimburseTax): static {
         $this->reimburseTax[$taxingId] = $reimburseTax;
         return $this;
     }
@@ -514,7 +514,7 @@ class CurrentAccount {
      * @param mixed $reimburseTax
      * @return static
      */
-    public function sumReimburseTax($taxingId, $reimburseTax) {
+    public function sumReimburseTax($taxingId, $reimburseTax): static {
         if (isset($this->reimburseTax[$taxingId])) {
             $this->reimburseTax[$taxingId] += $reimburseTax;
         } else {
@@ -529,7 +529,7 @@ class CurrentAccount {
      * @param mixed $amt
      * @return void
      */
-    public function setLodgingTaxPd($tid, $amt) {
+    public function setLodgingTaxPd($tid, $amt): void {
         if (isset($this->lodgingTaxPd[$tid])) {
             $this->lodgingTaxPd[$tid] += $amt;
         } else {
@@ -541,7 +541,7 @@ class CurrentAccount {
      * Summary of setDueToday
      * @return void
      */
-    public function setDueToday() {
+    public function setDueToday(): void {
 
         $this->dueToday = round($this->getTotalCharged() - $this->getTotalPaid() - $this->getAmtPending3P(), 2);
 
@@ -552,7 +552,7 @@ class CurrentAccount {
      * @param mixed $roomFeeBalance
      * @return static
      */
-    public function setRoomFeeBalance($roomFeeBalance) {
+    public function setRoomFeeBalance($roomFeeBalance): static {
         $this->roomFeeBalance = $roomFeeBalance;
         return $this;
     }
@@ -562,7 +562,7 @@ class CurrentAccount {
      * @param mixed $addnlGuestNites
      * @return static
      */
-    public function setAddnlGuestNites($addnlGuestNites) {
+    public function setAddnlGuestNites($addnlGuestNites): static {
         $this->addnlGuestNites = $addnlGuestNites;
         return $this;
     }
@@ -572,7 +572,7 @@ class CurrentAccount {
      * @param mixed $toCharge
      * @return static
      */
-    public function setRoomFeesToCharge($toCharge) {
+    public function setRoomFeesToCharge($toCharge): static {
         $this->roomFeesToCharge = $toCharge;
         return $this;
     }
@@ -582,7 +582,7 @@ class CurrentAccount {
      * @param mixed $visitGlideCredit
      * @return static
      */
-    public function setVisitGlideCredit($visitGlideCredit) {
+    public function setVisitGlideCredit($visitGlideCredit): static {
         $this->visitGlideCredit = $visitGlideCredit;
         return $this;
     }
@@ -592,7 +592,7 @@ class CurrentAccount {
      * @param mixed $additionalChargeTax
      * @return static
      */
-    public function setAdditionalChargeTax($additionalChargeTax) {
+    public function setAdditionalChargeTax($additionalChargeTax): static {
         $this->additionalChargeTax = $additionalChargeTax;
         return $this;
     }
@@ -602,7 +602,7 @@ class CurrentAccount {
      * @param mixed $roomCharge
      * @return static
      */
-    public function setRoomCharge($roomCharge) {
+    public function setRoomCharge($roomCharge): static {
         $this->roomCharge = $roomCharge;
         return $this;
     }
@@ -612,7 +612,7 @@ class CurrentAccount {
      * @param mixed $totalDiscounts
      * @return static
      */
-    public function setTotalDiscounts($totalDiscounts) {
+    public function setTotalDiscounts($totalDiscounts): static {
         $this->totalDiscounts = $totalDiscounts;
         return $this;
     }
@@ -622,7 +622,7 @@ class CurrentAccount {
      * @param mixed $visitFeeCharged
      * @return static
      */
-    public function setVisitFeeCharged($visitFeeCharged) {
+    public function setVisitFeeCharged($visitFeeCharged): static {
         $this->visitFeeCharged = $visitFeeCharged;
         return $this;
     }
@@ -632,7 +632,7 @@ class CurrentAccount {
      * @param mixed $additionalCharge
      * @return static
      */
-    public function setAdditionalCharge($additionalCharge) {
+    public function setAdditionalCharge($additionalCharge): static {
         $this->additionalCharge = $additionalCharge;
         return $this;
     }
@@ -642,7 +642,7 @@ class CurrentAccount {
      * @param mixed $unpaidMOA
      * @return static
      */
-    public function setUnpaidMOA($unpaidMOA) {
+    public function setUnpaidMOA($unpaidMOA): static {
         $this->unpaidMOA = $unpaidMOA;
         return $this;
     }
@@ -653,7 +653,7 @@ class CurrentAccount {
      * @param mixed $vfeeBal
      * @return static
      */
-    public function setVfeeBal($vfeeBal) {
+    public function setVfeeBal($vfeeBal): static {
         $this->vfeeBal = $vfeeBal;
         return $this;
     }
@@ -663,17 +663,17 @@ class CurrentAccount {
      * @param mixed $totalPaid
      * @return static
      */
-    public function setTotalPaid($totalPaid) {
+    public function setTotalPaid($totalPaid): static {
         $this->totalPaid = $totalPaid;
         return $this;
     }
 
     /**
      * Summary of setAmtPending
-     * @param mixed $amtPending3P
+     * @param mixed $amtPending
      * @return static
      */
-    public function setAmtPending3P($amtPending) {
+    public function setAmtPending3P($amtPending): static {
         $this->amtPending3P = $amtPending;
         return $this;
     }

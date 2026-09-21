@@ -2,6 +2,7 @@
 
 use HHK\CreateMarkupFromDB;
 use HHK\CrmExport\AbstractExportManager;
+use HHK\CrmExport\Neon\NeonManager;
 use HHK\CrmExport\Salesforce\SalesforceManager;
 use HHK\CrmExport\Salesforce\SF_Connector;
 use HHK\Exception\RuntimeException;
@@ -54,17 +55,17 @@ try {
                     'filter' => FILTER_SANITIZE_NUMBER_INT,
                     'flags' => FILTER_FORCE_ARRAY,
                 ],
-                'trace' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
+                'trace' => FILTER_VALIDATE_BOOLEAN,
             ];
             $post = filter_input_array(INPUT_POST, $rags);
 
             if (isset($post['ids']) && count($post['ids']) > 0) {
 
                 try {
-                    $events = $transfer->upsertMembers($dbh, $post['ids'], $post['trace']);
+                    $events = $transfer->upsertMembers($dbh, $post['ids'], $post['trace'], $transfer->getLinkRelatives());
 
                 } catch (Exception $ex) {
-                    $events = ["error" => "Transfer Error: " . $ex->getMessage() . " Exception class: " . get_class($ex)];
+                    $events = ["error" => "Transfer Error: " . $ex->getMessage()];
                 }
 
             } else {
@@ -88,7 +89,7 @@ try {
                 try {
                     $events['members'] = $transfer->exportMembers($dbh, $post['ids']);
                 } catch (Exception $ex) {
-                    $events = ["error" => "Transfer Error: " . $ex->getMessage() . " Exception class: " . get_class($ex)];
+                    $events = ["error" => "Transfer Error: " . $ex->getMessage()];
                 }
 
             } else {
@@ -271,7 +272,7 @@ try {
             ];
             $filtered = filter_input_array(INPUT_GET, $arguments);
             
-            $allowedServices = [SalesforceManager::LOG_SERVICE_NAME];
+            $allowedServices = [SalesforceManager::LOG_SERVICE_NAME, NeonManager::LOG_SERVICE_NAME, 'Deluxe'];
 
             if(in_array($filtered["service"], $allowedServices)){
                 $events = ExternalAPILog::getLog($dbh, $filtered["service"]);

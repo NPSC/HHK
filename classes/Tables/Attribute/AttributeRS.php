@@ -20,13 +20,13 @@ use HHK\Tables\Fields\{DB_Field, DbIntSanitizer, DbStrSanitizer, DbDateSanitizer
  */
 class AttributeRS extends AbstractTableRS {
 
-    public $idAttribute;  // int(11) NOT NULL AUTO_INCREMENT,
-    public $Type;  // varchar(4) NOT NULL,
-    public $Title;  // varchar(145) NOT NULL DEFAULT '',
-    public $Category;  // varchar(45) NOT NULL DEFAULT '',
-    public $Status;  // varchar(4) NOT NULL DEFAULT '',
-    public $Updated_By;  // varchar(45) NOT NULL DEFAULT '',
-    public $Last_Updated;  // datetime DEFAULT NULL,
+    public DB_Field $idAttribute;  // int(11) NOT NULL AUTO_INCREMENT,
+    public DB_Field $Type;  // varchar(4) NOT NULL,
+    public DB_Field $Title;  // varchar(145) NOT NULL DEFAULT '',
+    public DB_Field $Category;  // varchar(45) NOT NULL DEFAULT '',
+    public DB_Field $Status;  // varchar(4) NOT NULL DEFAULT '',
+    public DB_Field $Updated_By;  // varchar(45) NOT NULL DEFAULT '',
+    public DB_Field $Last_Updated;  // datetime DEFAULT NULL,
 
     function __construct($TableName = 'attribute') {
 

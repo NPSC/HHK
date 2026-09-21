@@ -15,9 +15,9 @@ use HHK\Tables\Fields\{DB_Field, DbStrSanitizer, DbIntSanitizer, DbDateSanitizer
 
 class Id_SecurityGroupRS extends AbstractTableRS {
     
-    public $idName;  // int(11) NOT NULL,
-    public $Group_Code;  // varchar(5) NOT NULL,
-    public $Timestamp;  // timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+    public DB_Field $idName;  // int(11) NOT NULL,
+    public DB_Field $Group_Code;  // varchar(5) NOT NULL,
+    public DB_Field $Timestamp;  // timestamp NULL DEFAULT CURRENT_TIMESTAMP,
     
     function __construct($TableName = "id_securitygroup") {
         $this->idName = new DB_Field("idName", 0, new DbIntSanitizer());

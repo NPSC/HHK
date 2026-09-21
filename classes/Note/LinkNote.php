@@ -53,48 +53,39 @@ class LinkNote {
      * Summary of findIdPsg
      * @param \PDO $dbh
      * @param mixed $linkType
-     * @param mixed $linkId
+     * @param int $linkId
      * @return array
      */
-    public static function findIdPsg(\PDO $dbh, $linkType, $linkId) {
+    public static function findIdPsg(\PDO $dbh, $linkType, int $linkId): array {
 
-        $query = '';
-        $idPsgs = [];
-
-        if ($linkType == Note::ResvLink) {
-            $query = "select reg.idPsg from registration reg join reservation r on reg.idRegistration = r.idRegistration "
-                    . "where r.idReservation = $linkId";
-        } else if ($linkType == Note::VisitLink) {
-            $query = "select reg.idPsg from registration reg join visit r on reg.idRegistration = r.idRegistration "
-                    . "where r.idVisit = $linkId";
-        } else if ($linkType == Note::PsgLink) {
+        if ($linkType === Note::PsgLink) {
             return [$linkId];
-        }else if ($linkType == "curguests") {
-            $query = "select reg.idPsg from registration reg join reservation r on reg.idRegistration = r.idRegistration "
-                    . "where r.Status = 's'";
-        }else if ($linkType == "confirmed") {
-            $query = "select reg.idPsg from registration reg join reservation r on reg.idRegistration = r.idRegistration "
-                    . "where r.Status = 'a'";
-        }else if ($linkType == "unconfirmed") {
-            $query = "select reg.idPsg from registration reg join reservation r on reg.idRegistration = r.idRegistration "
-                    . "where r.Status = 'uc'";
-        }else if ($linkType == "waitlist") {
-            $query = "select reg.idPsg from registration reg join reservation r on reg.idRegistration = r.idRegistration "
-                    . "where r.Status = 'w'";
         }
 
-        if ($query != '') {
+        $statusMap = [
+            'curguests'   => 's',
+            'confirmed'   => 'a',
+            'unconfirmed' => 'uc',
+            'waitlist'    => 'w',
+        ];
 
-            $stmt = $dbh->query($query);
-            $rows = $stmt->fetchAll(\PDO::FETCH_NUM);
+        $query = "SELECT reg.idPsg FROM registration reg JOIN reservation r ON reg.idRegistration = r.idRegistration";
 
-            if(count($rows) > 0){
-                foreach($rows as $k=>$v){
-                    $idPsgs[] = $v[0];
-                }
-            }
+        if ($linkType === Note::ResvLink) {
+            $stmt = $dbh->prepare("$query WHERE r.idReservation = ?");
+            $stmt->execute([$linkId]);
+        } elseif ($linkType === Note::VisitLink) {
+            $stmt = $dbh->prepare("SELECT reg.idPsg FROM registration reg JOIN visit r ON reg.idRegistration = r.idRegistration WHERE r.idVisit = ?");
+            $stmt->execute([$linkId]);
+        } elseif (isset($statusMap[$linkType])) {
+            $stmt = $dbh->prepare("$query WHERE r.Status = ?");
+            $stmt->execute([$statusMap[$linkType]]);
+        } else {
+            return [];
         }
-        return $idPsgs;
+
+        return $stmt->fetchAll(\PDO::FETCH_COLUMN, 0);
+        
     }
 
     /**
@@ -112,16 +103,18 @@ class LinkNote {
             if($linkType == Note::VisitLink) {
 
                 // We actually need the reservation ID
-                $stmt = $dbh->query("SELECT
-    v.`idReservation`, IFNULL(r.Title, '(?)')
-FROM
-    `visit` v
-        LEFT JOIN
-    reservation rv on v.idReservation = rv.idReservation
-	LEFT JOIN
-    resource r ON rv.idResource = r.idResource
-WHERE
-    v.`Span` = 0 AND v.`idVisit` =" . $linkId);
+                $stmt = $dbh->prepare("SELECT
+                    `v`.`idReservation`, IFNULL(`r`.`Title`, '(?)')
+                    FROM
+                    `visit` `v`
+                    LEFT JOIN
+                        `reservation` `rv` on `v`.`idReservation` = `rv`.`idReservation`
+	                LEFT JOIN
+                        `resource` `r` ON `rv`.`idResource` = `r`.`idResource`
+                    WHERE
+                        `v`.`Span` = 0 AND `v`.`idVisit` = :idLink");
+                $stmt->execute([':idLink'=>$linkId]);
+                
                 $rows = $stmt->fetchAll(\PDO::FETCH_NUM);
 
                 if (count($rows) > 0) {
@@ -137,7 +130,13 @@ WHERE
 
             if ($linkId >= 0) {
 
-                $dbh->exec("insert into `link_note` (`linkType`, `idLink`, `idNote`) values ('$linkType', '$linkId', '" . $note->getIdNote() . "');");
+                $stmt = $dbh->prepare("INSERT INTO `link_note` (`linkType`, `idLink`, `idNote`) values (:linkType, :linkId, :idNote);");
+                $stmt->execute([
+                    ':linkType'=>$linkType,
+                    ':linkId'=>$linkId,
+                    ':idNote'=>$note->getIdNote()
+                ]);
+
             } else {
                 return 'The link id is missing ';
             }

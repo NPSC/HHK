@@ -19,14 +19,14 @@ use HHK\Tables\Fields\{DB_Field, DbStrSanitizer, DbIntSanitizer, DbDateSanitizer
  */
 class GenLookupsRS extends AbstractTableRS {
 
-    public $Table_Name;   // varchar(45) NOT NULL,
-    public $Code;   // varchar(65) NOT NULL DEFAULT '',
-    public $Description;   // varchar(255) NOT NULL DEFAULT '',
-    public $Substitute;   // varchar(255) NOT NULL DEFAULT '',
-    public $Attributes; //JSON NOT NULL DEFAULT '[]',
-    public $Type;  // varchar(4) NOT NULL DEFAULT '',
-    public $Order;  // INT NOT NULL DEFAULT 0
-    public $Timestamp;   // timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+    public DB_Field $Table_Name;   // varchar(45) NOT NULL,
+    public DB_Field $Code;   // varchar(65) NOT NULL DEFAULT '',
+    public DB_Field $Description;   // varchar(255) NOT NULL DEFAULT '',
+    public DB_Field $Substitute;   // varchar(255) NOT NULL DEFAULT '',
+    public DB_Field $Attributes; //JSON NOT NULL DEFAULT '[]',
+    public DB_Field $Type;  // varchar(4) NOT NULL DEFAULT '',
+    public DB_Field $Order;  // INT NOT NULL DEFAULT 0
+    public DB_Field $Timestamp;   // timestamp NULL DEFAULT CURRENT_TIMESTAMP,
 
 
     function __construct($TableName = "gen_lookups") {

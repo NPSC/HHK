@@ -205,7 +205,7 @@ class InvoiceActions {
         if ($invDateStr != '') {
 
             try {
-                $billDT = setTimeZone(NULL, $invDateStr);
+                $billDT = \HHK\Common::setTimeZone(NULL, $invDateStr);
             } catch (RunTImeException $ex) {
                 return array('error' => 'Bad Date:  ' . $ex->getMessage());
             }

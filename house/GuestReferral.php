@@ -1,16 +1,11 @@
 <?php
 
+use HHK\Common;
 use HHK\sec\{Session, WebInit};
 use HHK\HTMLControls\HTMLContainer;
-use HHK\Exception\RuntimeException;
-use HHK\House\ReserveData\ReserveData;
-use HHK\Member\Role\AbstractRole;
 use HHK\sec\Labels;
 use HHK\House\ReferralForm;
-use HHK\SysConst\{GLTableNames, MemStatus, PhonePurpose};
-use HHK\House\PSG;
 use HHK\SysConst\ReferralFormStatus;
-use HHK\Tables\WebSec\Page_SecurityGroupRS;
 
 /**
  * Referral.php
@@ -24,7 +19,7 @@ require ("homeIncludes.php");
 
 
 try {
-    $wInit = new webInit();
+    $wInit = new WebInit();
 } catch (Exception $exw) {
     die($exw->getMessage());
 }
@@ -157,7 +152,7 @@ if ($idDoc > 0) {
     	} else {
     	    // Wrong document status
 
-    	    $lookups = readGenLookupsPDO($dbh, 'Referral_Form_Status');
+    	    $lookups = Common::readGenLookupsPDO($dbh, 'Referral_Form_Status');
 
     	    if ($refForm->getReferralStatus() == ReferralFormStatus::Accepted) {
 

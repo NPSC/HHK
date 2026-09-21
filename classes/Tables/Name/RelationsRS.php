@@ -15,19 +15,19 @@ use HHK\Tables\Fields\{DB_Field, DbIntSanitizer, DbStrSanitizer, DbDateSanitizer
 
 class RelationsRS extends AbstractTableRS {
     
-    public $idRelationship;  // int(11) NOT NULL AUTO_INCREMENT,
-    public $idName;  // int(11) NOT NULL,
-    public $Target_Id;  // int(11) NOT NULL DEFAULT '0',
-    public $Relation_Type;  // varchar(5) NOT NULL DEFAULT '',
-    public $Status;  // varchar(45) NOT NULL DEFAULT '',
-    public $Principal;  // bit(1) NOT NULL DEFAULT b'0',
-    public $Effective_Date;  // date DEFAULT NULL,
-    public $Thru_date;  // date DEFAULT NULL,
-    public $Note;  // text
-    public $Date_Added;  // datetime DEFAULT NULL,
-    public $Group_Code;  // varchar(45) NOT NULL DEFAULT '',
-    public $Updated_By;  // varchar(45) NOT NULL DEFAULT '',
-    public $Timestamp;  // timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    public DB_Field $idRelationship;  // int(11) NOT NULL AUTO_INCREMENT,
+    public DB_Field $idName;  // int(11) NOT NULL,
+    public DB_Field $Target_Id;  // int(11) NOT NULL DEFAULT '0',
+    public DB_Field $Relation_Type;  // varchar(5) NOT NULL DEFAULT '',
+    public DB_Field $Status;  // varchar(45) NOT NULL DEFAULT '',
+    public DB_Field $Principal;  // bit(1) NOT NULL DEFAULT b'0',
+    public DB_Field $Effective_Date;  // date DEFAULT NULL,
+    public DB_Field $Thru_date;  // date DEFAULT NULL,
+    public DB_Field $Note;  // text
+    public DB_Field $Date_Added;  // datetime DEFAULT NULL,
+    public DB_Field $Group_Code;  // varchar(45) NOT NULL DEFAULT '',
+    public DB_Field $Updated_By;  // varchar(45) NOT NULL DEFAULT '',
+    public DB_Field $Timestamp;  // timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
     
     
     function __construct($TableName = "relationship") {

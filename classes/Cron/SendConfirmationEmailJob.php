@@ -81,7 +81,7 @@ class SendConfirmationEmailJob extends AbstractJob implements JobInterface{
 
         $uS = Session::getInstance();
         
-        SysConfig::getCategory($this->dbh, $uS, ["h", "a", "d", "es", "f", "fg", "pr", "v", "ga"], webInit::SYS_CONFIG);
+        SysConfig::getCategory($this->dbh, $uS, ["h", "a", "d", "es", "f", "fg", "pr", "v", "ga"], WebInit::SYS_CONFIG);
         
         WebInit::loadNameLookups($this->dbh, $uS);
 

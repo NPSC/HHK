@@ -2,6 +2,7 @@
 
 namespace HHK\House\Reservation;
 
+use HHK\Common;
 use HHK\Document\FormDocument;
 use HHK\House\OperatingHours;
 use HHK\HTMLControls\{HTMLContainer, HTMLInput, HTMLTable};
@@ -285,13 +286,17 @@ class Reservation_1 {
      * @param int $endDelta
      * @param string $uname
      * @param bool $forceNewResource
+     * @param int|null $idRescPosted
      * @return bool
      */
-    public function move(\PDO $dbh, $startDelta, $endDelta, $uname, $forceNewResource = FALSE) {
-
+    public function move(\PDO $dbh, $startDelta, $endDelta, $uname, $forceNewResource = FALSE, $idRescPosted = null) {
+        $uS = Session::getInstance();
+        
         $startInterval = new \DateInterval('P' . abs($startDelta) . 'D');
         $endInterval = new \DateInterval('P' . abs($endDelta) . 'D');
 
+        $oldStartTxt = (new \DateTime($this->getExpectedArrival()))->format('M j, Y');
+        $oldEndTxt = (new \DateTime($this->getExpectedDeparture()))->format('M j, Y');
         $newStartDT = new \DateTime($this->getExpectedArrival());
         $newEndDt = new \DateTime($this->getExpectedDeparture());
 
@@ -333,7 +338,7 @@ class Reservation_1 {
         // Check for pre-existing visits
         $resvs = ReservationSvcs::getCurrentReservations($dbh, $this->getIdReservation(), $this->getIdGuest(), 0, $newStartDT, $newEndDt);
         if (count($resvs) > 0) {
-            $this->resultMessage = "The Move overlaps another reservation or visit.  ";
+            $this->resultMessage = "Cannot move reservation: the selected dates overlap another reservation or waitlist entry for this guest.  ";
             return FALSE;
         }
 
@@ -346,17 +351,56 @@ class Reservation_1 {
             $closedMsg = " - Info: The house is closed on the new arrival date";
         }
 
+        $requestedRescId = null;
+        if ($idRescPosted !== null && $idRescPosted !== '') {
+            $requestedRescId = intval($idRescPosted, 10);
+        }
+
         if ($this->getStatus() == ReservationStatus::Waitlist) {
 
             // move the reservation
             $this->setExpectedArrival($newStartDT->format('Y-m-d'));
             $this->setExpectedDeparture($newEndDt->format('Y-m-d'));
 
+            $roomChanged = '';
+            if ($requestedRescId !== null) {
+                if ($requestedRescId == 0 || $requestedRescId == 9999) {
+                    $this->setIdResource(0);
+                } else {
+                    $rescs = $this->findResources($dbh, $newStartDT->format('Y-m-d 17:00:00'), $newEndDt->format('Y-m-d 09:00:00'), $this->getNumberGuests(), array('room','rmtroom','part'), TRUE);
+                    if (isset($rescs[$requestedRescId]) === FALSE) {
+                        $this->resultMessage = 'Chosen Room is unavailable.  ';
+                        return FALSE;
+                    }
+
+                    $this->setIdResource($requestedRescId);
+                    $this->setStatus($uS->InitResvStatus);
+
+                    $roomChanged = 'to room ' . $rescs[$requestedRescId]->getTitle() . '.  ';
+                }
+            }
+
             $this->saveReservation($dbh, $this->getIdRegistration(), $uname);
-            $this->resultMessage = 'Reservation moved.' . $closedMsg;
+
+            if ($roomChanged !== '') {
+                $this->resultMessage = 'Reservation changed ' . $roomChanged . $closedMsg;
+            } else {
+                $this->resultMessage = 'Reservation moved.' . $closedMsg;
+            }
             return TRUE;
 
         } else {
+
+            if ($requestedRescId !== null && ($requestedRescId == 0 || $requestedRescId == 9999)) {
+                $this->setExpectedArrival($newStartDT->format('Y-m-d'));
+                $this->setExpectedDeparture($newEndDt->format('Y-m-d'));
+                $this->setIdResource(0);
+                $this->setStatus(ReservationStatus::Waitlist);
+
+                $this->saveReservation($dbh, $this->getIdRegistration(), $uname);
+                $this->resultMessage = 'Reservation waitlisted' . $closedMsg;
+                return TRUE;
+            }
 
             // Check for vacant rooms
             $rescs = $this->findResources($dbh, $newStartDT->format('Y-m-d 17:00:00'), $newEndDt->format('Y-m-d 09:00:00'), $this->getNumberGuests(), array('room','rmtroom','part'), TRUE);
@@ -367,31 +411,51 @@ class Reservation_1 {
                 $this->setExpectedArrival($newStartDT->format('Y-m-d'));
                 $this->setExpectedDeparture($newEndDt->format('Y-m-d'));
 
-                // If my original resource is unavailable, use another
+                // Keep the current room unless a specific room was requested.
                 $roomChanged = '';
-                if (isset($rescs[$this->getIdResource()]) === FALSE || $forceNewResource) {
-
-                    $keys = array_keys($rescs);
-                    $this->setIdResource($keys[0]);
-
-                    $resc = $rescs[$keys[0]];
-                    $roomChanged = 'to room ' . $resc->getTitle() . '.  ';
-
-                    if ($this->getStatus() == ReservationStatus::Waitlist) {
-                        $this->setStatus(ReservationStatus::Committed);
-                        $roomChanged .= 'New status is ' . $this->getStatusTitle($dbh, ReservationStatus::Committed);
+                if ($requestedRescId !== null) {
+                    if (isset($rescs[$requestedRescId]) === FALSE) {
+                        $this->resultMessage = 'Chosen Room is unavailable.  ';
+                        return FALSE;
                     }
 
+                    if ($requestedRescId != $this->getIdResource()) {
+                        $this->setIdResource($requestedRescId);
+                        $resc = $rescs[$requestedRescId];
+                        $roomChanged = 'to room ' . $resc->getTitle() . '.  ';
+                    }
+
+                } else if (isset($rescs[$this->getIdResource()]) === FALSE) {
+                    if ($forceNewResource) {
+                        // Used by admin/system workflows to free room assignments.
+                        $this->setIdResource('0');
+                        $this->setStatus(ReservationStatus::Waitlist);
+                        $roomChanged = 'to waitlist.  ';
+                    } else {
+                        $this->resultMessage = 'The date range is not available.  ';
+                        return FALSE;
+                    }
                 }
 
                 $this->saveReservation($dbh, $this->getIdRegistration(), $uname);
 
-                $this->resultMessage = 'Reservation changed ' . $roomChanged . $closedMsg;
+                $newStartTxt = $newStartDT->format('M j, Y');
+                $newEndTxt = $newEndDt->format('M j, Y');
+                $dateChangedMsg = '';
+                if ($oldStartTxt !== $newStartTxt || $oldEndTxt !== $newEndTxt) {
+                    $dateChangedMsg = 'from ' . $oldStartTxt . ' - ' . $oldEndTxt . ' to ' . $newStartTxt . ' - ' . $newEndTxt . '  ';
+                }
+
+                $this->resultMessage = 'Reservation changed ' . $dateChangedMsg . $roomChanged . $closedMsg;
                 return TRUE;
 
             } else {
 
-                if ($forceNewResource) {
+                if ($requestedRescId !== null) {
+                    $this->resultMessage = 'Chosen Room is unavailable.  ';
+                    return FALSE;
+
+                } else if ($forceNewResource) {
 
                     // move the reservation
                     $this->setExpectedArrival($newStartDT->format('Y-m-d'));
@@ -570,11 +634,15 @@ class Reservation_1 {
 
         // Set referal doc to archived
         $this->updateReferralFormDocStatus($dbh, ReferralFormStatus::Archived);
+        $dbh->exec("delete from `link_doc` where `idReservation` = '" . $this->getIdReservation(). "'");
+
+
 
         //move notes to PSG
         $idPsg = $this->getIdPsg($dbh);
         if($idPsg > 0 && $this->getIdReservation() > 0) {
-            $dbh->exec("update `link_note` set linkType = '" . Note::PsgLink . "', idLink = " . $idPsg . " where `linkType` = '" . Note::ResvLink . "' and `idLink` = " . $this->getIdReservation());
+            $dbh->exec("update ignore `link_note` set linkType = '" . Note::PsgLink . "', idLink = " . $idPsg . " where `linkType` = '" . Note::ResvLink . "' and `idLink` = " . $this->getIdReservation());
+            $dbh->exec("delete from `link_note` where `linkType` = '" . Note::ResvLink . "' and `idLink` = " . $this->getIdReservation());
         }
         
 
@@ -661,9 +729,14 @@ class Reservation_1 {
 
         $arDate = new \DateTime($stringDate);
 
-        // Initially check holidays
-        while ($startHolidays->is_holiday($arDate->format('U')) || $endHolidays->is_holiday($arDate->format('U'))) {
-            $arDate->sub(new \DateInterval('P1D'));
+        $uS = Session::getInstance();
+        if ($uS->UseCleaningBOdays) {
+
+            // Initially check holidays
+            while ($startHolidays->is_holiday($arDate->format('U')) || $endHolidays->is_holiday($arDate->format('U'))) {
+                $arDate->sub(new \DateInterval('P1D'));
+            }
+
         }
 
         $dateInfo = getDate($arDate->format('U'));
@@ -678,9 +751,13 @@ class Reservation_1 {
 
         }
 
-        // Finally check holidays again
-        while ($startHolidays->is_holiday($arDate->format('U')) || $endHolidays->is_holiday($arDate->format('U'))) {
-            $arDate->sub(new \DateInterval('P1D'));
+        if ($uS->UseCleaningBOdays) {
+
+            // Finally check holidays again
+            while ($startHolidays->is_holiday($arDate->format('U')) || $endHolidays->is_holiday($arDate->format('U'))) {
+                $arDate->sub(new \DateInterval('P1D'));
+            }
+
         }
 
         return $arDate->format('Y-m-d H:i:s');
@@ -707,11 +784,14 @@ class Reservation_1 {
 
         $arDate = new \DateTime($stringDate);
 
-        // add all consecutive holidays
-        while ($startHolidays->is_holiday($arDate->format('U')) || $endHolidays->is_holiday($arDate->format('U'))) {
-            $arDate->add(new \DateInterval('P1D'));
-        }
+        $uS = Session::getInstance();
+        if ($uS->UseCleaningBOdays) {
 
+            // add all consecutive holidays
+            while ($startHolidays->is_holiday($arDate->format('U')) || $endHolidays->is_holiday($arDate->format('U'))) {
+                $arDate->add(new \DateInterval('P1D'));
+            }
+        }
 
         $dateInfo = getDate($arDate->format('U'));
         $limit = 5;
@@ -723,9 +803,13 @@ class Reservation_1 {
             $dateInfo = getDate($arDate->format('U'));
         }
 
-        // Finally, check for holidays again.
-        while ($startHolidays->is_holiday($arDate->format('U')) || $endHolidays->is_holiday($arDate->format('U'))) {
-            $arDate->add(new \DateInterval('P1D'));
+        if ($uS->UseCleaningBOdays) {
+
+            // Finally, check for holidays again.
+            while ($startHolidays->is_holiday($arDate->format('U')) || $endHolidays->is_holiday($arDate->format('U'))) {
+                $arDate->add(new \DateInterval('P1D'));
+            }
+            
         }
 
         return $arDate->format('Y-m-d H:i:s');
@@ -923,7 +1007,7 @@ where $typeList and (rc.`Retired_At` is null or date(rc.`Retired_At`) > '" . $ex
 
         //
         $query = "select r.idReservation from reservation r "
-                . "where r.idResource = $idResource and r.Status in ($statuses) and DATE(ifnull(r.Actual_Arrival, r.Expected_Arrival)) <= DATE('$dep') "
+                . "where r.idResource = $idResource and r.Status in ($statuses) and DATE(ifnull(r.Actual_Arrival, r.Expected_Arrival)) < DATE('$dep') "
                 . "and DATE(ifnull(r.Actual_Departure, r.Expected_Departure)) > DATE('$arr')";
         $stmt = $dbh->query($query);
 
@@ -1201,10 +1285,10 @@ where $typeList and (rc.`Retired_At` is null or date(rc.`Retired_At`) > '" . $ex
 
         if (count($rows) > 0) {
 
-        	$roomStatuses = readGenLookupsPDO($dbh, 'Room_Status');
+        	$roomStatuses = Common::readGenLookupsPDO($dbh, 'Room_Status');
 
             if ($shoDirtyRooms) {
-                $cleanCodes = readGenLookupsPDO($dbh, 'Room_Cleaning_Days');
+                $cleanCodes = Common::readGenLookupsPDO($dbh, 'Room_Cleaning_Days');
 
                 foreach ($cleanCodes as $i) {
                     if ($i['Substitute'] == '0') {
@@ -1372,7 +1456,7 @@ where $typeList and (rc.`Retired_At` is null or date(rc.`Retired_At`) > '" . $ex
             }
         }
 
-        $reservStatuses = readLookups($dbh, "ReservStatus", "Code", true);
+        $reservStatuses = Common::readLookups($dbh, "ReservStatus", "Code", true);
 
         if(isset($reservStatuses[$status])){
             return $reservStatuses[$status]["Title"];
@@ -1405,7 +1489,7 @@ where $typeList and (rc.`Retired_At` is null or date(rc.`Retired_At`) > '" . $ex
             }
         }
 
-        $reservStatuses = readLookups($dbh, "reservStatus", "Code", true);
+        $reservStatuses = Common::readLookups($dbh, "reservStatus", "Code", true);
 
         if(isset($reservStatuses[$status])){
             return HTMLContainer::generateMarkup('span', '', array('class'=>'ui-icon ' . $reservStatuses[$status]["Icon"], 'style'=>'float: left; margin-left:.3em;', 'title'=>$reservStatuses[$status]["Title"]));
@@ -2143,9 +2227,9 @@ where $typeList and (rc.`Retired_At` is null or date(rc.`Retired_At`) > '" . $ex
      * @param \PDO|null $dbh
      * @return int|mixed
      */
-    public function getNumberGuests(\PDO $dbh = null) {
+    public function getNumberGuests(\PDO|null $dbh = null) {
 
-        if (!is_null($dbh) && $this->getStatus() == ReservationStatus::Staying) {
+        if ($dbh instanceof \PDO && $this->getStatus() == ReservationStatus::Staying) {
 
             $stmt = $dbh->query("select count(s.idStays)
 from stays s join visit v on s.idVisit = v.idVisit and s.Visit_Span = v.Span

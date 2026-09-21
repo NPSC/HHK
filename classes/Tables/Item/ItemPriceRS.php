@@ -20,12 +20,11 @@ use HHK\Tables\Fields\{DB_Field, DbIntSanitizer, DbStrSanitizer, DbDecimalSaniti
  */
 class ItemPriceRS extends AbstractTableRS {
     
-    public $idItem_price;  // INTEGER NOT NULL,
-    public $Item_Id;  // INTEGER NOT NULL,
-    public $Price;  // decimal
-    public $Currency_Id;  // INTEGER NOT NULL,
-    public $ModelCode;  // VARCHAR(5) NOT NULL DEFAULT ''
-    
+    public DB_Field $idItem_price;  // INTEGER NOT NULL,
+    public DB_Field $Item_Id;  // INTEGER NOT NULL,
+    public DB_Field $Price;  // decimal
+    public DB_Field $Currency_Id;  // INTEGER NOT NULL,
+    public DB_Field $ModelCode;  // VARCHAR(5) NOT NULL DEFAULT ''
     function __construct($TableName = 'item_price') {
         $this->idItem_price = new DB_Field('idItem_price', 0, new DbIntSanitizer(), TRUE, TRUE);
         $this->Item_Id = new DB_Field('Item_Id', 0, new DbIntSanitizer(), TRUE, TRUE);

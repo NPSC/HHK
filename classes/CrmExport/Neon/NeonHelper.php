@@ -1,6 +1,8 @@
 <?php
 namespace HHK\CrmExport\Neon;
 
+use DateTime;
+
 /**
  *
  * @author Eric
@@ -8,66 +10,55 @@ namespace HHK\CrmExport\Neon;
  */
 final class NeonHelper {
 
-    Const MAX_CUSTOM_PROPERTYS = 50;
+    public static function fillDonation(array $r, array &$param): void {
 
-    public static function fillDonation($r, &$param) {
-
-        $codes = array(
-            'accountId',
-            'amount',
-            'date',
-            'fund.id',
-            'source.name',
-        );
-
-        $base = 'donation.';
-
-        foreach ($codes as $c) {
-
-            if (isset($r[$c]) && $r[$c] != '') {
-                $param[$base . $c] = $r[$c];
-            }
+        if (isset($r['accountId']) && $r['accountId'] != '') {
+            $param['donation']['accountId'] = $r['accountId'];
+        }
+        if (isset($r['amount']) && $r['amount'] != '') {
+            $param['donation']['amount'] = $r['amount'];
+        }
+        if (isset($r['date']) && $r['date'] != '') {
+            $param['donation']['date'] = $r['date'];
+        }
+        if (isset($r['fund.id']) && $r['fund.id'] != '') {
+            $param['donation']['fund']['id'] = $r['fund.id'];
         }
     }
 
-    public static function fillPayment($r, &$param) {
+    public static function fillPayment(array $r, array &$param): void {
 
-        $codes = array(
-            'amount',
-            'tenderType.id',
-            'note',
-        );
-
-        $base = 'Payment.';
-
-        foreach ($codes as $c) {
-
-            if (isset($r[$c]) && $r[$c] != '') {
-                $param[$base . $c] = $r[$c];
-            }
+        if (isset($r['amount']) && $r['amount'] != '') {
+            $param['Payment']['amount'] = $r['amount'];
+        }
+        if (isset($r['tenderType.id']) && $r['tenderType.id'] != '') {
+            $param['Payment']['tenderType']['id'] = $r['tenderType.id'];
+        }
+        if (isset($r['note']) && $r['note'] != '') {
+            $param['Payment']['note'] = $r['note'];
         }
 
         switch ($r['tenderType.id']) {
 
             // Charge
             case '2':
-                $param[$base . 'creditCardOfflinePayment.cardNumber'] = '444444444444' . $r['cardNumber'];
-                $param[$base . 'creditCardOfflinePayment.cardHolder'] = $r['cardHolder'];
-                $param[$base . 'creditCardOfflinePayment.cardType.name'] = $r['cardType.name'];
+                $param['Payment']['creditCardOfflinePayment']['cardNumber'] = '444444444444' . $r['cardNumber'];
+                $param['Payment']['creditCardOfflinePayment']['cardHolder'] = $r['cardHolder'];
+                $param['Payment']['creditCardOfflinePayment']['cardType']['name'] = $r['cardType.name'];
                 break;
 
                 // Check
             case '3':
-                $param[$base . 'checkPayment.CheckNumber'] = $r['CheckNumber'];
+                $param['Payment']['checkPayment']['CheckNumber'] = $r['CheckNumber'];
                 break;
 
         }
 
     }
 
-    public static function fillPcName($r, &$param, $origValues = array()) {
+    public static function fillPcName(array $r, array &$param): void {
 
-        $codes = array(
+        $simpleCodes = array(
             'contactId',
             'firstName',
             'lastName',
@@ -80,221 +71,175 @@ final class NeonHelper {
             'email2',
             'email3',
             'fax',
-            'gender.name',
             'deceased',
             'title',
             'department',
         );
 
-        $nonEmptyCodes = array(
-            'dob',
-            'phone1',
-            'phone1Type',
-            'phone2',
-            'phone2Type',
-            'phone3',
-            'phone3Type',
+        $simpleNonEmptyCodes = array(
+            'dob'
         );
 
-        $base = 'individualAccount.';
-        $pc = 'primaryContact.';
-        $basePc = $base . $pc;
-
-        foreach ($codes as $c) {
-
+        foreach ($simpleCodes as $c) {
             if (isset($r[$c])) {
-                $param[$basePc . $c] = $r[$c];
-            } else if (isset($origValues[$pc . $c])) {
-                $param[$basePc . $c] = $origValues[$pc . $c];
+                $param['individualAccount']['primaryContact'][$c] = $r[$c];
             }
         }
 
-        foreach ($nonEmptyCodes as $c) {
+        // deceased is boolean
+        if (isset($r['deceased'])) {
+            $param['individualAccount']['primaryContact']['deceased'] = filter_var($r['deceased'], FILTER_VALIDATE_BOOLEAN);
+        }
+        
+        // gender.name maps to a nested path
+        if (isset($r['gender.code']) && $r['gender.code'] != '') {
+            $param['individualAccount']['primaryContact']['gender']['code'] = $r['gender.code'];
+        }
+
+        foreach ($simpleNonEmptyCodes as $c) {
             // these codes must be missing if not defined
             if (isset($r[$c]) && $r[$c] != '') {
-                $param[$basePc . $c] = $r[$c];
-            } else if (isset($origValues[$pc . $c]) && $origValues[$pc . $c] != '') {
-                $param[$basePc . $c] = $origValues[$pc . $c];
+                if($c == 'dob'){
+                    $param['individualAccount']['primaryContact'][$c] = self::formatDate(new DateTime($r[$c]));
+                }else{
+                    $param['individualAccount']['primaryContact'][$c] = $r[$c];
+                }
             }
         }
     }
 
-    public static function fillIndividualAccount($r) {
-
-        //$base = 'individualAccount.individualTypes.';
-        $indBase = 'individualType.id';
-        $str = '';
-
-        if (isset($r[$indBase]) && $r[$indBase] > 0) {
-            $str = '&individualAccount.individualTypes.individualType.id=' . $r[$indBase];
-        }
-
-
-        if (isset($r['individualType.id2']) && $r['individualType.id2'] > 0) {
-            $str .= '&individualAccount.individualTypes.individualType.id=' . $r['individualType.id2'];
-        }
-
-        return $str;
+    public static function formatDate(DateTime $date):array {
+        return [
+            'year' => $date->format('Y'),
+            'month' => $date->format('m'),
+            'day' => $date->format('d'),
+        ];
     }
 
-    public static function fillOther($r, &$param, $origValues = array()) {
+    public static function fillIndividualAccount(array $r, array &$param): void {
 
-        $codes = array(
+        $param['individualAccount']['individualTypes'] = []; //reset individual types to prevent duplicates
+
+        if (isset($r['individualType.id']) && $r['individualType.id'] > 0) {
+            $param['individualAccount']['individualTypes'][] = ['id' => $r['individualType.id']];
+        }
+
+        if (isset($r['individualType.id2']) && $r['individualType.id2'] > 0) {
+            $param['individualAccount']['individualTypes'][] = ['id' => $r['individualType.id2']];
+        }
+    }
+
+    public static function fillOther(array $r, array &$param): void {
+
+        $simpleCodes = array(
             'noSolicitation',
             'url',
-            'login.username',
-            'login.password',
-            'login.orgId',
-            'source.name',
             'existingOrganizationId',
             'organizationName',
             'twitterPage',
             'facebookPage',
         );
 
-        $base = 'individualAccount.';
-
-        foreach ($codes as $c) {
-
+        foreach ($simpleCodes as $c) {
             if (isset($r[$c])) {
-                $param[$base . $c] = $r[$c];
-            } else if (isset($origValues[$c])) {
-                $param[$base . $c] = $origValues[$c];
+                $param['individualAccount'][$c] = $r[$c];
             }
+        }
+
+        // login fields
+        if (isset($r['login.username'])) {
+            $param['individualAccount']['login']['username'] = $r['login.username'];
+        }
+
+        if (isset($r['login.password'])) {
+            $param['individualAccount']['login']['password'] = $r['login.password'];
+        }
+
+        if (isset($r['login.orgId'])) {
+            $param['individualAccount']['login']['orgId'] = $r['login.orgId'];
+        }
+
+        if (isset($r['source.code'], $r['source.name'])) {
+            $param['individualAccount']['source'] = ['id' => $r['source.code'], 'name' => $r['source.name'], 'status'=>"ACTIVE"];
         }
     }
 
-    public static function fillPcAddr($r, &$param, $origValues = array()) {
+    public static function fillPcAddr(array $r, array &$param): void {
 
-        $codes = array(
+        $simpleCodes = array(
             'addressId',
             'isPrimaryAddress',
-            'isShippingAddress',
-            'addressType.name',
             'addressLine1',
             'addressLine2',
             'addressLine3',
             'addressLine4',
             'city',
-            'state.code',
-            'province',
-            'country.id',
+            'county',
+            'stateProvince',
             'zipCode',
             'zipCodeSuffix',
             'startDate',
             'endDate',
+
+            'phone1',
+            'phone1Type',
+            'phone2',
+            'phone2Type',
+            'phone3',
+            'phone3Type'
         );
 
+        $address = [];
 
-        $pc = 'primaryContact.addresses.address.';
-        $basePc = 'individualAccount.' . $pc;
+        $origAddresses = $param['individualAccount']['primaryContact']['addresses'] ?? [];
 
-        foreach ($codes as $c) {
-
+        foreach ($simpleCodes as $c) {
             if (isset($r[$c])) {
-                $param[$basePc . $c] = $r[$c];
-            } else if (isset($origValues[$pc . '0.' . $c])) {
-                $param[$basePc . $c] = $origValues[$pc . '0.' . $c];
+                $address[$c] = $r[$c];
+            } else if (isset($origAddresses[0][$c])) {
+                $address[$c] = $origAddresses[0][$c];
             }
         }
+
+        // addressType.name
+        if (isset($r['addressType.name'])) {
+            $address['addressType']['name'] = $r['addressType.name'];
+        } else if (isset($origAddresses[0]['addressType']['name'])) {
+            $address['addressType']['name'] = $origAddresses[0]['addressType']['name'];
+        }
+
+        // state.code
+        if (isset($r['stateProvince.code'])) {
+            $address['stateProvince']['code'] = $r['stateProvince.code'];
+        } else if (isset($origAddresses[0]['stateProvince']['code'])) {
+            $address['stateProvince']['code'] = $origAddresses[0]['stateProvince']['code'];
+        }
+
+        // country.id
+        if (isset($r['country.id'])) {
+            $address['country']['id'] = $r['country.id'];
+        } else if (isset($origAddresses[0]['country']['id'])) {
+            $address['country']['id'] = $origAddresses[0]['country']['id'];
+        }
+
+        $param['individualAccount']['primaryContact']['addresses'][0] = $address;
     }
 
-    public static function fillCustomFields($customFields, $r, $origValues = array()) {
+    public static function fillCustomFields(array $customFields, array $r, array &$param): void {
 
-        $customParamStr = '';
-        $base = 'individualAccount.customFieldDataList.customFieldData.';
-
+        $customFieldParams = isset($param['individualAccount']['accountCustomFields']) ? $param['individualAccount']['accountCustomFields']: [];
 
         foreach ($customFields as $k => $v) {
-
             if (isset($r[$k]) && $r[$k] != '') {
-                // We have this custom field.
-
-                $cparam = array(
-                    $base . 'fieldId' => $v,
-                    $base . 'fieldOptionId' => '',
-                    $base . 'fieldValue' => $r[$k]
-                );
-
-                $customParamStr .= '&' . http_build_query($cparam);
-
-            } else {
-                // We don't have the custom field, see if one exists in Neon and if so, copy it.
-
-                $fieldValue = self::findCustomField($origValues, $v);
-
-                if ($fieldValue !== FALSE) {
-
-                    $cparam = array(
-                        $base . 'fieldId' => $v,
-                        $base . 'fieldOptionId' => '',
-                        $base . 'fieldValue' => $fieldValue
-                    );
-
-                    $customParamStr .= '&' . http_build_query($cparam);
-                }
+                static::addOrUpdateCustomField($customFieldParams, $v, $r[$k]);
             }
         }
-
-        // Search Neon custome fields that we don't control and copy them.
-        $customParamStr .= self::fillOtherCustomFields($customFields, $origValues);
-
-        return $customParamStr;
-
-    }
-
-    protected static function fillOtherCustomFields($customFields, $origValues) {
-
-        $condition = TRUE;
-        $index = 0;
-        $customParamStr = '';
-        $base = 'individualAccount.customFieldDataList.customFieldData.';
-
-        if (isset($origValues['customFieldDataList']['customFieldData'])) {
-
-            // Move Neon filedId's to key position
-            $fieldCustom = array_flip($customFields);
-
-            $cfValues = $origValues['customFieldDataList']['customFieldData'];
-
-            while ($condition) {
-
-                if (isset($cfValues[$index])) {
-
-                    // Is this not one of my field Ids?
-                    if (isset($cfValues[$index]["fieldId"]) && isset($fieldCustom[$cfValues[$index]["fieldId"]]) === FALSE) {
-                        // Found other custom field
-
-                        $cparam = array(
-                            $base . 'fieldId' => $cfValues[$index]["fieldId"],
-                            $base . 'fieldOptionId' => $cfValues[$index]["fieldOptionId"],
-                            $base . 'fieldValue' => $cfValues[$index]["fieldValue"]
-                        );
-
-                        $customParamStr .= '&' . http_build_query($cparam);
-
-                    }
-
-                } else {
-                    // end of custom fields
-                    $condition = FALSE;
-                }
-
-                $index++;
-
-                if ($index > self::MAX_CUSTOM_PROPERTYS) {
-                    $condition = FALSE;
-                }
-            }
-        }
-
-        return $customParamStr;
+        $param['individualAccount']['accountCustomFields'] = $customFieldParams;
     }
 
     /**
      *
      * @param array $origValues
-     * @param string $base
      * @param mixed $fieldId
      * @return boolean|mixed
      */
@@ -305,37 +250,33 @@ final class NeonHelper {
         $condition = TRUE;
         $index = 0;
 
-        if (isset($origValues['customFieldDataList']['customFieldData'])) {
+        if (isset($origValues['individualAccount']['accountCustomFields'])) {
 
-            $cfValues = $origValues['customFieldDataList']['customFieldData'];
-
-            while ($condition) {
-
-                if (isset($cfValues[$index])) {
-
-                    // Is this my field Id?
-                    if (isset($cfValues[$index]["fieldId"]) && $cfValues[$index]["fieldId"] == $fieldId) {
-                        // Found the given custom field
-
-                        $fieldValue = $cfValues[$index]["fieldValue"];
-                        $condition = FALSE;
-                    }
-
-                } else {
-                    // end of custom fields
-                    $condition = FALSE;
-                }
-
-                $index++;
-
-                if ($index > self::MAX_CUSTOM_PROPERTYS) {
-                    $condition = FALSE;
+            foreach($origValues['individualAccount']['accountCustomFields'] as $k=>$v){
+                if($v['id'] == $fieldId){
+                    return $v['value'];
                 }
             }
         }
+        return false;
+    }
 
-        return $fieldValue;
+    public static function addOrUpdateCustomField(array &$origList, string $id, string|int|array $value){
+        $found = false;
+        foreach($origList as $k=>$v){
+            if(isset($v['id']) && $v['id'] == $id){
+                $origList[$k]['value'] = $value;
+                $found = true;
+                continue;
+            }
+        }
+        
+        if($found == false){
+            $origList[] = [
+                'id'=>$id,
+                'value'=>$value
+            ];
+        }
     }
 
 }
-

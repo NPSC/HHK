@@ -36,7 +36,7 @@ class HouseLog extends AbstractTableLog {
 
     }
 
-    public static function logSysConfig(\PDO $dbh, $key, $value, $logText, $userName, $type = 'sys_config') {
+    public static function logSysConfig(\PDO $dbh, $key, $value, $logText, $userName, $type = 'sys_config'){
 
     	$logRS = new House_LogRS();
     	$logRS->Log_Type->setNewVal($type);
@@ -51,7 +51,7 @@ class HouseLog extends AbstractTableLog {
 
     }
 
-    public static function logSiteConfig(\PDO $dbh, $key, $value, $userName, $subType = 'update') {
+    public static function logSiteConfig(\PDO $dbh, $key, $value, $userName, $subType = 'update'){
 
         $logRS = new House_LogRS();
         $logRS->Log_Type->setNewVal('Site Config File');
@@ -115,7 +115,7 @@ class HouseLog extends AbstractTableLog {
      * @param bool $isSuccess
      * @param string $logText
      * @param string $userName
-     * @return number
+     * @return int
      */
     public static function logApi(\PDO $dbh, string $apiService, bool $isSuccess, string $logText, string $userName) {
 
@@ -139,7 +139,7 @@ class HouseLog extends AbstractTableLog {
      * @param string $fileType Word, Excel, etc
      * @param string $logText
      * @param string $userName
-     * @return number
+     * @return int
      */
     public static function logDownload(\PDO $dbh, string $type, string $fileType, string $logText, string $userName) {
 
@@ -162,7 +162,7 @@ class HouseLog extends AbstractTableLog {
      * @param string $clientId
      * @param string $logText
      * @param string $userName
-     * @return number
+     * @return int
      */
     public static function logAPIClient(\PDO $dbh, string $type, string $clientId, string $logText, string $userName) {
 
@@ -182,11 +182,10 @@ class HouseLog extends AbstractTableLog {
      * Log errors/exceptions
      *
      * @param \PDO $dbh
-     * @param string $apiService (google, salesforce, etc)
-     * @param bool $isSuccess
+     * @param string $exceptionType
      * @param string $logText
      * @param string $userName
-     * @return number
+     * @return int
      */
     public static function logError(\PDO $dbh, string $exceptionType, string $logText, string $userName) {
 

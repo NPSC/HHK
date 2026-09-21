@@ -8,13 +8,14 @@ use HHK\Tables\EditRS;
 use HHK\Tables\Name\NameRS;
 use HHK\AuditLog\NameLog;
 use HHK\sec\Session;
+use PDOStatement;
 
 /**
  *
  * @author Eric
  *
  */
-abstract class AbstractExportManager {
+abstract class AbstractExportManager implements ExportManagerInterface{
 
     protected $gatewayId;
     protected $userId;
@@ -36,17 +37,36 @@ abstract class AbstractExportManager {
     protected $apiVersion;
     protected $maxPSGsPerBatch;
 
+    protected bool $linkRelatives = true;
+
     protected $memberReplies;
     protected $replies;
     protected $proposedUpdates;
+    protected \PDO $dbh;
 
 
     const CMS_NEON = 'neon';
     const CMS_SF = 'sf';
     const EXCLUDE_TERM = 'excld';
 
+    const SearchViewName = '';
 
-    public static function factory(\PDO $dbh, $cmsName) {
+
+    /**
+     * Looks up a CMS's display title without constructing a full manager
+     * (which would open a connection, decrypt credentials, load field maps, etc).
+     */
+    public static function getCmsTitle(\PDO $dbh, string $cmsName): string {
+
+        $stmt = $dbh->prepare("SELECT `Description` FROM `gen_lookups` WHERE `Table_Name` = 'ExternalCRM' AND `Code` = :code;");
+        $stmt->execute([':code' => $cmsName]);
+        $title = $stmt->fetchColumn();
+
+        return $title === false ? '' : $title;
+    }
+
+
+    public static function factory(\PDO $dbh, string $cmsName): ?ExportManagerInterface {
 
         switch (strtolower($cmsName)) {
 
@@ -65,9 +85,9 @@ abstract class AbstractExportManager {
     }
 
 
-    public function __construct(\PDO $dbh, $cmsName) {
+    public function __construct(\PDO $dbh, string $cmsName) {
 
-        $stmt = $dbh->query("SELECT `Description` FROM gen_lookups WHERE Table_Name = 'ExternalCRM' AND Code = '$cmsName';");
+        $stmt = $dbh->query("SELECT `Description` FROM `gen_lookups` WHERE `Table_Name` = 'ExternalCRM' AND `Code` = '$cmsName';");
         $rows = $stmt->fetchAll(\PDO::FETCH_NUM);
 
         if (isset($rows[0]) && isset($rows[0][0])) {
@@ -88,6 +108,8 @@ abstract class AbstractExportManager {
 
         $this->loadCredentials($cmsRs);
 
+        $this->dbh = $dbh;
+
     }
 
     protected function loadCredentials(CmsGatewayRS $cmsRs) {
@@ -104,26 +126,27 @@ abstract class AbstractExportManager {
         $this->lastUpdated = $cmsRs->Last_Updated->getStoredVal();
         $this->apiVersion = $cmsRs->apiVersion->getStoredVal();
         $this->maxPSGsPerBatch = $cmsRs->retryCount->getStoredVal();
+        $this->linkRelatives = ($cmsRs->userLoginUrl->getStoredVal() !== '0');
 
     }
 
 
-    public function exportMembers(\PDO $dbh, array $ids) {
+    public function exportMembers(\PDO $dbh, array $ids): array {
         $replys[0] = array('error' => 'Transferring Members is not implemented');
         return $replys;
     }
 
-    public function exportPayments(\PDO $dbh, $startDateString, $endDateString) {
+    public function exportPayments(\PDO $dbh, string $startDateString, string $endDateString): array {
         $replys[0] = array('error' => 'Transferring Payments is not implemented');
         return $replys;
     }
 
-    public function exportVisits(\PDO $dbh, $idPsg, array $rels) {
+    public function exportVisits(\PDO $dbh, $idPsg, array $rels): array {
         $replys[0] = array('error' => 'Transferring Visits is not implemented');
         return $replys;
     }
 
-    public static function getSearchFields($dbh, $tableName) {
+    public function getSearchFields(?\PDO $dbh, string $tableName): array {
 
         $stmt = $dbh->query("SHOW COLUMNS FROM `$tableName`;");
         $cols = array();
@@ -140,33 +163,33 @@ abstract class AbstractExportManager {
      *
      * @param array $psgIds  PSG Id's to exclude.
      */
-    public function setExcludeMembers(\PDO $dbh, array $psgIds) {
+    public function setExcludeMembers(\PDO $dbh, array $psgIds): array {
         $replys[0] = array('error' => 'Excluding Members is not implemented');
         return $replys;
     }
 
-    public function searchMembers ($criteria) {
+    public function searchMembers (array $criteria): array {
         $replys[0] = array('error' => 'Transferring Visits is not implemented');
         return $replys;
     }
 
-    public function getMember(\PDO $dbh, $parameters) {
-        $replys[0] = array('error' => 'Getting Members is not implemented');
-        return $replys;
+    public function getMember(\PDO $dbh, array $parameters): string {
+        return 'Getting Members is not implemented';
     }
 
-    public function retrieveRemoteAccount($accountId) {
+    public function retrieveRemoteAccount(string|int $accountId): array {
         $replys[0] = array('error' => 'Retrieving remote accounts is not implemented');
         return $replys;
     }
 
-    public function updateRemoteMember(\PDO $dbh, array $accountData, $idName, $extraSourceCols = [], $updateAddr = FALSE) {
-        $replys[0] = array('error' => 'Updating Members is not implemented');
-        return $replys;
+    public function updateRemoteMember(\PDO $dbh, array $accountData, int $idName, array $extraSourceCols = [], bool $updateAddr = FALSE): string {
+        return 'Updating Members is not implemented';
     }
 
-    public abstract function showConfig(\PDO $dbh);
-    public abstract function saveConfig(\PDO $dbh);
+    public abstract function showConfig(\PDO $dbh): mixed;
+    public abstract function saveConfig(\PDO $dbh): mixed;
+
+    public abstract function upsertMembers(\PDO $dbh, array $sourceIds, bool $trace = false, bool $linkRelatives = true): array;
 
     /**
      * Summary of unwindResponse
@@ -175,7 +198,7 @@ abstract class AbstractExportManager {
      * @param mixed $prefix
      * @return void
      */
-    public function unwindResponse(&$line, $results, $prefix = '') {
+    public function unwindResponse(&$line, $results, $prefix = ''): void {
 
         if (is_array($results)) {
 
@@ -197,11 +220,7 @@ abstract class AbstractExportManager {
             }
         } else {
             if (is_bool($results)) {
-                if ($results) {
-                    $results = 'true';
-                } else {
-                    $results = 'false';
-                }
+                $results = ($results) ? 'true' : 'false';
             }
             $line[] = $results;
         }
@@ -215,7 +234,7 @@ abstract class AbstractExportManager {
      * @param mixed $externalId
      * @return int
      */
-    protected function updateLocalExternalId(\PDO $dbh, $idName, $externalId) {
+    protected function updateLocalExternalId(\PDO $dbh, $idName, $externalId): int {
 
         $uS = Session::getInstance();
         $upd = 0;
@@ -243,7 +262,7 @@ abstract class AbstractExportManager {
      * @param mixed $id
      * @return int
      */
-    public function resetExternalId(\PDO $dbh, $id) {
+    public function resetExternalId(\PDO $dbh, $id): int {
 
         return $this->updateLocalExternalId($dbh, $id, '');
 
@@ -254,7 +273,7 @@ abstract class AbstractExportManager {
      * @param mixed $text
      * @return array|string|null
      */
-    public function unencodeHTML($text) {
+    public function unencodeHTML($text): array|string|null {
 
         $txt = preg_replace_callback("/(&#[0-9]+;)/",
             function($m) {
@@ -270,17 +289,18 @@ abstract class AbstractExportManager {
     /**
      * Summary of loadSearchDB
      * @param \PDO $dbh
-     * @param mixed $view
-     * @param mixed $sourceIds
-     * @return \PDOStatement|bool|null
+     * @param string $view
+     * @param array $sourceIds
+     * @return PDOStatement|bool|null
      */
-    public static function loadSearchDB(\PDO $dbh, $view, $sourceIds) {
+    public static function loadSearchDB(\PDO $dbh, string $view, array $sourceIds): bool|PDOStatement|null {
 
         if ($view == '') {
             return NULL;
         }
 
         // clean up the ids
+        $idList = [];
         foreach ($sourceIds as $s) {
             if (intval($s, 10) > 0){
                 $idList[] = intval($s, 10);
@@ -305,87 +325,95 @@ abstract class AbstractExportManager {
      * @param \HHK\CrmExport\RelationshipMapper $rMapper
      * @return array
      */
-    public static function findPrimaryGuest(\PDO $dbh, $idPrimaryGuest, $idPsg, RelationshipMapper $rMapper)
+    public static function findPrimaryGuest(\PDO $dbh, $idPrimaryGuest, $idPsg, RelationshipMapper $rMapper): array
     {
         return array();
     }
 
-    public function getMyCustomFields(\PDO $dbh) {
+    public function getMyCustomFields(\PDO $dbh): array {
         return [];
     }
 
-    public function getAccountId() {
+    public function getAccountId(): mixed {
         return $this->accountId;
     }
 
-    public function setAccountId($v) {
+    public function setAccountId(string|int $v): void {
         $this->accountId = $v;
     }
 
-    public function getServiceTitle() {
+    public function getServiceTitle(): mixed {
         return $this->serviceTitle;
     }
 
-    public function getServiceName() {
+    public function getServiceName(): string {
         return $this->serviceName;
     }
 
-    public function getUserId() {
+    public function getUserId(): mixed {
         return $this->userId;
     }
 
-    public function getPassword() {
+    public function getPassword(): mixed {
         return $this->password;
     }
 
-    public function getClientId() {
+    public function getClientId(): mixed {
         return $this->clientId;
     }
 
-    public function getClientSecret() {
+    public function getClientSecret(): mixed {
         return $this->clientSecret;
     }
 
-    public function getEndpointUrl() {
+    public function getEndpointUrl(): mixed {
         return $this->endpointURL;
     }
 
-    public function getSecurityToken() {
+    public function getSecurityToken(): mixed {
         return $this->securityToken;
     }
 
-    public function getApiVersion() {
+    public function getApiVersion(): mixed {
         return $this->apiVersion;
     }
 
-    public function getMaxPSGsPerBatch(){
+    public function getMaxPSGsPerBatch(): mixed{
         return $this->maxPSGsPerBatch;
     }
 
-    public function getLastUpdated() {
+    public function getLinkRelatives(): bool {
+        return $this->linkRelatives;
+    }
+
+    public function getLastUpdated(): mixed {
         return $this->lastUpdated;
     }
 
-    public function getUpdatedBy() {
+    public function getUpdatedBy(): mixed {
         return $this->updatedBy;
     }
 
-    public function getGatewayId() {
+    public function getGatewayId(): mixed {
         return $this->gatewayId;
     }
 
-    public function getMemberReplies() {
+    public function getMemberReplies(): array {
         return $this->memberReplies;
     }
 
-    public function getReplies()
+    public function getReplies(): array
     {
         return $this->replies;
     }
 
-    public function getProposedUpdates()
+    public function getProposedUpdates(): mixed
     {
         return $this->proposedUpdates;
+    }
+
+    public function getLogServiceName(): string {
+        return '';
     }
 
 

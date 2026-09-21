@@ -41,7 +41,7 @@ Class VoidRequest extends AbstractDeluxeRequest {
 
         //send request
         try{
-            $resp = $this->GuzzleClient->post(self::ENDPOINT, [
+            $resp = $this->post(self::ENDPOINT, [
                 \GuzzleHttp\RequestOptions::JSON => $requestData
             ]);
 
@@ -89,12 +89,12 @@ Class VoidRequest extends AbstractDeluxeRequest {
             }
 
             if(isset($this->responseBody["error"]["message"])){
-                throw new PaymentException("Error making payment with Payment Gateway: Error: " . $this->responseBody["error"]["message"]);
+                throw new PaymentException("Error voiding payment with Payment Gateway: Error: " . $this->responseBody["error"]["message"]);
             }else if(isset($this->responseBody["errors"]) && is_array($this->responseBody["errors"])){
                 $msg = $this->responseBody["errors"]["message"] . ": " . $this->responseBody["errors"]["details"];
-                throw new PaymentException("Error making payment with Payment Gateway: " . $msg);
+                throw new PaymentException("Error voiding payment with Payment Gateway: " . $msg);
             } else{
-                throw new PaymentException("Error making payment with Payment Gateway: Unknown Error: " . $e->getMessage());
+                throw new PaymentException("Error voiding payment with Payment Gateway: Unknown Error: " . $e->getMessage());
             }
             
         }

@@ -16,12 +16,12 @@ use HHK\Tables\Fields\{DB_Field, DbStrSanitizer, DbIntSanitizer, DbDateSanitizer
 //Lists PCs and their IP address
 class W_auth_ipRS extends AbstractTableRS {
     
-    public $IP_addr; // varchar(45) NOT NULL
-    public $cidr; // int(2)
-    public $Title; // varchar(245),
-    public $Last_Updated;  // datetime DEFAULT NULL,
-    public $Updated_By;  // varchar(45) DEFAULT '',
-    public $Timestamp;  // timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    public DB_Field $IP_addr; // varchar(45) NOT NULL
+    public DB_Field $cidr; // int(2)
+    public DB_Field $Title; // varchar(245),
+    public DB_Field $Last_Updated;  // datetime DEFAULT NULL,
+    public DB_Field $Updated_By;  // varchar(45) DEFAULT '',
+    public DB_Field $Timestamp;  // timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
     
     function __construct($TableName = "w_auth_ip") {
         $this->IP_addr = new DB_Field("IP_addr", "", new DbStrSanitizer(45), TRUE, TRUE);

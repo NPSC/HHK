@@ -2,6 +2,7 @@
 
 namespace HHK\Purchase;
 
+use HHK\Common;
 use HHK\HTMLControls\{HTMLContainer, HTMLInput, HTMLTable, HTMLSelector};
 use HHK\House\Reservation\Reservation_1;
 use HHK\House\Visit\Visit;
@@ -120,10 +121,10 @@ class RateChooser {
     /**
      * Summary of createChangeRateMarkup
      * @param \PDO $dbh
-     * @param \HHK\Tables\Visit\VisitRS $vRs
+     * @param VisitRS $vRs
      * @return HTMLTable
      */
-    public function createChangeRateMarkup(\PDO $dbh, VisitRs $vRs) {
+    public function createChangeRateMarkup(\PDO $dbh, VisitRS $vRs) {
 
         $attrFixed = array('class'=>'hhk-fxFixed ml-2', 'style'=>'');
         $attrAdj = array('class'=>'hhk-fxAdj ml-2', 'style'=>'');
@@ -163,7 +164,7 @@ class RateChooser {
                 HTMLContainer::generateMarkup('label', 'Change Room Rate', array('for'=>'rateChgCB', 'style'=>'margin: 2px 1px;'))
                 . HTMLInput::generateMarkup('', array('type'=>'checkbox', 'name'=>'rateChgCB', 'class'=>'hhk-feeskeys', 'style'=>'margin-left: 1em;', 'title'=>'Change the room rate'))
 
-                . HTMLTable::makeTd(HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup(removeOptionGroups($rateCategories), $rateCat[0], FALSE), array('name'=>'selRateCategory', 'class'=>'hhk-feeskeys'))
+                . HTMLTable::makeTd(HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup(HTMLSelector::removeOptionGroups($rateCategories), $rateCat[0], FALSE), array('name'=>'selRateCategory', 'class'=>'hhk-feeskeys'))
                 .HTMLContainer::generateMarkup('span', 'Amt: $' . HTMLInput::generateMarkup($fixedRate, array('name'=>'txtFixedRate', 'class'=>'hhk-feeskeys', 'size'=>'8')), $attrFixed)
                 . HTMLContainer::generateMarkup('span', 'Adj:'.$adjSel, $attrAdj), array('class'=>'changeRateTd', 'style'=>'display:none;'))
                 .HTMLTable::makeTh('As Of: ', array('class'=>'changeRateTd', 'style'=>'display:none;'))
@@ -184,11 +185,11 @@ class RateChooser {
     /**
      * Summary of changeRoomRate
      * @param \PDO $dbh
-     * @param \HHK\House\Visit\Visit $visit
-     * @param mixed $post
+     * @param Visit $visit
+     * @param array $post
      * @return string
      */
-    public function changeRoomRate(\PDO $dbh, Visit $visit, $post) {
+    public function changeRoomRate(\PDO $dbh, Visit $visit, array $post) {
 
         $uS = Session::getInstance();
         $reply = '';
@@ -209,7 +210,7 @@ class RateChooser {
         $today->setTime(0, 0, 0);
         $now = new \DateTime();
         $hr = $now->format('H');
-        $min = $now->format('m');
+        $min = $now->format('i');
 
         if (isset($post['rbReplaceRate'])) {
             $replaceMode = filter_var($post['rbReplaceRate'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
@@ -222,17 +223,21 @@ class RateChooser {
 
             if (isset($post['chgRateDate']) && $post['chgRateDate'] != '') {
 
-                $chDT = setTimeZone($uS, filter_var($post['chgRateDate'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
+                $chDT = Common::setTimeZone($uS, filter_var($post['chgRateDate'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
                 $chRateDT = new \DateTime($chDT->format('Y-m-d'));
                 $chDT->setTime($hr, $min, 0);
 
             } else {
                 $chRateDT = $today;
+                $chDT = new \DateTime($today->format('Y-m-d'));
+                $chDT->setTime($hr, $min, 0);
             }
 
         } else {
             // set date to start of span
             $chRateDT = new \DateTime($visitRs->Span_Start->getStoredVal());
+            $chDT = new \DateTime($chRateDT->format('Y-m-d'));
+            $chDT->setTime($hr, $min, 0);
         }
 
         if (is_null($chRateDT)) {
@@ -346,12 +351,12 @@ class RateChooser {
     /**
      * Summary of splitVisitSpan
      * @param \PDO $dbh
-     * @param \HHK\House\Visit\Visit $visit
+     * @param Visit $visit
      * @param string $rateCategory
      * @param float|int $assignedRate
      * @param float|int $rateAdj
      * @param string $uname
-     * @param \DateTime $changeDT
+     * @param \DateTimeInterface $changeDT
      * @return string
      */
     protected function splitVisitSpan(\PDO $dbh, Visit $visit, $rateCategory, $assignedRate, $rateAdj, $idRateAdjust, $uname, \DateTimeInterface $changeDT) {
@@ -374,7 +379,9 @@ class RateChooser {
             if ($spanId > $visit->getSpan()) {
 
                 // Increment the Visit span id
-                $upcount = $dbh->exec("UPDATE `visit` SET `Span`= '" . ($spanId + 1) . "' WHERE `idVisit`='$idVisit' and `Span`='$spanId'");
+                $upStmt = $dbh->prepare("UPDATE `visit` SET `Span`= :newSpan WHERE `idVisit`= :idVisit and `Span`= :span");
+                $upStmt->execute(array(':newSpan' => $spanId + 1, ':idVisit' => $idVisit, ':span' => $spanId));
+                $upcount = $upStmt->rowCount();
 
                 if ($upcount != 1) {
                     $reply .= "Error on visit update, span Id = " . $spanId;
@@ -412,7 +419,7 @@ class RateChooser {
     /**
      * Summary of createCheckinMarkup
      * @param \PDO $dbh
-     * @param \HHK\House\Reservation\Reservation_1 $resv
+     * @param Reservation_1 $resv
      * @param int $numNights
      * @param string $visitFeeTitle
      * @return string
@@ -434,7 +441,7 @@ class RateChooser {
     /**
      * Summary of createResvMarkup
      * @param \PDO $dbh
-     * @param \HHK\House\Reservation\Reservation_1 $resv
+     * @param Reservation_1 $resv
      * @param int $numNights
      * @param string $visitFeeTitle
      * @param int $idRegistration
@@ -443,7 +450,7 @@ class RateChooser {
     public function createResvMarkup(\PDO $dbh, Reservation_1 $resv, $numNights, $visitFeeTitle, $idRegistration) {
 
         // Get Resv status codes
-        $reservStatuses = readLookups($dbh, "ReservStatus", "Code", TRUE);
+        $reservStatuses = Common::readLookups($dbh, "ReservStatus", "Code", TRUE);
 
         if ($resv->isActive($reservStatuses)) {
 
@@ -466,7 +473,7 @@ class RateChooser {
     /**
      * Summary of createStaticMarkup
      * @param \PDO $dbh
-     * @param \HHK\House\Reservation\Reservation_1 $resv
+     * @param Reservation_1 $resv
      * @param string $visitFeeTitle
      * @return string
      */
@@ -564,7 +571,7 @@ class RateChooser {
 
         $codes = array();
 
-        foreach (readGenLookupsPDO($dbh, 'Visit_Fee_Code') as $r) {
+        foreach (Common::readGenLookupsPDO($dbh, 'Visit_Fee_Code') as $r) {
 
             if ($r['Type'] != GLTypeCodes::Archive || $visitFeeCharged == $r['Substitute']) {
                 $codes[$r['Code']] = $r;
@@ -644,7 +651,7 @@ class RateChooser {
     /**
      * Summary of createBasicChooserMarkup
      * @param \PDO $dbh
-     * @param \HHK\House\Reservation\Reservation_1 $resv
+     * @param Reservation_1 $resv
      * @param int $nites
      * @param string $visitFeeTitle
      * @param int $idRegistration
@@ -735,7 +742,7 @@ class RateChooser {
             .HTMLTable::makeTh('Estimated Total'));
 
         $rateSel = $this->makeRateSelControl(
-                HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup(removeOptionGroups($rateCategories), $roomRateCategory, FALSE), $rateSelectorAttrs),
+                HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup(HTMLSelector::removeOptionGroups($rateCategories), $roomRateCategory, FALSE), $rateSelectorAttrs),
                 HTMLContainer::generateMarkup('span', '$' . HTMLInput::generateMarkup($fixedRate, $attrFixedInput), $attrFixed));
 
         $adjSel = $this->makeRateAdjustSel($resv->getIdRateAdjust(), $resv->getRateAdjust());

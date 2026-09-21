@@ -15,14 +15,14 @@ use HHK\Tables\Fields\{DB_Field, DbBlobSanitizer, DbStrSanitizer, DbDateSanitize
 
 class Notification_LogRS extends AbstractTableRS {
 
-    public $Log_Type;
-    public $Sub_Type;
-    public $username;
-    public $To;
-    public $From;
-    public $Log_Text;
-    public $Log_Details;
-    public $Timestamp;
+    public DB_Field $Log_Type;
+    public DB_Field $Sub_Type;
+    public DB_Field $username;
+    public DB_Field $To;
+    public DB_Field $From;
+    public DB_Field $Log_Text;
+    public DB_Field $Log_Details;
+    public DB_Field $Timestamp;
 
     function __construct($TableName = "notification_log") {
 

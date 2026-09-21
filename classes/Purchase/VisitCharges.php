@@ -2,6 +2,7 @@
 
 namespace HHK\Purchase;
 
+use HHK\Common;
 use HHK\House\Visit\Visit;
 use HHK\Payment\Statement;
 use HHK\Purchase\PriceModel\AbstractPriceModel;
@@ -138,7 +139,7 @@ class VisitCharges {
     /**
      * Summary of sumCurrentRoomCharge
      * @param \PDO $dbh
-     * @param \HHK\Purchase\PriceModel\AbstractPriceModel $priceModel
+     * @param AbstractPriceModel $priceModel
      * @param float|int $newPayment
      * @param bool $calcDaysPaid
      * @param mixed $givenPaid
@@ -152,7 +153,7 @@ class VisitCharges {
     /**
      * Summary of sumDatedRoomCharge
      * @param \PDO $dbh
-     * @param \HHK\Purchase\PriceModel\AbstractPriceModel $priceModel
+     * @param AbstractPriceModel $priceModel
      * @param string $coDate
      * @param float|int $newPayment
      * @param bool $calcDaysPaid
@@ -212,7 +213,7 @@ class VisitCharges {
     /**
      * Summary of getVisitData
      * @param mixed $spans
-     * @param \HHK\Purchase\PriceModel\AbstractPriceModel $priceModel
+     * @param AbstractPriceModel $priceModel
      * @param float|int $newPayment
      * @param bool $calcDaysPaid
      * @param mixed $givenPaid
@@ -221,6 +222,8 @@ class VisitCharges {
     protected function getVisitData($spans, AbstractPriceModel $priceModel, $newPayment = 0, $calcDaysPaid = FALSE, $givenPaid = NULL) {
 
         $uS = Session::getInstance();
+
+        $rateSummary = [];
 
         if ($newPayment > 0) {
             $calcDaysPaid = TRUE;
@@ -377,7 +380,7 @@ class VisitCharges {
         $taxitems = $vat->getAllTaxedItems($this->idVisit);
 
         $items = Item::loadItems($dbh);
-        $invStatuses = readGenLookupsPDO($dbh, 'Invoice_Status');
+        $invStatuses = Common::readGenLookupsPDO($dbh, 'Invoice_Status');
 
         // Pre-define the item sums array
         foreach ($items as $i) {

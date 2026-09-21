@@ -16,19 +16,19 @@ use HHK\Tables\Fields\DbBitSanitizer;
 
 class HospitalRS extends AbstractTableRS {
 
-    public $idHospital;   // int(11) NOT NULL AUTO_INCREMENT,
-    public $Title;   // varchar(45) NOT NULL DEFAULT '',
-    public $Description;   // varchar(245) NOT NULL DEFAULT '',
-    public $Type;   // varchar(45) NOT NULL DEFAULT '',
-    public $Status;   // varchar(4) NOT NULL DEFAULT '',
-    public $Hide; //  tinyint NOT NULL DEFAULT 0,
-    public $idLocation;   // int(11) NOT NULL DEFAULT '0',
-    public $idName;   // int(11) NOT NULL DEFAULT '0',
-    public $Reservation_Style;   // varchar(145) NOT NULL DEFAULT '',
-    public $Stay_Style;   // varchar(145) NOT NULL DEFAULT '',
-    public $Last_Updated;   // datetime DEFAULT NULL,
-    public $Updated_By;   //
-    public $Timestamp;   // timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    public DB_Field $idHospital;   // int(11) NOT NULL AUTO_INCREMENT,
+    public DB_Field $Title;   // varchar(45) NOT NULL DEFAULT '',
+    public DB_Field $Description;   // varchar(245) NOT NULL DEFAULT '',
+    public DB_Field $Type;   // varchar(45) NOT NULL DEFAULT '',
+    public DB_Field $Status;   // varchar(4) NOT NULL DEFAULT '',
+    public DB_Field $Hide; //  tinyint NOT NULL DEFAULT 0,
+    public DB_Field $idLocation;   // int(11) NOT NULL DEFAULT '0',
+    public DB_Field $idName;   // int(11) NOT NULL DEFAULT '0',
+    public DB_Field $Reservation_Style;   // varchar(145) NOT NULL DEFAULT '',
+    public DB_Field $Stay_Style;   // varchar(145) NOT NULL DEFAULT '',
+    public DB_Field $Last_Updated;   // datetime DEFAULT NULL,
+    public DB_Field $Updated_By;   //
+    public DB_Field $Timestamp;   // timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     function __construct($TableName = "hospital") {
 

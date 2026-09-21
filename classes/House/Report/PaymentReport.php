@@ -2,9 +2,10 @@
 
 namespace HHK\House\Report;
 
+use HHK\Common;
 use HHK\HTMLControls\{HTMLContainer, HTMLTable};
 use HHK\Payment\Statement;
-use HHK\SysConst\{PaymentMethod, PaymentStatusCode};
+use HHK\SysConst\{GLTableNames, PaymentMethod, PaymentStatusCode};
 use HHK\sec\Session;
 use HHK\ExcelHelper;
 
@@ -25,7 +26,7 @@ use HHK\ExcelHelper;
  */
 class PaymentReport {
 
-    public static function generateDayReport(\PDO $dbh, $post) {
+    public static function generateDayReport(\PDO $dbh, array $post) {
 
         $uS = Session::getInstance();
 
@@ -34,6 +35,8 @@ class PaymentReport {
         $txtEnd = '';
         $statusSelections = [];
         $payTypeSelections = [];
+        $start = date('Y-m-d 00:00:00');
+        $end = date('Y-m-d 23:59:59');
 
         if (isset($post['stDate'])) {
             $txtStart = filter_var($post['stDate'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
@@ -104,21 +107,33 @@ class PaymentReport {
         }
 
 
-        $whType = '';
+        $uS = Session::getInstance();
+        $payTypeLookup = $uS->nameLookups[GLTableNames::PayType] ?? [];
+        $standardMethodIds = [];
+        $externalTypeCodes = [];
         foreach ($payTypeSelections as $s) {
-            if ($s != '') {
-                // Set up query where part.
-                if ($whType == '') {
-                    $whType = $s ;
-                } else {
-                    $whType .= ",".$s;
+            if ($s !== '') {
+                $entry = $payTypeLookup[$s] ?? null;
+                if ($entry !== null) {
+                    if ((int)$entry[2] === PaymentMethod::External) {
+                        $externalTypeCodes[] = "'" . $s . "'";
+                    } else {
+                        $standardMethodIds[] = (int)$entry[2];
+                    }
                 }
-
             }
         }
 
-        if ($whType != '') {
-            $whType = " and lp.idPayment_Method in ($whType) ";
+        $typeConditions = [];
+        if (!empty($standardMethodIds)) {
+            $typeConditions[] = "lp.idPayment_Method IN (" . implode(',', array_unique($standardMethodIds)) . ")";
+        }
+        if (!empty($externalTypeCodes)) {
+            $typeConditions[] = "(lp.idPayment_Method = " . PaymentMethod::External . " AND tx.Payment_Type IN (" . implode(',', $externalTypeCodes) . "))";
+        }
+        $whType = '';
+        if (!empty($typeConditions)) {
+            $whType = " AND (" . implode(' OR ', $typeConditions) . ") ";
         }
 
         if ($showDelInv === FALSE) {
@@ -128,6 +143,7 @@ class PaymentReport {
 
         $query = "Select
         lp.*,
+        " . Statement::externalPaymentTitleSelectSql('lp') . ",
         ifnull(n.Name_First, '') as `First`,
         ifnull(n.Name_Last, '') as `Last`,
         ifnull(n.Company, '') as `Company`,
@@ -140,6 +156,7 @@ class PaymentReport {
         visit v on lp.Order_Number = v.idVisit and lp.Suborder_Number = v.Span
             left join
         resource r ON v.idResource = r.idResource
+            " . Statement::externalPaymentTitleJoinSql('lp') . "
     where lp.idPayment > 0
       $whDates $whStatus $whType ";
 
@@ -179,7 +196,7 @@ class PaymentReport {
         $writer->writeSheetHeader("Sheet1", $hdr, $hdrStyle);
 
         $name_lk = $uS->nameLookups;
-        $name_lk['Pay_Status'] = readGenLookupsPDO($dbh, 'Pay_Status');
+        $name_lk['Pay_Status'] = Common::readGenLookupsPDO($dbh, 'Pay_Status');
         $uS->nameLookups = $name_lk;
 
         // Now the data ...
@@ -197,11 +214,24 @@ class PaymentReport {
 
     protected static function doDayMarkupRow($r, $p, &$writer, $hdr, &$reportRows, $subsidyId, $returnId) {
 
+        $uS = Session::getInstance();
+
         $origAmt = $p['Payment_Amount'];
         $amt = 0;
         $payDetail = '';
         $payStatus = $p['Payment_Status_Title'];
+
+        // For External, Payment_Method_Title is already the gen_lookups description (set by processPayments).
+        // For all other types, look up the description from gen_lookups by matching idPayment_Method.
         $payType = $p['Payment_Method_Title'];
+        if ((int)$p['idPayment_Method'] !== PaymentMethod::External) {
+            foreach ($uS->nameLookups[GLTableNames::PayType] ?? [] as $entry) {
+                if ((int)$entry[2] === (int)$p['idPayment_Method']) {
+                    $payType = $entry[1];
+                    break;
+                }
+            }
+        }
 
         if ($p['idPayment_Method'] == PaymentMethod::Charge || $p['idPayment_Method'] == PaymentMethod::ChgAsCash) {
 
@@ -215,9 +245,7 @@ class PaymentReport {
                 }
             }
 
-            $payType = 'Credit Card';
-
-        } else if ($p['idPayment_Method'] == PaymentMethod::Check || $p['idPayment_Method'] == PaymentMethod::Transfer) {
+        } else if ($p['idPayment_Method'] == PaymentMethod::Check || $p['idPayment_Method'] == PaymentMethod::Transfer || $p['idPayment_Method'] == PaymentMethod::External) {
 
             $payDetail = $p['Check_Number'];
         }
@@ -327,8 +355,19 @@ class PaymentReport {
         // Use timestamp for time of day.
         $timeDT = new \DateTime($p['Payment_Timestamp'], new \DateTimeZone($uS->tz));
 
-        $payType = $p['Payment_Method_Title'];
         $statusAttr = [];
+
+        // For External, Payment_Method_Title is already the gen_lookups description (set by processPayments).
+        // For all other types, look up the description from gen_lookups by matching idPayment_Method.
+        $payType = $p['Payment_Method_Title'];
+        if ((int)$p['idPayment_Method'] !== PaymentMethod::External) {
+            foreach ($uS->nameLookups[GLTableNames::PayType] ?? [] as $entry) {
+                if ((int)$entry[2] === (int)$p['idPayment_Method']) {
+                    $payType = $entry[1];
+                    break;
+                }
+            }
+        }
 
         if ($p['idPayment_Method'] == PaymentMethod::Charge) {
 
@@ -356,10 +395,7 @@ class PaymentReport {
                 }
             }
 
-            $payType = 'Credit Card';
-
-
-        } else if ($p['idPayment_Method'] == PaymentMethod::Check || $p['idPayment_Method'] == PaymentMethod::Transfer) {
+        } else if ($p['idPayment_Method'] == PaymentMethod::Check || $p['idPayment_Method'] == PaymentMethod::Transfer || $p['idPayment_Method'] == PaymentMethod::External) {
 
             $payDetail = $p['Check_Number'];
         }

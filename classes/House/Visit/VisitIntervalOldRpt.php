@@ -3,6 +3,7 @@
 namespace HHK\House\Visit;
 
 use HHK\ColumnSelectors;
+use HHK\Common;
 use HHK\ExcelHelper;
 use HHK\House\Report\RoomReport;
 use HHK\House\Resource\ResourceTypes;
@@ -11,27 +12,16 @@ use HHK\HTMLControls\HTMLTable;
 use HHK\Purchase\PriceModel\AbstractPriceModel;
 use HHK\Purchase\RoomRate;
 use HHK\Purchase\ValueAddedTax;
-use HHK\sec\{
-    Session,
-};
-use HHK\SysConst\{
-    ResourceStatus,
-    RoomRateCategories,
-    GLTableNames,
-    ItemPriceCode,
-    InvoiceStatus,
-    ItemType,
-    ItemId,
-    VolMemberType
-};
-
+use HHK\sec\Session;
+use HHK\SysConst\{ResourceStatus, RoomRateCategories, GLTableNames, ItemPriceCode, InvoiceStatus, ItemType, ItemId, VolMemberType};
 use HHK\TableLog\HouseLog;
+use Pdo\Mysql;
 
 class VisitIntervalOldRpt {
 
-    protected $eachTaxPaid;
+    protected array $eachTaxPaid;
 
-    public function __construct($eachTaxPaid)
+    public function __construct(array $eachTaxPaid)
     {
         $this->eachTaxPaid = $eachTaxPaid;
     }
@@ -180,20 +170,21 @@ ORDER BY s.idVisit , s.Visit_Span");
         $rooms = array();
 
         $roomReport = new RoomReport();
-        $rescStatuses = readGenLookupsPDO($dbh, "Resource_Status");
+        $rescStatuses = Common::readGenLookupsPDO($dbh, "Resource_Status");
         $roomReport->collectUtilizationData($dbh, $start, $end, $rescStatuses);
         $daysAr = $roomReport->getDays();
 
         // transform room report data for visit report
         while ($r = $rstmt->fetch(\PDO::FETCH_ASSOC)) {
             if (isset($daysAr[$r['idResource']])) {
-                $totals = array(ResourceStatus::Available => 0, ResourceStatus::OutOfService => 0, ResourceStatus::Delayed => 0, ResourceStatus::Unavailable => 0, ResourceStatus::Closed => 0);
+                $totals = array(ResourceStatus::Available => 0, ResourceStatus::OutOfService => 0, ResourceStatus::Delayed => 0, ResourceStatus::Unavailable => 0, ResourceStatus::Closed => 0, 'nonClean' => 0);
                 foreach ($daysAr[$r['idResource']] as $day) {
-                    $totals[ResourceStatus::Available] += ($day['n'] + $day['o'] + $day['t'] + $day['u'] + $day['c'] == 0 ? 1 : 0);
+                    $totals[ResourceStatus::Available] += ($day['n'] + $day['o'] + $day['t'] + $day['u'] + $day['c'] + $day['b'] == 0 ? 1 : 0);
                     $totals[ResourceStatus::OutOfService] += $day['o'];
                     $totals[ResourceStatus::Delayed] += $day['t'];
                     $totals[ResourceStatus::Unavailable] += $day['u'];
                     $totals[ResourceStatus::Closed] += $day['c'];
+                    $totals['nonClean'] += $day['b'];
                 }
                 $rooms[$r['idResource']][$r[$rescGroup]] = $totals;
             }
@@ -237,7 +228,7 @@ ORDER BY s.idVisit , s.Visit_Span");
 
         if ($emod > 0) {
             // odd number of entries
-            $median = $visitNites[(ceil($entries / 2) - 1)];
+            $median = $visitNites[intdiv($entries, 2)];
         } else {
             $median = ($visitNites[($entries / 2) - 1] + $visitNites[($entries / 2)]) / 2;
         }
@@ -357,6 +348,12 @@ ORDER BY s.idVisit , s.Visit_Span");
     ifnull(rv.Visit_Fee, 0) as `Visit_Fee_Amount`,
     ifnull(n.Name_Last,'') as Name_Last,
     ifnull(n.Name_First,'') as Name_First,
+    concat(ifnull(napg.Address_1, ''), '', ifnull(napg.Address_2, ''))  as pgAddr,
+    ifnull(napg.City, '') as pgCity,
+    ifnull(napg.County, '') as pgCounty,
+    ifnull(napg.State_Province, '') as pgState,
+    ifnull(napg.Country_Code, '') as pgCountry,
+    ifnull(napg.Postal_Code, '') as pgZip,
     concat(ifnull(na.Address_1, ''), '', ifnull(na.Address_2, ''))  as pAddr,
     ifnull(na.City, '') as pCity,
     ifnull(na.County, '') as pCounty,
@@ -418,7 +415,12 @@ ORDER BY s.idVisit , s.Visit_Span");
             0) as `TaxPending`,
     ifnull((select sum(il.Amount) from invoice_line il join invoice i on il.Invoice_Id = i.idInvoice
     where il.Deleted = 0 and i.Deleted = 0 and i.Status in ('" . InvoiceStatus::Paid . "', '" . InvoiceStatus::Carried . "') and il.Item_Id = " . ItemId::VisitFee . " and i.Order_Number = v.idVisit),
-            0) as `VisitFeePaid`
+            0) as `VisitFeePaid`,
+    IFNULL(`nph`.`Phone_Num`,'') as 'pg_phone',
+    IFNULL(`ne`.`Email`,'') as 'pg_email',
+    IFNULL(`npp`.`Phone_Num`,'') as 'pa_phone',
+    IFNULL(`npe`.`Email`,'') as 'pa_email'
+
 from
     visit v
         left join
@@ -449,40 +451,44 @@ from
     gen_lookups gl ON gl.`Table_Name` = 'Location' and gl.`Code` = hs.Location
         left join
     name_address na on ifnull(hs.idPatient, 0) = na.idName and np.Preferred_Mail_Address = na.Purpose
+        left join
+    name_address napg on n.idName = napg.idName and n.Preferred_Mail_Address = napg.Purpose
+        left join
+    name_email npe on np.idName = npe.idName and np.Preferred_Email = npe.Purpose
+        left join
+    name_phone npp on np.idName = npp.idName and np.Preferred_Phone = npp.Phone_Code
+        left join
+    name_email ne on n.idName = ne.idName and n.Preferred_Email = ne.Purpose
+        left join
+    name_phone nph on n.idName = nph.idName and n.Preferred_Phone = nph.Phone_Code
 where
-    DATE(v.Span_Start) < DATE('$end')
-    and v.idVisit in (select
-        idVisit
-        from
-            visit
-        where
-            `Status` not in ('p', 'c')
-                and DATE(Arrival_Date) < DATE('$end')
-                and DATE(ifnull(Span_End,
-                    case
-                        when now() > Expected_Departure then now()
-                        else Expected_Departure
-                end)) >= DATE('$start')) ";
+    v.`Status` not in ('p', 'c')
+    AND v.Arrival_Date < '$end'
+  AND COALESCE(v.Span_End,
+          CASE WHEN NOW() > v.Expected_Departure
+               THEN NOW() ELSE v.Expected_Departure END
+      ) >= '$start'
+  AND v.Span_Start < '$end' ";
 
     }
 
 
     /**
      * Summary of doMarkup - Pretify a row
-     * @param mixed $fltrdFields
-     * @param mixed $r
-     * @param mixed $visit
+     * @param array $fltrdFields
+     * @param array $r
+     * @param array $visit
      * @param mixed $paid
      * @param mixed $unpaid
      * @param \DateTimeInterface $departureDT
      * @param mixed $matrix
-     * @param mixed $local
-     * @param mixed $rateTitles
-     * @param mixed $uS
+     * @param bool $local
+     * @param array $rateTitles
+     * @param Session $uS
      * @param mixed $visitFee
      * @return void
      */
-    protected function doMarkup($fltrdFields, $r, $visit, $paid, $unpaid, \DateTimeInterface $departureDT, &$matrix, $local, $rateTitles, $uS, $visitFee = FALSE)
+    protected function doMarkup(array $fltrdFields, array $r, array $visit, $paid, $unpaid, \DateTimeInterface $departureDT, &$matrix, bool $local, array $rateTitles, Session $uS, $visitFee = FALSE)
     {
 
         $arrivalDT = new \DateTime($r['Arrival_Date']);
@@ -694,7 +700,7 @@ where
     /**
      * Summary of doReport
      * @param \PDO $dbh
-     * @param \HHK\ColumnSelectors $colSelector
+     * @param ColumnSelectors $colSelector
      * @param mixed $start
      * @param mixed $end
      * @param mixed $whHosp
@@ -712,7 +718,7 @@ where
         // get session instance
         $uS = Session::getInstance();
 
-        $categories = readGenLookupsPDO($dbh, $rescGroup[2], 'Description');
+        $categories = Common::readGenLookupsPDO($dbh, $rescGroup[2], 'Description');
         // add default category
         $categories[] = [0 => '', 1 => '(default)'];
 
@@ -741,6 +747,8 @@ where
         $curVisit = 0;
         $curRoom = 0;
         $curRate = '';
+        $curRateId = 0;
+        $curAdj = 0;
         $curAmt = 0;
 
         $totalCharged = 0;
@@ -791,7 +799,7 @@ where
 
         $vat = new ValueAddedTax($dbh);
 
-        $dbh->setAttribute(\PDO::MYSQL_ATTR_USE_BUFFERED_QUERY, FALSE);
+        $dbh->setAttribute(Mysql::ATTR_USE_BUFFERED_QUERY, FALSE);
 
         $query = $this->buildQuery($start, $end, $uS->subsidyId, $eachTaxSql) . $whHosp . $whAssoc . " group by v.idVisit, v.Span order by v.idVisit, v.Span";
 
@@ -926,9 +934,6 @@ where
                         try {
                             $this->doMarkup($fltrdFields, $savedr, $visit, $dPaid, $unpaid, $departureDT, $matrix, $local, $rateTitles, $uS, $visitFee);
                         } catch (\Exception $e) {
-                            if (isset($writer)) {
-                                die();
-                            }
                         }
                     }
                 }
@@ -1087,7 +1092,7 @@ where
 
         }   // End of while
 
-        $dbh->setAttribute(\PDO::MYSQL_ATTR_USE_BUFFERED_QUERY, TRUE);
+        $dbh->setAttribute(Mysql::ATTR_USE_BUFFERED_QUERY, TRUE);
 
 
 
@@ -1215,9 +1220,6 @@ where
                 try {
                     $this->doMarkup($fltrdFields, $savedr, $visit, $dPaid, $unpaid, $departureDT, $matrix, $local, $rateTitles, $uS, $visitFee);
                 } catch (\Exception $e) {
-                    if (isset($writer)) {
-                        die();
-                    }
                 }
             }
         } // End of last visit
@@ -1257,7 +1259,7 @@ where
 
                 if ($emod > 0) {
                     // odd number of entries
-                    $medDailyFee = $chargesAr[(ceil($entries / 2) - 1)];
+                    $medDailyFee = $chargesAr[intdiv($entries, 2)];
                 } else {
                     $medDailyFee = ($chargesAr[($entries / 2) - 1] + $chargesAr[($entries / 2)]) / 2;
                 }

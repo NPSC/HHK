@@ -1,6 +1,7 @@
 <?php
 namespace HHK\sec;
 
+use HHK\Common;
 use HHK\Exception\AuthException;
 use HHK\Exception\RuntimeException;
 use HHK\SysConst\WebPageCode;
@@ -52,6 +53,7 @@ class SecurityComponent {
 
         $uS = Session::getInstance();
         $pageCode = array();
+        $pageTitle = '';
 
         //parse url before checking authorization
         $parsedName = parse_url($name);
@@ -65,6 +67,7 @@ class SecurityComponent {
 
             if (!is_null($r)) {
                 $pageCode = $r["Codes"];
+                $pageTitle = $r["Title"];
             }
         } else {
             return FALSE;
@@ -77,19 +80,19 @@ class SecurityComponent {
         if($isAuthorized){
             return true;
         }else if ($isIpRestricted){
-            $errorMsg = "Unauthorized for page:" . $name . " at this location";
+            $errorMsg = "Unauthorized for page:" . ($pageTitle != '' ? $pageTitle : $name) . " at this location";
 
             if($isLogin){
-                $dbh = initPDO(true);
+                $dbh = Common::initPDO(true);
                 UserClass::insertUserLog($dbh, $errorMsg, ($uS->username != "" ? $uS->username : "<empty>"));
                 throw new AuthException($errorMsg);
             }
             return false;
         }else{
-            $errorMsg = "Unauthorized for page: " . $name;
+            $errorMsg = "Unauthorized for page: " . ($pageTitle != '' ? $pageTitle : $name);
 
             if($isLogin){
-                $dbh = initPDO(true);
+                $dbh = Common::initPDO(true);
                 UserClass::insertUserLog($dbh, $errorMsg, ($uS->username != "" ? $uS->username : "<empty>"));
                 throw new AuthException($errorMsg);
             }
@@ -300,7 +303,7 @@ class SecurityComponent {
     }
 
     /**
-     * Summary of is_Admin
+     * Does the user have the Admin role or is the THE Admin user.
      * @return bool
      */
     public static function is_Admin() {

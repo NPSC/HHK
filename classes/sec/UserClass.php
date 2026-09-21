@@ -1,8 +1,11 @@
 <?php
 namespace HHK\sec;
 
+use donatj\UserAgent\UserAgentParser;
+use HHK\Crypto;
+use HHK\sec\MFA\AbstractMultiFactorAuth;
 use HHK\SysConst\WebRole;
-use HHK\Tables\WebSec\{W_auth_ipRS, W_user_answersRS};
+use HHK\Tables\WebSec\W_auth_ipRS;
 use HHK\Tables\EditRS;
 use HHK\sec\MFA\GoogleAuthenticator;
 use HHK\sec\MFA\Email;
@@ -60,7 +63,7 @@ class UserClass
      * @param string $otp
      * @return bool
      */
-    public function _checkLogin(\PDO $dbh, $username, $password, $rememberMe = FALSE, $checkOTP = true, $otpMethod = '', $otp = '')
+    public function _checkLogin(\PDO $dbh, $username, $password, bool $rememberMe = FALSE, bool $checkOTP = true, $otpMethod = '', $otp = '')
     {
         $ssn = Session::getInstance();
 
@@ -81,7 +84,6 @@ class UserClass
             }
 
             //check PW
-            //TODO Update password logic for php8
             $match = false;
             //new method
             if($r != NULL && stripos($r['Enc_PW'], '$argon2id') === 0 && isset($ssn->sitePepper) && password_verify(filter_var($password, FILTER_SANITIZE_ADD_SLASHES) . $ssn->sitePepper, $r['Enc_PW'])){
@@ -123,6 +125,7 @@ class UserClass
                     }
                     return FALSE;
                 }else if($OTPRequired && $otp != '' && $otpMethod){
+                    $mfaObj = null;
                     switch($otpMethod) {
                         case "authenticator":
                             $mfaObj = new GoogleAuthenticator($r);
@@ -137,9 +140,9 @@ class UserClass
                             $success = false;
                     }
 
-                    if($mfaObj->verifyCode($dbh, $otp) == true){
+                    if($mfaObj instanceof AbstractMultiFactorAuth && $mfaObj->verifyCode($dbh, $otp) == true){
                         if($rememberMe){
-                            $rememberObj->rememberMe($dbh);
+                            $rememberObj?->rememberMe($dbh);
                         }
 
                         $success = true;
@@ -206,7 +209,7 @@ class UserClass
 
             $remoteIp = self::getRemoteIp();
 
-            if (decryptMessage(filter_var($_COOKIE['housepc'], FILTER_SANITIZE_FULL_SPECIAL_CHARS)) == $remoteIp . 'eric') {
+            if (Crypto::decryptMessage(filter_var($_COOKIE['housepc'], FILTER_SANITIZE_FULL_SPECIAL_CHARS)) == $remoteIp . 'eric') {
                 $housePc = TRUE;
             }
         }
@@ -351,66 +354,12 @@ class UserClass
             $range .= '/32';
         }
         // $range is in IP/CIDR format eg 127.0.0.1/24
-        list ($range, $netmask) = explode('/', $range, 2);
+        [$range, $netmask] = explode('/', $range, 2);
         $range_decimal = ip2long($range);
         $ip_decimal = ip2long($ip);
         $wildcard_decimal = pow(2, (32 - $netmask)) - 1;
         $netmask_decimal = ~ $wildcard_decimal;
         return (($ip_decimal & $netmask_decimal) == ($range_decimal & $netmask_decimal));
-    }
-
-    /**
-     * Summary of updateSecurityQuestions
-     * @param \PDO $dbh
-     * @param mixed $questions
-     * @return bool
-     */
-    public function updateSecurityQuestions(\PDO $dbh, array $questions)
-    {
-        $ssn = Session::getInstance();
-        $updateCount = 0;
-
-        foreach ($questions as $question) {
-            $answerRS = new W_user_answersRS();
-            // if question already exists, update
-            if ($question['idAnswer']) {
-                $answerRS->idAnswer->setStoredVal($question['idAnswer']);
-                $rows = EditRS::select($dbh, $answerRS, array(
-                    $answerRS->idAnswer
-                ));
-
-                if (count($rows) == 1) {
-                    EditRS::loadRow($rows[0], $answerRS);
-
-                    $answerRS->idQuestion->setNewVal($question['idQuestion']);
-                    if ($question['Answer'] != "") {
-                        $answerRS->Answer->setNewVal($question['Answer']);
-                    }
-
-                    $counter = EditRS::update($dbh, $answerRS, array(
-                        $answerRS->idAnswer
-                    ));
-                    if ($counter > 0) {
-                        $updateCount ++;
-                    }
-                }
-            } else {
-                $answerRS->idUser->setNewVal($ssn->uid);
-                $answerRS->idQuestion->setNewVal($question['idQuestion']);
-                $answerRS->Answer->setNewVal($question['Answer']);
-
-                $idAnswer = EditRS::insert($dbh, $answerRS);
-                if ($idAnswer > 0) {
-                    $updateCount ++;
-                }
-            }
-        }
-
-        if ($updateCount > 0) {
-            $this->insertUserLog($dbh, "Security Questions updated");
-            return TRUE;
-        }
-        return FALSE;
     }
 
     /**
@@ -423,14 +372,42 @@ class UserClass
      * @param mixed $resetNextLogin
      * @return bool
      */
-    public function updateDbPassword(\PDO $dbh, $id, $oldPw, $newPw, $uname, $resetNextLogin = 0)
+    public function updateDbPassword(\PDO $dbh, $id, $oldPw, $newPw, $uname, $resetNextLogin = 0): bool
     {
         $ssn = Session::getInstance();
         $priorPasswords = SysConfig::getKeyValue($dbh, 'sys_config', 'PriorPasswords');
 
+        $success = true;
+
+        // check old password
+        if(!$this->_checkLogin($dbh, $ssn->username, $oldPw, false, false)){
+            $this->logMessage = "Your old password is incorrect<br>";
+            $success = false;
+        }
+
         if ($oldPw == $newPw) {
-            $this->logMessage = "The new password must be different from the old one.  ";
-            return FALSE;
+            $this->logMessage .= "The new password must be different from the old one<br>";
+            $success = false;
+        }
+
+        // check if password has already been used
+        if ($this->isPasswordUsed($dbh, $newPw)) {
+            $this->logMessage .= "You cannot use any of the prior " . $priorPasswords . " passwords<br>";
+            $success = false;
+        }
+
+        //check length
+        $minPassLength = ($ssn->minPassLength > 8 ? $ssn->minPassLength : 8);
+        if (strlen($newPw) < $minPassLength){
+            $this->logMessage .= "The new password must be at least " . $minPassLength . " characters<br>";
+            $success = false;
+        }
+
+        //check strength
+        $strongRegex = '/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*\W).{'.$minPassLength.',}$/';
+        if (!preg_match($strongRegex, $newPw)) {
+            $this->logMessage .= "The new password does not meet the password complexity requirements.<br>";
+            $success = false;
         }
 
         if(isset($ssn->sitePepper) && $ssn->sitePepper != ''){
@@ -439,24 +416,14 @@ class UserClass
             $newPwHash = password_hash($newPw, PASSWORD_ARGON2ID);
         }
 
-
-        // check if password has already been used
-        if ($this->isPasswordUsed($dbh, $newPw)) {
-            $this->logMessage = "You cannot use any of the prior " . $priorPasswords . " passwords";
-            return FALSE;
-        }
-
-        // Are we legit?
-        $success = $this->_checkLogin($dbh, $ssn->username, $oldPw, false, false);
-
         if ($success) {
-            $query = "update w_users set PW_Change_Date = now(), PW_Updated_By = :uname, Enc_PW = :newPw, Chg_PW = :reset where idName = :id and Status='a';";
+            $query = "update w_users set PW_Change_Date = now(), PW_Updated_By = :uname, Enc_PW = :newPw, Chg_PW = :reset, Status = 'a' where idName = :id;";
             $stmt = $dbh->prepare($query);
             $stmt->execute(array(
                 ':uname' => $ssn->username,
                 ':newPw' => $newPwHash,
                 ':id' => $id,
-                ':reset' => $resetNextLogin
+                ':reset' => "$resetNextLogin"
             ));
 
             if ($stmt->rowCount() == 1) {
@@ -469,11 +436,15 @@ class UserClass
                     ':newPw' => $newPwHash
                 ));
 
+                // the cached session row is now stale if the current user changed their own password
+                if ($id == $ssn->uid) {
+                    unset($ssn->userCredentials);
+                }
+
                 return TRUE;
             }
-        }else{
-            $this->logMessage = "Your old password is incorrect";
         }
+
         return FALSE;
     }
 
@@ -483,7 +454,7 @@ class UserClass
      * @param string $newPw
      * @return bool
      */
-    public function isPasswordUsed(\PDO $dbh, $newPw)
+    public function isPasswordUsed(\PDO $dbh, $newPw): bool
     {
         $uS = Session::getInstance();
 
@@ -508,7 +479,7 @@ class UserClass
      * @param string $newPw
      * @return bool
      */
-    public function setPassword(\PDO $dbh, $id, $newPw)
+    public function setPassword(\PDO $dbh, $id, $newPw): bool
     {
         $uS = Session::getInstance();
         if ($newPw != '' && $id != 0) {
@@ -537,7 +508,7 @@ class UserClass
      * @param mixed $uS
      * @return bool
      */
-    public static function isUserNew(\PDO $dbh, $uS)
+    public static function isUserNew(\PDO $dbh, Session $uS): bool
     {
         $query = "select idAnswer, idQuestion from w_user_answers A join w_users U on A.idUser = U.idName where U.User_Name='" . $uS->username . "' limit 3;";
         $stmt = $dbh->query($query);
@@ -554,7 +525,7 @@ class UserClass
      * @param mixed $uS
      * @return bool
      */
-    public static function isPassExpired(\PDO $dbh, $uS)
+    public static function isPassExpired(\PDO $dbh, Session $uS): bool
     {
         $u = self::getUserCredentials($dbh, $uS->username);
         if (isset($u['Chg_PW']) && $u['Chg_PW']  && $u['idIdp'] == '0') {
@@ -613,7 +584,7 @@ class UserClass
      * @param string $username
      * @return bool|string
      */
-    public static function getDefaultOtpMethod(\PDO $dbh, $username)
+    public static function getDefaultOtpMethod(\PDO $dbh, $username): bool|string
     {
         $u = self::getUserCredentials($dbh, $username);
         if ($u['totpSecret'] !== '') {
@@ -650,11 +621,8 @@ class UserClass
      * @param string $username
      * @return bool
      */
-    public static function isLocalUser(\PDO $dbh, $uS, $username = false)
+    public static function isLocalUser(\PDO $dbh, $uS, $username = false): bool
     {
-        if($username === false){
-            $username = $uS->username;
-        }
         $u = self::getUserCredentials($dbh, $username);
         return (isset($u['idIdp']) && $u['idIdp'] > 0 ? false : true);
     }
@@ -704,7 +672,7 @@ class UserClass
      * @param string $hiddenMethod
      * @return string
      */
-    public static function getOtpMethodMarkup(\PDO $dbh, $username, $hiddenMethod = ''){
+    public static function getOtpMethodMarkup(\PDO $dbh, $username, $hiddenMethod = ''): string{
         $userAr = UserClass::getUserCredentials($dbh, $username);
         $mkup = '';
 
@@ -728,7 +696,7 @@ class UserClass
      * @param \PDO $dbh
      * @return string
      */
-    public static function createUserSettingsMarkup(\PDO $dbh)
+    public static function createUserSettingsMarkup(\PDO $dbh): string
     {
         $uS = Session::getInstance();
         $userAr = UserClass::getUserCredentials($dbh, $uS->username);
@@ -813,6 +781,7 @@ class UserClass
             ';
 
             // password markup
+            $minPassLength = ($uS->minPassLength > 8 ? $uS->minPassLength : 8);
             $mkup .= '
                 <div class="ui-widget hhk-visitdialog hhk-row" style="margin-bottom: 1em;">
             		<div class="ui-widget-header ui-state-default ui-corner-top" style="padding: 5px;">' . $passwordTitle . '</div>
@@ -827,7 +796,7 @@ class UserClass
                             </tr><tr>
                                 <td class="tdlabel">New Password Again:</td><td class="hhk-flex"><input style="width: 100%" id="utxtNewPw2" type="password" value=""  /><button class="showPw" style="font-size: .75em; margin-left: 1em;" tabindex="-1">Show</button></td>
                             </tr><tr>
-                                <td colspan ="2"><span style="font-size: smaller;">Passwords must have at least 8 characters with at least 1 uppercase letter, 1 lowercase letter, a number and a symbol. It cannot include &lt; or &gt;. Do not use names or dictionary words</span></td>
+                                <td colspan ="2"><span style="font-size: smaller;">Passwords must have at least ' . $minPassLength . ' characters with at least 1 uppercase letter, 1 lowercase letter, a number and a symbol. It cannot include &lt; or &gt;. Do not use names or dictionary words</span></td>
                             </tr>
                         </table>
                         <div id="pwChangeErrMsg" style="color:red; text-align:center;" class="mt-1"></div>
@@ -897,12 +866,12 @@ class UserClass
             $osName = "HHK";
         }else{
             try {
-            	if ($userAgentArray = get_browser(NULL, TRUE)) {
-            		$browserName = $userAgentArray['parent'];
-            		$osName = $userAgentArray['platform'];
-            	}
+                $userAgentParser = new UserAgentParser();
+                $ua = $userAgentParser->parse();
+                $browserName = $ua->browser() ." ". $ua->browserVersion();
+            	$osName = $ua->platform();
             } catch (\Exception $d) {
-            	$browserName = "Missing Browscap?";
+            	$browserName = "";
             }
         }
 
@@ -932,6 +901,15 @@ class UserClass
 
         $uname = str_ireplace("'", "", $username);
 
+        // Serve the logged-in user's own row from the session cache instead of re-querying.
+        // Populated/refreshed in setSession() at login; callers that mutate this user's row
+        // (password/2FA/status changes) must unset $uS->userCredentials afterward.
+        $isSessionUser = ($uS->logged === true && strcasecmp((string) $uS->username, $uname) === 0);
+
+        if ($isSessionUser && isset($uS->userCredentials)) {
+            return $uS->userCredentials;
+        }
+
         $stmt = $dbh->prepare("SELECT u.*, a.Role_Id as Role_Id, ifnull(idp.Name, 'Unknown Provider') as 'authProvider'
 FROM w_users u join w_auth a on u.idName = a.idName
 join `name` n on n.idName = u.idName
@@ -941,11 +919,13 @@ WHERE n.idName is not null and u.Status IN ('a', 'd') and n.`Member_Status` = 'a
         $stmt->execute(array(':uname'=>$uname));
         $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
-        if (count($rows) == 1) {
-            return $rows[0];
+        $result = (count($rows) == 1) ? $rows[0] : NULL;
+
+        if ($isSessionUser) {
+            $uS->userCredentials = $result;
         }
 
-        return NULL;
+        return $result;
     }
 
     /**
@@ -1026,7 +1006,7 @@ WHERE n.idName is not null and u.Status IN ('a', 'd') and n.`Member_Status` = 'a
      * @param mixed $init
      * @return void
      */
-    public function setSession(\PDO $dbh, Session $ssn, $r, $init = true)
+    public function setSession(\PDO $dbh, Session $ssn, $r, $init = true): void
     {
         $ssn->uid = $r["idName"];
         $ssn->username = htmlspecialchars($r["User_Name"]);
@@ -1041,6 +1021,7 @@ WHERE n.idName is not null and u.Status IN ('a', 'd') and n.`Member_Status` = 'a
 
         $ssn->logged = true;
         $ssn->userAgent = filter_input(INPUT_SERVER, "HTTP_USER_AGENT", FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+        $ssn->userCredentials = $r;
         unset($ssn->Challtries);
 
         if ($init) {
@@ -1061,7 +1042,7 @@ WHERE n.idName is not null and u.Status IN ('a', 'd') and n.`Member_Status` = 'a
      * Summary of isCron
      * @return bool
      */
-    public static function isCron(){
+    public static function isCron(): bool{
         return (php_sapi_name() == 'cli')? true:false;
     }
 
@@ -1069,7 +1050,7 @@ WHERE n.idName is not null and u.Status IN ('a', 'd') and n.`Member_Status` = 'a
      * Summary of _logout
      * @return void
      */
-    public static function _logout()
+    public static function _logout(): void
     {
         $uS = Session::getInstance();
         $uS->destroy();
@@ -1093,7 +1074,7 @@ WHERE n.idName is not null and u.Status IN ('a', 'd') and n.`Member_Status` = 'a
      * @param int $max
      * @return bool
      */
-    private function testTries($max = 3) {
+    private function testTries(int $max = 3): bool {
         $ssn = Session::getInstance();
         if (isset($ssn->Challtries) && $ssn->Challtries > $max) {
             return FALSE;
@@ -1105,7 +1086,7 @@ WHERE n.idName is not null and u.Status IN ('a', 'd') and n.`Member_Status` = 'a
      * Summary of resetTries
      * @return void
      */
-    private function resetTries(){
+    private function resetTries(): void{
         $ssn = Session::getInstance();
         if (isset($ssn->Challtries)){
             unset($ssn->Challtries);
@@ -1131,7 +1112,7 @@ WHERE n.idName is not null and u.Status IN ('a', 'd') and n.`Member_Status` = 'a
      * @param string $available_sets
      * @return string
      */
-    public function generateStrongPassword($length = 9, $add_dashes = false, $available_sets = 'luds')
+    public function generateStrongPassword(int $length = 9, bool $add_dashes = false, string $available_sets = 'luds'): string
     {
         $sets = array();
         if(strpos($available_sets, 'l') !== false)

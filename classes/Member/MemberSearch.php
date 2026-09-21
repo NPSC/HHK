@@ -143,12 +143,6 @@ class MemberSearch {
     public function volunteerCmteFilter(\PDO $dbh, $basis, $fltr, $additional = '', $psg = '') {
         $events = array();
 
-        $operation = 'OR';
-        if ($this->twoParts) {
-            $operation = 'AND';
-        }
-
-
         if ($basis == "m") {
 
             $prts = explode("|", $fltr);
@@ -157,12 +151,11 @@ class MemberSearch {
                 $query2 = "SELECT n.idName, n.Name_Last, n.Name_First, n.Name_Nickname
     FROM name_volunteer2 v left join name n on v.idName = n.idName
     where v.Vol_Status = 'a' and Vol_Category = :vcat and Vol_Code = :vcode
-    and n.idName>0 and n.Member_Status='a' and (LOWER(n.Name_Last) like :ltrln
-    $operation (LOWER(n.Name_First) like :ltrfn OR LOWER(n.Name_NickName) like :ltrnk))
+    and n.idName>0 and n.Member_Status='a' AND MATCH(n.`Name_Search`) AGAINST (:search in boolean mode)
     order by n.Name_Last, n.Name_First;";
 
-                $stmt = $dbh->prepare($query2, array(\PDO::ATTR_CURSOR => \PDO::CURSOR_FWDONLY));
-                $stmt->execute(array(':vcat' => $prts[0], ':vcode' => $prts[1], ':ltrln' => $this->Name_Last, ':ltrfn' => $this->Name_First, ':ltrnk' => $this->Name_First));
+                $stmt = $dbh->prepare($query2);
+                $stmt->execute([':vcat' => $prts[0], ':vcode' => $prts[1], ':search'=>$this->buildFulltextQuery($this->letters)]);
 
                 $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
@@ -214,11 +207,10 @@ FROM name n join name_volunteer2 nv on n.idName = nv.idName and nv.Vol_Category 
 left join name_phone nw on n.idName = nw.idName and nw.Phone_Code = '" . PhonePurpose::Work . "'
 left join name_phone nc on n.idName = nc.idName and nc.Phone_Code = '" . PhonePurpose::Cell . "'
 left join name_email ne on n.idName = ne.idName and n.Preferred_Email = ne.Purpose
-where n.idName>0 and n.Member_Status='a' and n.Record_Member = 1  and (LOWER(n.Name_Last) like :ltrln
-$operation (LOWER(n.Name_First) like :ltrfn OR LOWER(n.Name_NickName) like :ltrnk)) order by n.Name_Last, n.Name_First;";
+where n.idName>0 and n.Member_Status='a' and n.Record_Member = 1 AND MATCH(n.`Name_Search`) AGAINST (:search in boolean mode) order by n.Name_Last, n.Name_First;";
 
-            $stmt = $dbh->prepare($query2, array(\PDO::ATTR_CURSOR => \PDO::CURSOR_FWDONLY));
-            $stmt->execute(array(':ltrln' => $this->Name_Last, ':ltrfn' => $this->Name_First, ':ltrnk' => $this->Name_First));
+            $stmt = $dbh->prepare($query2);
+            $stmt->execute([':search'=>$this->buildFulltextQuery($this->letters)]);
             $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
             foreach ($rows as $r) {
@@ -280,11 +272,10 @@ $operation (LOWER(n.Name_First) like :ltrfn OR LOWER(n.Name_NickName) like :ltrn
                 $query2 = "SELECT distinct n.idName, n.Name_Last, n.Name_First, n.Name_Nickname, n.Company, nd.tax_exempt
 FROM name n join name_volunteer2 nv on n.idName = nv.idName and nv.Vol_Category = 'Vol_Type'  and nv.Vol_Code = '$basis'
  join name_demog nd on n.idName = nd.idName
-where n.idName>0 and n.Member_Status='a' and n.Record_Member = 1  and ((LOWER(n.Name_Last) like :ltrln or LOWER(n.Company) like :ltrco)
-$operation (LOWER(n.Name_First) like :ltrfn OR LOWER(n.Name_NickName) like :ltrnk)) order by n.Company, n.Name_Last, n.Name_First;";
+where n.idName>0 and n.Member_Status='a' and n.Record_Member = 1 AND (MATCH(n.`Name_Search`) AGAINST (:search in boolean mode) or n.`Name_Search` LIKE :searchLike) order by n.Company, n.Name_Last, n.Name_First;";
 
-                $stmt = $dbh->prepare($query2, array(\PDO::ATTR_CURSOR => \PDO::CURSOR_FWDONLY));
-                $stmt->execute(array(':ltrln' => $this->Name_Last, ':ltrfn' => $this->Name_First, ':ltrnk' => $this->Name_First, ':ltrco'=>$this->Company));
+                $stmt = $dbh->prepare($query2);
+                $stmt->execute([':search'=>$this->buildFulltextQuery($this->letters), ':searchLike'=>'%'.$this->letters.'%']);
             }
 
 
@@ -292,28 +283,19 @@ $operation (LOWER(n.Name_First) like :ltrfn OR LOWER(n.Name_NickName) like :ltrn
 
             foreach ($rows as $r) {
 
-                $firstName = preg_replace_callback("/(&#[0-9]+;)/",
+                $val = ($r["Name_Last"] != '' ? $r["Name_Last"] . ", " . $r["Name_First"] . " - " . $r["Company"] : $r["Company"]);
+                
+                $val = preg_replace_callback("/&(?:#\d+|#x[0-9a-fA-F]+|[a-zA-Z][a-zA-Z0-9]+);/",
                         function($m) {
-                            return mb_convert_encoding($m[1], "UTF-8", "HTML-ENTITIES");
+                            return mb_convert_encoding($m[0], "UTF-8", "HTML-ENTITIES");
                         },
-                        $r["Name_First"]
+                        $val
                 );
-                $lastName = preg_replace_callback("/(&#[0-9]+;)/",
-                        function($m) {
-                            return mb_convert_encoding($m[1], "UTF-8", "HTML-ENTITIES");
-                        },
-                        $r["Name_Last"]
-                );
-                $company = preg_replace_callback("/(&#[0-9]+;)/",
-                        function($m) {
-                            return mb_convert_encoding($m[1], "UTF-8", "HTML-ENTITIES");
-                        },
-                        $r["Company"]
-                );
+                
                 $events[] = array(
                     'id' => $r["idName"],
                     'taxExempt' => $r["tax_exempt"],
-                    'value' => ($lastName != '' ? $lastName . ", " . $firstName . " - " . $company : $company) . ($r["tax_exempt"] ? " - Tax Exempt" : '')
+                    'value' => $val . ($r["tax_exempt"] ? " - Tax Exempt" : '')
                 );
             }
 
@@ -336,11 +318,10 @@ $operation (LOWER(n.Name_First) like :ltrfn OR LOWER(n.Name_NickName) like :ltrn
             $query2 = "SELECT distinct n.idName, n.Name_Last, n.Name_First, n.Name_Nickname, ifnull(np.Phone_Num, '') as `Phone`
 FROM name n join name_volunteer2 nv on n.idName = nv.idName and nv.Vol_Category = 'Vol_Type' $andVc
 left join name_phone np on n.idName = np.idName and n.Preferred_Phone = np.Phone_Code
-where n.idName>0 and n.Member_Status='a' and n.Record_Member = 1  and (LOWER(n.Name_Last) like :ltrln
-$operation (LOWER(n.Name_First) like :ltrfn OR LOWER(n.Name_NickName) like :ltrnk)) order by n.Name_Last, n.Name_First;";
+where n.idName>0 and n.Member_Status='a' and n.Record_Member = 1 AND MATCH(n.`Name_Search`) AGAINST (:search in boolean mode) order by n.Name_Last, n.Name_First;";
 
-            $stmt = $dbh->prepare($query2, array(\PDO::ATTR_CURSOR => \PDO::CURSOR_FWDONLY));
-            $stmt->execute(array(':ltrln' => $this->Name_Last, ':ltrfn' => $this->Name_First, ':ltrnk' => $this->Name_First));
+            $stmt = $dbh->prepare($query2);
+            $stmt->execute([':search'=>$this->buildFulltextQuery($this->letters)]);
             $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
             foreach ($rows as $r) {
@@ -385,17 +366,20 @@ $operation (LOWER(n.Name_First) like :ltrfn OR LOWER(n.Name_NickName) like :ltrn
         } else if ($basis == 'psg') {
 
             $andVc = " and nv.Vol_Code = '" . VolMemberType::Guest . "' ";
+            $queryParams = [':idPsg'=>$psg];
 
+            if(strlen(trim($this->letters)) > 0){
+                $queryParams[':search'] = $this->buildFulltextQuery($this->letters);
+            }
 
             $query2 = "SELECT distinct n.idName, n.Name_Last, n.Name_First, n.Name_Nickname, ifnull(np.Phone_Num, '') as `Phone`
             FROM name n join name_volunteer2 nv on n.idName = nv.idName and nv.Vol_Category = 'Vol_Type' $andVc
             left join name_phone np on n.idName = np.idName and n.Preferred_Phone = np.Phone_Code
             left join name_guest ng on n.idName = ng.idName
-            where n.idName>0 and n.Member_Status='a' and n.Record_Member = 1  and idPsg = :idPsg and (LOWER(n.Name_Last) like :ltrln
-            $operation (LOWER(n.Name_First) like :ltrfn OR LOWER(n.Name_NickName) like :ltrnk)) order by n.Name_Last, n.Name_First;";
+            where n.idName>0 and n.Member_Status='a' and n.Record_Member = 1  and idPsg = :idPsg " . (strlen(trim($this->letters)) > 0 ? "AND MATCH(n.`Name_Search`) AGAINST (:search in boolean mode)" :"") . " order by n.Name_Last, n.Name_First;";
 
-            $stmt = $dbh->prepare($query2, array(\PDO::ATTR_CURSOR => \PDO::CURSOR_FWDONLY));
-            $stmt->execute(array(':ltrln' => $this->Name_Last, ':ltrfn' => $this->Name_First, ':ltrnk' => $this->Name_First, ':idPsg'=>$psg));
+            $stmt = $dbh->prepare($query2);
+            $stmt->execute($queryParams);
             $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
             foreach ($rows as $r) {
@@ -441,10 +425,11 @@ $operation (LOWER(n.Name_First) like :ltrfn OR LOWER(n.Name_NickName) like :ltrn
 
             $query2 = "SELECT n.idName, n.Name_Last, n.Name_First, n.Name_Nickname
 FROM name n join name_volunteer2 nv on n.idName = nv.idName and nv.Vol_Category = 'Vol_Type' and nv.Vol_Code = '" . VolMemberType::Patient . "'
-where n.idName>0 and n.Member_Status='a' and n.Record_Member = 1  and (LOWER(n.Name_Last) like :ltrln
-$operation (LOWER(n.Name_First) like :ltrfn OR LOWER(n.Name_NickName) like :ltrnk)) order by n.Name_Last, n.Name_First;";
-            $stmt = $dbh->prepare($query2, array(\PDO::ATTR_CURSOR => \PDO::CURSOR_FWDONLY));
-            $stmt->execute(array(':ltrln' => $this->Name_Last, ':ltrfn' => $this->Name_First, ':ltrnk' => $this->Name_First));
+where n.idName>0 and n.Member_Status='a' and n.Record_Member = 1 "
+. "AND MATCH(n.`Name_Search`) AGAINST (:search in boolean mode) "
+." order by n.Name_Last, n.Name_First;";
+            $stmt = $dbh->prepare($query2);
+            $stmt->execute([':search'=>$this->buildFulltextQuery($this->letters)]);
             $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
             foreach ($rows as $r) {
@@ -510,10 +495,10 @@ $operation (LOWER(n.Name_First) like :ltrfn OR LOWER(n.Name_NickName) like :ltrn
                 //                  0          1             2             3            4                 5                         6
                 $query2 = "SELECT n.idName, n.Name_Last, n.Name_First, n.Company, case when n.Record_Company = 1 then 't' else '' end, ifnull(n.Member_Status,'x'), ifnull(g.Description,'Undefined!')
                 FROM name n left join gen_lookups g on g.Table_Name='mem_status' and g.Code = n.Member_Status
-                WHERE n.idName>0 and n.Member_Status not in ('u','TBD','p') and
-                (LOWER(n.Name_Last) like '" . $this->Name_Last . "' $operation
-                (LOWER(n.Name_NickName) like '" . $this->Name_First . "' OR LOWER(n.Name_First) like '" . $this->Name_First . "') OR LOWER(n.Company) like '" . $this->Company . "') order by n.Member_Status, n.Name_Last, n.Name_First;";
-                $stmt = $dbh->query($query2);
+                WHERE n.idName>0 and n.Member_Status not in ('u','TBD','p')
+                AND MATCH(n.`Name_Search`) AGAINST (:search in boolean mode) order by n.Member_Status, n.Name_Last, n.Name_First;";
+                $stmt = $dbh->prepare($query2);
+                $stmt->execute([':search'=>$this->buildFulltextQuery($this->letters)]);
                 $rows = $stmt->fetchAll(\PDO::FETCH_NUM);
 
                 foreach ($rows as $row2) {
@@ -522,20 +507,14 @@ $operation (LOWER(n.Name_First) like :ltrfn OR LOWER(n.Name_NickName) like :ltrn
                     $namArray['id'] = $row2[0];
 
                     if ($row2[4] == '') {
-                        $namArray['value'] = preg_replace_callback("/(&#[0-9]+;)/", function($m) {
-                            return mb_convert_encoding($m[1], "UTF-8", "HTML-ENTITIES");
-                            }, $row2[1] . ", " . $row2[2]);
+                        $namArray['value'] = html_entity_decode( $row2[1] . ", " . $row2[2], ENT_QUOTES | ENT_HTML5, "UTF-8");
                     } else {
-                        $namArray['value'] = preg_replace_callback("/(&#[0-9]+;)/", function($m) {
-                            return mb_convert_encoding($m[1], "UTF-8", "HTML-ENTITIES");
-                        }, $row2[3]);
+                        $namArray['value'] = html_entity_decode( $row2[3], ENT_QUOTES | ENT_HTML5, "UTF-8");
                     }
 
                     $namArray['stat'] = $row2[6];
                     $namArray['scode'] = $row2[5];
-                    $namArray['company'] = preg_replace_callback("/(&#[0-9]+;)/", function($m) {
-                            return mb_convert_encoding($m[1], "UTF-8", "HTML-ENTITIES");
-                        }, $row2[3]);
+                    $namArray['company'] = html_entity_decode($row2[3], ENT_QUOTES | ENT_HTML5, "UTF-8");
 
                     $events[] = $namArray;
                 }
@@ -546,10 +525,9 @@ $operation (LOWER(n.Name_First) like :ltrfn OR LOWER(n.Name_NickName) like :ltrn
                 //                  0          1             2             3            4                 5             6
                 $query2 = "SELECT n.idName, n.Name_Last, n.Name_First, n.Company, case when n.Record_Company = 1 then 't' else '' end, ifnull(n.Member_Status,'x'), ifnull(g.Description,'Undefined!') as `Descrip`
                 FROM name n left join gen_lookups g on g.Table_Name='mem_status' and g.Code = n.Member_Status
-                WHERE n.idName>0 and n.idName <> :id and n.Member_Status<>'u' and n.Member_Status<>'TBD' and (LOWER(n.Name_Last) like :ltrln
-                $operation (LOWER(n.Name_First) like :ltrfn  OR LOWER(n.Name_NickName) like :ltrnk)) order by n.Member_Status, n.Name_Last, n.Name_First;";
-                $stmt = $dbh->prepare($query2, array(\PDO::ATTR_CURSOR => \PDO::CURSOR_FWDONLY));
-                $stmt->execute(array(':id' => $id, ':ltrln' => $this->Name_Last, ':ltrfn' => $this->Name_First, ':ltrnk' => $this->Name_First));
+                WHERE n.idName>0 and n.idName <> :id and n.Member_Status<>'u' and n.Member_Status<>'TBD' AND MATCH(n.`Name_Search`) AGAINST (:search in boolean mode) order by n.Member_Status, n.Name_Last, n.Name_First;";
+                $stmt = $dbh->prepare($query2);
+                $stmt->execute(array(':id' => $id, ':search' => $this->buildFulltextQuery($this->letters)));
                 $rows = $stmt->fetchAll(\PDO::FETCH_NUM);
 
                 foreach ($rows as $row2) {
@@ -559,13 +537,9 @@ $operation (LOWER(n.Name_First) like :ltrfn OR LOWER(n.Name_NickName) like :ltrn
                     $namArray['id'] = $row2[0];
 
                     if ($row2[4] == '') {
-                        $namArray['value'] = preg_replace_callback("/(&#[0-9]+;)/", function($m) {
-                            return mb_convert_encoding($m[1], "UTF-8", "HTML-ENTITIES");
-                        }, $row2[1] . ", " . $row2[2]);
+                        $namArray['value'] = html_entity_decode($row2[1] . ", " . $row2[2], ENT_QUOTES | ENT_HTML5, "UTF-8");
                     } else {
-                        $namArray['value'] = preg_replace_callback("/(&#[0-9]+;)/", function($m) {
-                            return mb_convert_encoding($m[1], "UTF-8", "HTML-ENTITIES");
-                        }, $row2[3]);
+                        $namArray['value'] = html_entity_decode($row2[3], ENT_QUOTES | ENT_HTML5, "UTF-8");
                     }
 
                     $namArray['stat'] = $row2[6];
@@ -580,7 +554,7 @@ $operation (LOWER(n.Name_First) like :ltrfn OR LOWER(n.Name_NickName) like :ltrn
                 from name_email e join name n on e.idName = n.idName
                 left join gen_lookups g on g.Table_Name='mem_status' and g.Code = n.Member_Status
                 where n.idName>0 and n.Member_Status<>'u' and Member_Status<>'TBD' and  LOWER(e.Email) like :ltr order by n.Member_Status, e.Email";
-                $stmt = $dbh->prepare($query2, array(\PDO::ATTR_CURSOR => \PDO::CURSOR_FWDONLY));
+                $stmt = $dbh->prepare($query2);
                 $stmt->execute(array(':ltr' => $this->Name_First));
                 $rows = $stmt->fetchAll(\PDO::FETCH_NUM);
 
@@ -600,19 +574,17 @@ $operation (LOWER(n.Name_First) like :ltrfn OR LOWER(n.Name_NickName) like :ltrn
                 $query2 = "SELECT n.idName as Id, n.Name_Last, n.Name_First, ifnull(n.Member_Status,'x'), ifnull(g.Description,'Undefined!')
             FROM name n left join relationship r on n.idName = r.Target_Id and :id = r.idName and r.Relation_Type = 'par'
             left join gen_lookups g on g.Table_Name='mem_status' and g.Code = n.Member_Status
-            WHERE (LOWER(n.Name_Last) like :ltrln $operation (LOWER(n.Name_First) like :ltrfn OR LOWER(n.Name_NickName) like :ltrnk)) and n.Record_Member = 1
+            WHERE MATCH(n.`Name_Search`) AGAINST (:search in boolean mode) and n.Record_Member = 1
                 and n.Member_Status in ('a','d','in') and n.idName <> :id2 and r.idRelationship is null order by n.Member_Status, n.Name_Last, n.Name_First;";
-                $stmt = $dbh->prepare($query2, array(\PDO::ATTR_CURSOR => \PDO::CURSOR_FWDONLY));
-                $stmt->execute(array(':id' => $id, ':id2' => $id, ':ltrln' => $this->Name_Last, ':ltrfn' => $this->Name_First, ':ltrnk' => $this->Name_First));
+                $stmt = $dbh->prepare($query2);
+                $stmt->execute(array(':id' => $id, ':id2' => $id, ':search' => $this->buildFulltextQuery($this->letters)));
                 $rows = $stmt->fetchAll(\PDO::FETCH_NUM);
 
                 foreach ($rows as $row2) {
                     $namArray = array();
 
                     $namArray['id'] = $row2[0];
-                    $namArray['value'] = preg_replace_callback("/(&#[0-9]+;)/", function($m) {
-                        return mb_convert_encoding($m[1], "UTF-8", "HTML-ENTITIES");
-                    }, $row2[1] . ", " . $row2[2]);
+                    $namArray['value'] = html_entity_decode($row2[1] . ", " . $row2[2], ENT_QUOTES | ENT_HTML5, "UTF-8");
                     $namArray['scode'] = $row2[3];
                     $namArray["stat"] = $row2[4];
                     $events[] = $namArray;
@@ -624,19 +596,17 @@ $operation (LOWER(n.Name_First) like :ltrfn OR LOWER(n.Name_NickName) like :ltrn
                 $query2 = "SELECT n.idName as Id, n.Name_Last, n.Name_First, ifnull(n.Member_Status,'x'), ifnull(g.Description,'Undefined!')
                 FROM name n left join relationship r on n.idName = r.idName and :id = r.Target_Id and r.Relation_Type = 'par'
                 left join gen_lookups g on g.Table_Name='mem_status' and g.Code = n.Member_Status
-                WHERE (LOWER(n.Name_Last) like :ltrln $operation (LOWER(n.Name_First) like :ltrfn OR LOWER(n.Name_NickName) like :ltrnk)) and n.Record_Member = 1
+                WHERE MATCH(n.`Name_Search`) AGAINST (:search in boolean mode) and n.Record_Member = 1
                 and n.Member_Status in ('a','d','in') and n.idName <> :id2 and r.idRelationship is null order by n.Member_Status, n.Name_Last, n.Name_First;";
-                $stmt = $dbh->prepare($query2, array(\PDO::ATTR_CURSOR => \PDO::CURSOR_FWDONLY));
-                $stmt->execute(array(':id' => $id, ':id2' => $id, ':ltrln' => $this->Name_Last, ':ltrfn' => $this->Name_First, ':ltrnk' => $this->Name_First));
+                $stmt = $dbh->prepare($query2);
+                $stmt->execute(array(':id' => $id, ':id2' => $id, ':search' => $this->buildFulltextQuery($this->letters)));
                 $rows = $stmt->fetchAll(\PDO::FETCH_NUM);
 
                 foreach ($rows as $row2) {
                     $namArray = array();
 
                     $namArray['id'] = $row2[0];
-                    $namArray['value'] = preg_replace_callback("/(&#[0-9]+;)/", function($m) {
-                        return mb_convert_encoding($m[1], "UTF-8", "HTML-ENTITIES");
-                    }, $row2[1] . ", " . $row2[2]);
+                    $namArray['value'] = html_entity_decode($row2[1] . ", " . $row2[2], ENT_QUOTES | ENT_HTML5, "UTF-8");
                     $namArray['scode'] = $row2[3];
                     $namArray["stat"] = $row2[4];
                     $events[] = $namArray;
@@ -648,20 +618,18 @@ $operation (LOWER(n.Name_First) like :ltrfn OR LOWER(n.Name_NickName) like :ltrn
                 $query2 = "SELECT n.idName as Id, n.Name_Last, n.Name_First, ifnull(n.Member_Status,'x'), ifnull(g.Description,'Undefined!')
             FROM name n left join relationship r on n.idName = r.idName and r.Relation_Type = 'sib'
             left join gen_lookups g on g.Table_Name='mem_status' and g.Code = n.Member_Status
-                WHERE (LOWER(n.Name_Last) like :ltrln $operation (LOWER(n.Name_First) like :ltrfn OR LOWER(n.Name_NickName) like :ltrnk)) and n.Record_Member = 1 and ifnull(r.Group_Code,'0') not in
+                WHERE MATCH(n.`Name_Search`) AGAINST (:search in boolean mode) and n.Record_Member = 1 and ifnull(r.Group_Code,'0') not in
                 (Select Group_Code from relationship where idname = :id)
                 and n.Member_Status in ('a','d','in') and n.idName <> :id2 order by n.Member_Status, n.Name_Last, n.Name_First;";
-                $stmt = $dbh->prepare($query2, array(\PDO::ATTR_CURSOR => \PDO::CURSOR_FWDONLY));
-                $stmt->execute(array(':id' => $id, ':id2' => $id, ':ltrln' => $this->Name_Last, ':ltrfn' => $this->Name_First, ':ltrnk' => $this->Name_First));
+                $stmt = $dbh->prepare($query2);
+                $stmt->execute(array(':id' => $id, ':id2' => $id, ':search' => $this->buildFulltextQuery($this->letters)));
                 $rows = $stmt->fetchAll(\PDO::FETCH_NUM);
 
                 foreach ($rows as $row2) {
                     $namArray = array();
 
                     $namArray['id'] = $row2[0];
-                    $namArray['value'] = preg_replace_callback("/(&#[0-9]+;)/", function($m) {
-                        return mb_convert_encoding($m[1], "UTF-8", "HTML-ENTITIES");
-                    }, $row2[1] . ", " . $row2[2]);
+                    $namArray['value'] = html_entity_decode($row2[1] . ", " . $row2[2], ENT_QUOTES | ENT_HTML5, "UTF-8");
 
                     $namArray['scode'] = $row2[3];
                     $namArray["stat"] = $row2[4];
@@ -671,7 +639,7 @@ $operation (LOWER(n.Name_First) like :ltrfn OR LOWER(n.Name_NickName) like :ltrn
 
             case RelLinkType::Company:
                 $query2 = "select idName as Id, Company from name where Record_Company=1 and Member_Status ='a' and idName>0 and idName <> :id and LOWER(Company) like :ltr order by Member_Status, Company;";
-                $stmt = $dbh->prepare($query2, array(\PDO::ATTR_CURSOR => \PDO::CURSOR_FWDONLY));
+                $stmt = $dbh->prepare($query2);
                 $stmt->execute(array(':id' => $id, ':ltr' => $this->Name_First));
                 $rows = $stmt->fetchAll(\PDO::FETCH_NUM);
 
@@ -679,12 +647,7 @@ $operation (LOWER(n.Name_First) like :ltrfn OR LOWER(n.Name_NickName) like :ltrn
                     $namArray = array();
 
                     $namArray['id'] = $row2[0];
-                    $namArray['value'] = preg_replace_callback("/(&#[0-9]+;)/",
-                            function($m) {
-                                return mb_convert_encoding($m[1], "UTF-8", "HTML-ENTITIES");
-                            },
-                            $row2[1]
-                    );
+                    $namArray['value'] = html_entity_decode($row2[1], ENT_QUOTES | ENT_HTML5, "UTF-8");
 
                     $events[] = $namArray;
                 }
@@ -694,19 +657,17 @@ $operation (LOWER(n.Name_First) like :ltrfn OR LOWER(n.Name_NickName) like :ltrn
                 $query2 = "SELECT n.idName as Id, n.Name_Last, n.Name_First, ifnull(n.Member_Status,'x'), ifnull(g.Description,'Undefined!')
                 FROM name n left join relationship r on (n.idName = r.idName or n.idName = r.Target_Id) and r.Relation_Type = 'sp'
                 left join gen_lookups g on g.Table_Name='mem_status' and g.Code = n.Member_Status
-                WHERE (LOWER(n.Name_Last) like :ltrln $operation (LOWER(n.Name_First) like :ltrfn OR LOWER(n.Name_NickName) like :ltrnk)) and n.Record_Member = 1
+                WHERE MATCH(n.`Name_Search`) AGAINST (:search in boolean mode) and n.Record_Member = 1
                 and n.Member_Status in ('a','d','in') and n.idName>0 and n.idName <> :id and r.idRelationship is null order by n.Member_Status, n.Name_Last, n.Name_First;";
-                $stmt = $dbh->prepare($query2, array(\PDO::ATTR_CURSOR => \PDO::CURSOR_FWDONLY));
-                $stmt->execute(array(':id' => $id, ':ltrln' => $this->Name_Last, ':ltrfn' => $this->Name_First, ':ltrnk' => $this->Name_First));
+                $stmt = $dbh->prepare($query2);
+                $stmt->execute(array(':id' => $id, ':search' => $this->buildFulltextQuery($this->letters)));
                 $rows = $stmt->fetchAll(\PDO::FETCH_NUM);
 
                 foreach ($rows as $row2) {
                     $namArray = array();
 
                     $namArray['id'] = $row2[0];
-                    $namArray['value'] = preg_replace_callback("/(&#[0-9]+;)/", function($m) {
-                        return mb_convert_encoding($m[1], "UTF-8", "HTML-ENTITIES");
-                    }, $row2[1] . ", " . $row2[2]);
+                    $namArray['value'] = html_entity_decode($row2[1] . ", " . $row2[2], ENT_QUOTES | ENT_HTML5, "UTF-8");
                     $namArray['scode'] = $row2[3];
                     $namArray["stat"] = $row2[4];
                     $events[] = $namArray;
@@ -716,19 +677,16 @@ $operation (LOWER(n.Name_First) like :ltrfn OR LOWER(n.Name_NickName) like :ltrn
             case RelLinkType::Employee:
                 $query2 = "SELECT n.idName, n.Name_Last, n.Name_First, ifnull(n.Member_Status,'x'), ifnull(g.Description,'Undefined!')
             FROM name n left join gen_lookups g on g.Table_Name='mem_status' and g.Code = n.Member_Status
-            WHERE n.Company_Id = 0 and n.Member_Status in ('a','in') and n.Record_Member = 1 and n.idName <> :id and (LOWER(n.Name_Last) like :ltrln
-                $operation (LOWER(n.Name_First) like :ltrfn  OR LOWER(n.Name_NickName) like :ltrnk)) order by n.Member_Status, n.Name_Last, n.Name_First;";
-                $stmt = $dbh->prepare($query2, array(\PDO::ATTR_CURSOR => \PDO::CURSOR_FWDONLY));
-                $stmt->execute(array(':id' => $id, ':ltrln' => $this->Name_Last, ':ltrfn' => $this->Name_First, ':ltrnk' => $this->Name_First));
+            WHERE n.Company_Id = 0 and n.Member_Status in ('a','in') and n.Record_Member = 1 and n.idName <> :id and MATCH(n.`Name_Search`) AGAINST (:search in boolean mode) order by n.Member_Status, n.Name_Last, n.Name_First;";
+                $stmt = $dbh->prepare($query2);
+                $stmt->execute(array(':id' => $id, ':search' => $this->buildFulltextQuery($this->letters)));
                 $rows = $stmt->fetchAll(\PDO::FETCH_NUM);
 
                 foreach ($rows as $row2) {
                     $namArray = array();
 
                     $namArray['id'] = $row2[0];
-                    $namArray['value'] = preg_replace_callback("/(&#[0-9]+;)/", function($m) {
-                        return mb_convert_encoding($m[1], "UTF-8", "HTML-ENTITIES");
-                    }, $row2[1] . ", " . $row2[2]);
+                    $namArray['value'] = html_entity_decode($row2[1] . ", " . $row2[2], ENT_QUOTES | ENT_HTML5, "UTF-8");
                     $namArray['scode'] = $row2[3];
                     $namArray["stat"] = $row2[4];
                     $events[] = $namArray;
@@ -740,20 +698,18 @@ $operation (LOWER(n.Name_First) like :ltrfn OR LOWER(n.Name_NickName) like :ltrn
                 $query2 = "SELECT n.idName as Id, n.Name_Last, n.Name_First, ifnull(n.Member_Status,'x'), ifnull(g.Description,'Undefined!')
             FROM name n left join relationship r on n.idName = r.idName and r.Relation_Type = 'rltv'
             left join gen_lookups g on g.Table_Name='mem_status' and g.Code = n.Member_Status
-                WHERE (LOWER(n.Name_Last) like :ltrln $operation (LOWER(n.Name_First) like :ltrfn OR LOWER(n.Name_NickName) like :ltrnk)) and n.Record_Member = 1 and ifnull(r.Group_Code,'0') not in
+                WHERE MATCH(n.`Name_Search`) AGAINST (:search in boolean mode) and n.Record_Member = 1 and ifnull(r.Group_Code,'0') not in
                 (Select Group_Code from relationship where idname = :id)
                 and n.Member_Status in ('a','d','in') and n.idName <> :id2 order by n.Member_Status, n.Name_Last, n.Name_First;";
-                $stmt = $dbh->prepare($query2, array(\PDO::ATTR_CURSOR => \PDO::CURSOR_FWDONLY));
-                $stmt->execute(array(':id' => $id, ':id2' => $id, ':ltrln' => $this->Name_Last, ':ltrfn' => $this->Name_First, ':ltrnk' => $this->Name_First));
+                $stmt = $dbh->prepare($query2);
+                $stmt->execute(array(':id' => $id, ':id2' => $id, ':search' => $this->buildFulltextQuery($this->letters)));
                 $rows = $stmt->fetchAll(\PDO::FETCH_NUM);
 
                 foreach ($rows as $row2) {
                     $namArray = array();
 
                     $namArray['id'] = $row2[0];
-                    $namArray['value'] = preg_replace_callback("/(&#[0-9]+;)/", function($m) {
-                        return mb_convert_encoding($m[1], "UTF-8", "HTML-ENTITIES");
-                    }, $row2[1] . ", " . $row2[2]);
+                    $namArray['value'] = html_entity_decode($row2[1] . ", " . $row2[2], ENT_QUOTES | ENT_HTML5, "UTF-8");
                     $namArray['scode'] = $row2[3];
                     $namArray["stat"] = $row2[4];
                     $events[] = $namArray;
@@ -816,24 +772,9 @@ $operation (LOWER(n.Name_First) like :ltrfn OR LOWER(n.Name_NickName) like :ltrn
         while ($row2 = $stmt->fetch(\PDO::FETCH_ASSOC)) {
             $namArray = array();
 
-            $firstName = preg_replace_callback("/(&#[0-9]+;)/",
-                function($m) {
-                    return mb_convert_encoding($m[1], "UTF-8", "HTML-ENTITIES");
-                },
-                $row2["Name_First"]
-                );
-            $lastName = preg_replace_callback("/(&#[0-9]+;)/",
-                function($m) {
-                    return mb_convert_encoding($m[1], "UTF-8", "HTML-ENTITIES");
-                },
-                $row2["Name_Last"]
-                );
-            $nickName = preg_replace_callback("/(&#[0-9]+;)/",
-                function($m) {
-                    return mb_convert_encoding($m[1], "UTF-8", "HTML-ENTITIES");
-                },
-                $row2["Name_Nickname"]
-                );
+            $firstName = html_entity_decode($row2["Name_First"], ENT_QUOTES | ENT_HTML5, "UTF-8");
+            $lastName = html_entity_decode($row2["Name_Last"], ENT_QUOTES | ENT_HTML5, "UTF-8");
+            $nickName = html_entity_decode($row2["Name_Nickname"], ENT_QUOTES | ENT_HTML5, "UTF-8");
 
             $strBirthDate = '';
             if ($row2['BirthDate'] != '') {
@@ -1003,11 +944,6 @@ $operation (LOWER(n.Name_First) like :ltrfn OR LOWER(n.Name_NickName) like :ltrn
      */
     public function guestSearch(\PDO $dbh) {
 
-        $operation = 'OR';
-        if ($this->twoParts) {
-            $operation = 'AND';
-        }
-
         $query = "Select distinct n.idName,  n.Name_Last, n.Name_First, ifnull(gp.Description, '') as Name_Prefix, ifnull(g.Description, '') as Name_Suffix, n.Name_Nickname, n.BirthDate, "
             . " n.Member_Status, ifnull(gs.Description, '') as `Status`, ifnull(np.Phone_Num, '') as `Phone`, ifnull(na.City,'') as `City`, ifnull(na.State_Province,'') as `State`, "
             . " ifnull(gr.Description, '') as `No_Return` " . ", SUBSTR(MAX(CONCAT(LPAD(hs.idHospital_stay,50),hs.MRN)),51)as `MRN`, ifnull(s.idRoom, '') as 'idRoom', ifnull(r.Title, '') as 'Room' "
@@ -1026,15 +962,12 @@ $operation (LOWER(n.Name_First) like :ltrfn OR LOWER(n.Name_NickName) like :ltrn
             . " left join hospital_stay hs on n.idName = hs.idPatient"
             . " where n.idName>0 and n.Member_Status in ('a','d') and n.Record_Member = 1 "
             . " and nv.Vol_Code in ('" . VolMemberType::Guest . "', '" . VolMemberType::Patient . "') "
-            . " and (LOWER(n.Name_Last) like :nameLast "
-            . " $operation (LOWER(n.Name_First) like :nameFirst OR LOWER(n.Name_NickName) like :nameFirst2)) "
+            . "AND MATCH(n.`Name_Search`) AGAINST (:search in boolean mode) "
             . " group by n.idName order by n.Name_Last, n.Name_First";
 
         $stmt = $dbh->prepare($query);
         $stmt->execute([
-            ":nameFirst"=>$this->Name_First,
-            ":nameFirst2"=>$this->Name_First,
-            ":nameLast"=>$this->Name_Last
+            ":search"=>$this->buildFulltextQuery($this->letters)
         ]);
 
         $events = array();
@@ -1107,11 +1040,6 @@ $operation (LOWER(n.Name_First) like :ltrfn OR LOWER(n.Name_NickName) like :ltrn
      */
     public function roleSearch(\PDO $dbh, $mode = '', $guestPatient = FALSE, $MRN = FALSE) {
 
-        $operation = 'OR';
-        if ($this->twoParts) {
-            $operation = 'AND';
-        }
-
         $filterGP = '';
         if ($guestPatient) {
             $filterGP = " and nv.Vol_Code in ('" . VolMemberType::Guest . "', '" . VolMemberType::Patient . "') ";
@@ -1131,8 +1059,7 @@ $operation (LOWER(n.Name_First) like :ltrfn OR LOWER(n.Name_NickName) like :ltrn
                 . " left join gen_lookups gr on gr.Table_Name = 'NoReturnReason' and gr.Code = nd.No_Return"
                 . " left join hospital_stay hs on n.idName = hs.idPatient"
             . " where n.idName>0 and n.Member_Status in ('a','d') and n.Record_Member = 1 $filterGP "
-                . ($MRN ? "" : " and (LOWER(n.Name_Last) like '" . $this->Name_Last . "' "
-                . " $operation (LOWER(n.Name_First) like '" . $this->Name_First . "' OR LOWER(n.Name_NickName) like '" . $this->Name_First . "')) "
+                . ($MRN ? "" : " and MATCH(n.`Name_Search`) AGAINST ('" . $this->buildFulltextQuery($this->letters). "' in boolean mode)  "
                 . " OR np.Phone_Search like '" . $this->Name_First . "' ")
                 . ($MRN ? " and hs.MRN like '" . $this->MRN . "' " : "")
             . " group by n.idName order by n.Name_Last, n.Name_First";
@@ -1318,6 +1245,31 @@ $operation (LOWER(n.Name_First) like :ltrfn OR LOWER(n.Name_NickName) like :ltrn
     }
 
     /**
+     * Build query search string for use in match()...against() query
+     * 
+     * @param string $input
+     * @return string
+     */
+    protected function buildFulltextQuery(string $input): string
+    {
+        $q = trim($input);
+
+        $q = html_entity_decode($q, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+
+        $q = preg_replace('/[^\p{L}\s]/u', '', $q);
+
+        // Tokenize
+        $tokens = array_values(array_filter(preg_split('/\s+/', $q)));
+
+        // Build BOOLEAN MODE query
+        if (count($tokens) === 1) {
+            return $tokens[0] . '*';
+        }
+
+        return implode(' ', array_map(fn($t) => '+' . $t . '*', $tokens));
+    }
+
+    /**
      * Summary of getName_First
      * @return string
      */
@@ -1348,6 +1300,4 @@ $operation (LOWER(n.Name_First) like :ltrfn OR LOWER(n.Name_NickName) like :ltrn
     public function getCompany() {
         return $this->Company;
     }
-
-
 }

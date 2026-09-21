@@ -143,7 +143,7 @@ class FamilyAddGuest extends Family {
             HTMLContainer::generateMarkup('span', $familyName . ' Family')
             , array('style'=>'float:left;', 'class'=>'hhk-checkinHdr'));
 
-        return array('hdr'=>$hdr, 'tblHead'=>$th, 'tblBody'=>$trs, 'adtnl'=>$mk1, 'mem'=>$rData->getMembersArray(), 'addrs'=>$this->getAddresses($this->roleObjs), 'emergContacts'=>$this->getEmergContacts($dbh, $this->roleObjs), 'tblId'=>FAMILY::FAM_TABLE_ID);
+        return array('hdr'=>$hdr, 'tblHead'=>$th, 'tblBody'=>$trs, 'adtnl'=>$mk1, 'mem'=>$rData->getMembersArray(), 'addrs'=>$this->getAddresses($this->roleObjs), 'emergContacts'=>$this->getEmergContacts($dbh, $this->roleObjs), 'tblId'=>Family::FAM_TABLE_ID);
 
     }
 

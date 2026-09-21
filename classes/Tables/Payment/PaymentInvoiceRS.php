@@ -15,11 +15,11 @@ use HHK\Tables\Fields\{DB_Field, DbIntSanitizer, DbDecimalSanitizer, DbDateSanit
 
 class PaymentInvoiceRS extends AbstractTableRS {
     
-    public $idPayment_Invoice;   // INTEGER NOT NULL,
-    public $Payment_Id;   // INTEGER,
-    public $Invoice_Id;   // INTEGER,
-    public $Amount;   // DECIMAL(22,10),
-    public $Create_Datetime;   // TIMESTAMP NOT NULL,
+    public DB_Field $idPayment_Invoice;   // INTEGER NOT NULL,
+    public DB_Field $Payment_Id;   // INTEGER,
+    public DB_Field $Invoice_Id;   // INTEGER,
+    public DB_Field $Amount;   // DECIMAL(22,10),
+    public DB_Field $Create_Datetime;   // TIMESTAMP NOT NULL,
     
     function __construct($TableName = "payment_invoice") {
         $this->idPayment_Invoice = new DB_Field("idPayment_Invoice", 0, new DbIntSanitizer(), TRUE, TRUE);

@@ -1,4 +1,6 @@
 <?php
+use HHK\Common;
+use HHK\Crypto;
 use HHK\Exception\RuntimeException;
 use HHK\sec\UserClass;
 
@@ -15,9 +17,7 @@ use HHK\sec\UserClass;
 require_once ("InstallIncludes.php");
 
 //Check request
-if (filter_has_var(INPUT_POST, 'cmd')) {
-    $c = filter_input(INPUT_POST, 'cmd', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
-}
+$c = filter_input(INPUT_POST, 'cmd', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
 $events = array();
 
@@ -34,7 +34,7 @@ if ($c == "testdb") {
 
 // define db connection obj
     try {
-        $dbh = initPDO(TRUE);
+        $dbh = Common::initPDO(TRUE);
     } catch (RuntimeException $hex) {
         echo( json_encode(array('error'=>$hex->getMessage())));
         exit();
@@ -47,6 +47,8 @@ if ($c == "testdb") {
         $filedata = file_get_contents('initialdata.sql');
         $parts = explode('-- ;', $filedata);
 
+        $dbh->beginTransaction();
+
         foreach ($parts as $q) {
 
             $q = trim($q);
@@ -55,9 +57,16 @@ if ($c == "testdb") {
                 try {
                     $dbh->exec($q);
                 } catch (PDOException $pex) {
-                    $errorMsg .= $pex->getMessage() . '.  ';
+                    $errorMsg .= 'Rolling back database: ' . $pex->getMessage() . '.  <br> QUERY: ' . $q;
+                    if ($dbh->inTransaction()) {
+                        $dbh->rollBack();
+                    }
                 }
             }
+        }
+
+        if ($dbh->inTransaction()) {
+            $dbh->commit();
         }
 
         // Update admin password
@@ -118,7 +127,7 @@ function testdb($post) {
         $dbUser = filter_var($post['dbuser'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
     }
     if (isset($post['dbPW'])) {
-        $pw = decryptMessage(filter_var($post['dbPW'], FILTER_UNSAFE_RAW));
+        $pw = Crypto::decryptMessage(filter_var($post['dbPW'], FILTER_UNSAFE_RAW));
     }
     if (isset($post['dbSchema'])) {
         $dbName = filter_var($post['dbSchema'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
@@ -127,7 +136,7 @@ function testdb($post) {
 
     try {
 
-        $dbh = initPDO();
+        $dbh = Common::initPDO();
 
         $dbh->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
         $serverInfo = $dbh->getAttribute(\PDO::ATTR_SERVER_VERSION);

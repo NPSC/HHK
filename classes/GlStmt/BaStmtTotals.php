@@ -5,7 +5,7 @@ use HHK\HTMLControls\{HTMLTable};
 
 class BaStmtTotals extends GlStmtTotals {
 	
-	public function __construct($pmCodes = array()) {
+	public function __construct() {
 		
 		$this->totalCredit = 0;
 		$this->totalDebit = 0;

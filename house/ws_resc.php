@@ -1,5 +1,6 @@
 <?php
 
+use HHK\Common;
 use HHK\Document\Document;
 use HHK\Document\FormDocument;
 use HHK\Document\FormTemplate;
@@ -235,7 +236,6 @@ try {
         case 'vehsch':
 
             if (isset($_REQUEST['letters'])) {
-                //require (HOUSE . 'Vehicle.php');
                 $tag = filter_var($_REQUEST['letters'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
                 $events = Vehicle::searchTag($dbh, $tag);
             }
@@ -301,7 +301,7 @@ try {
                     $showDelInv = TRUE;
                 }
 
-                $markup = HTMLContainer::generateMarkup('div', ActivityReport::feesLog($dbh, $startDT, $endDT, $st, $pt, $id, 'Payments Report', $showDelInv), ['style' => 'margin-left:5px;']);
+                $markup = ActivityReport::feesLog($dbh, $startDT, $endDT, $st, $pt, $id, 'Payments Report', $showDelInv);
             }
 
             if (isset($_REQUEST['inv'])) {
@@ -361,7 +361,7 @@ try {
                     $roomRates = $uS->guestLookups['Static_Room_Rate'];
                 }
 
-                $reportCategories = readGenLookupsPDO($dbh, 'Room_Rpt_Cat');
+                $reportCategories = Common::readGenLookupsPDO($dbh, 'Room_Rpt_Cat');
 
 
                 $events = ResourceView::roomDialog($dbh, $id, $uS->guestLookups[GLTableNames::RoomType], $uS->guestLookups[GLTableNames::RoomCategory], $reportCategories, $roomRates, $uS->guestLookups[GLTableNames::KeyDepositCode], $uS->KeyDeposit);
@@ -390,7 +390,7 @@ try {
                     $title = filter_var($_REQUEST["title"], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
                 }
 
-                $events = ResourceView::getStatusEvents($dbh, $id, $type, $title, $uS->guestLookups[GLTableNames::RescStatus], readGenLookupsPDO($dbh, 'OOS_Codes'));
+                $events = ResourceView::getStatusEvents($dbh, $id, $type, $title, $uS->guestLookups[GLTableNames::RescStatus], Common::readGenLookupsPDO($dbh, 'OOS_Codes'));
             }else{
                 $events = ["error"=>"Unauthorized"];
             }
@@ -479,15 +479,15 @@ try {
                     break;
 
                 case 'reservs':
-                    $events['reservs'] = $history->getReservedGuestsMarkup($dbh, ReservationStatus::Committed, TRUE);
+                    $events = $history->getReservedGuestsDataTable($dbh, ReservationStatus::Committed, TRUE);
                     break;
 
                 case 'unreserv':
-                    $events['unreserv'] = $history->getReservedGuestsMarkup($dbh, ReservationStatus::UnCommitted, TRUE);
+                    $events = $history->getReservedGuestsDataTable($dbh, ReservationStatus::UnCommitted, TRUE);
                     break;
 
                 case 'waitlist':
-                    $events['waitlist'] = $history->getReservedGuestsMarkup($dbh, ReservationStatus::Waitlist, TRUE);
+                    $events = $history->getReservedGuestsDataTable($dbh, ReservationStatus::Waitlist, TRUE);
                     break;
             }
 
@@ -805,7 +805,7 @@ try {
             $events = getCssVars($uS);
             break;
         case "generateRandomString":
-            $events = getRandomString();
+            $events = Common::getRandomString();
             break;
         case "getNameDetails":
             $post = filter_input_array(INPUT_POST, ['idNames'=>['filter', FILTER_SANITIZE_NUMBER_INT, 'flags'=>FILTER_FORCE_ARRAY], 'title'=>['filter', FILTER_SANITIZE_FULL_SPECIAL_CHARS]]);
@@ -848,7 +848,7 @@ function getCssVars(Session $uS){
     return $vars;
 }
 
-function getNameDetails(\PDO $dbh, $post){
+function getNameDetails(\PDO $dbh, array $post){
     if(isset($post['idNames'])){
 
         $query = "select distinct n.idName, n.Name_First, n.Name_Last, na.Address_1 as `address1`, na.Address_2 as `address2`,	na.City as `city`, na.State_Province, na.Postal_Code

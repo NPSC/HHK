@@ -2,26 +2,27 @@
 
 use HHK\API\OAuth\CRUD\Client;
 use HHK\Cron\SendConfirmationEmailJob;
+use HHK\House\Report\AbstractReport;
+use HHK\Payment\PaymentGateway\AbstractPaymentGateway;
 use HHK\sec\Pages;
 use HHK\sec\{Session, SecurityComponent, UserClass, WebInit};
 use HHK\SysConst\WebPageCode;
 use HHK\Tables\EditRS;
-use HHK\Tables\WebSec\{Id_SecurityGroupRS, W_authRS, W_usersRS};
-use HHK\AuditLog\NameLog;
 use HHK\DataTableServer\SSP;
 use HHK\Exception\RuntimeException;
-use HHK\House\Report\GuestDemogReport;
 use HHK\Member\WebUser;
 use HHK\Member\Relation\AbstractRelation;
-use HHK\sec\SAML;
-use HHK\Neon\ConfigureNeon;
 use HHK\Cron\JobFactory;
 use HHK\Tables\CronRS;
 use HHK\Cron\AbstractJob;
-use HHK\Cron\EmptyJob;
 use HHK\Cron\EmailReportJob;
 use HHK\CrmExport\AbstractExportManager;
+use HHK\CrmExport\Salesforce\SalesforceManager;
 use HHK\House\Distance\ZipDistance;
+use HHK\TableLog\ExternalAPILog;
+use HHK\Payment\PaymentGateway\Deluxe\DeluxeGateway;
+use HHK\Payment\PaymentGateway\Deluxe\Request\SearchPaymentRequest;
+use HHK\Payment\PaymentGateway\Deluxe\Request\VoidRequest;
 
 /**
  * ws_gen.php
@@ -33,7 +34,7 @@ use HHK\House\Distance\ZipDistance;
  */
 require ("AdminIncludes.php");
 
-$wInit = new webInit(WebPageCode::Service);
+$wInit = new WebInit(WebPageCode::Service);
 
 $dbh = $wInit->dbh;
 
@@ -57,16 +58,14 @@ try {
 
         case "zipd":
 
-            if (isset($_POST["zipf"])) {
-                $zipf = filter_var($_POST["zipf"], FILTER_SANITIZE_NUMBER_INT);
-            }
-            if (isset($_POST["zipt"])) {
-                $zipt = filter_var($_POST["zipt"], FILTER_SANITIZE_NUMBER_INT);
-            }
+            $post = filter_input_array(INPUT_POST, [
+                'zipf' => FILTER_SANITIZE_NUMBER_INT,
+                'zipt' => FILTER_SANITIZE_NUMBER_INT
+            ]);
 
             try{
                 $distanceCalculator = new ZipDistance();
-                $events['success'] = number_format($distanceCalculator->getDistance($dbh, ['zip'=>$zipf], ['zip'=>$zipt], 'miles'), 0);
+                $events['success'] = number_format($distanceCalculator->getDistance($dbh, ['zip'=>$post['zipf']], ['zip'=>$post['zipt']], 'miles'), 0);
             } catch (RuntimeException $hex) {
                 $events['error'] = "Zip code not found. " . $hex->getMessage();
             }
@@ -76,7 +75,7 @@ try {
         case 'schzip':
 
             if (isset($_GET['zip'])) {
-                $zip = filter_var($_GET['zip'], FILTER_SANITIZE_NUMBER_INT);
+                $zip = filter_input(INPUT_GET, 'zip', FILTER_SANITIZE_NUMBER_INT);
                 $events = searchZip($dbh, $zip);
             }
             break;
@@ -84,9 +83,13 @@ try {
         case "save":
 
             $parms = array();
-            if (isset($_POST["parms"])) {
-                $parms = filter_var_array($_POST["parms"], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
-            }
+            $post = filter_input_array(INPUT_POST, [
+                "parms" => [
+                    'filter' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
+                    'flags'=>FILTER_FORCE_ARRAY
+                ]
+            ]);
+            $parms = $post['parms'] ?? [];
 
             $events = WebUser::saveUname($dbh, $uS->username, $parms, $maintFlag);
 
@@ -373,7 +376,7 @@ try {
             break;
 
         case "getCronLookups":
-            $events = ["inputSets"=>[], "docs"=>[], "resvStatus"=>""];
+            $events = ["inputSets"=>[], "docs"=>[], "resvStatus"=>"", "filterOpts"=>[]];
 
             //input sets
             $query = "select `idFieldSet`, `Title` from `report_field_sets`";
@@ -398,6 +401,19 @@ try {
             //resv Status
             $events["resvStatus"] = SendConfirmationEmailJob::getResvStatusList($dbh);
 
+            //filterOpts
+            foreach(EmailReportJob::AVAILABLE_REPORTS as $className=>$classTitle){
+                try{
+                    $class = '\HHK\House\\Report\\' . $className;
+                    $reportObj = new $class($dbh);
+
+                    if($reportObj instanceof AbstractReport){
+                        $events['filterOpts'][$className] = ["data"=>$reportObj->filterOpts, "mkup"=>$reportObj->makeFilterOptsMkup()];
+                    }
+                }catch(Exception $e){
+                }
+            }
+
             break;
         
         case "updateCronJob":
@@ -419,7 +435,13 @@ try {
             $params = array();
             if (isset($_REQUEST['params']) && is_array($_REQUEST['params'])) {
                 foreach($_REQUEST['params'] as $key=>$val){
-                    $params[$key] = filter_var($val, FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+                    if (is_array($val)){
+                        foreach($val as $k=>$v){
+                            $params[$key][$k] = filter_var($v, FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+                        }
+                    }else{
+                        $params[$key] = filter_var($val, FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+                    }
                 }
             }
 
@@ -458,97 +480,57 @@ try {
 
         case "delRel":
 
-            $id = 0;
-            $rId = 0;
-            $relCode = "";
-            if (isset($_POST['id'])) {
-                $id = intval(filter_var($_POST['id'], FILTER_SANITIZE_NUMBER_INT), 10);
-            }
-            if (isset($_POST['rId'])) {
-                $rId = intval(filter_var($_POST['rId'], FILTER_SANITIZE_NUMBER_INT), 10);
-            }
-
-            if (isset($_POST['rc'])) {
-                $rc = filter_var($_POST['rc'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
-            }
-
-            $events = deleteRelationLink($dbh, $id, $rId, $rc);
+            $post = filter_input_array(INPUT_POST, [
+                "id" => FILTER_SANITIZE_NUMBER_INT,
+                "rId" => FILTER_SANITIZE_NUMBER_INT,
+                "rc" => FILTER_SANITIZE_FULL_SPECIAL_CHARS
+            ]);
+            
+            $events = deleteRelationLink($dbh, $post['id'], $post['rId'], $post['rc']);
             break;
 
         case "newRel":
+            
+            $post = filter_input_array(INPUT_POST, [
+                "id" => FILTER_SANITIZE_NUMBER_INT,
+                "rId" => FILTER_SANITIZE_NUMBER_INT,
+                "rc" => FILTER_SANITIZE_FULL_SPECIAL_CHARS
+            ]);
 
-            $id = 0;
-            $rId = 0;
-            $relCode = "";
-            if (isset($_POST['id'])) {
-                $id = intval(filter_var($_POST['id'], FILTER_SANITIZE_NUMBER_INT), 10);
-            }
-            if (isset($_POST['rId'])) {
-                $rId = intval(filter_var($_POST['rId'], FILTER_SANITIZE_NUMBER_INT), 10);
-            }
-
-            if (isset($_POST['rc'])) {
-                $rc = filter_var($_POST['rc'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
-            }
-
-            $events = newRelationLink($dbh, $id, $rId, $rc);
+            $events = newRelationLink($dbh, $post['id'], $post['rId'], $post['rc']);
             break;
 
         case "addcareof":
 
-            $id = 0;
-            $rId = 0;
-            $relCode = "";
-            if (isset($_POST['id'])) {
-                $id = intval(filter_var($_POST['id'], FILTER_SANITIZE_NUMBER_INT), 10);
-            }
-            if (isset($_POST['rId'])) {
-                $rId = intval(filter_var($_POST['rId'], FILTER_SANITIZE_NUMBER_INT), 10);
-            }
+            $post = filter_input_array(INPUT_POST, [
+                "id" => FILTER_SANITIZE_NUMBER_INT,
+                "rId" => FILTER_SANITIZE_NUMBER_INT,
+                "rc" => FILTER_SANITIZE_FULL_SPECIAL_CHARS
+            ]);
 
-            if (isset($_POST['rc'])) {
-                $rc = filter_var($_POST['rc'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
-            }
-
-            $events = changeCareOfFlag($dbh, $id, $rId, $rc, TRUE);
+            $events = changeCareOfFlag($dbh, $post['id'], $post['rId'], $post['rc'], TRUE);
             break;
 
         case "delcareof":
 
-            $id = 0;
-            $rId = 0;
-            $relCode = "";
-            if (isset($_POST['id'])) {
-                $id = intval(filter_var($_POST['id'], FILTER_SANITIZE_NUMBER_INT), 10);
-            }
-            if (isset($_POST['rId'])) {
-                $rId = intval(filter_var($_POST['rId'], FILTER_SANITIZE_NUMBER_INT), 10);
-            }
+            $post = filter_input_array(INPUT_POST, [
+                "id" => FILTER_SANITIZE_NUMBER_INT,
+                "rId" => FILTER_SANITIZE_NUMBER_INT,
+                "rc" => FILTER_SANITIZE_FULL_SPECIAL_CHARS
+            ]);
 
-            if (isset($_POST['rc'])) {
-                $rc = filter_var($_POST['rc'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
-            }
-
-            $events = changeCareOfFlag($dbh, $id, $rId, $rc, FALSE);
+            $events = changeCareOfFlag($dbh, $post['id'], $post['rId'], $post['rc'], FALSE);
             break;
 
         case "adchgpw":
-            $adPw = '';
-            $uid = 0;
 
-            if (isset($_POST["adpw"])) {
-                $adPw = filter_var($_POST["adpw"], FILTER_UNSAFE_RAW);
-            }
+            $post = filter_input_array(INPUT_POST, [
+                "adpw" => FILTER_UNSAFE_RAW,
+                "uid" => FILTER_SANITIZE_NUMBER_INT,
+                "uname" => FILTER_SANITIZE_FULL_SPECIAL_CHARS
+            ]);
 
-            if (isset($_POST['uid'])) {
-                $uid = intval(filter_var($_POST['uid'], FILTER_SANITIZE_NUMBER_INT), 10);
-            }
-
-            if (isset($_POST["uname"])) {
-                $uname = filter_var($_POST["uname"], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
-            }
-
-            $events = adminChangePW($dbh, $adPw, $uid, $uname);
+            $events = adminChangePW($dbh, $post['adpw'], $post['uid'], $post['uname']);
 
             break;
 
@@ -565,6 +547,129 @@ try {
 
                 $events = $exportManager->showConfig($dbh);
             }
+
+            break;
+
+        case 'sfPicklistMap':
+
+            $exportManager = AbstractExportManager::factory($dbh, $uS->ContactManager);
+
+            if ($exportManager !== NULL) {
+                $sfObject = filter_input(INPUT_GET, 'sfObject', FILTER_SANITIZE_FULL_SPECIAL_CHARS) ?? '';
+                $sfField  = filter_input(INPUT_GET, 'sfField',  FILTER_SANITIZE_FULL_SPECIAL_CHARS) ?? '';
+                $hhkField = filter_input(INPUT_GET, 'hhkField', FILTER_SANITIZE_FULL_SPECIAL_CHARS) ?? '';
+                $events = $exportManager->getPicklistMapMarkup($dbh, $sfObject, $sfField, $hhkField);
+            }
+
+            break;
+
+        case 'savePicklistMap':
+
+            $exportManager = AbstractExportManager::factory($dbh, $uS->ContactManager);
+
+            if ($exportManager !== NULL) {
+                $events = $exportManager->savePicklistMap($dbh);
+            }
+
+            break;
+
+        case 'resetFieldMap':
+
+            $exportManager = AbstractExportManager::factory($dbh, $uS->ContactManager);
+
+            if ($exportManager instanceof SalesforceManager) {
+                $events = $exportManager->resetFieldMap($dbh);
+            }
+
+            break;
+
+        case 'viewLog':
+
+            $arguments = [
+                'service' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
+            ];
+            $filtered = filter_input_array(INPUT_GET, $arguments);
+
+            $allowedServices = [AbstractPaymentGateway::DELUXE, AbstractPaymentGateway::INSTAMED];
+
+            if (in_array($filtered["service"], $allowedServices)) {
+                $events = ExternalAPILog::getLog($dbh, $filtered["service"]);
+            } else {
+                throw new RuntimeException("Invalid service name: " . $filtered["service"]);
+            }
+
+            break;
+
+        case 'searchDeluxePayment':
+
+            if (!SecurityComponent::is_TheAdmin()) {
+                throw new RuntimeException("Insufficient authorization.");
+            }
+
+            if (strtolower($uS->PaymentGateway) !== AbstractPaymentGateway::DELUXE) {
+                throw new RuntimeException("Search payment is only available for the Deluxe payment gateway.");
+            }
+
+            $paymentId = '';
+            if (isset($_POST['paymentId'])) {
+                $paymentId = filter_var($_POST['paymentId'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+            }
+
+            if ($paymentId === '') {
+                throw new RuntimeException("Payment ID is required.");
+            }
+
+            if (!preg_match('/^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/', $paymentId)) {
+                throw new RuntimeException("Payment ID must be a valid UUID.");
+            }
+
+            $gwRow = $dbh->query("SELECT `cc_name` FROM `cc_hosted_gateway` WHERE `Gateway_Name` = '" . AbstractPaymentGateway::DELUXE . "' LIMIT 1")->fetch(\PDO::FETCH_ASSOC);
+            if ($gwRow === false) {
+                throw new RuntimeException("No Deluxe payment gateway merchant found.");
+            }
+            $gway = new DeluxeGateway($dbh, $gwRow['cc_name']);
+            $searchRequest = new SearchPaymentRequest($dbh, $gway);
+            $result = $searchRequest->submit($paymentId);
+            $events = ['success' => true, 'payment' => $result];
+
+            break;
+
+        case 'voidDeluxePayment':
+
+            if (!SecurityComponent::is_TheAdmin()) {
+                throw new RuntimeException("Insufficient authorization.");
+            }
+
+            if (strtolower($uS->PaymentGateway) !== AbstractPaymentGateway::DELUXE) {
+                throw new RuntimeException("Void payment is only available for the Deluxe payment gateway.");
+            }
+
+            $paymentId = '';
+            if (isset($_POST['paymentId'])) {
+                $paymentId = filter_var($_POST['paymentId'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+            }
+
+            if ($paymentId === '') {
+                throw new RuntimeException("Payment ID is required.");
+            }
+
+            if (!preg_match('/^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/', $paymentId)) {
+                throw new RuntimeException("Payment ID must be a valid UUID.");
+            }
+
+            $gwRow = $dbh->query("SELECT `cc_name` FROM `cc_hosted_gateway` WHERE `Gateway_Name` = '" . AbstractPaymentGateway::DELUXE . "' LIMIT 1")->fetch(\PDO::FETCH_ASSOC);
+            if ($gwRow === false) {
+                throw new RuntimeException("No Deluxe payment gateway merchant found.");
+            }
+            $gway = new DeluxeGateway($dbh, $gwRow['cc_name']);
+            $voidRequest = new VoidRequest($dbh, $gway);
+            $gatewayResponse = $voidRequest->submit($paymentId);
+            $events = [
+                'success' => true,
+                'responseCode' => $gatewayResponse->getResponseCode(),
+                'message' => $gatewayResponse->getMessage(),
+                'paymentId' => $gatewayResponse->getAcqRefData(),
+            ];
 
             break;
 
@@ -624,8 +729,10 @@ function adminChangePW(PDO $dbh, $adminPw, $wUserId, $uname) {
     if (SecurityComponent::is_Admin()) {
 
         $u = new UserClass();
+        $uS = Session::getInstance();
 
-        $newPw = $u->generateStrongPassword();
+        $minPassLength = ($uS->minPassLength > 8 ? $uS->minPassLength : 8);
+        $newPw = $u->generateStrongPassword($minPassLength);
 
         if ($u->updateDbPassword($dbh, $wUserId, $adminPw, $newPw, $uname, true) === TRUE) {
             $event = array('success' => 'Password updated.', 'tempPW'=>$newPw);
@@ -686,8 +793,6 @@ function newRelationLink(PDO $dbh, $id, $rId, $relCode) {
 }
 
 function changeLog(PDO $dbh, $id, $get) {
-
-    //require(CLASSES . 'DataTableServer.php');
 
     $view = 'vaudit_log';
 
@@ -825,7 +930,7 @@ function makeTable(array $names, array $rows, string $tableName) {
     return $names;
 }
 
-function createRecentReportMU(PDO $dbh, $names) {
+function createRecentReportMU(PDO $dbh, array $names) {
     $markup = "";
 
     // array have data?
@@ -888,129 +993,7 @@ function createRecentReportMU(PDO $dbh, $names) {
     return $markup;
 }
 
-/* function saveUname(PDO $dbh, $vaddr, $role, $id, $status, $fbStatus, $admin, $parms, $maintFlag) {
-
-    $reply = array();
-
-    // fbx table
-    $stmt = $dbh->query("select * from fbx where idName=$id;");
-    $fbxRows = $stmt->fetchAll(PDO::FETCH_ASSOC);
-    if (count($fbxRows) == 1) {
-
-        if (strtolower($fbxRows[0]["Status"]) != $fbStatus) {
-
-            $stmt = $dbh->prepare("update fbx set Approved_Date=now(), Approved_By=:admin, Status=:stat where idName = $id;");
-            $stmt->execute(array(':admin' => $admin, ':stat' => $fbStatus));
-        }
-    }
-    // else we dont care.
-    // w_users table
-    $usersRS = new W_usersRS();
-    $usersRS->idName->setStoredVal($id);
-    $userRows = EditRS::select($dbh, $usersRS, array($usersRS->idName));
-
-    if (count($userRows) == 1) {
-        EditRS::loadRow($userRows[0], $usersRS);
-        // update existing entry
-
-        $usersRS->Status->setNewVal($status);
-        $usersRS->Verify_Address->setNewVal($vaddr);
-        $usersRS->Last_Updated->setNewVal(date('Y-m-d H:i:s'));
-        $usersRS->Updated_By->setNewVal($admin);
-
-        $n = EditRS::update($dbh, $usersRS, array($usersRS->idName));
-
-        if ($n == 1) {
-
-            NameLog::writeUpdate($dbh, $usersRS, $id, $admin);
-            $reply[] = array("success" => "Update web users.  ");
-        }
-    } else {
-        $reply[] = array("error", "Record not found");
-    }
-
-
-
-    if ($maintFlag) {
-
-        // update w_auth table with new role
-        $authRS = new W_authRS();
-        $authRS->idName->setStoredVal($id);
-        $authRows = EditRS::select($dbh, $authRS, array($authRS->idName));
-
-        if (count($authRows) == 1) {
-            // update existing entry
-            EditRS::loadRow($authRows[0], $authRS);
-
-            $authRS->Role_Id->setNewVal($role);
-
-            $authRS->Last_Updated->setNewVal(date('Y-m-d H:i:s'));
-            $authRS->Updated_By->setNewVal($admin);
-
-            $n = EditRS::update($dbh, $authRS, array($authRS->idName));
-
-            if ($n == 1) {
-
-                NameLog::writeUpdate($dbh, $authRS, $id, $admin);
-                $reply[] = array("success" => "Update web authorization.  ");
-            }
-        } else {
-            $reply[] = array("error", "Record not found");
-        }
-
-
-        // Group Code security table
-        //$sArray = readGenLookups($dbh, "Group_Code");
-        $stmt = $dbh->query("select Group_Code as Code, Description from w_groups");
-        $groups = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-        foreach ($groups as $g) {
-            $sArray[$g['Code']] = $g;
-        }
-
-
-
-        $secRS = new Id_SecurityGroupRS();
-        $secRS->idName->setStoredVal($id);
-        $rows = EditRS::select($dbh, $secRS, array($secRS->idName));
-
-        foreach ($rows as $r) {
-            $sArray[$r['Group_Code']]["exist"] = "t";
-        }
-
-        foreach ($sArray as $g) {
-
-            if (isset($parms["grpSec_" . $g["Code"]])) {
-
-                if (!isset($g["exist"]) && $parms["grpSec_" . $g["Code"]] == "checked") {
-
-                    // new group code to put into the database
-                    $secRS = new Id_SecurityGroupRS();
-                    $secRS->idName->setNewVal($id);
-                    $secRS->Group_Code->setNewVal($g["Code"]);
-                    $n = EditRS::insert($dbh, $secRS);
-
-                    NameLog::writeInsert($dbh, $secRS, $id, $admin);
-
-                } else if (isset($g["exist"]) && $parms["grpSec_" . $g["Code"]] != "checked") {
-
-                    // group code to delete from the database.
-                    $secRS = new Id_SecurityGroupRS();
-                    $secRS->idName->setStoredVal($id);
-                    $secRS->Group_Code->setStoredVal($g["Code"]);
-                    $n = EditRS::delete($dbh, $secRS, array($secRS->idName, $secRS->Group_Code));
-
-                    if ($n == 1) {
-                        NameLog::writeDelete($dbh, $secRS, $id, $admin);
-                    }
-                }
-            }
-        }
-    }
-    return $reply;
-}
- */
-function AccessLog(\PDO $dbh, $get) {
+function AccessLog(\PDO $dbh, array $request): array {
 
     $columns = array(
 
@@ -1023,7 +1006,7 @@ function AccessLog(\PDO $dbh, $get) {
         array( 'db' => 'OS', 'dt' => 'OS' )
     );
 
-    return SSP::simple($get, $dbh, "w_user_log", 'Username', $columns);
+    return SSP::complex($request, $dbh, "w_user_log", 'Username', $columns);
 }
 
 function updateCronJob(\PDO $dbh, $idJob, $title, $type, array $params, $interval, $day, $weekday, $hour, $minute, $status){

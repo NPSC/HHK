@@ -20,15 +20,15 @@ use HHK\Tables\Fields\{DB_Field, DbIntSanitizer, DbStrSanitizer, DbDecimalSaniti
  */
 class ItemRS extends AbstractTableRS {
 
-    public $idItem;  // INTEGER NOT NULL,
-    public $Timeout_Days;  // VARCHAR(50) NOT NULL default '',
-    public $First_Order_Id;  // INTEGER NOT NULL DEFAULT 0,
-    public $Last_Order_Id;  // INTEGER NOT NULL DEFAULT 0,
-    public $Percentage;  // DECIMAL(22,10) NOT NULL DEFAULT '0.00',
-    public $Deleted;  // SMALLINT default 0 NOT NULL DEFAULT '0',
-    public $Has_Decimals;  // SMALLINT default 0 NOT NULL DEFAULT '0',
-    public $Gl_Code;  // VARCHAR(50) NOT NULL default '',
-    public $Description;  // VARCHAR(1000), NOT NULL default ''.
+    public DB_Field $idItem;  // INTEGER NOT NULL,
+    public DB_Field $Timeout_Days;  // VARCHAR(50) NOT NULL default '',
+    public DB_Field $First_Order_Id;  // INTEGER NOT NULL DEFAULT 0,
+    public DB_Field $Last_Order_Id;  // INTEGER NOT NULL DEFAULT 0,
+    public DB_Field $Percentage;  // DECIMAL(22,10) NOT NULL DEFAULT '0.00',
+    public DB_Field $Deleted;  // SMALLINT default 0 NOT NULL DEFAULT '0',
+    public DB_Field $Has_Decimals;  // SMALLINT default 0 NOT NULL DEFAULT '0',
+    public DB_Field $Gl_Code;  // VARCHAR(50) NOT NULL default '',
+    public DB_Field $Description;  // VARCHAR(1000), NOT NULL default ''.
 
     function __construct($TableName = 'item') {
         $this->idItem = new DB_Field('idItem', 0, new DbIntSanitizer(), TRUE, TRUE);

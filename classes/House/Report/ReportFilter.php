@@ -2,8 +2,11 @@
 
 namespace HHK\House\Report;
 
+use HHK\Common;
 use HHK\HTMLControls\{HTMLContainer, HTMLInput, HTMLSelector, HTMLTable};
+use HHK\Purchase\TaxedItem;
 use HHK\SysConst\GLTableNames;
+use HHK\SysConst\ItemId;
 use HHK\sec\Labels;
 use HHK\sec\Session;
 use HHK\SysConst\VolMemberType;
@@ -136,7 +139,7 @@ class ReportFilter {
      * Summary of diagnsoses
      * @var
      */
-    protected $diagnoses;
+    public $diagnoses;
     protected $diagnosisCategories;
 
     /**
@@ -148,7 +151,7 @@ class ReportFilter {
      * Summary of billingAgents
      * @var 
      */
-    protected $billingAgents;
+    public $billingAgents;
 
     /**
      * Summary of selectedPayTypes
@@ -174,14 +177,36 @@ class ReportFilter {
 
     /**
      * Summary of selectedPaymentGateways
-     * @var 
+     * @var
      */
     protected $selectedPaymentGateways;
     /**
      * Summary of paymentGateways
-     * @var 
+     * @var
      */
     protected $paymentGateways;
+
+    /**
+     * Summary of selectedInvoiceStatuses
+     * @var
+     */
+    protected $selectedInvoiceStatuses;
+    /**
+     * Summary of invoiceStatuses
+     * @var
+     */
+    protected $invoiceStatuses;
+
+    /**
+     * Summary of selectedItems
+     * @var
+     */
+    protected $selectedItems;
+    /**
+     * Summary of items
+     * @var
+     */
+    protected $items;
 
     /**
      * Summary of reportStart
@@ -214,6 +239,8 @@ class ReportFilter {
         $this->selectedMonths = array();
         $this->hospitals = array();
         $this->paymentGateways = array();
+        $this->selectedInvoiceStatuses = array();
+        $this->selectedItems = array();
     }
 
     /**
@@ -265,7 +292,7 @@ class ReportFilter {
         $uS = Session::getInstance();
 
         $monthSelector = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($this->months, $this->selectedMonths, FALSE), array('name' => 'selIntMonth[]', 'size'=>'12', 'multiple'=>'multiple'));
-        $yearSelector = HTMLSelector::generateMarkup(getYearOptionsMarkup($this->selectedYear, ($uS->StartYear ? $uS->StartYear : "2013"), $this->fyDiffMonths, FALSE), array('name' => 'selIntYear', 'size'=>'12'));
+        $yearSelector = HTMLSelector::generateMarkup(static::getYearOptionsMarkup($this->selectedYear, ($uS->StartYear ? $uS->StartYear : "2013"), $this->fyDiffMonths, FALSE), array('name' => 'selIntYear', 'size'=>'12'));
         $calSelector = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($this->calendarOptions, $this->selectedCalendar, FALSE), array('name' => 'selCalendar', 'size'=>'5'));
 
         $tbl = new HTMLTable();
@@ -407,7 +434,7 @@ $ckdate";
 
             if ($startDT <= $endDT) {
                 $this->reportEnd = $endDT->format('Y-m-d');
-                $this->queryEnd = $endDT->format('Y-m-d');
+                $this->queryEnd = $endDT->add(new \DateInterval('P1D'))->format('Y-m-d');
                 $this->reportStart = $startDT->format('Y-m-d');
             } else {
                 $this->reportStart = $endDT->format('Y-m-d');
@@ -442,6 +469,40 @@ $ckdate";
         }
 
         return $this;
+    }
+
+    public static function getYearOptionsMarkup($slctd, $startYear, $fyMonths, $showAllYears = TRUE)
+    {
+        $markup = "";
+
+        $curYear = intval(date("Y")) + 1;
+
+        // Get month number of start of FY
+        $fyDate = 12 - $fyMonths;
+
+        // Show next year in list if we are already into the new FY
+        if ($fyDate <= intval(date("n"))) {
+            $curYear ++;
+        }
+
+        if ($showAllYears) {
+            if ($slctd == "all" || $slctd == "") {
+                $markup .= "<option value='all' selected='selected'>All Years</option>";
+            } else {
+                $markup .= "<option value='all'>All Years</option>";
+            }
+        }
+
+        // load years
+        for ($i = $startYear; $i <= $curYear; $i ++) {
+            if ($slctd == $i) {
+                $slctMarkup = "selected='selected'";
+            } else {
+                $slctMarkup = "";
+            }
+            $markup .= "<option value='" . $i . "' $slctMarkup>" . $i . "</option>";
+        }
+        return $markup;
     }
 
     /**
@@ -490,10 +551,10 @@ $ckdate";
         $tbl = new HTMLTable();
         $tr = '';
 
-        $tbl->addHeaderTr(HTMLTable::makeTh($labels->getString('hospital', 'hospital', 'Hospital').'s', array('colspan'=>'2')));
+        $tbl->addHeaderTr(HTMLTable::makeTh($labels->getString('hospital', 'hospitals', 'Hospitals'), array('colspan'=>'2')));
 
         if (count($this->aList) > 1) {
-            $tbl->addHeaderTr(HTMLTable::makeTh($labels->getString('hospital', 'association', 'Association')) . HTMLTable::makeTh($labels->getString('hospital', 'hospital', 'Hospital').'s'));
+            $tbl->addHeaderTr(HTMLTable::makeTh($labels->getString('hospital', 'association', 'Association')) . HTMLTable::makeTh($labels->getString('hospital', 'hospitals', 'Hospitals')));
             $tr .= HTMLTable::makeTd($assocs, array('style'=>'vertical-align: top;'));
         }
 
@@ -543,7 +604,7 @@ $ckdate";
 
         $uS = Session::getInstance();
 
-        $rescGroups = readGenLookupsPDO($dbh, 'Room_Group');
+        $rescGroups = Common::readGenLookupsPDO($dbh, 'Room_Group');
 
         if (isset($rescGroups[$uS->CalResourceGroupBy])) {
             $this->selectedResourceGroups = $uS->CalResourceGroupBy;
@@ -551,7 +612,7 @@ $ckdate";
             $this->selectedResourceGroups = reset($rescGroups)[0];
         }
 
-        $this->resourceGroups = removeOptionGroups($rescGroups);
+        $this->resourceGroups = HTMLSelector::removeOptionGroups($rescGroups);
         return $this;
     }
 
@@ -590,8 +651,8 @@ $ckdate";
      * @return ReportFilter
      */
     public function createDiagnoses(\PDO $dbh){
-        $this->diagnoses = readGenLookupsPDO($dbh, 'Diagnosis', 'Description');
-        $this->diagnosisCategories = readGenLookupsPDO($dbh, 'Diagnosis_Category', 'Description');
+        $this->diagnoses = Common::readGenLookupsPDO($dbh, 'Diagnosis', 'Description');
+        $this->diagnosisCategories = Common::readGenLookupsPDO($dbh, 'Diagnosis_Category', 'Description');
 
         if (count($this->diagnoses) > 0) {
 
@@ -696,7 +757,7 @@ $ckdate";
      * Summary of billingAgentMarkup
      * @return HTMLTable
      */
-    public function billingAgentMarkup() {
+    public function billingAgentMarkup(): HTMLTable {
 
         $agents = HTMLSelector::generateMarkup( HTMLSelector::doOptionsMkup($this->billingAgents, $this->selectedBillingAgents, TRUE),
         array('name'=>'selBillingAgents[]', 'size'=>(count($this->billingAgents)>12 ? '12' : count($this->billingAgents))+1, 'multiple'=>'multiple', 'style'=>'min-width:60px; width: 100%'));
@@ -716,11 +777,12 @@ $ckdate";
      */
     public function createPayTypes(\PDO $dbh){
         $this->payTypes = array();
-        $uS = Session::getInstance();
+        
+        $payTypes = Common::readGenLookupsPDO($dbh, GLTableNames::PayType, 'Order');
 
-        foreach ($uS->nameLookups[GLTableNames::PayType] as $p) {
-            if ($p[2] != '') {
-                $this->payTypes[$p[2]] = array($p[2], $p[1]);
+        foreach ($payTypes as $p) {
+            if ($p[2] != ''){
+                $this->payTypes[$p[0]] = array($p[0], $p[1]);
             }
         }
         return $this;
@@ -749,12 +811,12 @@ $ckdate";
     public function payTypesMarkup() {
 
         $payTypeSelector = HTMLSelector::generateMarkup(
-            HTMLSelector::doOptionsMkup($this->payTypes, $this->selectedPayTypes), array('name' => 'selPayType[]', 'size' => '5', 'multiple' => 'multiple'));
+            HTMLSelector::doOptionsMkup($this->payTypes, $this->selectedPayTypes), array('name' => 'selPayType[]', 'size' => '7', 'multiple' => 'multiple'));
 
         $tbl = new HTMLTable();
 
         $tbl->addHeaderTr(HTMLTable::makeTh("Pay Type"));
-        $tbl->addBodyTr(HTMLTable::makeTd($payTypeSelector, array('style'=>'vertical-align: top;')));
+        $tbl->addBodyTr(HTMLTable::makeTd($payTypeSelector));
 
         return $tbl;
     }
@@ -765,7 +827,7 @@ $ckdate";
      * @return ReportFilter
      */
     public function createPayStatuses(\PDO $dbh){
-        $this->payStatuses = readGenLookupsPDO($dbh, 'Payment_Status');
+        $this->payStatuses = Common::readGenLookupsPDO($dbh, 'Payment_Status');
         return $this;
     }
 
@@ -798,6 +860,131 @@ $ckdate";
 
         $tbl->addHeaderTr(HTMLTable::makeTh("Pay Status"));
         $tbl->addBodyTr(HTMLTable::makeTd($statusSelector, array('style'=>'vertical-align: top;')));
+
+        return $tbl;
+    }
+
+    /**
+     * Load Invoice Statuses
+     * @param \PDO $dbh
+     * @return ReportFilter
+     */
+    public function createInvoiceStatuses(\PDO $dbh){
+        $this->invoiceStatuses = Common::readGenLookupsPDO($dbh, 'Invoice_Status');
+        return $this;
+    }
+
+    /**
+     * Summary of loadSelectedInvoiceStatuses
+     * @return ReportFilter
+     */
+    public function loadSelectedInvoiceStatuses() {
+
+        if (filter_has_var(INPUT_POST, 'selInvoiceStatus')) {
+            $reqs = $_POST['selInvoiceStatus'];
+            if (is_array($reqs)) {
+                $this->selectedInvoiceStatuses = filter_var_array($reqs, FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+            }
+        }
+
+        return $this;
+    }
+
+    /**
+     * Summary of invoiceStatusMarkup
+     * @return HTMLTable
+     */
+    public function invoiceStatusMarkup() {
+
+        $statusSelector = HTMLSelector::generateMarkup(
+            HTMLSelector::doOptionsMkup($this->invoiceStatuses, $this->selectedInvoiceStatuses), array('name' => 'selInvoiceStatus[]', 'size' => '4', 'multiple' => 'multiple', 'style'=>'width: 100%;'));
+
+        $tbl = new HTMLTable();
+
+        $tbl->addHeaderTr(HTMLTable::makeTh("Invoice Status"));
+        $tbl->addBodyTr(HTMLTable::makeTd($statusSelector, array('style'=>'vertical-align: top;')));
+
+        return $tbl;
+    }
+
+    /**
+     * Load Items
+     * @param \PDO $dbh
+     * @return ReportFilter
+     */
+    public function createItems(\PDO $dbh){
+
+        $uS = Session::getInstance();
+        $addnlCharges = Common::readGenLookupsPDO($dbh, 'Addnl_Charge');
+
+        $stmt = $dbh->query("SELECT idItem, Description, Percentage, Last_Order_Id from item where Deleted = 0");
+        $this->items = array();
+
+        while ($r = $stmt->fetch(\PDO::FETCH_NUM)) {
+
+            if ($r[0] == ItemId::LodgingDonate) {
+                $r[1] = "Lodging Donation";
+            }
+
+            if ($r[2] != 0) {
+                $r[1] .= ' ' . TaxedItem::suppressTrailingZeros($r[2]);
+
+                if ($r[3] != 0) {
+                    $r[2] = 'Old Rates';
+                } else {
+                    $r[2] = '';
+                }
+            } else {
+                $r[2] = '';
+            }
+
+            if ($r[0] == ItemId::DepositRefund && $uS->KeyDeposit === FALSE) {
+                continue;
+            } else if ($r[0] == ItemId::KeyDeposit && $uS->KeyDeposit === FALSE) {
+                continue;
+            } else if ($r[0] == ItemId::VisitFee && $uS->VisitFee === FALSE) {
+                continue;
+            } else if ($r[0] == ItemId::AddnlCharge && count($addnlCharges) == 0) {
+                continue;
+            } else if ($r[0] == ItemId::InvoiceDue) {
+                continue;
+            }
+
+            $this->items[$r[0]] = $r;
+        }
+
+        return $this;
+    }
+
+    /**
+     * Summary of loadSelectedItems
+     * @return ReportFilter
+     */
+    public function loadSelectedItems() {
+
+        if (filter_has_var(INPUT_POST, 'selItems')) {
+            $reqs = $_POST['selItems'];
+            if (is_array($reqs)) {
+                $this->selectedItems = filter_var_array($reqs, FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+            }
+        }
+
+        return $this;
+    }
+
+    /**
+     * Summary of itemsMarkup
+     * @return HTMLTable
+     */
+    public function itemsMarkup() {
+
+        $itemSelector = HTMLSelector::generateMarkup(
+            HTMLSelector::doOptionsMkup($this->items, $this->selectedItems), array('name' => 'selItems[]', 'size' => (count($this->items) + 1), 'multiple' => 'multiple'));
+
+        $tbl = new HTMLTable();
+
+        $tbl->addHeaderTr(HTMLTable::makeTh("Item Filter"));
+        $tbl->addBodyTr(HTMLTable::makeTd($itemSelector, array('style'=>'vertical-align: top;')));
 
         return $tbl;
     }
@@ -994,6 +1181,54 @@ $ckdate";
 
     public function getSelectedPaymentGateways(){
         return $this->selectedPaymentGateways;
+    }
+
+    public function getInvoiceStatuses(){
+        return $this->invoiceStatuses;
+    }
+
+    public function getSelectedInvoiceStatuses(){
+        return $this->selectedInvoiceStatuses;
+    }
+
+    public function getSelectedInvoiceStatusesString(){
+        $list = $this->getInvoiceStatuses();
+        $titles = "";
+        foreach ($this->getSelectedInvoiceStatuses() as $h) {
+            if (isset($list[$h])) {
+                $titles .= $list[$h][1] . ', ';
+            }
+        }
+        if ($titles != '') {
+            $h = trim($titles);
+            return substr($h, 0, strlen($h) - 1);
+        }else{
+            return "All";
+        }
+    }
+
+    public function getItems(){
+        return $this->items;
+    }
+
+    public function getSelectedItems(){
+        return $this->selectedItems;
+    }
+
+    public function getSelectedItemsString(){
+        $list = $this->getItems();
+        $titles = "";
+        foreach ($this->getSelectedItems() as $h) {
+            if (isset($list[$h])) {
+                $titles .= $list[$h][1] . ', ';
+            }
+        }
+        if ($titles != '') {
+            $h = trim($titles);
+            return substr($h, 0, strlen($h) - 1);
+        }else{
+            return "All";
+        }
     }
 
     /**

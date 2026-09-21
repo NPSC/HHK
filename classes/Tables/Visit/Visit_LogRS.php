@@ -15,19 +15,19 @@ use HHK\Tables\Fields\{DB_Field, DbIntSanitizer, DbStrSanitizer, DbDateSanitizer
 
 class Visit_LogRS extends AbstractTableRS {
     
-    public $Log_Type;  // VARCHAR(45) NOT NULL DEFAULT '' ,
-    public $Sub_Type;  // VARCHAR(45) NOT NULL DEFAULT '' ,
-    public $User_Name;  // VARCHAR(45) NOT NULL DEFAULT '' ,
-    public $idName;  // INT NOT NULL DEFAULT 0 ,
-    public $idPsg;  // INT NOT NULL DEFAULT 0 ,
-    public $idRegistration;  // INT NOT NULL DEFAULT 0 ,
-    public $idVisit;  // INT NOT NULL DEFAULT 0 ,
-    public $Span;  // INT NOT NULL DEFAULT 0 ,
-    public $idStay;  // INT NOT NULL DEFAULT 0 ,
-    public $idRr;  // int(11) NOT NULL DEFAULT '0',
-    public $Status;  // varchar(15) NOT NULL DEFAULT '',
-    public $Log_Text;  // VARCHAR(5000) NOT NULL DEFAULT '' ,
-    public $Timestamp;  // TIMESTAMP NOT NULL DEFAULT now()
+    public DB_Field $Log_Type;  // VARCHAR(45) NOT NULL DEFAULT '' ,
+    public DB_Field $Sub_Type;  // VARCHAR(45) NOT NULL DEFAULT '' ,
+    public DB_Field $User_Name;  // VARCHAR(45) NOT NULL DEFAULT '' ,
+    public DB_Field $idName;  // INT NOT NULL DEFAULT 0 ,
+    public DB_Field $idPsg;  // INT NOT NULL DEFAULT 0 ,
+    public DB_Field $idRegistration;  // INT NOT NULL DEFAULT 0 ,
+    public DB_Field $idVisit;  // INT NOT NULL DEFAULT 0 ,
+    public DB_Field $Span;  // INT NOT NULL DEFAULT 0 ,
+    public DB_Field $idStay;  // INT NOT NULL DEFAULT 0 ,
+    public DB_Field $idRr;  // int(11) NOT NULL DEFAULT '0',
+    public DB_Field $Status;  // varchar(15) NOT NULL DEFAULT '',
+    public DB_Field $Log_Text;  // VARCHAR(5000) NOT NULL DEFAULT '' ,
+    public DB_Field $Timestamp;  // TIMESTAMP NOT NULL DEFAULT now()
     
     
     function __construct($TableName = "visit_log") {

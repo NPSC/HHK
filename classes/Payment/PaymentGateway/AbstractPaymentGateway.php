@@ -44,7 +44,7 @@ abstract class AbstractPaymentGateway {
     protected $checkManualEntryCheckbox = FALSE;
 
 
-    public function __construct(\PDO $dbh, $gwType = '', $tokenId = 0) {
+    public function __construct(\PDO $dbh, $gwType = '') {
 
         $this->gwType = $gwType;
         $this->setCredentials($this->loadGateway($dbh));

@@ -1,4 +1,6 @@
 <?php
+
+use HHK\Crypto;
 /**
  * step1.php
  *
@@ -23,11 +25,11 @@ $input = filter_input_array(INPUT_POST,
 );
 
 if (filter_has_var(INPUT_POST, 'btnSmt') && !empty($input['clrtxt'])) {
-    $mudTxt = encryptMessage($input['clrtxt']);
+    $mudTxt = Crypto::encryptMessage($input['clrtxt']);
 }
 
 if (filter_has_var(INPUT_POST, 'btndec') && !empty($input['enctxt'])) {
-    $clearTxt = decryptMessage($input['enctxt']);
+    $clearTxt = Crypto::decryptMessage($input['enctxt']);
 }
 
 

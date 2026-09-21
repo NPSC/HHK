@@ -20,6 +20,7 @@ use HHK\sec\{Labels, SecurityComponent, Session};
 use HHK\SysConst\{GLTableNames, ItemPriceCode, ReservationStatus, RoomRateCategories, VisitStatus, DefaultSettings, ChecklistType};
 use HHK\Tables\EditRS;
 use HHK\Tables\Reservation\{Reservation_GuestRS, ReservationRS};
+use HHK\Common;
 
 
 
@@ -195,7 +196,7 @@ WHERE r.idReservation = " . $rData->getIdResv());
             ->setResvStatusCode($rows[0]['Status']);
 
         // Get Resv status codes
-        $reservStatuses = readLookups($dbh, "ReservStatus", "Code");
+        $reservStatuses = Common::readLookups($dbh, "ReservStatus", "Code");
 
         if (isset($reservStatuses[$rData->getResvStatusCode()])) {
             $rData->setResvStatusType($reservStatuses[$rData->getResvStatusCode()]['Type']);
@@ -657,7 +658,7 @@ WHERE r.idReservation = " . $rData->getIdResv());
         $statusText = $resv->getStatusTitle($dbh);
         $hideCheckinButton = TRUE;
         $dataArray = [];
-        $reservStatuses = readLookups($dbh, "reservStatus", "Code");
+        $reservStatuses = Common::readLookups($dbh, "reservStatus", "Code");
 
 
         // Registration
@@ -865,11 +866,7 @@ WHERE r.idReservation = " . $rData->getIdResv());
 
         $reg = new Registration($dbh, 0, $regId);
 
-        $noVeh = $reg->getNoVehicle();
-
-        if ($reg->isNew()) {
-            $noVeh = '1';
-        }
+        $noVeh = $this->reservRs->No_Vehicle->getStoredVal();
 
         return Vehicle::createVehicleMarkup($dbh, $reg->getIdRegistration(), $this->reservRs->idReservation->getStoredVal(), $noVeh, $refVehicle);
 
@@ -1018,7 +1015,7 @@ where rg.idReservation =" . $r['idReservation']);
                 );
 
         $tbl2->addBodyTr(
-                ($showPayWith ? HTMLTable::makeTd(HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup(removeOptionGroups($payTypes), $resv->getExpectedPayType()), ['name'=>'selPayType'])) : '')
+                ($showPayWith ? HTMLTable::makeTd(HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup(HTMLSelector::removeOptionGroups($payTypes), $resv->getExpectedPayType()), ['name'=>'selPayType'])) : '')
             .($moaBalance > 0 ? HTMLTable::makeTd('$'.number_format($moaBalance, 2), ['style'=>'text-align:center;']) : '')
             .($resv->isActive($allResvStatuses) ? HTMLTable::makeTd(HTMLInput::generateMarkup('', $attr), ['style'=>'text-align:center;']) : HTMLTable::makeTd(''))
                 .HTMLTable::makeTd(
@@ -1199,7 +1196,7 @@ WHERE
                 . "join reservation r on r.idReservation = rg.idReservation "
                 . "join registration reg on reg.idRegistration = r.idRegistration "
                 . "where r.`Status` $rStatus and rg.idGuest in (" . substr($whResv, 1) . ") and rg.idReservation != " . $idResv
-                . " and Date(r.Expected_Arrival) < DATE('".$departDT->format('Y-m-d') . "') and Date(r.Expected_Departure) > DATE('".$arrivalDT->format('Y-m-d') . "')");
+                . " and r.Expected_Arrival < '".$departDT->format('Y-m-d') . "' and r.Expected_Departure > '".$arrivalDT->format('Y-m-d') . " 23:59:59'");
 
             while ($r = $rstmt->fetch(\PDO::FETCH_ASSOC)) {
 
@@ -1365,7 +1362,7 @@ WHERE
         $uS = Session::getInstance();
 
         if (count($reservStatuses) == 0) {
-            $reservStatuses = readLookups($dbh, "reservStatus", "Code");
+            $reservStatuses = Common::readLookups($dbh, "reservStatus", "Code");
         }
 
         // Only resverations in active status can change rooms
@@ -1375,7 +1372,6 @@ WHERE
         }
 
         if ($idRescPosted == 0 || $idRescPosted == 9999) {
-
             // Waitlisting the Reservation.
             $resv->setIdResource(0);
             $resv->setStatus(ReservationStatus::Waitlist);
@@ -1392,8 +1388,8 @@ WHERE
 
             //  room is in use
             $this->reserveData->addError('Chosen Room is unavailable.  ');
-            $resv->setIdResource(0);
-            $resv->setStatus(ReservationStatus::Waitlist);
+            //$resv->setIdResource(0);
+            //$resv->setStatus(ReservationStatus::Waitlist);
 
         } else {
 
@@ -1472,13 +1468,11 @@ WHERE
     		return '';
     	}
 
-    	$stmt = $dbh->query("select vi.idVisit, vi.Span, vi.Span_Start, vi.Span_End, vi.`Status`, g.Description as `Status_Title`, vi.idPrimaryGuest, r.Title as `Room`
-	from visit vi left join resource r on vi.idResource = r.idResource
-    left join gen_lookups g on g.Table_Name = 'Visit_Status' and g.Code = vi.`Status`
- where vi.Status not in ('".VisitStatus::Cancelled."', '".VisitStatus::Pending."') and vi.Span_Start =
-	(SELECT  MAX(v.Span_Start)
-		FROM visit v LEFT JOIN registration rg ON v.idRegistration = rg.idRegistration
-	WHERE vi.Status not in ('".VisitStatus::Cancelled."', '".VisitStatus::Pending."') and rg.idPsg = " . $this->reserveData->getIdPsg() .")");
+    	$stmt = $dbh->query("select v.idVisit, v.Span, v.Span_Start, v.Span_End, v.`Status`, g.Description as `Status_Title`, v.idPrimaryGuest, r.Title as `Room`
+	from visit v left join resource r on v.idResource = r.idResource
+    left join gen_lookups g on g.Table_Name = 'Visit_Status' and g.Code = v.`Status`
+    LEFT JOIN registration rg ON v.idRegistration = rg.idRegistration
+ where v.Status not in ('".VisitStatus::Cancelled."', '".VisitStatus::Pending."') and rg.idPsg = " . $this->reserveData->getIdPsg() ." order by Span_Start DESC limit 1;");
 
     	$rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
     	$mkup = '';

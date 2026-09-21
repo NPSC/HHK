@@ -14,12 +14,12 @@ use HHK\Tables\Fields\{DB_Field, DbIntSanitizer, DbStrSanitizer, DbDateSanitizer
 
 class LinkDocRS extends AbstractTableRS {
 
-    public $idDocument;  // INT NOT NULL AUTO_INCREMENT,
-    public $idGuest;  // VARCHAR(128) NOT NULL,
-    public $idPSG;
-    public $idReservation;
-    public $username;
-    public $Timestamp;  // TIMESTAMP NOT NULL DEFAULT now(),
+    public DB_Field $idDocument;  // INT NOT NULL AUTO_INCREMENT,
+    public DB_Field $idGuest;  // VARCHAR(128) NOT NULL,
+    public DB_Field $idPSG;
+    public DB_Field $idReservation;
+    public DB_Field $username;
+    public DB_Field $Timestamp;  // TIMESTAMP NOT NULL DEFAULT now(),
 
     function __construct($TableName = "link_doc") {
 

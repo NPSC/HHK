@@ -108,7 +108,7 @@ class Campaign {
                     
                     //sync contacts to new list
                     $contacts = new Contacts($this->dbh);
-                    $syncStatus = $contacts->syncContacts($status, [$this->settings->getSmsListName(), $campaignListId]);
+                    $syncStatus = $contacts->syncContacts($status, [$this->settings->getSmsListName(), $campaignListId], $filterVal);
 
                     if(is_array($syncStatus) && strtolower($syncStatus["status"]) == "done"){
                         $this->sendCampaign($campaignListId, $campaignListName);

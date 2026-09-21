@@ -34,6 +34,7 @@ Interface JobInterface {
      * @property array $paramTemplate
      */
 
+    function run(): void;
 
     /**
      * Define the job tasks here
@@ -45,5 +46,10 @@ Interface JobInterface {
     function tasks():void;
 
     function getParamEditMkup():string;
+
+    function getStatus();
+
+    function getLogMsg();
+
+    function getParamTemplate():array;
 }
-?>

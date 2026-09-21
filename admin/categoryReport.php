@@ -1,5 +1,7 @@
 <?php
 
+use HHK\Admin\Reports\CategoryReport;
+use HHK\Common;
 use HHK\sec\{SecurityComponent, WebInit};
 use HHK\HTMLControls\selCtrl;
 use HHK\sec\Session;
@@ -45,7 +47,7 @@ $catSelTitleMarkup = "";
 $catagoryHeadertable = "";
 
 // Selector Controls for Category section
-$gSel = readGenLookupsPDO($dbh, "Vol_Category");
+$gSel = Common::readGenLookupsPDO($dbh, "Vol_Category");
 $catSelCtrls = array();
 
 foreach ($gSel as $selData) {
@@ -61,15 +63,16 @@ $catVolStatus = new selCtrl($dbh, "Vol_Status", false, "catVolStatus", true);
 $catVolStatus->set_value(TRUE, 'a');
 
 
+$isEmailList = 0;
+
 // Postback logic
 if (filter_has_var(INPUT_POST, "btnCat") || filter_has_var(INPUT_POST, "btnCatDL") || filter_has_var(INPUT_POST, "btnCSVEmail")) {
     $makeTable = 1;
+    $isEmailList = filter_has_var(INPUT_POST, "btnCSVEmail") ? 1 : 0;
 
     ini_set('memory_limit', "128M");
 
-    require("functions" . DS . "CategoryReportMgr.php");
-
-    $volCat = processCategory($dbh, $catSelCtrls, $catSelRoles, $catSelDormancy, $catVolStatus, $uS->SolicitBuffer);
+    $volCat = CategoryReport::processCategory($dbh, $catSelCtrls, $catSelRoles, $catSelDormancy, $catVolStatus, $uS->SolicitBuffer);
 
     if ($volCat->get_andOr() == "and") {
         $andChecked = "checked='checked'";
@@ -123,6 +126,7 @@ foreach ($catSelCtrls as $sel) {
 
                 var listTable;
                 var makeTable = <?php echo $makeTable; ?>;
+                var isEmailList = <?php echo $isEmailList; ?>;
                 var now = new Date();
                 $('#selIntMonth option:eq(' + now.getMonth() + ')').prop("selected", true);
                 $('#m').css('display', 'table-cell');
@@ -151,16 +155,18 @@ foreach ($catSelCtrls as $sel) {
                 }
                 if (makeTable === 1) {
                     $('div#printArea').css('display', 'block');
-                    try {
-                        listTable = $('#tblCategory').dataTable({
-                            "displayLength": 50,
-                            "lengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]],
-                            "dom": '<"top"lf><"hhk-overflow-x"rt><"bottom"p>',
-                            "order": [[1,'asc'], [2,'asc']]
-                        });
-                    }
-                    catch (err) {
+                    if (isEmailList !== 1) {
+                        try {
+                            listTable = $('#tblCategory').dataTable({
+                                "displayLength": 50,
+                                "lengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]],
+                                "dom": '<"top"lf><"hhk-overflow-x"rt><"bottom"p>',
+                                "order": [[1,'asc'], [2,'asc']]
+                            });
+                        }
+                        catch (err) {
 
+                        }
                     }
                 }
                 $('#Print_Button').click(function() {

@@ -1,4 +1,5 @@
 <?php
+use HHK\Common;
 use HHK\sec\WebInit;
 use HHK\sec\Session;
 use HHK\HTMLControls\HTMLContainer;
@@ -27,7 +28,7 @@ $uS = Session::getInstance();
 
 $labels = Labels::getLabels();
 $dbh = $wInit->dbh;
-$demographics = readGenLookupsPDO($dbh, 'Demographics');
+$demographics = Common::readGenLookupsPDO($dbh, 'Demographics');
 
 if(isset($_GET['cmd'])){
     $cmd = filter_var($_GET['cmd'],FILTER_SANITIZE_FULL_SPECIAL_CHARS);
@@ -121,7 +122,7 @@ $waitlist = HTMLContainer::generateMarkup('h3', $uS->siteName . ' Daily Waitlist
         ];
 
         var $table = $('#waitlist').DataTable({
-            "dom": '<"top ui-toolbar ui-helper-clearfix"if>Brt<"bottom ui-toolbar ui-helper-clearfix"lp><"clear">',
+            "dom": '<"top"Bif><\"hhk-overflow-x\"rt><"bottom"lp>',
             "displayLength": 50,
             "lengthMenu": [[5, 25, 50, -1], [5, 25, 50, "All"]],
             "order": [[ 3, 'asc' ]],

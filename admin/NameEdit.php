@@ -1,8 +1,11 @@
 <?php
 
+use HHK\Crypto;
 use HHK\Donation\{Campaign, DonateMarkup};
 use HHK\History;
 use HHK\AlertControl\AlertMessage;
+use HHK\HTMLControls\HTMLContainer;
+use HHK\HTMLControls\HTMLSelector;
 use HHK\Member\{AbstractMember, WebUser};
 use HHK\SysConst\{GLTableNames, MemBasis, MemDesignation, SalutationCodes};
 use HHK\sec\{SecurityComponent, Session, WebInit};
@@ -13,15 +16,15 @@ use HHK\sec\SAML;
 /**
  * NameEdit.php
  *
--- @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
--- @copyright 2010-2017 <nonprofitsoftwarecorp.org>
--- @license   MIT
--- @link      https://github.com/NPSC/HHK
+ * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
+ * @copyright 2010-2017 <nonprofitsoftwarecorp.org>
+ * @license   MIT
+ * @link      https://github.com/NPSC/HHK
  */
 
 require ("AdminIncludes.php");
 
-$wInit = new webInit();
+$wInit = new WebInit();
 
 $dbh = $wInit->dbh;
 
@@ -330,7 +333,7 @@ if ($id != 0 && $donationsFlag) {
 
     $donateMkup = DonateMarkup::createDonateMarkup(
             $CampOpt,
-            removeOptionGroups($uS->nameLookups[GLTableNames::AddrPurpose]),
+            HTMLSelector::removeOptionGroups($uS->nameLookups[GLTableNames::AddrPurpose]),
             $name->get_preferredMailAddr(),
             $uS->nameLookups[GLTableNames::SalutationCodes],
             SalutationCodes::FirstOnly,
@@ -338,7 +341,7 @@ if ($id != 0 && $donationsFlag) {
             $name->getAssocDonorList($rel),
             $name->getDefaultDonor($rel),
             $name->getAssocDonorLabel(),
-            removeOptionGroups($uS->nameLookups[GLTableNames::PayType]),
+            HTMLSelector::removeOptionGroups($uS->nameLookups[GLTableNames::PayType]),
             NULL
             );
 
@@ -364,7 +367,7 @@ if($wUserRS->idIdp->getStoredVal() > 0){
 }else{
     $editSecGroups = $maintFlag;
 }
-$webUserDialogMarkup = WebUser::getSSOMsg($dbh, $id) . WebUser::getSecurityGroupMarkup($dbh, $id, $editSecGroups) . WebUser::getWebUserMarkup($dbh, $id, $maintFlag, $wUserRS);
+$webUserDialogMarkup = WebUser::getSSOMsg($dbh, $id) . HTMLContainer::generateMarkup('div', WebUser::getSecurityGroupMarkup($dbh, $id, $editSecGroups) . WebUser::getWebUserMarkup($dbh, $id, $maintFlag, $wUserRS), ['class'=>'d-flex']);
 
 
 $memberData["id"] = $id;
@@ -384,7 +387,7 @@ $usrDataJSON = json_encode($userData);
 // Squirms
 $plus5 = time() + (1 * 60 * 60);
 
-$squirm = encryptMessage(date("Y/m/d H:i:s", $plus5));
+$squirm = Crypto::encryptMessage(date("Y/m/d H:i:s", $plus5));
 
 $PWresultMessage = "";
 
@@ -450,15 +453,17 @@ $alertMessage = $alertMsg->createMarkup();
             <div class="hhk-flex my-3">
                 <?php echo $NiceName; ?>
                 <div class="ui-widget ui-widget-content ui-corner-all hhk-widget-content p-2 ml-3" style="background:#EFDBC2;">
-                    <div style="border-width: 1px; border-color: gray; border-style: ridge; padding: 2px;">
-                        <span>Search: </span>
-                        <span style="margin: 0 10px;">
-                            <label for="rbmemName">Name</label><input type="radio" name="msearch" checked="checked" id="rbmemName" />
-                            <label for="rbmemEmail">Email</label><input type="radio" name="msearch" id="rbmemEmail" />
-                        </span>
-                        <input type="text" id='hdnblank' value='' style='display:none;'/>
-                        <input type="search" id="txtsearch" size="20" title="Enter at least 3 characters to invoke search" />
-                    </div>
+                    <form autocomplete="off">
+                        <div style="border-width: 1px; border-color: gray; border-style: ridge; padding: 2px;">
+                            <span>Search: </span>
+                            <span style="margin: 0 10px;">
+                                <input type="radio" name="msearch" checked="checked" id="rbmemName" class="mr-1"/><label for="rbmemName">Name</label>
+                                <input type="radio" name="msearch" id="rbmemEmail" class="mx-1"/><label for="rbmemEmail">Email</label>
+                            </span>
+                            <input type="text" id='hdnblank' value='' style='display:none;'/>
+                            <input type="search" id="txtsearch" size="20" title="Enter at least 3 characters to invoke search" />
+                        </div>
+                    </form>
                 </div>
             </div>
             <?php echo $resultMessage; ?> <?php echo $alertMessage; ?>

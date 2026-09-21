@@ -46,7 +46,7 @@ use HHK\House\Vehicle;
  */
 class RegisterForm {
 
-    public $labels;
+    public Labels $labels;
 
     protected function titleBlock($roomTitle, $expectedDeparture, $expDepartPrompt, $rate, $title, $agent, $priceModelCode, $houseAddr = '', $roomFeeTitle = 'Pledged Fee') {
 
@@ -481,6 +481,8 @@ p.label {
         $uS = Session::getInstance();
         $this->labels = Labels::getLabels();
         $guests = [];
+        $patient = NULL;
+        $hospRoom = '';
         $depDate = '';
         $reg = NULL;
         $primaryGuestId = 0;

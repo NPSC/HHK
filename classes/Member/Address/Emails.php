@@ -3,8 +3,6 @@
 namespace HHK\Member\Address;
 
 use HHK\AuditLog\NameLog;
-use HHK\Exception\RuntimeException;
-use HHK\Exception\ValidationException;
 use HHK\HTMLControls\{HTMLContainer, HTMLInput, HTMLTable};
 use HHK\SysConst\EmailPurpose;
 use HHK\Tables\EditRS;
@@ -178,8 +176,6 @@ class Emails extends AbstractContactPoint {
 
         if ($p[0] == $this->get_preferredCode()) {
             $prefAttr['checked'] = 'checked';
-        } else {
-            unset($prefAttr['checked']);
         }
 
         $em = '';
@@ -217,7 +213,7 @@ class Emails extends AbstractContactPoint {
     /**
      * Summary of savePost
      * @param \PDO $dbh
-     * @param mixed $post
+     * @param array $post
      * @param mixed $user
      * @param mixed $idPrefix
      * @return string
@@ -304,8 +300,8 @@ class Emails extends AbstractContactPoint {
 
     /**
      * Summary of loadPostData
-     * @param \HHK\Tables\Name\NameEmailRS $a
-     * @param mixed $p
+     * @param NameEmailRS $a
+     * @param array $p
      * @param mixed $typeCode
      * @param mixed $uname
      * @param mixed $idPrefix

@@ -28,7 +28,7 @@ interface SearchNameDataInterface
 
     public function setPhone($phone);
 
-    public function setAddressStreet($addressStreet, CleanAddress $cleanAddress = NULL, $include = FALSE);
+    public function setAddressStreet($addressStreet, CleanAddress|null $cleanAddress = NULL, $include = FALSE);
 
     public function setAddressStreet1($addressStreet1);
 
@@ -150,7 +150,11 @@ interface SearchNameDataInterface
     public function getEmrgAltPhone();
     public function getEmrgRelation();
 
+    public function getDemographics():array;
 
-    public function loadMeFrom(array $r, SearchNameDataInterface $formData = null);
+    public function setDemographics(array $v);
+
+
+    public function loadMeFrom(array $r, SearchNameDataInterface $formData);
 }
 

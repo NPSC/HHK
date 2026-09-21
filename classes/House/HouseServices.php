@@ -3,6 +3,7 @@
 namespace HHK\House;
 
 
+use HHK\Common;
 use HHK\Exception\PaymentException;
 use HHK\Exception\RuntimeException;
 use HHK\Exception\UnexpectedValueException;
@@ -161,8 +162,8 @@ class HouseServices {
 
         // Show adjust button?
         $showAdjust = FALSE;
-        $hdArry = readGenLookupsPDO($dbh, "House_Discount");
-        $adnlArray = readGenLookupsPDO($dbh, 'Addnl_Charge');
+        $hdArry = Common::readGenLookupsPDO($dbh, "House_Discount");
+        $adnlArray = Common::readGenLookupsPDO($dbh, 'Addnl_Charge');
 
         if ($action != 'cf' && (count($hdArry) > 0 || count($adnlArray) > 0)) {
             $showAdjust = TRUE;
@@ -344,6 +345,10 @@ class HouseServices {
                 if (isset($post['stayExpCkOut'])) {
 
                     $replyArray = $visit->changeExpectedCheckoutDates($dbh, $post['stayExpCkOut'], $uS->MaxExpected, $uS->username);
+
+                    if (isset($replyArray['error']) && $replyArray['error'] != '') {
+                        return ['error' => $replyArray['error']];
+                    }
 
                     if (isset($replyArray['isChanged']) && $replyArray['isChanged']) {
                         $returnCkdIn = TRUE;
@@ -691,14 +696,16 @@ class HouseServices {
 
         if ($idItem == ItemId::Discount) {
 
-            $codes = readGenLookupsPDO($dbh, 'House_Discount');
+            $codes = Common::readGenLookupsPDO($dbh, 'House_Discount');
+            $discountLabel = (new Item($dbh, ItemId::Discount))->getDescription();
 
             if (isset($codes[$discount])) {
 
                 $amount = 0 - $amount;
+                $discountItem = new Item($dbh, ItemId::Discount, $amount);
 
                 $invLine = new OneTimeInvoiceLine();
-                $invLine->createNewLine(new Item($dbh, ItemId::Discount, $amount), 1, $codes[$discount][1]);
+                $invLine->createNewLine($discountItem, 1, $codes[$discount][1]);
                 $invoice = new Invoice($dbh);
 
                 $invoice->newInvoice(
@@ -717,22 +724,24 @@ class HouseServices {
                 // Pay the invoice
                 $invoice->updateInvoiceBalance($dbh, $amount, $uS->username);
 
-                $dataArray['reply'] = $codes[$discount][1] . ' Discount Applied.  ';
+                $dataArray['reply'] = $codes[$discount][1] . ' ' . $discountLabel . ' Applied.  ';
 
             } else {
-                $dataArray['reply'] = 'Discount code not found: ' . $discount;
+                $dataArray['reply'] = $discountLabel . ' code not found: ' . $discount;
             }
 
         }
 
         if ($idItem == ItemId::AddnlCharge) {
 
-            $codes = readGenLookupsPDO($dbh, 'Addnl_Charge');
+            $codes = Common::readGenLookupsPDO($dbh, 'Addnl_Charge');
+            $addnlChargeItem = new Item($dbh, ItemId::AddnlCharge, $amount);
+            $addnlChargeLabel = $addnlChargeItem->getDescription();
 
             if (isset($codes[$addnlCharge])) {
 
                 $invLine = new OneTimeInvoiceLine();
-                $invLine->createNewLine(new Item($dbh, ItemId::AddnlCharge, $amount), 1, $codes[$addnlCharge][1]);
+                $invLine->createNewLine($addnlChargeItem, 1, $codes[$addnlCharge][1]);
 
                 if (is_null($invoice)) {
                     $invoice = new Invoice($dbh);
@@ -791,11 +800,11 @@ class HouseServices {
                     }
 
                 } else {
-                    $dataArray['reply'] = $codes[$addnlCharge][1] . ' additional charge is invoiced. ';
+                    $dataArray['reply'] = $codes[$addnlCharge][1] . ' ' . $addnlChargeLabel . ' is invoiced. ';
                 }
 
             } else {
-                $dataArray['reply'] = 'Additional Charge code not found: ' . $addnlCharge;
+                $dataArray['reply'] = $addnlChargeLabel . ' code not found: ' . $addnlCharge;
             }
         }
 
@@ -903,11 +912,11 @@ class HouseServices {
 
             $expDepDT = new \DateTime($r['Expected_Departure']);
 
-            $now = new \DateTime();
-            $now->setTime(0, 0, 0);
+            $tomorrow = new \DateTime("tomorrow");
 
-            if ($expDepDT < $now) {
-                $expDepDT = $now->add(new \DateInterval('P1D'));
+
+            if ($expDepDT < $tomorrow) {
+                $expDepDT = $tomorrow;
             }
 
             $reserv = Reservation_1::instantiateFromIdReserv($dbh, $r['idReservation']);
@@ -931,6 +940,8 @@ class HouseServices {
 
             $dataArray['start'] = $vspanStartDT->format('c');
             $dataArray['end'] = $expDepDT->format('c');
+            $dataArray['expDep'] = $expDepDT->format('c');
+            $dataArray['curExpDep'] = $r['Expected_Departure'];
 
         } else {
             $dataArray['error'] = "Change rooms command only available for checked-in visits.";
@@ -949,8 +960,9 @@ class HouseServices {
      * @param mixed $rescId
      * @return array
      */
-    public static function changeRoomList(\PDO $dbh, $idVisit, $span, $changeDate, $rescId) {
+    public static function changeRoomList(\PDO $dbh, $idVisit, $span, $changeDate, $rescId, $expectedDeparture = '') {
 
+        $uS = Session::getInstance();
         $dataArray = array();
         $vid = intval($idVisit, 10);
         $spanId = intval($span, 10);
@@ -965,11 +977,16 @@ class HouseServices {
             $now->setTime(10, 0, 0);
 
             // Expected Departure
-            $expDepDT = new \DateTime($vRows[0]['Expected_Departure']);
-            $expDepDT->setTime(10, 0, 0);
+            if ($expectedDeparture != '') {
+                $expDepDT = new \DateTime($expectedDeparture);
+            } else {
+                $expDepDT = new \DateTime($vRows[0]['Expected_Departure']);
+            }
+            $expDepDT->setTime($uS->CheckOutTime, 0, 0);
 
-            if ($expDepDT < $now) {
+            if ($expDepDT <= $now) {
                 $expDepDT = new \DateTime($now->format('Y-m-d H:i:s'));
+                $expDepDT->add(new \DateInterval('P1D'));
             }
 
             // Original Span Start Date
@@ -1007,7 +1024,7 @@ class HouseServices {
     }
 
 
-    public static function changeRooms(\PDO $dbh, $idVisit, $span, $newRescId, $replaceRoom, $useDefaultRate, $changeDate) {
+    public static function changeRooms(\PDO $dbh, $idVisit, $span, $newRescId, $replaceRoom, $useDefaultRate, $changeDate, $expectedDeparture = '') {
 
         $uS = Session::getInstance();
         $dataArray = array();
@@ -1021,9 +1038,21 @@ class HouseServices {
 
             // instantiate current visit
             $visit = new Visit($dbh, 0, $idVisit, NULL, NULL, NULL, $uS->username, $span);
+            $canChangeExpectedDeparture = TRUE;
+            $targetExpectedDepartureDT = NULL;
+
+            if ($expectedDeparture != '') {
+                try {
+                    $targetExpectedDepartureDT = new \DateTime($expectedDeparture);
+                    $targetExpectedDepartureDT->setTime(0, 0, 0);
+                } catch (\Exception $e) {
+                    return ['error' => 'The expected checkout date is invalid.'];
+                }
+            }
 
 
             if ($newRescId != $visit->getidResource()) {
+                $canChangeExpectedDeparture = FALSE;
 
                 $resc = AbstractResource::getResourceObj($dbh, $newRescId);
 
@@ -1076,10 +1105,53 @@ class HouseServices {
                         $newRateCategory = $resc->getDefaultRoomCategory();
                     }
 
-                    $reply .= $visit->changeRooms($dbh, $resc, $uS->username, $chRoomDT, SecurityComponent::is_Authorized("guestadmin"), $newRateCategory);
+                    $changeRoomReply = $visit->changeRooms($dbh, $resc, $uS->username, $chRoomDT, SecurityComponent::is_Authorized("guestadmin"), $newRateCategory, $targetExpectedDepartureDT);
+
+                    if (is_array($changeRoomReply)) {
+                        if (isset($changeRoomReply['error']) && $changeRoomReply['error'] != '') {
+                            $dataArray['error'] = $changeRoomReply['error'];
+                            return $dataArray;
+                        }
+
+                        $reply .= ($changeRoomReply['message'] ?? '');
+
+                    } else {
+                        // Backward compatibility if string is returned.
+                        $reply .= $changeRoomReply;
+                    }
 
                     $returnCkdIn = TRUE;
                     $returnReserv = TRUE;
+                    $canChangeExpectedDeparture = TRUE;
+                }
+            }
+
+            if ($canChangeExpectedDeparture && $targetExpectedDepartureDT !== NULL) {
+
+                $newExpectedDT = new \DateTime($targetExpectedDepartureDT->format('Y-m-d 00:00:00'));
+
+                $currentExpectedDT = new \DateTime($visit->getExpectedDeparture());
+                $currentExpectedDT->setTime(0, 0, 0);
+
+                if ($newExpectedDT != $currentExpectedDT) {
+
+                    $guestDates = [];
+                    foreach (Visit::loadStaysStatic($dbh, $visit->getIdVisit(), $visit->getSpan(), VisitStatus::CheckedIn) as $stayRS) {
+                        $guestDates[$stayRS->idName->getStoredVal()] = $newExpectedDT->format('Y-m-d');
+                    }
+
+                    $expDepReply = $visit->changeExpectedCheckoutDates($dbh, $guestDates, $uS->MaxExpected, $uS->username);
+
+                    if (isset($expDepReply['error']) && $expDepReply['error'] != '') {
+                        return ['error' => $expDepReply['error']];
+                    }
+
+                    if (isset($expDepReply['isChanged']) && $expDepReply['isChanged']) {
+                        $returnCkdIn = TRUE;
+                        $returnReserv = TRUE;
+                    }
+
+                    $reply .= ($expDepReply['message'] ?? '');
                 }
             }
         }

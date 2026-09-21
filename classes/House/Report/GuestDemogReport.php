@@ -2,8 +2,10 @@
 
 namespace HHK\House\Report;
 
+use HHK\Common;
 use HHK\HTMLControls\{HTMLTable, HTMLContainer, HTMLInput};
 use HHK\Exception\RuntimeException;
+use HHK\HTMLControls\HTMLSelector;
 use HHK\Member\Address\Address;
 use HHK\sec\Labels;
 use HHK\sec\Session;
@@ -58,20 +60,17 @@ class GuestDemogReport {
 
         $accum = array();
         $periods = array();
-//        $totalPSGs = array();
-
-//        $firstPeriod = $thisPeriod = $stDT->format($periodFormat);
         $badZipCodes = array();
 
         $now = new \DateTime();
         $now->setTime(0, 0, 0);
 
-        // Set up user selected demographics categoryeis.
+        // Set up user selected demographics categories.
         $demoCategorys = array();
 
         $fields = '';
 
-        foreach (readGenLookupsPDO($dbh, 'Demographics', 'Order') as $d) {
+        foreach (Common::readGenLookupsPDO($dbh, 'Demographics', 'Order') as $d) {
 
             if (strtolower($d[2]) == 'y') {
 
@@ -88,18 +87,18 @@ class GuestDemogReport {
 
         //set up room grouping
         $roomGroupingTitle = "";
-        $roomGroupings = readGenLookupsPDO($dbh, 'Room_Group', 'Order');
+        $roomGroupings = Common::readGenLookupsPDO($dbh, 'Room_Group', 'Order');
         switch ($roomGroupBy){
             case "Category":
-                $roomGrouping = readGenLookupsPDO($dbh, 'Room_Category', 'Order');
+                $roomGrouping = Common::readGenLookupsPDO($dbh, 'Room_Category', 'Order');
                 $roomGroupingTitle = (isset($roomGroupings["Category"]["Description"]) ? $roomGroupings["Category"]["Description"]: "Room Category");
                 break;
             case "Report_Category":
-                $roomGrouping = readGenLookupsPDO($dbh, 'Room_Rpt_Cat', 'Order');
+                $roomGrouping = Common::readGenLookupsPDO($dbh, 'Room_Rpt_Cat', 'Order');
                 $roomGroupingTitle = (isset($roomGroupings["Report_Category"]["Description"]) ? $roomGroupings["Report_Category"]["Description"]: "Room Report Category");
                 break;
             case "Type":
-                $roomGrouping = readGenLookupsPDO($dbh, 'Room_Type', 'Order');
+                $roomGrouping = Common::readGenLookupsPDO($dbh, 'Room_Type', 'Order');
                 $roomGroupingTitle = (isset($roomGroupings["Type"]["Description"]) ? $roomGroupings["Type"]["Description"]: "Room Type");
                 break;
             default:
@@ -126,14 +125,14 @@ class GuestDemogReport {
                 }
 
                 //room grouping
-                $accum[$thisPeriod][Labels::getString('memberType', 'visitor', 'Guest') . 's by ' . $roomGroupingTitle] = self::makeCounters(removeOptionGroups($roomGrouping));
+                $accum[$thisPeriod][Labels::getString('memberType', 'visitor', 'Guest') . 's by ' . $roomGroupingTitle] = self::makeCounters(HTMLSelector::removeOptionGroups($roomGrouping));
 
                 // Demographics
                 foreach ($demoCategorys as $k => $d) {
-                    $accum[$thisPeriod][$d] = self::makeCounters(removeOptionGroups(readGenLookupsPDO($dbh, $k, 'Order')));
+                    $accum[$thisPeriod][$d] = self::makeCounters(HTMLSelector::removeOptionGroups(Common::readGenLookupsPDO($dbh, $k, 'Order')));
                 }
 
-                $accum[$thisPeriod]['Distance'] = self::makeCounters(removeOptionGroups(readGenLookupsPDO($dbh, 'Distance_Range', 'Substitute')));
+                $accum[$thisPeriod]['Distance'] = self::makeCounters(HTMLSelector::removeOptionGroups(Common::readGenLookupsPDO($dbh, 'Distance_Range', 'Substitute')));
 
                 $periods[] = $thisPeriod;
 
@@ -152,14 +151,14 @@ class GuestDemogReport {
         }
 
         //room grouping
-        $accum['Total'][Labels::getString('memberType', 'visitor', 'Guest') . 's by ' . $roomGroupingTitle] = self::makeCounters(removeOptionGroups($roomGrouping));
+        $accum['Total'][Labels::getString('memberType', 'visitor', 'Guest') . 's by ' . $roomGroupingTitle] = self::makeCounters(HTMLSelector::removeOptionGroups($roomGrouping));
 
         // Totals
         foreach ($demoCategorys as $k => $d) {
-            $accum['Total'][$d] = self::makeCounters(removeOptionGroups(readGenLookupsPDO($dbh, $k, 'Order')));
+            $accum['Total'][$d] = self::makeCounters(HTMLSelector::removeOptionGroups(Common::readGenLookupsPDO($dbh, $k, 'Order')));
         }
 
-        $accum['Total']['Distance'] = self::makeCounters(removeOptionGroups(readGenLookupsPDO($dbh, 'Distance_Range', 'Substitute')));
+        $accum['Total']['Distance'] = self::makeCounters(HTMLSelector::removeOptionGroups(Common::readGenLookupsPDO($dbh, 'Distance_Range', 'Substitute')));
 
         if($uS->county){
             $accum['Total']['County'][''] = ['title'=>"Not Indicated", 'cnt'=>0];
@@ -167,12 +166,14 @@ class GuestDemogReport {
 
         $th .= HTMLTable::makeTh("Total");
 
+        $query = "SELECT ";
+
         if ($whichGuests == 'new') {
-            $query = "SELECT s.idName, MIN(s.Span_Start_Date) AS `minDate`,";
+            $query .= "s.idName, MIN(s.Span_Start_Date) AS `minDate`,";
         } else if ($whichGuests == 'allStarted'){
-            $query = "SELECT s.idName, DATE(s.Span_Start_Date) as `minDate`,";
+            $query .= "s.idName, DATE(s.Span_Start_Date) as `minDate`,";
         }else if ($whichGuests == 'allStayed'){
-            $query = "SELECT DISTINCT s.idName,";
+            $query .= "DISTINCT s.idName,";
         }
 
         $query .= "na.idName_Address,	
@@ -509,19 +510,11 @@ class GuestDemogReport {
 
         $rows = $stmt->fetchAll(\PDO::FETCH_NUM);
         if (count($rows) == 2) {
-            $miles = self::calcDist($rows[0][1], $rows[0][2], $rows[1][1], $rows[1][2]);
+            $miles = ZipDistance::GPS2Miles($rows[0][1], $rows[0][2], $rows[1][1], $rows[1][2]);
         } else {
             throw new RuntimeException("One or both zip codes not found in zip table, source=$sourceZip, dest=$destZip.  ");
         }
         return $miles;
-    }
-
-    protected static function calcDist($lat_A, $long_A, $lat_B, $long_B) {
-
-        $distance = sin(deg2rad((double)$lat_A)) * sin(deg2rad((double)$lat_B)) + cos(deg2rad((double)$lat_A)) * cos(deg2rad((double)$lat_B)) * cos(deg2rad((double)$long_A - (double)$long_B));
-        $distance2 = (rad2deg(acos($distance))) * 69.09;
-
-        return $distance2;
     }
 
     protected static function makeCounters($GL_Table, $includeBlank = TRUE) {

@@ -17,5 +17,6 @@ class PayType {
     const Invoice = 'in';
     const ChargeAsCash = 'cx';
     const Transfer = 'tf';
+    const External = 'ex';
 }
 ?>

@@ -183,7 +183,7 @@ $(document).ready(function () {
             'data': 'Room',
             'title': 'Room',
             'searchable': true,
-            'sortable': false
+            'sortable': true
         },
         {
             'data': 'Nights',

@@ -39,7 +39,7 @@ try {
     exit ("<h3>Database Access Error.   <a href='index.php'>Continue</a></h3>");
 
 } catch (Exception $ex) {
-    echo ("<h3>Server Error</h3>" . $ex->getMessage());
+    exit ("<h3>Server Error</h3>" . $ex->getMessage());
 }
 
 

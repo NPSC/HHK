@@ -6,25 +6,13 @@ use GuzzleHttp\Client;
 use GuzzleHttp\Exception\ClientException;
 use HHK\Exception\SmsException;
 use HHK\sec\Session;
-use HHK\sec\SysConfig;
-use HHK\SysConst\ReservationStatus;
-use HHK\SysConst\VisitStatus;
+
 
 Class Settings {
 
     protected \PDO $dbh;
     protected Client $client;
     protected array $settings;
-
-    const StatusLookups = [
-        VisitStatus::CheckedIn=>"checked_in",
-        VisitStatus::CheckedOut=>"checked_out",
-        VisitStatus::ChangeRate=>"checked_in",
-        VisitStatus::OnLeave=>"on_leave",
-        ReservationStatus::Waitlist=>"waitlist",
-        ReservationStatus::Committed=>"confirmed_reservation",
-        ReservationStatus::UnCommitted=>"unconfirmed_reservation"
-    ];
 
     const HHKListName = "HHK Contacts";
 

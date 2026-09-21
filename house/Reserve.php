@@ -316,19 +316,19 @@ $resvObjEncoded = json_encode($resvAr);
 	            <?php } ?>
                 <div id="hospitalSection" style="font-size: .9em; display:none;"  class="ui-widget hhk-visitdialog mb-3"></div>
                 <div id="resvSection" style="font-size:.9em; display:none;" class="ui-widget hhk-visitdialog mb-3"></div>
-                <div style="clear:left; min-height: 70px;"></div>
+                <div style="height: 70px;"></div>
+
+
                 <div id="submitButtons" class="ui-corner-all" style="font-size:.9em; display:none;">
-                    <table >
-                        <tr><td ><span id="pWarnings" style="display:none; font-size: 1.4em; border: 1px solid #ddce99;margin-bottom:3px; padding: 0 2px; color:red; background-color: yellow; float:right;"></span></td></tr>
-                        <tr><td>
+                    <div id="pWarnings" class="hhk-pWarningMsg" style="display:none;"></div>
+                    <div style="text-align: right;">
                         <input type="button" id="btnDelete" value="Delete" style="display:none;"/>
-                        <input type="button" id="btnCheckinNow" value='Check-in Now' style="display:none;"/><input type="hidden" id="resvCkinNow" name="resvCkinNow" value="no" />
+                        <input type="button" id="btnCheckinNow" value='Check-in Now' style="display:none;"/>
+                        <input type="hidden" id="resvCkinNow" name="resvCkinNow" value="no" />
                         <input type="button" id="btnShowReg" value='Show Registration Form' style="display:none;"/>
                         <input type='button' id='btnDone' value='Continue' style="display:none;"/>
-                            </td></tr>
-                    </table>
+                    </div>
                 </div>
-
             </form>
 
             <div id="pmtRcpt" style="font-size: .9em; display:none;"></div>

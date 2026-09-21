@@ -8,6 +8,7 @@ use HHK\Payment\PaymentResponse\AbstractCreditResponse;
 use HHK\SysConst\MpStatusValues;
 use HHK\SysConst\PaymentMethod;
 use HHK\HTMLControls\HTMLTable;
+use PDO;
 
 /**
  * TokenTX.php
@@ -63,9 +64,10 @@ class TokenResponse extends AbstractCreditResponse {
         return $pr;
     }
 
-    public function receiptMarkup(\PDO $dbh, &$tbl) {
+    public function receiptMarkup(PDO $dbh, &$tbl) {
 
-        $tbl->addBodyTr(HTMLTable::makeTd("Credit Card:", ['class' => 'tdlabel']) . HTMLTable::makeTd(number_format($this->getAmount(), 2)));
+        $payTypeTitle = $this->getPaymentTypeTitle($dbh);
+        $tbl->addBodyTr(HTMLTable::makeTd(($payTypeTitle != "" ? $payTypeTitle : "Credit Card") . ":", ['class' => 'tdlabel']) . HTMLTable::makeTd(number_format($this->getAmount(), 2)));
         $tbl->addBodyTr(HTMLTable::makeTd($this->response->getCardType() . ':', ['class' => 'tdlabel']) . HTMLTable::makeTd("xxx...". $this->response->getMaskedAccount()));
 
         if ($this->response->getCardHolderName() != '') {

@@ -2,10 +2,7 @@
 
 namespace HHK\Payment\PaymentResult;
 
-use HHK\Admin\VolCats;
-use HHK\Note\LinkNote;
-use HHK\Note\Note;
-use HHK\Notification\Mail\HHKMailer;
+
 use HHK\Payment\PaymentSvcs;
 use HHK\Payment\Receipt;
 use HHK\Payment\Invoice\Invoice;
@@ -13,7 +10,6 @@ use HHK\Payment\PaymentResponse\AbstractPaymentResponse;
 use HHK\Tables\EditRS;
 use HHK\Tables\Payment\PaymentInvoiceRS;
 use HHK\sec\Session;
-use HHK\Volunteer\VolCal;
 
 /**
  * PaymentResult.php

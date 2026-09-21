@@ -21,10 +21,10 @@ use HHK\Tables\Fields\{DB_Field, DbIntSanitizer, DbStrSanitizer};
  
 class ConstraintAttributeRS extends AbstractTableRS {
     
-    public $idConstraint;  // int(11) NOT NULL,
-    public $idAttribute;
-    public $Type;  // varchar(4) NOT NULL,
-    public $Operation;  // varchar(4) NOT NULL,
+    public DB_Field $idConstraint;  // int(11) NOT NULL,
+    public DB_Field $idAttribute;
+    public DB_Field $Type;  // varchar(4) NOT NULL,
+    public DB_Field $Operation;  // varchar(4) NOT NULL,
     
     
     function __construct($TableName = "constraint_attribute") {

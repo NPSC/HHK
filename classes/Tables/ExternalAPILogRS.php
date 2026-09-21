@@ -15,15 +15,16 @@ use HHK\Tables\Fields\{DB_Field, DbBlobSanitizer, DbStrSanitizer, DbDateSanitize
 
 class ExternalAPILogRS extends AbstractTableRS {
 
-    public $Log_Type;
-    public $Sub_Type;
-    public $requestMethod;
-    public $endpoint;
-    public $responseCode;
-    public $request;
-    public $response;
-    public $username;
-    public $Timestamp;
+    public DB_Field $Log_Type;
+    public DB_Field $Sub_Type;
+    public DB_Field $requestMethod;
+    public DB_Field $endpoint;
+    public DB_Field $responseCode;
+    public DB_Field $requestHeaders;
+    public DB_Field $request;
+    public DB_Field $response;
+    public DB_Field $username;
+    public DB_Field $Timestamp;
 
     function __construct($TableName = "external_api_log") {
 
@@ -32,6 +33,7 @@ class ExternalAPILogRS extends AbstractTableRS {
         $this->requestMethod = new DB_Field("requestMethod", "", new DbStrSanitizer(10), true, true);
         $this->endpoint = new DB_Field("endpoint", "", new DbStrSanitizer(512), true, true);
         $this->responseCode = new DB_Field("responseCode", "", new DbStrSanitizer(3), true, true);
+        $this->requestHeaders = new DB_Field("requestHeaders", "", new DbBlobSanitizer(), true, true);
         $this->request = new DB_Field("request", "", new DbBlobSanitizer(), true, true);
         $this->response = new DB_Field("response", "", new DbBlobSanitizer(), true, true);
         $this->username = new DB_Field("username", "", new DbStrSanitizer(255), true, true);

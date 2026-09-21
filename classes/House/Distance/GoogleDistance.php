@@ -3,6 +3,7 @@ namespace HHK\House\Distance;
 
 use GuzzleHttp\Client;
 use HHK\AuditLog\NameLog;
+use HHK\Crypto;
 use HHK\Exception\RuntimeException;
 use HHK\HTMLControls\HTMLContainer;
 use HHK\HTMLControls\HTMLInput;
@@ -56,7 +57,7 @@ class GoogleDistance extends AbstractDistance {
         $uS = Session::getInstance();
 
         $endpoint = "https://maps.googleapis.com/maps/api/directions/json";
-        $apiKey = decryptMessage($uS->recaptchaApiKey);
+        $apiKey = Crypto::decryptMessage($uS->recaptchaApiKey);
 
         try{
 

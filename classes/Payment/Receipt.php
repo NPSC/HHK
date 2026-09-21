@@ -9,9 +9,8 @@ use HHK\sec\Session;
 use HHK\SysConst\{ItemId};
 use HHK\SysConst\MemBasis;
 use HHK\HTMLControls\{HTMLTable, HTMLContainer};
-use HHK\House\Registration;
 use HHK\Member\AbstractMember;
-use HHK\SysConst\PaymentStatusCode;
+use HHK\sec\SysConfig;
 use Mpdf\Mpdf;
 
 /**
@@ -121,6 +120,10 @@ class Receipt {
 
         if (isset($info['Room']) && $info['Room'] != '') {
             $tbl->addBodyTr(HTMLTable::makeTd("Room: ", array('class'=>'tdlabel')) . HTMLTable::makeTd($info['Room']));
+
+            if(isset($info['RoomPhone']) && $info['RoomPhone'] != '' && SysConfig::getKeyValue($dbh, 'sys_config','showRoomPhoneRcpt')){
+                $tbl->addBodyTr(HTMLTable::makeTd(Labels::getString("ResourceBuilder","RoomPhone","Phone") . ": ", array('class'=>'tdlabel')) . HTMLTable::makeTd($info['RoomPhone']));
+            }
         }
 
         $tbl->addBodyTr(HTMLTable::makeTd("Date: ", array('class'=>'tdlabel')) . HTMLTable::makeTd(date('D M jS, Y', strtotime($payResp->getPaymentDate()))));
@@ -195,6 +198,10 @@ class Receipt {
 
         if (isset($info['Room']) && $info['Room'] != '') {
             $tbl->addBodyTr(HTMLTable::makeTd("Room: ", array('class'=>'tdlabel')) . HTMLTable::makeTd($info['Room']));
+
+            if(isset($info['RoomPhone']) && $info['RoomPhone'] != '' && SysConfig::getKeyValue($dbh, 'sys_config','showRoomPhoneRcpt')){
+                $tbl->addBodyTr(HTMLTable::makeTd(Labels::getString("ResourceBuilder","RoomPhone","Phone") . ": ", array('class'=>'tdlabel')) . HTMLTable::makeTd($info['RoomPhone']));
+            }
         }
 
 
@@ -252,6 +259,10 @@ class Receipt {
 
         if (isset($info['Room']) && $info['Room'] != '') {
             $tbl->addBodyTr(HTMLTable::makeTd("Room: ", array('class'=>'tdlabel')) . HTMLTable::makeTd($info['Room']));
+
+            if(isset($info['RoomPhone']) && $info['RoomPhone'] != '' && SysConfig::getKeyValue($dbh, 'sys_config','showRoomPhoneRcpt')){
+                $tbl->addBodyTr(HTMLTable::makeTd(Labels::getString("ResourceBuilder","RoomPhone","Phone") . ": ", array('class'=>'tdlabel')) . HTMLTable::makeTd($info['RoomPhone']));
+            }
         }
 
         $tbl->addBodyTr(HTMLTable::makeTd("Date: ", array('class'=>'tdlabel'))
@@ -311,6 +322,10 @@ class Receipt {
 
         if (isset($info['Room']) && $info['Room'] != '') {
             $tbl->addBodyTr(HTMLTable::makeTd("Room: ", array('class'=>'tdlabel')) . HTMLTable::makeTd($info['Room']));
+
+            if(isset($info['RoomPhone']) && $info['RoomPhone'] != '' && SysConfig::getKeyValue($dbh, 'sys_config','showRoomPhoneRcpt')){
+                $tbl->addBodyTr(HTMLTable::makeTd(Labels::getString("ResourceBuilder","RoomPhone","Phone") . ": ", array('class'=>'tdlabel')) . HTMLTable::makeTd($info['RoomPhone']));
+            }
         }
 
         $tbl->addBodyTr(HTMLTable::makeTd("Date: ", array('class'=>'tdlabel'))
@@ -433,12 +448,17 @@ class Receipt {
 	n.Name_Full as `Primary_Guest`,
     np.Name_Full as `Patient`,
     r.Title as `Room`,
+    rm.Phone as `RoomPhone`,
     ifnull(ha.Title, '') as `Assoc`,
     ifnull(hh.Title, '') as `Hospital`
 from
     visit v
         left join
 	resource r on v.idResource = r.idResource
+        left join
+    resource_room rr on r.idResource = rr.idResource
+        left join
+    room rm on rr.idRoom = rm.idRoom
 		left join
     hospital_stay hs ON v.idHospital_stay = hs.idHospital_stay
         left join
@@ -480,7 +500,8 @@ where
      * @return mixed
      */
     public static function getHospitalNames(\PDO $dbh, $orderNumber) {
-
+        $hsNames = '';
+        
         // Find the hospital
         if ($orderNumber > 0) {
 

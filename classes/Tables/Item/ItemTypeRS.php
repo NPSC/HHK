@@ -20,28 +20,11 @@ use HHK\Tables\Fields\{DB_Field, DbIntSanitizer, DbStrSanitizer};
  */
 
 class ItemTypeRS extends AbstractTableRS {
-
-    /**
-     * Summary of idItem_Type
-     * @var int
-     */
-    public $idItem_Type;  // INTEGER NOT NULL,
-    /**
-     * Summary of Category_Type
-     * @var int
-     */
-    public $Category_Type;  // INTEGER NOT NULL,
-    /**
-     * Summary of Type_Description
-     * @var string
-     */
-    public $Type_Description;  // VARCHAR(100),
-
-    /**
-     * Summary of Order_Line_Type_Id
-     * @var int
-     */
-    public $Order_Line_Type_Id;  // INTEGER NOT NULL,
+    
+    public DB_Field $idItem_Type;  // INTEGER NOT NULL,
+    public DB_Field $Category_Type;  // INTEGER NOT NULL,
+    public DB_Field $Type_Description;  // VARCHAR(100),
+    public DB_Field $Order_Line_Type_Id;  // INTEGER NOT NULL,
 
     /**
      * Summary of __construct
@@ -57,4 +40,3 @@ class ItemTypeRS extends AbstractTableRS {
     }
 
 }
-?>

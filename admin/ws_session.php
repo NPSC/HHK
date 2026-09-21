@@ -1,7 +1,7 @@
 <?php
 
-use HHK\sec\{Session, Login, ScriptAuthClass, UserClass};
-use HHK\Update\UpdateSite;
+use HHK\Debug\DebugBarSupport;
+use HHK\sec\{Session};
 use HHK\sec\WebInit;
 
 /**
@@ -16,29 +16,22 @@ use HHK\sec\WebInit;
 
 require ("AdminIncludes.php");
 
-require (FUNCTIONS . 'mySqlFunc.php');
-
 $uS = Session::getInstance();
 
+$events = [];
 $cmd = 'get';
 if (isset($_GET['cmd'])) {
     $cmd = filter_input(INPUT_GET, 'cmd');
 }
 
-// Initialize
-try {
-
-    $login = new Login();
-    $dbh = $login->initHhkSession(CONF_PATH, ciCFG_FILE);
-
-} catch (Exception $ex) {
-
-    $uS->destroy(true);
-    echo (json_encode(array('error'=>"Server Error: " . $ex->getMessage())));
-    exit();
-}
-
 switch ($cmd){
+    case "debugbarOpen":
+        if($uS->logged && $uS->username){
+            DebugBarSupport::handleOpenRequest();
+            exit();
+        }
+        $events = array('error'=>"unauthorized");
+        break;
     case "get":
         $expiresIn = false;
         if(isset($uS->timeout_idle)){

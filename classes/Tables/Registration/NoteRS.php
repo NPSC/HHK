@@ -15,17 +15,17 @@ use HHK\Tables\Fields\{DB_Field, DbIntSanitizer, DbStrSanitizer, DbDateSanitizer
 
 class NoteRS extends AbstractTableRS {
 
-    public $idNote;   // INT NOT NULL AUTO_INCREMENT,
-    public $User_Name;   // VARCHAR(45) NOT NULL,
-    public $Note_Type;   // VARCHAR(15) NULL,
-    public $Flag; // BOOL DEFAULT false
-    public $Category; //VARCHAR(15)
-    public $Title;   // VARCHAR(145) NULL,
-    public $Note_Text;   // TEXT NULL,
-    public $Updated_By;   // VARCHAR(45) NULL,
-    public $Last_Updated;   // DATETIME NULL,
-    public $Status;   // VARCHAR(5) NOT NULL DEFAULT 'a',
-    public $Timestamp;   // TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    public DB_Field $idNote;   // INT NOT NULL AUTO_INCREMENT,
+    public DB_Field $User_Name;   // VARCHAR(45) NOT NULL,
+    public DB_Field $Note_Type;   // VARCHAR(15) NULL,
+    public DB_Field $Flag; // BOOL DEFAULT false
+    public DB_Field $Category; //VARCHAR(15)
+    public DB_Field $Title;   // VARCHAR(145) NULL,
+    public DB_Field $Note_Text;   // TEXT NULL,
+    public DB_Field $Updated_By;   // VARCHAR(45) NULL,
+    public DB_Field $Last_Updated;   // DATETIME NULL,
+    public DB_Field $Status;   // VARCHAR(5) NOT NULL DEFAULT 'a',
+    public DB_Field $Timestamp;   // TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     function __construct($TableName = "note") {
 

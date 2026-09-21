@@ -2,44 +2,44 @@
 
 namespace HHK\Payment\PaymentGateway\Instamed\Connect;
 
-use HHK\Payment\GatewayResponse\AbstractCurlRequest;
+use GuzzleHttp\Client;
+use GuzzleHttp\Exception\GuzzleException;
 use HHK\Exception\PaymentException;
+use HHK\Integrations\GuzzleAPILogger;
 
-/**
- * ImCurlRequest.php
- *
- * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
- * @copyright 2019 <nonprofitsoftwarecorp.org>
- * @license   MIT
- * @link      https://github.com/NPSC/HHK
- */
+class ImCurlRequest {
 
-class ImCurlRequest extends AbstractCurlRequest {
+    private const LOG_SERVICE_NAME = 'Instamed';
 
-    protected function execute($url, $params, $accountId, $password) {
+    protected Client $client;
 
-        $ch = curl_init();
+    public function __construct(\PDO $dbh) {
+        $this->client = new Client([
+            'handler' => GuzzleAPILogger::createStack($dbh, self::LOG_SERVICE_NAME),
+        ]);
+    }
 
-        curl_setopt($ch, CURLOPT_URL, $url);
-        curl_setopt($ch, CURLOPT_POST, true);
-        curl_setopt($ch, CURLOPT_POSTFIELDS, $params);
-        curl_setopt($ch, CURLOPT_USERPWD, "$accountId:$password");
-        curl_setopt($ch, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    public function submit(string $parmStr, string $url, string $accountId, string $password): array {
 
-        $responseString = curl_exec($ch);
-        $msg = curl_error($ch);
-        curl_close($ch);
-
-        if ( ! $responseString ) {
-            throw new PaymentException('Network (cURL) Error: ' . $msg);
+        if ($url == '') {
+            throw new PaymentException('Request is missing the URL.');
         }
 
-        $transaction = array();
-        parse_str($responseString, $transaction);
+        try {
+            parse_str($parmStr, $params);
 
-        return $transaction;
+            $response = $this->client->request('POST', $url, [
+                'auth' => [$accountId, $password],
+                'form_params' => $params,
+            ]);
+
+            $transaction = [];
+            parse_str($response->getBody()->getContents(), $transaction);
+
+            return $transaction;
+        } catch (GuzzleException $e) {
+            throw new PaymentException('Problem contacting the payment gateway: ' . $e->getMessage());
+        }
     }
 
 }
-?>

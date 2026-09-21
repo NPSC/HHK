@@ -8,6 +8,7 @@ use HHK\Payment\PaymentResponse\CashResponse;
 use HHK\Tables\Payment\TransRS;
 use HHK\Tables\EditRS;
 use HHK\Payment\PaymentResponse\CheckResponse;
+use HHK\Payment\PaymentResponse\ExternalResponse;
 use HHK\Payment\PaymentResponse\TransferResponse;
 
 /**
@@ -44,7 +45,7 @@ class Transaction {
         $transRs->Amount->setNewVal($vr->getAmount());
         $transRs->Invoice_Number->setNewVal($vr->getInvoiceNumber());
         $transRs->Date_Entered->setNewVal(date("Y-m-d H:i:s"));
-        $transRs->Payment_Type->setNewVal($vr->getPaymentMethod());
+        $transRs->Payment_Type->setNewVal($vr instanceof ExternalResponse ? $vr->getExternalPaymentTypeCode() : $vr->getPaymentMethod());
         $transRs->idName->setNewVal($vr->getIdPayor());
         $transRs->Trans_Date->setNewVal(date("Y-m-d H:i:s"));
         $transRs->Gateway_Ref->setNewVal($gwName);

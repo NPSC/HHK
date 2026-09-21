@@ -15,18 +15,18 @@ use HHK\Tables\Fields\{DB_Field, DbStrSanitizer, DbIntSanitizer, DbDateSanitizer
 
 class Web_SitesRS extends AbstractTableRS {
     
-    public $idweb_sites;  // int(11) NOT NULL AUTO_INCREMENT,
-    public $Site_Code;  // varchar(5) NOT NULL,
-    public $Description;  // varchar(245) NOT NULL DEFAULT '',
-    public $Relative_Address;  // varchar(145) NOT NULL DEFAULT '',
-    public $Required_Group_Code;  // varchar(45) NOT NULL DEFAULT '',
-    public $Path_To_CSS;  // varchar(145) NOT NULL DEFAULT '',
-    public $Path_To_JS;  // varchar(145) NOT NULL DEFAULT '',
-    public $Default_Page;  // varchar(105) NOT NULL DEFAULT '',
-    public $Index_Page;  // varchar(145) NOT NULL DEFAULT '',
-    public $HTTP_Host;  // varchar(245) NOT NULL DEFAULT '',
-    public $Last_Updated;  // datetime DEFAULT NULL,
-    public $Updated_By;  // varchar(45) NOT NULL,
+    public DB_Field $idweb_sites;  // int(11) NOT NULL AUTO_INCREMENT,
+    public DB_Field $Site_Code;  // varchar(5) NOT NULL,
+    public DB_Field $Description;  // varchar(245) NOT NULL DEFAULT '',
+    public DB_Field $Relative_Address;  // varchar(145) NOT NULL DEFAULT '',
+    public DB_Field $Required_Group_Code;  // varchar(45) NOT NULL DEFAULT '',
+    public DB_Field $Path_To_CSS;  // varchar(145) NOT NULL DEFAULT '',
+    public DB_Field $Path_To_JS;  // varchar(145) NOT NULL DEFAULT '',
+    public DB_Field $Default_Page;  // varchar(105) NOT NULL DEFAULT '',
+    public DB_Field $Index_Page;  // varchar(145) NOT NULL DEFAULT '',
+    public DB_Field $HTTP_Host;  // varchar(245) NOT NULL DEFAULT '',
+    public DB_Field $Last_Updated;  // datetime DEFAULT NULL,
+    public DB_Field $Updated_By;  // varchar(45) NOT NULL,
     
     function __construct($TableName = "web_sites") {
         

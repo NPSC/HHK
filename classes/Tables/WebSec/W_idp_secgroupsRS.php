@@ -15,9 +15,9 @@ use HHK\Tables\Fields\{DB_Field, DbStrSanitizer, DbIntSanitizer};
 
 class W_idp_secgroupsRS extends AbstractTableRS {
 
-    public $idIdpSecGroup;  // int(11) NOT NULL,
-    public $idIdp;  // int(11) NOT NULL,
-    public $idSecGroup;  // varchar(5) NOT NULL,
+    public DB_Field $idIdpSecGroup;  // int(11) NOT NULL,
+    public DB_Field $idIdp;  // int(11) NOT NULL,
+    public DB_Field $idSecGroup;  // varchar(5) NOT NULL,
 
     function __construct($TableName = "w_idp_secgroups") {
         $this->idIdpSecGroup = new DB_Field("idIdpSecGroup", 0, new DbIntSanitizer());

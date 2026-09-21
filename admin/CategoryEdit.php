@@ -1,5 +1,7 @@
 <?php
 
+use HHK\Common;
+use HHK\HTMLControls\HTMLSelector;
 use HHK\sec\{WebInit};
 use HHK\Tables\EditRS;
 use HHK\Tables\GenLookupsRS;
@@ -10,14 +12,14 @@ use HHK\Exception\RuntimeException;
 /**
  * CategoryEdit.php
  *
--- @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
--- @copyright 2010-2018 <nonprofitsoftwarecorp.org>
--- @license   MIT
--- @link      https://github.com/NPSC/HHK
+ * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
+ * @copyright 2010-2018 <nonprofitsoftwarecorp.org>
+ * @license   MIT
+ * @link      https://github.com/NPSC/HHK
  */
 require ("AdminIncludes.php");
 
-$wInit = new webInit();
+$wInit = new WebInit();
 $dbh = $wInit->dbh;
 
 // catch service call
@@ -28,7 +30,7 @@ if ($tableName != '') {
     $volArray = $wInit->reloadSessionVolLkUps();
 
     if (isset($volArray['Vol_Category'][$tableName])) {
-        $rows = readGenLookupsPDO($dbh, $tableName);
+        $rows = Common::readGenLookupsPDO($dbh, $tableName);
     }
 
     echo json_encode($rows);
@@ -37,6 +39,7 @@ if ($tableName != '') {
 
 function processAction(PDO $dbh, $tbl, $cde, $colr, $desc, $repl, $action, &$volAlert) {
 
+    $rptId = 0;
     // Is the Code there?
     $gl = new GenLookupsRS();
     $gl->Table_Name->setStoredVal($tbl);
@@ -174,7 +177,8 @@ if (filter_has_var(INPUT_POST, "btnvType")) {
     $resMessage = $volAlert->createMarkup();
 }
 
-$vCatOptions = DoLookups($dbh, "Vol_Category", '', false);
+$volCategories = Common::readGenLookupsPDO($dbh, "Vol_Category");
+$vCatOptions = HTMLSelector::doOptionsMkup($volCategories, '', false);
 ?>
 <!DOCTYPE html>
 <html lang="en">

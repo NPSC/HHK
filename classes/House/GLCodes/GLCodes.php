@@ -2,6 +2,7 @@
 
 namespace HHK\House\GLCodes;
 
+use HHK\Common;
 use HHK\SysConst\{InvoiceStatus, ItemId, PaymentStatusCode};
 use HHK\SFTPConnection;
 use HHK\SysConst\ItemType;
@@ -50,7 +51,7 @@ class GLCodes {
 
 		$this->recordError('Report Dates: ' . $this->startDate->format('M j, Y') . ' to ' . $periodEndDate->format('M j, Y'));
 
-		$this->fileId = 'GL_HHK_' . $periodEndDate->format('Ymd') . '_' . getRandomString(3);
+		$this->fileId = 'GL_HHK_' . $periodEndDate->format('Ymd') . '_' . Common::getRandomString(3);
 
 		$this->stopAtInvoice = '';
 
@@ -576,6 +577,37 @@ class GLCodes {
 		return $bytesWritten;
 	}
 
+	public function downloadCSV() {
+		
+
+		$data = '';
+
+		if (count($this->lines) == 0) {
+			$this->recordError("No records to Transfer. ");
+			return FALSE;
+		}
+
+		foreach ($this->lines as $l) {
+			$data .= implode(',', $l['l']) . "\r\n";
+		}
+
+		$this->recordError($this->fileId . '.csv');
+
+		try
+		{
+			header('Content-Type: application/csv');
+        	header('Content-Disposition: attachment; filename="'.$this->fileId.'.csv";');
+			echo $data;
+		}
+		catch (\Exception $e)
+		{
+			$this->recordError($e->getMessage());
+			return FALSE;
+		}
+
+		exit();
+	}
+
 	protected function getPayTypeGlCodes(\PDO $dbh) {
 
 	    // Pay Types
@@ -588,7 +620,7 @@ class GLCodes {
 	    }
 
 
-	    $payTypes = readGenLookupsPDO($dbh, 'Pay_Type');
+	    $payTypes = Common::readGenLookupsPDO($dbh, 'Pay_Type');
 
 	    foreach ($payTypes as $r) {
 	        if ($r[2] != '') {

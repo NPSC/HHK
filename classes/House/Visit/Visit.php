@@ -2,11 +2,12 @@
 
 namespace HHK\House\Visit;
 
+use HHK\Common;
 use HHK\Exception\RuntimeException;
 use HHK\Notification\Mail\HHKMailer;
 use HHK\Payment\Invoice\Invoice;
 use HHK\Purchase\PriceModel\AbstractPriceModel;
-use HHK\SysConst\{RoomRateCategories, VisitStatus};
+use HHK\SysConst\{RoomRateCategories, ReservationStatus, VisitStatus};
 use HHK\TableLog\VisitLog;
 use HHK\Tables\EditRS;
 use HHK\Tables\House\ResourceRS;
@@ -47,7 +48,7 @@ class Visit {
     public $visitRS;
     /**
      * Summary of visitRSs
-     * @var array[VisitRS]
+     * @var array<VisitRS>
      */
     protected $visitRSs = array();
     /**
@@ -83,13 +84,13 @@ class Visit {
      * @param int $idVisit
      * @param \DateTime|null $arrivalDT
      * @param \DateTime|null $departureDT
-     * @param \HHK\House\Resource\AbstractResource|null $resource
+     * @param AbstractResource|null $resource
      * @param string $userName
      * @param int $span
      * @param bool $forceNew
-     * @throws \HHK\Exception\RuntimeException
+     * @throws RuntimeException
      */
-    function __construct(\PDO $dbh, $idReg, $idVisit, \DateTimeInterface $arrivalDT = NULL, \DateTimeInterface $departureDT = NULL, AbstractResource $resource = NULL, $userName = '', $span = -1, $forceNew = FALSE) {
+    function __construct(\PDO $dbh, $idReg, $idVisit, \DateTimeInterface|null $arrivalDT = null, \DateTimeInterface|null $departureDT = null, AbstractResource|null $resource = null, $userName = '', $span = -1, $forceNew = false) {
 
         $this->visitRSs = $this->loadVisits($dbh, $idReg, $idVisit, $span, $forceNew);
 
@@ -232,11 +233,11 @@ class Visit {
     /**
      * Summary of updateVisitRecordStatic
      * @param \PDO $dbh
-     * @param \HHK\Tables\Visit\VisitRS $visitRS
+     * @param VisitRS $visitRS
      * @param string $uname
      * @return int
      */
-    public static function updateVisitRecordStatic(\PDO $dbh, VisitRs $visitRS, $uname = '') {
+    public static function updateVisitRecordStatic(\PDO $dbh, VisitRS $visitRS, $uname = '') {
 
         $visitRS->Last_Updated->setNewVal(date("Y-m-d H:i:s"));
         $visitRS->Updated_By->setNewVal($uname);
@@ -261,8 +262,8 @@ class Visit {
      * @param string $stayStartDate
      * @param string $expectedCO
      * @param mixed $stayOnLeave
-     * @throws \HHK\Exception\RuntimeException
-     * @throws \HHK\Exception\UnexpectedValueException
+     * @throws RuntimeException
+     * @throws UnexpectedValueException
      * @return void
      */
     public function addGuestStay($idGuest, $checkinDate, $stayStartDate, $expectedCO = '', $stayOnLeave = 0) {
@@ -332,7 +333,7 @@ class Visit {
      * Summary of checkin
      * @param \PDO $dbh
      * @param string $username
-     * @throws \HHK\Exception\UnexpectedValueException
+     * @throws UnexpectedValueException
      * @return bool
      */
     public function checkin(\PDO $dbh, $username) {
@@ -386,15 +387,15 @@ class Visit {
     /**
      * Summary of changeRooms
      * @param \PDO $dbh
-     * @param \HHK\House\Resource\AbstractResource $resc
+     * @param AbstractResource $resc
      * @param string $uname
      * @param \DateTime $chgDT
      * @param bool $isAdmin
      * @param string $newRateCategory
-     * @throws \HHK\Exception\RuntimeException
-     * @return string
+     * @throws RuntimeException
+     * @return array
      */
-    public function changeRooms(\PDO $dbh, AbstractResource $resc, $uname, \DateTimeInterface $chgDT, $isAdmin, $newRateCategory = '') {
+    public function changeRooms(\PDO $dbh, AbstractResource $resc, $uname, \DateTimeInterface $chgDT, $isAdmin, $newRateCategory = '', $targetExpectedDeparture = NULL) {
 
         $uS = Session::getInstance();
 
@@ -403,27 +404,37 @@ class Visit {
         $rateGlideDays = 0;
 
         $rtnMessage = '';
+        $errorMessage = '';
 
         if ($resc->isNewResource()) {
             throw new RuntimeException('Invalid Resource supplied to visit->changeRooms.');
         }
 
         if ($this->visitRS->idResource->getStoredVal() == $resc->getIdResource()) {
-            return "Error - Change Rooms: the new room cannot be the same as the old room.  ";
+            return ['message' => '', 'error' => 'The new room cannot be the same as the current room.  '];
         }
 
         if (count($this->stays) > $resc->getMaxOccupants()) {
-            return "Error - Change Rooms failed:The New room is too small, or has too many occupants.  ";
+            return ['message' => '', 'error' => 'The selected room is too small for this visit.  '];
         }
 
         // Change date cannot be earlier than span start date.
         $spanStartDT = new \DateTime($this->visitRS->Span_Start->getStoredVal());
         $spanStartDT->setTime(0,0,0);
         if ($chgDT < $spanStartDT) {
-            return "Error - Change Rooms failed: The Change Date is prior to Visit Span start date.  ";
+            return ['message' => '', 'error' => 'The room change date cannot be before the visit span start date.  '];
         }
 
-        $expDepDT = new \DateTime($this->getExpectedDeparture());
+        if ($targetExpectedDeparture instanceof \DateTimeInterface) {
+            $expDepDT = new \DateTime($targetExpectedDeparture->format('Y-m-d 00:00:00'));
+        } else {
+            $expDepDT = new \DateTime($this->getExpectedDeparture());
+        }
+
+        if ($chgDT->format("Y-m-d") == $expDepDT->format("Y-m-d")) {
+            return ['message' => '', 'error' => 'Cannot change rooms on the expected checkout date.  '];
+        }
+
         $expDepDT->setTime(10, 0, 0);
         $now = new \DateTime();
         $now->setTime(10, 0, 0);
@@ -445,7 +456,7 @@ class Visit {
                 $reserv->setIdResource($resc->getIdResource());
                 $reserv->saveReservation($dbh, $this->getIdRegistration(), $uname);
             } else {
-                return "Error - Change Rooms failed: The new room is busy or missing necessary attributes.  ";
+                return ['message' => '', 'error' => 'Room ' . $resc->getTitle() . ' is not available for the selected dates.  '];
             }
         }
 
@@ -593,20 +604,20 @@ class Visit {
             }
         }
 
-        return $rtnMessage;
+        return ['message' => $rtnMessage, 'error' => $errorMessage];
     }
 
     /**
      * Summary of replaceRoomRate: change the rate for this span.
      * @param \PDO $dbh
-     * @param \HHK\Tables\Visit\VisitRS $visitRs
+     * @param VisitRS $visitRs
      * @param string $newRateCategory
      * @param float $pledgedRate
      * @param float $rateAdjust
      * @param string $uname
      * @return string
      */
-    public static function replaceRoomRate(\PDO $dbh, VisitRs $visitRs, $newRateCategory, $pledgedRate, $rateAdjust, $idRateAdjust, $uname) {
+    public static function replaceRoomRate(\PDO $dbh, VisitRS $visitRs, $newRateCategory, $pledgedRate, $rateAdjust, $idRateAdjust, $uname) {
 
         $uS = Session::getInstance();
         $reply = "";
@@ -686,9 +697,8 @@ class Visit {
      * @param string $newRateCategory
      * @param float $pledgedRate
      * @param float $rateAdjust
-     * @param string $uname
+     * @param mixed $idRateAdjust
      * @param \DateTimeInterface $chgDT
-     * @param mixed $useRateGlide
      * @param mixed $stayOnLeave
      * @return string
      */
@@ -746,7 +756,7 @@ class Visit {
      * @param integer $newRateId
      * @param float $pledgedRate
      * @param float $rateAdjust
-     * @param string $uname
+     * @param mixed $idRateAdjust
      * @param string $changeDate
      * @param integer $newSpan  span Id for new visit span.
      * @param integer $stayOnLeave
@@ -814,7 +824,7 @@ class Visit {
      * @param mixed $oldVisitStatus
      * @param mixed $uname
      * @param mixed $stayOnLeave
-     * @throws \HHK\Exception\RuntimeException
+     * @throws RuntimeException
      * @return void
      */
     protected function replaceStays(\PDO $dbh, $oldVisitStatus, $uname, $stayOnLeave = 0) {
@@ -954,8 +964,8 @@ class Visit {
 
         } else {
 
-            $dateDepartedDT = setTimeZone($uS, $dateDeparted);
-            $depDate = setTimeZone($uS, $dateDeparted);
+            $dateDepartedDT = Common::setTimeZone($uS, $dateDeparted);
+            $depDate = Common::setTimeZone($uS, $dateDeparted);
 
         }
 
@@ -1130,7 +1140,7 @@ class Visit {
         $resc = AbstractResource::getResourceObj($dbh, $this->getidResource());
         $rooms = $resc->getRooms();
 
-        $rmCleans = readGenLookupsPDO($dbh, 'Room_Cleaning_Days');
+        $rmCleans = Common::readGenLookupsPDO($dbh, 'Room_Cleaning_Days');
 
         foreach ($rooms as $r) {
 
@@ -1230,7 +1240,7 @@ class Visit {
      * Summary of removeSpanStub
      * @param \PDO $dbh
      * @param \DateTime $dateDepartedDT
-     * @throws \HHK\Exception\RuntimeException
+     * @throws RuntimeException
      * @return void
      */
     protected function removeSpanStub(\PDO $dbh, \DateTimeInterface $dateDepartedDT){
@@ -1251,7 +1261,7 @@ class Visit {
             VisitLog::logVisit($dbh, $this->visitRS->idVisit->getStoredVal(), $this->visitRS->Span->getStoredVal(), $this->visitRS->idResource->getStoredVal(), $this->visitRS->idRegistration->getStoredVal(), $logText, "delete", $uS->username);
 
             unset($this->visitRSs[$this->getSpan()]);
-            unset($this->stays);
+            $this->stays = array();
             $this->resource = NULL;
 
         } else {
@@ -1573,12 +1583,13 @@ class Visit {
     public function changeExpectedCheckoutDates(\PDO $dbh, array $guestDates, $maxExpected, $uname) {
 
         if ($this->getVisitStatus() != VisitStatus::CheckedIn) {
-            return array('message' => '');
+            return array('message' => '', 'error' => '', 'isChanged' => FALSE);
         }
 
         $uS = Session::getInstance();
         $isChanged = FALSE;
         $rtnMsg = '';
+        $errorMsg = '';
         $staysToUpdate = array();
 
         $todayDT = new \DateTime();
@@ -1618,10 +1629,10 @@ class Visit {
 
             // Creaate new Checkout date
             try {
-                $coDT = setTimeZone(NULL, $coDate);
+                $coDT = Common::setTimeZone(NULL, $coDate);
                 $coDT->setTime(0, 0, 0);
             } catch (\Exception $ex) {
-                $rtnMsg .= "Something wrong with the Expected Checkout Date: " . $coDate;
+                $errorMsg .= "Invalid Expected Checkout Date '" . $coDate . "': " . $ex->getMessage() . '.  ';
                 continue;
             }
 
@@ -1639,7 +1650,7 @@ class Visit {
             // Only if trying to set a new expected checkout date
             if ($coDT < $todayDT) {
 
-                $rtnMsg .= "Expected Checkout date cannot be earlier than today.  ";
+                $errorMsg .= "Expected Checkout date cannot be earlier than today.  ";
                  // Check last date
                 if ($ecoDT > $lastDepartureDT) {
                     $lastDepartureDT = new \DateTime($ecoDT->format('Y-m-d 00:00:00'));
@@ -1655,7 +1666,7 @@ class Visit {
             // Earlier than check in date?
             if ($coDT <= $spnStartDT) {
 
-                $rtnMsg .= "The Expected Checkout date cannot be earlier or the same as the Check-in date.  ";
+                $errorMsg .= "The Expected Checkout date cannot be earlier or the same as the Check-in date.  ";
                 // Check last date
                 if ($ecoDT > $lastDepartureDT) {
                     $lastDepartureDT = new \DateTime($ecoDT->format('Y-m-d 00:00:00'));
@@ -1667,7 +1678,7 @@ class Visit {
             // Too rar out?
             if ($todayDT->diff($coDT)->days > $maxExpected) {
 
-                $rtnMsg .= "Expected Checkout date cannot be beyond " . $maxExpected . " days from today.  The max days setting can be changed.";
+                $errorMsg .= "Expected Checkout date cannot be beyond " . $maxExpected . " days from today.  The max days setting can be changed.";
                 // Check last date
                 if ($ecoDT > $lastDepartureDT) {
                     $lastDepartureDT = new \DateTime($ecoDT->format('Y-m-d 00:00:00'));
@@ -1693,6 +1704,56 @@ class Visit {
             $isChanged = TRUE;
         }
 
+        // Check for room conflicts before applying updates.
+        $visitExpDepDT = new \DateTime($this->getExpectedDeparture());
+        $visitExpDepDT->setTime(0, 0, 0);
+        $spanStartDT = new \DateTime($this->getSpanStart());
+
+        if ($this->getidResource() > 0 && $visitExpDepDT != $lastDepartureDT && $lastDepartureDT > $visitArrivalDT) {
+
+            $rStat = "'" . ReservationStatus::Committed . "','" . ReservationStatus::UnCommitted . "'";
+            $vStat = "'" . VisitStatus::Pending . "','" . VisitStatus::Cancelled . "'";
+
+            $stmt = $dbh->prepare("
+                select 1
+                from reservation r
+                where r.idResource = :idrResv
+                  and r.idReservation != :idResvExcl
+                  and r.Status in ($rStat)
+                  and DATE(r.Expected_Arrival) < DATE(:depResv)
+                  and DATE(r.Expected_Departure) > DATE(:arrResv)
+                union
+                select 1
+                from visit v
+                where v.idResource = :idrVisit
+                  and v.idVisit != :idVisitExcl
+                  and v.Status not in ($vStat)
+                  and (case when v.Status != 'a' then DATE(v.Span_Start) != DATE(v.Span_End) else 1=1 end)
+                  and DATE(v.Arrival_Date) < DATE(:depVisit)
+                  and ifnull(DATE(v.Span_End), case when DATE(now()) > DATE(v.Expected_Departure) then AddDate(DATE(now()), 1) else DATE(v.Expected_Departure) end) > DATE(:arrVisit)
+                limit 1
+            ");
+
+            $stmt->execute([
+                ':idrResv' => $this->getidResource(),
+                ':idResvExcl' => $this->getReservationId(),
+                ':depResv' => $lastDepartureDT->format('Y-m-d'),
+                ':arrResv' => $spanStartDT->format('Y-m-d'),
+                ':idrVisit' => $this->getidResource(),
+                ':idVisitExcl' => $this->getIdVisit(),
+                ':depVisit' => $lastDepartureDT->format('Y-m-d'),
+                ':arrVisit' => $spanStartDT->format('Y-m-d')
+            ]);
+
+            if ($stmt->fetchColumn()) {
+                return [
+                    'error' => $errorMsg . 'The room has an overlapping reservation or visit.  ',
+                    'message' => '',
+                    'isChanged' => FALSE
+                ];
+            }
+        }
+
         // Update indicated stays.
         if (count($staysToUpdate) > 0) {
             VisitViewer::saveStaysDates($dbh, $staysToUpdate, $this->getIdRegistration(), $uS->username);
@@ -1700,8 +1761,6 @@ class Visit {
         }
 
         // See if the visit expected departure changed.
-        $visitExpDepDT = new \DateTime($this->getExpectedDeparture());
-        $visitExpDepDT->setTime(0, 0, 0);
 
         // Make sure the lastDepart date is greater than the visit arrival.
         if ($visitExpDepDT != $lastDepartureDT && $lastDepartureDT > $visitArrivalDT) {
@@ -1728,7 +1787,7 @@ class Visit {
             }
         }
 
-        return array('message'=>$rtnMsg, 'isChanged' => $isChanged);
+        return array('message' => $rtnMsg, 'error' => $errorMsg, 'isChanged' => $isChanged);
     }
 
     /**
@@ -1804,7 +1863,7 @@ class Visit {
         } else {
 
             /**
-             * @var \DateTimeImmutable $stayStartDT
+             * @var ?\DateTimeImmutable $stayStartDT
              */
             $stayStartDT = NULL;
 
@@ -2224,7 +2283,7 @@ class Visit {
      */
     public function loadStays(\PDO $dbh, $statusFilter = VisitStatus::CheckedIn) {
 
-        unset($this->stays);
+        $this->stays = array();
         $this->stays = self::loadStaysStatic($dbh, $this->getIdVisit(), $this->getSpan(), $statusFilter);
 
     }
@@ -2488,8 +2547,6 @@ class Visit {
     /**
      * Summary of setNotes
      * @param mixed $notes
-     * @param mixed $username
-     * @param mixed $roomTitle
      * @return void
      */
     public function setNotes($notes) {
