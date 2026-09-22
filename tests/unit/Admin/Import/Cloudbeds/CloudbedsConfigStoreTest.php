@@ -31,10 +31,27 @@ class CloudbedsConfigStoreTest extends TestCase
         $this->assertSame('ignore', $settings['unmappedCustomFields']);
         $this->assertFalse($settings['importGuestNotes'], 'an unchecked box is not posted');
         $this->assertTrue(CloudbedsConfigStore::settingsFromForm(['importGuestNotes' => '1'])['importGuestNotes']);
+        $this->assertSame('', $settings['stayedFrom']);
+        $this->assertSame('', $settings['stayedTo']);
+        $this->assertFalse($settings['includeCurrentGuests']);
         $this->assertArrayNotHasKey('customFields', $settings, 'the mapping is in crm_field_map, not a setting');
         foreach (['roomMap', 'paymentMethodMap', 'reservationStatusMap', 'chargeItemMap', 'customFields'] as $mapped) {
             $this->assertArrayNotHasKey($mapped, $settings, "$mapped is a mapping, not a setting");
         }
+        CloudbedsConfig::validateSettings($settings);
+    }
+
+    public function testStayFilterFieldsAreParsedAndTrimmed(): void
+    {
+        $settings = CloudbedsConfigStore::settingsFromForm([
+            'stayedFrom' => ' 2024-01-01 ',
+            'stayedTo' => '2024-12-31',
+            'includeCurrentGuests' => '1',
+        ]);
+
+        $this->assertSame('2024-01-01', $settings['stayedFrom']);
+        $this->assertSame('2024-12-31', $settings['stayedTo']);
+        $this->assertTrue($settings['includeCurrentGuests']);
         CloudbedsConfig::validateSettings($settings);
     }
 

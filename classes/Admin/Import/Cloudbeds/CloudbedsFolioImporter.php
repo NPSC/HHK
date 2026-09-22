@@ -24,6 +24,7 @@ use HHK\SysConst\PayType;
  * Charges become invoice lines (room revenue lines are merged into one line per run of nights at the same rate) and payments are
  * recorded against the invoice. This builds on the same classes the rest of HHK uses to take payments (Invoice, PaymentManagerPayment,
  * the *TX and *Response classes), only receipts are not emailed (see ImportPaymentResult) since these are historical payments.
+ * Each charge transaction's own Cloudbeds notes (distinct from its description) are collected into the invoice's Notes field.
  *
  * Voided/refunded/transferred transactions, refunds and authorizations are not imported and are reported as warnings.
  *
@@ -72,6 +73,7 @@ class CloudbedsFolioImporter {
 
         $folioId = (string) ($payload['folio']['id'] ?? '');
         $invoiceDate = $this->invoiceDate($charges, $payments);
+        $notes = $this->invoiceNotes($folioId, (string) ($payload['reservationId'] ?? ''), $charges);
 
         $invoice = new Invoice($this->dbh);
         $invoice->newInvoice(
@@ -81,7 +83,7 @@ class CloudbedsFolioImporter {
             $idRegistration,
             $idVisit,
             0,
-            'Imported from Cloudbeds folio ' . $folioId . ' (reservation ' . ($payload['reservationId'] ?? '') . ')',
+            $notes,
             $invoiceDate,
             $username,
             'Cloudbeds folio ' . $folioId
@@ -164,6 +166,7 @@ class CloudbedsFolioImporter {
                     'amount' => $amount,
                     'type' => (string) ($t['transactionType'] ?? ''),
                     'description' => trim((string) ($t['description'] ?? '')),
+                    'notes' => trim((string) ($t['notes'] ?? '')),
                     'serviceDate' => substr((string) ($t['serviceDate'] ?? ''), 0, 10),
                     'date' => $this->dateTime($t['transactionDatetimePropertyTime'] ?? $t['transactionDatetime'] ?? ''),
                 ];
@@ -247,6 +250,33 @@ class CloudbedsFolioImporter {
         }
 
         return $lines;
+    }
+
+    /**
+     * The invoice's Notes field: the standard "imported from" line, plus every distinct note found on the folio's charge
+     * transactions (payment notes go on the payment itself, see recordPayment()). Capped to fit the column.
+     */
+    protected function invoiceNotes(string $folioId, string $reservationId, array $charges): string {
+        $notes = 'Imported from Cloudbeds folio ' . $folioId . ' (reservation ' . $reservationId . ')';
+
+        $chargeNotes = [];
+        foreach ($charges as $c) {
+            $text = trim((string) ($c['notes'] ?? ''));
+            if ($text !== '' && !in_array($text, $chargeNotes, true)) {
+                $chargeNotes[] = $text;
+            }
+        }
+
+        if (count($chargeNotes) > 0) {
+            $notes .= '. Folio notes: ' . implode('; ', $chargeNotes);
+        }
+
+        // Invoice.Notes is a 450 character column; truncate cleanly rather than let the DB layer cut mid-word
+        if (strlen($notes) > 450) {
+            $notes = substr($notes, 0, 447) . '...';
+        }
+
+        return $notes;
     }
 
     /**

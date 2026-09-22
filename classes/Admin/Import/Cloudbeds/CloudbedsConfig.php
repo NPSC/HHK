@@ -63,7 +63,7 @@ class CloudbedsConfig {
     ];
 
     /** Settings saved in import_cloudbeds_settings. The rest of the config is the connection, the custom field mapping (crm_field_map) and the room, payment method and status mappings (import_cloudbeds_map). */
-    public const SETTING_KEYS = ['defaultHospital', 'createMissing', 'unmappedCustomFields', 'importGuestNotes'];
+    public const SETTING_KEYS = ['defaultHospital', 'createMissing', 'unmappedCustomFields', 'importGuestNotes', 'stayedFrom', 'stayedTo', 'includeCurrentGuests'];
 
     protected array $cfg;
     protected CloudbedsFieldMapper $fieldMapper;
@@ -120,6 +120,17 @@ class CloudbedsConfig {
             throw new \InvalidArgumentException('defaultHospital must be a hospital id');
         }
 
+        $stayedFrom = trim((string) ($settings['stayedFrom'] ?? ''));
+        $stayedTo = trim((string) ($settings['stayedTo'] ?? ''));
+        foreach (['stayedFrom' => $stayedFrom, 'stayedTo' => $stayedTo] as $key => $value) {
+            if ($value !== '' && !preg_match('/^\d{4}-\d{2}-\d{2}$/', $value)) {
+                throw new \InvalidArgumentException("$key must be a date (YYYY-MM-DD)");
+            }
+        }
+        if ($stayedFrom !== '' && $stayedTo !== '' && $stayedFrom > $stayedTo) {
+            throw new \InvalidArgumentException('stayedFrom must not be after stayedTo');
+        }
+
         foreach (['reservationStatusMap' => CloudbedsValueMaps::RESERVATION_STATUS, 'paymentMethodMap' => CloudbedsValueMaps::PAYMENT_METHOD, 'roomMap' => CloudbedsValueMaps::ROOM, 'chargeItemMap' => CloudbedsValueMaps::CHARGE_ITEM] as $key => $type) {
             if (isset($settings[$key]) && !is_array($settings[$key])) {
                 throw new \InvalidArgumentException("$key must be a list of mappings");
@@ -168,6 +179,35 @@ class CloudbedsConfig {
      */
     public function importGuestNotes(): bool {
         return (bool) ($this->cfg['importGuestNotes'] ?? true);
+    }
+
+    /**
+     * Only guests with a checked-out (or, with includeCurrentGuests(), checked-in) stay whose check-out date falls in this range are
+     * imported, per getGuestList. Blank means no bound on that side.
+     */
+    public function getStayedFrom(): string {
+        return trim((string) ($this->cfg['stayedFrom'] ?? ''));
+    }
+
+    public function getStayedTo(): string {
+        return trim((string) ($this->cfg['stayedTo'] ?? ''));
+    }
+
+    /**
+     * Count a guest currently checked in (mid-stay, not yet checked out) as having stayed too. Off by default: "stayed" normally
+     * means the stay is complete.
+     */
+    public function includeCurrentGuests(): bool {
+        return (bool) ($this->cfg['includeCurrentGuests'] ?? false);
+    }
+
+    /**
+     * The Cloudbeds reservation statuses that getGuestList is filtered to, per includeCurrentGuests()
+     *
+     * @return string[]
+     */
+    public function getStayStatuses(): array {
+        return $this->includeCurrentGuests() ? ['checked_out', 'checked_in'] : ['checked_out'];
     }
 
     public function getFieldMapper(): CloudbedsFieldMapper {

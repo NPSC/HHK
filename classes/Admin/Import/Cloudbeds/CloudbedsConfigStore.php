@@ -462,6 +462,7 @@ class CloudbedsConfigStore {
      * Build the settings to save from the import page's settings form. Settings the form doesn't include are kept from $existing.
      *
      * Form fields: defaultHospital, createMissing[hospitals|rooms|genLookups], unmappedCustomFields, importGuestNotes,
+     * stayedFrom, stayedTo, includeCurrentGuests,
      * The custom field mapping and the room, payment method, status and charge item mappings are not settings, see fieldMapFromForm() and CloudbedsValueMaps::fromForm().
      *
      * @param array $post
@@ -479,6 +480,9 @@ class CloudbedsConfigStore {
         ];
         $settings['unmappedCustomFields'] = (string) ($post['unmappedCustomFields'] ?? 'note');
         $settings['importGuestNotes'] = !empty($post['importGuestNotes']);
+        $settings['stayedFrom'] = trim((string) ($post['stayedFrom'] ?? ''));
+        $settings['stayedTo'] = trim((string) ($post['stayedTo'] ?? ''));
+        $settings['includeCurrentGuests'] = !empty($post['includeCurrentGuests']);
 
         return $settings;
     }

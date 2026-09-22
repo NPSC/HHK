@@ -16,10 +16,11 @@ class CloudbedsFolioImporterTest extends TestCase
     {
         $config = new CloudbedsConfig(['apiKey' => 'k', 'organizationId' => '1', 'propertyIds' => [1]]);
 
-        // expose the protected line building/partitioning, these don't touch the database
+        // expose the protected line building/partitioning/notes, these don't touch the database
         $this->importer = new class($this->createStub(\PDO::class), $config) extends CloudbedsFolioImporter {
             public function split(array $t, array &$w): array { return $this->partition($t, $w); }
             public function lines(array $c, array &$w = []): array { return $this->buildLines($c, $w); }
+            public function notes(string $folioId, string $reservationId, array $c): string { return $this->invoiceNotes($folioId, $reservationId, $c); }
         };
     }
 
@@ -108,6 +109,7 @@ class CloudbedsFolioImporterTest extends TestCase
         return new class($this->createStub(\PDO::class), $config) extends CloudbedsFolioImporter {
             public function split(array $t, array &$w): array { return $this->partition($t, $w); }
             public function lines(array $c, array &$w = []): array { return $this->buildLines($c, $w); }
+            public function notes(string $folioId, string $reservationId, array $c): string { return $this->invoiceNotes($folioId, $reservationId, $c); }
         };
     }
 
@@ -129,6 +131,43 @@ class CloudbedsFolioImporterTest extends TestCase
         $this->assertSame('2024-03-01 10:00:00', $payments[0]['date']);
         $this->assertSame(40.0, $payments[1]['amount'], 'falls back to the amount, without a sign');
         $this->assertSame([], $w);
+    }
+
+    public function testChargeNotesAreKeptOnTheCharge(): void
+    {
+        $w = [];
+        [$charges] = $this->importer->split([
+            ['id' => 't', 'transactionType' => 'tax', 'amount' => 12.5, 'description' => 'City tax', 'notes' => 'Guest requested itemized tax'],
+        ], $w);
+
+        $this->assertSame('Guest requested itemized tax', $charges[0]['notes']);
+    }
+
+    public function testInvoiceNotesCollectDistinctChargeNotes(): void
+    {
+        $notes = $this->importer->notes('F1', 'R1', [
+            ['notes' => 'Late checkout approved'],
+            ['notes' => 'Late checkout approved'],
+            ['notes' => ''],
+            ['notes' => 'Comped parking'],
+            [],
+        ]);
+
+        $this->assertSame('Imported from Cloudbeds folio F1 (reservation R1). Folio notes: Late checkout approved; Comped parking', $notes);
+    }
+
+    public function testInvoiceNotesWithoutChargeNotesIsJustTheImportLine(): void
+    {
+        $this->assertSame('Imported from Cloudbeds folio F1 (reservation R1)', $this->importer->notes('F1', 'R1', [['notes' => '']]));
+    }
+
+    public function testInvoiceNotesAreTruncatedToFitTheColumn(): void
+    {
+        $notes = $this->importer->notes('F1', 'R1', [['notes' => str_repeat('x', 500)]]);
+
+        $this->assertSame(450, strlen($notes));
+        $this->assertStringEndsWith('...', $notes);
+        $this->assertStringStartsWith('Imported from Cloudbeds folio F1', $notes);
     }
 
     public function testVoidedRefundedAndAuthorizationTransactionsAreSkipped(): void

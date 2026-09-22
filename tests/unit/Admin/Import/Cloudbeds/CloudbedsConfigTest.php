@@ -46,6 +46,21 @@ class CloudbedsConfigTest extends TestCase
         $this->assertSame(12, $this->config(['defaultHospital' => '12'])->getDefaultHospitalId());
         $this->assertSame(0, $this->config(['defaultHospital' => ''])->getDefaultHospitalId());
         $this->assertTrue($this->config(['createMissing' => ['rooms' => true]])->createMissing('rooms'));
+        $this->assertSame('', $c->getStayedFrom());
+        $this->assertSame('', $c->getStayedTo());
+        $this->assertFalse($c->includeCurrentGuests());
+        $this->assertSame(['checked_out'], $c->getStayStatuses());
+    }
+
+    public function testStayFilter(): void
+    {
+        $c = $this->config(['stayedFrom' => '2024-01-01', 'stayedTo' => '2024-12-31', 'includeCurrentGuests' => true]);
+        $this->assertSame('2024-01-01', $c->getStayedFrom());
+        $this->assertSame('2024-12-31', $c->getStayedTo());
+        $this->assertTrue($c->includeCurrentGuests());
+        $this->assertSame(['checked_out', 'checked_in'], $c->getStayStatuses());
+
+        $this->assertSame('', $this->config(['stayedFrom' => '  '])->getStayedFrom(), 'blank means no bound');
     }
 
     public function testStatusMap(): void
@@ -121,8 +136,11 @@ class CloudbedsConfigTest extends TestCase
             'paymentMethodMap' => ['venmo' => 'tf'],
             'chargeItemMap' => ['product' => '2', 'tax' => 9, 'channel_commission' => 'skip'],
             'roomMap' => ['A' => '1'],
+            'stayedFrom' => '2024-01-01',
+            'stayedTo' => '2024-12-31',
         ]);
-        $this->addToAssertionCount(1);
+        CloudbedsConfig::validateSettings(['stayedFrom' => '', 'stayedTo' => '']);
+        $this->addToAssertionCount(2);
 
         foreach ([
             ['customFields' => ['guest' => ['a' => 'hospital']]],
@@ -136,6 +154,9 @@ class CloudbedsConfigTest extends TestCase
             ['paymentMethodMap' => ['venmo' => 'bitcoin']],
             ['chargeItemMap' => ['product' => 'two']],
             ['defaultHospital' => 'Mercy'],
+            ['stayedFrom' => '01/01/2024'],
+            ['stayedTo' => 'not a date'],
+            ['stayedFrom' => '2024-12-31', 'stayedTo' => '2024-01-01'],
         ] as $bad) {
             try {
                 CloudbedsConfig::validateSettings($bad);

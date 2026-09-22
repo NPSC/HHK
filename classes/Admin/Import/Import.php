@@ -569,6 +569,7 @@ class Import extends AbstractImport implements ImportInterface {
      * @return array
      */
     public function makeMissingGenLookups(string $importFieldName){
+        $uploadedGenLookups = [];
         if(isset($this->genLookupMapping[$importFieldName])){
             $uploadedGenLookups = (new ImportMarkup($this->dbh))->getGenLookupInfo($this->genLookupMapping[$importFieldName], $importFieldName);
         }

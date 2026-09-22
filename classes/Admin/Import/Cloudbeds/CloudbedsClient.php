@@ -10,7 +10,7 @@ use HHK\Integrations\GuzzleAPILogger;
 /**
  * Thin client for the Cloudbeds APIs used by the importer:
  *  - Guest Profiles API v1 (/guest-profiles/v1): profiles, profile custom fields and profile reservations
- *  - PMS API v1.3 (/api/v1.3): reservation custom fields, guest notes, custom field definitions, rooms and payment methods
+ *  - PMS API v1.3 (/api/v1.3): reservation custom fields, guest notes, guest list, custom field definitions, rooms and payment methods
  *  - Accounting API v1.0 (/accounting/v1.0): folios and folio transactions
  *
  * API keys are sent in the x-api-key header, OAuth access tokens as a Bearer token.
@@ -229,6 +229,49 @@ class CloudbedsClient {
         }
 
         return (array) ($resp['data']['methods'] ?? []);
+    }
+
+    /**
+     * One page of the property's guests (one entry per guest per reservation), filtered by check-out date range and reservation status.
+     * Cloudbeds keys this by PMS guest id; each entry also carries that id under "guestID" so it can be handled the same as other pages.
+     *
+     * @param string $propertyId
+     * @param int $pageNumber starting at 1
+     * @param string $checkOutFrom Y-m-d, blank for no lower bound
+     * @param string $checkOutTo Y-m-d, blank for no upper bound
+     * @param string[] $statuses reservation statuses to include, e.g. ['checked_out']
+     * @return array{data: array[], total: int}
+     */
+    public function getGuestListPage(string $propertyId, int $pageNumber, string $checkOutFrom, string $checkOutTo, array $statuses): array {
+        $query = [
+            'propertyIDs' => $propertyId,
+            'status' => implode(',', $statuses),
+            'includeGuestInfo' => 'true',
+            'pageNumber' => $pageNumber,
+            'pageSize' => self::PMS_PAGE_SIZE,
+        ];
+        if ($checkOutFrom !== '') {
+            $query['checkOutFrom'] = $checkOutFrom;
+        }
+        if ($checkOutTo !== '') {
+            $query['checkOutTo'] = $checkOutTo;
+        }
+
+        $resp = $this->request('GET', 'api/v1.3/getGuestList', ['query' => $query]);
+
+        if (isset($resp['success']) && $resp['success'] === false) {
+            throw new \RuntimeException('Cloudbeds getGuestList failed: ' . ($resp['message'] ?? 'unknown error'));
+        }
+
+        $data = [];
+        foreach ((array) ($resp['data'] ?? []) as $guestId => $entry) {
+            if (is_array($entry)) {
+                $entry['guestID'] = (string) ($entry['guestID'] ?? $guestId);
+                $data[] = $entry;
+            }
+        }
+
+        return ['data' => $data, 'total' => (int) ($resp['total'] ?? count($data))];
     }
 
     /**

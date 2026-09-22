@@ -5,11 +5,15 @@ namespace HHK\Admin\Import\Cloudbeds;
  * Pulls data from Cloudbeds into the staging table, in resumable steps that each stay within a time budget so
  * they can be driven from repeated web requests:
  *
- *  1. profiles           every (non merged) guest profile
- *  2. profileDetails     each profile's custom fields and reservations (a reservation is staged once, with the ids of all its guest profiles)
- *  3. reservationFields  reservation custom fields, from the PMS API. Also pairs profiles with their PMS guest ids where Cloudbeds allows it (see CloudbedsGuestMatcher).
- *  4. guestNotes         the notes on each guest by PMS guest id, from the PMS API (skipped when guest notes aren't imported)
- *  5. folios             folios and their transactions, for reservations that became visits
+ *  1. guestList          which reservations count as a stay, from the PMS getGuestList endpoint (see CloudbedsConfig::getStayedFrom() etc).
+ *                        Seeds a reservation row per qualifying reservation; nothing else ever creates one, so only reservations
+ *                        getGuestList reports as stayed (in the configured timeframe) are ever staged or imported.
+ *  2. profiles           every (non merged) guest profile
+ *  3. profileDetails     each seeded reservation is matched up with its guest profiles, and a profile's custom fields are fetched
+ *                        only once it has at least one (a profile with none is never imported, see CloudbedsImport::importProfile())
+ *  4. reservationFields  reservation custom fields, from the PMS API. Also pairs profiles with their PMS guest ids where Cloudbeds allows it (see CloudbedsGuestMatcher).
+ *  5. guestNotes         the notes on each guest by PMS guest id, from the PMS API (skipped when guest notes aren't imported)
+ *  6. folios             folios and their transactions, for reservations that became visits
  *
  * @author    Will Ireland <wireland@nonprofitsoftwarecorp.org>
  * @copyright 2010-2017 <nonprofitsoftwarecorp.org>
@@ -18,7 +22,7 @@ namespace HHK\Admin\Import\Cloudbeds;
  */
 class CloudbedsFetcher {
 
-    public const STEPS = ['profiles', 'profileDetails', 'reservationFields', 'guestNotes', 'folios'];
+    public const STEPS = ['guestList', 'profiles', 'profileDetails', 'reservationFields', 'guestNotes', 'folios'];
 
     public function __construct(
         protected CloudbedsClient $client,
@@ -46,6 +50,7 @@ class CloudbedsFetcher {
             }
 
             $finished = match ($step) {
+                'guestList' => $this->fetchGuestList($deadline),
                 'profiles' => $this->fetchProfiles($deadline),
                 'profileDetails' => $this->fetchProfileDetails($deadline),
                 'reservationFields' => $this->fetchReservationFields($deadline),
@@ -69,13 +74,73 @@ class CloudbedsFetcher {
     protected function describe(string $step): string {
         $counts = $this->staging->counts();
         return match ($step) {
+            'guestList' => 'Finding guests who stayed: ' . array_sum($counts[CloudbedsStaging::RESERVATION]) . ' qualifying reservations found',
             'profiles' => 'Fetching profiles: ' . array_sum($counts[CloudbedsStaging::PROFILE]) . ' fetched',
-            'profileDetails' => 'Fetching profile custom fields and reservations: ' . $this->staging->countUnfetched(CloudbedsStaging::PROFILE) . ' profiles left, ' . array_sum($counts[CloudbedsStaging::RESERVATION]) . ' reservations found',
+            'profileDetails' => 'Fetching profile custom fields and reservations: ' . $this->staging->countUnfetched(CloudbedsStaging::PROFILE) . ' profiles left, ' . array_sum($counts[CloudbedsStaging::RESERVATION]) . ' qualifying reservations matched',
             'reservationFields' => 'Fetching reservation custom fields',
             'guestNotes' => 'Fetching guest notes: ' . $this->staging->getMeta('guestNotesDone', '0') . ' guests done, ' . $this->staging->getMeta('guestNotesUnpaired', '0') . ' without a Cloudbeds guest id (no notes)',
             'folios' => 'Fetching folios: ' . $this->staging->countUnfetched(CloudbedsStaging::RESERVATION) . ' reservations left, ' . array_sum($counts[CloudbedsStaging::FOLIO]) . ' folios found',
             default => '',
         };
+    }
+
+    /**
+     * Seed a reservation row for every reservation getGuestList reports as stayed (per the configured timeframe and statuses).
+     * profileDetails() only ever enriches a reservation that already exists here; it never creates one, so this is what decides
+     * which reservations (and, transitively, which guest profiles) end up imported.
+     */
+    protected function fetchGuestList(float $deadline): bool {
+        $checkOutFrom = $this->config->getStayedFrom();
+        $checkOutTo = $this->config->getStayedTo();
+        $statuses = $this->config->getStayStatuses();
+
+        foreach ($this->config->getPropertyIds() as $propertyId) {
+            if ($this->staging->getMeta("guestListDone:$propertyId") === '1') {
+                continue;
+            }
+
+            while (microtime(true) < $deadline) {
+                $pageNumber = (int) $this->staging->getMeta("guestListPage:$propertyId", '1');
+                $page = $this->client->getGuestListPage($propertyId, $pageNumber, $checkOutFrom, $checkOutTo, $statuses);
+
+                foreach ($page['data'] as $entry) {
+                    $reservationId = (string) ($entry['reservationID'] ?? '');
+                    $guestId = (string) ($entry['guestID'] ?? '');
+                    if ($reservationId === '' || $guestId === '') {
+                        continue;
+                    }
+
+                    $staged = $this->staging->getPayload(CloudbedsStaging::RESERVATION, $reservationId) ?? [
+                        'reservationId' => $reservationId,
+                        'propertyId' => $propertyId,
+                        'summary' => [],
+                        'profileIds' => [],
+                        'customFields' => [],
+                        'guestListGuests' => [],
+                    ];
+
+                    $staged['guestListStatus'] = (string) ($entry['status'] ?? '');
+                    if (!in_array($guestId, array_column($staged['guestListGuests'], 'guestId'), true)) {
+                        $staged['guestListGuests'][] = ['guestId' => $guestId, 'isMainGuest' => !empty($entry['isMainGuest'])];
+                    }
+
+                    $this->staging->upsert(CloudbedsStaging::RESERVATION, $reservationId, $staged, '', $propertyId);
+                }
+
+                if (count($page['data']) < CloudbedsClient::PMS_PAGE_SIZE || $pageNumber * CloudbedsClient::PMS_PAGE_SIZE >= $page['total']) {
+                    $this->staging->setMeta("guestListDone:$propertyId", '1');
+                    break;
+                }
+
+                $this->staging->setMeta("guestListPage:$propertyId", $pageNumber + 1);
+            }
+
+            if ($this->staging->getMeta("guestListDone:$propertyId") !== '1') {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     protected function fetchProfiles(float $deadline): bool {
@@ -116,7 +181,7 @@ class CloudbedsFetcher {
             foreach ($rows as $row) {
                 $profileId = $row['cloudbedsId'];
                 $payload = $row['payload'];
-                $payload['customFields'] = $this->client->getProfileCustomFields($profileId);
+                $hasStay = false;
 
                 foreach ($this->client->iterateProfileReservations($profileId) as $reservation) {
                     $propertyId = (string) ($reservation['property']['id'] ?? '');
@@ -125,20 +190,25 @@ class CloudbedsFetcher {
                     }
 
                     $reservationId = (string) $reservation['id'];
-                    $staged = $this->staging->getPayload(CloudbedsStaging::RESERVATION, $reservationId) ?? [
-                        'reservationId' => $reservationId,
-                        'propertyId' => $propertyId,
-                        'summary' => $reservation,
-                        'profileIds' => [],
-                        'customFields' => [],
-                    ];
 
+                    // only a reservation the guest list step already staged (i.e. reported as stayed) is ever enriched or imported
+                    $staged = $this->staging->getPayload(CloudbedsStaging::RESERVATION, $reservationId);
+                    if ($staged === null) {
+                        continue;
+                    }
+
+                    $staged['summary'] = $reservation;
                     if (!in_array($profileId, $staged['profileIds'], true)) {
                         $staged['profileIds'][] = $profileId;
                     }
 
                     $this->staging->upsert(CloudbedsStaging::RESERVATION, $reservationId, $staged, '', $propertyId);
+                    $hasStay = true;
                 }
+
+                $payload['hasStay'] = $hasStay;
+                // custom fields are only useful for profiles that will actually be imported
+                $payload['customFields'] = $hasStay ? $this->client->getProfileCustomFields($profileId) : [];
 
                 $this->staging->setPayload((int) $row['id'], $payload);
                 $this->staging->markFetched((int) $row['id']);

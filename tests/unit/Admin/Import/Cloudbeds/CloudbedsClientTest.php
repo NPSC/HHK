@@ -196,6 +196,47 @@ class CloudbedsClientTest extends TestCase
         $this->assertSame([], $this->sleeps);
     }
 
+    public function testGuestListFlattensTheGuestIdKeyedMapAndSendsTheFilters(): void
+    {
+        $c = $this->client([$this->json(['success' => true, 'data' => [
+            'G1' => ['reservationID' => 'R1', 'status' => 'checked_out', 'guestFirstName' => 'Jane'],
+            'G2' => ['reservationID' => 'R1', 'guestID' => 'G2-explicit', 'status' => 'checked_out'],
+        ], 'total' => 2])]);
+
+        $page = $c->getGuestListPage('42', 2, '2024-01-01', '2024-12-31', ['checked_out', 'checked_in']);
+
+        $this->assertSame(2, $page['total']);
+        $this->assertSame('G1', $page['data'][0]['guestID'], 'the map key is used when the entry has no guestID of its own');
+        $this->assertSame('G2-explicit', $page['data'][1]['guestID'], 'an explicit guestID in the entry is kept');
+
+        $req = $this->request(0);
+        $this->assertSame('/api/v1.3/getGuestList', $req->getUri()->getPath());
+        parse_str($req->getUri()->getQuery(), $q);
+        $this->assertSame('42', $q['propertyIDs']);
+        $this->assertSame('checked_out,checked_in', $q['status']);
+        $this->assertSame('2024-01-01', $q['checkOutFrom']);
+        $this->assertSame('2024-12-31', $q['checkOutTo']);
+        $this->assertSame('2', $q['pageNumber']);
+        $this->assertSame('true', $q['includeGuestInfo']);
+    }
+
+    public function testGuestListOmitsBlankDateBounds(): void
+    {
+        $c = $this->client([$this->json(['success' => true, 'data' => []])]);
+        $c->getGuestListPage('42', 1, '', '', ['checked_out']);
+
+        parse_str($this->request(0)->getUri()->getQuery(), $q);
+        $this->assertArrayNotHasKey('checkOutFrom', $q);
+        $this->assertArrayNotHasKey('checkOutTo', $q);
+    }
+
+    public function testGuestListThrowsOnUnsuccessfulResponse(): void
+    {
+        $c = $this->client([$this->json(['success' => false, 'message' => 'bad status filter'])]);
+        $this->expectExceptionMessage('bad status filter');
+        $c->getGuestListPage('42', 1, '', '', ['checked_out']);
+    }
+
     public function testGuestNotesAreFetchedForTheGuestAtTheProperty(): void
     {
         $c = $this->client([$this->json(['success' => true, 'data' => [['guestNoteID' => '5', 'userName' => 'Jane', 'dateCreated' => '2024-03-01 10:00:00', 'guestNote' => 'Allergic to nuts']]])]);

@@ -202,6 +202,11 @@ $setTbl->addBodyTr(HTMLTable::makeTh('Create Missing') . HTMLTable::makeTd(
     . $checkbox('createMissing[genLookups]', !empty($createMissing['genLookups']), 'Lookup values (ethnicity, diagnosis, ...)')));
 $setTbl->addBodyTr(HTMLTable::makeTh('Unmapped Custom Fields') . HTMLTable::makeTd(
     HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup([['note', 'Keep as a note'], ['ignore', 'Ignore']], (string) ($saved['unmappedCustomFields'] ?? 'note'), FALSE), ['name' => 'unmappedCustomFields'])));
+$setTbl->addBodyTr(HTMLTable::makeTh('Only Guests Who Stayed') . HTMLTable::makeTd(
+    'From ' . HTMLInput::generateMarkup(cbEsc($saved['stayedFrom'] ?? ''), ['name' => 'stayedFrom', 'type' => 'date', 'id' => false])
+    . ' to ' . HTMLInput::generateMarkup(cbEsc($saved['stayedTo'] ?? ''), ['name' => 'stayedTo', 'type' => 'date', 'id' => false])
+    . HTMLContainer::generateMarkup('div', $checkbox('includeCurrentGuests', !empty($saved['includeCurrentGuests']), 'Also count a guest who is currently checked in (mid-stay)'), ['class' => 'mt-1'])
+    . HTMLContainer::generateMarkup('div', 'Only guest profiles with a checked-out stay (checked-in too, if checked above) whose check-out date falls in this range, at the configured properties, are imported. Uses the Cloudbeds getGuestList endpoint. Leave a date blank for no limit on that side; leave both blank to import anyone who has ever checked out.', ['class' => 'mt-1'])));
 $setTbl->addBodyTr(HTMLTable::makeTh('Guest Notes') . HTMLTable::makeTd(
     $checkbox('importGuestNotes', !empty($saved['importGuestNotes'] ?? true), 'Import the notes on guests as member notes (one extra Cloudbeds request per guest when fetching)')));
 
@@ -709,8 +714,9 @@ if ($import !== null) {
                 <p>Properties: <?php echo cbEsc(implode(', ', $config->getPropertyIds())); ?>
                     &nbsp;|&nbsp; Organization: <?php echo cbEsc($config->getOrganizationId()); ?>
                     &nbsp;|&nbsp; Fetch step: <strong><?php echo cbEsc($fetchStep); ?></strong></p>
-                <p>Pulls guest profiles, their custom fields and reservations, reservation custom fields and folios into a staging table.
-                    Nothing is written to HHK yet. It can be stopped and resumed. Map the custom fields above before importing.</p>
+                <p>First finds which reservations count as a stay (Cloudbeds getGuestList, filtered by the "Only Guests Who Stayed" setting above), then pulls
+                    those guest profiles, their custom fields and reservations, reservation custom fields and folios into a staging table.
+                    Only guests with a qualifying stay are ever staged. Nothing is written to HHK yet. It can be stopped and resumed. Map the custom fields above before importing.</p>
                 <button class="ui-button ui-corner-all cbAction" id="fetch">Fetch / Resume Fetch</button>
                 <span id="fetchStatus" class="ml-3"></span>
                 <?php if ((int) $staging->getMeta('guestNotesUnpaired', '0') > 0) { ?>

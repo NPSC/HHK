@@ -14,6 +14,8 @@ use HHK\SysConst\VisitStatus;
  *
  * Data is fetched from Cloudbeds into a staging table first (see CloudbedsFetcher), then imported in batches by startImport():
  *
+ *  - only guests with a stay (by default checked-out; see CloudbedsConfig::includeCurrentGuests()) in the configured timeframe are
+ *    imported at all; see CloudbedsFetcher's guestList step, driven by Cloudbeds' getGuestList endpoint.
  *  - guest profiles become HHK people. The Cloudbeds guest profile id is stored in name.External_Id, which is how imported people are tracked.
  *    The notes on the guest in Cloudbeds become member notes.
  *  - reservations become an HHK reservation, plus a visit and stays when the guest checked in/out. Cloudbeds has no patients or PSGs, so
@@ -215,6 +217,10 @@ class CloudbedsImport extends AbstractImport implements ImportInterface {
         $existing = $this->findPersonByExternalId($profileId);
         if ($existing > 0) {
             return $this->result(CloudbedsStaging::DONE, $existing, [], 'Already imported');
+        }
+
+        if (!($payload['hasStay'] ?? false)) {
+            return $this->result(CloudbedsStaging::SKIPPED, null, [], 'No stay in the configured timeframe');
         }
 
         $r = CloudbedsNormalizer::person($payload);
