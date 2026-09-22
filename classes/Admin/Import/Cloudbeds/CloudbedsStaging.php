@@ -380,6 +380,28 @@ class CloudbedsStaging {
     }
 
     /**
+     * Qualifying reservations (staged by the guestList fetch step) that no guest profile ever claimed - i.e. every
+     * guest on that reservation was excluded from the profiles fetch. This is the visible symptom if the checkoutAt
+     * prefilter in fetchProfiles() ever excludes a profile that should have been fetched: the reservation is still
+     * staged (guestList doesn't filter by profile), but profileDetails() never got a chance to enrich it, so it will
+     * fail to import with "Reservation has no importable guests" rather than being silently dropped. A non-zero count
+     * here after a complete fetch is worth investigating before importing.
+     *
+     * @return int
+     */
+    public function countReservationsWithoutProfile(): int {
+        $count = 0;
+
+        $this->eachPayload(self::RESERVATION, function (array $payload) use (&$count) {
+            if (count((array) ($payload['profileIds'] ?? [])) === 0) {
+                $count++;
+            }
+        });
+
+        return $count;
+    }
+
+    /**
      * Every custom field found in the staged data so the mappings in the config can be reviewed
      *
      * @param CloudbedsFieldMapper $mapper

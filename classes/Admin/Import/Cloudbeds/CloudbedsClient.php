@@ -281,9 +281,26 @@ class CloudbedsClient {
      * @param int $limit
      * @return array{data: array, total: ?int}
      */
-    public function getProfilesPage(int $offset, int $limit = self::PROFILES_PAGE_SIZE): array {
+    public function getProfilesPage(int $offset, int $limit = self::PROFILES_PAGE_SIZE, string $checkOutFrom = '', string $checkOutTo = ''): array {
+        $query = ['offset' => $offset, 'limit' => $limit, 'includeTotal' => 'true', 'sort' => 'dateModified:asc'];
+
+        // narrows the enumeration to profiles with a reservation checking out in this range, per the endpoint's own
+        // checkinAt/checkoutAt filter. The exact server-side semantics (e.g. whether it matches ANY of a profile's
+        // reservations, which is what this assumes, versus some aggregate value) are not documented and this has not
+        // been verified against a live account - see CloudbedsFetcher::fetchProfiles().
+        $filters = [];
+        if ($checkOutFrom !== '') {
+            $filters[] = "checkoutAt:greater_than_or_equal:$checkOutFrom";
+        }
+        if ($checkOutTo !== '') {
+            $filters[] = "checkoutAt:less_than_or_equal:$checkOutTo";
+        }
+        if (count($filters) > 0) {
+            $query['filter'] = implode(';', $filters);
+        }
+
         $page = $this->unwrapPage($this->request('GET', 'guest-profiles/v1/profiles', [
-            'query' => ['offset' => $offset, 'limit' => $limit, 'includeTotal' => 'true', 'sort' => 'dateModified:asc'],
+            'query' => $query,
         ], $this->profileHeaders()));
 
         return ['data' => (array) ($page['data'] ?? []), 'total' => isset($page['total']) ? (int) $page['total'] : null];

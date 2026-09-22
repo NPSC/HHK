@@ -146,9 +146,16 @@ class CloudbedsFetcher {
     protected function fetchProfiles(float $deadline): bool {
         $limit = CloudbedsClient::PROFILES_PAGE_SIZE;
 
+        // prefilter by the same timeframe guestList uses, so this doesn't have to enumerate the whole account's guest
+        // history just to later throw most of it away in profileDetails() - a big win when the account has years of
+        // guests but the configured timeframe is narrow. Skipped for a currently checked-in guest (includeCurrentGuests),
+        // since an in-progress stay has no final checkout date yet to filter on.
+        $checkOutFrom = $this->config->includeCurrentGuests() ? '' : $this->config->getStayedFrom();
+        $checkOutTo = $this->config->includeCurrentGuests() ? '' : $this->config->getStayedTo();
+
         while (microtime(true) < $deadline) {
             $offset = (int) $this->staging->getMeta('profileOffset', '0');
-            $page = $this->client->getProfilesPage($offset, $limit);
+            $page = $this->client->getProfilesPage($offset, $limit, $checkOutFrom, $checkOutTo);
 
             foreach ($page['data'] as $profile) {
                 // merged profiles are no longer active in Cloudbeds, their reservations belong to the surviving profile

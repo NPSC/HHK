@@ -73,6 +73,25 @@ class CloudbedsClientTest extends TestCase
         $this->assertSame('0', $q['offset']);
         $this->assertSame('250', $q['limit']);
         $this->assertSame('true', $q['includeTotal']);
+        $this->assertArrayNotHasKey('filter', $q, 'no timeframe given, so profiles are not prefiltered');
+    }
+
+    public function testProfilesAreFilteredByCheckoutWhenATimeframeIsGiven(): void
+    {
+        $c = $this->client([$this->json(['data' => []])]);
+        $c->getProfilesPage(0, 250, '2024-01-01', '2024-12-31');
+
+        parse_str($this->request(0)->getUri()->getQuery(), $q);
+        $this->assertSame('checkoutAt:greater_than_or_equal:2024-01-01;checkoutAt:less_than_or_equal:2024-12-31', $q['filter']);
+    }
+
+    public function testProfilesFilterCanBeOneSidedOnly(): void
+    {
+        $c = $this->client([$this->json(['data' => []])]);
+        $c->getProfilesPage(0, 250, '2024-01-01', '');
+
+        parse_str($this->request(0)->getUri()->getQuery(), $q);
+        $this->assertSame('checkoutAt:greater_than_or_equal:2024-01-01', $q['filter']);
     }
 
     public function testAccessTokenIsSentAsBearer(): void

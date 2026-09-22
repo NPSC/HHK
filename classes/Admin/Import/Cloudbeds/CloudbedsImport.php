@@ -122,6 +122,42 @@ class CloudbedsImport extends AbstractImport implements ImportInterface {
         return ['success' => "$insertCount $genLookupTableName value(s) created."];
     }
 
+    /**
+     * Create an HHK room for every Cloudbeds room name found in the fetched data that isn't already mapped to an existing
+     * HHK room and doesn't match one by name (the same check resolveResource() makes during import). This is the same
+     * thing createMissing.rooms does automatically per reservation during import, offered here - like "Create Missing
+     * Rooms" in the CSV importer - so rooms can be reviewed and created ahead of time instead.
+     *
+     * @return array{success: string}|array{error: string}
+     */
+    public function createMissingRooms(): array {
+        $names = $this->staging->summarizeValues()['rooms'] ?? [];
+        $insertCount = 0;
+
+        try {
+            $this->dbh->beginTransaction();
+
+            foreach ($names as $name) {
+                $name = trim($name);
+                if ($name === '' || $this->config->getMappedRoomId($name) > 0 || (int) $this->findIdResource($name) > 0) {
+                    continue;
+                }
+
+                $this->createRoom($name);
+                $insertCount++;
+            }
+
+            $this->dbh->commit();
+        } catch (\Throwable $e) {
+            if ($this->dbh->inTransaction()) {
+                $this->dbh->rollBack();
+            }
+            return ['error' => $e->getMessage()];
+        }
+
+        return ['success' => "$insertCount room(s) created."];
+    }
+
     public function getStaging(): CloudbedsStaging {
         return $this->staging;
     }

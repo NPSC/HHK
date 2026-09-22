@@ -64,7 +64,8 @@ if (filter_has_var(INPUT_POST, 'btnSaveConnection')) {
 // save the import settings and custom field mapping. Everything is checked before anything is saved.
 if (filter_has_var(INPUT_POST, 'btnSaveSettings')) {
     try {
-        $settings = CloudbedsConfigStore::settingsFromForm($_POST, $store->load());
+        $previousSettings = $store->load();
+        $settings = CloudbedsConfigStore::settingsFromForm($_POST, $previousSettings);
         CloudbedsConfig::validateSettings($settings);
 
         $fieldMapRows = CloudbedsConfigStore::fieldMapFromForm($_POST);
@@ -78,6 +79,26 @@ if (filter_has_var(INPUT_POST, 'btnSaveSettings')) {
         $mappingCount += count($valueMapRows) > 0 ? $store->saveValueMaps($valueMapRows, $uS->username) : 0;
 
         $resultMsg = 'Import settings saved.' . (count($fieldMapRows) + count($valueMapRows) > 0 ? "  $mappingCount mapping(s) saved." : '');
+
+        // Several settings decide what the fetch itself looks at, not just how an already-fetched record is imported:
+        // the stay timeframe/includeCurrentGuests control the guestList step's Cloudbeds query, and importGuestNotes
+        // decides whether the guestNotes step runs at all. Once a fetch step has finished (or, for guestNotes, been
+        // skipped because the setting was off), later fetches only resume past it - they never go back and re-apply a
+        // changed setting to data already staged under the old one. So a change here has to force a fresh fetch, or the
+        // new setting silently has no effect on anything already staged.
+        $fetchAffectingChanged = [];
+        foreach (['stayedFrom' => ['', 'the "Only Guests Who Stayed" timeframe'], 'stayedTo' => ['', 'the "Only Guests Who Stayed" timeframe'],
+                  'includeCurrentGuests' => [false, 'the "Only Guests Who Stayed" timeframe'], 'importGuestNotes' => [true, '"Guest Notes"']] as $key => [$default, $label]) {
+            $old = $previousSettings[$key] ?? $default;
+            $new = $settings[$key] ?? $default;
+            if ((is_bool($default) ? (bool) $old : (string) $old) !== (is_bool($default) ? (bool) $new : (string) $new)) {
+                $fetchAffectingChanged[$label] = true;
+            }
+        }
+        if (count($fetchAffectingChanged) > 0 && $staging->getProgress()['total'] > 0) {
+            $staging->reset();
+            $resultMsg .= ' ' . implode(' and ', array_keys($fetchAffectingChanged)) . ' changed, so previously fetched data was discarded (it was staged under the old setting) - fetch again to apply it.';
+        }
     } catch (\Throwable $e) {
         $errorMsg = $e->getMessage();
     }
@@ -131,6 +152,9 @@ if (filter_has_var(INPUT_POST, "cmd")) {
                 break;
             case 'createGenLookups':
                 $return = $import->createMissingGenLookupValues((string) filter_input(INPUT_POST, "table", FILTER_SANITIZE_FULL_SPECIAL_CHARS));
+                break;
+            case 'createRooms':
+                $return = $import->createMissingRooms();
                 break;
             case 'resetStaging':
                 $import->getStaging()->reset();
@@ -210,9 +234,11 @@ $setTbl->addBodyTr(HTMLTable::makeTh('Only Guests Who Stayed') . HTMLTable::make
     'From ' . HTMLInput::generateMarkup(cbEsc($saved['stayedFrom'] ?? ''), ['name' => 'stayedFrom', 'type' => 'date', 'id' => false])
     . ' to ' . HTMLInput::generateMarkup(cbEsc($saved['stayedTo'] ?? ''), ['name' => 'stayedTo', 'type' => 'date', 'id' => false])
     . HTMLContainer::generateMarkup('div', $checkbox('includeCurrentGuests', !empty($saved['includeCurrentGuests']), 'Also count a guest who is currently checked in (mid-stay)'), ['class' => 'mt-1'])
-    . HTMLContainer::generateMarkup('div', 'Only guest profiles with a checked-out stay (checked-in too, if checked above) whose check-out date falls in this range, at the configured properties, are imported. Uses the Cloudbeds getGuestList endpoint. Leave a date blank for no limit on that side; leave both blank to import anyone who has ever checked out.', ['class' => 'mt-1'])));
+    . HTMLContainer::generateMarkup('div', 'Only guest profiles with a checked-out stay (checked-in too, if checked above) whose check-out date falls in this range, at the configured properties, are imported. Uses the Cloudbeds getGuestList endpoint. Leave a date blank for no limit on that side; leave both blank to import anyone who has ever checked out.
+        Changing this discards any already-fetched data, since it was staged under the old timeframe and fetching would otherwise just resume past it without applying the change.', ['class' => 'mt-1'])));
 $setTbl->addBodyTr(HTMLTable::makeTh('Guest Notes') . HTMLTable::makeTd(
-    $checkbox('importGuestNotes', !empty($saved['importGuestNotes'] ?? true), 'Import the notes on guests as member notes (one extra Cloudbeds request per guest when fetching)')));
+    $checkbox('importGuestNotes', !empty($saved['importGuestNotes'] ?? true), 'Import the notes on guests as member notes (one extra Cloudbeds request per guest when fetching)')
+    . HTMLContainer::generateMarkup('div', 'Turning this on or off after a fetch has already run discards already-fetched data too, for the same reason.', ['class' => 'mt-1'])));
 
 // custom field mapping, modeled on the CRM export field mapping: rows of HHK field <-> Cloudbeds custom field for each kind of custom field.
 // The Cloudbeds fields come from the property's custom field definitions and from the fetched data.
@@ -407,7 +433,7 @@ $savedValueMap = function (string $type) use ($valueMaps): array {
  * @param array<int, array{0: string, 1: string}> $hhkOptions [value, label]
  * @param callable(string): string $defaultFor the HHK value used when a Cloudbeds value isn't mapped
  */
-$valueMapSection = function (string $type, string $title, string $help, array $sources, array $hhkOptions, string $blankLabel, callable $defaultFor) use ($savedValueMap): string {
+$valueMapSection = function (string $type, string $title, string $help, array $sources, array $hhkOptions, string $blankLabel, callable $defaultFor, string $extraHeaderMkup = '') use ($savedValueMap): string {
     $saved = $savedValueMap($type);
 
     // the Cloudbeds values we know of, then saved mappings for values we don't
@@ -444,7 +470,7 @@ $valueMapSection = function (string $type, string $title, string $help, array $s
     ]);
 
     return HTMLContainer::generateMarkup('div',
-        HTMLContainer::generateMarkup('h4', cbEsc($title))
+        HTMLContainer::generateMarkup('h4', cbEsc($title) . $extraHeaderMkup)
         . HTMLContainer::generateMarkup('p', cbEsc($help), ['class' => 'mb-1'])
         . HTMLInput::generateMarkup('1', ['type' => 'hidden', 'name' => "valmap_posted[$type]", 'id' => false])
         . HTMLContainer::generateMarkup('div', $tbl->generateMarkup(), ['id' => "valmap_tbl_$type"])
@@ -460,6 +486,21 @@ foreach ($hhkRooms as $r) {
     }
 }
 
+// rooms Cloudbeds has that aren't mapped to, and don't match the name of, an existing HHK room. Counted from the
+// staged rooms only (not the live API list above), since that is what createMissingRooms() itself works from.
+$hhkRoomNames = array_map(fn($r) => strtolower(trim($r[1])), $hhkRooms);
+$savedRoomMap = $savedValueMap(CloudbedsValueMaps::ROOM);
+$missingRooms = 0;
+foreach ($stagedValues['rooms'] as $name) {
+    $mapped = $savedRoomMap[CloudbedsValueMaps::normalize(CloudbedsValueMaps::ROOM, (string) $name)]['hhk'] ?? '';
+    if ($mapped === '' && !in_array(strtolower(trim((string) $name)), $hhkRoomNames, true)) {
+        $missingRooms++;
+    }
+}
+$createRoomsBtn = $missingRooms > 0
+    ? HTMLInput::generateMarkup('Create ' . $missingRooms . ' Missing', ['type' => 'button', 'class' => 'ui-button ui-corner-all ui-widget cbAction cbCmd ml-2', 'data-cmd' => 'createRooms'])
+    : '';
+
 $statusDefault = fn(string $status): string => ($p = CloudbedsConfig::DEFAULT_STATUS_MAP[CloudbedsValueMaps::normalize(CloudbedsValueMaps::RESERVATION_STATUS, $status)] ?? null) !== null ? CloudbedsValueMaps::statusChoice($p) : '';
 // room rates are lodging. Everything else is decided by the amount (a discount when negative) so it isn't preselected.
 $defaultItems = [];
@@ -471,7 +512,7 @@ $methodDefault = fn(string $method): string => CloudbedsConfig::DEFAULT_PAYMENT_
 $toOptions = fn(array $choices): array => array_map(null, array_keys($choices), array_values($choices));
 
 $valueMapsMkup = HTMLContainer::generateMarkup('div',
-    $valueMapSection(CloudbedsValueMaps::ROOM, 'Rooms', 'Which HHK room each Cloudbeds room is imported as. Rooms left as they are are matched to the HHK room with the same name.', $cbRooms, $roomOptions, '-- Match by name --', fn() => '')
+    $valueMapSection(CloudbedsValueMaps::ROOM, 'Rooms', 'Which HHK room each Cloudbeds room is imported as. Rooms left as they are are matched to the HHK room with the same name, or created by that name if "Create Missing" (Rooms) is on above; the button here does the same thing now instead of waiting for import.', $cbRooms, $roomOptions, '-- Match by name --', fn() => '', $createRoomsBtn)
     . $valueMapSection(CloudbedsValueMaps::PAYMENT_METHOD, 'Payment Methods', 'How payments are recorded. Card and other methods are recorded as external payments.', $cbMethods, $toOptions(CloudbedsValueMaps::PAY_TYPE_CHOICES), '-- Default --', $methodDefault)
     . $valueMapSection(CloudbedsValueMaps::RESERVATION_STATUS, 'Reservation Statuses', 'What each Cloudbeds reservation status is imported as. Checked out and staying reservations also get a visit and its folio.', $cbStatuses, $toOptions(CloudbedsValueMaps::STATUS_CHOICES), '-- Default --', $statusDefault)
     . $valueMapSection(CloudbedsValueMaps::CHARGE_ITEM, 'Charge Items', 'What each kind of folio charge is imported as on the invoice. Room rates are lodging. Anything left as default is an additional charge, or a discount when the amount is negative. Charges set to Do not import are left off the invoice.', $cbChargeTypes, $toOptions(CloudbedsValueMaps::CHARGE_ITEM_CHOICES), '-- Default --', $chargeDefault),
@@ -529,8 +570,10 @@ $summaryMkup = '';
 $errorsMkup = '';
 $progress = ['progress' => 0];
 $fetchStep = '';
+$reservationsWithoutProfile = 0;
 
 if ($import !== null) {
+    $reservationsWithoutProfile = $staging->countReservationsWithoutProfile();
     $countRows = [];
     foreach ($staging->counts() as $entity => $statuses) {
         $countRows[] = ['Type' => ucfirst($entity) . 's'] + array_map('strval', array_combine(array_map('ucfirst', array_keys($statuses)), array_values($statuses)));
@@ -781,6 +824,11 @@ if ($import !== null) {
                 <?php if ((int) $staging->getMeta('guestNotesUnpaired', '0') > 0) { ?>
                 <p class="mt-2">Guest notes: <?php echo (int) $staging->getMeta('guestNotesUnpaired', '0'); ?> guests could not be paired with a Cloudbeds guest id, so their notes were not fetched.
                     Cloudbeds only pairs a guest profile with its guest id for the main guest of a reservation.</p>
+                <?php } ?>
+                <?php if ($reservationsWithoutProfile > 0) { ?>
+                <p class="mt-2 ui-state-highlight ui-corner-all p-2"><?php echo $reservationsWithoutProfile; ?> qualifying reservation(s) have no guest profile attached and will fail to import
+                    ("Reservation has no importable guests"). This can happen if a guest's profile was excluded by the timeframe prefilter used when fetching profiles
+                    (see fetchProfiles() in CloudbedsFetcher) - if this number seems too high, it is worth reviewing before importing.</p>
                 <?php } ?>
             </div>
 

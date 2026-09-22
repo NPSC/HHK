@@ -78,6 +78,14 @@ class InMemoryStaging extends CloudbedsStaging {
         return $counts;
     }
 
+    public function eachPayload(string $type, callable $callback): void {
+        foreach ($this->rows as $row) {
+            if ($row['entityType'] === $type) {
+                $callback($row['payload']);
+            }
+        }
+    }
+
     /** @return array[] payloads of a type by cloudbeds id */
     public function payloads(string $type): array {
         $out = [];
@@ -103,7 +111,8 @@ class FakeCloudbeds extends CloudbedsClient {
     public array $notes = [];
     public array $folios = [];
 
-    public function getProfilesPage(int $offset, int $limit = self::PROFILES_PAGE_SIZE): array {
+    public function getProfilesPage(int $offset, int $limit = self::PROFILES_PAGE_SIZE, string $checkOutFrom = '', string $checkOutTo = ''): array {
+        $this->calls[] = "profiles:$offset:$checkOutFrom..$checkOutTo";
         return ['data' => array_slice($this->profiles, $offset, $limit), 'total' => count($this->profiles)];
     }
 
@@ -258,6 +267,27 @@ class CloudbedsFetcherTest extends TestCase
         [, , $client] = $this->fetch(['stayedFrom' => '2024-01-01', 'stayedTo' => '2024-12-31']);
         $call = current(array_filter($client->calls, fn($c) => str_starts_with($c, 'guestList:')));
         $this->assertStringContainsString('2024-01-01..2024-12-31', $call);
+    }
+
+    public function testProfilesAreAlsoPrefilteredByTheSameDateRange(): void
+    {
+        [, , $client] = $this->fetch(['stayedFrom' => '2024-01-01', 'stayedTo' => '2024-12-31']);
+        $call = current(array_filter($client->calls, fn($c) => str_starts_with($c, 'profiles:0:')));
+        $this->assertSame('profiles:0:2024-01-01..2024-12-31', $call);
+    }
+
+    public function testProfilesAreNotPrefilteredWhenCurrentGuestsAreIncluded(): void
+    {
+        // an in-progress stay has no final checkout date yet to filter profiles on
+        [, , $client] = $this->fetch(['stayedFrom' => '2024-01-01', 'stayedTo' => '2024-12-31', 'includeCurrentGuests' => true]);
+        $call = current(array_filter($client->calls, fn($c) => str_starts_with($c, 'profiles:0:')));
+        $this->assertSame('profiles:0:..', $call);
+    }
+
+    public function testReservationsWithoutAnyImportedProfileAreCountedAsASafetyNet(): void
+    {
+        [, $staging] = $this->fetch();
+        $this->assertSame(0, $staging->countReservationsWithoutProfile(), 'every staged reservation in the normal fixture has at least one guest profile');
     }
 
     public function testGuestNotesAreFetchedByPmsGuestIdNotProfileId(): void
