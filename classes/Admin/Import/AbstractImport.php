@@ -181,12 +181,11 @@ abstract class AbstractImport {
         $post = array(
             'txtFirstName' => $newPatFirst,
             'txtLastName'=>  $newPatLast,
+            'txtMiddleName' => $newPatMiddle,
             'txtNickname' => '',
 
             'txtBirthDate'=>$birthDate,
             'selStatus'=>'a',
-            //'sel_Gender'=>$gender,
-            //'sel_Ethnicity'=>$ethnicity,
             //'sel_Media_Source'=>$mediaSource,
             //'selnoReturn'=>$noReturn,
             'selMbrType'=>'ai',
@@ -194,6 +193,9 @@ abstract class AbstractImport {
 
         if(isset($r['Gender'])){
             $post['sel_Gender'] = $this->findIdGenLookup("Gender", $r['Gender']);
+        }
+        if(isset($r['Ethnicity'])){
+            $post['sel_Ethnicity'] = $this->findIdGenLookup("Ethnicity", $r['Ethnicity']);
         }
 
         //if (trim($r['PatientLast'] . $r['PatientFirst']) == trim($r['GuestLast'] . $r['GuestFirst'])) { //assume patient is the guest

@@ -5,7 +5,10 @@ namespace HHK\Admin\Import\Cloudbeds;
  * Applies the manual Cloudbeds custom field -> HHK field mapping (the crm_field_map rows, see CloudbedsConfigStore).
  *
  * A mapping's Cloudbeds field may be the custom field's id, shortcode, name or label, checked in that order (case insensitive).
- * The HHK field is one of those listed in GUEST_FIELDS / RESERVATION_FIELDS.
+ * The HHK field is one of those listed in GUEST_FIELDS / RESERVATION_FIELDS - a guest (profile-level) custom field may target
+ * anything a reservation field can too, since Cloudbeds has no concept of the patient separate from the guest (see fieldsFor()).
+ * CloudbedsImport::importReservation() is what actually merges a guest-mapped patient/reservation value in; this class only
+ * validates and applies the mapping.
  *
  * @author    Will Ireland <wireland@nonprofitsoftwarecorp.org>
  * @copyright 2010-2017 <nonprofitsoftwarecorp.org>
@@ -45,10 +48,20 @@ class CloudbedsFieldMapper {
             'patient.first' => 'Patient First Name',
             'patient.last' => 'Patient Last Name',
             'patient.full' => 'Patient Full Name',
+            'patient.Middle' => 'Patient Middle Name',
             'patient.Phone' => 'Patient Phone',
+            'patient.Mobile' => 'Patient Mobile Phone',
             'patient.Email' => 'Patient Email',
             'patient.BirthDate' => 'Patient Birth Date',
             'patient.Gender' => 'Patient Gender',
+            'patient.Ethnicity' => 'Patient Ethnicity',
+            'patient.Address' => 'Patient Address',
+            'patient.Address2' => 'Patient Address 2',
+            'patient.City' => 'Patient City',
+            'patient.County' => 'Patient County',
+            'patient.State' => 'Patient State',
+            'patient.ZipCode' => 'Patient ZIP Code',
+            'patient.Country' => 'Patient Country',
         ],
         'Hospital Stay' => [
             'hospital' => 'Hospital',
@@ -179,7 +192,13 @@ class CloudbedsFieldMapper {
      * @return array<string, array<string,string>> [group => [target => label]]
      */
     public static function fieldsFor(string $scope): array {
-        return $scope === self::SCOPE_GUEST ? self::GUEST_FIELDS : self::RESERVATION_FIELDS;
+        if ($scope === self::SCOPE_GUEST) {
+            // Cloudbeds has no separate concept for the patient: a guest (profile-level) custom field can hold data about
+            // the patient, hospital stay, vehicle or PSG too, so everything a reservation field can target is offered here
+            // as well. CloudbedsImport::importReservation() reads the main guest's profile-level mapped values for this.
+            return array_merge(self::GUEST_FIELDS, self::RESERVATION_FIELDS);
+        }
+        return self::RESERVATION_FIELDS;
     }
 
     /**

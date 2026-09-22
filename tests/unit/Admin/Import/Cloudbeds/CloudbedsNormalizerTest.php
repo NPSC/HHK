@@ -55,6 +55,49 @@ class CloudbedsNormalizerTest extends TestCase
         $this->assertSame('', CloudbedsNormalizer::person(['birthday' => '0000-00-00'])['BirthDate']);
     }
 
+    public function testParseCustomFieldDateHandlesBareMmddyy(): void
+    {
+        // the "door code" field repurposed to hold a birth date, e.g. "010150" for January 1, 1950
+        $this->assertSame('1950-01-01', CloudbedsNormalizer::parseCustomFieldDate('010150'));
+        $this->assertSame('2008-05-03', CloudbedsNormalizer::parseCustomFieldDate('050308'), 'a 2 digit year that would be in the future as 20YY falls back to 19YY, otherwise 20YY');
+        $this->assertSame('', CloudbedsNormalizer::parseCustomFieldDate('130199'), '13 is not a valid month');
+    }
+
+    public function testParseCustomFieldDateNeverProducesAFutureDate(): void
+    {
+        $currentTwoDigitYear = (int) date('y');
+        $futureTwoDigitYear = str_pad((string) (($currentTwoDigitYear + 5) % 100), 2, '0', STR_PAD_LEFT);
+
+        $date = CloudbedsNormalizer::parseCustomFieldDate('0101' . $futureTwoDigitYear);
+
+        $this->assertLessThanOrEqual(date('Y-m-d'), $date, 'a birth date can never be in the future, so this must resolve to the 1900s');
+        $this->assertStringStartsWith('19', $date);
+    }
+
+    public function testParseCustomFieldDateHandlesSeparatedFormats(): void
+    {
+        $this->assertSame('1950-01-01', CloudbedsNormalizer::parseCustomFieldDate('01/01/1950'));
+        $this->assertSame('1950-01-01', CloudbedsNormalizer::parseCustomFieldDate('1/1/1950'));
+        $this->assertSame('1950-01-01', CloudbedsNormalizer::parseCustomFieldDate('01-01-1950'));
+        $this->assertSame('1950-01-01', CloudbedsNormalizer::parseCustomFieldDate('01/01/50'));
+        $this->assertSame('1950-01-01', CloudbedsNormalizer::parseCustomFieldDate('1950-01-01'));
+        $this->assertSame('1950-01-01', CloudbedsNormalizer::parseCustomFieldDate('1950/01/01'));
+    }
+
+    public function testParseCustomFieldDateHandlesBareMmddyyyy(): void
+    {
+        $this->assertSame('1950-03-04', CloudbedsNormalizer::parseCustomFieldDate('03041950'));
+    }
+
+    public function testParseCustomFieldDateRejectsUnrecognizedInput(): void
+    {
+        $this->assertSame('', CloudbedsNormalizer::parseCustomFieldDate(''));
+        $this->assertSame('', CloudbedsNormalizer::parseCustomFieldDate('   '));
+        $this->assertSame('', CloudbedsNormalizer::parseCustomFieldDate('not a date'));
+        $this->assertSame('', CloudbedsNormalizer::parseCustomFieldDate('1234'), 'too short to be any recognized format');
+        $this->assertSame('', CloudbedsNormalizer::parseCustomFieldDate('99999999'), 'not a valid calendar date');
+    }
+
     public function testGender(): void
     {
         $this->assertSame('Male', CloudbedsNormalizer::gender('m'));

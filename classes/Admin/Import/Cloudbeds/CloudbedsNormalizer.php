@@ -59,6 +59,73 @@ class CloudbedsNormalizer {
     }
 
     /**
+     * Parse a birth date out of a custom field's free text. Properties sometimes repurpose a custom field (e.g. a "door
+     * code" field) to hold a birth date typed by hand, in all kinds of formats - unlike Cloudbeds' own birthday field,
+     * which is always a clean YYYY-MM-DD.
+     *
+     * Handles MM/DD/YYYY and MM-DD-YYYY, YYYY-MM-DD, MM/DD/YY and MM-DD-YY, and bare digits with no separator at all,
+     * MMDDYYYY and MMDDYY (the "door code" case). A 2 digit year is resolved to whichever century does not put the date
+     * in the future - a birth date can never be in the future, and this importer is mainly used for adult patients, so
+     * that favors the right reading for most of them, but a young adult whose 2 digit year is low (e.g. "05") could
+     * still be misread as 1905 rather than 2005: there is no way to tell those apart from the digits alone.
+     *
+     * Anything else - a different order (e.g. DD/MM/YY), a textual month, a format not listed above - is not
+     * recognized and comes back blank rather than risk a silently wrong date.
+     *
+     * @param string $value
+     * @return string Y-m-d, blank if $value is empty or not recognized
+     */
+    public static function parseCustomFieldDate(string $value): string {
+        $value = trim($value);
+        if ($value === '') {
+            return '';
+        }
+
+        // YYYY-MM-DD / YYYY/MM/DD
+        if (preg_match('~^(\d{4})[/-](\d{1,2})[/-](\d{1,2})~', $value, $m)) {
+            return self::toDate((int) $m[1], (int) $m[2], (int) $m[3]);
+        }
+
+        // MM/DD/YYYY or MM-DD-YYYY - 4 digit year, unambiguous
+        if (preg_match('~^(\d{1,2})[/-](\d{1,2})[/-](\d{4})$~', $value, $m)) {
+            return self::toDate((int) $m[3], (int) $m[1], (int) $m[2]);
+        }
+
+        // MM/DD/YY or MM-DD-YY - 2 digit year
+        if (preg_match('~^(\d{1,2})[/-](\d{1,2})[/-](\d{2})$~', $value, $m)) {
+            return self::toDate(self::resolveTwoDigitYear((int) $m[3]), (int) $m[1], (int) $m[2]);
+        }
+
+        // MMDDYYYY - 8 bare digits, no separator
+        if (preg_match('~^(\d{2})(\d{2})(\d{4})$~', $value, $m)) {
+            return self::toDate((int) $m[3], (int) $m[1], (int) $m[2]);
+        }
+
+        // MMDDYY - 6 bare digits, no separator (the repurposed "door code" case)
+        if (preg_match('~^(\d{2})(\d{2})(\d{2})$~', $value, $m)) {
+            return self::toDate(self::resolveTwoDigitYear((int) $m[3]), (int) $m[1], (int) $m[2]);
+        }
+
+        return '';
+    }
+
+    /**
+     * A 2 digit year is 20YY unless that would be in the future, in which case it's 19YY. Fixed 100 years back rather
+     * than a floating "current year" window, since a birth date can be arbitrarily far in the past but never in the future.
+     */
+    private static function resolveTwoDigitYear(int $twoDigitYear): int {
+        $asCurrentCentury = 2000 + $twoDigitYear;
+        return $asCurrentCentury > (int) date('Y') ? $asCurrentCentury - 100 : $asCurrentCentury;
+    }
+
+    private static function toDate(int $year, int $month, int $day): string {
+        return checkdate($month, $day, $year) ? sprintf('%04d-%02d-%02d', $year, $month, $day) : '';
+    }
+
+    /**
+     * Cloudbeds gender (M, F, N/A) to the description of the HHK Gender lookup value
+     */
+    /**
      * Cloudbeds gender (M, F, N/A) to the description of the HHK Gender lookup value
      */
     public static function gender(string $gender): string {

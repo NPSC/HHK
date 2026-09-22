@@ -333,6 +333,53 @@ class CloudbedsStaging {
     }
 
     /**
+     * Distinct values found for gen-lookup-backed fields, after applying the current custom field mapping, with how many
+     * staged records have each value. Used to review which values (e.g. a relationship, an ethnicity) HHK doesn't have yet,
+     * see CloudbedsImport::GEN_LOOKUP_TARGETS.
+     *
+     * @param CloudbedsFieldMapper $mapper
+     * @param array<string,string> $targets [mapper target => gen lookup table name]. guest.* targets are read from staged
+     *                                        profiles, everything else from staged reservations.
+     * @return array<string, array<string,int>> [genLookupTableName => [rawValue => count]]
+     */
+    public function summarizeGenLookupValues(CloudbedsFieldMapper $mapper, array $targets): array {
+        $guestTargets = array_filter($targets, fn($t) => str_starts_with($t, 'guest.'), ARRAY_FILTER_USE_KEY);
+        $reservationTargets = array_diff_key($targets, $guestTargets);
+        $counts = [];
+
+        $tally = function (string $table, string $value) use (&$counts) {
+            $value = trim($value);
+            if ($value !== '') {
+                $counts[$table][$value] = ($counts[$table][$value] ?? 0) + 1;
+            }
+        };
+
+        if (count($guestTargets) > 0) {
+            $this->eachPayload(self::PROFILE, function (array $payload) use ($mapper, $guestTargets, $tally) {
+                $values = $mapper->apply(CloudbedsFieldMapper::SCOPE_GUEST, (array) ($payload['customFields'] ?? []))['values'];
+                foreach ($guestTargets as $target => $table) {
+                    if (isset($values[$target])) {
+                        $tally($table, $values[$target]);
+                    }
+                }
+            });
+        }
+
+        if (count($reservationTargets) > 0) {
+            $this->eachPayload(self::RESERVATION, function (array $payload) use ($mapper, $reservationTargets, $tally) {
+                $values = $mapper->apply(CloudbedsFieldMapper::SCOPE_RESERVATION, (array) ($payload['customFields'] ?? []))['values'];
+                foreach ($reservationTargets as $target => $table) {
+                    if (isset($values[$target])) {
+                        $tally($table, $values[$target]);
+                    }
+                }
+            });
+        }
+
+        return $counts;
+    }
+
+    /**
      * Every custom field found in the staged data so the mappings in the config can be reviewed
      *
      * @param CloudbedsFieldMapper $mapper

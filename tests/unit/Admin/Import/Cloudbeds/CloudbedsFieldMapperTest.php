@@ -65,9 +65,44 @@ class CloudbedsFieldMapperTest extends TestCase
 
     public function testRejectsTargetsFromTheWrongScope(): void
     {
+        // reservation scope stays restricted to its own targets - a guest-only target is invalid there
         $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessage("Invalid target 'hospital' for guest custom field 'h'");
-        new CloudbedsFieldMapper(['guest' => ['h' => 'hospital']]);
+        $this->expectExceptionMessage("Invalid target 'guest.Ethnicity' for reservation custom field 'h'");
+        new CloudbedsFieldMapper(['reservation' => ['h' => 'guest.Ethnicity']]);
+    }
+
+    public function testAcceptsAPatientTargetFromGuestScope(): void
+    {
+        // guest scope is the expanded one - a reservation/patient target is valid there
+        $mapper = new CloudbedsFieldMapper(['guest' => ['h' => 'hospital']]);
+        $this->assertSame(['hospital' => 'Mercy'], $mapper->apply('guest', [['customFieldId' => '1', 'name' => 'h', 'value' => 'Mercy']])['values']);
+    }
+
+    public function testPatientDemographicTargetsAreOfferedAndExtracted(): void
+    {
+        $demographics = [
+            'patient.Middle' => 'C', 'patient.Mobile' => '555-1212', 'patient.Ethnicity' => 'Asian',
+            'patient.Address' => '1 Main St', 'patient.Address2' => 'Apt 2', 'patient.City' => 'Ames',
+            'patient.County' => 'Story', 'patient.State' => 'IA', 'patient.ZipCode' => '50010', 'patient.Country' => 'US',
+        ];
+
+        foreach (array_keys($demographics) as $target) {
+            $this->assertContains($target, CloudbedsFieldMapper::targetsFor('reservation'), "missing target $target");
+            $this->assertContains($target, CloudbedsFieldMapper::targetsFor('guest'), "guest scope should offer $target too");
+        }
+
+        $config = [];
+        $fields = [];
+        $i = 0;
+        foreach ($demographics as $target => $value) {
+            $key = "cf$i";
+            $config[$key] = $target;
+            $fields[] = ['customFieldId' => (string) $i, 'name' => $key, 'value' => $value];
+            $i++;
+        }
+
+        $mapper = new CloudbedsFieldMapper(['reservation' => $config]);
+        $this->assertSame($demographics, $mapper->apply('reservation', $fields)['values']);
     }
 
     public function testRejectsUnknownScopeAndUnmappedMode(): void
@@ -100,11 +135,27 @@ class CloudbedsFieldMapperTest extends TestCase
 
         $this->assertContains('guest.Ethnicity', $guest);
         $this->assertContains('note.member', $guest);
-        $this->assertNotContains('hospital', $guest);
         $this->assertContains('hospital', $reservation);
         $this->assertContains('vehicle.license', $reservation);
-        $this->assertNotContains('guest.Ethnicity', $reservation);
+        $this->assertNotContains('guest.Ethnicity', $reservation, 'a reservation field can not target a guest-only field');
+        $this->assertNotContains('note.member', $reservation, 'a reservation field can not target a guest-only note');
         $this->assertNotContains('ignore', array_merge($guest, $reservation));
+    }
+
+    public function testAGuestFieldCanAlsoTargetAPatientOrReservationField(): void
+    {
+        // Cloudbeds has no separate concept for the patient, so a guest (profile-level) custom field can carry patient,
+        // hospital stay, vehicle or PSG data too - the same targets a reservation custom field can use
+        $guest = CloudbedsFieldMapper::targetsFor('guest');
+
+        foreach (CloudbedsFieldMapper::targetsFor('reservation') as $reservationTarget) {
+            $this->assertContains($reservationTarget, $guest, "guest scope should also allow '$reservationTarget'");
+        }
+
+        $mapper = new CloudbedsFieldMapper(['guest' => ['veteran_dob' => 'patient.BirthDate', 'veteran_name' => 'patient.full']]);
+        $out = $mapper->apply('guest', [['customFieldId' => '1', 'name' => 'veteran_dob', 'value' => '1950-01-01'], ['customFieldId' => '2', 'name' => 'veteran_name', 'value' => 'Doe, John']]);
+
+        $this->assertSame(['patient.BirthDate' => '1950-01-01', 'patient.full' => 'Doe, John'], $out['values']);
     }
 
     public function testEveryFieldHasALabelAndAGroup(): void

@@ -143,7 +143,7 @@ class CloudbedsConfigTest extends TestCase
         $this->addToAssertionCount(2);
 
         foreach ([
-            ['customFields' => ['guest' => ['a' => 'hospital']]],
+            ['customFields' => ['reservation' => ['a' => 'guest.Ethnicity']]],
             ['unmappedCustomFields' => 'maybe'],
             ['roomMap' => 'nope'],
             ['roomMap' => ['A' => 'Suite']],

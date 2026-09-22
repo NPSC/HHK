@@ -98,7 +98,7 @@ class CloudbedsConfigStoreTest extends TestCase
     public function testValidFieldMapPasses(): void
     {
         CloudbedsConfigStore::validateFieldMap([
-            'guest' => [['hhk' => 'guest.Ethnicity', 'crm' => 'Ethnicity'], ['hhk' => 'note.member', 'crm' => 'Notes']],
+            'guest' => [['hhk' => 'guest.Ethnicity', 'crm' => 'Ethnicity'], ['hhk' => 'note.member', 'crm' => 'Notes'], ['hhk' => 'patient.BirthDate', 'crm' => 'Veteran DOB']],
             'reservation' => [['hhk' => 'hospital', 'crm' => 'hosp']],
         ]);
         CloudbedsConfigStore::validateFieldMap([]);
@@ -112,7 +112,7 @@ class CloudbedsConfigStoreTest extends TestCase
     public static function invalidFieldMaps(): array
     {
         return [
-            'field from the other object' => [['guest' => [['hhk' => 'hospital', 'crm' => 'x']]], "'hospital' is not an HHK field for guest"],
+            'guest-only field used on a reservation' => [['reservation' => [['hhk' => 'guest.Ethnicity', 'crm' => 'x']]], "'guest.Ethnicity' is not an HHK field for reservation"],
             'unknown HHK field' => [['reservation' => [['hhk' => 'ignore', 'crm' => 'x']]], "'ignore' is not an HHK field"],
             'HHK field twice' => [['reservation' => [['hhk' => 'mrn', 'crm' => 'a'], ['hhk' => 'mrn', 'crm' => 'b']]], "'MRN' is mapped more than once"],
             'Cloudbeds field twice' => [['reservation' => [['hhk' => 'mrn', 'crm' => 'Field'], ['hhk' => 'hospital', 'crm' => 'field']]], "'field' is mapped to more than one HHK field"],

@@ -1,5 +1,6 @@
 <?php
 
+use HHK\Common;
 use HHK\CreateMarkupFromDB;
 use HHK\HTMLControls\{HTMLContainer, HTMLInput, HTMLSelector, HTMLTable};
 use HHK\House\Hospital\Hospital;
@@ -127,6 +128,9 @@ if (filter_has_var(INPUT_POST, "cmd")) {
                 break;
             case 'undo':
                 $return = $import->undoImport();
+                break;
+            case 'createGenLookups':
+                $return = $import->createMissingGenLookupValues((string) filter_input(INPUT_POST, "table", FILTER_SANITIZE_FULL_SPECIAL_CHARS));
                 break;
             case 'resetStaging':
                 $import->getStaging()->reset();
@@ -473,6 +477,53 @@ $valueMapsMkup = HTMLContainer::generateMarkup('div',
     . $valueMapSection(CloudbedsValueMaps::CHARGE_ITEM, 'Charge Items', 'What each kind of folio charge is imported as on the invoice. Room rates are lodging. Anything left as default is an additional charge, or a discount when the amount is negative. Charges set to Do not import are left off the invoice.', $cbChargeTypes, $toOptions(CloudbedsValueMaps::CHARGE_ITEM_CHOICES), '-- Default --', $chargeDefault),
     ['class' => 'hhk-flex flex-wrap']);
 
+// gen lookup values (relationship, ethnicity, gender, ...) found in the fetched data, and whether they already exist in HHK.
+// Lets a value like a relationship or an ethnicity be created ahead of time instead of relying on the "Lookup values" Create
+// Missing setting, which does the same thing automatically (and silently) per record during import.
+$genLookupFound = $staging->summarizeGenLookupValues($mapper, CloudbedsImport::GEN_LOOKUP_TARGETS);
+
+$genLookupSection = function (string $table) use ($dbh, $genLookupFound): string {
+    $existing = [];
+    foreach (Common::readGenLookupsPDO($dbh, $table) as $row) {
+        $existing[strtolower(trim($row[1]))] = $row[1];
+    }
+
+    $rows = [];
+    $missing = 0;
+    foreach ($genLookupFound[$table] ?? [] as $value => $count) {
+        $match = $existing[strtolower(trim($value))] ?? null;
+        if ($match === null) {
+            $missing++;
+        }
+        $rows[] = [
+            'Import Value' => cbEsc($value),
+            'Count' => (string) $count,
+            'HHK Match' => $match !== null ? cbEsc($match) : HTMLContainer::generateMarkup('em', 'missing'),
+        ];
+    }
+
+    if (count($rows) === 0) {
+        return '';
+    }
+
+    $addBtn = $missing > 0
+        ? HTMLInput::generateMarkup('Create ' . $missing . ' Missing', ['type' => 'button', 'class' => 'ui-button ui-corner-all ui-widget cbAction cbCmd ml-2', 'data-cmd' => 'createGenLookups', 'data-table' => $table])
+        : '';
+
+    return HTMLContainer::generateMarkup('div',
+        HTMLContainer::generateMarkup('h4', cbEsc(str_replace('_', ' ', $table)) . $addBtn)
+        . CreateMarkupFromDB::generateHTML_Table($rows, 'genlookup' . $table),
+        ['class' => 'ui-widget ui-widget-content ui-corner-all p-2 mb-3 mr-2']);
+};
+
+$genLookupMkup = '';
+foreach (array_unique(CloudbedsImport::GEN_LOOKUP_TARGETS) as $table) {
+    $genLookupMkup .= $genLookupSection($table);
+}
+$genLookupMkup = $genLookupMkup !== ''
+    ? HTMLContainer::generateMarkup('div', $genLookupMkup, ['class' => 'hhk-flex flex-wrap'])
+    : HTMLContainer::generateMarkup('p', 'Gen lookup values found in the fetched data (relationship, ethnicity, gender, no-return, media source, diagnosis) will be listed here, with whether they already exist in HHK. Fetch first to see them.');
+
 // import status
 $summaryMkup = '';
 $errorsMkup = '';
@@ -653,7 +704,7 @@ if ($import !== null) {
                     if (btn.data("confirm") && !confirm(btn.data("confirm"))) {
                         return;
                     }
-                    post({cmd: btn.data("cmd")}, function (data) {
+                    post({cmd: btn.data("cmd"), table: btn.data("table")}, function (data) {
                         if (data.error) {
                             flagAlertMessage(data.error, true);
                         } else {
@@ -697,11 +748,19 @@ if ($import !== null) {
                     <h3 class="mt-3">Custom Field Mapping</h3>
                     <p>Choose which Cloudbeds custom field feeds each HHK field. Cloudbeds has no patients, hospitals or vehicles, so this is how they are found.
                         Guest custom fields are on the guest profile, reservation custom fields are on the reservation.
-                        Custom fields that aren't mapped are handled as set in "Unmapped Custom Fields" above.</p>
+                        A guest custom field can be mapped to a patient, hospital stay, vehicle or PSG field too &mdash; useful when a property stores that
+                        information (e.g. the veteran's details) on the guest profile rather than the reservation. If both a guest field and a reservation
+                        field are mapped to the same target, the reservation's value is used. Custom fields that aren't mapped are handled as set in
+                        "Unmapped Custom Fields" above.</p>
                     <?php echo $mappingMkup; ?>
 
                     <h3 class="mt-3">Room, Payment Method, Status and Charge Item Mapping</h3>
                     <?php echo $valueMapsMkup; ?>
+
+                    <h3 class="mt-3">Gen Lookup Values</h3>
+                    <p>Relationship, ethnicity, gender, no-return, media source and diagnosis values found in the fetched data, and whether HHK already has them.
+                        "Create Missing" adds them now; otherwise they are handled per the "Lookup values" Create Missing setting above during import (silently falling back to a default when off).</p>
+                    <?php echo $genLookupMkup; ?>
 
                     <p><input type="submit" name="btnSaveSettings" value="Save Settings" class="ui-button ui-corner-all mt-2"></p>
                 </form>

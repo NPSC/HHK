@@ -20,6 +20,8 @@ use HHK\SysConst\VisitStatus;
  *    The notes on the guest in Cloudbeds become member notes.
  *  - reservations become an HHK reservation, plus a visit and stays when the guest checked in/out. Cloudbeds has no patients or PSGs, so
  *    the patient, hospital, diagnosis, etc. come from custom fields, mapped in the config. Without a mapped patient the main guest is their own patient.
+ *    Those custom fields are normally on the reservation, but can also be mapped from the main guest's profile-level custom fields
+ *    (Cloudbeds has no separate concept for the patient), see the merge in importReservation().
  *  - folios become invoices on the visit, with their payments (see CloudbedsFolioImporter).
  *
  * The person/PSG/reservation/visit logic is shared with the CSV importer through AbstractImport.
@@ -30,6 +32,19 @@ use HHK\SysConst\VisitStatus;
  * @link      https://github.com/NPSC/HHK
  */
 class CloudbedsImport extends AbstractImport implements ImportInterface {
+
+    /**
+     * Which gen lookup table each guest/reservation custom field target feeds, for the "Gen Lookup Values" review on the
+     * settings page (see CloudbedsStaging::summarizeGenLookupValues() and createMissingGenLookupValues()).
+     */
+    public const GEN_LOOKUP_TARGETS = [
+        'guest.Gender' => 'Gender',
+        'guest.Ethnicity' => 'Ethnicity',
+        'guest.Banned' => 'No_Return',
+        'guest.mediaSource' => 'Media_Source',
+        'diagnosis' => 'Diagnosis',
+        'relationship' => 'Patient_Rel_Type',
+    ];
 
     protected CloudbedsConfig $config;
     protected CloudbedsStaging $staging;
@@ -63,6 +78,48 @@ class CloudbedsImport extends AbstractImport implements ImportInterface {
 
     public function getConfig(): CloudbedsConfig {
         return $this->config;
+    }
+
+    public function getMapper(): CloudbedsFieldMapper {
+        return $this->mapper;
+    }
+
+    /**
+     * Create any gen lookup values found in the fetched data (for one of GEN_LOOKUP_TARGETS' tables) that don't exist in HHK
+     * yet. This is the same thing createMissing.genLookups does automatically per record during import, offered here so the
+     * values can be reviewed and created ahead of time instead.
+     *
+     * @param string $genLookupTableName
+     * @return array{success: string}|array{error: string}
+     */
+    public function createMissingGenLookupValues(string $genLookupTableName): array {
+        $targets = array_filter(self::GEN_LOOKUP_TARGETS, fn($table) => $table === $genLookupTableName);
+        if (count($targets) === 0) {
+            return ['error' => "Unknown gen lookup table '$genLookupTableName'"];
+        }
+
+        $found = $this->staging->summarizeGenLookupValues($this->mapper, $targets);
+        $insertCount = 0;
+
+        try {
+            $this->dbh->beginTransaction();
+
+            foreach (array_keys($found[$genLookupTableName] ?? []) as $value) {
+                if ($this->findIdGenLookup($genLookupTableName, $value) === '') {
+                    $this->createGenLookup($genLookupTableName, $value);
+                    $insertCount++;
+                }
+            }
+
+            $this->dbh->commit();
+        } catch (\Throwable $e) {
+            if ($this->dbh->inTransaction()) {
+                $this->dbh->rollBack();
+            }
+            return ['error' => $e->getMessage()];
+        }
+
+        return ['success' => "$insertCount $genLookupTableName value(s) created."];
     }
 
     public function getStaging(): CloudbedsStaging {
@@ -230,6 +287,11 @@ class CloudbedsImport extends AbstractImport implements ImportInterface {
         foreach ($mapped['values'] as $target => $value) {
             $r[substr($target, strlen('guest.'))] = $value;
         }
+        // a mapped BirthDate is free text from a custom field (unlike Cloudbeds' own native birthday field), so it needs
+        // its own parsing rather than the generic date parsing addGuest() falls back to - see parseCustomFieldDate()
+        if (isset($mapped['values']['guest.BirthDate'])) {
+            $r['BirthDate'] = CloudbedsNormalizer::parseCustomFieldDate($r['BirthDate']);
+        }
 
         $this->ensureGenLookups($r);
 
@@ -321,6 +383,24 @@ class CloudbedsImport extends AbstractImport implements ImportInterface {
         $mapped = $this->mapper->apply(CloudbedsFieldMapper::SCOPE_RESERVATION, (array) ($payload['customFields'] ?? []));
         $values = $mapped['values'];
 
+        // a guest (profile-level) custom field can also be mapped to a patient/hospital/vehicle/PSG/note target: Cloudbeds
+        // has no concept of the patient distinct from the guest, so properties sometimes store that data on the guest
+        // profile instead of the reservation. Only the main guest's profile is consulted; a value already mapped from the
+        // reservation's own custom fields wins over one from the guest profile.
+        $mainGuestPayload = $this->staging->getPayload(CloudbedsStaging::PROFILE, $mainProfileId);
+        if ($mainGuestPayload !== null) {
+            $guestMapped = $this->mapper->apply(CloudbedsFieldMapper::SCOPE_GUEST, (array) ($mainGuestPayload['customFields'] ?? []));
+
+            foreach ($guestMapped['values'] as $target => $value) {
+                if (!str_starts_with($target, 'guest.') && $target !== 'note.member') {
+                    $values[$target] ??= $value;
+                }
+            }
+            foreach (['note.reservation', 'note.psg'] as $noteTarget) {
+                $mapped['notes'][$noteTarget] = array_merge($mapped['notes'][$noteTarget] ?? [], $guestMapped['notes'][$noteTarget] ?? []);
+            }
+        }
+
         // patient, PSG, registration and hospital stay
         $hospitalTitle = trim($values['hospital'] ?? '');
         if ($hospitalTitle === '' && $this->config->getDefaultHospitalId() > 0) {
@@ -341,6 +421,7 @@ class CloudbedsImport extends AbstractImport implements ImportInterface {
         if (trim($values['mrn'] ?? '') !== '') {
             $patientRow['MRN'] = trim($values['mrn']);
         }
+        $this->ensureGenLookups($patientRow);
 
         $pat = $this->addPatient($patientRow);
         $idPatient = (int) $pat['patient']->getIdName();
@@ -506,7 +587,10 @@ class CloudbedsImport extends AbstractImport implements ImportInterface {
     }
 
     /**
-     * The import row for the patient: a patient named by custom fields, or else the main guest is their own patient
+     * The import row for the patient: a patient named by custom fields, or else the main guest is their own patient.
+     * Demographics (name, contact info, address, birth date, gender, ethnicity) all come from the mapped patient.* custom
+     * fields (see CloudbedsFieldMapper::RESERVATION_FIELDS['Patient']) - a brand new patient has none of these for free the
+     * way a guest does from Cloudbeds' own profile fields, since Cloudbeds has no concept of the patient.
      */
     protected function patientRow(array $values, array $mainGuestRow): array {
         $first = trim($values['patient.first'] ?? '');
@@ -524,11 +608,14 @@ class CloudbedsImport extends AbstractImport implements ImportInterface {
 
         return [
             'externalId' => '',
-            'FirstName' => $first, 'Middle' => '', 'LastName' => $last,
-            'Email' => trim($values['patient.Email'] ?? ''), 'Phone' => trim($values['patient.Phone'] ?? ''), 'Mobile' => '',
-            'Address' => '', 'Address2' => '', 'City' => '', 'County' => '', 'State' => '', 'ZipCode' => '', 'Country' => '',
-            'BirthDate' => trim($values['patient.BirthDate'] ?? ''),
+            'FirstName' => $first, 'Middle' => trim($values['patient.Middle'] ?? ''), 'LastName' => $last,
+            'Email' => trim($values['patient.Email'] ?? ''), 'Phone' => trim($values['patient.Phone'] ?? ''), 'Mobile' => trim($values['patient.Mobile'] ?? ''),
+            'Address' => trim($values['patient.Address'] ?? ''), 'Address2' => trim($values['patient.Address2'] ?? ''),
+            'City' => trim($values['patient.City'] ?? ''), 'County' => trim($values['patient.County'] ?? ''),
+            'State' => trim($values['patient.State'] ?? ''), 'ZipCode' => trim($values['patient.ZipCode'] ?? ''), 'Country' => trim($values['patient.Country'] ?? ''),
+            'BirthDate' => CloudbedsNormalizer::parseCustomFieldDate($values['patient.BirthDate'] ?? ''),
             'Gender' => CloudbedsNormalizer::gender($values['patient.Gender'] ?? '') ?: trim($values['patient.Gender'] ?? ''),
+            'Ethnicity' => trim($values['patient.Ethnicity'] ?? ''),
             'Hospital' => '',
         ];
     }
