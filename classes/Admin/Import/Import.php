@@ -30,37 +30,11 @@ use HHK\Member\Address\Emails;
 use HHK\Volunteer\VolunteerCategory;
 
 
-class Import {
-
-    protected \PDO $dbh;
-    protected array $volLkups;
-    protected array $zipLookups;
-    protected array $hospitals;
-    protected array $rooms;
-    protected int $importedPatients;
-    protected int $importedGuests;
-
-    /**
-     * Mapping of import field to gen lookup table name
-     * 
-     * @var array //[<import field> => <genLookupTableName>]
-     */
-    public array $genLookupMapping; //array[<import field>] => <genLookupTableName>
-    
-    /**
-     * Mapping of import field to a single specific HHK field
-     * 
-     * @var array //[<hhkField> => <import field>]
-     */
-    public array $fieldMapping;
-    
-    protected array $genLookups;
+class Import extends AbstractImport implements ImportInterface {
 
     public function __construct(\PDO $dbh){
-        $this->dbh = $dbh;
-        $wInit = new WebInit();
-        $this->volLkups = $wInit->sessionLoadVolLkUps();
-        
+        parent::__construct($dbh);
+
         //TODO: Customize mappings for each import to facilitate making missing lookups
         $this->genLookupMapping = [
             //"<importfieldname>"=>"genLookupTableName"
@@ -90,7 +64,7 @@ class Import {
      * @param bool $visits
      * @return array{batch: int, guests: int, patients: int, progress: array{imported: float|int, progress: float, remaining: mixed, success: bool, workerId: string}|array{ImportId: mixed, error: string, trace: string}}
      */
-    public function startImport(int $limit = 100, bool $people = true, bool $visits = false){
+    public function startImport(int $limit = 100, bool $people = true, bool $visits = false): array{
         $uS = Session::getInstance();
         $workerId = bin2hex(random_bytes(16)); //generate random 32 char string for workerId
         ini_set('max_execution_time', '300');
@@ -296,213 +270,6 @@ class Import {
         }
 
         return array('success'=>true, 'batch'=>$numRead, 'workerId'=>$workerId, 'patients'=>$this->importedPatients, 'guests'=>$this->importedGuests, "progress"=>$this->getProgress());
-
-    }
-
-    private function addPatient(array $r, bool $update = true){
-
-        // New Patient
-        $newPatFirst = trim(addslashes($r['FirstName']));
-        $newPatMiddle = trim(addslashes($r['Middle']));
-        $newPatLast = trim(addslashes($r['LastName']));
-        //$newPatNickname = trim(addslashes($r['PatientNickname']));
-        //$gender = $this->findIdGender($r['Gender']);
-        //$ethnicity = $this->findIdEthnicity((isset($r['Ethnicity']) ? $r["Ethnicity"] : ""));
-        //$noReturn = $this->findIdNoReturn($r["Banned"]);
-        //$mediaSource = $this->findIdMediaSource($r["mediaSource"]);
-
-        $birthDate = "";
-        //if(trim($r['BirthDate']) != ''){
-        //    $birthdateDT = new \DateTime($r['BirthDate']);
-        //    $birthDate = $birthdateDT->format("M j, Y");
-        //}
-
-
-        $id = $this->findPerson($newPatFirst, $newPatLast, "patient", true, $r["Phone"]);
-
-        if($id > 0){
-            $patient = new Patient($this->dbh, '', $id);
-            $psg = new Psg($this->dbh, 0, $patient->getIdName());
-            $reg = new Registration($this->dbh, $psg->getIdPsg());
-
-            $hospitalId = (isset($this->hospitals[trim(strtolower($r['Hospital']))]) ? $this->hospitals[trim(strtolower($r['Hospital']))] : 0);
-
-            $hospitalStay = null;
-            if ($hospitalId > 0) {
-
-                $hospitalStay = new HospitalStay($this->dbh, $patient->getIdName());
-                $hospitalStay->setHospitalId($hospitalId);
-                $hospitalStay->setIdPsg($psg->getIdPsg());
-                if(isset($r["Diagnosis"])){
-                    $hospitalStay->setDiagnosis($this->findIdGenLookup("diagnosis", $r["Diagnosis"]));
-                }
-
-                $hospitalStay->save($this->dbh, $psg, 0, 'admin');
-            }
-            return array("patient"=>$patient, "psg"=>$psg, "reg"=> $reg, "hospStay"=>$hospitalStay);
-        }
-        
-
-        $post = array(
-            'txtFirstName' => $newPatFirst,
-            'txtLastName'=>  $newPatLast,
-            'txtNickname' => '',
-
-            'txtBirthDate'=>$birthDate,
-            'selStatus'=>'a',
-            //'sel_Gender'=>$gender,
-            //'sel_Ethnicity'=>$ethnicity,
-            //'sel_Media_Source'=>$mediaSource,
-            //'selnoReturn'=>$noReturn,
-            'selMbrType'=>'ai',
-        );
-
-        //if (trim($r['PatientLast'] . $r['PatientFirst']) == trim($r['GuestLast'] . $r['GuestFirst'])) { //assume patient is the guest
-
-            $homePhone = (isset($r['Phone']) ? $this->formatPhone($r['Phone']):'');
-            $cellPhone = (isset($r['Mobile']) ? $this->formatPhone($r['Mobile']):'');
-            //$workPhone = $this->formatPhone($r['Work']);
-
-            $post['rbPrefMail'] = '1';
-            $post['rbEmPref'] = "1";
-            $post['txtEmail'] = array('1'=>$r['Email']);
-            $post['rbPhPref'] = ($homePhone != '' ? "dh": ($cellPhone != "" ? "mc" : ""));
-            $post['txtPhone'] = array('dh'=>$homePhone, 'mc'=>$cellPhone, 'gw'=>'');
-
-            $adr1 = $this->loadAddress($this->dbh, $r);
-            $post['adr'] = $adr1;
-
-            if(trim($r['Address']) == ""){
-            $post['incomplete'] = true;
-            }
-
-        //}
-
-        $patient = new Patient($this->dbh, '', 0);
-        $patient->save($this->dbh, $post, 'admin');
-
-
-        $hospitalId = (isset($this->hospitals[trim(strtolower($r['Hospital']))]) ? $this->hospitals[trim(strtolower($r['Hospital']))] : 0);
-        //$hospitalId = 21;
-
-        // PSG
-        $psg = new Psg($this->dbh, 0, $patient->getIdName());
-        $psg->setNewMember($patient->getIdName(), RelLinkType::Self);
-        $psg->savePSG($this->dbh, $patient->getIdName(), 'admin');
-
-        // Registration
-        $reg = new Registration($this->dbh, $psg->getIdPsg());
-        $reg->saveRegistrationRs($this->dbh, $psg->getIdPsg(), 'admin');
-
-        // Hospital
-        $hospitalStay = null;
-        if ($hospitalId > 0) {
-
-            $hospitalStay = new HospitalStay($this->dbh, $patient->getIdName());
-            $hospitalStay->setHospitalId($hospitalId);
-            $hospitalStay->setIdPsg($psg->getIdPsg());
-            if(isset($r["Diagnosis"])){
-                $hospitalStay->setDiagnosis($this->findIdGenLookup("diagnosis", $r["Diagnosis"]));
-            }
-            if(isset($r["MRN"])){
-                $hospitalStay->setMrn($r["MRN"]);
-            }
-
-            $hospitalStay->save($this->dbh, $psg, 0, 'admin');
-        }
-
-        // external id
-        $this->dbh->exec("update `name` set `External_Id` = " . $r['importId'] . " where `idName` = " . $patient->getIdName());
-
-        $this->importedPatients++;
-
-        return array("patient"=>$patient, "psg"=>$psg, "reg"=> $reg, "hospStay"=>$hospitalStay);
-    }
-
-    /**
-     * Search for person and or create them. if PSG is given, add the guest to the PSG.
-     * @param array $r ["firstName", "LastName", "Middle", "Gender", "Ethnicity", "BirthDate", "Banned", "mediaSource", "Relationship_to_Patient", "Address", "Address2, "City", "County", "State", "ZipCode", "Phone", "Mobile", "Email"]
-     * @param mixed $psg
-     * @return Guest|bool
-     */
-    private function addGuest(array $r, PSG|bool $psg = false){
-
-        // get session instance
-        $uS = Session::getInstance();
-
-        $newFirst = isset($r["FirstName"]) ? trim(addslashes($r['FirstName'])) : "";
-        $newLast = isset($r["LastName"]) ? trim(addslashes($r['LastName'])) : "";
-        $newMiddle = isset($r["Middle"]) ? trim(addslashes(string: $r['Middle'])) : "";
-        //$newNickname = trim(addslashes($r['GuestNickname']));
-
-        if ($newLast == '') {
-            return false;
-        }
-
-        $id = $this->findPerson($newFirst, $newLast, "guest", true, $r["Phone"]);
-
-        $guest = new Guest($this->dbh, '', $id);
-
-        if($id == 0){
-            $gender = $this->findIdGenLookup("Gender", (isset($r['Gender']) ? $r["Gender"] : ""));
-            $ethnicity = $this->findIdGenLookup("Ethnicity", (isset($r['Ethnicity']) ? $r["Ethnicity"] : ""));
-            $noReturn =  $this->findIdGenLookup("No_Return", (isset($r["Banned"]) ? $r["Banned"] : ""));
-            $mediaSource = $this->findIdGenLookup("Media_Source", (isset($r["mediaSource"]) ? $r["mediaSource"] : ""));
-
-            $birthDate = "";
-            if(isset($r["BirthDate"]) && trim($r['BirthDate']) != ''){
-                $birthdateDT = new \DateTime($r['BirthDate']);
-                $birthDate = $birthdateDT->format("M j, Y");
-            }
-
-            // phone
-            $homePhone = isset($r['Phone']) ? $this->formatPhone($r['Phone']) : "";
-            $cellPhone = isset($r['Mobile']) ? $this->formatPhone($r['Mobile']) : "";
-            //$workPhone = $this->formatPhone($r['Work']);
-
-            $post = array(
-                'txtFirstName' => $newFirst,
-                'txtLastName'=>  $newLast,
-                'txtNickname'=> "",//$newNickname,
-                'txtMiddleName'=> $newMiddle,
-                'rbPrefMail'=>'1',
-                'rbEmPref'=>"1",
-                'txtEmail'=>array('1'=>$r['Email']),
-                'rbPhPref'=>($homePhone != '' ? "dh": ($cellPhone != "" ? "mc" : "")),
-                'txtPhone'=>array('dh'=>$homePhone, 'mc'=>$cellPhone),
-                'txtBirthDate'=> $birthDate,  //$r['Date_of_Birth'],
-                'selStatus'=>'a',
-                'sel_Ethnicity'=>$ethnicity,
-                'sel_Gender'=>$gender,
-                'sel_Media_Source'=>$mediaSource,
-                'selnoReturn'=>$noReturn,
-                'selMbrType'=>'ai'
-            );
-
-            $adr1 = $this->loadAddress($this->dbh, $r);
-            $post['adr'] = $adr1;
-
-            if(trim($r['Address']) == ""){
-                //$post['incomplete'] = true;
-            }
-
-            $guest->save($this->dbh, $post, $uS->username);
-        }
-        $relship = RelLinkType::Relative;
-        if (isset($r['Relationship_to_Patient'])) {
-            $relship = $this->findIdGenLookup("Patient_Rel_Type", $r['Relationship_to_Patient']);
-        }
-
-        if($psg instanceof PSG){
-            $psg->setNewMember($guest->getIdName(), $relship);
-            $psg->savePSG($this->dbh, $psg->getIdPatient(), $uS->username);
-        }
-        // external id
-        $this->dbh->exec("update `name` set `External_Id` = " . $r['importId'] . " where `idName` = " . $guest->getIdName());
-
-        $this->importedGuests++;
-
-        return $guest;
 
     }
 
@@ -749,18 +516,6 @@ class Import {
         }
     }
 
-    private function addVehicle(array $vehicle, Registration $reg){
-        $stmt = $this->dbh->prepare("insert into vehicle (`idRegistration`, `Make`,`Model`, `Color`, `State_Reg`, `License_Number`) VALUES(:idReg, :make, :model, :color, :state, :license)");
-                $stmt->execute(array(
-                    ":idReg" => $reg->getIdRegistration(),
-                    ":make" => "",
-                    ":model" => substr(trim($vehicle["prop_Vehicle_1___Make___Model"]), 0,45),
-                    ":color" => substr(trim($vehicle["prop_Vehicle_1___Color"]), 0, 45),
-                    ":state" => "",
-                    ":license" => substr(trim($vehicle["prop_Vehicle_1___License_No_"]), 0, 15)
-                ));
-    }
-
     private function addReservation(array $guests, Registration $reg, HospitalStay $hospStay, array $r, $resvStatus = ReservationStatus::Checkedout){
         
         $idResource = $this->findIdResource($r['RoomNum']);
@@ -809,162 +564,6 @@ class Import {
     }
 
     /**
-     * Search for a member record depending on name/phone/email/member type (guest/patient)
-     *
-     * @param string $first
-     * @param string $last
-     * @param string $memberType - "guest", "patient" "doctor" or ""
-     * @param bool $limit - limit to 1 record or multiple
-     * @param string $phone
-     * @param string $email
-     * @return number|array
-     */
-    private function findPerson(string $first, string $last, string $memberType, bool $limit = true, string $phone = '', string $email = ''){
-
-        $newFirst = trim(htmlentities($first, ));
-        $newLast = trim(htmlentities($last));
-        $phone = ($phone !='' ? $this->formatPhone($phone) : null);
-        $email = ($email !='' ? trim($email) : null);
-
-
-        if(in_array($memberType, ["guest", "patient"])){
-            $query = "Select n.idName, ng.idPsg, ng.Relationship_Code from name n join name_guest ng on n.idName = ng.idName where n.Name_Last = '" . $newLast . "' and n.Name_First = '" . $newFirst . "'";
-            if($memberType == "guest"){
-                $query .= " and ng.Relationship_Code != 'slf'";
-            }else if($memberType == "patient"){
-                $query .= " and ng.Relationship_Code = 'slf'";
-            }
-        }else if(in_array($memberType, [VolMemberType::Doctor, VolMemberType::Donor])){
-            $query = "SELECT distinct n.idName, n.Name_Last, n.Name_First
-FROM name n join name_volunteer2 nv on n.idName = nv.idName and nv.Vol_Category = 'Vol_Type'  and nv.Vol_Code = '" . $memberType . "'
-WHERE n.Name_First = '" . $newFirst . "' AND n.Name_Last = '" . $newLast . "'";
-        }else{
-            $query = "Select n.idName from name n where n.Name_Last = '" . $newLast . "' and n.Name_First = '" . $newFirst . "'";
-        }
-        
-
-        if($limit){
-            $query .= " limit 1";
-        }
-
-        $stmtg = $this->dbh->query($query);
-        $rowCount = $stmtg->rowCount();
-        $rowgs = $stmtg->fetchAll(\PDO::FETCH_NUM);
-
-        if ($rowCount == 0) {
-            $id = 0;
-        } else if($rowCount == 1) {
-            $id = $rowgs[0][0];
-        } else {
-            $id = $rowgs;
-        }
-        return $id;
-    }
-
-    
-
-    /**
-     * Trim and format phone as (###) ###-####
-     * @param string $phone
-     * @return array|string|null
-     */
-    private function formatPhone(string $phone){
-        $phone = preg_replace('[^0-9]', '', $phone);//throw out any non numeric characters
-        return preg_replace('~.*(\d{3})[^\d]*(\d{3})[^\d]*(\d{4}).*~', '($1) $2-$3', $phone); //format remaining numbers
-    }
-
-    private function loadAddress(\PDO $dbh, $r, $purpose = 1) {
-
-        $state = ucfirst(trim($r['State']));
-        $city = ucwords(trim($r['City']));
-        $county = (isset($r['County']) ? ucfirst($r['County']) : '');
-        $country = 'US';
-        $zip = $r['ZipCode'];
-
-        if (strlen($zip) > 4) {
-
-            $searchZip = substr($zip, 0, 5);
-
-            if (isset($this->zipLookups[$searchZip]) === FALSE) {
-
-                $stmtz = $dbh->query("Select City, State, County from postal_codes where Zip_Code = '$searchZip'");
-                $rows = $stmtz->fetchAll(\PDO::FETCH_ASSOC);
-
-                if (count($rows) == 1) {
-                    $this->zipLookups[$searchZip] = $rows[0];
-                }
-            }
-
-            if (isset($this->zipLookups[$searchZip])) {
-
-                $state = $this->zipLookups[$searchZip]['State'];
-                $city = $this->zipLookups[$searchZip]['City'];
-                $county = $this->zipLookups[$searchZip]['County'];
-
-            }
-        }
-
-
-        $adr1 = array($purpose => array(
-            'address1' => isset($r['Address']) ? ucwords(strtolower(trim($r['Address']))) : '',
-            'address2' => isset($r['Address2']) ? ucwords(strtolower(trim($r['Address2']))) : '',
-            'city' => $city,
-            'county'=>  $county,
-            'state' => $state,
-            'country' => $country,
-            'zip' => $zip));
-
-        return $adr1;
-    }
-
-    private function getHospitals(){
-        $stmt = $this->dbh->query("Select idHospital, Title from hospital");
-        while ($h = $stmt->fetch(\PDO::FETCH_ASSOC)) {
-            $this->hospitals[strtolower($h['Title'])] = $h['idHospital'];
-        }
-    }
-
-    private function getRooms(){
-        $stmt = $this->dbh->query("Select idResource, Title from resource");
-        while ($h = $stmt->fetch(\PDO::FETCH_ASSOC)) {
-            $this->rooms[trim(strtolower($h['Title']))] = $h['idResource'];
-        }
-    }
-
-    private function findIdResource(string $roomTitle){
-        return (isset($this->rooms[trim(strtolower($roomTitle))]) ? $this->rooms[trim(strtolower($roomTitle))] : 0);
-    }
-
-    /**
-     * Find the Gen lookup ID based on given value, return empty string if not found
-     * @param string $importFieldName
-     * @param string $importFieldValue
-     * @return int|string
-     */
-    private function findIdGenLookup(string $genLookupTableName, string $importFieldValue):int|string
-    {
-        if(isset($this->genLookups[$genLookupTableName])){
-            return (isset($this->genLookups[$genLookupTableName][trim(strtolower($importFieldValue))]) ? $this->genLookups[$genLookupTableName][trim(strtolower($importFieldValue))] : '');
-        }
-        return '';
-    }
-
-    /**
-     * Load required gen lookups based on contents of genLookupMapping
-     * @return void
-     */
-    private function loadGenLookups(){
-        foreach($this->genLookupMapping as $fieldName=>$genlookupTableName){
-            if(!isset($this->genLookups[$genlookupTableName])){
-                $this->genLookups[$genlookupTableName] = [];
-                foreach(readGenLookupsPDO($this->dbh, $genlookupTableName) as $r) {
-                    $this->genLookups[$genlookupTableName][strtolower($r[1])] = $r[0];
-                }
-            }
-        }
-    }
-
-    /**
      * Create genLookups in HHK if they don't already exist
      *
      * @return array
@@ -980,17 +579,7 @@ WHERE n.Name_First = '" . $newFirst . "' AND n.Name_Last = '" . $newLast . "'";
             foreach($uploadedGenLookups as $genLookup){
                 if($genLookup["id"] == null && $genLookup["Import Name"] != ''){
                     //insert new ethnicity
-                    $newCode = 'g' . incCounter($this->dbh, 'codes');
-
-                    $glRs = new GenLookupsRS();
-                    $glRs->Table_Name->setNewVal($this->genLookupMapping[$importFieldName]);
-                    $glRs->Code->setNewVal($newCode);
-                    $glRs->Description->setNewVal($genLookup["Import Name"]);
-                    $glRs->Type->setNewVal('h');
-                    $glRs->Substitute->setNewVal('');
-                    $glRs->Order->setNewVal(0);
-
-                    EditRS::insert($this->dbh, $glRs);
+                    $this->createGenLookup($this->genLookupMapping[$importFieldName], $genLookup["Import Name"]);
                     $insertCount++;
                 }
             }
@@ -1018,21 +607,7 @@ WHERE n.Name_First = '" . $newFirst . "' AND n.Name_Last = '" . $newLast . "'";
                 if($room["idResource"] == null && $room['RoomNum'] != ''){
                     $title = $room['RoomNum'];
 
-                    // create room record
-                    $stmt = $this->dbh->prepare("insert into room (`idHouse`,`Item_Id`,`Title`,`Type`,`Category`,`Status`,`State`,`Availability`, `Max_Occupants`,`Min_Occupants`,`Rate_Code`,`Key_Deposit_Code`,`Cleaning_Cycle_Code`, `idLocation`) VALUES"
-                            . " (0, 1, :roomTitle, 'r', 'dh', 'a', 'a', 'a', 4, 0,'rb', 'k0', 'a', 1);");
-                    $stmt->execute(array(":roomTitle"=>$title));
-                    $idRoom = $this->dbh->lastInsertId();
-
-                    // create resource record
-                    $stmt = $this->dbh->prepare("insert into resource (`idResource`,`idSponsor`,`Title`,`Utilization_Category`,`Type`,`Status`) values "
-                            . "(:idRoom, 0, :roomTitle, 'uc1', 'room', 'a')");
-                    $stmt->execute(array(":idRoom"=>$idRoom, ":roomTitle"=>$title));
-
-                    // Resource-Room
-                    $stmt = $this->dbh->prepare("insert into resource_room (`idResource_room`,`idResource`,`idRoom`) values "
-                            . "(:idRoom, :idRoom2, :idRoom3)");
-                    $stmt->execute(array(":idRoom" => $idRoom,":idRoom2" => $idRoom,":idRoom3" => $idRoom));
+                    $this->createRoom($title);
                     $insertCount++;
                 }
             }
@@ -1060,8 +635,7 @@ WHERE n.Name_First = '" . $newFirst . "' AND n.Name_Last = '" . $newLast . "'";
 
             foreach($uploadedHospitals as $hospital){
                 if($hospital["idHospital"] == null && $hospital["Hospital"] != ''){
-                    $stmt = $this->dbh->prepare("insert into `hospital` (`Title`, `Type`, `Status`) values (:title, 'h','a');");
-                    $stmt->execute(array(":title"=>$hospital["Hospital"]));
+                    $this->createHospital($hospital["Hospital"]);
                     $insertCount++;
                 }
             }
@@ -1120,7 +694,7 @@ WHERE n.Name_First = '" . $newFirst . "' AND n.Name_Last = '" . $newLast . "'";
      *
      * @return array
      */
-    public function undoImport(){
+    public function undoImport(): array{
         try{
             $this->dbh->beginTransaction();
             $this->dbh->exec("update `name` set `Member_Status` = 'tbd' where `External_Id` != ''");

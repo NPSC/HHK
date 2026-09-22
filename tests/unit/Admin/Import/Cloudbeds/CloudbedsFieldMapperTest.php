@@ -1,0 +1,148 @@
+<?php
+namespace Tests\Unit\Admin\Import\Cloudbeds;
+
+use HHK\Admin\Import\Cloudbeds\CloudbedsFieldMapper;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\TestCase;
+
+#[CoversClass(CloudbedsFieldMapper::class)]
+class CloudbedsFieldMapperTest extends TestCase
+{
+    public function testNormalizesBothCustomFieldShapes(): void
+    {
+        $pms = CloudbedsFieldMapper::normalizeField(['customFieldID' => '7', 'shortcode' => 'hosp', 'customFieldName' => 'Hospital', 'customFieldValue' => ' Mercy ']);
+        $profile = CloudbedsFieldMapper::normalizeField(['customFieldId' => '8', 'name' => 'Ethnicity', 'value' => 'Asian']);
+
+        $this->assertSame(['id' => '7', 'shortcode' => 'hosp', 'name' => 'Hospital', 'label' => '', 'value' => 'Mercy'], $pms);
+        $this->assertSame(['id' => '8', 'shortcode' => '', 'name' => 'Ethnicity', 'label' => '', 'value' => 'Asian'], $profile);
+    }
+
+    public function testMapsByIdShortcodeOrNameCaseInsensitively(): void
+    {
+        $mapper = new CloudbedsFieldMapper(['reservation' => ['7' => 'hospital', 'DX' => 'diagnosis', 'Patient Name' => 'patient.full']]);
+
+        $out = $mapper->apply('reservation', [
+            ['customFieldID' => '7', 'customFieldName' => 'Anything', 'customFieldValue' => 'Mercy'],
+            ['customFieldID' => '9', 'shortcode' => 'dx', 'customFieldName' => 'Dx', 'customFieldValue' => 'Flu'],
+            ['customFieldID' => '10', 'customFieldName' => 'patient name', 'customFieldValue' => 'Doe, Jane'],
+        ]);
+
+        $this->assertSame(['hospital' => 'Mercy', 'diagnosis' => 'Flu', 'patient.full' => 'Doe, Jane'], $out['values']);
+        $this->assertSame([], $out['unmapped']);
+    }
+
+    public function testNoteTargetsAndUnmappedFieldsBecomeNotes(): void
+    {
+        $mapper = new CloudbedsFieldMapper(['reservation' => ['special' => 'note.reservation', 'psgnote' => 'note.psg']]);
+
+        $out = $mapper->apply('reservation', [
+            ['customFieldName' => 'Special', 'customFieldValue' => 'Needs ground floor'],
+            ['customFieldName' => 'PsgNote', 'customFieldValue' => 'Family of 4'],
+            ['customFieldName' => 'Other', 'customFieldValue' => 'kept'],
+            ['customFieldName' => 'Empty', 'customFieldValue' => ''],
+        ]);
+
+        $this->assertSame(['Special: Needs ground floor', 'Other: kept'], $out['notes']['note.reservation']);
+        $this->assertSame(['PsgNote: Family of 4'], $out['notes']['note.psg']);
+        $this->assertSame(['Other' => 'kept'], $out['unmapped']);
+        $this->assertSame([], $out['values']);
+    }
+
+    public function testUnmappedFieldsCanBeDropped(): void
+    {
+        $mapper = new CloudbedsFieldMapper([], 'ignore');
+        $out = $mapper->apply('guest', [['customFieldName' => 'Other', 'customFieldValue' => 'x']]);
+
+        $this->assertSame([], $out['notes']);
+        $this->assertSame(['Other' => 'x'], $out['unmapped']);
+    }
+
+    public function testUnmappedGuestFieldsGoToMemberNote(): void
+    {
+        $out = (new CloudbedsFieldMapper())->apply('guest', [['customFieldName' => 'Other', 'name' => 'Other', 'customFieldValue' => 'x']]);
+        $this->assertSame(['Other: x'], $out['notes']['note.member']);
+    }
+
+    public function testRejectsTargetsFromTheWrongScope(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage("Invalid target 'hospital' for guest custom field 'h'");
+        new CloudbedsFieldMapper(['guest' => ['h' => 'hospital']]);
+    }
+
+    public function testRejectsUnknownScopeAndUnmappedMode(): void
+    {
+        try {
+            new CloudbedsFieldMapper(['stay' => []]);
+            $this->fail('unknown scope accepted');
+        } catch (\InvalidArgumentException $e) {
+            $this->assertStringContainsString("Unknown custom field scope 'stay'", $e->getMessage());
+        }
+
+        $this->expectException(\InvalidArgumentException::class);
+        new CloudbedsFieldMapper([], 'maybe');
+    }
+
+    public function testResolveReportsWhichConfigKeyMatched(): void
+    {
+        $mapper = new CloudbedsFieldMapper(['reservation' => ['Hosp' => 'hospital']]);
+
+        $this->assertSame(['key' => 'hosp', 'target' => 'hospital'], $mapper->resolve('reservation', ['id' => '9', 'shortcode' => 'HOSP', 'name' => 'Hospital', 'value' => '']));
+        $this->assertNull($mapper->resolve('reservation', ['id' => '9', 'shortcode' => '', 'name' => 'Other', 'value' => '']));
+        $this->assertNull($mapper->resolve('guest', ['id' => '9', 'shortcode' => 'hosp', 'name' => '', 'value' => '']), 'scopes are separate');
+        $this->assertSame(['reservation' => ['hosp' => 'hospital']], $mapper->getMap());
+    }
+
+    public function testTargetsForScope(): void
+    {
+        $guest = CloudbedsFieldMapper::targetsFor('guest');
+        $reservation = CloudbedsFieldMapper::targetsFor('reservation');
+
+        $this->assertContains('guest.Ethnicity', $guest);
+        $this->assertContains('note.member', $guest);
+        $this->assertNotContains('hospital', $guest);
+        $this->assertContains('hospital', $reservation);
+        $this->assertContains('vehicle.license', $reservation);
+        $this->assertNotContains('guest.Ethnicity', $reservation);
+        $this->assertNotContains('ignore', array_merge($guest, $reservation));
+    }
+
+    public function testEveryFieldHasALabelAndAGroup(): void
+    {
+        foreach (['guest', 'reservation'] as $scope) {
+            foreach (CloudbedsFieldMapper::fieldsFor($scope) as $group => $fields) {
+                $this->assertNotSame('', $group);
+                foreach ($fields as $target => $label) {
+                    $this->assertNotSame('', $label, "$scope $target");
+                }
+            }
+        }
+    }
+
+    public function testFieldKeyPrefersShortcodeForReservationsAndNameForGuests(): void
+    {
+        $field = ['id' => '12', 'shortcode' => 'hosp', 'name' => 'Hospital'];
+
+        $this->assertSame('hosp', CloudbedsFieldMapper::fieldKey('reservation', $field));
+        $this->assertSame('Hospital', CloudbedsFieldMapper::fieldKey('guest', $field));
+        $this->assertSame('Hospital', CloudbedsFieldMapper::fieldKey('reservation', ['shortcode' => '', 'name' => 'Hospital']));
+        $this->assertSame('12', CloudbedsFieldMapper::fieldKey('guest', ['id' => '12']));
+        $this->assertSame('', CloudbedsFieldMapper::fieldKey('guest', []));
+    }
+
+    public function testMatchesByLabelToo(): void
+    {
+        $mapper = new CloudbedsFieldMapper(['guest' => ['ethnic background' => 'guest.Ethnicity']]);
+        $out = $mapper->apply('guest', [['customFieldId' => '1', 'name' => 'ethnicity', 'label' => 'Ethnic Background', 'value' => 'Asian']]);
+
+        $this->assertSame(['guest.Ethnicity' => 'Asian'], $out['values']);
+    }
+
+    public function testSplitFullName(): void
+    {
+        $this->assertSame(['first' => 'Jane', 'last' => 'Doe'], CloudbedsFieldMapper::splitFullName('Doe, Jane'));
+        $this->assertSame(['first' => 'Mary Ann', 'last' => 'Smith'], CloudbedsFieldMapper::splitFullName('  Mary  Ann Smith '));
+        $this->assertSame(['first' => '', 'last' => 'Cher'], CloudbedsFieldMapper::splitFullName('Cher'));
+        $this->assertSame(['first' => '', 'last' => ''], CloudbedsFieldMapper::splitFullName(''));
+    }
+}
