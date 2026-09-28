@@ -94,9 +94,16 @@ if(isset($_POST["generateFakeData"])){
     }
 
     $numGuests = min(500, max(0, intval(filter_input(INPUT_POST, 'numFakeGuests', FILTER_SANITIZE_NUMBER_INT))));
+    $frameStart = \DateTimeImmutable::createFromFormat('!Y-m-d', (string) filter_input(INPUT_POST, 'fakeStartDate', FILTER_UNSAFE_RAW));
+    $frameEnd = \DateTimeImmutable::createFromFormat('!Y-m-d', (string) filter_input(INPUT_POST, 'fakeEndDate', FILTER_UNSAFE_RAW));
+    if($frameStart === false || $frameEnd === false){
+        echo json_encode(array("error"=>"Please enter a valid start and end date."));
+        exit;
+    }
+
     $import = new Import($dbh);
     try{
-        $return = $import->generateFakeData($numGuests);
+        $return = $import->generateFakeData($numGuests, $frameStart, $frameEnd);
     }catch(\Exception $e){
         $return = array("error"=>$e->getMessage());
     }
@@ -298,14 +305,16 @@ if(filter_has_var(INPUT_POST, "cmd") && $cmd = filter_input(INPUT_POST, "cmd", F
 						method: "post",
 						data:{
 							generateFakeData: true,
-							numFakeGuests: numGuests
+							numFakeGuests: numGuests,
+							fakeStartDate: $("#fakeStartDate").val(),
+							fakeEndDate: $("#fakeEndDate").val()
 						},
 						dataType:"json",
 						success: function(data){
 							if(data.success){
-								var msg = data.created + " fake guest(s) created.";
+								var msg = data.created + " fake guest(s) created: " + data.pastVisits + " checked-out visit(s), " + data.futureReservations + " future reservation(s).";
 								if(data.skippedReservations){
-									msg += " " + data.skippedReservations + " couldn't be given a reservation/visit (no open room/date slot found).";
+									msg += " " + data.skippedReservations + " couldn't be given a reservation/visit (all rooms are full in that date range).";
 								}
 								flagAlertMessage(msg, false);
 							}else if(data.error){
@@ -401,8 +410,13 @@ if(filter_has_var(INPUT_POST, "cmd") && $cmd = filter_input(INPUT_POST, "cmd", F
 				</form>
 				<?php if($isDevMode){ ?>
 				<div class="mt-3">
-					<label for="numFakeGuests">OR - Generate fake guests, reservations &amp; visits (dev mode only):</label>
+					<p>OR - Generate fake guests, reservations &amp; visits</p>
+					<label for="numFakeGuests">Number of Guests:</label>
 					<input type="number" id="numFakeGuests" name="numFakeGuests" min="1" max="500" value="10" style="width:70px;">
+					<label for="fakeStartDate" class="ml-2">From</label>
+					<input type="date" id="fakeStartDate" name="fakeStartDate" value="<?php echo (new DateTime('-6 months'))->format('Y-m-d'); ?>">
+					<label for="fakeEndDate">To</label>
+					<input type="date" id="fakeEndDate" name="fakeEndDate" value="<?php echo (new DateTime('+3 months'))->format('Y-m-d'); ?>">
 					<button type="button" id="generateFakeData" class="ui-button ui-corner-all">Generate Fake Data</button>
 				</div>
 				<?php } ?>

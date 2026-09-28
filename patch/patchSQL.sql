@@ -230,3 +230,6 @@ call `new_webpage`('GuestCensusReport.php',31,'Guest Census Report',1,'h','102',
 
 INSERT IGNORE INTO `page_securitygroup` (`idPage`,`Group_Code`)
 select `idPage`, 'gr' from `page` where `File_Name` = 'GuestCensusReport.php';
+
+-- add Import page (hidden by default)
+call `new_webpage`('Import.php',2,'Import',1,'a','34','l','p','','',now(),'db');
