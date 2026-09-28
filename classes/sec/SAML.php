@@ -40,7 +40,7 @@ use HHK\Tables\WebSec\W_idp_secgroupsRS;
 
 class SAML {
 
-    protected Auth $auth;
+    protected $auth;
 
     protected $IdpId;
     protected $IdpConfig;
