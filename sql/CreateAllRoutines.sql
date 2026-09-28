@@ -1303,10 +1303,7 @@ BEGIN
 
     if p > 0 then
 
-        update `page` set `Login_Page_Id` = loginPageId, `Title` = pageTitle, `Hide` = hideMe, `Menu_Parent` = menuParent, `Menu_Position` = menuPosition, `Type` = pageType,
-                `Validity_Code` = validityCode, `Updated_By` = updatedBy, `Last_Updated` = lastUpdated
-                where idPage = p;
-
+        -- page already exists, leave it as is
         Select p into id;
 
     else

@@ -6506,6 +6506,18 @@ VALUES
 		'35',
 		'e',
 		'p'
+	),
+	(
+		141,
+		'GuestCensusReport.php',
+		31,
+		'Guest Census Report',
+		'',
+		1,
+		'h',
+		'102',
+		'u',
+		'p'
 	);
 
 -- ;
@@ -6670,7 +6682,9 @@ VALUES
 	(139, 'h'),
 	(139, 'mm'),
 	(139, 'ro'),
-	(140, 'mm');
+	(140, 'mm'),
+	(141, 'ga'),
+	(141, 'gr');
 
 -- ;
 UNLOCK TABLES;

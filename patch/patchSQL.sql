@@ -222,5 +222,11 @@ SELECT 'hospitals', CONCAT(`Value`, 's'), 's', 'h', '', '' FROM `labels` WHERE `
 
 
 
-INSERT IGNORE INTO `sys_config`(`Key`,`Value`,`Type`,`Category`,`Description`,`Show`) VALUES 
+INSERT IGNORE INTO `sys_config`(`Key`,`Value`,`Type`,`Category`,`Description`,`Show`) VALUES
 ("stmtShowBirthDate", "false","b","f","Show Patient Birthdate on Statements","1");
+
+-- add Guest Census Report (hidden by default)
+call `new_webpage`('GuestCensusReport.php',31,'Guest Census Report',1,'h','102','u','p','','',now(),'ga');
+
+INSERT IGNORE INTO `page_securitygroup` (`idPage`,`Group_Code`)
+select `idPage`, 'gr' from `page` where `File_Name` = 'GuestCensusReport.php';
