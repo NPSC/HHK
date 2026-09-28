@@ -11,8 +11,9 @@ use HHK\Admin\Import\Cloudbeds\{CloudbedsClient, CloudbedsConfig, CloudbedsConfi
 /**
  * CloudbedsImport.php
  *
- * Import people, reservations/visits and folios (invoices/payments) from Cloudbeds. See CloudbedsImport class.
+ * Import people and reservations/visits from Cloudbeds. See CloudbedsImport class.
  * The connection and the import settings are saved in the database, see CloudbedsConfigStore.
+ * Folios (invoices/payments) are not currently fetched, see CloudbedsFetcher.
  *
  * @author    Will Ireland <wireland@nonprofitsoftwarecorp.org>
  * @copyright 2010-2017 <nonprofitsoftwarecorp.org>
@@ -817,7 +818,7 @@ if ($import !== null) {
                     &nbsp;|&nbsp; Organization: <?php echo cbEsc($config->getOrganizationId()); ?>
                     &nbsp;|&nbsp; Fetch step: <strong><?php echo cbEsc($fetchStep); ?></strong></p>
                 <p>First finds which reservations count as a stay (Cloudbeds getGuestList, filtered by the "Only Guests Who Stayed" setting above), then pulls
-                    those guest profiles, their custom fields and reservations, reservation custom fields and folios into a staging table.
+                    those guest profiles, their custom fields and reservations, and reservation custom fields into a staging table. Folios are not fetched.
                     Only guests with a qualifying stay are ever staged. Nothing is written to HHK yet. It can be stopped and resumed. Map the custom fields above before importing.</p>
                 <button class="ui-button ui-corner-all cbAction" id="fetch">Fetch / Resume Fetch</button>
                 <span id="fetchStatus" class="ml-3"></span>
@@ -827,8 +828,8 @@ if ($import !== null) {
                 <?php } ?>
                 <?php if ($reservationsWithoutProfile > 0) { ?>
                 <p class="mt-2 ui-state-highlight ui-corner-all p-2"><?php echo $reservationsWithoutProfile; ?> qualifying reservation(s) have no guest profile attached and will fail to import
-                    ("Reservation has no importable guests"). This can happen if a guest's profile was excluded by the timeframe prefilter used when fetching profiles
-                    (see fetchProfiles() in CloudbedsFetcher) - if this number seems too high, it is worth reviewing before importing.</p>
+                    ("Reservation has no importable guests"). This can happen if the PMS and Guest Profiles APIs disagree on a reservation's guests
+                    (see CloudbedsFetcher::fetchProfiles()) - if this number seems too high, it is worth reviewing before importing.</p>
                 <?php } ?>
             </div>
 

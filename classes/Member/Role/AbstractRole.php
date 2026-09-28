@@ -2,7 +2,6 @@
 
 namespace HHK\Member\Role;
 
-use HHK\Common;
 use HHK\HTMLControls\{HTMLContainer, HTMLInput, HTMLTable};
 use HHK\House\ReserveData\PSGMember\PSGMember;
 use HHK\Member\Address\{Address, Addresses, CleanAddress, Emails, Phones};
@@ -27,6 +26,14 @@ use HHK\sec\Labels;
  * @author Eric
  */
 abstract class AbstractRole {
+
+    /**
+     * The connection passed to the constructor, reused by getAddrObj()/getPhonesObj()/getEmailsObj() instead of
+     * opening a new one - each subclass constructor must set this.
+     *
+     * @var \PDO
+     */
+    protected $dbh;
 
     /**
      *
@@ -537,9 +544,8 @@ where r.idPsg = $idPsg and s.idName = " . $id;
     public function getAddrObj() {
 
         if (is_null($this->addr)) {
-            $dbh = Common::initPDO(true);
             $uS = Session::getInstance();
-            $this->addr = new Address($dbh, $this->roleMember, $uS->nameLookups[GLTableNames::AddrPurpose]);
+            $this->addr = new Address($this->dbh, $this->roleMember, $uS->nameLookups[GLTableNames::AddrPurpose]);
         }
         return $this->addr;
     }
@@ -550,9 +556,8 @@ where r.idPsg = $idPsg and s.idName = " . $id;
      */
     public function getPhonesObj() {
         if (is_null($this->phones)) {
-            $dbh = Common::initPDO(true);
             $uS = Session::getInstance();
-            $this->phones = new Phones($dbh, $this->roleMember, $uS->nameLookups[GLTableNames::PhonePurpose]);
+            $this->phones = new Phones($this->dbh, $this->roleMember, $uS->nameLookups[GLTableNames::PhonePurpose]);
         }
         return $this->phones;
     }
@@ -563,9 +568,8 @@ where r.idPsg = $idPsg and s.idName = " . $id;
      */
     public function getEmailsObj() {
         if (is_null($this->emails)) {
-            $dbh = Common::initPDO(true);
             $uS = Session::getInstance();
-            $this->emails = new Emails($dbh, $this->roleMember, $uS->nameLookups[GLTableNames::EmailPurpose]);
+            $this->emails = new Emails($this->dbh, $this->roleMember, $uS->nameLookups[GLTableNames::EmailPurpose]);
         }
         return $this->emails;
     }

@@ -58,46 +58,35 @@ class CloudbedsClientTest extends TestCase
 
     public function testApiKeyIsSentAsHeaderAndProfilesGetOrganization(): void
     {
-        $c = $this->client([$this->json(['offset' => 0, 'limit' => 250, 'total' => 1, 'data' => [['id' => '1']]])]);
+        $c = $this->client([$this->json(['id' => '1', 'firstName' => 'Jane'])]);
 
-        $page = $c->getProfilesPage(0);
+        $profile = $c->getProfileById('1');
 
-        $this->assertSame([['id' => '1']], $page['data']);
-        $this->assertSame(1, $page['total']);
+        $this->assertSame(['id' => '1', 'firstName' => 'Jane'], $profile);
         $req = $this->request(0);
-        $this->assertSame('/guest-profiles/v1/profiles', $req->getUri()->getPath());
+        $this->assertSame('/guest-profiles/v1/profiles/1', $req->getUri()->getPath());
         $this->assertSame('cbat_key', $req->getHeaderLine('x-api-key'));
         $this->assertSame('', $req->getHeaderLine('Authorization'));
         $this->assertSame('777', $req->getHeaderLine('X-Organization-Id'));
-        parse_str($req->getUri()->getQuery(), $q);
-        $this->assertSame('0', $q['offset']);
-        $this->assertSame('250', $q['limit']);
-        $this->assertSame('true', $q['includeTotal']);
-        $this->assertArrayNotHasKey('filter', $q, 'no timeframe given, so profiles are not prefiltered');
     }
 
-    public function testProfilesAreFilteredByCheckoutWhenATimeframeIsGiven(): void
+    public function testProfileByIdReturnsNullWhenNotFound(): void
     {
-        $c = $this->client([$this->json(['data' => []])]);
-        $c->getProfilesPage(0, 250, '2024-01-01', '2024-12-31');
-
-        parse_str($this->request(0)->getUri()->getQuery(), $q);
-        $this->assertSame('checkoutAt:greater_than_or_equal:2024-01-01;checkoutAt:less_than_or_equal:2024-12-31', $q['filter']);
+        $c = $this->client([$this->json(['message' => 'Profile not found'], 404)]);
+        $this->assertNull($c->getProfileById('nope'));
     }
 
-    public function testProfilesFilterCanBeOneSidedOnly(): void
+    public function testProfileByIdOtherErrorsAreNotHidden(): void
     {
-        $c = $this->client([$this->json(['data' => []])]);
-        $c->getProfilesPage(0, 250, '2024-01-01', '');
-
-        parse_str($this->request(0)->getUri()->getQuery(), $q);
-        $this->assertSame('checkoutAt:greater_than_or_equal:2024-01-01', $q['filter']);
+        $c = $this->client([$this->json(['message' => 'Missing scope read:guest'], 403)]);
+        $this->expectExceptionMessage('read:guest');
+        $c->getProfileById('1');
     }
 
     public function testAccessTokenIsSentAsBearer(): void
     {
-        $c = $this->client([$this->json(['data' => []])], ['apiKey' => '', 'accessToken' => 'tok']);
-        $c->getProfilesPage(0);
+        $c = $this->client([$this->json(['id' => '1'])], ['apiKey' => '', 'accessToken' => 'tok']);
+        $c->getProfileById('1');
 
         $this->assertSame('Bearer tok', $this->request(0)->getHeaderLine('Authorization'));
         $this->assertSame('', $this->request(0)->getHeaderLine('x-api-key'));
@@ -105,11 +94,10 @@ class CloudbedsClientTest extends TestCase
 
     public function testUnwrapsSingleElementListResponses(): void
     {
-        $c = $this->client([$this->json([['offset' => 0, 'limit' => 250, 'total' => 2, 'data' => [['id' => 'a'], ['id' => 'b']]]])]);
-        $page = $c->getProfilesPage(0);
+        $c = $this->client([$this->json([['data' => [['customFieldId' => 'a'], ['customFieldId' => 'b']]]])]);
+        $fields = $c->getProfileCustomFields('1');
 
-        $this->assertCount(2, $page['data']);
-        $this->assertSame(2, $page['total']);
+        $this->assertCount(2, $fields);
     }
 
     public function testRetriesRateLimitingHonoringRetryAfter(): void
@@ -117,12 +105,12 @@ class CloudbedsClientTest extends TestCase
         $c = $this->client([
             $this->json(['message' => 'slow down'], 429, ['Retry-After' => '3']),
             $this->json(['message' => 'oops'], 503),
-            $this->json(['data' => [['id' => 'x']]]),
+            $this->json(['id' => 'x']),
         ]);
 
-        $page = $c->getProfilesPage(0);
+        $profile = $c->getProfileById('x');
 
-        $this->assertSame([['id' => 'x']], $page['data']);
+        $this->assertSame(['id' => 'x'], $profile);
         $this->assertSame([3, 4], $this->sleeps, 'Retry-After first, then exponential backoff for the 2nd attempt');
         $this->assertCount(3, $this->history);
     }
@@ -132,7 +120,7 @@ class CloudbedsClientTest extends TestCase
         $c = $this->client(array_fill(0, 5, $this->json(['message' => 'still busy'], 429)));
 
         try {
-            $c->getProfilesPage(0);
+            $c->getProfileById('x');
             $this->fail('expected exception');
         } catch (\RuntimeException $e) {
             $this->assertStringContainsString('HTTP 429', $e->getMessage());
@@ -181,6 +169,18 @@ class CloudbedsClientTest extends TestCase
         $this->assertSame('true', $q['includeGuestsDetails'], 'the guest list is how PMS guest ids are found');
         $this->assertSame('3', $q['pageNumber']);
         $this->assertSame('100', $q['pageSize']);
+        $this->assertArrayNotHasKey('checkOutFrom', $q);
+        $this->assertArrayNotHasKey('checkOutTo', $q);
+    }
+
+    public function testReservationsPageIsFilteredByCheckoutWhenATimeframeIsGiven(): void
+    {
+        $c = $this->client([$this->json(['success' => true, 'data' => []])]);
+        $c->getReservationsPage('42', 1, '2024-01-01', '2024-12-31');
+
+        parse_str($this->request(0)->getUri()->getQuery(), $q);
+        $this->assertSame('2024-01-01', $q['checkOutFrom']);
+        $this->assertSame('2024-12-31', $q['checkOutTo']);
     }
 
     public function testReservationsPageThrowsOnUnsuccessfulResponse(): void

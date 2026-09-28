@@ -275,35 +275,22 @@ class CloudbedsClient {
     }
 
     /**
-     * One page of guest profiles
+     * A single guest profile by id
      *
-     * @param int $offset
-     * @param int $limit
-     * @return array{data: array, total: ?int}
+     * @param string $profileId
+     * @return array|null null if Cloudbeds has no such profile (e.g. it no longer exists)
      */
-    public function getProfilesPage(int $offset, int $limit = self::PROFILES_PAGE_SIZE, string $checkOutFrom = '', string $checkOutTo = ''): array {
-        $query = ['offset' => $offset, 'limit' => $limit, 'includeTotal' => 'true', 'sort' => 'dateModified:asc'];
-
-        // narrows the enumeration to profiles with a reservation checking out in this range, per the endpoint's own
-        // checkinAt/checkoutAt filter. The exact server-side semantics (e.g. whether it matches ANY of a profile's
-        // reservations, which is what this assumes, versus some aggregate value) are not documented and this has not
-        // been verified against a live account - see CloudbedsFetcher::fetchProfiles().
-        $filters = [];
-        if ($checkOutFrom !== '') {
-            $filters[] = "checkoutAt:greater_than_or_equal:$checkOutFrom";
-        }
-        if ($checkOutTo !== '') {
-            $filters[] = "checkoutAt:less_than_or_equal:$checkOutTo";
-        }
-        if (count($filters) > 0) {
-            $query['filter'] = implode(';', $filters);
+    public function getProfileById(string $profileId): ?array {
+        try {
+            $profile = $this->unwrapPage($this->request('GET', 'guest-profiles/v1/profiles/' . rawurlencode($profileId), [], $this->profileHeaders()));
+        } catch (\RuntimeException $e) {
+            if ($e->getCode() === 404) {
+                return null;
+            }
+            throw $e;
         }
 
-        $page = $this->unwrapPage($this->request('GET', 'guest-profiles/v1/profiles', [
-            'query' => $query,
-        ], $this->profileHeaders()));
-
-        return ['data' => (array) ($page['data'] ?? []), 'total' => isset($page['total']) ? (int) $page['total'] : null];
+        return $profile;
     }
 
     /**
@@ -340,22 +327,32 @@ class CloudbedsClient {
     }
 
     /**
-     * One page of PMS reservations including their custom fields and guest lists (guests by PMS guest id)
+     * One page of PMS reservations including their custom fields and guest lists (guests by PMS guest id), filtered by
+     * check-out date range. Unlike getGuestListPage, this is not filtered by reservation status - a caller that only
+     * wants reservations getGuestList already staged should match on reservationID itself.
      *
      * @param string $propertyId
      * @param int $pageNumber starting at 1
+     * @param string $checkOutFrom Y-m-d, blank for no lower bound
+     * @param string $checkOutTo Y-m-d, blank for no upper bound
      * @return array{data: array, total: int}
      */
-    public function getReservationsPage(string $propertyId, int $pageNumber): array {
-        $resp = $this->request('GET', 'api/v1.3/getReservations', [
-            'query' => [
-                'propertyID' => $propertyId,
-                'includeCustomFields' => 'true',
-                'includeGuestsDetails' => 'true',
-                'pageNumber' => $pageNumber,
-                'pageSize' => self::PMS_PAGE_SIZE,
-            ],
-        ]);
+    public function getReservationsPage(string $propertyId, int $pageNumber, string $checkOutFrom = '', string $checkOutTo = ''): array {
+        $query = [
+            'propertyID' => $propertyId,
+            'includeCustomFields' => 'true',
+            'includeGuestsDetails' => 'true',
+            'pageNumber' => $pageNumber,
+            'pageSize' => self::PMS_PAGE_SIZE,
+        ];
+        if ($checkOutFrom !== '') {
+            $query['checkOutFrom'] = $checkOutFrom;
+        }
+        if ($checkOutTo !== '') {
+            $query['checkOutTo'] = $checkOutTo;
+        }
+
+        $resp = $this->request('GET', 'api/v1.3/getReservations', ['query' => $query]);
 
         if (isset($resp['success']) && $resp['success'] === false) {
             throw new \RuntimeException('Cloudbeds getReservations failed: ' . ($resp['message'] ?? 'unknown error'));

@@ -17,7 +17,8 @@ use HHK\SysConst\VisitStatus;
  *  - only guests with a stay (by default checked-out; see CloudbedsConfig::includeCurrentGuests()) in the configured timeframe are
  *    imported at all; see CloudbedsFetcher's guestList step, driven by Cloudbeds' getGuestList endpoint.
  *  - guest profiles become HHK people. The Cloudbeds guest profile id is stored in name.External_Id, which is how imported people are tracked.
- *    The notes on the guest in Cloudbeds become member notes.
+ *    The notes on the guest in Cloudbeds become PSG notes (see addProfileNotesToPsg()), not member notes - a guest profile has no PSG of
+ *    its own until a reservation gives it one, so these are only attached once importReservation() gets to that guest.
  *  - reservations become an HHK reservation, plus a visit and stays when the guest checked in/out. Cloudbeds has no patients or PSGs, so
  *    the patient, hospital, diagnosis, etc. come from custom fields, mapped in the config. Without a mapped patient the main guest is their own patient.
  *    Those custom fields are normally on the reservation, but can also be mapped from the main guest's profile-level custom fields
@@ -276,23 +277,22 @@ class CloudbedsImport extends AbstractImport implements ImportInterface {
     }
 
     /**
-     * Imported people are matched on their Cloudbeds profile id, never on name. People without one (patients taken from a custom field)
-     * are matched on name and patient relationship.
+     * Imported people are matched first on their Cloudbeds profile id. If that doesn't find anyone - no previous import
+     * ever paired this Cloudbeds id with an HHK person, or there is no id at all (a patient taken from a custom field) -
+     * fall back to the same name search the CSV importer uses (see AbstractImport::findPerson()), so a person already
+     * in HHK from another source (e.g. entered at the front desk) isn't duplicated. An ambiguous match (more than one
+     * same-name person) is treated as not found rather than risk merging into the wrong person.
      */
     protected function findExistingPersonId(array $r, string $memberType, string $first, string $last) {
         if (($r['externalId'] ?? '') !== '') {
-            return $this->findPersonByExternalId($r['externalId']);
+            $id = $this->findPersonByExternalId($r['externalId']);
+            if ($id > 0) {
+                return $id;
+            }
         }
 
-        // names are stored html escaped
-        $stmt = $this->dbh->prepare("select n.`idName` from `name` n join `name_guest` ng on n.`idName` = ng.`idName` where n.`Name_Last` = :last and n.`Name_First` = :first and n.`Member_Status` != 'tbd' and ng.`Relationship_Code` = 'slf' limit 1");
-        $stmt->execute([
-            ':last' => filter_var($last, FILTER_SANITIZE_FULL_SPECIAL_CHARS),
-            ':first' => filter_var($first, FILTER_SANITIZE_FULL_SPECIAL_CHARS),
-        ]);
-        $id = $stmt->fetchColumn();
-
-        return $id === false ? 0 : (int) $id;
+        $id = $this->findPerson($first, $last, $memberType, true, $r['Phone'] ?? '', $r['Email'] ?? '');
+        return is_array($id) ? 0 : (int) $id;
     }
 
     // ------------------------------------------------------------------------------------------------
@@ -303,7 +303,6 @@ class CloudbedsImport extends AbstractImport implements ImportInterface {
      * @return array{status: string, hhkId: ?int, data: array, message: string}
      */
     protected function importProfile(array $row): array {
-        $uS = Session::getInstance();
         $profileId = $row['cloudbedsId'];
         $payload = $row['payload'];
 
@@ -338,23 +337,49 @@ class CloudbedsImport extends AbstractImport implements ImportInterface {
 
         $idName = (int) $guest->getIdName();
 
-        if (!empty($mapped['notes']['note.member'])) {
-            LinkNote::save($this->dbh, $this->noteText($mapped['notes']['note.member']), $idName, Note::MemberLink, '', $uS->username);
-        }
+        // guest notes (Cloudbeds' own, and the note.member custom field) aren't attached here: a guest profile has no
+        // PSG of its own yet, only a reservation gives it one. See addProfileNotesToPsg(), called from importReservation().
 
-        $noteCount = $this->config->importGuestNotes() ? $this->addGuestNotes($idName, (array) ($payload['guestNotes'] ?? [])) : 0;
-
-        return $this->result(CloudbedsStaging::DONE, $idName, $noteCount > 0 ? ['notes' => $noteCount] : []);
+        return $this->result(CloudbedsStaging::DONE, $idName);
     }
 
     /**
-     * Add the notes Cloudbeds has on a guest to the person as member notes, oldest first. Each note keeps the date it was written and says who wrote it.
+     * A profile's Cloudbeds guest notes and its note.member custom field, attached to the PSG the guest's reservation
+     * joins rather than to the guest's own member record. Imported once per profile - tracked on the profile's own
+     * staging row - the first time that guest is encountered on a qualifying reservation, whichever PSG that turns out
+     * to be; a guest who later turns up on a different patient's reservation does not get the notes repeated there.
+     */
+    protected function addProfileNotesToPsg(string $profileId, int $idPsg): void {
+        $row = $this->staging->getRow(CloudbedsStaging::PROFILE, $profileId);
+        if ($row === null || !empty($row['payload']['notesImportedToPsg'])) {
+            return;
+        }
+
+        $payload = $row['payload'];
+        $uS = Session::getInstance();
+
+        $mapped = $this->mapper->apply(CloudbedsFieldMapper::SCOPE_GUEST, (array) ($payload['customFields'] ?? []));
+        if (!empty($mapped['notes']['note.member'])) {
+            LinkNote::save($this->dbh, $this->noteText($mapped['notes']['note.member']), $idPsg, Note::PsgLink, '', $uS->username);
+        }
+
+        if ($this->config->importGuestNotes()) {
+            $this->addGuestNotes($idPsg, (array) ($payload['guestNotes'] ?? []));
+        }
+
+        $payload['notesImportedToPsg'] = true;
+        $this->staging->setPayload((int) $row['id'], $payload);
+    }
+
+    /**
+     * Add the notes Cloudbeds has on a guest to the PSG as PSG notes, oldest first. Each note keeps the date it was written
+     * (when Cloudbeds gives us one - see CloudbedsFetcher::fetchGuestNotes()) and says who wrote it.
      *
-     * @param int $idName
+     * @param int $idPsg
      * @param array[] $notes Cloudbeds guest notes ["guestNote", "userName", "dateCreated"]
      * @return int number of notes added
      */
-    protected function addGuestNotes(int $idName, array $notes): int {
+    protected function addGuestNotes(int $idPsg, array $notes): int {
         $uS = Session::getInstance();
         $count = 0;
 
@@ -367,7 +392,7 @@ class CloudbedsImport extends AbstractImport implements ImportInterface {
             }
 
             $author = trim((string) ($note['userName'] ?? ''));
-            $idNote = LinkNote::save($this->dbh, $this->noteText(['Cloudbeds note' . ($author !== '' ? " by $author" : '') . ': ' . $text]), $idName, Note::MemberLink, '', $uS->username);
+            $idNote = LinkNote::save($this->dbh, $this->noteText(['Cloudbeds note' . ($author !== '' ? " by $author" : '') . ': ' . $text]), $idPsg, Note::PsgLink, '', $uS->username);
 
             // the date the note was written, not the date it was imported
             $written = CloudbedsNormalizer::dateTime((string) ($note['dateCreated'] ?? ''), '00:00:00');
@@ -463,6 +488,13 @@ class CloudbedsImport extends AbstractImport implements ImportInterface {
         $idPatient = (int) $pat['patient']->getIdName();
         $psg = $pat['psg'];
         $reg = $pat['reg'];
+        $idPsg = (int) $psg->getIdPsg();
+
+        // each guest profile's own notes (Cloudbeds guest notes and its note.member custom field), now that this
+        // reservation has given them a PSG - see addProfileNotesToPsg()
+        foreach (array_keys($people) as $profileId) {
+            $this->addProfileNotesToPsg((string) $profileId, $idPsg);
+        }
 
         $idHospitalStay = 0;
         if ($pat['hospStay'] instanceof HospitalStay) {

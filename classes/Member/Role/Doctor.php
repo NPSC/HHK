@@ -32,6 +32,7 @@ class Doctor extends AbstractRole{
      */
     public function __construct(\PDO $dbh, $idPrefix, $id, $title = 'Doctor') {
 
+        $this->dbh = $dbh;
         $this->currentlyStaying = NULL;
         $this->idVisit = NULL;
         $this->emergContact = NULL;

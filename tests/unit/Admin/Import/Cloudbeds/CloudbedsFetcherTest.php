@@ -104,16 +104,16 @@ class InMemoryStaging extends CloudbedsStaging {
 class FakeCloudbeds extends CloudbedsClient {
 
     public array $calls = [];
+    /** @var array<string, array> profile id => profile, for getProfileById */
     public array $profiles = [];
     public array $profileReservations = [];
     public array $pmsReservations = [];
     public array $guestListEntries = [];
     public array $notes = [];
-    public array $folios = [];
 
-    public function getProfilesPage(int $offset, int $limit = self::PROFILES_PAGE_SIZE, string $checkOutFrom = '', string $checkOutTo = ''): array {
-        $this->calls[] = "profiles:$offset:$checkOutFrom..$checkOutTo";
-        return ['data' => array_slice($this->profiles, $offset, $limit), 'total' => count($this->profiles)];
+    public function getProfileById(string $profileId): ?array {
+        $this->calls[] = "profileById:$profileId";
+        return $this->profiles[$profileId] ?? null;
     }
 
     public function getProfileCustomFields(string $profileId): array {
@@ -122,6 +122,7 @@ class FakeCloudbeds extends CloudbedsClient {
     }
 
     public function iterateProfileReservations(string $profileId): \Generator {
+        $this->calls[] = "reservations:$profileId";
         yield from $this->profileReservations[$profileId] ?? [];
     }
 
@@ -136,22 +137,15 @@ class FakeCloudbeds extends CloudbedsClient {
         return ['data' => $entries, 'total' => count($entries)];
     }
 
-    public function getReservationsPage(string $propertyId, int $pageNumber): array {
-        return ['data' => $this->pmsReservations[$propertyId] ?? [], 'total' => count($this->pmsReservations[$propertyId] ?? [])];
+    public function getReservationsPage(string $propertyId, int $pageNumber, string $checkOutFrom = '', string $checkOutTo = ''): array {
+        $this->calls[] = "reservationFields:$propertyId:$pageNumber" . ($checkOutFrom !== '' || $checkOutTo !== '' ? ":$checkOutFrom..$checkOutTo" : '');
+        $data = $this->pmsReservations[$propertyId] ?? [];
+        return ['data' => $data, 'total' => count($data)];
     }
 
     public function getGuestNotes(string $propertyId, string $guestId): array {
         $this->calls[] = "notes:$propertyId:$guestId";
         return $this->notes["$propertyId:$guestId"] ?? [];
-    }
-
-    public function getFolios(string $propertyId, string $reservationId): array {
-        $this->calls[] = "folios:$propertyId:$reservationId";
-        return $this->folios[$reservationId] ?? [];
-    }
-
-    public function getFolioTransactions(string $propertyId, string $reservationId, string $folioId): array {
-        return [];
     }
 }
 
@@ -165,37 +159,55 @@ class CloudbedsFetcherTest extends TestCase
         $client = new FakeCloudbeds($config, $this->createStub(\PDO::class), $this->createStub(ClientInterface::class));
 
         $client->profiles = [
-            ['id' => 'P1', 'firstName' => 'Jane'], ['id' => 'P2', 'firstName' => 'Sam'],
-            ['id' => 'P3', 'firstName' => 'Merged', 'isMerged' => true],
-            ['id' => 'P4', 'firstName' => 'Loner'], ['id' => 'P5', 'firstName' => 'Extra1'], ['id' => 'P6', 'firstName' => 'Extra2'],
-            ['id' => 'P8', 'firstName' => 'CurrentlyStaying'],
+            'P1' => ['id' => 'P1', 'firstName' => 'Jane'],
+            'P2' => ['id' => 'P2', 'firstName' => 'Sam'],
+            'P3' => ['id' => 'P3', 'firstName' => 'Merged', 'isMerged' => true],
+            'P4' => ['id' => 'P4', 'firstName' => 'Loner'],
+            'P5' => ['id' => 'P5', 'firstName' => 'Extra1'],
+            'P6' => ['id' => 'P6', 'firstName' => 'Extra2'],
+            'P8' => ['id' => 'P8', 'firstName' => 'CurrentlyStaying'],
         ];
-        $guests = [['id' => 'P1', 'firstName' => 'Jane', 'lastName' => 'Doe', 'isMainGuest' => true], ['id' => 'P2', 'firstName' => 'Sam', 'lastName' => 'Lee']];
-        $threeGuests = [['id' => 'P1', 'isMainGuest' => true], ['id' => 'P5'], ['id' => 'P6']];
-        $resv = fn(string $id, string $property, string $status, array $guests = []) => ['id' => $id, 'property' => ['id' => $property], 'reservationStatus' => $status, 'guests' => $guests];
+
+        $r1Guests = [['id' => 'P1', 'firstName' => 'Jane', 'lastName' => 'Doe', 'isMainGuest' => true], ['id' => 'P2', 'firstName' => 'Sam', 'lastName' => 'Lee']];
+        // P4 (no reservations of its own) and P3 (merged) are also on the Guest Profiles API's guest list for R3, to
+        // exercise "discovered but never actually confirms a stay" without disturbing the R1/R3 guest id matching below
+        $r3Guests = [['id' => 'P1', 'isMainGuest' => true], ['id' => 'P5'], ['id' => 'P6'], ['id' => 'P4'], ['id' => 'P3']];
+        // the Guest Profiles API's own "id" is a different id than the PMS reservation id - matching must go through
+        // "externalId" instead (confirmed against live data), so these two are deliberately given different values
+        $resv = fn(string $id, string $property, string $status, array $guests = []) => ['id' => "gp-$id", 'externalId' => $id, 'property' => ['id' => $property], 'reservationStatus' => $status, 'guests' => $guests];
+
         $client->profileReservations = [
-            'P1' => [$resv('R1', '42', 'checked_out', $guests), $resv('R9', '99', 'checked_out')],
-            'P2' => [$resv('R1', '42', 'checked_out', $guests), $resv('R2', '42', 'canceled', [$guests[1]])],
-            'P5' => [$resv('R3', '42', 'checked_out', $threeGuests)],
-            'P6' => [$resv('R3', '42', 'checked_out', $threeGuests)],
+            'P1' => [$resv('R1', '42', 'checked_out', $r1Guests), $resv('R3', '42', 'checked_out', $r3Guests), $resv('R9', '99', 'checked_out')],
+            'P2' => [$resv('R1', '42', 'checked_out', $r1Guests), $resv('R2', '42', 'canceled', [$r1Guests[1]])],
+            'P5' => [$resv('R3', '42', 'checked_out', $r3Guests)],
+            'P6' => [$resv('R3', '42', 'checked_out', $r3Guests)],
             'P8' => [$resv('R6', '42', 'checked_in', [['id' => 'P8', 'isMainGuest' => true]])],
-            // P4 has no reservations at all
+            // P4 has no reservations at all, so it never confirms a stay even though it's on R3's guest list
+            // P3 is merged - its reservations are never queried
         ];
-        // what getGuestList reports as a stay. R2 (canceled) and R9 (a property that is not configured) are never reported, so they
-        // never get seeded, regardless of what the Guest Profiles API's own reservation summaries say.
+
+        // what getGuestList reports as a stay. R2 (canceled) and R9 (a property that is not configured) are never
+        // reported, so they never get seeded, regardless of what the Guest Profiles API's own reservation summaries say.
         $client->guestListEntries['42'] = [
-            ['reservationID' => 'R1', 'guestID' => 'G1', 'status' => 'checked_out', 'isMainGuest' => true],
+            // getGuestList's own guestNotes for G1: note '1' duplicates one getGuestNotes also returns (with a different,
+            // wrong-looking text, to prove the getGuestNotes version wins) and note '10' is exclusive to getGuestList
+            // (getGuestNotes never returns it, see testGuestListNotesFillGapsGetGuestNotesMisses())
+            ['reservationID' => 'R1', 'guestID' => 'G1', 'status' => 'checked_out', 'isMainGuest' => true, 'guestNotes' => [['ID' => '1', 'note' => 'stale duplicate, must be ignored'], ['ID' => '10', 'note' => 'only getGuestList has this one']]],
             ['reservationID' => 'R1', 'guestID' => 'G2', 'status' => 'checked_out', 'isMainGuest' => false],
             ['reservationID' => 'R3', 'guestID' => 'G1', 'status' => 'checked_out', 'isMainGuest' => true],
             ['reservationID' => 'R3', 'guestID' => 'G5', 'status' => 'checked_out', 'isMainGuest' => false],
             ['reservationID' => 'R3', 'guestID' => 'G6', 'status' => 'checked_out', 'isMainGuest' => false],
             ['reservationID' => 'R6', 'guestID' => 'G8', 'status' => 'checked_in', 'isMainGuest' => true],
         ];
+        // the source of the profile ids that seed the profiles step: only R1 and R3's main guest (P1) is a real seed here,
+        // since R6's main guest (P8) is only ever seeded once R6 itself is staged (i.e. includeCurrentGuests). R2 and R404
+        // are reservations the PMS knows about that guestList never staged, so they must never seed a profile either.
         $client->pmsReservations['42'] = [
             ['reservationID' => 'R1', 'guestID' => 'G1', 'profileID' => 'P1', 'guestList' => ['G1' => ['guestFirstName' => 'Jane', 'guestLastName' => 'Doe'], 'G2' => ['guestFirstName' => 'Sam', 'guestLastName' => 'Lee']],
                 'customFields' => [['customFieldID' => '7', 'shortcode' => 'hosp', 'customFieldName' => 'Hospital', 'customFieldValue' => 'Mercy']]],
             ['reservationID' => 'R2', 'guestID' => 'G2', 'profileID' => 'P2', 'guestList' => ['G2' => ['guestFirstName' => 'Sam', 'guestLastName' => 'Lee']], 'customFields' => []],
             ['reservationID' => 'R3', 'guestID' => 'G1', 'profileID' => 'P1', 'guestList' => ['G1' => [], 'G5' => [], 'G6' => []], 'customFields' => []],
+            ['reservationID' => 'R6', 'guestID' => 'G8', 'profileID' => 'P8', 'guestList' => ['G8' => []], 'customFields' => []],
             ['reservationID' => 'R404', 'guestID' => 'X', 'profileID' => 'PX', 'guestList' => [], 'customFields' => []],
         ];
         $client->notes = [
@@ -205,7 +217,6 @@ class CloudbedsFetcherTest extends TestCase
             // the notes of whoever has this as a guest id, which must not be picked up by profile id
             '42:P1' => [['guestNoteID' => '99', 'guestNote' => 'someone else']],
         ];
-        $client->folios = ['R1' => [['id' => 'F1']]];
 
         $result = (new CloudbedsFetcher($client, $staging, $config))->run(20);
 
@@ -225,15 +236,35 @@ class CloudbedsFetcherTest extends TestCase
         $this->assertSame('complete', $staging->getMeta('fetchStep'));
 
         $profiles = $staging->payloads('profile');
-        $this->assertSame(['P1', 'P2', 'P4', 'P5', 'P6', 'P8'], array_keys($profiles), 'merged profiles are not staged');
+        $this->assertEqualsCanonicalizing(['P1', 'P2', 'P3', 'P4', 'P5', 'P6'], array_keys($profiles),
+            'only profiles connected to a qualifying reservation are ever fetched - P8 (checked-in only) is excluded by default and never even discovered');
         $this->assertSame('Ethnicity', $profiles['P1']['customFields'][0]['name']);
+        $this->assertSame('Jane', $profiles['P1']['firstName']);
 
         $reservations = $staging->payloads('reservation');
         $this->assertSame(['R1', 'R3'], array_keys($reservations), 'only reservations getGuestList reports as a stay are ever staged: R2 is canceled, R9 is at a property that is not configured, R6 is checked-in only (not counted by default)');
-        $this->assertSame(['P1', 'P2'], $reservations['R1']['profileIds'], 'a reservation is staged once with all its guests');
+        $this->assertSame(['P1', 'P2'], $reservations['R1']['profileIds'], 'a reservation is staged once with all its confirmed guests');
+        $this->assertSame(['P1', 'P5', 'P6'], $reservations['R3']['profileIds'], 'P4 and P3 are on the Guest Profiles API guest list but never confirm the stay themselves (no reservations / merged)');
         $this->assertSame('hosp', $reservations['R1']['customFields'][0]['shortcode']);
+    }
 
-        $this->assertSame(['F1'], array_keys($staging->payloads('folio')), 'only reservations that became visits have folios');
+    public function testFoliosAreNeverFetched(): void
+    {
+        [, $staging, $client] = $this->fetch();
+
+        $this->assertSame([], $staging->payloads('folio'), 'the folios fetch step was intentionally removed');
+        $this->assertSame([], array_filter($client->calls, fn($c) => str_starts_with($c, 'folios:')));
+    }
+
+    public function testTheWholeAccountsProfileHistoryIsNeverEnumerated(): void
+    {
+        // there is no bulk "list all profiles" call left at all - every profile fetch is scoped to one id
+        [, , $client] = $this->fetch();
+        $this->assertFalse(method_exists($client, 'getProfilesPage'));
+        $this->assertEqualsCanonicalizing(['P1', 'P2', 'P3', 'P4', 'P5', 'P6'], array_unique(array_map(
+            fn($c) => explode(':', $c)[1],
+            array_values(array_filter($client->calls, fn($c) => str_starts_with($c, 'profileById:')))
+        )));
     }
 
     public function testProfilesWithNoQualifyingStayAreNotImported(): void
@@ -245,15 +276,28 @@ class CloudbedsFetcherTest extends TestCase
         $this->assertTrue($profiles['P1']['hasStay']);
         $this->assertContains('customFields:P1', $client->calls);
 
-        $this->assertFalse($profiles['P4']['hasStay'], 'no reservations at all');
+        $this->assertFalse($profiles['P4']['hasStay'], 'discovered as a guest on R3, but has no reservations of its own');
         $this->assertSame([], $profiles['P4']['customFields'], 'the extra API call is skipped for a profile that will not be imported');
         $this->assertNotContains('customFields:P4', $client->calls);
+    }
+
+    public function testMergedProfilesAreNeverImportedAndTheirReservationsAreNeverQueried(): void
+    {
+        [, $staging, $client] = $this->fetch();
+
+        $profiles = $staging->payloads('profile');
+
+        $this->assertFalse($profiles['P3']['hasStay']);
+        $this->assertTrue($profiles['P3']['isMerged']);
+        $this->assertSame([], $profiles['P3']['customFields']);
+        $this->assertNotContains('reservations:P3', $client->calls, "a merged profile's reservations belong to the surviving profile, so they are never even queried");
+        $this->assertNotContains('customFields:P3', $client->calls);
     }
 
     public function testACheckedInOnlyStayIsExcludedByDefaultButIncludedWhenConfigured(): void
     {
         [, $staging] = $this->fetch();
-        $this->assertFalse($staging->payloads('profile')['P8']['hasStay'], 'checked-in only, and includeCurrentGuests is off by default');
+        $this->assertArrayNotHasKey('P8', $staging->payloads('profile'), 'checked-in only, and includeCurrentGuests is off by default - P8 is never even discovered, let alone fetched');
         $this->assertArrayNotHasKey('R6', $staging->payloads('reservation'));
 
         [, $staging2, $client2] = $this->fetch(['includeCurrentGuests' => true]);
@@ -269,19 +313,20 @@ class CloudbedsFetcherTest extends TestCase
         $this->assertStringContainsString('2024-01-01..2024-12-31', $call);
     }
 
-    public function testProfilesAreAlsoPrefilteredByTheSameDateRange(): void
+    public function testReservationFieldsIsAlsoFilteredByTheSameDateRange(): void
     {
         [, , $client] = $this->fetch(['stayedFrom' => '2024-01-01', 'stayedTo' => '2024-12-31']);
-        $call = current(array_filter($client->calls, fn($c) => str_starts_with($c, 'profiles:0:')));
-        $this->assertSame('profiles:0:2024-01-01..2024-12-31', $call);
+        $call = current(array_filter($client->calls, fn($c) => str_starts_with($c, 'reservationFields:42:1')));
+        $this->assertSame('reservationFields:42:1:2024-01-01..2024-12-31', $call);
     }
 
-    public function testProfilesAreNotPrefilteredWhenCurrentGuestsAreIncluded(): void
+    public function testReservationFieldsStaysDateFilteredWhenCurrentGuestsAreIncluded(): void
     {
-        // an in-progress stay has no final checkout date yet to filter profiles on
+        // reservationFields never decides which reservations qualify itself (guestList already did, via the staged
+        // lookup), so it has no reason to use a wider window than guestList's own - which stays date filtered here too
         [, , $client] = $this->fetch(['stayedFrom' => '2024-01-01', 'stayedTo' => '2024-12-31', 'includeCurrentGuests' => true]);
-        $call = current(array_filter($client->calls, fn($c) => str_starts_with($c, 'profiles:0:')));
-        $this->assertSame('profiles:0:..', $call);
+        $call = current(array_filter($client->calls, fn($c) => str_starts_with($c, 'reservationFields:42:1')));
+        $this->assertSame('reservationFields:42:1:2024-01-01..2024-12-31', $call);
     }
 
     public function testReservationsWithoutAnyImportedProfileAreCountedAsASafetyNet(): void
@@ -298,14 +343,32 @@ class CloudbedsFetcherTest extends TestCase
         $reservations = $staging->payloads('reservation');
 
         $this->assertSame(['P1' => 'G1', 'P2' => 'G2'], $reservations['R1']['guestIds'], 'the main guest is paired by the reservation, the only other guest by elimination');
-        $this->assertSame(['P1' => 'G1'], $reservations['R3']['guestIds'], 'two other guests on each side can not be told apart');
-        $this->assertSame([['guestId' => 'G1', 'propertyId' => '42']], $profiles['P1']['guestRefs']);
-        $this->assertSame([['guestId' => 'G2', 'propertyId' => '42']], $profiles['P2']['guestRefs'], 'G2 is found on two reservations and kept once');
+        $this->assertSame(['P1' => 'G1'], $reservations['R3']['guestIds'], 'more than one other guest on each side can not be told apart');
+        $this->assertSame('G1', $profiles['P1']['guestRefs'][0]['guestId']);
+        $this->assertSame([['guestId' => 'G2', 'propertyId' => '42', 'guestListNotes' => []]], $profiles['P2']['guestRefs'], 'G2 is found on two reservations and kept once');
 
-        $this->assertSame(['1', '2'], array_column($profiles['P1']['guestNotes'], 'guestNoteID'));
+        $this->assertEqualsCanonicalizing(['1', '2', '10'], array_column($profiles['P1']['guestNotes'], 'guestNoteID'), 'note 10 is only ever returned by getGuestList, see testGuestListNotesFillGapsGetGuestNotesMisses()');
         $this->assertSame(['3'], array_column($profiles['P2']['guestNotes'], 'guestNoteID'));
 
         $this->assertEqualsCanonicalizing(['notes:42:G1', 'notes:42:G2'], array_values(array_filter($client->calls, fn($c) => str_starts_with($c, 'notes:'))));
+    }
+
+    public function testGuestListNotesFillGapsGetGuestNotesMisses(): void
+    {
+        [, $staging] = $this->fetch();
+
+        $notes = $staging->payloads('profile')['P1']['guestNotes'];
+        $byId = [];
+        foreach ($notes as $note) {
+            $byId[$note['guestNoteID']] = $note;
+        }
+
+        $this->assertSame('first', $byId['1']['guestNote'], "getGuestNotes' version of a note it shares with getGuestList wins, not getGuestList's dateless duplicate");
+        $this->assertSame('Jane', $byId['1']['userName']);
+
+        $this->assertSame('only getGuestList has this one', $byId['10']['guestNote'], 'a note getGuestNotes never returns is still preserved, from getGuestList');
+        $this->assertSame('', $byId['10']['userName'], 'getGuestList has no author or date for its notes');
+        $this->assertSame('', $byId['10']['dateCreated']);
     }
 
     public function testProfilesWithoutAPmsGuestIdGetNoNotes(): void
@@ -314,7 +377,7 @@ class CloudbedsFetcherTest extends TestCase
 
         $profiles = $staging->payloads('profile');
 
-        foreach (['P4', 'P5', 'P6', 'P8'] as $unpaired) {
+        foreach (['P3', 'P4', 'P5', 'P6'] as $unpaired) {
             $this->assertArrayNotHasKey('guestRefs', $profiles[$unpaired]);
             $this->assertSame([], $profiles[$unpaired]['guestNotes']);
         }

@@ -380,12 +380,12 @@ class CloudbedsStaging {
     }
 
     /**
-     * Qualifying reservations (staged by the guestList fetch step) that no guest profile ever claimed - i.e. every
-     * guest on that reservation was excluded from the profiles fetch. This is the visible symptom if the checkoutAt
-     * prefilter in fetchProfiles() ever excludes a profile that should have been fetched: the reservation is still
-     * staged (guestList doesn't filter by profile), but profileDetails() never got a chance to enrich it, so it will
-     * fail to import with "Reservation has no importable guests" rather than being silently dropped. A non-zero count
-     * here after a complete fetch is worth investigating before importing.
+     * Qualifying reservations (staged by the guestList fetch step) that no guest profile ever claimed - i.e. none of its
+     * guests were ever matched back to it by the profiles fetch step. This is the visible symptom of a gap between the
+     * PMS and Guest Profiles APIs (e.g. a reservation's main guest profile id is stale or missing): the reservation is
+     * still staged (guestList doesn't depend on a profile match), but nothing ever enriched it, so it will fail to
+     * import with "Reservation has no importable guests" rather than being silently dropped. A non-zero count here
+     * after a complete fetch is worth investigating before importing.
      *
      * @return int
      */
