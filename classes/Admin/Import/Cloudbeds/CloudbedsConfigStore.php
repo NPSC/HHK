@@ -1,6 +1,7 @@
 <?php
 namespace HHK\Admin\Import\Cloudbeds;
 
+use HHK\Common;
 use HHK\Crypto;
 use HHK\Tables\CmsGatewayRS;
 use HHK\Tables\EditRS;
@@ -237,6 +238,29 @@ class CloudbedsConfigStore {
         return $map;
     }
 
+    /** Demographic codes already covered by CloudbedsFieldMapper's own fixed targets/special-casing */
+    protected const RESERVED_DEMOGRAPHIC_CODES = ['Gender', 'Ethnicity', 'Media_Source', 'No_Return'];
+
+    /**
+     * The site's enabled "demographic" fields (gen_lookups rows with Table_Name = 'Demographics' and Substitute = 'y',
+     * see house/GuestDemog.php for the reference pattern this mirrors), minus the ones CloudbedsFieldMapper already
+     * exposes as fixed targets. Used to offer "map to any enabled demographic" in the field mapping UI - see
+     * CloudbedsFieldMapper::isValidTarget().
+     *
+     * @return array<string, string> [Code => Description]
+     */
+    public function loadEnabledDemographics(): array {
+        $demographics = [];
+
+        foreach (Common::readGenLookupsPDO($this->dbh, 'Demographics') as $code => $row) {
+            if (strtolower((string) ($row['Substitute'] ?? '')) === 'y' && !in_array($code, self::RESERVED_DEMOGRAPHIC_CODES, true)) {
+                $demographics[$code] = (string) ($row['Description'] ?? $code);
+            }
+        }
+
+        return $demographics;
+    }
+
     /**
      * Check custom field mapping rows: each HHK field belongs to the object and is mapped once, and each Cloudbeds field feeds one HHK field
      *
@@ -257,14 +281,16 @@ class CloudbedsConfigStore {
                 $hhk = $pair['hhk'];
                 $crm = $pair['crm'];
 
-                if (!isset($labels[$hhk])) {
+                // a dynamic "map to any enabled demographic" target (guest.demog.<Code> / patient.demog.<Code>) has no
+                // fixed label - CloudbedsFieldMapper::isValidTarget() accepts it by pattern instead, see there for why
+                if (!CloudbedsFieldMapper::isValidTarget($object, $hhk)) {
                     throw new \InvalidArgumentException("'$hhk' is not an HHK field for $object custom fields");
                 }
                 if (strlen($crm) > 100) {
                     throw new \InvalidArgumentException("Cloudbeds field '$crm' is too long");
                 }
                 if (isset($seenHhk[$hhk])) {
-                    throw new \InvalidArgumentException("The HHK field '" . $labels[$hhk] . "' is mapped more than once for $object custom fields");
+                    throw new \InvalidArgumentException("The HHK field '" . ($labels[$hhk] ?? $hhk) . "' is mapped more than once for $object custom fields");
                 }
                 if (isset($seenCrm[strtolower($crm)])) {
                     throw new \InvalidArgumentException("The Cloudbeds field '$crm' is mapped to more than one HHK field for $object custom fields");

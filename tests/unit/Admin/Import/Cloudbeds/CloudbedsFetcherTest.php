@@ -329,6 +329,40 @@ class CloudbedsFetcherTest extends TestCase
         $this->assertSame('reservationFields:42:1:2024-01-01..2024-12-31', $call);
     }
 
+    public function testFutureConfirmedReservationsAreFetchedRegardlessOfConfiguredStatuses(): void
+    {
+        // the normal fixture has no 'confirmed'-status guestList entries, so this only proves the second pass is made
+        // with the right status and date range - see testFutureConfirmedReservationIsStaged() for the staged result
+        [, , $client] = $this->fetch();
+        $call = current(array_filter($client->calls, fn($c) => str_starts_with($c, 'guestList:42:1:confirmed:')));
+        $this->assertNotFalse($call, 'a second guestList pass for Confirmed reservations is always made, not gated by includeCurrentGuests');
+        $this->assertStringContainsString('confirmed:' . date('Y-m-d') . '..', $call, 'the future pass starts from today, per import specs.md');
+    }
+
+    public function testFutureConfirmedReservationIsStaged(): void
+    {
+        $config = new CloudbedsConfig(['apiKey' => 'k', 'organizationId' => '1', 'propertyIds' => [42]]);
+        $staging = new InMemoryStaging($this->createStub(\PDO::class));
+        $client = new FakeCloudbeds($config, $this->createStub(\PDO::class), $this->createStub(ClientInterface::class));
+
+        $client->profiles = ['P9' => ['id' => 'P9', 'firstName' => 'Future']];
+        $client->guestListEntries['42'] = [
+            ['reservationID' => 'R7', 'guestID' => 'G7', 'status' => 'confirmed', 'isMainGuest' => true],
+        ];
+        $client->pmsReservations['42'] = [
+            ['reservationID' => 'R7', 'guestID' => 'G7', 'profileID' => 'P9', 'guestList' => ['G7' => []], 'customFields' => []],
+        ];
+        $client->profileReservations['P9'] = [
+            ['id' => 'gp-R7', 'externalId' => 'R7', 'property' => ['id' => '42'], 'reservationStatus' => 'confirmed', 'guests' => [['id' => 'P9', 'isMainGuest' => true]]],
+        ];
+
+        $result = (new CloudbedsFetcher($client, $staging, $config))->run(20);
+
+        $this->assertTrue($result['complete']);
+        $this->assertArrayHasKey('R7', $staging->payloads('reservation'), "a Confirmed (not yet checked in) reservation is staged even though it's not in the configured stay statuses");
+        $this->assertTrue($staging->payloads('profile')['P9']['hasStay']);
+    }
+
     public function testReservationsWithoutAnyImportedProfileAreCountedAsASafetyNet(): void
     {
         [, $staging] = $this->fetch();

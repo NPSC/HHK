@@ -366,8 +366,41 @@ class CloudbedsStaging {
         }
 
         if (count($reservationTargets) > 0) {
+            // mirrors importReservation()'s own 3-source merge (guest profile, reservation, then the main guest's own
+            // per-slot custom fields - highest priority) so this preview matches what an actual import would find.
+            // Confirmed against live data: a property's veteran-specific fields (Branch of Service, Door Code, Gender/
+            // Ethnicity of veteran, Relationship to Patient, Special Needs, ...) are typically only ever present in the
+            // per-slot source, not the reservation's own top-level customFields.
             $this->eachPayload(self::RESERVATION, function (array $payload) use ($mapper, $reservationTargets, $tally) {
-                $values = $mapper->apply(CloudbedsFieldMapper::SCOPE_RESERVATION, (array) ($payload['customFields'] ?? []))['values'];
+                $values = [];
+
+                $realMainProfileId = (string) ($payload['mainProfileId'] ?? '');
+                $profilePayload = $realMainProfileId !== '' ? $this->getPayload(self::PROFILE, $realMainProfileId) : null;
+                if ($profilePayload !== null) {
+                    foreach ($mapper->apply(CloudbedsFieldMapper::SCOPE_GUEST, (array) ($profilePayload['customFields'] ?? []))['values'] as $target => $value) {
+                        if (!str_starts_with($target, 'guest.') && $target !== 'note.member') {
+                            $values[$target] = $value;
+                        }
+                    }
+                }
+
+                foreach ($mapper->apply(CloudbedsFieldMapper::SCOPE_RESERVATION, (array) ($payload['customFields'] ?? []))['values'] as $target => $value) {
+                    $values[$target] = $value;
+                }
+
+                // Cloudbeds attaches these to the reservation's own guest-list entry rather than the persistent
+                // profile, but a site's own mapping may still categorize them as guest-scope fields (confirmed
+                // against a live config) - see CloudbedsFieldMapper::applyEitherScope().
+                $mainGuestId = (string) ($payload['mainGuestId'] ?? '');
+                $guestSlotFields = (array) ($payload['pmsGuestList'][$mainGuestId]['customFields'] ?? []);
+                if (count($guestSlotFields) > 0) {
+                    foreach ($mapper->applyEitherScope($guestSlotFields, CloudbedsFieldMapper::SCOPE_GUEST, CloudbedsFieldMapper::SCOPE_RESERVATION)['values'] as $target => $value) {
+                        if (!str_starts_with($target, 'guest.') && $target !== 'note.member') {
+                            $values[$target] = $value;
+                        }
+                    }
+                }
+
                 foreach ($reservationTargets as $target => $table) {
                     if (isset($values[$target])) {
                         $tally($table, $values[$target]);

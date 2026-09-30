@@ -105,6 +105,38 @@ class CloudbedsFieldMapperTest extends TestCase
         $this->assertSame($demographics, $mapper->apply('reservation', $fields)['values']);
     }
 
+    public function testIsValidTargetAcceptsAnyEnabledDemographicByPattern(): void
+    {
+        $this->assertTrue(CloudbedsFieldMapper::isValidTarget('guest', 'guest.demog.Special_Needs'));
+        $this->assertTrue(CloudbedsFieldMapper::isValidTarget('guest', 'patient.demog.Special_Needs'), 'patient.demog.* is valid from guest scope too, like the rest of RESERVATION_FIELDS');
+        $this->assertTrue(CloudbedsFieldMapper::isValidTarget('reservation', 'patient.demog.Special_Needs'));
+
+        $this->assertFalse(CloudbedsFieldMapper::isValidTarget('reservation', 'guest.demog.Special_Needs'), 'guest.demog.* only makes sense on a guest-profile field');
+        $this->assertFalse(CloudbedsFieldMapper::isValidTarget('guest', 'guest.demog.'), 'no code at all');
+        $this->assertFalse(CloudbedsFieldMapper::isValidTarget('guest', 'guest.demog.Bad Code'), 'spaces are not a valid gen_lookups Code');
+        $this->assertFalse(CloudbedsFieldMapper::isValidTarget('guest', 'guest.demograph.Special_Needs'), 'must be the demog segment exactly');
+        $this->assertFalse(CloudbedsFieldMapper::isValidTarget('guest', 'not.a.real.target'));
+
+        // still true for the fixed, hardcoded targets
+        $this->assertTrue(CloudbedsFieldMapper::isValidTarget('guest', 'guest.Ethnicity'));
+        $this->assertFalse(CloudbedsFieldMapper::isValidTarget('reservation', 'guest.Ethnicity'));
+    }
+
+    public function testConstructorAcceptsAnEnabledDemographicTarget(): void
+    {
+        $mapper = new CloudbedsFieldMapper(['guest' => ['sn' => 'guest.demog.Special_Needs'], 'reservation' => ['vet' => 'patient.demog.Branch_Of_Service']]);
+
+        $out = $mapper->apply('guest', [['customFieldId' => '1', 'name' => 'sn', 'value' => 'Wheelchair accessible']]);
+        $this->assertSame(['guest.demog.Special_Needs' => 'Wheelchair accessible'], $out['values']);
+    }
+
+    public function testConstructorRejectsAMalformedDemographicTarget(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage("Invalid target 'guest.demog.Bad Code'");
+        new CloudbedsFieldMapper(['guest' => ['sn' => 'guest.demog.Bad Code']]);
+    }
+
     public function testRejectsUnknownScopeAndUnmappedMode(): void
     {
         try {
@@ -195,5 +227,29 @@ class CloudbedsFieldMapperTest extends TestCase
         $this->assertSame(['first' => 'Mary Ann', 'last' => 'Smith'], CloudbedsFieldMapper::splitFullName('  Mary  Ann Smith '));
         $this->assertSame(['first' => '', 'last' => 'Cher'], CloudbedsFieldMapper::splitFullName('Cher'));
         $this->assertSame(['first' => '', 'last' => ''], CloudbedsFieldMapper::splitFullName(''));
+    }
+
+    /**
+     * @return array<string, array{0: string}>
+     */
+    public static function junkNames(): array
+    {
+        return [
+            'n/a' => ['n/a'], 'N/A' => ['N/A'], 'na' => ['na'], 'n.a.' => ['n.a.'],
+            'none' => ['None'], 'false' => ['FALSE'], 'no' => ['no'], 'null' => ['NULL'],
+            'dash' => ['-'], 'double dash' => ['--'],
+        ];
+    }
+
+    #[\PHPUnit\Framework\Attributes\DataProvider('junkNames')]
+    public function testSplitFullNameTreatsPlaceholderValuesAsNoName(string $junk): void
+    {
+        // a "Veteran Name if different" custom field holding a placeholder like "n/a" must not become the patient's name
+        $this->assertSame(['first' => '', 'last' => ''], CloudbedsFieldMapper::splitFullName($junk));
+    }
+
+    public function testSplitFullNameDoesNotTreatARealNameAsJunk(): void
+    {
+        $this->assertSame(['first' => 'Norma', 'last' => 'Ackerman'], CloudbedsFieldMapper::splitFullName('Norma Ackerman'));
     }
 }

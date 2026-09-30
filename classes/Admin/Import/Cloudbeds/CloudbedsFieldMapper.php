@@ -107,8 +107,8 @@ class CloudbedsFieldMapper {
             }
             $valid = self::targetsFor($scope);
             foreach ((array) $fields as $key => $target) {
-                if (!in_array($target, $valid, true)) {
-                    throw new \InvalidArgumentException("Invalid target '" . (is_scalar($target) ? $target : gettype($target)) . "' for $scope custom field '$key'. Valid targets: " . implode(', ', $valid));
+                if (!is_string($target) || !self::isValidTarget($scope, $target)) {
+                    throw new \InvalidArgumentException("Invalid target '" . (is_scalar($target) ? $target : gettype($target)) . "' for $scope custom field '$key'. Valid targets: " . implode(', ', $valid) . ', or any enabled demographic (guest.demog.<Code> / patient.demog.<Code>)');
                 }
                 $this->map[$scope][strtolower(trim((string) $key))] = $target;
             }
@@ -211,6 +211,27 @@ class CloudbedsFieldMapper {
     }
 
     /**
+     * A target is valid either as one of the fixed GUEST_FIELDS/RESERVATION_FIELDS, or as a "map to any enabled
+     * demographic" target - guest.demog.<Code> / patient.demog.<Code>, where <Code> is a gen_lookups Demographics row.
+     * This is checked by pattern rather than against a live list of enabled demographics: the mapper itself has no
+     * database access (CloudbedsConfig, which owns it, is built from stored settings on every page load with no
+     * $dbh), and the site's admin UI only ever offers a real enabled demographic in the dropdown in the first place -
+     * a Code that doesn't match anything real just resolves to nothing at import time (see AbstractImport::addGuest()).
+     */
+    public static function isValidTarget(string $scope, string $target): bool {
+        if (in_array($target, self::targetsFor($scope), true)) {
+            return true;
+        }
+        // guest.demog.* only makes sense on a guest-profile field, same as GUEST_FIELDS; patient.demog.* is valid from
+        // either scope, same as the rest of RESERVATION_FIELDS (Cloudbeds has no concept of the patient separate from
+        // the guest, see fieldsFor())
+        if ($scope === self::SCOPE_GUEST && preg_match('/^guest\.demog\.[A-Za-z0-9_]+$/', $target) === 1) {
+            return true;
+        }
+        return preg_match('/^patient\.demog\.[A-Za-z0-9_]+$/', $target) === 1;
+    }
+
+    /**
      * Sort a list of custom fields into HHK targets
      *
      * @param string $scope
@@ -252,7 +273,55 @@ class CloudbedsFieldMapper {
     }
 
     /**
-     * Split a patient full name into first/last. Handles "Last, First" and "First Middle Last".
+     * Like apply(), but for custom field data that might be mapped under either scope. Cloudbeds attaches some fields
+     * to a reservation's per-guest-slot data (see CloudbedsImport::importReservation()'s pmsGuestList source) that a
+     * site's own mapping may still categorize as a guest field, matching how Cloudbeds' own UI presents them, rather
+     * than a reservation one - confirmed against a live config where every veteran-specific field (Branch of Service,
+     * Door Code, Gender/Ethnicity of veteran, Relationship to Patient, ...) is mapped under the guest scope even
+     * though the data lives in this reservation-side structure. Each field is resolved against $primaryScope first,
+     * falling back to $secondaryScope only if genuinely unmapped there too - so a field mapped under one scope is
+     * never also treated as unmapped in the other, which would double its "kept as a note" fallback.
+     */
+    public function applyEitherScope(array $customFields, string $primaryScope, string $secondaryScope): array {
+        $out = ['values' => [], 'notes' => [], 'unmapped' => []];
+
+        foreach ($customFields as $field) {
+            if (!is_array($field)) {
+                continue;
+            }
+            $f = self::normalizeField($field);
+            if ($f['value'] === '') {
+                continue;
+            }
+
+            $label = $f['name'] !== '' ? $f['name'] : ($f['shortcode'] !== '' ? $f['shortcode'] : $f['id']);
+            $target = $this->targetFor($primaryScope, $f) ?? $this->targetFor($secondaryScope, $f);
+
+            if ($target === null) {
+                $out['unmapped'][$label] = $f['value'];
+                if ($this->unmapped === 'note') {
+                    $out['notes']['note.reservation'][] = $label . ': ' . $f['value'];
+                }
+            } elseif (str_starts_with($target, 'note.')) {
+                $out['notes'][$target][] = $label . ': ' . $f['value'];
+            } else {
+                $out['values'][$target] = $f['value'];
+            }
+        }
+
+        return $out;
+    }
+
+    /**
+     * Placeholder values a "Veteran Name if different" custom field sometimes holds instead of an actual name - these
+     * must not be treated as a name (see import specs.md). Matched after stripping spaces/periods, so "N/A", "n.a.",
+     * "None" etc all match.
+     */
+    protected const JUNK_NAME_VALUES = ['n/a', 'na', 'none', 'false', 'no', 'null', '-', '--'];
+
+    /**
+     * Split a patient full name into first/last. Handles "Last, First" and "First Middle Last". A placeholder value
+     * like "n/a" or "false" (see JUNK_NAME_VALUES) is treated the same as an empty name.
      *
      * @param string $full
      * @return array{first: string, last: string}
@@ -260,7 +329,7 @@ class CloudbedsFieldMapper {
     public static function splitFullName(string $full): array {
         $full = trim(preg_replace('/\s+/', ' ', $full));
 
-        if ($full === '') {
+        if ($full === '' || in_array(strtolower(str_replace([' ', '.'], '', $full)), self::JUNK_NAME_VALUES, true)) {
             return ['first' => '', 'last' => ''];
         }
 

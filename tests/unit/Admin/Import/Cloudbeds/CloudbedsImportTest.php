@@ -35,4 +35,18 @@ class CloudbedsImportTest extends TestCase
         $tables = array_values(CloudbedsImport::GEN_LOOKUP_TARGETS);
         $this->assertCount(count(array_unique($tables)), $tables);
     }
+
+    /**
+     * A companion guest's HHK External_Id must never look like a bare Guest Profile id (a real one is always a bare
+     * number, e.g. from the PMS reservation fields) - see ensureReservationPeople(). A live-data-confirmed bug: the
+     * Guest Profiles API's reservation.guests[].id is a PMS guest id, not a profile id, and storing it unprefixed
+     * caused it to be mistaken for a person's real profile id on a later import, creating a duplicate person.
+     */
+    public function testPmsGuestExternalIdIsNeverAPlainNumber(): void
+    {
+        $externalId = (new \ReflectionMethod(CloudbedsImport::class, 'pmsGuestExternalId'))->invoke(null, '182375451');
+
+        $this->assertSame('pmsguest:182375451', $externalId);
+        $this->assertFalse(ctype_digit($externalId), 'must not be confusable with a bare Guest Profile id');
+    }
 }

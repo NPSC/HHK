@@ -5,9 +5,11 @@ namespace HHK\Admin\Import\Cloudbeds;
  * Pulls data from Cloudbeds into the staging table, in resumable steps that each stay within a time budget so
  * they can be driven from repeated web requests:
  *
- *  1. guestList          which reservations count as a stay, from the PMS getGuestList endpoint (see CloudbedsConfig::getStayedFrom() etc).
- *                        Seeds a reservation row per qualifying reservation; nothing else ever creates one, so only reservations
- *                        getGuestList reports as stayed (in the configured timeframe) are ever staged or imported.
+ *  1. guestList          which reservations count as a stay, from the PMS getGuestList endpoint (see CloudbedsConfig::getStayedFrom() etc),
+ *                        plus a second pass for Confirmed reservations checking out from today onward (not yet checked in, but still
+ *                        worth importing as a future reservation - see import specs.md). Seeds a reservation row per qualifying
+ *                        reservation; nothing else ever creates one, so only reservations one of these two passes reports are ever
+ *                        staged or imported.
  *  2. reservationFields  reservation custom fields, from the PMS API, filtered to the same timeframe. Also queues the main guest's
  *                        profile id to be fetched next - Cloudbeds only pairs a guest profile id with a PMS guest id for a
  *                        reservation's main guest (see CloudbedsGuestMatcher), so that pairing is the only way in.
@@ -90,22 +92,34 @@ class CloudbedsFetcher {
     }
 
     /**
-     * Seed a reservation row for every reservation getGuestList reports as stayed (per the configured timeframe and statuses).
-     * Nothing else ever creates a reservation row, so this is what decides which reservations (and, transitively, which guest
-     * profiles) end up imported.
+     * Seed a reservation row for every reservation getGuestList reports as stayed (per the configured timeframe and statuses),
+     * plus - per import specs.md ("For dates in the future, HHK will bring in reservations that aren't yet checked in") - every
+     * Confirmed reservation checking out from today onward, regardless of the configured stay statuses. Nothing else ever
+     * creates a reservation row, so this is what decides which reservations (and, transitively, which guest profiles) end up
+     * imported.
      */
     protected function fetchGuestList(float $deadline): bool {
-        $checkOutFrom = $this->config->getStayedFrom();
-        $checkOutTo = $this->config->getStayedTo();
-        $statuses = $this->config->getStayStatuses();
+        if (!$this->fetchGuestListPass($deadline, 'guestList', $this->config->getStayedFrom(), $this->config->getStayedTo(), $this->config->getStayStatuses())) {
+            return false;
+        }
 
+        return $this->fetchGuestListPass($deadline, 'guestListFuture', date('Y-m-d'), $this->config->getStayedTo(), ['confirmed']);
+    }
+
+    /**
+     * One getGuestList sweep across every configured property, for a given status set and date range - paginated and
+     * resumable via $metaPrefix-scoped staging meta keys, so fetchGuestList()'s two passes track their progress independently.
+     *
+     * @param string[] $statuses
+     */
+    protected function fetchGuestListPass(float $deadline, string $metaPrefix, string $checkOutFrom, string $checkOutTo, array $statuses): bool {
         foreach ($this->config->getPropertyIds() as $propertyId) {
-            if ($this->staging->getMeta("guestListDone:$propertyId") === '1') {
+            if ($this->staging->getMeta("{$metaPrefix}Done:$propertyId") === '1') {
                 continue;
             }
 
             while (microtime(true) < $deadline) {
-                $pageNumber = (int) $this->staging->getMeta("guestListPage:$propertyId", '1');
+                $pageNumber = (int) $this->staging->getMeta("{$metaPrefix}Page:$propertyId", '1');
                 $page = $this->client->getGuestListPage($propertyId, $pageNumber, $checkOutFrom, $checkOutTo, $statuses);
 
                 foreach ($page['data'] as $entry) {
@@ -135,14 +149,14 @@ class CloudbedsFetcher {
                 }
 
                 if (count($page['data']) < CloudbedsClient::PMS_PAGE_SIZE || $pageNumber * CloudbedsClient::PMS_PAGE_SIZE >= $page['total']) {
-                    $this->staging->setMeta("guestListDone:$propertyId", '1');
+                    $this->staging->setMeta("{$metaPrefix}Done:$propertyId", '1');
                     break;
                 }
 
-                $this->staging->setMeta("guestListPage:$propertyId", $pageNumber + 1);
+                $this->staging->setMeta("{$metaPrefix}Page:$propertyId", $pageNumber + 1);
             }
 
-            if ($this->staging->getMeta("guestListDone:$propertyId") !== '1') {
+            if ($this->staging->getMeta("{$metaPrefix}Done:$propertyId") !== '1') {
                 return false;
             }
         }

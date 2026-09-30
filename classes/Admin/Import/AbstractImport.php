@@ -174,6 +174,10 @@ abstract class AbstractImport {
 
                 $hospitalStay->save($this->dbh, $psg, 0, 'admin');
             }
+
+            // patient already exists - never overwrite their data, but fill in any demographic that's currently blank
+            $this->fillBlankDemographics($patient, $r);
+
             return array("patient"=>$patient, "psg"=>$psg, "reg"=> $reg, "hospStay"=>$hospitalStay);
         }
 
@@ -196,6 +200,14 @@ abstract class AbstractImport {
         }
         if(isset($r['Ethnicity'])){
             $post['sel_Ethnicity'] = $this->findIdGenLookup("Ethnicity", $r['Ethnicity']);
+        }
+        // any other demographic a "map to any enabled demographic" target (see CloudbedsFieldMapper::isValidTarget())
+        // resolved into a demog.<Code> key - Gender/Ethnicity above are handled the same way IndivMember::processMember()
+        // applies a sel_<Code> POST field to any name_demog column/gen_lookups Demographics row generically
+        foreach ($r as $rKey => $rValue) {
+            if (str_starts_with((string) $rKey, 'demog.') && trim((string) $rValue) !== '') {
+                $post['sel_' . substr((string) $rKey, strlen('demog.'))] = $this->findIdGenLookup(substr((string) $rKey, strlen('demog.')), (string) $rValue);
+            }
         }
 
         //if (trim($r['PatientLast'] . $r['PatientFirst']) == trim($r['GuestLast'] . $r['GuestFirst'])) { //assume patient is the guest
@@ -324,6 +336,16 @@ abstract class AbstractImport {
                 'selMbrType'=>'ai'
             );
 
+            // any other demographic a "map to any enabled demographic" target (see CloudbedsFieldMapper::isValidTarget())
+            // resolved into a demog.<Code> key - Ethnicity/Gender/Media_Source/No_Return above are handled the same way
+            // IndivMember::processMember() applies a sel_<Code> POST field to any name_demog column/gen_lookups
+            // Demographics row generically
+            foreach ($r as $rKey => $rValue) {
+                if (str_starts_with((string) $rKey, 'demog.') && trim((string) $rValue) !== '') {
+                    $post['sel_' . substr((string) $rKey, strlen('demog.'))] = $this->findIdGenLookup(substr((string) $rKey, strlen('demog.')), (string) $rValue);
+                }
+            }
+
             $adr1 = $this->loadAddress($this->dbh, $r);
             $post['adr'] = $adr1;
 
@@ -332,6 +354,9 @@ abstract class AbstractImport {
             }
 
             $guest->save($this->dbh, $post, $uS->username);
+        } else {
+            // guest already exists - never overwrite their data, but fill in any demographic that's currently blank
+            $this->fillBlankDemographics($guest, $r);
         }
         $relship = RelLinkType::Relative;
         if (isset($r['Relationship_to_Patient'])) {
@@ -504,7 +529,7 @@ abstract class AbstractImport {
 
 
         if(in_array($memberType, ["guest", "patient"])){
-            $query = "Select n.idName, ng.idPsg, ng.Relationship_Code from name n join name_guest ng on n.idName = ng.idName where n.Name_Last = '" . $newLast . "' and n.Name_First = '" . $newFirst . "'";
+            $query = "Select n.idName, ng.idPsg, ng.Relationship_Code, n.External_Id from name n join name_guest ng on n.idName = ng.idName where n.Name_Last = '" . $newLast . "' and n.Name_First = '" . $newFirst . "'";
             if($memberType == "guest"){
                 $query .= " and ng.Relationship_Code != 'slf'";
             }else if($memberType == "patient"){
@@ -622,6 +647,40 @@ WHERE n.Name_First = '" . $newFirst . "' AND n.Name_Last = '" . $newLast . "'";
             return (isset($this->genLookups[$tableKey][trim(strtolower($importFieldValue))]) ? $this->genLookups[$tableKey][trim(strtolower($importFieldValue))] : '');
         }
         return '';
+    }
+
+    /**
+     * Fill in a blank demographic (Gender, Ethnicity, or any demog.<Code> from a "map to any enabled demographic"
+     * target, see CloudbedsFieldMapper::isValidTarget()) on a person who already exists - addGuest()/addPatient() only
+     * apply demographics when creating someone for the first time, so an existing person's data is never overwritten
+     * by an automated import; this fills a gap instead of a value, on request only (never overwrites a value that's
+     * already set, whether from a prior import or entered by hand in HHK).
+     *
+     * @param \HHK\Member\Role\AbstractRole $person an existing Guest or Patient
+     * @param array $r the import row, as passed to addGuest()/addPatient()
+     */
+    protected function fillBlankDemographics(\HHK\Member\Role\AbstractRole $person, array $r): void {
+        $candidates = ['Gender' => (string) ($r['Gender'] ?? ''), 'Ethnicity' => (string) ($r['Ethnicity'] ?? '')];
+        foreach ($r as $key => $value) {
+            if (str_starts_with((string) $key, 'demog.')) {
+                $candidates[substr((string) $key, strlen('demog.'))] = (string) $value;
+            }
+        }
+
+        $post = [];
+        foreach ($candidates as $code => $value) {
+            if (trim($value) === '') {
+                continue;
+            }
+            $field = $person->getRoleMember()->getDemographicField($code);
+            if ($field !== null && trim((string) $field->getStoredVal()) === '') {
+                $post['sel_' . $code] = $this->findIdGenLookup($code, $value);
+            }
+        }
+
+        if (count($post) > 0) {
+            $person->save($this->dbh, $post, 'admin');
+        }
     }
 
     /**

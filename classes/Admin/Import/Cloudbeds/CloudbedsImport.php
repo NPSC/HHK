@@ -53,6 +53,9 @@ class CloudbedsImport extends AbstractImport implements ImportInterface {
     protected CloudbedsFolioImporter $folioImporter;
     protected ?CloudbedsFetcher $fetcher = null;
 
+    /** @var array<string, string> [Code => Description] of the site's enabled demographics, see CloudbedsConfigStore::loadEnabledDemographics() */
+    protected array $enabledDemographics = [];
+
     public function __construct(\PDO $dbh, ?CloudbedsConfig $config = null) {
         parent::__construct($dbh);
 
@@ -61,6 +64,7 @@ class CloudbedsImport extends AbstractImport implements ImportInterface {
         $this->staging = new CloudbedsStaging($dbh);
         $this->staging->ensureTables();
         $this->folioImporter = new CloudbedsFolioImporter($dbh, $this->config);
+        $this->enabledDemographics = (new CloudbedsConfigStore($dbh))->loadEnabledDemographics();
 
         $this->genLookupMapping = [
             "gender" => "Gender",
@@ -70,6 +74,11 @@ class CloudbedsImport extends AbstractImport implements ImportInterface {
             "relationship" => "Patient_Rel_Type",
             "diagnosis" => "Diagnosis",
         ];
+        // "map to any enabled demographic" targets (guest.demog.<Code> / patient.demog.<Code>, see CloudbedsFieldMapper::isValidTarget())
+        // need their own gen lookup category pre-cached the same way the fixed ones above are, for findIdGenLookup() to resolve them
+        foreach (array_keys($this->enabledDemographics) as $code) {
+            $this->genLookupMapping['demog_' . $code] = $code;
+        }
         $this->fieldMapping = [];
 
         $this->loadGenLookups();
@@ -86,15 +95,33 @@ class CloudbedsImport extends AbstractImport implements ImportInterface {
     }
 
     /**
-     * Create any gen lookup values found in the fetched data (for one of GEN_LOOKUP_TARGETS' tables) that don't exist in HHK
-     * yet. This is the same thing createMissing.genLookups does automatically per record during import, offered here so the
-     * values can be reviewed and created ahead of time instead.
+     * GEN_LOOKUP_TARGETS plus one 'guest.demog.<Code>' / 'patient.demog.<Code>' => <Code> entry per enabled demographic
+     * (see CloudbedsConfigStore::loadEnabledDemographics()), so a site-configured "map to any enabled demographic" target
+     * gets the same "Gen Lookup Values" review/create-missing support the fixed targets already have.
+     *
+     * @return array<string, string> [target => gen lookup table name]
+     */
+    public function getGenLookupTargets(): array {
+        $targets = self::GEN_LOOKUP_TARGETS;
+
+        foreach (array_keys($this->enabledDemographics) as $code) {
+            $targets['guest.demog.' . $code] = $code;
+            $targets['patient.demog.' . $code] = $code;
+        }
+
+        return $targets;
+    }
+
+    /**
+     * Create any gen lookup values found in the fetched data (for one of getGenLookupTargets()' tables) that don't exist in
+     * HHK yet. This is the same thing createMissing.genLookups does automatically per record during import, offered here so
+     * the values can be reviewed and created ahead of time instead.
      *
      * @param string $genLookupTableName
      * @return array{success: string}|array{error: string}
      */
     public function createMissingGenLookupValues(string $genLookupTableName): array {
-        $targets = array_filter(self::GEN_LOOKUP_TARGETS, fn($table) => $table === $genLookupTableName);
+        $targets = array_filter($this->getGenLookupTargets(), fn($table) => $table === $genLookupTableName);
         if (count($targets) === 0) {
             return ['error' => "Unknown gen lookup table '$genLookupTableName'"];
         }
@@ -278,10 +305,29 @@ class CloudbedsImport extends AbstractImport implements ImportInterface {
 
     /**
      * Imported people are matched first on their Cloudbeds profile id. If that doesn't find anyone - no previous import
-     * ever paired this Cloudbeds id with an HHK person, or there is no id at all (a patient taken from a custom field) -
-     * fall back to the same name search the CSV importer uses (see AbstractImport::findPerson()), so a person already
-     * in HHK from another source (e.g. entered at the front desk) isn't duplicated. An ambiguous match (more than one
-     * same-name person) is treated as not found rather than risk merging into the wrong person.
+     * ever paired this Cloudbeds id with an HHK person, or there is no id at all (a patient named only in a custom
+     * field, e.g. "Veteran Name if different than guest in room" - Cloudbeds never gives a person like that a profile
+     * id at all) - fall back to the same name search the CSV importer uses (see AbstractImport::findPerson()), so a
+     * person already in HHK from another source (e.g. entered at the front desk, or a prior visit as a relative's
+     * named veteran) isn't duplicated.
+     *
+     * An exact name match must be unambiguous to be used on its own (see the $limit=false below - unlike the CSV
+     * importer, a same-name collision here is resolved rather than picked arbitrarily). An ambiguous match is
+     * narrowed two ways, in order:
+     *  1. If exactly one candidate has a real Cloudbeds profile id (a bare number - see PMS_GUEST_ID_PREFIX for why
+     *     that's how a real one is told apart from a companion's namespaced one), that one is authoritative - a
+     *     veteran who is also, separately, someone's own guest (checked in under their own profile at some point)
+     *     is a live-confirmed case: a relative's reservation naming them can be processed before the veteran's own
+     *     reservation ever is, creating an orphan, name-only patient with no external id first; once the veteran's
+     *     own, profile-backed record exists, it - not the orphan - is the one every later mention of them should
+     *     resolve to.
+     *  2. Otherwise, for a patient, by MRN (see findPatientByMrnAndLastName() - the "Last 4 of Veteran's Social"
+     *     value some properties map to it is only 4 digits, so it's corroborated with the already-matched last name
+     *     rather than trusted alone, to guard against two different veterans coincidentally sharing it). This alone
+     *     can't break a tie between several orphans that are already duplicates of the very same veteran (they all
+     *     share the same MRN, because they really are the same person) - narrowing #1 is what actually prevents
+     *     that pile-up once the real, profile-backed record shows up.
+     * Still ambiguous after both is treated as not found rather than risk merging into the wrong person.
      */
     protected function findExistingPersonId(array $r, string $memberType, string $first, string $last) {
         if (($r['externalId'] ?? '') !== '') {
@@ -291,8 +337,74 @@ class CloudbedsImport extends AbstractImport implements ImportInterface {
             }
         }
 
-        $id = $this->findPerson($first, $last, $memberType, true, $r['Phone'] ?? '', $r['Email'] ?? '');
-        return is_array($id) ? 0 : (int) $id;
+        $id = $this->findPerson($first, $last, $memberType, false, $r['Phone'] ?? '', $r['Email'] ?? '');
+
+        if (is_array($id)) {
+            $withRealExternalId = array_values(array_filter($id, fn($row) => ctype_digit((string) ($row[3] ?? ''))));
+            if (count($withRealExternalId) === 1) {
+                return (int) $withRealExternalId[0][0];
+            }
+
+            $candidates = array_map(fn($row) => (int) $row[0], $id);
+
+            if ($memberType === 'patient') {
+                $mrn = trim((string) ($r['MRN'] ?? ''));
+                if ($mrn !== '') {
+                    $idHospital = (int) ($this->hospitals[trim(strtolower((string) ($r['Hospital'] ?? '')))] ?? 0);
+                    $mrnMatch = $this->findPatientByMrnAndLastName($mrn, $last, $idHospital);
+                    if ($mrnMatch > 0 && in_array($mrnMatch, $candidates, true)) {
+                        return $mrnMatch;
+                    }
+                }
+            }
+
+            return 0;
+        }
+
+        return (int) $id;
+    }
+
+    /**
+     * A patient already in HHK with this MRN, corroborated by last name (see findExistingPersonId() - guards against
+     * a coincidental collision on a short value like "Last 4 of Veteran's Social" matching two different people).
+     * Scoped to the given hospital when known, since an MRN is usually only unique within one hospital's own records.
+     *
+     * @return int idName, 0 if there is no single unambiguous match
+     */
+    protected function findPatientByMrnAndLastName(string $mrn, string $lastName, int $idHospital = 0): int {
+        $mrn = trim($mrn);
+        $lastName = trim($lastName);
+        if ($mrn === '' || $lastName === '') {
+            return 0;
+        }
+
+        $sql = "select distinct hs.idPatient from hospital_stay hs join name n on n.idName = hs.idPatient
+                where hs.MRN = :mrn and n.Name_Last = :lastName";
+        $params = [':mrn' => $mrn, ':lastName' => $lastName];
+        if ($idHospital > 0) {
+            $sql .= " and hs.idHospital = :idHospital";
+            $params[':idHospital'] = $idHospital;
+        }
+
+        $stmt = $this->dbh->prepare($sql);
+        $stmt->execute($params);
+        $ids = $stmt->fetchAll(\PDO::FETCH_COLUMN);
+
+        return count($ids) === 1 ? (int) $ids[0] : 0;
+    }
+
+    /**
+     * Prefix for a companion guest's HHK External_Id (see ensureReservationPeople()): the Guest Profiles API never
+     * pairs a companion (non-main guest) with their own real, persistent Guest Profile id - only their PMS guest id
+     * is ever known for them (see CloudbedsGuestMatcher). A bare PMS guest id must never be stored as if it were a
+     * real profile id - findPersonByExternalId() would then be unable to tell the two id spaces apart, and a person
+     * legitimately re-encountered later under their real profile id (see importProfile()) would not be recognized as
+     * the same person, creating a duplicate. This prefix keeps the two spaces structurally distinct.
+     */
+    protected const PMS_GUEST_ID_PREFIX = 'pmsguest:';
+
+    protected static function pmsGuestExternalId(string $pmsGuestId): string {
+        return self::PMS_GUEST_ID_PREFIX . $pmsGuestId;
     }
 
     // ------------------------------------------------------------------------------------------------
@@ -432,35 +544,74 @@ class CloudbedsImport extends AbstractImport implements ImportInterface {
         $resvStatus = $statusMap['reservation'];
         $visitStatus = $statusMap['visit'];
 
-        // guests: the profile ids on the reservation
-        $people = $this->ensureReservationPeople($summary, $warnings);
+        // guests: the reservation's guest list, keyed by PMS guest id (see ensureReservationPeople()). The main guest's
+        // real, persistent Guest Profile id is a different id space, already known from the PMS reservation fields
+        // (fetchReservationFields()), and is threaded through separately.
+        $realMainProfileId = (string) ($payload['mainProfileId'] ?? '');
+        $mainGuestId = (string) ($payload['mainGuestId'] ?? '');
+
+        $people = $this->ensureReservationPeople($summary, $realMainProfileId, $mainGuestId, $warnings);
         if (count($people) === 0) {
             throw new \RuntimeException('Reservation has no importable guests');
         }
-        // array keys that look like integers are ints in PHP, keep profile ids as strings when comparing
-        $mainProfileId = (string) (array_key_first(array_filter($people, fn($p) => $p['main'])) ?? array_key_first($people));
+        // array keys that look like integers are ints in PHP, keep guest ids as strings when comparing
+        $mainGuestKey = (string) (array_key_first(array_filter($people, fn($p) => $p['main'])) ?? array_key_first($people));
 
-        // custom fields
-        $mapped = $this->mapper->apply(CloudbedsFieldMapper::SCOPE_RESERVATION, (array) ($payload['customFields'] ?? []));
-        $values = $mapped['values'];
+        // custom fields, from three possible sources, each overriding the one before it:
+        //  1. the guest's persistent profile-level custom fields (Guest Profiles API) - lowest priority, since a
+        //     property mostly uses these for guest.* targets rather than patient/hospital/vehicle ones.
+        //  2. the reservation's own top-level custom fields (PMS getReservations).
+        //  3. the main guest's own per-slot custom fields (PMS getReservations' guestList[guestId].customFields) -
+        //     confirmed against live data as where this account's veteran-specific fields (Branch of Service, Door
+        //     Code, Gender/Ethnicity of veteran, Relationship to Patient, Special Needs, ...) actually live; the
+        //     reservation's own top-level customFields rarely has more than a couple of fields for this account.
+        $values = [];
+        $notes = [];
 
-        // a guest (profile-level) custom field can also be mapped to a patient/hospital/vehicle/PSG/note target: Cloudbeds
-        // has no concept of the patient distinct from the guest, so properties sometimes store that data on the guest
-        // profile instead of the reservation. Only the main guest's profile is consulted; a value already mapped from the
-        // reservation's own custom fields wins over one from the guest profile.
-        $mainGuestPayload = $this->staging->getPayload(CloudbedsStaging::PROFILE, $mainProfileId);
+        // 1. guest profile-level (lowest priority). Cloudbeds has no concept of the patient distinct from the guest, so
+        // properties sometimes store that data on the guest profile instead of the reservation. Only the main guest's
+        // profile is consulted, by their real profile id (not $people's own guest-id keying - see ensureReservationPeople()).
+        $mainGuestPayload = $realMainProfileId !== '' ? $this->staging->getPayload(CloudbedsStaging::PROFILE, $realMainProfileId) : null;
         if ($mainGuestPayload !== null) {
             $guestMapped = $this->mapper->apply(CloudbedsFieldMapper::SCOPE_GUEST, (array) ($mainGuestPayload['customFields'] ?? []));
 
             foreach ($guestMapped['values'] as $target => $value) {
                 if (!str_starts_with($target, 'guest.') && $target !== 'note.member') {
-                    $values[$target] ??= $value;
+                    $values[$target] = $value;
                 }
             }
             foreach (['note.reservation', 'note.psg'] as $noteTarget) {
-                $mapped['notes'][$noteTarget] = array_merge($mapped['notes'][$noteTarget] ?? [], $guestMapped['notes'][$noteTarget] ?? []);
+                $notes[$noteTarget] = array_merge($notes[$noteTarget] ?? [], $guestMapped['notes'][$noteTarget] ?? []);
             }
         }
+
+        // 2. the reservation's own top-level custom fields
+        $mapped = $this->mapper->apply(CloudbedsFieldMapper::SCOPE_RESERVATION, (array) ($payload['customFields'] ?? []));
+        foreach ($mapped['values'] as $target => $value) {
+            $values[$target] = $value;
+        }
+        foreach (['note.reservation', 'note.psg'] as $noteTarget) {
+            $notes[$noteTarget] = array_merge($notes[$noteTarget] ?? [], $mapped['notes'][$noteTarget] ?? []);
+        }
+
+        // 3. the main guest's own per-slot custom fields (highest priority) - Cloudbeds attaches these to the
+        // reservation's own guest-list entry rather than the persistent profile, but a site's own mapping may still
+        // categorize them as guest-scope fields (confirmed against a live config - see applyEitherScope()), so each
+        // field is checked against whichever scope it's actually mapped under.
+        $guestSlotFields = (array) ($payload['pmsGuestList'][$mainGuestId]['customFields'] ?? []);
+        if (count($guestSlotFields) > 0) {
+            $guestSlotMapped = $this->mapper->applyEitherScope($guestSlotFields, CloudbedsFieldMapper::SCOPE_GUEST, CloudbedsFieldMapper::SCOPE_RESERVATION);
+            foreach ($guestSlotMapped['values'] as $target => $value) {
+                if (!str_starts_with($target, 'guest.') && $target !== 'note.member') {
+                    $values[$target] = $value;
+                }
+            }
+            foreach (['note.reservation', 'note.psg'] as $noteTarget) {
+                $notes[$noteTarget] = array_merge($notes[$noteTarget] ?? [], $guestSlotMapped['notes'][$noteTarget] ?? []);
+            }
+        }
+
+        $mapped['notes'] = $notes;
 
         // patient, PSG, registration and hospital stay
         $hospitalTitle = trim($values['hospital'] ?? '');
@@ -476,7 +627,7 @@ class CloudbedsImport extends AbstractImport implements ImportInterface {
         $diagnosis = trim($values['diagnosis'] ?? '');
         $this->ensureGenLookup('Diagnosis', $diagnosis);
 
-        $patientRow = $this->patientRow($values, $people[$mainProfileId]['row']);
+        $patientRow = $this->patientRow($values, $people[$mainGuestKey]['row']);
         $patientRow['Hospital'] = $hospitalTitle;
         $patientRow['Diagnosis'] = $diagnosis;
         if (trim($values['mrn'] ?? '') !== '') {
@@ -491,9 +642,13 @@ class CloudbedsImport extends AbstractImport implements ImportInterface {
         $idPsg = (int) $psg->getIdPsg();
 
         // each guest profile's own notes (Cloudbeds guest notes and its note.member custom field), now that this
-        // reservation has given them a PSG - see addProfileNotesToPsg()
-        foreach (array_keys($people) as $profileId) {
-            $this->addProfileNotesToPsg((string) $profileId, $idPsg);
+        // reservation has given them a PSG - see addProfileNotesToPsg(). Only possible for a person whose real profile
+        // id is known (the main guest, via $realMainProfileId/'profileId') - a companion is only ever known by their
+        // PMS guest id, whose profile was never fetched, so there is nothing to look up for them here.
+        foreach ($people as $person) {
+            if (($person['profileId'] ?? '') !== '') {
+                $this->addProfileNotesToPsg($person['profileId'], $idPsg);
+            }
         }
 
         $idHospitalStay = 0;
@@ -506,13 +661,13 @@ class CloudbedsImport extends AbstractImport implements ImportInterface {
 
         // everyone else joins the PSG
         $relationship = trim($values['relationship'] ?? '');
-        foreach ($people as $profileId => $person) {
+        foreach ($people as $guestKey => $person) {
             if ($person['idName'] === $idPatient) {
                 continue;
             }
 
             $guestRow = $person['row'];
-            if ((string) $profileId === $mainProfileId && $relationship !== '') {
+            if ((string) $guestKey === $mainGuestKey && $relationship !== '') {
                 $this->ensureGenLookup('Patient_Rel_Type', $relationship);
                 if ($this->findIdGenLookup('Patient_Rel_Type', $relationship) !== '') {
                     $guestRow['Relationship_to_Patient'] = $relationship;
@@ -533,9 +688,12 @@ class CloudbedsImport extends AbstractImport implements ImportInterface {
             $this->insertVehicle($reg, $vehicle);
         }
 
-        // one HHK reservation (and visit) per Cloudbeds room
+        // one HHK reservation (and visit) per Cloudbeds room. A guest who changed rooms mid-stay has more than one here,
+        // each carrying its own status - a segment they've since left is "checked_out" even while the reservation as a
+        // whole is still "checked_in" (they're now in a later segment) - see the per-room status override below.
         $rooms = array_values((array) ($summary['rooms'] ?? []));
-        if (count($rooms) === 0) {
+        $hadRoomData = count($rooms) > 0;
+        if (!$hadRoomData) {
             $rooms = [[]];
         }
 
@@ -543,6 +701,15 @@ class CloudbedsImport extends AbstractImport implements ImportInterface {
         $visitIds = [];
 
         foreach ($rooms as $room) {
+            // Cloudbeds sometimes reports a room segment with no room assigned at all yet (e.g. the guest is between
+            // rooms and the new one isn't finalized) - per import specs.md, no room means no imported visit for this
+            // segment; a later re-fetch picks it up once Cloudbeds assigns a room. This only applies to a real, explicit
+            // "no room" segment from Cloudbeds' own room list, not the single synthetic segment used below when
+            // Cloudbeds gave no room breakdown for the reservation at all.
+            if ($hadRoomData && trim((string) ($room['roomName'] ?? '')) === '' && trim((string) ($room['roomId'] ?? '')) === '') {
+                continue;
+            }
+
             $arrival = CloudbedsNormalizer::dateTime((string) ($room['checkInAt'] ?? $summary['checkInAt'] ?? ''), CloudbedsNormalizer::DEFAULT_ARRIVAL_TIME);
             $expectedDeparture = CloudbedsNormalizer::dateTime((string) ($room['checkOutAt'] ?? $summary['checkOutAt'] ?? ''), CloudbedsNormalizer::DEFAULT_DEPARTURE_TIME);
             if ($arrival === null || $expectedDeparture === null) {
@@ -551,8 +718,8 @@ class CloudbedsImport extends AbstractImport implements ImportInterface {
 
             $roomPeople = $this->roomPeople($room, $people);
             $roomGuestId = (string) ($room['guestId'] ?? '');
-            $roomMainProfileId = isset($roomPeople[$roomGuestId]) ? $roomGuestId : (isset($roomPeople[$mainProfileId]) ? $mainProfileId : (string) array_key_first($roomPeople));
-            $primaryIdName = $roomPeople[$roomMainProfileId]['idName'];
+            $roomMainGuestKey = isset($roomPeople[$roomGuestId]) ? $roomGuestId : (isset($roomPeople[$mainGuestKey]) ? $mainGuestKey : (string) array_key_first($roomPeople));
+            $primaryIdName = $roomPeople[$roomMainGuestKey]['idName'];
 
             $guestIds = [];
             foreach ($roomPeople as $person) {
@@ -560,7 +727,18 @@ class CloudbedsImport extends AbstractImport implements ImportInterface {
             }
 
             $idResource = $this->resolveResource((string) ($room['roomName'] ?? ''), $warnings);
-            $checkedOut = $visitStatus === VisitStatus::CheckedOut;
+
+            // this room segment's own status, not the reservation's overall one, decides whether it is done - a segment
+            // Cloudbeds itself reports as checked out is departed regardless of what the guest's current (later) segment
+            // is doing; anything else (not yet checked into this room, or any other value) is this reservation's current
+            // segment, so it follows the reservation's own overall status
+            $segResvStatus = $resvStatus;
+            $segVisitStatus = $visitStatus;
+            if ((string) ($room['status'] ?? '') === 'checked_out') {
+                $segResvStatus = CloudbedsConfig::DEFAULT_STATUS_MAP['checked_out']['reservation'];
+                $segVisitStatus = CloudbedsConfig::DEFAULT_STATUS_MAP['checked_out']['visit'];
+            }
+            $segCheckedOut = $segVisitStatus === VisitStatus::CheckedOut;
 
             $idResv = $this->insertReservation([
                 'idRegistration' => $reg->getIdRegistration(),
@@ -569,9 +747,9 @@ class CloudbedsImport extends AbstractImport implements ImportInterface {
                 'idResource' => $idResource,
                 'expectedArrival' => $arrival,
                 'expectedDeparture' => $expectedDeparture,
-                'actualArrival' => $visitStatus !== null ? $arrival : null,
-                'actualDeparture' => $checkedOut ? $expectedDeparture : null,
-                'status' => $resvStatus,
+                'actualArrival' => $segVisitStatus !== null ? $arrival : null,
+                'actualDeparture' => $segCheckedOut ? $expectedDeparture : null,
+                'status' => $segResvStatus,
                 'guests' => $guestIds,
             ]);
             $reservationIds[] = $idResv;
@@ -579,10 +757,10 @@ class CloudbedsImport extends AbstractImport implements ImportInterface {
             $lines = array_merge(["Imported from Cloudbeds reservation #" . $reservationId], $mapped['notes']['note.reservation'] ?? []);
             LinkNote::save($this->dbh, $this->noteText($lines), $idResv, Note::ResvLink, '', $uS->username);
 
-            if ($visitStatus !== null) {
+            if ($segVisitStatus !== null) {
                 $stays = [];
                 foreach (array_keys($guestIds) as $idName) {
-                    $stays[] = ['idName' => $idName, 'idRoom' => $idResource, 'checkin' => $arrival, 'checkout' => $checkedOut ? $expectedDeparture : null];
+                    $stays[] = ['idName' => $idName, 'idRoom' => $idResource, 'checkin' => $arrival, 'checkout' => $segCheckedOut ? $expectedDeparture : null];
                 }
 
                 $visitIds[] = $this->insertVisit([
@@ -593,11 +771,15 @@ class CloudbedsImport extends AbstractImport implements ImportInterface {
                     'idPrimaryGuest' => $primaryIdName,
                     'arrival' => $arrival,
                     'expectedDeparture' => $expectedDeparture,
-                    'departure' => $checkedOut ? $expectedDeparture : null,
-                    'status' => $visitStatus,
+                    'departure' => $segCheckedOut ? $expectedDeparture : null,
+                    'status' => $segVisitStatus,
                     'stays' => $stays,
                 ]);
             }
+        }
+
+        if (count($reservationIds) === 0) {
+            return $this->result(CloudbedsStaging::SKIPPED, null, [], 'No room segment with an assigned room could be imported');
         }
 
         if (!empty($mapped['notes']['note.psg'])) {
@@ -612,7 +794,7 @@ class CloudbedsImport extends AbstractImport implements ImportInterface {
             'psg' => (int) $psg->getIdPsg(),
             'registration' => (int) $reg->getIdRegistration(),
             'patient' => $idPatient,
-            'primaryGuest' => $people[$mainProfileId]['idName'],
+            'primaryGuest' => $people[$mainGuestKey]['idName'],
             'reservations' => $reservationIds,
             'visits' => $visitIds,
         ], implode('; ', $warnings));
@@ -622,33 +804,49 @@ class CloudbedsImport extends AbstractImport implements ImportInterface {
      * Make sure every guest on the reservation exists in HHK, creating the ones the profile import didn't get to
      * from the guest details on the reservation.
      *
-     * @return array<string, array{idName: int, row: array, main: bool}> keyed by profile id
+     * The Guest Profiles API's own reservation.guests[].id is the PMS guest id (confirmed against live data) - not a
+     * Guest Profile id, despite it being documented as one on CloudbedsGuestMatcher::match(). By itself it is not a
+     * reusable identity for a person across imports: Cloudbeds only ever pairs a PMS guest id with a real profile id
+     * for a reservation's main guest (see CloudbedsGuestMatcher), so that pairing - $mainProfileId/$mainGuestId,
+     * already known from fetchReservationFields() - is used to identify the main guest by their real profile id, the
+     * same id importProfile() uses for them. This is what makes the two agree on the same HHK person instead of each
+     * creating their own separate record for the same guest. A companion can only ever be identified by their PMS
+     * guest id here, which is namespaced (see PMS_GUEST_ID_PREFIX) so it can never be confused with, or overwrite, a
+     * real profile id.
+     *
+     * @return array<string, array{idName: int, row: array, main: bool, profileId: string}> keyed by PMS guest id
+     *         (matches room['guestId']/additionalGuestIds, also PMS guest ids). 'profileId' is the person's real
+     *         Guest Profile id when known (always for the main guest), '' otherwise.
      */
-    protected function ensureReservationPeople(array $summary, array &$warnings): array {
+    protected function ensureReservationPeople(array $summary, string $mainProfileId, string $mainGuestId, array &$warnings): array {
         $people = [];
 
         foreach ((array) ($summary['guests'] ?? []) as $g) {
-            $profileId = (string) ($g['id'] ?? '');
-            if ($profileId === '') {
+            $guestId = (string) ($g['id'] ?? '');
+            if ($guestId === '') {
                 continue;
             }
 
-            $r = CloudbedsNormalizer::person($g);
-            $r['externalId'] = $profileId;
+            $isMain = !empty($g['isMainGuest']) || ($mainGuestId !== '' && $guestId === $mainGuestId);
+            $realProfileId = ($isMain && $mainProfileId !== '') ? $mainProfileId : '';
+            $externalId = $realProfileId !== '' ? $realProfileId : self::pmsGuestExternalId($guestId);
 
-            $idName = $this->findPersonByExternalId($profileId);
+            $r = CloudbedsNormalizer::person($g);
+            $r['externalId'] = $externalId;
+
+            $idName = $this->findPersonByExternalId($externalId);
             if ($idName === 0) {
                 $this->ensureGenLookups($r);
                 $guest = $this->addGuest($r);
 
                 if ($guest === false) {
-                    $warnings[] = "Guest $profileId has no last name and was not imported";
+                    $warnings[] = "Guest $guestId has no last name and was not imported";
                     continue;
                 }
                 $idName = (int) $guest->getIdName();
             }
 
-            $people[$profileId] = ['idName' => $idName, 'row' => $r, 'main' => !empty($g['isMainGuest'])];
+            $people[$guestId] = ['idName' => $idName, 'row' => $r, 'main' => $isMain, 'profileId' => $realProfileId];
         }
 
         return $people;
@@ -670,13 +868,10 @@ class CloudbedsImport extends AbstractImport implements ImportInterface {
             $last = $name['last'];
         }
 
-        if ($last === '') {
-            return $mainGuestRow;
-        }
-
-        return [
-            'externalId' => '',
-            'FirstName' => $first, 'Middle' => trim($values['patient.Middle'] ?? ''), 'LastName' => $last,
+        // fields that describe the patient regardless of whether they turn out to be a separate person (below) or the
+        // main guest themselves (see $last === '' below) - including any "map to any enabled demographic" values
+        $patientFields = [
+            'Middle' => trim($values['patient.Middle'] ?? ''),
             'Email' => trim($values['patient.Email'] ?? ''), 'Phone' => trim($values['patient.Phone'] ?? ''), 'Mobile' => trim($values['patient.Mobile'] ?? ''),
             'Address' => trim($values['patient.Address'] ?? ''), 'Address2' => trim($values['patient.Address2'] ?? ''),
             'City' => trim($values['patient.City'] ?? ''), 'County' => trim($values['patient.County'] ?? ''),
@@ -684,8 +879,31 @@ class CloudbedsImport extends AbstractImport implements ImportInterface {
             'BirthDate' => CloudbedsNormalizer::parseCustomFieldDate($values['patient.BirthDate'] ?? ''),
             'Gender' => CloudbedsNormalizer::gender($values['patient.Gender'] ?? '') ?: trim($values['patient.Gender'] ?? ''),
             'Ethnicity' => trim($values['patient.Ethnicity'] ?? ''),
-            'Hospital' => '',
         ];
+        foreach ($values as $target => $value) {
+            if (str_starts_with($target, 'patient.demog.')) {
+                $patientFields['demog.' . substr($target, strlen('patient.demog.'))] = trim((string) $value);
+            }
+        }
+
+        if ($last === '') {
+            // no separate veteran/patient named - the guest is their own patient, but a mapped patient.* value still
+            // describes them and must not be lost; only overlay fields something was actually mapped for, so the
+            // guest's own existing data isn't clobbered with blanks. Gender is the one exception: per import specs.md,
+            // Cloudbeds' own native profile Gender (already on $mainGuestRow) wins over the "Gender of Veteran if
+            // different" custom field's value when both are present.
+            $overlay = array_filter($patientFields, fn($v) => $v !== '');
+            if (trim((string) ($mainGuestRow['Gender'] ?? '')) !== '') {
+                unset($overlay['Gender']);
+            }
+            return array_merge($mainGuestRow, $overlay);
+        }
+
+        return [
+            'externalId' => '',
+            'FirstName' => $first, 'LastName' => $last,
+            'Hospital' => '',
+        ] + $patientFields;
     }
 
     /**
@@ -753,6 +971,14 @@ class CloudbedsImport extends AbstractImport implements ImportInterface {
         $this->ensureGenLookup('Ethnicity', (string) ($r['Ethnicity'] ?? ''));
         $this->ensureGenLookup('No_Return', (string) ($r['Banned'] ?? ''));
         $this->ensureGenLookup('Media_Source', (string) ($r['mediaSource'] ?? ''));
+
+        // same "create missing" support for any other mapped demographic (guest.demog.<Code> / patient.demog.<Code>),
+        // see AbstractImport::addGuest()/addPatient() for where the matching demog.<Code> keys get applied
+        foreach ($r as $key => $value) {
+            if (str_starts_with((string) $key, 'demog.')) {
+                $this->ensureGenLookup(substr((string) $key, strlen('demog.')), (string) $value);
+            }
+        }
     }
 
     protected function ensureGenLookup(string $genLookupTableName, string $value): void {

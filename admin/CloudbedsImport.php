@@ -6,7 +6,7 @@ use HHK\HTMLControls\{HTMLContainer, HTMLInput, HTMLSelector, HTMLTable};
 use HHK\House\Hospital\Hospital;
 use HHK\sec\{Labels, Session, WebInit};
 use HHK\SysConst\HospitalType;
-use HHK\Admin\Import\Cloudbeds\{CloudbedsClient, CloudbedsConfig, CloudbedsConfigStore, CloudbedsFieldMapper, CloudbedsImport, CloudbedsStaging, CloudbedsValueMaps};
+use HHK\Admin\Import\Cloudbeds\{CloudbedsClient, CloudbedsConfig, CloudbedsConfigStore, CloudbedsFieldMapper, CloudbedsImport, CloudbedsInvoiceCsv, CloudbedsInvoiceImporter, CloudbedsInvoiceStaging, CloudbedsStaging, CloudbedsValueMaps};
 
 /**
  * CloudbedsImport.php
@@ -43,6 +43,12 @@ function cbEsc($value): string {
 $store = new CloudbedsConfigStore($dbh);
 $staging = new CloudbedsStaging($dbh);
 $staging->ensureTables();
+
+// $0 "additional charge" invoice CSV, tied to visits by Cloudbeds reservation id (see CloudbedsInvoiceImporter). Independent
+// of whether the Cloudbeds API connection itself is configured - it only needs $staging, for the reservation-id -> visit lookup.
+$invoiceStaging = new CloudbedsInvoiceStaging($dbh);
+$invoiceCsv = new CloudbedsInvoiceCsv($dbh, $invoiceStaging);
+$invoiceImporter = new CloudbedsInvoiceImporter($dbh, $invoiceStaging, $staging);
 
 $resultMsg = '';
 $errorMsg = '';
@@ -161,6 +167,28 @@ if (filter_has_var(INPUT_POST, "cmd")) {
                 $import->getStaging()->reset();
                 $return = ["success" => "Staged Cloudbeds data has been discarded"];
                 break;
+            case 'uploadInvoiceCsv':
+                if (!isset($_FILES['invoiceCsvFile']) || !is_uploaded_file($_FILES['invoiceCsvFile']['tmp_name'])) {
+                    $return = ["error" => "No file was uploaded"];
+                    break;
+                }
+                $return = $invoiceCsv->upload($_FILES['invoiceCsvFile']['tmp_name']);
+                $return['success'] = true;
+                break;
+            case 'startInvoiceImport':
+                $limit = max(1, min(500, intval(filter_input(INPUT_POST, "limit", FILTER_SANITIZE_NUMBER_INT))));
+                $return = $invoiceImporter->startImport($limit);
+                break;
+            case 'createMissingInvoiceItems':
+                $return = ["success" => $invoiceCsv->createMissingItems() . " item(s) created"];
+                break;
+            case 'retryInvoiceFailed':
+                $return = ["success" => $invoiceStaging->retryFailed() . " records will be retried"];
+                break;
+            case 'resetInvoiceStaging':
+                $invoiceStaging->reset();
+                $return = ["success" => "Staged invoice CSV data has been discarded"];
+                break;
             default:
                 $return = ["error" => "Unknown command"];
         }
@@ -200,6 +228,10 @@ try {
     $mapper = new CloudbedsFieldMapper();
     $errorMsg .= ($errorMsg !== '' ? ' ' : '') . 'Saved custom field mapping is invalid: ' . $e->getMessage();
 }
+
+// the site's enabled demographics (Special Needs, Age Bracket, ...) - offered as "map to any enabled demographic"
+// targets in the custom field mapping dropdown below, see CloudbedsFieldMapper::isValidTarget()
+$enabledDemographics = $store->loadEnabledDemographics();
 
 $checkbox = function (string $name, bool $checked, string $label): string {
     $attrs = ['type' => 'checkbox', 'name' => $name, 'id' => str_replace(['[', ']'], '_', $name), 'value' => '1'];
@@ -339,12 +371,20 @@ $objectLabels = [
 ];
 
 // [[value, label, group], ...] for the HHK field dropdown, grouped like the CRM export
-$hhkOptionsFor = function (string $scope): array {
+$hhkOptionsFor = function (string $scope) use ($enabledDemographics): array {
     $options = [];
     foreach (CloudbedsFieldMapper::fieldsFor($scope) as $group => $fields) {
         foreach ($fields as $target => $label) {
             $options[] = [$target, cbEsc($label), $group];
         }
+    }
+    // guest.demog.<Code> is only offered for guest-scope fields; patient.demog.<Code> (like the rest of the Patient
+    // group) is offered from both scopes, since Cloudbeds has no concept of the patient separate from the guest
+    foreach ($enabledDemographics as $code => $label) {
+        if ($scope === CloudbedsFieldMapper::SCOPE_GUEST) {
+            $options[] = ['guest.demog.' . $code, cbEsc($label), 'Demographics'];
+        }
+        $options[] = ['patient.demog.' . $code, cbEsc('Patient ' . $label), 'Demographics'];
     }
     return $options;
 };
@@ -519,12 +559,29 @@ $valueMapsMkup = HTMLContainer::generateMarkup('div',
     . $valueMapSection(CloudbedsValueMaps::CHARGE_ITEM, 'Charge Items', 'What each kind of folio charge is imported as on the invoice. Room rates are lodging. Anything left as default is an additional charge, or a discount when the amount is negative. Charges set to Do not import are left off the invoice.', $cbChargeTypes, $toOptions(CloudbedsValueMaps::CHARGE_ITEM_CHOICES), '-- Default --', $chargeDefault),
     ['class' => 'hhk-flex flex-wrap']);
 
-// gen lookup values (relationship, ethnicity, gender, ...) found in the fetched data, and whether they already exist in HHK.
-// Lets a value like a relationship or an ethnicity be created ahead of time instead of relying on the "Lookup values" Create
-// Missing setting, which does the same thing automatically (and silently) per record during import.
-$genLookupFound = $staging->summarizeGenLookupValues($mapper, CloudbedsImport::GEN_LOOKUP_TARGETS);
+// gen lookup values (relationship, ethnicity, gender, any other mapped demographic, ...) found in the fetched data, and
+// whether they already exist in HHK. Lets a value like a relationship or an ethnicity be created ahead of time instead
+// of relying on the "Lookup values" Create Missing setting, which does the same thing automatically (and silently) per
+// record during import. Falls back to the fixed target list if the Cloudbeds connection itself failed to load ($import
+// is null), same as $mapper above.
+$genLookupTargets = $import !== null ? $import->getGenLookupTargets() : CloudbedsImport::GEN_LOOKUP_TARGETS;
+$genLookupFound = $staging->summarizeGenLookupValues($mapper, $genLookupTargets);
 
-$genLookupSection = function (string $table) use ($dbh, $genLookupFound): string {
+// a table a site custom field is actually mapped to right now (e.g. a newly-mapped demographic) always gets a section,
+// even before any value has been found in the fetched data - a table that's merely an available target (an enabled
+// demographic nothing is mapped to yet, or no fetch has happened) only appears once a value is actually found, so the
+// page isn't cluttered with empty sections for demographics nothing uses.
+$mappedTargetKeys = array_merge(array_values((array) ($saved['customFields']['guest'] ?? [])), array_values((array) ($saved['customFields']['reservation'] ?? [])));
+$tableIsMapped = function (string $table) use ($genLookupTargets, $mappedTargetKeys): bool {
+    foreach ($genLookupTargets as $target => $t) {
+        if ($t === $table && in_array($target, $mappedTargetKeys, true)) {
+            return true;
+        }
+    }
+    return false;
+};
+
+$genLookupSection = function (string $table, bool $isMapped) use ($dbh, $genLookupFound): string {
     $existing = [];
     foreach (Common::readGenLookupsPDO($dbh, $table) as $row) {
         $existing[strtolower(trim($row[1]))] = $row[1];
@@ -544,7 +601,7 @@ $genLookupSection = function (string $table) use ($dbh, $genLookupFound): string
         ];
     }
 
-    if (count($rows) === 0) {
+    if (count($rows) === 0 && !$isMapped) {
         return '';
     }
 
@@ -552,15 +609,19 @@ $genLookupSection = function (string $table) use ($dbh, $genLookupFound): string
         ? HTMLInput::generateMarkup('Create ' . $missing . ' Missing', ['type' => 'button', 'class' => 'ui-button ui-corner-all ui-widget cbAction cbCmd ml-2', 'data-cmd' => 'createGenLookups', 'data-table' => $table])
         : '';
 
+    $body = count($rows) > 0
+        ? CreateMarkupFromDB::generateHTML_Table($rows, 'genlookup' . $table)
+        : HTMLContainer::generateMarkup('p', 'No values found in the fetched data yet.', ['class' => 'ui-state-disabled p-1']);
+
     return HTMLContainer::generateMarkup('div',
         HTMLContainer::generateMarkup('h4', cbEsc(str_replace('_', ' ', $table)) . $addBtn)
-        . CreateMarkupFromDB::generateHTML_Table($rows, 'genlookup' . $table),
+        . $body,
         ['class' => 'ui-widget ui-widget-content ui-corner-all p-2 mb-3 mr-2']);
 };
 
 $genLookupMkup = '';
-foreach (array_unique(CloudbedsImport::GEN_LOOKUP_TARGETS) as $table) {
-    $genLookupMkup .= $genLookupSection($table);
+foreach (array_unique($genLookupTargets) as $table) {
+    $genLookupMkup .= $genLookupSection($table, $tableIsMapped($table));
 }
 $genLookupMkup = $genLookupMkup !== ''
     ? HTMLContainer::generateMarkup('div', $genLookupMkup, ['class' => 'hhk-flex flex-wrap'])
@@ -591,6 +652,19 @@ if ($import !== null) {
     $fetchStep = $staging->getMeta('fetchStep', 'profiles');
 }
 
+// invoice CSV status
+$invoiceErrorsMkup = '';
+$invoiceProgress = $invoiceStaging->getProgress();
+$unmatchedItems = $invoiceCsv->unmatchedItems();
+
+if ($invoiceProgress['total'] > 0) {
+    $invoiceErrorRows = [];
+    foreach ($invoiceStaging->getErrors(50) as $e) {
+        $invoiceErrorRows[] = ['Reservation Id' => cbEsc($e['reservationId']), 'Item' => cbEsc($e['item']), 'Error' => cbEsc($e['message'])];
+    }
+    $invoiceErrorsMkup = count($invoiceErrorRows) > 0 ? CreateMarkupFromDB::generateHTML_Table($invoiceErrorRows, 'cbInvoiceErrors') : '';
+}
+
 ?>
 <!DOCTYPE html>
 <html>
@@ -613,10 +687,10 @@ if ($import !== null) {
         <script type="text/javascript" src="<?php echo NOTY_SETTINGS_JS; ?>"></script>
 
         <style>
-            #progressBar { height: 20px; margin: 0 -1px; }
-            #progressBar .progressValue { background-color: rgb(77, 141, 67); }
-            #progressBar .progressValueText { position: absolute; width: 100%; text-align: center; }
-            #cbErrors td:last-child { white-space: pre-wrap; }
+            #progressBar, #invoiceProgressBar { height: 20px; margin: 0 -1px; }
+            #progressBar .progressValue, #invoiceProgressBar .progressValue { background-color: rgb(77, 141, 67); }
+            #progressBar .progressValueText, #invoiceProgressBar .progressValueText { position: absolute; width: 100%; text-align: center; }
+            #cbErrors td:last-child, #cbInvoiceErrors td:last-child { white-space: pre-wrap; }
         </style>
 
         <script type="text/javascript">
@@ -670,6 +744,71 @@ if ($import !== null) {
                         runImport();
                     } else {
                         flagAlertMessage("Import finished: " + p.processed + " of " + p.total + " records processed, " + p.errors + " errors", p.errors > 0);
+                        setTimeout(function () { location.reload(); }, 1500);
+                    }
+                });
+            }
+
+            // upload the additional-charge invoice CSV (needs FormData, unlike the JSON-only post() helper)
+            function uploadInvoiceCsv() {
+                var fileInput = document.getElementById("invoiceCsvFile");
+                if (!fileInput.files.length) {
+                    flagAlertMessage("Choose a CSV file first", true);
+                    return;
+                }
+
+                var formData = new FormData();
+                formData.append("cmd", "uploadInvoiceCsv");
+                formData.append("invoiceCsvFile", fileInput.files[0]);
+
+                $("button.cbAction").prop("disabled", true);
+                $("#uploadInvoiceStatus").text("Uploading...");
+
+                $.ajax({
+                    url: "CloudbedsImport.php",
+                    method: "post",
+                    data: formData,
+                    processData: false,
+                    contentType: false,
+                    dataType: "json",
+                    success: function (data) {
+                        $("button.cbAction").prop("disabled", false);
+                        if (data.error) {
+                            flagAlertMessage(data.error, true);
+                            return;
+                        }
+                        var msg = data.staged + " row(s) staged" + (data.duplicates > 0 ? ", " + data.duplicates + " already staged (skipped)" : "");
+                        flagAlertMessage(msg + (data.errors.length > 0 ? ". " + data.errors.length + " row(s) had errors, see below." : ""), data.errors.length > 0);
+                        if (data.errors.length > 0) {
+                            flagAlertMessage(data.errors.join("\n"), true);
+                        }
+                        setTimeout(function () { location.reload(); }, data.errors.length > 0 ? 4000 : 1500);
+                    },
+                    error: function (xhr) {
+                        $("button.cbAction").prop("disabled", false);
+                        flagAlertMessage("Request failed: " + xhr.status + " " + xhr.statusText, true);
+                    }
+                });
+            }
+
+            // import invoice CSV batches until nothing is left
+            function runInvoiceImport() {
+                post({cmd: "startInvoiceImport", limit: 50}, function (data) {
+                    if (data.error) {
+                        flagAlertMessage(data.error, true);
+                        $("button.cbAction").prop("disabled", false);
+                        return;
+                    }
+
+                    var p = data.progress;
+                    $("#invoiceProgressBar .progressValue").css("width", p.progress + "%");
+                    $("#invoiceProgressBar .progressValueText").text(p.progress + "% (" + p.processed + " of " + p.total + ", " + p.errors + " errors)")
+                        .css("color", p.progress >= 50 ? "white" : "black");
+
+                    if (data.batch > 0 && p.remaining > 0) {
+                        runInvoiceImport();
+                    } else {
+                        flagAlertMessage("Invoice import finished: " + p.processed + " of " + p.total + " records processed, " + p.errors + " errors", p.errors > 0);
                         setTimeout(function () { location.reload(); }, 1500);
                     }
                 });
@@ -741,6 +880,16 @@ if ($import !== null) {
                     $("button.cbAction").prop("disabled", true);
                     $("#progressBar").removeClass("d-none").addClass("d-flex");
                     runImport();
+                });
+
+                $("#uploadInvoiceCsv").click(function () {
+                    uploadInvoiceCsv();
+                });
+
+                $("#startInvoiceImport").click(function () {
+                    $("button.cbAction").prop("disabled", true);
+                    $("#invoiceProgressBar").removeClass("d-none").addClass("d-flex");
+                    runInvoiceImport();
                 });
 
                 $(".cbCmd").click(function () {
@@ -852,6 +1001,42 @@ if ($import !== null) {
             <div class="ui-widget ui-widget-content ui-corner-all hhk-widget-content mb-3" style="max-width:100%">
                 <h2>Errors</h2>
                 <?php echo $errorsMkup; ?>
+            </div>
+            <?php } ?>
+
+            <div class="ui-widget ui-widget-content ui-corner-all hhk-widget-content mb-3" style="max-width:100%">
+                <h2>Additional Charge Invoices (CSV)</h2>
+                <p>Creates a $0, already-paid invoice with one line for each row, on the visit found by the Cloudbeds reservation id the row names
+                    (the same id the fetch/import above uses - a reservation has to already be imported as a visit before its invoices can be added).
+                    CSV columns: <strong>Reservation ID</strong>, <strong>Item</strong>, <strong>Date</strong>, and optionally <strong>Notes</strong> (copied to the invoice's Notes).
+                    One row is one invoice with one line - rows are not grouped.</p>
+                <p>
+                    <input type="file" id="invoiceCsvFile" accept=".csv,text/csv">
+                    <button class="ui-button ui-corner-all cbAction" id="uploadInvoiceCsv">Upload</button>
+                    <span id="uploadInvoiceStatus" class="ml-3"></span>
+                </p>
+
+                <?php if (count($unmatchedItems) > 0) { ?>
+                <p class="ui-state-highlight ui-corner-all p-2"><?php echo count($unmatchedItems); ?> item name(s) in the staged rows don't match an existing HHK item:
+                    <?php echo cbEsc(implode(', ', array_keys($unmatchedItems))); ?>.
+                    <button class="ui-button ui-corner-all ml-2 cbAction cbCmd" data-cmd="createMissingInvoiceItems">Create Missing Items</button></p>
+                <?php } ?>
+
+                <div class="hhk-flex mt-2">
+                    <button class="ui-button ui-corner-all cbAction" id="startInvoiceImport">Start Import</button>
+                    <button class="ui-button ui-corner-all ml-3 cbAction cbCmd" data-cmd="retryInvoiceFailed">Retry Failed</button>
+                    <button class="ui-button ui-corner-all ml-3 cbAction cbCmd" data-cmd="resetInvoiceStaging" data-confirm="Discard all staged (not-yet-imported) invoice CSV rows? Nothing already imported into HHK is changed.">Discard Staged Rows</button>
+                </div>
+                <div id="invoiceProgressBar" class="ui-widget ui-widget-content ui-corner-all <?php echo $invoiceProgress['total'] > 0 ? 'd-flex' : 'd-none'; ?>">
+                    <div class="progressValue ui-corner-all" style="width: <?php echo (int) $invoiceProgress['progress']; ?>%"></div>
+                    <div class="progressValueText"><?php echo (int) $invoiceProgress['progress']; ?>% (<?php echo (int) $invoiceProgress['processed']; ?> of <?php echo (int) $invoiceProgress['total']; ?>, <?php echo (int) $invoiceProgress['errors']; ?> errors)</div>
+                </div>
+            </div>
+
+            <?php if ($invoiceErrorsMkup != '') { ?>
+            <div class="ui-widget ui-widget-content ui-corner-all hhk-widget-content mb-3" style="max-width:100%">
+                <h2>Invoice CSV Errors</h2>
+                <?php echo $invoiceErrorsMkup; ?>
             </div>
             <?php } ?>
 

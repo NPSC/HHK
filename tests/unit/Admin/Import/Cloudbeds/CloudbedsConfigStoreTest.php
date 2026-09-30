@@ -41,6 +41,35 @@ class CloudbedsConfigStoreTest extends TestCase
         CloudbedsConfig::validateSettings($settings);
     }
 
+    public function testLoadEnabledDemographicsFiltersToEnabledAndExcludesReserved(): void
+    {
+        // matches Common::readGenLookupsPDO()'s query shape: repeated fetch(PDO::FETCH_BOTH) calls, false to end
+        $rows = [
+            ['Code' => 'Special_Needs', 'Description' => 'Accommodation Needs', 'Substitute' => 'y'],
+            ['Code' => 'Branch_Of_Service', 'Description' => 'Branch of Service', 'Substitute' => 'Y'],
+            ['Code' => 'Covid', 'Description' => 'Covid', 'Substitute' => 'n'],
+            // reserved codes are excluded even though enabled - CloudbedsFieldMapper already exposes these as fixed targets
+            ['Code' => 'Gender', 'Description' => 'Gender', 'Substitute' => 'y'],
+            ['Code' => 'Ethnicity', 'Description' => 'Ethnicity', 'Substitute' => 'y'],
+            ['Code' => 'Media_Source', 'Description' => 'Media Source', 'Substitute' => 'y'],
+            ['Code' => 'No_Return', 'Description' => 'No Return', 'Substitute' => 'y'],
+            false,
+        ];
+
+        $stmt = $this->createMock(\PDOStatement::class);
+        $stmt->method('execute')->willReturn(true);
+        $stmt->method('fetch')->willReturnOnConsecutiveCalls(...$rows);
+
+        $dbh = $this->createMock(\PDO::class);
+        $dbh->method('prepare')->willReturn($stmt);
+
+        $store = new CloudbedsConfigStore($dbh);
+        $this->assertSame(
+            ['Special_Needs' => 'Accommodation Needs', 'Branch_Of_Service' => 'Branch of Service'],
+            $store->loadEnabledDemographics()
+        );
+    }
+
     public function testStayFilterFieldsAreParsedAndTrimmed(): void
     {
         $settings = CloudbedsConfigStore::settingsFromForm([
