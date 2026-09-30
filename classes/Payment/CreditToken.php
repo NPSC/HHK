@@ -65,6 +65,9 @@ class CreditToken {
         }
         $gtRs->CardType->setNewVal($vr->getCardType());
 
+        // Reissued card (same number, new expiration) gets a new token.
+        $expChanged = ($vr->getExpDate() != '' && $vr->getExpDate() != $gtRs->ExpDate->getStoredVal());
+
         if ($vr->getExpDate() != '') {
             $gtRs->ExpDate->setNewVal($vr->getExpDate());
         }
@@ -84,7 +87,7 @@ class CreditToken {
         $gtRs->StatusMessage->setNewVal($vr->getMessage());
         $gtRs->Tran_Type->setNewVal($vr->getTranType());
         
-        if($gtRs->Token->getStoredVal() == ''){
+        if($gtRs->Token->getStoredVal() == '' || $expChanged){
             $gtRs->Token->setNewVal($vr->getToken());
         }
 
@@ -288,6 +291,32 @@ where t.idRegistration = $idReg $whMerchant and nv.idName is null order by t.Mer
         }
 
         $rows = EditRS::select($dbh, $gtRs, array($gtRs->idGuest, $gtRs->CardHolderName, $gtRs->CardType, $gtRs->MaskedAccount, $gtRs->Merchant));
+
+        // Multiple matches (e.g. reissued card): prefer usable tokens, then stale tokens, then "deleted" (blank token) rows.
+        if (count($rows) > 1) {
+
+            $usableRows = array();
+            $staleRows = array();
+
+            foreach ($rows as $r) {
+                $rowRs = new Guest_TokenRS();
+                EditRS::loadRow($r, $rowRs);
+
+                if (self::hasToken($rowRs)) {
+                    $usableRows[] = $r;
+                } else if (trim($r['Token'] ?? '') != '') {
+                    $staleRows[] = $r;
+                }
+            }
+
+            if (count($usableRows) > 0) {
+                $rows = $usableRows;   // more than one still throws below
+            } else if (count($staleRows) > 0) {
+                $rows = array($staleRows[0]);
+            } else {
+                $rows = array($rows[0]);
+            }
+        }
 
         if (count($rows) == 1) {
 
