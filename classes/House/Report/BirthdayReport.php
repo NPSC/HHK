@@ -26,12 +26,6 @@ use HHK\sec\Labels;
 class BirthdayReport extends AbstractReport implements ReportInterface
 {
 
-    public array $locations;
-    public array $diags;
-    public array $resvStatuses;
-    public array $selectedResvStatuses;
-
-
     public function __construct(\PDO $dbh, array $request = [])
     {
         $uS = Session::getInstance();

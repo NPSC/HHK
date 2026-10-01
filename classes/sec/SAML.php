@@ -40,9 +40,9 @@ use HHK\Tables\WebSec\W_idp_secgroupsRS;
 
 class SAML {
 
-    protected Auth $auth;
+    protected ?Auth $auth = null;
 
-    protected $IdpId;
+    protected int|string $IdpId;
     protected $IdpConfig;
 
     protected $SPacsURL;
@@ -649,7 +649,7 @@ class SAML {
         }
     }
 
-    public function getEditMarkup($formOnly = false){
+    public function getEditMarkup(bool $formOnly = false){
 
         $idpSigningCertInfo = $this->getCertificateInfo("idpSign");
         $idpRolloverSigningCertInfo = $this->getCertificateInfo("idpSign2");

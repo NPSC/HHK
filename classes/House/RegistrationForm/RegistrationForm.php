@@ -30,13 +30,17 @@ class RegistrationForm {
 
     public Labels $labels;
 
+    public function __construct() {
+
+        $this->labels = Labels::getLabels();
+    }
+
     public function getDocument(\PDO $dbh, Guest $priGuest, Guest $billGuest, array $addtionalGuests, $patientName, $hospitalName, $roomTitle,
             $cardName, $cardType, $cardNumber, $logoUrl, $logoWidth, $instructionFileName, $agreement, $expectedPayType = '', $note = '', $todaysDate = '') {
 
 //        $paymentInfoSection = '<div><span>The House asks that guests leave a card on file for security purposes. You will be charged for the nights stayed at the agreed upon rate after check-out or after x weeks. </div>';
 
         $uS = Session::getInstance();
-        $this->labels = Labels::getLabels();
         $fullNames = array();
 
         $house = AbstractMember::GetDesignatedMember($dbh, $uS->sId, MemBasis::NonProfit);
@@ -358,4 +362,3 @@ td.prompt {vertical-align: top; font: 9px/11px sans-serif; color:slategray; heig
 
     }
 }
-?>

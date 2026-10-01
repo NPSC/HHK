@@ -8,9 +8,7 @@ use HHK\Notification\SMS\AbstractMessages;
 
 Class Messages extends AbstractMessages {
 
-    protected \PDO $dbh;
     protected Settings $settings;
-    protected string $accountPhone;
 
     /**
      * Set up Messages object
@@ -28,7 +26,7 @@ Class Messages extends AbstractMessages {
      * @param string $contactPhone
      * @param int $limit
      * @param string $since
-     * @throws \HHK\Exception\SmsException
+     * @throws SmsException
      * @return array
      */
     public function fetchMessages(string $contactPhone, int $limit = 20, string $since = ""):array{
