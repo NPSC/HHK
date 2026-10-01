@@ -49,19 +49,23 @@ class ReferralForm
 	 *
 	 * @var array Form data
 	 */
-	protected $formUserData;
+	protected ?array $formUserData = null;
 
 	protected FormDocument $formDoc;
 
-	protected SearchFor $patSearchFor;
+	protected ?SearchFor $patSearchFor = null;
 
-	protected array $patResults;
+	protected array $patResults = [];
 
-	protected $gstSearchFor = [];
+	/**
+	 * Summary of gstSearchFor
+	 * @var array<SearchFor>
+	 */
+	protected array $gstSearchFor = [];
 	
-	protected $gstResults = [];
+	protected array $gstResults = [];
 
-	protected int $idPsg;
+	protected int $idPsg = 0;
 
 	protected ?\DateTime $CkinDT = NULL;
 	protected ?\DateTime $CkoutDT = NULL;

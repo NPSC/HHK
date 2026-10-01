@@ -18,9 +18,7 @@ class Client {
     protected \PDO $dbh;
     protected $clientId;
 
-    protected OauthClientRS $oauthClientRS;
-
-    protected array $activeAccessTokens;
+    protected array $activeAccessTokens = [];
 
     public function __construct(\PDO $dbh, $clientId = false) {
         $this->dbh = $dbh;

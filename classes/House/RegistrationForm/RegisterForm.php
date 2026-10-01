@@ -48,6 +48,11 @@ class RegisterForm {
 
     public Labels $labels;
 
+    public function __construct() {
+
+        $this->labels = Labels::getLabels();
+    }
+
     protected function titleBlock($roomTitle, $expectedDeparture, $expDepartPrompt, $rate, $title, $agent, $priceModelCode, $houseAddr = '', $roomFeeTitle = 'Pledged Fee') {
 
         $staff = 'Staff';

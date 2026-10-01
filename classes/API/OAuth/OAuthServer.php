@@ -16,7 +16,7 @@ class OAuthServer
     private ScopeRepository $scopeRepository;
     private AccessTokenRepository $accessTokenRepository;
     private AuthorizationServer $authServer;
-    private ResourceServer $resourceServer;
+    private ?ResourceServer $resourceServer = null;
 
     private string $privateKeyPath;
     private string $publicKeyPath;
@@ -57,7 +57,7 @@ class OAuthServer
     }
 
     public function getResourceServer(){
-        if (!isset($this->resourceServer)) {
+        if (!$this->resourceServer instanceof ResourceServer) {
             $this->resourceServer = new ResourceServer(
                 $this->accessTokenRepository,
                 $this->publicKeyPath

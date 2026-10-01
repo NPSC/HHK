@@ -31,28 +31,28 @@ use HHK\Common;
 abstract class AbstractImport {
 
     protected \PDO $dbh;
-    protected array $volLkups;
-    protected array $zipLookups;
-    protected array $hospitals;
-    protected array $rooms;
-    protected int $importedPatients;
-    protected int $importedGuests;
+    protected array $volLkups = [];
+    protected array $zipLookups = [];
+    protected array $hospitals = [];
+    protected array $rooms = [];
+    protected int $importedPatients = 0;
+    protected int $importedGuests = 0;
 
     /**
      * Mapping of import field to gen lookup table name
      *
      * @var array //[<import field> => <genLookupTableName>]
      */
-    public array $genLookupMapping; //array[<import field>] => <genLookupTableName>
+    public array $genLookupMapping = []; //array[<import field>] => <genLookupTableName>
 
     /**
      * Mapping of import field to a single specific HHK field
      *
      * @var array //[<hhkField> => <import field>]
      */
-    public array $fieldMapping;
+    public array $fieldMapping = [];
 
-    protected array $genLookups;
+    protected array $genLookups = [];
 
     public function __construct(\PDO $dbh){
         $this->dbh = $dbh;

@@ -596,8 +596,7 @@ $ckdate";
 
     /**
      * Summary of createResourceGroups
-     * @param mixed $rescGroups
-     * @param mixed $defaultGroupBy
+     * @param \PDO $dbh
      * @return ReportFilter
      */
     public function createResourceGroups(\PDO $dbh) {

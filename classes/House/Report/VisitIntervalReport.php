@@ -38,9 +38,7 @@ class VisitIntervalReport extends AbstractReport implements ReportInterface {
     public array $locations;
     public array $diags;
     protected array $adjusts;
-    protected array $rescGroups;
     protected $useTaxes;
-    protected array $selectedRescGroups;
 
     public function __construct(\PDO $dbh, array $request = [])
     {

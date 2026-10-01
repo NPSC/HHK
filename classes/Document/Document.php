@@ -63,7 +63,7 @@ class Document {
     protected ?string $lastUpdated = null;
     protected string $updatedBy = '';
     protected $createdOn = '';
-    private DocumentRS$documentRS;
+    private ?DocumentRS $documentRS = null;
 
     /**
      *
@@ -71,8 +71,7 @@ class Document {
      */
     public function __construct($idDocument = 0) {
 
-        $id = intval($idDocument, 10);
-        $this->idDocument = $id;
+        $this->idDocument = intval($idDocument, 10);
     }
 
     /**

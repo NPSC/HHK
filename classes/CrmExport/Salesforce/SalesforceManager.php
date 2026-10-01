@@ -68,12 +68,12 @@ class SalesforceManager extends AbstractExportManager {
     private ?string $webServiceError = null;
 
     protected $uniqueGuests;
-    protected bool $trace;
+    protected bool $trace = false;
     protected $traceData;
-    protected array $picklists;
+    protected array $picklists = [];
     protected array $objectFields = [];
     protected array $hhkFieldDetails = [];
-    protected FieldMapper $fieldMapper;
+    protected ?FieldMapper $fieldMapper = null;
 
     const string LOG_SERVICE_NAME = "SalesForce";
 

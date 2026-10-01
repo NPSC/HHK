@@ -60,7 +60,7 @@ abstract class AbstractJob implements JobInterface
      *
      * @var array
      */
-    public array $paramTemplate;
+    public array $paramTemplate = [];
 
     /**
      * @param \PDO $dbh

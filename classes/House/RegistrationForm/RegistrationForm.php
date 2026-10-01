@@ -114,7 +114,7 @@ class RegistrationForm {
         return HTMLContainer::generateMarkup('div', $doc, array('style'=>'max-width:860px;margin-left:5px;'));
     }
 
-    public function getStyle() {
+    public function getStyle(): string {
 
         return '<style>
 table {border-collapse:collapse; border:none; padding: 0; margin: 0;}
@@ -291,7 +291,7 @@ td.prompt {vertical-align: top; font: 9px/11px sans-serif; color:slategray; heig
 
     }
 
-    public function makeAdditionalGuest(Guest $guest, $index) {
+    public function makeAdditionalGuest(Guest $guest, $index): string {
 
         $name = $guest->getRoleMember();
         $uS = Session::getInstance();
@@ -314,7 +314,7 @@ td.prompt {vertical-align: top; font: 9px/11px sans-serif; color:slategray; heig
     </div>';
     }
 
-    public function makeBlankGuest($index) {
+    public function makeBlankGuest($index): string {
 
         return '<div class="imdlist">' . $index . '. Additional Guest (optional)</div>
     <div id="divAdditionalGuest3">
@@ -329,7 +329,7 @@ td.prompt {vertical-align: top; font: 9px/11px sans-serif; color:slategray; heig
     </div>';
     }
 
-    public function makePrimaryGuest(Guest $guest) {
+    public function makePrimaryGuest(Guest $guest): string {
 
         $name = $guest->getRoleMember();
         $addr = $guest->getAddrObj();
