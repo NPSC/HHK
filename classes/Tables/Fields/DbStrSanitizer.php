@@ -46,9 +46,8 @@ class DbStrSanitizer implements DbFieldSanitizerInterface {
      *
      * @return int
      */
-    public function getDbType(){
+    public function getDbType(): int {
         return \PDO::PARAM_STR;
     }
 
 }
-?>

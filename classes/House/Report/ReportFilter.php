@@ -62,166 +62,74 @@ class ReportFilter {
      * @var array
      */
     protected $calendarOptions;
-    /**
-     * Summary of selectedCalendar
-     * @var
-     */
+
     protected $selectedCalendar;
-    /**
-     * Summary of selectedMonths
-     * @var
-     */
+
     protected $selectedMonths;
-    /**
-     * Summary of selectedYear
-     * @var
-     */
+
     protected $selectedYear;
-    /**
-     * Summary of selectedStart
-     * @var
-     */
+
     protected $selectedStart;
-    /**
-     * Summary of selectedEnd
-     * @var
-     */
+
     protected $selectedEnd;
-    /**
-     * Summary of fyDiffMonths
-     * @var
-     */
+
     protected $fyDiffMonths;
 
-    /**
-     * Summary of hospitals
-     * @var
-     */
+
     protected $hospitals;
-    /**
-     * Summary of hList
-     * @var
-     */
+
     protected $hList;
-    /**
-     * Summary of aList
-     * @var
-     */
+
     protected $aList;
-    /**
-     * Summary of selectedHosptials
-     * @var
-     */
+
     protected $selectedHosptials;
-    /**
-     * Summary of selectedAssocs
-     * @var
-     */
+
     protected $selectedAssocs;
 
-    /**
-     * Summary of selectedResourceGroups
-     * @var
-     */
+
     protected $selectedResourceGroups;
-    /**
-     * Summary of resourceGroups
-     * @var
-     */
+
     protected $resourceGroups;
 
-    /**
-     * Summary of selectedDiagnoses
-     * @var
-     */
+
     protected $selectedDiagnoses;
-    /**
-     * Summary of diagnsoses
-     * @var
-     */
+
     public $diagnoses;
     protected $diagnosisCategories;
 
-    /**
-     * Summary of selectedBillingAgents
-     * @var 
-     */
+
     protected $selectedBillingAgents;
-    /**
-     * Summary of billingAgents
-     * @var 
-     */
+
     public $billingAgents;
 
-    /**
-     * Summary of selectedPayTypes
-     * @var 
-     */
+
     protected $selectedPayTypes;
-    /**
-     * Summary of payTypes
-     * @var 
-     */
+
     protected $payTypes;
 
-    /**
-     * Summary of selectedPayStatuses
-     * @var 
-     */
+
     protected $selectedPayStatuses;
-    /**
-     * Summary of payStatuses
-     * @var 
-     */
+
     protected $payStatuses;
 
-    /**
-     * Summary of selectedPaymentGateways
-     * @var
-     */
+
     protected $selectedPaymentGateways;
-    /**
-     * Summary of paymentGateways
-     * @var
-     */
+
     protected $paymentGateways;
 
-    /**
-     * Summary of selectedInvoiceStatuses
-     * @var
-     */
+
     protected $selectedInvoiceStatuses;
-    /**
-     * Summary of invoiceStatuses
-     * @var
-     */
+
     protected $invoiceStatuses;
 
-    /**
-     * Summary of selectedItems
-     * @var
-     */
     protected $selectedItems;
-    /**
-     * Summary of items
-     * @var
-     */
+
     protected $items;
 
-    /**
-     * Summary of reportStart
-     * @var
-     */
     protected $reportStart;
-    /**
-     * Summary of reportEnd
-     * @var
-     */
+
     protected $reportEnd;
-    /**
-     * Summary of queryEnd
-     * @var
-     */
+
     protected $queryEnd;
 
     /**

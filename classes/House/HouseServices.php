@@ -71,8 +71,8 @@ class HouseServices {
      *
      * @param \PDO $dbh
      * @param int $idGuest Supply either this or the next
-     * @param int $idVisit
-     * @param int $span span = 'max' means load last visit span, otherwise load int value
+     * @param int $idV
+     * @param int $idSpan span = 'max' means load last visit span, otherwise load int value
      * @param boolean $isAdmin Administrator flag
      * @param string $action Processing code with various settings.
      * @param array $coStayDates Dates for an early checkout. Adjusts the final payments
@@ -1358,10 +1358,10 @@ class HouseServices {
     /**
      * Summary of undoCheckout
      * @param \PDO $dbh
-     * @param \HHK\House\Visit\Visit $visit
+     * @param Visit $visit
      * @param \DateTime $newExpectedDT
      * @param mixed $uname
-     * @throws \HHK\Exception\RuntimeException
+     * @throws RuntimeException
      * @return string
      */
     public static function undoCheckout(\PDO $dbh, Visit $visit, \DateTime $newExpectedDT, $uname) {
@@ -1667,7 +1667,9 @@ class HouseServices {
      *
      * @param \PDO $dbh
      * @param int $idVisit
-     * @param int $dayDelta
+     * @param int $span
+     * @param int $startDelta
+     * @param int $endDelta
      * @return array
      */
     public static function moveVisit(\PDO $dbh, $idVisit, $span, $startDelta, $endDelta) {

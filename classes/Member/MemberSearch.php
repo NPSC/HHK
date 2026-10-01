@@ -1144,10 +1144,15 @@ where n.idName>0 and n.Member_Status='a' and n.Record_Member = 1 "
      * Duplicate prevention.
      *
      * @param \PDO $dbh
-     * @param array $post
-     * @throws RuntimeException::
+     * @param $memDesignation
+     * @param $nameLast
+     * @param string $nameFirst
+     * @param string $email
+     * @param string $phone
+     * @return array
+     * @throws RuntimeException
      */
-    public static function searchName(\PDO $dbh, $memDesignation, $nameLast, $nameFirst = '', $email = '', $phone = '') {
+    public static function searchName(\PDO $dbh, $memDesignation, $nameLast, $nameFirst = '', $email = '', $phone = ''): array {
 
         $email = strtolower($email);
         $phone = strtolower($phone);

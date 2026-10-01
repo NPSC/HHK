@@ -27,13 +27,8 @@ use HHK\sec\Labels;
  */
 abstract class AbstractRole {
 
-    /**
-     * The connection passed to the constructor, reused by getAddrObj()/getPhonesObj()/getEmailsObj() instead of
-     * opening a new one - each subclass constructor must set this.
-     *
-     * @var \PDO
-     */
-    protected $dbh;
+
+    protected ?\PDO $dbh = null;
 
     /**
      *
@@ -100,15 +95,9 @@ abstract class AbstractRole {
      * @var string
      */
     public $status = '';
-    /**
-     * Summary of checkinDate
-     * @var
-     */
+
     protected $checkinDate;
-    /**
-     * Summary of expectedCheckOut
-     * @var
-     */
+
     protected $expectedCheckOut;
     /**
      * Summary of incompleteEmergContact

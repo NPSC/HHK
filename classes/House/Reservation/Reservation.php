@@ -40,13 +40,13 @@ class Reservation {
      * Summary of reservRs
      * @var ReservationRS
      */
-    protected $reservRs;
+    protected ?ReservationRS $reservRs;
 
     /**
      * Summary of family
      * @var Family
      */
-    protected $family;
+    protected ?Family $family;
 
     /**
      * Summary of payResult
@@ -68,11 +68,11 @@ class Reservation {
 
     /**
      * Summary of __construct
-     * @param \HHK\House\ReserveData\ReserveData $reserveData
+     * @param ReserveData $reserveData
      * @param mixed $reservRs
      * @param mixed $family
      */
-    function __construct(ReserveData $reserveData, $reservRs, $family) {
+    function __construct(ReserveData $reserveData, ?ReservationRS $reservRs, ?Family $family) {
 
         $this->reserveData = $reserveData;
         $this->reservRs = $reservRs;
@@ -82,7 +82,7 @@ class Reservation {
     /**
      * Summary of reservationFactoy
      * @param \PDO $dbh
-     * @throws \HHK\Exception\RuntimeException
+     * @throws RuntimeException
      * @return ActiveReservation|CheckedoutReservation|DeletedReservation|Reservation|ReserveSearcher|StaticReservation|StayingReservation
      */
     public static function reservationFactoy(\PDO $dbh, $inputData) {
@@ -148,8 +148,8 @@ class Reservation {
     /**
      * Summary of loadReservation
      * @param \PDO $dbh
-     * @param \HHK\House\ReserveData\ReserveData $rData
-     * @throws \HHK\Exception\NotFoundException
+     * @param ReserveData $rData
+     * @throws NotFoundException
      * @return ActiveReservation|CheckedoutReservation|DeletedReservation|StaticReservation|StayingReservation
      */
     public static function loadReservation(\PDO $dbh, ReserveData $rData) {
@@ -978,14 +978,15 @@ where rg.idReservation =" . $r['idReservation']);
     /**
      *
      * @param Reservation_1 $resv
-     * @param array $limResvStatuses
+     * @param array $resvStatuses
      * @param array $payTypes
      * @param string $psgCheckboxes  Markup
      * @param Labels $labels
      * @param bool $showPayWith
+     * @param float $moaBalance
      * @return string
      */
-    public function createStatusChooser(Reservation_1 $resv, array $resvStatuses, array $payTypes, $psgChecboxes, $labels, $showPayWith, $moaBalance = 0) {
+    public function createStatusChooser(Reservation_1 $resv, array $resvStatuses, array $payTypes, string $psgCheckboxes, Labels $labels, bool $showPayWith, float $moaBalance = 0) {
 
         $uS = Session::getInstance();
         $tbl2 = new HTMLTable();
@@ -1052,7 +1053,7 @@ where rg.idReservation =" . $r['idReservation']);
                     HTMLContainer::generateMarkup('legend', $labels->getString('referral', 'statusLabel', 'Reservation Status'), array('style'=>'font-weight:bold;'))
                     . $tbl2->generateMarkup() . $mk2,
                     ['class'=>'hhk-panel'])
-            , ['class'=>'mr-3 d-inline-block']) . $psgChecboxes;
+            , ['class'=>'mr-3 d-inline-block']) . $psgCheckboxes;
 
     }
 
@@ -1234,9 +1235,8 @@ WHERE
     /**
      * Summary of setRoomRate
      * @param \PDO $dbh
-     * @param \HHK\House\Registration $reg
+     * @param Registration $reg
      * @param \HHK\House\Reservation\Reservation_1 $resv
-     * @param mixed $post
      * @return void
      */
     protected function setRoomRate(\PDO $dbh, Registration $reg, Reservation_1 &$resv) {
@@ -1570,7 +1570,7 @@ WHERE
     /**
      * Summary of setDates
 
-     * @throws \HHK\Exception\RuntimeException
+     * @throws RuntimeException
      * @return void
      */
     public function setDates() {

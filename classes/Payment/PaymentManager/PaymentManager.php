@@ -76,16 +76,15 @@ class PaymentManager {
      * My invoice
      * @var Invoice
      */
-    protected $invoice;
+    protected ?Invoice $invoice = null;
 
 
     /**
      * Summary of __construct
      * @param PaymentManagerPayment $pmp
      */
-    public function __construct($pmp) {
+    public function __construct(PaymentManagerPayment $pmp) {
         $this->pmp = $pmp;
-        $this->invoice = NULL;
     }
 
 

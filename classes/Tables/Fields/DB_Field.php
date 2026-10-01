@@ -60,7 +60,7 @@ class DB_Field {
      *
      * @return int
      */
-    public function getDbType() {
+    public function getDbType(): int {
         return $this->sanitizer->getDbType();
     }
 

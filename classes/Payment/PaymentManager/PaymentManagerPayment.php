@@ -138,11 +138,8 @@ class PaymentManagerPayment {
      * @var int
      */
     protected $idInvoicePayor;
-    /**
-     * Summary of invoicePayorTaxExempt
-     * @var
-     */
-    protected $invoicePayorTaxExempt;
+
+    protected bool $invoicePayorTaxExempt = false;
     /**
      * Summary of checkNumber
      * @var string
@@ -417,10 +414,10 @@ class PaymentManagerPayment {
 
     /**
      * Summary of setInvoicePayorTaxExempt
-     * @param mixed $invoicePayorTaxExempt
+     * @param bool $invoicePayorTaxExempt
      * @return PaymentManagerPayment
      */
-    public function setInvoicePayorTaxExempt($invoicePayorTaxExempt) {
+    public function setInvoicePayorTaxExempt(bool $invoicePayorTaxExempt) {
         $this->invoicePayorTaxExempt = $invoicePayorTaxExempt;
         return $this;
     }

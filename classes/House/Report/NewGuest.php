@@ -80,10 +80,10 @@ class NewGuest
     /**
      * Summary of doNewGuestReport
      * @param \PDO $dbh
-     * @param \HHK\ColumnSelectors $colSelector
+     * @param ColumnSelectors $colSelector
      * @param mixed $whereStr
      * @param mixed $local
-     * @param \HHK\sec\Labels $labels
+     * @param Labels $labels
      * @return string|void
      */
     public function doNewGuestReport(\PDO $dbh, ColumnSelectors $colSelector, $whereStr, $local, Labels $labels) {
@@ -438,9 +438,7 @@ ORDER BY `First Stay`";
         return $this->endDT;
     }
 
-    /**
-     * @param \DateTimeInterface $startDT
-     */
+
     public function setStartDT($startDate)
     {
         if ($startDate instanceof \DateTimeInterface) {
@@ -451,9 +449,6 @@ ORDER BY `First Stay`";
 
     }
 
-    /**
-     * @param \DateTimeInterface $endDT
-     */
     public function setEndDT($endDate)
     {
         if ($endDate instanceof \DateTimeInterface) {
