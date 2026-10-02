@@ -42,33 +42,6 @@ class ExcelHelper extends \XLSXWriter{
     }
 
     /**
-     * Adds ExcelRichText cells (an inline string of colored runs) to the cell types XLSXWriter knows.
-     */
-    protected function writeCell(\XLSXWriter_BuffererWriter &$file, $row_number, $column_number, $value, $num_format_type, $cell_style_idx)
-    {
-        if ($value instanceof ExcelRichText && !$value->isEmpty()) {
-
-            $runs = '';
-
-            foreach ($value->getRuns() as [$text, $color]) {
-
-                // Runs with their own properties don't inherit the cell font, so match XLSXWriter's default font.
-                $rPr = '<rFont val="Arial"/><sz val="10"/>';
-                if (preg_match('/^#[0-9a-fA-F]{6}$/', $color)) {
-                    $rPr .= '<color rgb="FF' . strtoupper(substr($color, 1)) . '"/>';
-                }
-
-                $runs .= '<r><rPr>' . $rPr . '</rPr><t xml:space="preserve">' . self::xmlspecialchars($text) . '</t></r>';
-            }
-
-            $file->write('<c r="' . self::xlsCell($row_number, $column_number) . '" s="' . $cell_style_idx . '" t="inlineStr"><is>' . $runs . '</is></c>');
-            return;
-        }
-
-        parent::writeCell($file, $row_number, $column_number, $value, $num_format_type, $cell_style_idx);
-    }
-
-    /**
      *
      * Decodes all html entities and removes all html tags on fields defined as string in the header
      *
@@ -80,7 +53,7 @@ class ExcelHelper extends \XLSXWriter{
         $n = 0;
 
         foreach($header as $val){
-            if($val == "string" && isset($row[$n]) && is_scalar($row[$n])){ // leave ExcelRichText values alone
+            if($val == "string" && isset($row[$n])){
                 $row[$n] = html_entity_decode(strval($row[$n]), ENT_QUOTES, 'UTF-8'); //decode html entities
                 $row[$n] = strip_tags($row[$n]); //remove html tags
             }

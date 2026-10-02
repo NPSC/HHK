@@ -48,8 +48,6 @@ abstract class AbstractReport {
     protected bool $rendered = false;
     protected string $statsMkup = "";
     protected int $defaultSortCol = 0;
-    protected bool $printFooter = false;    // include the table footer (eg. totals) when printing
-    protected bool $printKeepHtml = false;  // print cell markup (eg. colored text) instead of plain text; a cell whose content is wrapped in an element with a data-print attribute prints that attribute's markup instead
 
     /**
      * @param \PDO $dbh
@@ -189,16 +187,6 @@ abstract class AbstractReport {
     protected function makeFooterMkup(HTMLTable $tbl): void {
     }
 
-    /**
-     * Optional hook for subclasses to write rows (eg. totals) or sheets after the data rows of the Excel download.
-     * No-op by default.
-     *
-     * @param ExcelHelper $writer
-     * @param array $hdr Sheet1 column header => type, as written by downloadExcel()
-     */
-    protected function writeExcelFooter(ExcelHelper $writer, array $hdr): void {
-    }
-
     public function generateSummaryMkup():string {
 
         $uS = Session::getInstance();
@@ -246,16 +234,6 @@ abstract class AbstractReport {
                 extend: "print",
                 className: "ui-corner-all",
                 autoPrint: true,
-                footer: ' . ($this->printFooter ? 'true' : 'false') . ',' . ($this->printKeepHtml ? '
-                exportOptions: {
-                    stripHtml: false,
-                    format: {
-                        body: function (data) {
-                            var alt = $("<div>").html(data).children("[data-print]");
-                            return alt.length ? alt.attr("data-print") : data;
-                        }
-                    }
-                },' : '') . '
                 paperSize: "letter",
                 title: function(){
                     return "' . $this->reportTitle . '";
@@ -407,8 +385,6 @@ abstract class AbstractReport {
             $row = $writer->convertStrings($hdr, $flds);
             $writer->writeSheetRow("Sheet1", $row);
         }
-
-        $this->writeExcelFooter($writer, $hdr);
 
         HouseLog::logDownload($this->dbh, $this->reportTitle, "Excel", $this->reportTitle . " for " . $this->filter->getReportStart() . " - " . $this->filter->getReportEnd() . " downloaded", $uS->username);
 
