@@ -192,7 +192,7 @@ class UserClass
     /**
      * Summary of doLogin
      * @param \PDO $dbh
-     * @param mixed $r
+     * @param array $r
      * @return bool
      */
     public function doLogin(\PDO $dbh, array $r){
@@ -242,7 +242,7 @@ class UserClass
     /**
      * Summary of setPCAccess
      * @param \PDO $dbh
-     * @param mixed $pcName
+     * @param ?string $pcName
      * @return string
      */
     public static function setPCAccess(\PDO $dbh, $pcName = null)
@@ -505,7 +505,7 @@ class UserClass
     /**
      * Summary of isUserNew
      * @param \PDO $dbh
-     * @param mixed $uS
+     * @param Session $uS
      * @return bool
      */
     public static function isUserNew(\PDO $dbh, Session $uS): bool
@@ -522,7 +522,7 @@ class UserClass
     /**
      * Summary of isPassExpired
      * @param \PDO $dbh
-     * @param mixed $uS
+     * @param Session $uS
      * @return bool
      */
     public static function isPassExpired(\PDO $dbh, Session $uS): bool
@@ -605,9 +605,9 @@ class UserClass
      * @param string $username
      * @return mixed
      */
-    public static function getAuthProvider(\PDO $dbh, $uS, $username = false)
+    public static function getAuthProvider(\PDO $dbh, Session $uS, string $username = '')
     {
-        if($username === false){
+        if($username == ''){
             $username = $uS->username;
         }
         $u = self::getUserCredentials($dbh, $username);
@@ -621,7 +621,7 @@ class UserClass
      * @param string $username
      * @return bool
      */
-    public static function isLocalUser(\PDO $dbh, $uS, $username = false): bool
+    public static function isLocalUser(\PDO $dbh, Session $uS, string $username = ''): bool
     {
         $u = self::getUserCredentials($dbh, $username);
         return (isset($u['idIdp']) && $u['idIdp'] > 0 ? false : true);
@@ -839,9 +839,9 @@ class UserClass
      * @param bool $fromHHK
      * @return void
      */
-    public static function insertUserLog(\PDO $dbh, $action, $username = false, $date = false, $fromHHK = false)
+    public static function insertUserLog(\PDO $dbh, string $action, string $username = '', $date = false, $fromHHK = false)
     {
-        if (! $username) {
+        if ($username == '') {
             $ssn = Session::getInstance();
             $username = $ssn->username;
         }

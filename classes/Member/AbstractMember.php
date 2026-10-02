@@ -189,7 +189,7 @@ abstract class AbstractMember {
      * @param \PDO $dbh
      * @param int $nid
      * @return NameRS
-     * @throws RuntimeException::
+     * @throws RuntimeException
      */
     protected static function loadNameRS(\PDO $dbh, $nid) {
         $nRS = new NameRS();

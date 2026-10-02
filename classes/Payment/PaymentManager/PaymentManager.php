@@ -159,8 +159,7 @@ class PaymentManager {
                 $invLine = new OneTimeInvoiceLine($uS->ShowLodgDates);
                 $invLine->createNewLine($visitFeeItem, 1, $notes);
 
-                $this->getInvoice($dbh, $idPayor, $visit->getIdRegistration(), $visit->getIdVisit(), $visit->getSpan(), $uS->username, '', $notes, $this->pmp->getPayDate());
-                $this->invoice->addLine($dbh, $invLine, $uS->username);
+                $this->getInvoice($dbh, $idPayor, $visit->getIdRegistration(), $visit->getIdVisit(), $visit->getSpan(), $uS->username, '', $notes, $this->pmp->getPayDate())->addLine($dbh, $invLine, $uS->username);
 
             }
 
@@ -170,8 +169,7 @@ class PaymentManager {
                 $invLine = new HoldInvoiceLine($uS->ShowLodgDates);
                 $invLine->createNewLine(new Item($dbh, ItemId::KeyDeposit, $this->pmp->getKeyDepositPayment()), 1, $notes);
 
-                $this->getInvoice($dbh, $idPayor, $visit->getIdRegistration(), $visit->getIdVisit(), $visit->getSpan(), $uS->username, '', $notes, $this->pmp->getPayDate());
-                $this->invoice->addLine($dbh, $invLine, $uS->username);
+                $this->getInvoice($dbh, $idPayor, $visit->getIdRegistration(), $visit->getIdVisit(), $visit->getSpan(), $uS->username, '', $notes, $this->pmp->getPayDate())->addLine($dbh, $invLine, $uS->username);
 
             }
 
@@ -182,8 +180,7 @@ class PaymentManager {
 
                 $invLine = new ReimburseInvoiceLine($uS->ShowLodgDates);
                 $invLine->createNewLine(new Item($dbh, ItemId::DepositRefund, (0 - $this->depositRefundAmt)), 1, $notes);
-                $this->getInvoice($dbh, $idPayor, $visit->getIdRegistration(), $visit->getIdVisit(), $visit->getSpan(), $uS->username, '', $notes, $this->pmp->getPayDate());
-                $this->invoice->addLine($dbh, $invLine, $uS->username);
+                $this->getInvoice($dbh, $idPayor, $visit->getIdRegistration(), $visit->getIdVisit(), $visit->getSpan(), $uS->username, '', $notes, $this->pmp->getPayDate())->addLine($dbh, $invLine, $uS->username);
             }
 
             // MOA refunds.
@@ -200,8 +197,7 @@ class PaymentManager {
                     $invLine->appendDescription($notes);
                     $invLine->createNewLine(new Item($dbh, ItemId::LodgingMOA, (0 - $this->moaRefundAmt)), 1, 'Payout');
 
-                    $this->getInvoice($dbh, $idPayor, $visit->getIdRegistration(), $visit->getIdVisit(), $visit->getSpan(), $uS->username, '', $notes, $this->pmp->getPayDate());
-                    $this->invoice->addLine($dbh, $invLine, $uS->username);
+                    $this->getInvoice($dbh, $idPayor, $visit->getIdRegistration(), $visit->getIdVisit(), $visit->getSpan(), $uS->username, '', $notes, $this->pmp->getPayDate())->addLine($dbh, $invLine, $uS->username);
 
                 } else {
                     $this->moaRefundAmt = 0;
@@ -220,8 +216,7 @@ class PaymentManager {
                         $invLine = new TaxInvoiceLine($uS->ShowLodgDates);
                         $invLine->createNewLine(new Item($dbh, $taxingId, (0 - $sum)), 1, 'Reimburse');
                         $invLine->setSourceItemId(ItemId::Lodging);
-                        $this->getInvoice($dbh, $idPayor, $visit->getIdRegistration(), $visit->getIdVisit(), $visit->getSpan(), $uS->username, '', $notes, $this->pmp->getPayDate());
-                        $this->invoice->addLine($dbh, $invLine, $uS->username);
+                        $this->getInvoice($dbh, $idPayor, $visit->getIdRegistration(), $visit->getIdVisit(), $visit->getSpan(), $uS->username, '', $notes, $this->pmp->getPayDate())->addLine($dbh, $invLine, $uS->username);
 
                     }
                 }
@@ -292,8 +287,8 @@ class PaymentManager {
                 $invLine->appendDescription($notes);
                 $invLine->createNewLine($lodging, 1, $paidThruDT->format('Y-m-d H:i:s'), $endPricingDT->format('Y-m-d H:i:s'), $this->pmp->visitCharges->getNightsToPay());
 
-                $this->getInvoice($dbh, $idPayor, $visit->getIdRegistration(), $visit->getIdVisit(), $visit->getSpan(), $uS->username, '', $notes, $this->pmp->getPayDate());
-                $this->invoice->addLine($dbh, $invLine, $uS->username);
+                $invoice = $this->getInvoice($dbh, $idPayor, $visit->getIdRegistration(), $visit->getIdVisit(), $visit->getSpan(), $uS->username, '', $notes, $this->pmp->getPayDate());
+                $invoice->addLine($dbh, $invLine, $uS->username);
 
                 // Taxes on room charges
                 if ($this->pmp->getFinalPaymentFlag() && $housePaymentAmt > 0) {
@@ -310,7 +305,7 @@ class PaymentManager {
                             $taxInvoiceLine = new TaxInvoiceLine();
                             $taxInvoiceLine->createNewLine(new Item($dbh, $t->getIdTaxingItem(), $roomChargesTaxable), $t->getDecimalTax(), '(' . $t->getTextPercentTax() . ')');
                             $taxInvoiceLine->setSourceItemId(ItemId::Lodging);
-                            $this->invoice->addLine($dbh, $taxInvoiceLine, $uS->username);
+                            $invoice->addLine($dbh, $taxInvoiceLine, $uS->username);
 
                             $roomTax += round($roomChargesTaxable * $t->getDecimalTax(), 2);
                         }
@@ -329,8 +324,7 @@ class PaymentManager {
                     $invLine = new ReimburseInvoiceLine($uS->ShowLodgDates);
                     $invLine->createNewLine($waive, 1, $notes);
 
-                    $this->getInvoice($dbh, $idPayor, $visit->getIdRegistration(), $visit->getIdVisit(), $visit->getSpan(), $uS->username, '', $notes, $this->pmp->getPayDate());
-                    $this->invoice->addLine($dbh, $invLine, $uS->username);
+                    $this->getInvoice($dbh, $idPayor, $visit->getIdRegistration(), $visit->getIdVisit(), $visit->getSpan(), $uS->username, '', $notes, $this->pmp->getPayDate())->addLine($dbh, $invLine, $uS->username);
                 }
 
 
@@ -346,7 +340,7 @@ class PaymentManager {
                     if ($reversalAmt !== $this->guestCreditAmt) {
                         // we caught taxes.  Reduce reversalAmt by the sum of tax rates.
 
-                        $this->getInvoice($dbh, $idPayor, $visit->getIdRegistration(), $visit->getIdVisit(), $visit->getSpan(), $uS->username, '', $notes);
+                        $invoice = $this->getInvoice($dbh, $idPayor, $visit->getIdRegistration(), $visit->getIdVisit(), $visit->getSpan(), $uS->username, '', $notes);
 
                         // Add the tax lines back into the mix
                         foreach ($vat->getCurrentTaxedItems($visit->getIdVisit(), $this->pmp->visitCharges->getNightsStayed()) as $t) {
@@ -355,7 +349,7 @@ class PaymentManager {
                                 $taxInvoiceLine = new TaxInvoiceLine();
                                 $taxInvoiceLine->createNewLine(new Item($dbh, $t->getIdTaxingItem(), (0 - $reversalAmt)), $t->getDecimalTax(), '(' . $t->getTextPercentTax() . ')');
                                 $taxInvoiceLine->setSourceItemId(ItemId::LodgingReversal);
-                                $this->invoice->addLine($dbh, $taxInvoiceLine, $uS->username);
+                                $invoice->addLine($dbh, $taxInvoiceLine, $uS->username);
                             }
                         }
                     }
@@ -364,8 +358,7 @@ class PaymentManager {
                     $invLine = new OneTimeInvoiceLine();
                     $invLine->createNewLine(new Item($dbh, ItemId::LodgingReversal, (0 - $reversalAmt)), 1, $notes);
                     //$invLine->appendDescription($notes);
-                    $this->getInvoice($dbh, $idPayor, $visit->getIdRegistration(), $visit->getIdVisit(), $visit->getSpan(), $uS->username, '', $notes);
-                    $this->invoice->addLine($dbh, $invLine, $uS->username);
+                    $this->getInvoice($dbh, $idPayor, $visit->getIdRegistration(), $visit->getIdVisit(), $visit->getSpan(), $uS->username, '', $notes)->addLine($dbh, $invLine, $uS->username);
 
                 }
 
@@ -386,8 +379,7 @@ class PaymentManager {
                     $invLine = new HoldInvoiceLine($uS->ShowLodgDates);
                     $invLine->createNewLine(new Item($dbh, ItemId::LodgingMOA, $remainingMOA), 1, 'Balance');
 
-                    $this->getInvoice($dbh, $idPayor, $visit->getIdRegistration(), $visit->getIdVisit(), $visit->getSpan(), $uS->username, '', $notes, $this->pmp->getPayDate());
-                    $this->invoice->addLine($dbh, $invLine, $uS->username);
+                    $this->getInvoice($dbh, $idPayor, $visit->getIdRegistration(), $visit->getIdVisit(), $visit->getSpan(), $uS->username, '', $notes, $this->pmp->getPayDate())->addLine($dbh, $invLine, $uS->username);
                 }
 
             }
@@ -470,8 +462,7 @@ class PaymentManager {
                 $invLine = new HoldInvoiceLine($uS->ShowLodgDates);
                 $invLine->createNewLine(new Item($dbh, ItemId::LodgingMOA, $overPaymemntAmt), 1, $notes);
 
-                $this->getInvoice($dbh, $idPayor, $idRegistration, $idVisit, $visitSpan, $uS->username, '', $notes);
-                $this->invoice->addLine($dbh, $invLine, $uS->username);
+                $this->getInvoice($dbh, $idPayor, $idRegistration, $idVisit, $visitSpan, $uS->username, '', $notes)->addLine($dbh, $invLine, $uS->username);
 
                 // Donation
             } else if ($this->pmp->getBalWith() == ExcessPay::RoomFund) {
@@ -479,8 +470,7 @@ class PaymentManager {
                 $invLine = new OneTimeInvoiceLine();
                 $invLine->createNewLine(new Item($dbh, ItemId::LodgingDonate, $overPaymemntAmt), 1);
 
-                $this->getInvoice($dbh, $idPayor, $idRegistration, $idVisit, $visitSpan, $uS->username, '', $notes);
-                $this->invoice->addLine($dbh, $invLine, $uS->username);
+                $this->getInvoice($dbh, $idPayor, $idRegistration, $idVisit, $visitSpan, $uS->username, '', $notes)->addLine($dbh, $invLine, $uS->username);
 
                 // Refund
             } else if ($this->pmp->getBalWith() == ExcessPay::Refund && $this->hasInvoice()) {
@@ -525,9 +515,9 @@ class PaymentManager {
      * @param mixed $desc
      * @param mixed $notes
      * @param mixed $payDate
-     * @return Invoice|mixed
+     * @return Invoice
      */
-    protected function getInvoice(\PDO $dbh, $payor, $groupId, $orderNumber, $suborderNumber, $username, $desc = '', $notes = '', $payDate = '') {
+    protected function getInvoice(\PDO $dbh, $payor, $groupId, $orderNumber, $suborderNumber, $username, $desc = '', $notes = '', $payDate = ''): Invoice {
 
         if (is_null($this->invoice)) {
 

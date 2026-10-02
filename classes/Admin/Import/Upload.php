@@ -105,7 +105,7 @@ class Upload {
      * Generate an array of fake people instead of reading CSV
      * 
      * @param int $numMembers Number of fake people to create
-     * @throws \ErrorException
+     * @throws ErrorException
      * @return array
      */
     private function makeFakeMembers(int $numMembers){

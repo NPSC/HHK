@@ -587,7 +587,7 @@ class HouseServices {
      * Summary of payInvoice
      * @param \PDO $dbh
      * @param int $idPayor
-     * @param mixed $post
+     * @param array $post
      * @return array
      */
     public static function payInvoice(\PDO $dbh, $idPayor, array $post) {

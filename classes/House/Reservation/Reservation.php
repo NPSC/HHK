@@ -54,10 +54,7 @@ class Reservation {
      */
     protected $payResult;
 
-    /**
-     * Summary of cofResult
-     * @var
-     */
+
     protected $cofResult;
     /**
      * Summary of gotoCheckingIn
@@ -69,23 +66,24 @@ class Reservation {
     /**
      * Summary of __construct
      * @param ReserveData $reserveData
-     * @param mixed $reservRs
-     * @param mixed $family
+     * @param ?ReservationRS $reservRS
+     * @param ?Family $family
      */
-    function __construct(ReserveData $reserveData, ?ReservationRS $reservRs, ?Family $family) {
+    function __construct(ReserveData $reserveData, ?ReservationRS $reservRS, ?Family $family) {
 
         $this->reserveData = $reserveData;
-        $this->reservRs = $reservRs;
+        $this->reservRs = $reservRS;
         $this->family = $family;
     }
 
     /**
      * Summary of reservationFactoy
      * @param \PDO $dbh
+     * @param array $inputData
      * @throws RuntimeException
      * @return ActiveReservation|CheckedoutReservation|DeletedReservation|Reservation|ReserveSearcher|StaticReservation|StayingReservation
      */
-    public static function reservationFactoy(\PDO $dbh, $inputData) {
+    public static function reservationFactoy(\PDO $dbh, array $inputData) {
 
         $uS = Session::getInstance();
 
@@ -278,7 +276,7 @@ WHERE r.idReservation = " . $rData->getIdResv());
     /**
      * Summary of createFamilyMarkup
      * @param \PDO $dbh
-     * @param mixed $formUserData
+     * @param array $formUserData
      * @return array<string>|void
      */
     protected function createFamilyMarkup(\PDO $dbh, array $formUserData = []) {
@@ -347,7 +345,7 @@ WHERE r.idReservation = " . $rData->getIdResv());
     /**
      * Summary of createHospitalMarkup
      * @param \PDO $dbh
-     * @param mixed $refHospital
+     * @param array $refHospital
      * @return void
      */
     protected function createHospitalMarkup(\PDO $dbh, array $refHospital = []) {
@@ -857,7 +855,7 @@ WHERE r.idReservation = " . $rData->getIdResv());
     /**
      * Summary of vehicleMarkup
      * @param \PDO $dbh
-     * @param mixed $refVehicle
+     * @param array $refVehicle
      * @return string
      */
     protected function vehicleMarkup(\PDO $dbh, array $refVehicle = []) {
@@ -1060,10 +1058,10 @@ where rg.idReservation =" . $r['idReservation']);
     /**
      * Summary of findConflictingStays
      * @param \PDO $dbh
-     * @param mixed $psgMembers
-     * @param mixed $arrivalDT
+     * @param array $psgMembers
+     * @param ?\DateTimeInterface $arrivalDT
      * @param mixed $idPsg
-     * @param mixed $departureDT
+     * @param ?\DateTimeInterface $departureDT
      * @param mixed $idVisit
      * @param mixed $idSpan
      * @return int
@@ -1160,9 +1158,9 @@ WHERE
      * @param \PDO $dbh
      * @param mixed $idPsg
      * @param mixed $idResv
-     * @param mixed $psgMembers
-     * @param mixed $arrivalDT
-     * @param mixed $departDT
+     * @param array $psgMembers
+     * @param ?\DateTimeInterface $arrivalDT
+     * @param ?\DateTimeInterface $departDT
      * @param mixed $resvPrompt
      * @return int
      */

@@ -108,7 +108,7 @@ abstract class AbstractInvoiceLine {
 
     /**
      * Summary of loadRecord
-     * @param \HHK\Tables\Payment\InvoiceLineRS $invoiceLine
+     * @param InvoiceLineRS $invoiceLine
      * @return void
      */
     public function loadRecord(InvoiceLineRS $invoiceLine) {
@@ -164,7 +164,7 @@ abstract class AbstractInvoiceLine {
 
     /**
      * Summary of createNewLine
-     * @param \HHK\Purchase\Item $item
+     * @param Item $item
      * @param mixed $quantity
      * @param mixed $str1
      * @param mixed $str2

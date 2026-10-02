@@ -36,27 +36,29 @@ class ColumnSelectors {
      */
     protected $controlName;
 
-    protected $columnDefs;
-    protected $dateTimecolumnDefs;
-    protected $dayColumnDefs;
+    protected array $columnDefs;
+    protected array $dateTimecolumnDefs;
+    protected array $dayColumnDefs;
 
     /**
      * Filter Sets array
      *
      * @var array
      */
-    protected $filterSets;
+    protected array $filterSets;
     protected $filterSetSelection;
-    protected $useFilterSets;
+    protected bool $useFilterSets;
     protected $alertMsg;
 
     /**
      *
      * @param array $cols
      * @param string $contrlName
+     * @param bool $useFilterSets
      * @param array $filterSets - 0 = index, 1 = description, 2 = option group name.
+     * @param mixed $filterSetSelection
      */
-    public function __construct(array $cols, $contrlName, $useFilterSets = false, $filterSets = false, $filterSetSelection = false) {
+    public function __construct(array $cols, string $contrlName, bool $useFilterSets = false, array $filterSets = [], $filterSetSelection = false) {
         $this->cols = $cols;
         $this->controlName = $contrlName;
         $this->columnDefs = array();

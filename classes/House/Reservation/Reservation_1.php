@@ -15,8 +15,6 @@ use HHK\Note\{LinkNote, Note};
 use HHK\SysConst\{MemBasis, ReservationStatus, RoomState, VisitStatus, RoomRateCategories, ItemId, InvoiceStatus};
 use HHK\SysConst\ReferralFormStatus;
 use HHK\TableLog\{ReservationLog, VisitLog};
-use HHK\TableLog\DocumentLog;
-use HHK\TableLog\HouseLog;
 use HHK\Tables\EditRS;
 use HHK\Tables\Registration\RegistrationRS;
 use HHK\Tables\Reservation\ReservationRS;
@@ -176,7 +174,7 @@ class Reservation_1 {
 
     /**
      * Summary of __construct
-     * @param \HHK\Tables\Reservation\ReservationRS $reservRs
+     * @param ReservationRS $reservRs
      */
     public function __construct(ReservationRS $reservRs) {
 
@@ -621,9 +619,8 @@ class Reservation_1 {
     /**
      * Summary of deleteMe
      * @param \PDO $dbh
-     * @param bool $deleteHost
      * @param string $uname
-     * @throws \HHK\Exception\RuntimeException
+     * @throws RuntimeException
      * @return bool
      */
     public function deleteMe(\PDO $dbh, $uname) {
@@ -930,7 +927,7 @@ class Reservation_1 {
      * @param mixed $expectedArrival
      * @param mixed $expectedDeparture
      * @param mixed $numOccupants
-     * @param mixed $resourceTypes
+     * @param array $resourceTypes
      * @param mixed $omitSelf
      * @return array
      */
@@ -1897,7 +1894,7 @@ where $typeList and (rc.`Retired_At` is null or date(rc.`Retired_At`) > '" . $ex
 
     /**
      * Summary of setHospitalStay
-     * @param \HHK\House\Hospital\HospitalStay $v
+     * @param HospitalStay $v
      * @return Reservation_1
      */
     public function setHospitalStay(HospitalStay $v) {
