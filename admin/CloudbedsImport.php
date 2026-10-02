@@ -154,6 +154,15 @@ if (filter_has_var(INPUT_POST, "cmd")) {
             case 'retryFailed':
                 $return = ["success" => $import->getStaging()->retryFailed() . " records will be retried"];
                 break;
+            case 'resetImportStatus':
+                // puts every staged row (not just failed ones) back to pending and clears hhkId/hhkData/message,
+                // without touching the fetched payload - so the next Start Import re-runs against the same already-
+                // fetched data, no re-fetch needed. Does not touch HHK itself: delete whatever Start Import already
+                // created (Misc.php's "Delete Member Records", after Undo) before resetting, or re-importing will
+                // create a second, duplicate set alongside it - importReservation() has no "already imported" guard.
+                $import->getStaging()->resetProcessed();
+                $return = ["success" => "Import status reset - the next Start Import will re-run against the already-fetched data"];
+                break;
             case 'undo':
                 $return = $import->undoImport();
                 break;
@@ -988,6 +997,7 @@ if ($invoiceProgress['total'] > 0) {
                     <button class="ui-button ui-corner-all ml-3 cbAction" id="startImport">Start Import</button>
                     <button class="ui-button ui-corner-all ml-3 cbAction cbCmd" data-cmd="retryFailed">Retry Failed</button>
                     <button class="ui-button ui-corner-all ml-3 cbAction cbCmd" data-cmd="undo" data-confirm="Set imported people to 'To Be Deleted'? This only works before reservations and folios are imported.">Undo Import</button>
+                    <button class="ui-button ui-corner-all ml-3 cbAction cbCmd" data-cmd="resetImportStatus" data-confirm="Reset every staged record to pending so Start Import re-runs against the already-fetched data? If Start Import already created people/reservations in HHK, delete those first (Misc.php's 'Delete Member Records', after Undo) - this does not touch HHK itself, and re-importing without deleting first will create a second, duplicate set.">Reset Import Status</button>
                     <button class="ui-button ui-corner-all ml-3 cbAction cbCmd" data-cmd="resetStaging" data-confirm="Discard all fetched Cloudbeds data? Nothing already imported into HHK is changed.">Discard Fetched Data</button>
                 </div>
                 <div id="progressBar" class="ui-widget ui-widget-content ui-corner-all d-none">

@@ -175,8 +175,8 @@ abstract class AbstractImport {
                 $hospitalStay->save($this->dbh, $psg, 0, 'admin');
             }
 
-            // patient already exists - never overwrite their data, but fill in any demographic that's currently blank
-            $this->fillBlankDemographics($patient, $r);
+            // patient already exists - never overwrite their data, but fill in any field that's currently blank
+            $this->fillBlankFields($patient, $r);
 
             return array("patient"=>$patient, "psg"=>$psg, "reg"=> $reg, "hospStay"=>$hospitalStay);
         }
@@ -355,8 +355,8 @@ abstract class AbstractImport {
 
             $guest->save($this->dbh, $post, $uS->username);
         } else {
-            // guest already exists - never overwrite their data, but fill in any demographic that's currently blank
-            $this->fillBlankDemographics($guest, $r);
+            // guest already exists - never overwrite their data, but fill in any field that's currently blank
+            $this->fillBlankFields($guest, $r);
         }
         $relship = RelLinkType::Relative;
         if (isset($r['Relationship_to_Patient'])) {
@@ -651,15 +651,15 @@ WHERE n.Name_First = '" . $newFirst . "' AND n.Name_Last = '" . $newLast . "'";
 
     /**
      * Fill in a blank demographic (Gender, Ethnicity, or any demog.<Code> from a "map to any enabled demographic"
-     * target, see CloudbedsFieldMapper::isValidTarget()) on a person who already exists - addGuest()/addPatient() only
-     * apply demographics when creating someone for the first time, so an existing person's data is never overwritten
-     * by an automated import; this fills a gap instead of a value, on request only (never overwrites a value that's
-     * already set, whether from a prior import or entered by hand in HHK).
+     * target, see CloudbedsFieldMapper::isValidTarget()) or birth date on a person who already exists -
+     * addGuest()/addPatient() only apply these when creating someone for the first time, so an existing person's
+     * data is never overwritten by an automated import; this fills a gap instead of a value, on request only (never
+     * overwrites a value that's already set, whether from a prior import or entered by hand in HHK).
      *
      * @param \HHK\Member\Role\AbstractRole $person an existing Guest or Patient
      * @param array $r the import row, as passed to addGuest()/addPatient()
      */
-    protected function fillBlankDemographics(\HHK\Member\Role\AbstractRole $person, array $r): void {
+    protected function fillBlankFields(\HHK\Member\Role\AbstractRole $person, array $r): void {
         $candidates = ['Gender' => (string) ($r['Gender'] ?? ''), 'Ethnicity' => (string) ($r['Ethnicity'] ?? '')];
         foreach ($r as $key => $value) {
             if (str_starts_with((string) $key, 'demog.')) {
@@ -676,6 +676,13 @@ WHERE n.Name_First = '" . $newFirst . "' AND n.Name_Last = '" . $newLast . "'";
             if ($field !== null && trim((string) $field->getStoredVal()) === '') {
                 $post['sel_' . $code] = $this->findIdGenLookup($code, $value);
             }
+        }
+
+        // birth date isn't a gen-lookup demographic (no getDemographicField()/sel_<Code> handling for it) - it's a
+        // plain name column, set directly via txtBirthDate in IndivMember::processMember()'s own "Common" handling
+        $birthDate = trim((string) ($r['BirthDate'] ?? ''));
+        if ($birthDate !== '' && trim((string) $person->getRoleMember()->get_birthDate()) === '') {
+            $post['txtBirthDate'] = $birthDate;
         }
 
         if (count($post) > 0) {

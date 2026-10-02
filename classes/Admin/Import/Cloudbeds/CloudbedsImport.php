@@ -328,6 +328,19 @@ class CloudbedsImport extends AbstractImport implements ImportInterface {
      *     share the same MRN, because they really are the same person) - narrowing #1 is what actually prevents
      *     that pile-up once the real, profile-backed record shows up.
      * Still ambiguous after both is treated as not found rather than risk merging into the wrong person.
+     *
+     * A lookup that still finds nobody (no ambiguity to narrow - genuinely nobody by that exact name) has one more
+     * fallback before giving up, in either direction:
+     *  - a "guest" lookup tries an orphan self patient of the same name (see findOrphanSelfPatient()) - closing the
+     *    gap #1 above describes, for the case where the orphan already exists when the veteran's own first
+     *    self-check-in runs (so narrowing #1 never gets a chance to run for it - the external id lookup above
+     *    already "succeeds" against the guest record this same reservation just created for them).
+     *  - a "patient" lookup tries any existing person with a real Cloudbeds profile id and this exact name, 'slf' or
+     *    not (see findRealGuestByName()) - closing the reverse gap: importProfile() runs in its own phase, entirely
+     *    before any reservation does, and creates every real guest as a bare guest with no patient role yet, so
+     *    whichever reservation (the veteran's own, or a relative's naming them) happens to have the lower staging id
+     *    is the one that gets to promote them to 'slf' first - if that's a relative's reservation, the plain
+     *    'slf'-only search just above always finds nobody, no matter which of the two actually ran first.
      */
     protected function findExistingPersonId(array $r, string $memberType, string $first, string $last) {
         if (($r['externalId'] ?? '') !== '') {
@@ -361,7 +374,99 @@ class CloudbedsImport extends AbstractImport implements ImportInterface {
             return 0;
         }
 
+        if ((int) $id === 0) {
+            if ($memberType === 'guest') {
+                $orphanMatch = $this->findOrphanSelfPatient($first, $last, trim((string) ($r['MRN'] ?? '')));
+                if ($orphanMatch > 0) {
+                    return $orphanMatch;
+                }
+            } elseif ($memberType === 'patient') {
+                // the reverse case: importProfile() runs in its own phase, entirely before any reservation does, and
+                // creates every real guest (by their real Cloudbeds profile id) as a bare guest with no patient role
+                // yet - so whichever reservation has the lower staging id "wins" the chance to promote them to their
+                // own ('slf') patient first. If that happens to be a relative's reservation naming them (this call),
+                // the plain 'slf'-only search just above always finds nobody, since they aren't 'slf' yet - whatever
+                // the actual order between the veteran's own reservation and the relative's one turns out to be.
+                // Finding them here by name (see findRealGuestByName()) and promoting them is what addPatient()'s
+                // existing-person branch already does for anyone found - it establishes the self PSG relationship.
+                $realGuestMatch = $this->findRealGuestByName($first, $last);
+                if ($realGuestMatch > 0) {
+                    return $realGuestMatch;
+                }
+            }
+        }
+
         return (int) $id;
+    }
+
+    /**
+     * An existing person with a real Cloudbeds profile id (a bare number - see PMS_GUEST_ID_PREFIX) matching this
+     * exact name, regardless of their current relationship role - see findExistingPersonId()'s "patient" fallback.
+     * No MRN corroboration is possible here (unlike findOrphanSelfPatient()/findPatientByMrnAndLastName()): a person
+     * who hasn't yet been promoted to being their own patient has no hospital_stay row, so no MRN, to check against.
+     *
+     * @return int idName, 0 if there is no single match
+     */
+    protected function findRealGuestByName(string $first, string $last): int {
+        $newFirst = trim(htmlentities($first));
+        $newLast = trim(htmlentities($last));
+        if ($newFirst === '' || $newLast === '') {
+            return 0;
+        }
+
+        $stmt = $this->dbh->prepare(
+            "select idName from name where Name_First = :first and Name_Last = :last and External_Id regexp '^[0-9]{9,}\$'"
+        );
+        $stmt->execute([':first' => $newFirst, ':last' => $newLast]);
+        $ids = array_map('intval', $stmt->fetchAll(\PDO::FETCH_COLUMN));
+
+        return count($ids) === 1 ? $ids[0] : 0;
+    }
+
+    /**
+     * An existing orphan self patient (see patientRow() - a relative named them in a text field, so they have no
+     * Cloudbeds profile id of their own) matching this exact name - see findExistingPersonId()'s "guest" fallback,
+     * which is what this is really for: the real person's own first self-check-in must recognize and promote this
+     * record (addGuest() links the real external id to whatever idName it's given) rather than create a second,
+     * disconnected one, since an orphan can never be found by external id. Requires the last name to match
+     * (guaranteed, by the exact-name query) and, when more than one same-named orphan exists, MRN too - the same
+     * safety principle as findPatientByMrnAndLastName().
+     *
+     * @return int idName, 0 if there is no single, safe match
+     */
+    protected function findOrphanSelfPatient(string $first, string $last, string $mrn): int {
+        $newFirst = trim(htmlentities($first));
+        $newLast = trim(htmlentities($last));
+        if ($newFirst === '' || $newLast === '') {
+            return 0;
+        }
+
+        $stmt = $this->dbh->prepare(
+            "select distinct n.idName from name n join name_guest ng on n.idName = ng.idName
+             where ng.Relationship_Code = 'slf' and (n.External_Id = '' or n.External_Id is null)
+             and n.Name_First = :first and n.Name_Last = :last"
+        );
+        $stmt->execute([':first' => $newFirst, ':last' => $newLast]);
+        $idNames = array_map('intval', $stmt->fetchAll(\PDO::FETCH_COLUMN));
+
+        if (count($idNames) === 1) {
+            return $idNames[0];
+        }
+
+        $mrn = trim($mrn);
+        if (count($idNames) > 1 && $mrn !== '') {
+            // a separate query against hospital_stay directly, rather than joining it above, since one person can
+            // have several stays (several hospital_stay rows), which would make a single real match look ambiguous
+            $placeholders = implode(',', array_fill(0, count($idNames), '?'));
+            $stmt2 = $this->dbh->prepare("select distinct idPatient from hospital_stay where idPatient in ($placeholders) and MRN = ?");
+            $stmt2->execute([...$idNames, $mrn]);
+            $withMrn = array_map('intval', $stmt2->fetchAll(\PDO::FETCH_COLUMN));
+            if (count($withMrn) === 1) {
+                return $withMrn[0];
+            }
+        }
+
+        return 0;
     }
 
     /**
@@ -544,18 +649,11 @@ class CloudbedsImport extends AbstractImport implements ImportInterface {
         $resvStatus = $statusMap['reservation'];
         $visitStatus = $statusMap['visit'];
 
-        // guests: the reservation's guest list, keyed by PMS guest id (see ensureReservationPeople()). The main guest's
-        // real, persistent Guest Profile id is a different id space, already known from the PMS reservation fields
-        // (fetchReservationFields()), and is threaded through separately.
+        // the reservation's real, persistent Guest Profile id and PMS guest id - a different id space than
+        // ensureReservationPeople()'s own guest-id keying, already known from the PMS reservation fields
+        // (fetchReservationFields()).
         $realMainProfileId = (string) ($payload['mainProfileId'] ?? '');
         $mainGuestId = (string) ($payload['mainGuestId'] ?? '');
-
-        $people = $this->ensureReservationPeople($summary, $realMainProfileId, $mainGuestId, $warnings);
-        if (count($people) === 0) {
-            throw new \RuntimeException('Reservation has no importable guests');
-        }
-        // array keys that look like integers are ints in PHP, keep guest ids as strings when comparing
-        $mainGuestKey = (string) (array_key_first(array_filter($people, fn($p) => $p['main'])) ?? array_key_first($people));
 
         // custom fields, from three possible sources, each overriding the one before it:
         //  1. the guest's persistent profile-level custom fields (Guest Profiles API) - lowest priority, since a
@@ -565,6 +663,10 @@ class CloudbedsImport extends AbstractImport implements ImportInterface {
         //     confirmed against live data as where this account's veteran-specific fields (Branch of Service, Door
         //     Code, Gender/Ethnicity of veteran, Relationship to Patient, Special Needs, ...) actually live; the
         //     reservation's own top-level customFields rarely has more than a couple of fields for this account.
+        // Computed before ensureReservationPeople() below so its MRN value can help it recognize the main guest's
+        // own first self-check-in as the same person a relative's earlier, separate reservation already named as
+        // their patient (see findOrphanSelfPatient()) - that reconciliation needs to happen before any guest or
+        // patient record is created for this reservation, not after.
         $values = [];
         $notes = [];
 
@@ -612,6 +714,16 @@ class CloudbedsImport extends AbstractImport implements ImportInterface {
         }
 
         $mapped['notes'] = $notes;
+
+        // guests: the reservation's guest list, keyed by PMS guest id (see ensureReservationPeople()). The mapped MRN
+        // (if any) lets the main guest's first self-check-in recognize a name-only orphan patient a relative's
+        // earlier, separate reservation already created for them (see findOrphanSelfPatient()).
+        $people = $this->ensureReservationPeople($summary, $realMainProfileId, $mainGuestId, trim($values['mrn'] ?? ''), $warnings);
+        if (count($people) === 0) {
+            throw new \RuntimeException('Reservation has no importable guests');
+        }
+        // array keys that look like integers are ints in PHP, keep guest ids as strings when comparing
+        $mainGuestKey = (string) (array_key_first(array_filter($people, fn($p) => $p['main'])) ?? array_key_first($people));
 
         // patient, PSG, registration and hospital stay
         $hospitalTitle = trim($values['hospital'] ?? '');
@@ -818,7 +930,7 @@ class CloudbedsImport extends AbstractImport implements ImportInterface {
      *         (matches room['guestId']/additionalGuestIds, also PMS guest ids). 'profileId' is the person's real
      *         Guest Profile id when known (always for the main guest), '' otherwise.
      */
-    protected function ensureReservationPeople(array $summary, string $mainProfileId, string $mainGuestId, array &$warnings): array {
+    protected function ensureReservationPeople(array $summary, string $mainProfileId, string $mainGuestId, string $mrn, array &$warnings): array {
         $people = [];
 
         foreach ((array) ($summary['guests'] ?? []) as $g) {
@@ -833,6 +945,12 @@ class CloudbedsImport extends AbstractImport implements ImportInterface {
 
             $r = CloudbedsNormalizer::person($g);
             $r['externalId'] = $externalId;
+            if ($isMain) {
+                // lets the main guest's first-ever self-check-in recognize a name-only orphan patient a relative's
+                // earlier, separate reservation already created for them - see findExistingPersonId()'s "guest"
+                // fallback and findOrphanSelfPatient()
+                $r['MRN'] = $mrn;
+            }
 
             $idName = $this->findPersonByExternalId($externalId);
             if ($idName === 0) {
