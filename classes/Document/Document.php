@@ -420,12 +420,11 @@ class Document {
             $this->documentRS->Last_Updated->setNewVal(date('Y-m-d H:i:s'));
 
             if($forceDelete == true){
-                $deleted = EditRS::delete($dbh, $this->documentRS, array($this->documentRS->idDocument));
-                if($deleted){
+                if(EditRS::delete($dbh, $this->documentRS, array($this->documentRS->idDocument))){
+                    $counter = 1;
                     $logText = DocumentLog::getDeleteText($this->documentRS, $this->getIdDocument());
                     DocumentLog::logDocument($dbh, $this->getIdDocument(), 0, 0, 0, $logText, "delete", $uS->username);
                 }
-                return $deleted;
             }else{
                 $counter = EditRS::update($dbh, $this->documentRS, array($this->documentRS->idDocument));
                 if($counter > 0){

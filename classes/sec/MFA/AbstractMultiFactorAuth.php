@@ -266,7 +266,7 @@ abstract class AbstractMultiFactorAuth {
      *
      * @param int $length
      *
-     * @return GoogleAuthenticator
+     * @return static
      */
     public function setCodeLength($length)
     {

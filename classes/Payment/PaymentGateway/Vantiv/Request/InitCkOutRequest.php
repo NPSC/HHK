@@ -40,6 +40,9 @@ use HHK\Exception\PaymentException;
 
 
 // Credit Payment Hosted transactions
+/**
+ * @extends AbstractMercRequest<InitCkOutResponse>
+ */
 class InitCkOutRequest extends AbstractMercRequest {
 
     /**

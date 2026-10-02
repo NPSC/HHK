@@ -21,7 +21,7 @@ abstract class AbstractDeluxeRequest
 
     protected string $hpfAccessToken;
 
-    protected string $responseCode;
+    protected int|string $responseCode;
 
     protected string $responseMsg;
 

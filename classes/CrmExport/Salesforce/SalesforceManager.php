@@ -2505,7 +2505,7 @@ JS;
 
         foreach ($objects as $obj) {
             $hhkFields = $hhkArrays[$obj] ?? [];
-            if (empty($hhkFields)) {
+            if (!is_array($hhkFields) || count($hhkFields) === 0) {
                 continue;
             }
 

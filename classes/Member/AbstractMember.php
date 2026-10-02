@@ -236,7 +236,7 @@ abstract class AbstractMember {
 
     /**
      * Summary of createMarkupTable
-     * @return void
+     * @return string
      */
     public abstract function createMarkupTable();
 
@@ -324,14 +324,8 @@ abstract class AbstractMember {
         $val = '';
         if ($tableName == 'Gender') {
             $val = $this->nameRS->Gender->getStoredVal();
-        } else {
-
-            foreach ($this->demogRS as $k => $v) {
-
-                if ($k == $tableName) {
-                    $val = $v->getStoredVal();
-                }
-            }
+        } else if (isset($this->demogRS->$tableName)) {
+            $val = $this->demogRS->$tableName->getStoredVal();
         }
 
         return $val;
@@ -346,14 +340,8 @@ abstract class AbstractMember {
 
         if ($tableName == 'Gender') {
             return $this->nameRS->Gender;
-        } else {
-
-            foreach ($this->demogRS as $k => $v) {
-
-                if ($k == $tableName) {
-                    return $v;
-                }
-            }
+        } else if (isset($this->demogRS->$tableName)) {
+            return $this->demogRS->$tableName;
         }
 
         return NULL;

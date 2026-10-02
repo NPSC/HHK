@@ -51,7 +51,7 @@ class Reservation_1 {
      * Summary of reservRs
      * @var ReservationRS
      */
-    protected $reservRs;
+    protected ?ReservationRS $reservRs;
 
     /**
      * Summary of reservConstraints
@@ -176,17 +176,17 @@ class Reservation_1 {
 
     /**
      * Summary of __construct
-     * @param \HHK\Tables\Reservation\ReservationRS $reservRs
+     * @param ReservationRS $reservRS
      */
-    public function __construct(ReservationRS $reservRs) {
+    public function __construct(ReservationRS $reservRS) {
 
-        $this->reservRs = $reservRs;
+        $this->reservRs = $reservRS;
         $this->idVisit = -1;
-        $this->expectedArrival = $reservRs->Expected_Arrival->getStoredVal();
-        $this->expectedDeparture = $reservRs->Expected_Departure->getStoredVal();
-        $this->numGuests = $reservRs->Number_Guests->getStoredVal();
-        $this->idResource = $reservRs->idResource->getStoredVal();
-        $this->idReferralDoc = $reservRs->idReferralDoc->getStoredVal();
+        $this->expectedArrival = $reservRS->Expected_Arrival->getStoredVal();
+        $this->expectedDeparture = $reservRS->Expected_Departure->getStoredVal();
+        $this->numGuests = $reservRS->Number_Guests->getStoredVal();
+        $this->idResource = $reservRS->idResource->getStoredVal();
+        $this->idReferralDoc = $reservRS->idReferralDoc->getStoredVal();
         $this->roomTitle = '';
 
     }
@@ -1182,8 +1182,8 @@ WHERE $typeList AND (`rc`.`Retired_At` IS NULL OR DATE(`rc`.`Retired_At`) > :ret
     /**
      * Summary of testResource
      * @param \PDO $dbh
-     * @param \HHK\House\Resource\AbstractResource $resc
-     * @throws \HHK\Exception\UnexpectedValueException
+     * @param AbstractResource $resc
+     * @throws UnexpectedValueException
      * @return bool
      */
     public function testResource(\PDO $dbh, AbstractResource $resc) {
@@ -1443,7 +1443,7 @@ WHERE $typeList AND (`rc`.`Retired_At` IS NULL OR DATE(`rc`.`Retired_At`) > :ret
                 } else {
                     if ($resv->getStatus() == ReservationStatus::UnCommitted) {
                         $guestAttrs['class'] = 'ui-state-highlight';
-                        $guestAttrs['title'] = 'Reservation status is ' . $resv->getStatusTitle($dbh) . '.  ' . $guestAttrs['title'];
+                        $guestAttrs['title'] = 'Reservation status is ' . $resv->getStatusTitle($dbh) . '.';
                     }
 
                     $guestName = HTMLContainer::generateMarkup('span', $guestMember->getMemberName(), $guestAttrs);

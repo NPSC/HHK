@@ -55,7 +55,7 @@ class Patient extends AbstractRole {
     /**
      * Summary of getPatientPsg
      * @param \PDO $dbh
-     * @return PSG|int
+     * @return PSG
      */
     public function getPatientPsg(\PDO $dbh) {
 
@@ -68,7 +68,7 @@ class Patient extends AbstractRole {
 
     /**
      * Summary of createThinMarkup
-     * @param \HHK\House\ReserveData\PSGMember\PSGMember $mem
+     * @param PSGMember $mem
      * @param mixed $lockRelChooser
      * @return string
      */
@@ -107,7 +107,7 @@ class Patient extends AbstractRole {
 
     /**
      * Summary of createStayMarkup
-     * @param \HHK\House\ReserveData\PSGMember\PSGMember $stay
+     * @param PSGMember $stay
      * @return string
      */
     public function createStayMarkup(PSGMember $stay) {
@@ -141,4 +141,3 @@ class Patient extends AbstractRole {
     }
 
 }
-?>

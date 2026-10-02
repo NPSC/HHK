@@ -40,6 +40,9 @@ use HHK\Payment\PaymentGateway\Vantiv\Response\VerifyCkOutResponse;
 
 // Credit Payment Hosted transactions
 
+/**
+ * @extends AbstractMercRequest<VerifyCkOutResponse>
+ */
 class VerifyCkOutRequest extends AbstractMercRequest{
 
     /**

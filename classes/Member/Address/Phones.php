@@ -434,9 +434,9 @@ class Phones extends AbstractContactPoint {
             $format = ($region === 'US') ? PhoneNumberFormat::NATIONAL : PhoneNumberFormat::INTERNATIONAL;
             $formatted = $phoneUtil->format($number, $format);
             $e164 = $phoneUtil->format($number, PhoneNumberFormat::E164);
-            $countryCode = $number->getCountryCode();
+            $countryCode = strval($number->getCountryCode());
 
-            $smsFormat = ($countryCode == "1" && $uS->smsProvider == "SimpleTexting" ? preg_replace('/^\+' . $number->getCountryCode() . '/', '', $e164) : $e164);
+            $smsFormat = ($countryCode == "1" && $uS->smsProvider == "SimpleTexting" ? preg_replace('/^\+' . $countryCode . '/', '', $e164) ?? $e164 : $e164);
             $smsSupported = !($countryCode != "1" && $uS->smsProvider == "SimpleTexting");
 
             return ['isValid' => true, 'formatted' => $formatted, 'E164'=>$e164, 'countryCode'=>$countryCode, 'smsSupported'=>$smsSupported, 'smsFormat' => $smsFormat];

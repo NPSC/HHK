@@ -10,7 +10,10 @@ namespace HHK\Tables;
  * @link      https://github.com/NPSC/HHK
  */
 
-interface TableRSInterface {
+/**
+ * @extends \IteratorAggregate<string, Fields\DB_Field>
+ */
+interface TableRSInterface extends \IteratorAggregate {
     public function getTableName();
 }
 ?>

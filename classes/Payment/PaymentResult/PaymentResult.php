@@ -124,7 +124,7 @@ class PaymentResult {
     /**
      * Decide whether to automatically send the receipt via email and send accordingly
      * @param \PDO $dbh
-     * @return array{error: string}|array{success: string}
+     * @return array{error: string}|array{success: string}|array{}
      */
     public function emailReceipt(\PDO $dbh) {
 
@@ -145,7 +145,7 @@ class PaymentResult {
      * @param \PDO $dbh
      * @param mixed $idRegistration
      * @param mixed $idName
-     * @return array{autoEmail: bool, email: string|array{autoEmail: bool, email: null}}
+     * @return array{autoEmail: true, email: string}|array{autoEmail: false, email: null}
      */
     public static function isAutoEmailEligible(\PDO $dbh, $idRegistration, $idName){
         $uS = Session::getInstance();

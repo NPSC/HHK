@@ -505,14 +505,14 @@ order by r.Util_Priority;", array(\PDO::ATTR_CURSOR => \PDO::CURSOR_FWDONLY));
      * Summary of allocateRoom
      * @param mixed $numGuests
      * @param mixed $overRideMax
-     * @return Room
+     * @return Room|null
      */
     public abstract function allocateRoom($numGuests, $overRideMax = FALSE);
 
     /**
      * Summary of testAllocateRoom
      * @param mixed $numGuests
-     * @return void
+     * @return bool
      */
     public abstract function testAllocateRoom($numGuests);
 

@@ -96,6 +96,10 @@ class IndivMember extends AbstractMember
         return $this->get_fullName();
     }
 
+    /**
+     * Summary of createMarkupTable
+     * @return string
+     */
     public function createMarkupTable()
     {
 

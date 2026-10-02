@@ -38,7 +38,7 @@ class Photo {
 
     /**
      * Summary of image
-     * @var string
+     * @var string|null
      */
     protected $image;
 
@@ -131,7 +131,7 @@ class Photo {
      * Summary of saveGuestPhoto
      * @param \PDO $dbh
      * @param int $idGuest
-     * @param string $imageFile
+     * @param array{name: string, type: string, tmp_name: string, error: int, size: int} $imageFile  An entry from $_FILES
      * @param int $imageSizePx
      * @param string $userName
      * @param int $defaultSizePx

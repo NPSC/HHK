@@ -94,7 +94,7 @@ class Client {
      * 
      * @param string $name
      * @param array $scopes
-     * @return array{client: mixed, client_id: string, client_secret: string}
+     * @return array{client: mixed, accessTokens: array{}}
      */
     public function generateNewClient(string $name, array $scopes = []){
         $uS = Session::getInstance();

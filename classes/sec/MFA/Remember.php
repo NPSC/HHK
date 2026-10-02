@@ -81,9 +81,7 @@ class Remember
             ':ipAddress'=>UserClass::getRemoteIp()
         ));
 
-        $rowCount = $stmt->rowCount();
-
-        return $rowCount;
+        return $stmt->rowCount() > 0;
     }
 
     public function deleteTokens(\PDO $dbh, bool $allUserTokens = false) : int

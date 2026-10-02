@@ -184,7 +184,7 @@ class CheckedoutReservation extends CheckingIn {
      * Summary of addGuestStay
      * @param \PDO $dbh
      * @throws RuntimeException
-     * @return CheckedoutReservation|null
+     * @return void
      */
     protected function addGuestStay(\PDO $dbh) {
 
@@ -194,7 +194,7 @@ class CheckedoutReservation extends CheckingIn {
         $this->initialSave($dbh);
 
         if ($this->reserveData->hasError()) {
-            return $this;
+            return;
         }
 
         // Modified added guest arrival and depture dates.

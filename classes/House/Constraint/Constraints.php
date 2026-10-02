@@ -155,9 +155,9 @@ class Constraints {
      *
      * @param \PDO $dbh
      * @param int $id
-     * @return string HTML markup of a single table row containing input controls
+     * @return array HTML markup of a single table row containing input controls
      */
-    public function editMarkup(\PDO $dbh, $id) {
+    public function editMarkup(\PDO $dbh, int $id): array {
 
         $cls = 'reCon' . $id;
 
@@ -188,14 +188,8 @@ class Constraints {
                 $parms['checked'] = 'checked';
             }
 
-//            if ($a['isActive'] > 0 && $a['Operation'] == 'not') {
-//                $notParms['checked'] = 'checked';
-//            }
-
             $tr .= HTMLTable::makeTd(
                     HTMLInput::generateMarkup('', $parms)
-//                    . HTMLContainer::generateMarkup('span', 'Not:', array('style'=>'margin-left:.9em;'))
-//                    . HTMLInput::generateMarkup('', $notParms)
                     , array('style'=>'text-align:center;padding-right:0;padding-left:0;'));
         }
 
@@ -209,9 +203,9 @@ class Constraints {
      * @param int $id
      * @param array $post
      * @param string $username
-     * @return string HTML markup of the new table of constraints
+     * @return array HTML markup of the new table of constraints
      */
-    public function saveMarkup(\PDO $dbh, $id, $post, $username) {
+    public function saveMarkup(\PDO $dbh, int $id, $post, $username): array {
 
         $constraintArray = $this->getConstraints();
 
@@ -296,7 +290,7 @@ class Constraints {
      * @param int $id
      * @return array Result message
      */
-    public function delete(\PDO $dbh, $id) {
+    public function delete(\PDO $dbh, int $id): array {
 
         $constraintArray = $this->getConstraints();
 
@@ -316,4 +310,3 @@ class Constraints {
         return array('success'=>'Record Deleted.  ');
     }
 }
-?>

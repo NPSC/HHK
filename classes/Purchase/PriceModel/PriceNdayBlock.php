@@ -28,7 +28,7 @@ class PriceNdayBlock extends AbstractPriceModel {
     protected $blockTitle = '';
     /**
      * Summary of blocks
-     * @var int
+     * @var float|int
      */
     protected $blocks = 0;
 
@@ -242,7 +242,7 @@ class PriceNdayBlock extends AbstractPriceModel {
      * @param array $tiers
      * @param mixed $startDT
      * @param string $separator
-     * @param int $totalGuestNites
+     * @param float|int $totalGuestNites
      * @return float|int
      */
     public function tiersMarkup($r, &$totalAmt, HTMLTable &$tbl, array $tiers, &$startDT, $separator, &$totalGuestNites) {

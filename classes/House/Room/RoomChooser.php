@@ -49,7 +49,7 @@ class RoomChooser {
     public $resv;
     /**
      *
-     * @var AbstractResource
+     * @var AbstractResource|null
      */
     protected $selectedResource;
     /**

@@ -31,7 +31,7 @@ class Backup extends AbstractMultiFactorAuth {
     public function verifyCode(\PDO $dbh, string $code): bool
     {
         if(strlen($code) == 6){
-            $availableCodes = $this->getCode();
+            $availableCodes = $this->getCodes();
             $isValid = in_array($code, $availableCodes);
             $isUsed = $this->isCodeUsed($dbh, $code);
             return ($isValid && $isUsed == 0);
@@ -66,7 +66,12 @@ class Backup extends AbstractMultiFactorAuth {
         return $isUsed;
     }
 
-    public function getCode($timeSlice = null)
+    /**
+     * Get the list of backup codes derived from the user's backup secret
+     *
+     * @return list<string>
+     */
+    public function getCodes(): array
     {
         $codeStr = substr(hash_hmac('sha256', $this->username, $this->secret), 0, 60);
         $codesAr = str_split($codeStr, 6);

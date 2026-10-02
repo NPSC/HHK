@@ -23,12 +23,13 @@ abstract class AbstractCreditPayments {
 
     /**
      * Summary of processReply
+     * @template T of AbstractCreditResponse
      * @param \PDO $dbh
-     * @param \HHK\Payment\PaymentResponse\AbstractCreditResponse $pr
+     * @param T $pr
      * @param string $userName
      * @param mixed $payRs
      * @param int $attempts
-     * @return AbstractCreditResponse
+     * @return T
      */
     public static function processReply(\PDO $dbh, AbstractCreditResponse $pr, $userName, $payRs = NULL, $attempts = 1) {
 
@@ -36,11 +37,11 @@ abstract class AbstractCreditPayments {
         switch ($pr->getStatus()) {
 
             case self::STATUS_APPROVED:
-                $pr = static::caseApproved($dbh, $pr, $userName, $payRs, $attempts);
+                static::caseApproved($dbh, $pr, $userName, $payRs, $attempts);
                 break;
 
             case self::STATUS_DECLINED:
-                $pr = static::caseDeclined($dbh, $pr, $userName, $payRs, $attempts);
+                static::caseDeclined($dbh, $pr, $userName, $payRs, $attempts);
                 break;
 
             default:

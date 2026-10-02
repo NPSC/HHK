@@ -412,7 +412,7 @@ function saveTwoFA(PDO $dbh, $secret, $OTP, $method){
                     $events = ['error' => "One Time Code is invalid"];
                 }elseif($backup->saveSecret($dbh) && $ga->saveSecret($dbh)){
                     unset($uS->userCredentials); // stale now that the MFA secrets changed
-                    $events = ['success' => 'Two Factor Authentication enabled', 'backupCodes' => $backup->getCode()];
+                    $events = ['success' => 'Two Factor Authentication enabled', 'backupCodes' => $backup->getCodes()];
                 }else{
                     $events = ['error' => "Unable to enable Two factor Authentication"];
                 }

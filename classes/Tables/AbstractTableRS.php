@@ -1,5 +1,7 @@
 <?php
 namespace HHK\Tables;
+
+use HHK\Tables\Fields\DB_Field;
 /**
  * AbstractTableRS.php
  *
@@ -31,6 +33,18 @@ abstract class AbstractTableRS implements TableRSInterface {
      */
     public function getTableName() {
         return $this->tableName;
+    }
+
+    /**
+     * Iterate the public DB_Field properties, keyed by property name
+     * @return \Generator<string, DB_Field>
+     */
+    public function getIterator(): \Generator {
+        foreach ((new \ReflectionObject($this))->getProperties(\ReflectionProperty::IS_PUBLIC) as $prop) {
+            if ($prop->isInitialized($this) && ($dbF = $prop->getValue($this)) instanceof DB_Field) {
+                yield $prop->getName() => $dbF;
+            }
+        }
     }
 
 }

@@ -53,7 +53,7 @@ class RoomResource extends AbstractResource {
      * @param int $numGuests
      * @param bool $overRideMax
      * @throws \HHK\Exception\RuntimeException
-     * @return mixed
+     * @return Room|null
      */
     public function allocateRoom($numGuests, $overRideMax = FALSE) {
 

@@ -296,7 +296,7 @@ class VantivGateway extends AbstractPaymentGateway {
      * @param \HHK\Tables\Payment\Payment_AuthRS $pAuthRs
      * @param mixed $returnAmt
      * @param mixed $bid
-     * @return array{bid: mixed, warning: mixed|array{bid: mixed, warning: string}|array{bid: mixed}|string[]}
+     * @return array{bid: mixed, warning: string}|array{bid: mixed, receipt: string, billToEmail: string, idPayment: mixed}
      */
     protected function _returnPayment(\PDO $dbh, Invoice $invoice, PaymentRS $payRs, Payment_AuthRS $pAuthRs, $returnAmt, $bid) {
 
