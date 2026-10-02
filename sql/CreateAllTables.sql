@@ -1811,6 +1811,7 @@ CREATE TABLE
         `Availability` VARCHAR(15) NOT NULL DEFAULT '',
         `Max_Occupants` INT (11) NOT NULL DEFAULT '0',
         `Min_Occupants` INT (11) NOT NULL DEFAULT '0',
+        `Sleeping_Spaces` INT (11) NOT NULL DEFAULT '0',
         `Beds_King` INT (11) NOT NULL DEFAULT '0',
         `Beds_Queen` INT (11) NOT NULL DEFAULT '0',
         `Beds_Utility` INT NOT NULL DEFAULT 0,

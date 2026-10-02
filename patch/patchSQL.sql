@@ -233,3 +233,6 @@ select `idPage`, 'gr' from `page` where `File_Name` = 'GuestCensusReport.php';
 
 -- add Import page (hidden by default)
 call `new_webpage`('Import.php',2,'Import',1,'a','34','l','p','','',now(),'db');
+
+-- Room sleeping spaces (Guest Census Report bednight percentage)
+ALTER TABLE `room` ADD COLUMN IF NOT EXISTS `Sleeping_Spaces` INT(11) NOT NULL DEFAULT 0 AFTER `Min_Occupants`;

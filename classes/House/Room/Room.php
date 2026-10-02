@@ -219,6 +219,14 @@ class Room {
     }
 
     /**
+     * Summary of getSleepingSpaces
+     * @return mixed
+     */
+    public function getSleepingSpaces() {
+        return $this->roomRS->Sleeping_Spaces->getStoredVal();
+    }
+
+    /**
      * Summary of isClean
      * @return bool
      */
