@@ -172,7 +172,7 @@ order by r.Retired_At, r.Title;");
         }
 
 
-        $stmt = $dbh->query("Select '' as `Edit`, r.idRoom as `Id`, r.Title, g.Description as `Type`, g3.Description as `Category`, g7.Description as `Report Category`, r.Max_Occupants as `Max`, r.Sleeping_Spaces as `Sleeping Spaces`,
+        $stmt = $dbh->query("Select '' as `Edit`, r.idRoom as `Id`, r.Title, g.Description as `Type`, g3.Description as `Category`, g7.Description as `Report Category`, r.Max_Occupants as `Max`,
 r.Floor, r.Phone as `". $labels->getString("ResourceBuilder","RoomPhone","Phone") ."`, g4.Description as `Static Rate`, ifnull(rr.Title, '') as `Default Rate` , g6.Description as `Clean Cycle`, if(count(rcr.idResource_room) = count(resc.idResource), 'hhk-retired', '') as `isRetired` $depositCol
 from room r
 left join gen_lookups g on g.`Table_Name`='Room_Type' and g.`Code` = r.`Type`
@@ -219,7 +219,6 @@ order by r.Title;");
             'Category' => '',
             'Report Category' => '',
             'Max' => '',
-            'Sleeping Spaces' => '',
             'Floor' => '',
             $labels->getString("ResourceBuilder","RoomPhone","Phone") => '',
             'Static Rate' => '',
@@ -587,10 +586,6 @@ WHERE
             $roomRs->Max_Occupants->setNewVal(intval(filter_var($post['txtMax'], FILTER_SANITIZE_NUMBER_INT), 10));
         }
 
-        if (isset($post['txtSleepSpaces'])) {
-            $roomRs->Sleeping_Spaces->setNewVal(intval(filter_var($post['txtSleepSpaces'], FILTER_SANITIZE_NUMBER_INT), 10));
-        }
-
         if (isset($post['selReType'])) {
             $roomRs->Type->setNewVal(filter_var($post['selReType'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
         }
@@ -827,8 +822,6 @@ WHERE
             ))
             // max occ
             . HTMLTable::makeTd(HTMLInput::generateMarkup($room->getMaxOccupants(), array('id' => 'txtMax', 'class' => $cls, 'size' => '3')))
-            // sleeping spaces
-            . HTMLTable::makeTd(HTMLInput::generateMarkup($room->getSleepingSpaces(), array('id' => 'txtSleepSpaces', 'class' => $cls, 'size' => '3')))
             . HTMLTable::makeTd(HTMLInput::generateMarkup($roomRs->Floor->getStoredVal(), array('id' => 'txtFloor', 'class' => $cls, 'size' => '4')))
             // phone
             . HTMLTable::makeTd(HTMLInput::generateMarkup($roomRs->Phone->getStoredVal(), array('id' => 'txtPhone', 'name' => 'txtPhone', 'type' => 'text', 'autocomplete' => "off", 'class' => $cls . ' hhk-phoneInput', 'size' => '10')))

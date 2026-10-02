@@ -27,7 +27,6 @@ class RoomRS extends AbstractTableRS {
     public DB_Field $Availability;   // varchar(15) Not Null Default '',
     public DB_Field $Max_Occupants;  // int(11) NOT NULL DEFAULT '0',
     public DB_Field $Min_Occupants;  // int(11) NOT NULL DEFAULT '0',
-    public DB_Field $Sleeping_Spaces;  // int(11) NOT NULL DEFAULT '0',
     public DB_Field $Beds_King;  // int(11) NOT NULL DEFAULT '0',
     public DB_Field $Beds_Queen;  // int(11) NOT NULL DEFAULT '0',
     public DB_Field $Beds_Full;  // int(11) NOT NULL DEFAULT '0',
@@ -66,7 +65,6 @@ class RoomRS extends AbstractTableRS {
         $this->Availability = new DB_Field("Availability", "", new DbStrSanitizer(15), TRUE, TRUE);
         $this->Max_Occupants = new DB_Field("Max_Occupants", 0, new DbIntSanitizer(), TRUE, TRUE);
         $this->Min_Occupants = new DB_Field("Min_Occupants", 0, new DbIntSanitizer(), TRUE, TRUE);
-        $this->Sleeping_Spaces = new DB_Field("Sleeping_Spaces", 0, new DbIntSanitizer(), TRUE, TRUE);
         $this->Beds_King = new DB_Field("Beds_King", 0, new DbIntSanitizer(), TRUE, TRUE);
         $this->Beds_Queen = new DB_Field("Beds_Queen", 0, new DbIntSanitizer(), TRUE, TRUE);
         $this->Beds_Full = new DB_Field("Beds_Full", 0, new DbIntSanitizer(), TRUE, TRUE);
