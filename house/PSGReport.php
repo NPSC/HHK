@@ -9,7 +9,7 @@ use HHK\CreateMarkupFromDB;
 use HHK\SysConst\RelLinkType;
 use HHK\HTMLControls\HTMLTable;
 use HHK\HTMLControls\HTMLSelector;
-use HHK\ExcelHelper;
+use HHK\Excel\ExcelHelper;
 use HHK\sec\Labels;
 use HHK\House\Report\ReportFilter;
 use HHK\House\Distance\DistanceFactory;

@@ -1,7 +1,7 @@
 <?php
-use HHK\ColumnSelectors;
+use HHK\House\Report\ColumnSelectors;
 use HHK\Common;
-use HHK\ExcelHelper;
+use HHK\Excel\ExcelHelper;
 use HHK\Exception\RuntimeException;
 use HHK\House\GLCodes\GLCodes;
 use HHK\House\GLCodes\GLParameters;

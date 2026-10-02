@@ -1,6 +1,6 @@
 <?php
 
-namespace HHK;
+namespace HHK\House\Report;
 
 use HHK\HTMLControls\{HTMLContainer, HTMLTable, HTMLSelector, HTMLInput};
 use HHK\sec\SecurityComponent;

@@ -2,9 +2,9 @@
 
 namespace HHK\House\Visit;
 
-use HHK\ColumnSelectors;
+use HHK\House\Report\ColumnSelectors;
 use HHK\Common;
-use HHK\ExcelHelper;
+use HHK\Excel\ExcelHelper;
 use HHK\House\Report\RoomReport;
 use HHK\House\Resource\ResourceTypes;
 use HHK\HTMLControls\HTMLContainer;

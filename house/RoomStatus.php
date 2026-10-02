@@ -1,7 +1,7 @@
 <?php
 
 use HHK\Common;
-use HHK\ExcelHelper;
+use HHK\Excel\ExcelHelper;
 use HHK\sec\{SecurityComponent, Session, WebInit};
 use HHK\House\ResourceView;
 use HHK\SysConst\RoomState;
