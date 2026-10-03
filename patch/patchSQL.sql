@@ -236,3 +236,4 @@ call `new_webpage`('Import.php',2,'Import',1,'a','34','l','p','','',now(),'db');
 
 -- Room sleeping spaces (Guest Census Report bednight percentage)
 ALTER TABLE `room` ADD COLUMN IF NOT EXISTS `Sleeping_Spaces` INT(11) NOT NULL DEFAULT 0 AFTER `Min_Occupants`;
+INSERT IGNORE INTO `sys_config`(`Key`,`Value`,`Type`,`Category`,`Description`,`Show`) VALUES ("showSleepingSpaces", "false","b","h","Show room Sleeping Spaces in Resource Builder and the Guest Census Report","1");

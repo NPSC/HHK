@@ -131,25 +131,33 @@ class GuestCensusReport extends AbstractReport implements ReportInterface {
      */
     private function getSummaryStats(): array {
 
+        $uS = Session::getInstance();
         $t = $this->totals;
         $nights = count($this->resultSet);
         $occupied = $t['RoomsOccupied'] ?? 0;
         $unpaid = $t['RoomsUnpaid'] ?? 0;
         $people = $t['PeopleInHouse'] ?? 0;
         $checkedIn = $t['CheckedIn'] ?? 0;
-        $bedNights = $nights * $this->getSleepingSpaces();
 
         $guestsCanceled = 0;
         foreach (array_keys($this->cancelCodes) as $code) {
             $guestsCanceled += $t['Canceled_' . $code] ?? 0;
         }
 
-        return [
+        $stats = [
             'Number of Guests Canceled' => (string) $guestsCanceled,
             'Percentage of Rooms Unpaid' => ($occupied > 0 ? round(100 * $unpaid / $occupied) . "% ($unpaid / $occupied room nights)" : 'n/a'),
-            'Percentage of Bednights' => ($bedNights > 0 ? round(100 * $people / $bedNights) . "% ($people / $bedNights bednights)" : 'n/a - set Sleeping Spaces in Resource Builder'),
-            'Average Length of Stay' => ($checkedIn > 0 ? number_format($people / $checkedIn, 2) . " nights ($people / $checkedIn checked in)" : 'n/a'),
         ];
+
+        // Sleeping Spaces are only editable in Resource Builder when showSleepingSpaces is on.
+        if ($uS->showSleepingSpaces) {
+            $bedNights = $nights * $this->getSleepingSpaces();
+            $stats['Percentage of Bednights'] = ($bedNights > 0 ? round(100 * $people / $bedNights) . "% ($people / $bedNights bednights)" : 'n/a - set Sleeping Spaces in Resource Builder');
+        }
+
+        $stats['Average Length of Stay'] = ($checkedIn > 0 ? number_format($people / $checkedIn, 2) . " nights ($people / $checkedIn checked in)" : 'n/a');
+
+        return $stats;
     }
 
     /**

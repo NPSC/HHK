@@ -3012,6 +3012,16 @@ Thank you
 		1
 	),
 	(
+		'showSleepingSpaces',
+		'false',
+		'b',
+		'h',
+		'',
+		'Show room Sleeping Spaces in Resource Builder and the Guest Census Report',
+		'',
+		1
+	),
+	(
 		'showRegEmptyFields',
 		'true',
 		'b',
