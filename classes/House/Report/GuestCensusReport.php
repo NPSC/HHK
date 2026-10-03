@@ -285,7 +285,7 @@ where exists (select 1 from resource_room rr join resource re on rr.idResource =
                     $primaryName = $room['primaryLastName'] != '' ? $room['primaryLastName'] : 'Unknown';
 
                     // Bootstrap's own "badge in a badge" pattern for a labeled count.
-                    $pillContent = htmlspecialchars($primaryName) . ' '
+                    $pillContent = $primaryName . ' '
                         . HTMLContainer::generateMarkup('span', $guestCount, ['class'=>'badge rounded-pill bg-light text-dark']);
 
                     $pillClass = 'badge rounded-pill d-inline-flex align-items-center gap-1 text-decoration-none hhk-guest-pill '
@@ -295,7 +295,7 @@ where exists (select 1 from resource_room rr join resource re on rr.idResource =
                         $entry = HTMLContainer::generateMarkup('a', $pillContent, [
                             'href' => 'GuestEdit.php?id=' . $room['primaryIdName'],
                             'target' => '_blank',
-                            'title' => htmlspecialchars("Go to $primaryName's Guest Edit page"),
+                            'title' => "Go to $primaryName's Guest Edit page",
                             'class' => $pillClass . ' hhk-guest-pill-link',
                         ]);
                     } else {
@@ -305,7 +305,7 @@ where exists (select 1 from resource_room rr join resource re on rr.idResource =
                     $rosterParts[] = $entry;
 
                     // The print view has no Bootstrap styles, so it prints this plain red/black version instead of the pills.
-                    $printParts[] = HTMLContainer::generateMarkup('span', htmlspecialchars($entryText),
+                    $printParts[] = HTMLContainer::generateMarkup('span', $entryText,
                         ['style' => "color:$color;" . ($room['isPaid'] ? '' : ' font-weight:bold;')]);
                 }
             }
@@ -406,6 +406,7 @@ order by v.idVisit, v.Span";
                 if (!isset($dayRooms[$d][$key])) {
                     $dayRooms[$d][$key] = [
                         'isPaid' => $d < $paidThru[$r['idVisit']],
+                        // Stored HTML-encoded, so it goes into markup as-is; ExcelHelper::convertStrings() decodes it for Excel.
                         'primaryLastName' => $r['Primary_Last'],
                         'primaryIdName' => intval($r['idPrimaryGuest']),
                         'guests' => [],

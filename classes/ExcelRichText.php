@@ -29,6 +29,20 @@ class ExcelRichText {
         return $this;
     }
 
+    /**
+     * Returns a copy with $fn applied to the text of every run, keeping the colors.
+     *
+     * @param callable $fn string => string
+     * @return ExcelRichText
+     */
+    public function mapText(callable $fn): ExcelRichText {
+        $copy = new ExcelRichText();
+        foreach ($this->runs as [$text, $color]) {
+            $copy->addRun($fn($text), $color);
+        }
+        return $copy;
+    }
+
     public function getRuns(): array {
         return $this->runs;
     }

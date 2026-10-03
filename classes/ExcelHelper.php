@@ -80,14 +80,28 @@ class ExcelHelper extends \XLSXWriter{
         $n = 0;
 
         foreach($header as $val){
-            if($val == "string" && isset($row[$n]) && is_scalar($row[$n])){ // leave ExcelRichText values alone
-                $row[$n] = html_entity_decode(strval($row[$n]), ENT_QUOTES, 'UTF-8'); //decode html entities
-                $row[$n] = strip_tags($row[$n]); //remove html tags
+            if($val == "string" && isset($row[$n])){
+                if ($row[$n] instanceof ExcelRichText) {
+                    $row[$n] = $row[$n]->mapText([self::class, 'convertString']); // each colored run, same as a plain string
+                } else {
+                    $row[$n] = self::convertString(strval($row[$n]));
+                }
             }
             $n++;
         }
 
         return $row;
+    }
+
+    /**
+     * Decodes html entities and removes html tags
+     *
+     * @param string $val
+     * @return string
+     */
+    public static function convertString(string $val): string {
+        $val = html_entity_decode($val, ENT_QUOTES, 'UTF-8'); //decode html entities
+        return strip_tags($val); //remove html tags
     }
 
     /**
