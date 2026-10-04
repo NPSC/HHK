@@ -114,7 +114,7 @@ This is in `getPaidThruDates()`. Invoices are only cut for the amount actually p
 1. For each visit, total the paid lodging. This means lodging, reversal, waive and discount lines on Paid or Carried invoices, leaving out invoices sold to the subsidy. Waives and discounts are negative, so they net out the share the house covers.
 2. `VisitCharges::sumCurrentRoomCharge()` converts that amount into a number of nights.
 3. Those nights are counted from the first night of the visit. Every night before the resulting date is paid, and a partly paid night is unpaid.
-4. **Free stays:** a visit whose whole room charge is $0 counts every night as paid. `VisitCharges` would otherwise count no nights paid, because nothing was paid. So the price model now runs for every visit, not just visits with payments.
+4. Visits with no payment skip the price model and are unpaid. That includes a free stay on a $0 rate: HHK's `VisitCharges` also counts zero nights paid when nothing was paid, and the report agrees with it.
 5. **Errors:** if the price model fails for a visit (for example, its rate doesn't exist in the current price model), that visit's nights show unpaid and the summary lists a warning. The rest of the report still works.
 
 This follows the Visit Interval Report's definition of paid.
@@ -163,7 +163,7 @@ This follows the Visit Interval Report's definition of paid.
 From the review in `Roast.md`, checked against the code.
 
 **Done 2026-10-03:**
-- Guests on leave are left out, and free stays count as paid (see "Decisions" below).
+- Guests on leave are left out (see "Decisions" below).
 - **Error handling:** each visit's price-model call is in a try/catch. A failure shows as a "Warning" line in the summary on screen and in Excel.
 - **Sleeping Spaces** is clamped to 0 or more when saved.
 - **Summary label:** "Number of *Guests* Canceled" uses the house's guest label.
@@ -190,8 +190,11 @@ From the review in `Roast.md`, checked against the code.
 
 *Changes (implemented):*
 - **Guests on leave don't count** in People in House. Leave is all-or-nothing for a visit: `Visit::onLeaveStays()` puts every checked-in guest on leave together. So on leave nights the room also drops out of Rooms Occupied, Paid and Unpaid, and off the roster. In code, leave nights are separate `stays` rows with `On_Leave > 0`, and the row keeps that value after the guest returns, so the fix is `s.On_Leave = 0` in `getRoomsByDay()`. HHK's Room Report already filters this way. The spec only mentions leave for check-ins and check-outs, which already ignore it.
-- **Free stays count as paid.** The purpose of the report is to find people who owe money. Free stays are set up with a $0 rate. HHK's nights-paid calculation treats "nothing paid" as zero nights paid even when the charge is $0, so this needs special handling.
-  - **Revisit later:** whether free stays might instead be set up with a 100% waive or discount. Under the current rule those nights would show unpaid.
+- **Free stays follow HHK: they show unpaid.**
+  - First decided that free stays ($0 rate) count as paid, because the report exists to find people who owe money. That was implemented in `e67231b2` and then reverted.
+  - HHK's `VisitCharges` counts zero nights paid when nothing was paid, even at $0. Making free stays paid needed special-case code, and the price model had to run for every visit.
+  - Anayat House has never had a free stay, so agreeing with the rest of HHK was preferred over special-case code.
+  - **Revisit** if Anayat ever has free stays, whether set up with a $0 rate or a 100% waive or discount.
 
 *Confirmed as is:*
 - **Cancel column names:** "Canceled: *type*" and "Bednights Canceled: *type*", one pair per cancel type. The spec's heading "Number of Bednights Turned Away" isn't used, because "Turned Away" is itself a cancel type. Columns come from the cancel types the house has switched on (`Use` = y), so Anayat should have exactly Guest Canceled, No Show and Turned Away on. On dev, "Canceled 1" was switched off so the report matches the spec.
@@ -208,12 +211,11 @@ From the review in `Roast.md`, checked against the code.
 - **The July 2026 Census Report:** the spec says the look should be modelled on this sample from Anayat. We don't have it yet.
 - **Email:** the Email button sends the report without Bootstrap, so the roster pills lose red and black (not tested). Does Anayat email this report?
 
-**Not yet measured:** the speed of a 12-month range on a realistic database. The price model now runs once for every visit in the period, to detect free stays. Dev data is too small to tell.
+**Not yet measured:** the speed of a 12-month range on a realistic database. The price model runs once per visit with any payment. Dev data is too small to tell.
 
 **Not yet tested in a browser:** the print change (plain text for cells without `data-print`). The generated JavaScript was checked, but the Print button wasn't clicked.
 
 **Known approximations and limitations:**
 - A room retired partway through the period counts for the whole period's sleeping spaces.
 - Paid nights are always counted from the first night of the visit.
-- A free stay means the *whole* visit's room charge is $0. A visit that is free only for part of its stay (for example, after a rate change) is treated like any other visit.
 - Excel's AutoFilter range always runs to the last row (XLSXWriter sets it), so sorting with it moves the totals row in among the data. A blank row before the totals wouldn't help.

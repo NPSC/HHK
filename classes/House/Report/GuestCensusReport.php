@@ -39,9 +39,6 @@ class GuestCensusReport extends AbstractReport implements ReportInterface {
     const PAID_COLOR = '#000000';
     const UNPAID_COLOR = '#CC0000';
 
-    /** Paid-thru date for a free stay: every night is paid. */
-    const FREE_STAY_PAID_THRU = '9999-12-31';
-
     /** @var array<string,string> cancel-type ReservStatus codes => Title, e.g. ['c' => 'Guest Canceled', ...] */
     private array $cancelCodes = [];
 
@@ -439,9 +436,8 @@ order by v.idVisit, v.Span";
      * within the nights covered by guest and 3rd-party lodging payments, counted from
      * the first night of the visit. Like the Visit Interval Report, house payments
      * (waives, discounts and subsidy invoices) and unpaid invoices don't count, and a
-     * partly paid night is unpaid. A free stay (no room charge) owes nothing, so all of
-     * its nights are paid. A visit the price model can't handle is left unpaid and
-     * listed in $this->warnings.
+     * partly paid night is unpaid. A visit the price model can't handle is left unpaid
+     * and listed in $this->warnings.
      *
      * @param array $rows getRoomsByDay() rows; only idVisit and VisitStart are used
      * @return array<int,string> idVisit => Y-m-d of the visit's first unpaid night
@@ -477,30 +473,24 @@ group by i.Order_Number");
 
         $paidThru = [];
 
-        if (is_null($this->priceModel)) {
-            $this->priceModel = AbstractPriceModel::priceModelFactory($this->dbh, $uS->RoomPriceModel);
-        }
-
         foreach ($visitStarts as $idVisit => $visitStart) {
 
             $nightsPaid = 0;
             $paid = $paidAmts[$idVisit] ?? 0;
 
-            try {
+            if ($paid > 0) {
 
-                $visitCharge = new VisitCharges($idVisit);
-                $visitCharge->sumCurrentRoomCharge($this->dbh, $this->priceModel, 0, TRUE, $paid);
-
-                // VisitCharges counts no nights paid when nothing was paid, even at a $0 rate.
-                if ($visitCharge->getRoomFeesCharged() + $visitCharge->getFeesToPay() <= 0) {
-                    $paidThru[$idVisit] = self::FREE_STAY_PAID_THRU;
-                    continue;
+                if (is_null($this->priceModel)) {
+                    $this->priceModel = AbstractPriceModel::priceModelFactory($this->dbh, $uS->RoomPriceModel);
                 }
 
-                $nightsPaid = $visitCharge->getNightsPaid();
-
-            } catch (\Exception $e) {
-                $this->warnings[] = "Visit $idVisit: " . $e->getMessage();
+                try {
+                    $visitCharge = new VisitCharges($idVisit);
+                    $visitCharge->sumCurrentRoomCharge($this->dbh, $this->priceModel, 0, TRUE, $paid);
+                    $nightsPaid = $visitCharge->getNightsPaid();
+                } catch (\Exception $e) {
+                    $this->warnings[] = "Visit $idVisit: " . $e->getMessage();
+                }
             }
 
             $dt = new \DateTime($visitStart);
