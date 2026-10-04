@@ -49,7 +49,7 @@ abstract class AbstractReport {
     protected string $statsMkup = "";
     protected int $defaultSortCol = 0;
     protected bool $printFooter = false;    // include the table footer (eg. totals) when printing
-    protected bool $printKeepHtml = false;  // print cell markup (eg. colored text) instead of plain text; a cell whose content is wrapped in an element with a data-print attribute prints that attribute's markup instead
+    protected bool $printKeepHtml = false;  // a cell whose content is wrapped in an element with a data-print attribute prints that attribute's markup (eg. colored text); other cells still print as plain text
 
     /**
      * @param \PDO $dbh
@@ -194,9 +194,8 @@ abstract class AbstractReport {
      * No-op by default.
      *
      * @param ExcelHelper $writer
-     * @param array $hdr Sheet1 column header => type, as written by downloadExcel()
      */
-    protected function writeExcelFooter(ExcelHelper $writer, array $hdr): void {
+    protected function writeExcelFooter(ExcelHelper $writer): void {
     }
 
     public function generateSummaryMkup():string {
@@ -251,8 +250,9 @@ abstract class AbstractReport {
                     stripHtml: false,
                     format: {
                         body: function (data) {
-                            var alt = $("<div>").html(data).children("[data-print]");
-                            return alt.length ? alt.attr("data-print") : data;
+                            var cell = $("<div>").html(data);
+                            var alt = cell.children("[data-print]");
+                            return alt.length ? alt.attr("data-print") : $("<div>").text(cell.text()).html();
                         }
                     }
                 },' : '') . '
@@ -408,7 +408,7 @@ abstract class AbstractReport {
             $writer->writeSheetRow("Sheet1", $row);
         }
 
-        $this->writeExcelFooter($writer, $hdr);
+        $this->writeExcelFooter($writer);
 
         HouseLog::logDownload($this->dbh, $this->reportTitle, "Excel", $this->reportTitle . " for " . $this->filter->getReportStart() . " - " . $this->filter->getReportEnd() . " downloaded", $uS->username);
 

@@ -594,7 +594,7 @@ WHERE
         }
 
         if (isset($post['txtSleepSpaces'])) {
-            $roomRs->Sleeping_Spaces->setNewVal(intval(filter_var($post['txtSleepSpaces'], FILTER_SANITIZE_NUMBER_INT), 10));
+            $roomRs->Sleeping_Spaces->setNewVal(max(0, intval(filter_var($post['txtSleepSpaces'], FILTER_SANITIZE_NUMBER_INT), 10)));
         }
 
         if (isset($post['selReType'])) {

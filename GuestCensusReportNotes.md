@@ -2,6 +2,12 @@
 
 Branch: `guestCensusReport_exp`. Custom report requested by Anayat House; the original report was written by Will Ireland.
 
+Spec: `SDD - Anayat Custom Occupancy Report.docx` (repo root).
+
+Spec wording interpreted:
+- "Rooms Unpaid = Total Rooms − Rooms Paid" is taken as rooms *occupied* minus rooms paid.
+- "Rooms Unpaid divided into total room nights" is taken as unpaid ÷ occupied room nights.
+
 Last updated: 2026-10-03
 
 ## Files
@@ -83,8 +89,8 @@ The report has one row per calendar night in the chosen period (the Dates, Month
 |---|---|
 | Date | The night |
 | Checked In / Checked Out | Distinct (visit, guest) pairs with `Checkin_Date` / `Checkout_Date` on that day |
-| Rooms Occupied | Rooms with at least one stay that night |
-| People in House | Guests staying that night |
+| Rooms Occupied | Rooms with at least one stay that night. Rooms whose party is on leave don't count |
+| People in House | Guests staying that night, not counting guests on leave |
 | Rooms Paid / Rooms Unpaid | Occupied rooms where that night is paid / not paid (see below) |
 | People Paid for Lodging | Guests in rooms whose night is paid |
 | Guest Roster | One entry per room: the visit's primary guest's last name and party size, e.g. `Smith (3)`. Red when that night is unpaid, black when paid |
@@ -99,7 +105,7 @@ The report has one row per calendar night in the chosen period (the Dates, Month
 
 A stay that hasn't checked out ends on its expected checkout date. If the guest is past that date and still checked in, the stay runs through tonight.
 
-- **Open question:** a guest due out *today* who is still here doesn't count tonight. HHK's `datedefaultnow()` doesn't count either case. Ask Will which rule he wants.
+- **Decided 2026-10-03: leave as is.** A guest due out *today* who is still here doesn't count tonight, while an overdue guest does. HHK's standard `datedefaultnow()` counts neither. The alternatives were `<=` (count both) or `datedefaultnow()` (count neither). This only affects today's row.
 
 ### Paid nights
 
@@ -108,13 +114,14 @@ This is in `getPaidThruDates()`. Invoices are only cut for the amount actually p
 1. For each visit, total the paid lodging. This means lodging, reversal, waive and discount lines on Paid or Carried invoices, leaving out invoices sold to the subsidy. Waives and discounts are negative, so they net out the share the house covers.
 2. `VisitCharges::sumCurrentRoomCharge()` converts that amount into a number of nights.
 3. Those nights are counted from the first night of the visit. Every night before the resulting date is paid, and a partly paid night is unpaid.
-4. Visits with no payment skip the price model and are unpaid.
+4. **Free stays:** a visit whose whole room charge is $0 counts every night as paid. `VisitCharges` would otherwise count no nights paid, because nothing was paid. So the price model now runs for every visit, not just visits with payments.
+5. **Errors:** if the price model fails for a visit (for example, its rate doesn't exist in the current price model), that visit's nights show unpaid and the summary lists a warning. The rest of the report still works.
 
 This follows the Visit Interval Report's definition of paid.
 
 ### Totals and summary
 
-- **Totals row:** sums every column except Date and Guest Roster. It appears on screen (table footer), in print, and in Excel as a bold row labeled in the roster column.
+- **Totals row:** sums every integer column (taken from `makeFields()`). It appears on screen (table footer), in print, and in Excel as a bold row. The "Total" label is in the Date column, which is always shown. In Excel it is written as an `ExcelRichText` cell so it isn't treated as a date.
 - **Summary box**, from the totals:
   - Number of Guests Canceled
   - Percentage of Rooms Unpaid = unpaid room nights / occupied room nights
@@ -127,7 +134,7 @@ This follows the Visit Interval Report's definition of paid.
 | Output | Guest Roster | Mechanism |
 |---|---|---|
 | Screen | Bootstrap pills linking to Guest Edit; red when unpaid, grey when paid | HTML in the cell |
-| Print | `Smith (3)` in red/bold or black | The roster cell carries a `data-print` attribute with plain colored markup. `AbstractReport` prints that instead (`$printKeepHtml`), and prints the footer (`$printFooter`) |
+| Print | `Smith (3)` in red/bold or black | The roster cell carries a `data-print` attribute with plain colored markup. `AbstractReport` prints that instead (`$printKeepHtml`); other cells print as plain text. It also prints the footer (`$printFooter`) |
 | Excel | `Smith (3)` in red or black | `ExcelRichText` cell; the `ExcelHelper::writeCell()` override writes colored text runs |
 | PDF | Browser print to PDF | Not verified with Will |
 
@@ -155,27 +162,58 @@ This follows the Visit Interval Report's definition of paid.
 
 From the review in `Roast.md`, checked against the code.
 
-**Confirmed, to do:**
-- **Carried invoices count as paid** even when the invoice they were carried to is unpaid. Decision needed: fix only this report, or this report and the Visit Interval Report (which has the same bug), or keep matching that report. The suggested fix is to use `VisitCharges::sumPayments()`, which follows chains of carried invoices.
-- **Error handling:** wrap each visit's price-model call in try/catch and show a warning, so one bad visit can't break the whole report.
-- **Clamp Sleeping Spaces** to 0 or more. Today `-4` saves as −4.
-- **Small items:**
-  - "Guests" in the summary is hard-coded instead of using the guest label.
-  - The Excel totals row has no label when Guest Roster isn't selected.
-  - Excel's AutoFilter can sort the totals row in among the data rows.
-  - `writeExcelFooter()` has an unused `$hdr` parameter.
+**Done 2026-10-03:**
+- Guests on leave are left out, and free stays count as paid (see "Decisions" below).
+- **Error handling:** each visit's price-model call is in a try/catch. A failure shows as a "Warning" line in the summary on screen and in Excel.
+- **Sleeping Spaces** is clamped to 0 or more when saved.
+- **Summary label:** "Number of *Guests* Canceled" uses the house's guest label.
+- **Excel totals row:** labeled "Total" in the Date column, whichever columns are selected. A run with no color now inherits the cell's font, so the label is bold.
+- **`writeExcelFooter()`:** the unused `$hdr` parameter was removed from the hook.
+- **Totals:** an explicit list of columns, every integer field, instead of "everything except Date and Guest Roster".
+- **Print:** only cells with a `data-print` attribute keep their HTML. Other cells print as plain, escaped text.
+
+**Deferred:**
+- **Carried invoices count as paid** even when the invoice they were carried to is unpaid.
+  - This is pre-existing. The Visit Interval Report has had the same rule on `main` since at least 2024 (`VisitIntervalReport.php:330`, plus older copies in `VisitIntervalOldRpt.php` and `house/VisitInterval.php`). This report inherited it by copying that report's definition of paid. `VisitCharges` (statements), `GlStmt` and `InvoiceReport` handle carried invoices correctly.
+  - It happens when staff pay several invoices at once and the merged invoice is only partly paid, or is billed to a third party who hasn't paid yet.
+  - **Decided 2026-10-03: leave for a future fix.** The report keeps matching the Visit Interval Report for now. Options when it is picked up: fix only this report, or this report and the Visit Interval Report (which has the same bug), or keep matching that report. The suggested fix is to use `VisitCharges::sumPayments()`, which follows chains of carried invoices.
+
+**Before merging:**
+- Check that page ids 141 and 142 are still free on `main`.
+- Check that no existing patch relies on `new_webpage` updating existing pages.
+- Time a 12-month report on a realistically sized database.
 
 **Separate fix:**
 - `house/ws_resc.php` `redit` and `rdel` have no Guest Admin check. Groups `g`, `gr`, `h` and `ro` can edit rooms. This predates the branch and needs Will's agreement.
 
-**Questions for Will:**
-- The overdue-guest rule (see "Stays that are still open").
-- Should guests on leave count as in the house?
-- Should future nights count for guests who are currently in house?
-- Is browser print to PDF acceptable?
+**Decisions, 2026-10-03:**
 
-**Not yet measured:** the speed of a 12-month range on a realistic database. The price model runs once per visit with any payment, and dev data has too few paid visits to tell.
+*Changes (implemented):*
+- **Guests on leave don't count** in People in House. Leave is all-or-nothing for a visit: `Visit::onLeaveStays()` puts every checked-in guest on leave together. So on leave nights the room also drops out of Rooms Occupied, Paid and Unpaid, and off the roster. In code, leave nights are separate `stays` rows with `On_Leave > 0`, and the row keeps that value after the guest returns, so the fix is `s.On_Leave = 0` in `getRoomsByDay()`. HHK's Room Report already filters this way. The spec only mentions leave for check-ins and check-outs, which already ignore it.
+- **Free stays count as paid.** The purpose of the report is to find people who owe money. Free stays are set up with a $0 rate. HHK's nights-paid calculation treats "nothing paid" as zero nights paid even when the charge is $0, so this needs special handling.
+  - **Revisit later:** whether free stays might instead be set up with a 100% waive or discount. Under the current rule those nights would show unpaid.
 
-**Known approximations:**
+*Confirmed as is:*
+- **Cancel column names:** "Canceled: *type*" and "Bednights Canceled: *type*", one pair per cancel type. The spec's heading "Number of Bednights Turned Away" isn't used, because "Turned Away" is itself a cancel type. Columns come from the cancel types the house has switched on (`Use` = y), so Anayat should have exactly Guest Canceled, No Show and Turned Away on. On dev, "Canceled 1" was switched off so the report matches the spec.
+- **House waives, discounts and subsidy invoices** count as unpaid, for now. This matches the spec.
+- **"Number of Guests Canceled"** sums all three cancel types. This matches the spec: "the sum of all Number of Guests Cancel Columns".
+- **Future nights:** guests still checked in count on future nights up to their expected checkout. This matches the Visit Interval Report.
+- **Cancel edge cases:**
+  - Counting a reservation more than once (canceled, reinstated, canceled again, or cancel type corrected) is **postponed**.
+  - Guest counts and nights come from the reservation as it is when the report runs. That's accepted.
+  - Deleted reservations dropping out of the counts is intentional.
+
+**Still open:**
+- **PDF:** the spec says "downloadable to excel and pdf". Is browser print to PDF good enough?
+- **The July 2026 Census Report:** the spec says the look should be modelled on this sample from Anayat. We don't have it yet.
+- **Email:** the Email button sends the report without Bootstrap, so the roster pills lose red and black (not tested). Does Anayat email this report?
+
+**Not yet measured:** the speed of a 12-month range on a realistic database. The price model now runs once for every visit in the period, to detect free stays. Dev data is too small to tell.
+
+**Not yet tested in a browser:** the print change (plain text for cells without `data-print`). The generated JavaScript was checked, but the Print button wasn't clicked.
+
+**Known approximations and limitations:**
 - A room retired partway through the period counts for the whole period's sleeping spaces.
 - Paid nights are always counted from the first night of the visit.
+- A free stay means the *whole* visit's room charge is $0. A visit that is free only for part of its stay (for example, after a rate change) is treated like any other visit.
+- Excel's AutoFilter range always runs to the last row (XLSXWriter sets it), so sorting with it moves the totals row in among the data. A blank row before the totals wouldn't help.

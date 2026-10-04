@@ -52,13 +52,15 @@ class ExcelHelper extends \XLSXWriter{
 
             foreach ($value->getRuns() as [$text, $color]) {
 
-                // Runs with their own properties don't inherit the cell font, so match XLSXWriter's default font.
-                $rPr = '<rFont val="Arial"/><sz val="10"/>';
+                $rPr = '';
+
+                // A run with its own properties doesn't inherit the cell font, so match XLSXWriter's default font.
+                // An uncolored run has none, and keeps the cell's font (eg. bold).
                 if (preg_match('/^#[0-9a-fA-F]{6}$/', $color)) {
-                    $rPr .= '<color rgb="FF' . strtoupper(substr($color, 1)) . '"/>';
+                    $rPr = '<rPr><rFont val="Arial"/><sz val="10"/><color rgb="FF' . strtoupper(substr($color, 1)) . '"/></rPr>';
                 }
 
-                $runs .= '<r><rPr>' . $rPr . '</rPr><t xml:space="preserve">' . self::xmlspecialchars($text) . '</t></r>';
+                $runs .= '<r>' . $rPr . '<t xml:space="preserve">' . self::xmlspecialchars($text) . '</t></r>';
             }
 
             $file->write('<c r="' . self::xlsCell($row_number, $column_number) . '" s="' . $cell_style_idx . '" t="inlineStr"><is>' . $runs . '</is></c>');

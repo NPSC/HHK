@@ -39,6 +39,9 @@ class GuestCensusReport extends AbstractReport implements ReportInterface {
     const PAID_COLOR = '#000000';
     const UNPAID_COLOR = '#CC0000';
 
+    /** Paid-thru date for a free stay: every night is paid. */
+    const FREE_STAY_PAID_THRU = '9999-12-31';
+
     /** @var array<string,string> cancel-type ReservStatus codes => Title, e.g. ['c' => 'Guest Canceled', ...] */
     private array $cancelCodes = [];
 
@@ -47,8 +50,11 @@ class GuestCensusReport extends AbstractReport implements ReportInterface {
 
     private ?AbstractPriceModel $priceModel = null;
 
-    /** @var array<string,int> column key => total over the report period, for every column except Date and GuestRoster */
+    /** @var array<string,int> column key => total over the report period, for every integer column */
     private array $totals = [];
+
+    /** @var string[] visits whose paid nights couldn't be calculated, shown in the summary */
+    private array $warnings = [];
 
     public function __construct(\PDO $dbh, array $request = []){
         $uS = Session::getInstance();
@@ -145,7 +151,7 @@ class GuestCensusReport extends AbstractReport implements ReportInterface {
         }
 
         $stats = [
-            'Number of Guests Canceled' => (string) $guestsCanceled,
+            'Number of ' . Labels::getString('memberType', 'guest', 'Guest') . 's Canceled' => (string) $guestsCanceled,
             'Percentage of Rooms Unpaid' => ($occupied > 0 ? round(100 * $unpaid / $occupied) . "% ($unpaid / $occupied room nights)" : 'n/a'),
         ];
 
@@ -156,6 +162,10 @@ class GuestCensusReport extends AbstractReport implements ReportInterface {
         }
 
         $stats['Average Length of Stay'] = ($checkedIn > 0 ? number_format($people / $checkedIn, 2) . " nights ($people / $checkedIn checked in)" : 'n/a');
+
+        if (count($this->warnings) > 0) {
+            $stats['Warning'] = 'Paid nights could not be calculated, so these visits show as unpaid: ' . implode('; ', $this->warnings);
+        }
 
         return $stats;
     }
@@ -195,18 +205,19 @@ where exists (select 1 from resource_room rr join resource re on rr.idResource =
         $tbl->addFooterTr($tr);
     }
 
-    protected function writeExcelFooter(ExcelHelper $writer, array $hdr): void {
+    protected function writeExcelFooter(ExcelHelper $writer): void {
 
         if (count($this->resultSet) == 0) {
             return;
         }
 
-        // A label in the Date column would be read as a date, so the roster column carries it.
+        // The label goes in the Date column, as on screen. A plain string there would be
+        // written as a date; an ExcelRichText cell is always written as text.
         $flds = [];
         foreach ($this->filteredFields as $f) {
 
-            if ($f[1] == 'GuestRoster') {
-                $flds[] = 'Total';
+            if ($f[1] == 'Date') {
+                $flds[] = (new ExcelRichText())->addRun('Total');
             } else {
                 $flds[] = $this->totals[$f[1]] ?? '';
             }
@@ -232,6 +243,7 @@ where exists (select 1 from resource_room rr join resource re on rr.idResource =
         $queryEnd = $this->filter->getQueryEnd();
 
         $this->resultSet = [];
+        $this->warnings = [];
 
         if ($start == $queryEnd) {
             return $this->resultSet;
@@ -335,11 +347,9 @@ where exists (select 1 from resource_room rr join resource re on rr.idResource =
         }
 
         $this->totals = [];
-        foreach ($this->resultSet as $row) {
-            foreach ($row as $k => $v) {
-                if ($k != 'Date' && $k != 'GuestRoster') {
-                    $this->totals[$k] = ($this->totals[$k] ?? 0) + $v;
-                }
+        foreach ($this->fields as $f) {
+            if ($f[4] == 'integer') {
+                $this->totals[$f[1]] = array_sum(array_column($this->resultSet, $f[1]));
             }
         }
 
@@ -361,6 +371,8 @@ where exists (select 1 from resource_room rr join resource re on rr.idResource =
         $tomorrow = date('Y-m-d', strtotime('+1 day'));
         $stayEnd = "date(ifnull(s.Span_End_Date, case when s.Expected_Co_Date is null or date(s.Expected_Co_Date) < '$today' then '$tomorrow' else s.Expected_Co_Date end))";
 
+        // Guests on leave aren't in the house. Leave nights are separate stays with On_Leave > 0,
+        // and a leave covers the whole party, so the room drops out for those nights too.
         $query = "select
     v.idVisit,
     v.Span,
@@ -375,6 +387,7 @@ from stays s
     left join name pg on v.idPrimaryGuest = pg.idName
 where date(s.Span_Start_Date) < '" . $queryEnd . "'
     and $stayEnd > '" . $start . "'
+    and s.On_Leave = 0
 order by v.idVisit, v.Span";
 
         $stmt = $this->dbh->query($query);
@@ -426,7 +439,9 @@ order by v.idVisit, v.Span";
      * within the nights covered by guest and 3rd-party lodging payments, counted from
      * the first night of the visit. Like the Visit Interval Report, house payments
      * (waives, discounts and subsidy invoices) and unpaid invoices don't count, and a
-     * partly paid night is unpaid.
+     * partly paid night is unpaid. A free stay (no room charge) owes nothing, so all of
+     * its nights are paid. A visit the price model can't handle is left unpaid and
+     * listed in $this->warnings.
      *
      * @param array $rows getRoomsByDay() rows; only idVisit and VisitStart are used
      * @return array<int,string> idVisit => Y-m-d of the visit's first unpaid night
@@ -462,20 +477,30 @@ group by i.Order_Number");
 
         $paidThru = [];
 
+        if (is_null($this->priceModel)) {
+            $this->priceModel = AbstractPriceModel::priceModelFactory($this->dbh, $uS->RoomPriceModel);
+        }
+
         foreach ($visitStarts as $idVisit => $visitStart) {
 
             $nightsPaid = 0;
             $paid = $paidAmts[$idVisit] ?? 0;
 
-            if ($paid > 0) {
-
-                if (is_null($this->priceModel)) {
-                    $this->priceModel = AbstractPriceModel::priceModelFactory($this->dbh, $uS->RoomPriceModel);
-                }
+            try {
 
                 $visitCharge = new VisitCharges($idVisit);
                 $visitCharge->sumCurrentRoomCharge($this->dbh, $this->priceModel, 0, TRUE, $paid);
+
+                // VisitCharges counts no nights paid when nothing was paid, even at a $0 rate.
+                if ($visitCharge->getRoomFeesCharged() + $visitCharge->getFeesToPay() <= 0) {
+                    $paidThru[$idVisit] = self::FREE_STAY_PAID_THRU;
+                    continue;
+                }
+
                 $nightsPaid = $visitCharge->getNightsPaid();
+
+            } catch (\Exception $e) {
+                $this->warnings[] = "Visit $idVisit: " . $e->getMessage();
             }
 
             $dt = new \DateTime($visitStart);
