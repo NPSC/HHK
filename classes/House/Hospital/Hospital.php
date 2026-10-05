@@ -684,6 +684,29 @@ $(document).ready(function () {
         return array('hdr' => $hdr, 'title' => $labels->getString('hospital', 'hospital', 'Hospital') . ' Details', 'div' => $div);
     }
 
+    /**
+     * Check posted hospital fields against the house's mandatory field settings.
+     * @param array $post
+     * @return string Error message, or '' if valid.
+     */
+    public static function validateReferralPost(array $post)
+    {
+        $uS = Session::getInstance();
+        $labels = Labels::getLabels();
+        $errors = '';
+
+        // MRN - only enforced when the field was presented (blank MRN label hides it)
+        if ($uS->InsistMRN && isset($post['psgMrn'])) {
+            $MRN = str_replace(["/", "-", "_"], "", trim(filter_var($post['psgMrn'], FILTER_SANITIZE_FULL_SPECIAL_CHARS)));
+
+            if ($MRN == '') {
+                $errors .= $labels->getString('hospital', 'MRN', 'MRN') . ' is required.  ';
+            }
+        }
+
+        return $errors;
+    }
+
     public static function saveReferralMarkup(\PDO $dbh, PSG $psg, HospitalStay $hstay, array $post, $idResv = -1)
     {
 

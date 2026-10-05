@@ -650,6 +650,12 @@ class Family
         $psg = NULL;
         $post = $rData->getRawPost();
 
+        // Verify mandatory hospital fields before saving anything
+        if (($hospErrors = Hospital::validateReferralPost($post)) != '') {
+            $rData->addError($hospErrors);
+            return FALSE;
+        }
+
         // Verify patient - psg link
         if ($rData->getIdPsg() < 1) {
 
