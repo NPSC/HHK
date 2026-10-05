@@ -649,6 +649,14 @@ class CloudbedsImport extends AbstractImport implements ImportInterface {
         $resvStatus = $statusMap['reservation'];
         $visitStatus = $statusMap['visit'];
 
+        // already imported? re-running (e.g. after Reset Import Status) must not create a second copy of the same
+        // stay. Every reservation this import creates carries a "Imported from Cloudbeds reservation #<id>" note, so
+        // that's what's checked - against reservations that still exist, so a stay deleted from HHK is re-imported.
+        $existingResvIds = $this->findImportedReservationIds($reservationId);
+        if (count($existingResvIds) > 0) {
+            return $this->result(CloudbedsStaging::DONE, $existingResvIds[0], ['reservations' => $existingResvIds], 'Already imported');
+        }
+
         // the reservation's real, persistent Guest Profile id and PMS guest id - a different id space than
         // ensureReservationPeople()'s own guest-id keying, already known from the PMS reservation fields
         // (fetchReservationFields()).
@@ -1169,6 +1177,28 @@ class CloudbedsImport extends AbstractImport implements ImportInterface {
      */
     protected function noteText(array $lines): string {
         return htmlspecialchars(trim(implode("\n", $lines)), ENT_QUOTES);
+    }
+
+    /**
+     * The HHK reservations that a Cloudbeds reservation already produced, found by the marker note importReservation()
+     * puts on each one. Only reservations that still exist count - one deleted from HHK is not "already imported".
+     *
+     * @return int[] idReservation
+     */
+    protected function findImportedReservationIds(string $cloudbedsId): array {
+        $marker = 'Imported from Cloudbeds reservation #' . $cloudbedsId;
+
+        $stmt = $this->dbh->prepare(
+            "select distinct ln.idLink from link_note ln
+                join note nt on nt.idNote = ln.idNote
+                join reservation r on r.idReservation = ln.idLink
+             where ln.linkType = :linkType
+               and (nt.Note_Text = :marker or nt.Note_Text like concat(:marker2, '\n%'))
+             order by ln.idLink"
+        );
+        $stmt->execute([':linkType' => Note::ResvLink, ':marker' => $marker, ':marker2' => $marker]);
+
+        return array_map('intval', $stmt->fetchAll(\PDO::FETCH_COLUMN));
     }
 
     /**
