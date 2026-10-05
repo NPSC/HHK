@@ -656,6 +656,12 @@ class Family
             return FALSE;
         }
 
+        // Verify mandatory guest fields
+        if (($guestErrors = $this->validateGuestPost($rData, $post)) != '') {
+            $rData->addError($guestErrors);
+            return FALSE;
+        }
+
         // Verify patient - psg link
         if ($rData->getIdPsg() < 1) {
 
@@ -740,6 +746,42 @@ class Family
 
         return TRUE;
 
+    }
+
+    /**
+     * Check posted guest fields against the house's mandatory field settings.
+     * @param ReserveData $rData
+     * @param array $post
+     * @return string Error message, or '' if valid.
+     */
+    protected function validateGuestPost(ReserveData $rData, array $post)
+    {
+        $uS = Session::getInstance();
+        $errors = '';
+        $guestError = '';
+
+        foreach ($rData->getPsgMembers() as $m) {
+
+            if ($m->getId() < 0) {
+                continue;
+            }
+
+            // Birth date - only enforced when the field was presented (ShowBirthDate off hides it)
+            $bdMissing = isset($post[$m->getPrefix() . 'txtBirthDate']) && trim($post[$m->getPrefix() . 'txtBirthDate']) == '';
+
+            if ($m->getRole() == VolMemberType::Patient) {
+
+                // Patient birth date is required whether or not the patient stays
+                if ($uS->InsistPatBD && $bdMissing) {
+                    $errors .= $rData->getPatLabel() . ' is missing the Birth Date.  ';
+                }
+
+            } else if ($uS->InsistGuestBD && $m->isStaying() && $bdMissing) {
+                $guestError = Labels::getString('MemberType', 'visitor', 'Guest') . ' is missing the Birth Date.  ';
+            }
+        }
+
+        return $errors . $guestError;
     }
 
     public function getPatientId()
