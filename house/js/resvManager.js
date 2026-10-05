@@ -103,6 +103,58 @@ function resvManager(initData, options) {
     }
 
     /**
+     * Show messages in the page warning box under a header that collapses them.
+     * Also pops the usual toast.
+     * @param {string} mess message markup, multiple messages separated by <br>
+     * @param {string} type alert, warning, error, etc.
+     */
+    function showWarning(mess, type) {
+
+        if (!mess || mess == '') {
+            return;
+        }
+
+        flagAlertMessage(mess, type);
+
+        const count = mess.split(/<br\s*\/?>/i).filter((m) => $.trim(m) !== '').length;
+
+        const $body = $('<div class="hhk-pWarningBody hhk-pWarningMsg ui-widget-content ui-corner-bottom"/>').html(mess);
+
+        const $icon = $('<span class="ui-icon ui-icon-circle-triangle-n"></span>');
+
+        const $hdr = $('<div class="hhk-pWarningHdr ui-widget-header ui-state-default ui-corner-top" style="padding:2px; cursor:pointer;"/>')
+                .append($('<div class="hhk-checkinHdr" style="float:left;"/>')
+                        .append($('<i class="bi bi-exclamation-triangle-fill mr-1"/>'))
+                        .append(document.createTextNode('Validation Errors'))
+                        .append($('<span class="ml-2" style="font-size:.8em; font-weight:normal;"/>').text('(' + count + ')')))
+                .append($("<ul style='list-style-type:none; float:right;margin-left:5px;padding-top:2px;' class='ui-widget'/>")
+                        .append($("<li class='ui-widget-header ui-corner-all' title='Open - Close'/>").append($icon)))
+                .append('<div style="clear:both;"/>');
+
+        $hdr.on('click', function () {
+            if ($body.css('display') === 'none') {
+                $body.show('blind');
+                $hdr.removeClass('ui-corner-all').addClass('ui-corner-top');
+                $icon.removeClass('ui-icon-circle-triangle-s').addClass('ui-icon-circle-triangle-n');
+            } else {
+                $body.hide('blind');
+                $hdr.removeClass('ui-corner-top').addClass('ui-corner-all');
+                $icon.removeClass('ui-icon-circle-triangle-n').addClass('ui-icon-circle-triangle-s');
+            }
+        });
+
+        $pWarning.empty().append($hdr).append($body).show();
+    }
+
+    /**
+     * @returns {string} the text of the messages showing in the warning box, without the header.
+     */
+    function getWarningText() {
+        const $body = $pWarning.find('.hhk-pWarningBody');
+        return ($body.length > 0 ? $body.text() : $pWarning.text());
+    }
+
+    /**
      *
      * @param {*} namePart two values: last or first
      */
@@ -136,6 +188,15 @@ function resvManager(initData, options) {
         t.verify = verify;
         t.divFamDetailId = divFamDetailId;
         t.$famTbl = $famTbl;
+
+        // Staying guests must have a birth date; the patient's is set required by the server.
+        $wrapper.on('change', '.hhk-cbStay', function () {
+            const prefix = $(this).data('prefix');
+
+            if (gstBirthDate && people.list()[prefix] && people.list()[prefix].role !== 'p') {
+                $('#' + prefix + 'txtBirthDate').prop('required', $(this).prop('checked'));
+            }
+        });
 
         const datePickerOptions = {
             yearRange: '-99:+00',
@@ -212,6 +273,12 @@ function resvManager(initData, options) {
                     }).appendTo(buttonPane).addClass("ui-datepicker-clear ui-state-default ui-priority-primary ui-corner-all");
                 }, 1);
             }
+        }
+
+        // Role label followed by the person's first name, when entered.
+        function memberLabel(label, prefix) {
+            const firstName = $.trim($('#' + prefix + 'txtFirstName').val() || '');
+            return label + (firstName === '' ? '' : ' ' + firstName);
         }
 
         function findStaysChecked() {
@@ -1366,7 +1433,7 @@ function resvManager(initData, options) {
                     // Check patient birthdate
                     if (patBirthDate & $('#' + p + 'txtBirthDate').val() === '') {
                         $('#' + p + 'txtBirthDate').addClass('ui-state-error');
-                        msgs.push(patLabel + ' is missing the Birth Date.');
+                        msgs.push(memberLabel(patLabel, p) + ' is missing their birth date.');
                         openSection(true);
                         isValid = false;
                     } else {
@@ -1397,7 +1464,7 @@ function resvManager(initData, options) {
                     // Check guest birthdate
                     if (gstBirthDate & $('#' + p + 'txtBirthDate').val() === '' && $('#' + p + 'cbStay').prop('checked') === true) {
                         $('#' + p + 'txtBirthDate').addClass('ui-state-error');
-                        msgs.push(visitorLabel + ' is missing the Birth Date.');
+                        msgs.push(memberLabel(visitorLabel, p) + ' is missing their birth date.');
                         openSection(true);
                         isValid = false;
                     } else {
@@ -1489,7 +1556,7 @@ function resvManager(initData, options) {
             
             if(isValid == false){
                 msgs = [...new Set(msgs)];
-                flagAlertMessage(msgs.join("<br>"), 'warning', $pWarning);
+                showWarning(msgs.join("<br>"), 'warning');
             }
 
             setupComplete = false;
@@ -1677,7 +1744,7 @@ function resvManager(initData, options) {
                     isValid = false;
                 }
             }
-            flagAlertMessage(msg, "warning", $pWarning);
+            showWarning(msg, "warning");
             return isValid;
         };
     }
@@ -2014,7 +2081,7 @@ function resvManager(initData, options) {
 
                     $('#divhospDetail').show('blind');
                     $('#divhospHdr').removeClass('ui-corner-all').addClass('ui-corner-top');
-                    flagAlertMessage(msg, 'warning', $pWarning);
+                    showWarning(msg, 'warning');
                     return false;
                 }
             }
@@ -2192,7 +2259,7 @@ function resvManager(initData, options) {
                 // Return pre-payment if cancelling reserv.
                 $(document).on('change', '#selResvStatus', function () {
                     // clean up pWarning error message
-                    if ($pWarning.text() == prePayErrorMsg) {
+                    if (getWarningText() == prePayErrorMsg) {
                         $pWarning.hide();
                     }
                     if (prePaymtAmt >= 0 && $(this).val() != 'a' && $(this).val() != 'uc' && $(this).val() != 'w') {
@@ -2585,7 +2652,7 @@ function resvManager(initData, options) {
 
                         if (carVal2 != '') {
                             $('#vehValidate').text(carVal2);
-                            flagAlertMessage(carVal, 'alert', $pWarning);
+                            showWarning(carVal, 'alert');
                             return false;
                         }
                     }
@@ -2601,7 +2668,7 @@ function resvManager(initData, options) {
                     // Room rate
                     if ($('#selCategory').val() == fixedRate && $('#txtFixedRate').length > 0 && $('#txtFixedRate').val() == '') {
 
-                        flagAlertMessage("Set the Room Rate to an amount, or to 0.", 'alert', $pWarning);
+                        showWarning("Set the Room Rate to an amount, or to 0.", 'alert');
                         $('#txtFixedRate').addClass('ui-state-error');
                         return false;
 
@@ -2613,7 +2680,7 @@ function resvManager(initData, options) {
                     // Room fees paid
                     if ($('input#feesPayment').length > 0 && $('input#feesPayment').val() == '' && insistPayFilledIn) {
 
-                        flagAlertMessage("Set the Room Fees to an amount, or 0.", 'alert', $pWarning);
+                        showWarning("Set the Room Fees to an amount, or 0.", 'alert');
                         $('#payChooserMsg').text("Set the Room Fees to an amount, or 0.").show();
                         $('input#feesPayment').addClass('ui-state-error');
                         return false;
@@ -2634,7 +2701,7 @@ function resvManager(initData, options) {
                 if (prePaymtAmt > 0 && isCheckedOut && $('#selexcpay').val() == '') {
 
                     $('#selexcpay').addClass('ui-state-error');
-                    flagAlertMessage(prePayErrorMsg, 'alert', $pWarning);
+                    showWarning(prePayErrorMsg, 'alert');
                     $('#payChooserMsg').text(prePayErrorMsg).show();
 
                     return false;
@@ -2841,7 +2908,7 @@ function resvManager(initData, options) {
             }
 
             if (data.error) {
-                flagAlertMessage(data.error, 'error', $pWarning);
+                showWarning(data.error, 'error');
                 $('#btnDone').val('Save ' + resvTitle).show();
             }
 
@@ -2857,7 +2924,7 @@ function resvManager(initData, options) {
             if (isCheckedOut) {
 
                 $('#selexcpay').addClass('ui-state-error');
-                flagAlertMessage("Determine how to handle the pre-payment.", 'alert', $pWarning);
+                showWarning("Determine how to handle the pre-payment.", 'alert');
                 $('#payChooserMsg').text("Determine how to handle the pre-payment.").show();
                 return false;
 
@@ -2958,7 +3025,14 @@ function resvManager(initData, options) {
         }
 
         if (data.warning !== undefined && data.warning !== '') {
-            flagAlertMessage(data.warning, 'warning', $pWarning);
+            showWarning(data.warning, 'warning');
+        }
+
+        // Fields the server rejected
+        if (data.errFields) {
+            data.errFields.forEach(function (id) {
+                $('#' + id).addClass('ui-state-error');
+            });
         }
 
         // Reservation

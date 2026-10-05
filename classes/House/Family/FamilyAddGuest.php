@@ -34,7 +34,7 @@ class FamilyAddGuest extends Family {
         $th = HTMLContainer::generateMarkup('tr',
             HTMLTable::makeTh('Staying')
             . HTMLTable::makeTh(Labels::getString('MemberType', 'primaryGuestAbrev', 'PG'), array('title'=>Labels::getString('MemberType', 'primaryGuest', 'Primary Guest')))
-            . AbstractRoleMember::createThinMarkupHdr($rData->getPatLabel(), FALSE, $rData->getShowBirthDate())
+            . AbstractRoleMember::createThinMarkupHdr($rData->getPatLabel(), FALSE, $rData->getShowBirthDate(), TRUE, ($rData->getPatBirthDateFlag() || $rData->getGuestBirthDateFlag()))
             . HTMLTable::makeTh('Phone')
             . HTMLTable::makeTh($AdrCopyDownIcon));
 

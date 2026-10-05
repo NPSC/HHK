@@ -2184,7 +2184,7 @@ VALUES
 		'b',
 		'g',
 		'',
-		'Insist on user filling in guest birthdates',
+		'Insist on user filling in birthdates for staying guests',
 		'',
 		1
 	),

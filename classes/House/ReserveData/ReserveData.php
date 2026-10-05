@@ -33,6 +33,7 @@ class ReserveData {
     const FULL_NAME = 'fullName';
     const ADD_PERSON = 'addPerson';
     const WARNING = 'warning';
+    const ERROR_FIELDS = 'errFields';
     const SUCCESS = 'success';
     const INFO = 'info';
 
@@ -94,7 +95,9 @@ class ReserveData {
     protected $departureDT;
     protected $concurrentRooms = 0;
     protected $psgMembers;
-    protected $errors;
+    protected array $errors = [];
+    protected $errorFields = [];
+    protected $membersPosted = FALSE;
     protected $msgs;
     protected $resvPrompt;
     protected $insistCkinDemog;
@@ -231,7 +234,7 @@ class ReserveData {
         $this->reservationSection = '';
         $this->checkinSection = '';
         $this->paymentSection = '';
-        $this->errors = '';
+        $this->errors = [];
         $this->msgs = '';
         $this->resvPrompt = $labels->getString('guestEdit', 'reservationTitle', 'Reservation');
         $this->resvTitle = ($reservationTitle == '' ? $this->resvPrompt : $reservationTitle);
@@ -242,11 +245,21 @@ class ReserveData {
     }
 
     /**
+     * Whether the family members (with their stay and primary guest choices) came from the page.
+     * @return bool
+     */
+    public function hasPostedMembers() {
+        return $this->membersPosted;
+    }
+
+    /**
      * Summary of setMembersFromPost
      * @param array $postMems
      * @return void
      */
     protected function setMembersFromPost($postMems) {
+
+        $this->membersPosted = TRUE;
 
         foreach ($postMems as $prefix => $memArray) {
 
@@ -364,8 +377,12 @@ class ReserveData {
             $rtnData[ReserveData::FULL_NAME] = $this->fullName;
         }
 
-        if ($this->errors != '') {
-            $rtnData[ReserveData::WARNING] = $this->errors;
+        if ($this->hasError()) {
+            $rtnData[ReserveData::WARNING] = $this->getErrors();
+        }
+
+        if (count($this->errorFields) > 0) {
+            $rtnData[ReserveData::ERROR_FIELDS] = $this->errorFields;
         }
 
         if ($this->msgs != '') {
@@ -802,20 +819,36 @@ class ReserveData {
     }
 
     public function addError($e) {
-        $this->errors .= $e;
+
+        $e = trim($e);
+
+        if ($e != '') {
+            $this->errors[] = $e;
+        }
+    }
+
+    /**
+     * Mark a form field (by element id) for the page to highlight along with the error.
+     * @param string $fieldId
+     */
+    public function addErrorField($fieldId) {
+        $this->errorFields[] = $fieldId;
     }
 
     public function hasError() {
 
-        if ($this->errors != '') {
+        if (count($this->errors) > 0) {
             return TRUE;
         }
 
         return FALSE;
     }
 
+    /**
+     * @return string Each error on its own line.
+     */
     public function getErrors() {
-        return $this->errors;
+        return implode('<br>', $this->errors);
     }
 
     public function addMsg($e) {

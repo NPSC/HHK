@@ -103,7 +103,7 @@ abstract class AbstractRoleMember extends IndivMember {
      * @param bool $showCopyDown
      * @return string
      */
-    public static function createThinMarkupHdr($labels = NULL, $hideRelChooser = TRUE, $showBirthDate = TRUE, $showCopyDown = TRUE) {
+    public static function createThinMarkupHdr($labels = NULL, $hideRelChooser = TRUE, $showBirthDate = TRUE, $showCopyDown = TRUE, $birthDateRequired = FALSE) {
 
         $lnCopyDownIcon = 'Last Name';
 
@@ -123,7 +123,7 @@ abstract class AbstractRoleMember extends IndivMember {
             . HTMLTable::makeTh($lnCopyDownIcon)
             .HTMLTable::makeTh('Suffix')
             . HTMLTable::makeTh(Labels::getString("MemberType", "nickname", 'Nickname'))
-            . ($showBirthDate ? HTMLTable::makeTh('Birth Date') : '');
+            . ($showBirthDate ? HTMLTable::makeTh('Birth Date' . ($birthDateRequired ? HTMLContainer::generateMarkup('span', "*", ['class' => 'hhk-text-red ml-1']) : '')) : '');
 
 
         if ($hideRelChooser === FALSE) {
@@ -326,11 +326,20 @@ abstract class AbstractRoleMember extends IndivMember {
                 $bd = date('M j, Y', strtotime($this->nameRS->BirthDate->getStoredVal()));
             }
 
-            $tr .= HTMLTable::makeTd(HTMLInput::generateMarkup($bd, array('name'=>$this->getIdPrefix().'txtBirthDate', 'class'=>'ckbdate')));
+            $tr .= HTMLTable::makeTd(HTMLInput::generateMarkup($bd, array('name'=>$this->getIdPrefix().'txtBirthDate', 'class'=>'ckbdate') + ($this->isBirthDateRequired() ? array('required' => 'required') : array())));
 
         }
 
         return $tr;
+    }
+
+    /**
+     * Whether this member's birth date input is marked required when rendered.
+     * Guests depend on their stay checkbox, so the page toggles theirs.
+     * @return bool
+     */
+    protected function isBirthDateRequired() {
+        return FALSE;
     }
 
     /**

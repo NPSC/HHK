@@ -280,7 +280,7 @@ $resvManagerOptionsEncoded = json_encode($resvManagerOptions);
                 <div id="hospitalSection" style="font-size: .9em; display:none;"  class="ui-widget hhk-visitdialog mb-3"></div>
                 <div id="resvSection" style="font-size:.9em; display:none; margin-bottom: 70px;" class="ui-widget hhk-visitdialog"></div>
                 <div id="submitButtons" class="ui-corner-all" style="font-size:.9em; clear:both;">
-                    <div id="pWarnings" class="hhk-pWarningMsg" style="display:none;"></div>
+                    <div id="pWarnings" class="ui-widget mb-2" style="display:none;"></div>
                     <div style="text-align:right;">
                         <input type="button" id="btnShowReg" value='Show Registration Form' style="display:none;"/>
                         <input type='button' id='btnDone' value='Continue' style="display:none;"/>
