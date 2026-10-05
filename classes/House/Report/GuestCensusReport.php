@@ -35,7 +35,8 @@ use HHK\SysConst\{ItemId, InvoiceStatus, ReservationStatusType};
  */
 
 class GuestCensusReport extends AbstractReport implements ReportInterface {
-
+    // Hard-coded colors for the HTML pills and Excel output
+    // TODO: Maybe make these optional / user-selectable
     const PAID_COLOR = '#000000';
     const UNPAID_COLOR = '#CC0000';
 
@@ -69,7 +70,6 @@ class GuestCensusReport extends AbstractReport implements ReportInterface {
 
         parent::__construct($dbh, $this->inputSetReportName, $request);
 
-        $this->printFooter = true;
         $this->printKeepHtml = true;
     }
 
@@ -207,20 +207,6 @@ where exists (select 1 from resource_room rr join resource re on rr.idResource =
         if (count($this->resultSet) == 0) {
             return;
         }
-
-        // The label goes in the Date column, as on screen. A plain string there would be
-        // written as a date; an ExcelRichText cell is always written as text.
-        $flds = [];
-        foreach ($this->filteredFields as $f) {
-
-            if ($f[1] == 'Date') {
-                $flds[] = (new ExcelRichText())->addRun('Total');
-            } else {
-                $flds[] = $this->totals[$f[1]] ?? '';
-            }
-        }
-
-        $writer->writeSheetRow("Sheet1", $flds, ['font-style'=>'bold']);
 
         $writer->writeSheetHeader("Summary", ['Summary'=>'string', 'Value'=>'string'], $writer->getHdrStyle(['30', '45']));
         foreach ($this->getSummaryStats() as $label => $value) {

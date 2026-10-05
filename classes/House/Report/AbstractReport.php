@@ -48,8 +48,7 @@ abstract class AbstractReport {
     protected bool $rendered = false;
     protected string $statsMkup = "";
     protected int $defaultSortCol = 0;
-    protected bool $printFooter = false;    // include the table footer (eg. totals) when printing
-    protected bool $printKeepHtml = false;  // a cell whose content is wrapped in an element with a data-print attribute prints that attribute's markup (eg. colored text); other cells still print as plain text
+    protected bool $printKeepHtml = false;  // cells with a data-print attribute applies markup (e.g. colored text)
 
     /**
      * @param \PDO $dbh
@@ -244,8 +243,7 @@ abstract class AbstractReport {
             {
                 extend: "print",
                 className: "ui-corner-all",
-                autoPrint: true,
-                footer: ' . ($this->printFooter ? 'true' : 'false') . ',' . ($this->printKeepHtml ? '
+                autoPrint: true,' . ($this->printKeepHtml ? '
                 exportOptions: {
                     stripHtml: false,
                     format: {
@@ -407,7 +405,7 @@ abstract class AbstractReport {
             $row = $writer->convertStrings($hdr, $flds);
             $writer->writeSheetRow("Sheet1", $row);
         }
-
+        
         $this->writeExcelFooter($writer);
 
         HouseLog::logDownload($this->dbh, $this->reportTitle, "Excel", $this->reportTitle . " for " . $this->filter->getReportStart() . " - " . $this->filter->getReportEnd() . " downloaded", $uS->username);

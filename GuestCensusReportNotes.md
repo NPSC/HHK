@@ -16,7 +16,7 @@ Last updated: 2026-10-03
 |---|---|
 | `house/GuestCensusReport.php` | Page: builds the report and handles the Run Here / Excel buttons |
 | `classes/House/Report/GuestCensusReport.php` | Report class (extends `AbstractReport`) |
-| `classes/House/Report/AbstractReport.php` | Shared report base; gained opt-in totals and print hooks for this report |
+| `classes/House/Report/AbstractReport.php` | Shared report base. This branch added `$printKeepHtml` and the `writeExcelFooter()` hook. (`$printFooter` was added, then removed 2026-10-05; see "Totals row".) The screen hook `makeFooterMkup()` already existed (Will, 2026-07-28); the Item Report uses it for an on-screen total only |
 | `classes/ExcelHelper.php`, `classes/ExcelRichText.php` | Excel cells with red and black text runs |
 | `classes/House/ResourceView.php`, `classes/House/Room/Room.php`, `classes/Tables/House/RoomRS.php` | Room Sleeping Spaces in Resource Builder |
 
@@ -121,7 +121,12 @@ This follows the Visit Interval Report's definition of paid.
 
 ### Totals and summary
 
-- **Totals row:** sums every integer column (taken from `makeFields()`). It appears on screen (table footer), in print, and in Excel as a bold row. The "Total" label is in the Date column, which is always shown. In Excel it is written as an `ExcelRichText` cell so it isn't treated as a date.
+- **Totals row:** sums every integer column (taken from `makeFields()`). It appears **on screen and in email only**, as the table footer, with "Total" in the Date column (always shown). The same totals feed the summary box.
+  - **Not in print (decided 2026-10-05).** Printing it needed `footer: true` on DataTables' print button, through an `AbstractReport::$printFooter` flag. Browsers repeat a table's `<tfoot>` at the bottom of every printed page, so the period total looked like a subtotal on each page.
+  - The flag was removed, so print matches the Item Report and `AbstractReport`'s print button is the same as on `main` for every other report.
+  - **To restore if needed:** bring back `$printFooter` and `footer: true`, and add `tfoot { display: table-row-group; }` in the print `customize` callback so the totals print once, at the end.
+  - **Not in Excel either (decided 2026-10-05, "for now").** `writeExcelFooter()` used to write a bold totals row labeled "Total" in the Date column, as an `ExcelRichText` cell so it wasn't read as a date. It now writes only the Summary sheet. To restore, put back that row in `writeExcelFooter()`.
+  - The spec ("each column is totaled at the bottom") and the July sample both show a totals row, in case these come back.
 - **Summary box**, from the totals:
   - Number of Guests Canceled
   - Percentage of Rooms Unpaid = unpaid room nights / occupied room nights
@@ -134,7 +139,7 @@ This follows the Visit Interval Report's definition of paid.
 | Output | Guest Roster | Mechanism |
 |---|---|---|
 | Screen | Bootstrap pills linking to Guest Edit; red when unpaid, grey when paid | HTML in the cell |
-| Print | `Smith (3)` in red/bold or black | The roster cell carries a `data-print` attribute with plain colored markup. `AbstractReport` prints that instead (`$printKeepHtml`); other cells print as plain text. It also prints the footer (`$printFooter`) |
+| Print | `Smith (3)` in red/bold or black | The roster cell carries a `data-print` attribute with plain colored markup. `AbstractReport` prints that instead (`$printKeepHtml`); other cells print as plain text. No totals row (see "Totals row") |
 | Excel | `Smith (3)` in red or black | `ExcelRichText` cell; the `ExcelHelper::writeCell()` override writes colored text runs |
 | PDF | Browser print to PDF | Not verified with Will |
 
@@ -167,7 +172,7 @@ From the review in `Roast.md`, checked against the code.
 - **Error handling:** each visit's price-model call is in a try/catch. A failure shows as a "Warning" line in the summary on screen and in Excel.
 - **Sleeping Spaces** is clamped to 0 or more when saved.
 - **Summary label:** "Number of *Guests* Canceled" uses the house's guest label.
-- **Excel totals row:** labeled "Total" in the Date column, whichever columns are selected. A run with no color now inherits the cell's font, so the label is bold.
+- **Excel totals row:** labeled "Total" in the Date column, whichever columns are selected. A run with no color now inherits the cell's font, so the label is bold. *(The row itself was removed on 2026-10-05; see "Totals row".)*
 - **`writeExcelFooter()`:** the unused `$hdr` parameter was removed from the hook.
 - **Totals:** an explicit list of columns, every integer field, instead of "everything except Date and Guest Roster".
 - **Print:** only cells with a `data-print` attribute keep their HTML. Other cells print as plain, escaped text.
@@ -206,9 +211,29 @@ From the review in `Roast.md`, checked against the code.
   - Guest counts and nights come from the reservation as it is when the report runs. That's accepted.
   - Deleted reservations dropping out of the counts is intentional.
 
+**July 2026 sample** (`Census Report July 2026.pdf`, Anayat's hand-built report), compared 2026-10-03:
+- **Matches:**
+  - the same nine columns in the same order
+  - Rooms Unpaid = occupied − paid, which confirms our reading of the spec
+  - the roster format and red/black coloring
+  - Bednights % = 151 ÷ (31 × 12)
+  - Average length of stay = 151 ÷ 17 (shown to 4 decimals there, 2 here)
+  - guests on leave are left off the roster and the counts
+- **Differs, follow the spec (decided 2026-10-04):**
+  - Their "Rooms" summary is **51% = 94 unpaid ÷ (6 rooms × 31 nights)**. Ours stays unpaid ÷ *occupied* room nights, per the spec, which gives 94 ÷ 108 = **87%** for July.
+  - Anayat's sample is taken to contradict the spec here.
+  - Tell Anayat when they receive the report, so the different number isn't a surprise.
+- **Differs, no change proposed:**
+  - They show only Turned Away cancel columns (we show all three types, per the spec).
+  - "B. Ferguson" is used to tell apart two guests with the same last name.
+  - Roster parties are separated by spaces, where we use commas.
+  - Dates are "1-Jul".
+  - The title reads "for July 2026".
+  - The totals row has blanks for the cancel columns.
+  - It's a single portrait page with the summary box below the table.
+
 **Still open:**
 - **PDF:** the spec says "downloadable to excel and pdf". Is browser print to PDF good enough?
-- **The July 2026 Census Report:** the spec says the look should be modelled on this sample from Anayat. We don't have it yet.
 - **Email:** the Email button sends the report without Bootstrap, so the roster pills lose red and black (not tested). Does Anayat email this report?
 
 **Not yet measured:** the speed of a 12-month range on a realistic database. The price model runs once per visit with any payment. Dev data is too small to tell.
