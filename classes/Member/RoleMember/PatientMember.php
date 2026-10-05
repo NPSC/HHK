@@ -48,6 +48,15 @@ class PatientMember extends AbstractRoleMember {
     }
 
     /**
+     * Patient birth date is required whether or not the patient stays.
+     * @return bool
+     */
+    protected function isBirthDateRequired() {
+        $uS = Session::getInstance();
+        return (bool) $uS->InsistPatBD;
+    }
+
+    /**
      * Summary of saveChanges
      * @param \PDO $dbh
      * @param array $post

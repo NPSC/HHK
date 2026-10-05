@@ -426,7 +426,7 @@ class Family
             'tr',
             HTMLTable::makeTh('Staying')
             . HTMLTable::makeTh(Labels::getString('MemberType', 'primaryGuestAbrev', 'PG'), array('title' => Labels::getString('MemberType', 'primaryGuest', 'Primary Guest')))
-            . AbstractRoleMember::createThinMarkupHdr($rData->getPatLabel(), FALSE, $rData->getShowBirthDate())
+            . AbstractRoleMember::createThinMarkupHdr($rData->getPatLabel(), FALSE, $rData->getShowBirthDate(), TRUE, ($rData->getPatBirthDateFlag() || $rData->getGuestBirthDateFlag()))
             . HTMLTable::makeTh('Phone')
             . HTMLTable::makeTh($AdrCopyDownIcon)
         );
@@ -750,6 +750,7 @@ class Family
 
     /**
      * Check posted guest fields against the house's mandatory field settings.
+     * Each failing field is also marked on $rData so the page can highlight it.
      * @param ReserveData $rData
      * @param array $post
      * @return string Error message, or '' if valid.
@@ -757,8 +758,7 @@ class Family
     protected function validateGuestPost(ReserveData $rData, array $post)
     {
         $uS = Session::getInstance();
-        $errors = '';
-        $guestError = '';
+        $errors = [];
 
         foreach ($rData->getPsgMembers() as $m) {
 
@@ -766,22 +766,31 @@ class Family
                 continue;
             }
 
+            $prefix = $m->getPrefix();
+
             // Birth date - only enforced when the field was presented (ShowBirthDate off hides it)
-            $bdMissing = isset($post[$m->getPrefix() . 'txtBirthDate']) && trim($post[$m->getPrefix() . 'txtBirthDate']) == '';
+            $bdMissing = isset($post[$prefix . 'txtBirthDate']) && trim($post[$prefix . 'txtBirthDate']) == '';
 
             if ($m->getRole() == VolMemberType::Patient) {
-
                 // Patient birth date is required whether or not the patient stays
-                if ($uS->InsistPatBD && $bdMissing) {
-                    $errors .= $rData->getPatLabel() . ' is missing the Birth Date.  ';
-                }
+                $bdRequired = $uS->InsistPatBD;
+                $memberLabel = $rData->getPatLabel();
+            } else {
+                $bdRequired = $uS->InsistGuestBD && $m->isStaying();
+                $memberLabel = Labels::getString('MemberType', 'visitor', 'Guest');
+            }
 
-            } else if ($uS->InsistGuestBD && $m->isStaying() && $bdMissing) {
-                $guestError = Labels::getString('MemberType', 'visitor', 'Guest') . ' is missing the Birth Date.  ';
+            if ($bdRequired && $bdMissing) {
+
+                $firstName = isset($post[$prefix . 'txtFirstName']) ? trim(filter_var($post[$prefix . 'txtFirstName'], FILTER_SANITIZE_FULL_SPECIAL_CHARS)) : '';
+
+                $errors[] = $memberLabel . ($firstName == '' ? '' : ' ' . $firstName) . ' is missing their birth date.';
+                $rData->addErrorField($prefix . 'txtBirthDate');
             }
         }
 
-        return $errors . $guestError;
+        // One message per line in the warning area
+        return implode('<br>', $errors);
     }
 
     public function getPatientId()

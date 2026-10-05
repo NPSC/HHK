@@ -320,7 +320,7 @@ $resvObjEncoded = json_encode($resvAr);
 
 
                 <div id="submitButtons" class="ui-corner-all" style="font-size:.9em; display:none;">
-                    <div id="pWarnings" class="hhk-pWarningMsg" style="display:none;"></div>
+                    <div id="pWarnings" class="ui-widget mb-2" style="display:none;"></div>
                     <div style="text-align: right;">
                         <input type="button" id="btnDelete" value="Delete" style="display:none;"/>
                         <input type="button" id="btnCheckinNow" value='Check-in Now' style="display:none;"/>
