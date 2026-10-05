@@ -228,3 +228,4 @@ INSERT IGNORE INTO `sys_config`(`Key`,`Value`,`Type`,`Category`,`Description`,`S
 
 INSERT IGNORE INTO `sys_config`(`Key`,`Value`,`Type`,`Category`,`Description`,`Show`) VALUES 
 ('InsistMRN','false','b','p','Insist on user filling in the patients MRN',1);
+update `sys_config` set `Description` = "Insist on user filling in birthdates for staying guests" where `Key` = "InsistGuestBD";
