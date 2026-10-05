@@ -97,6 +97,7 @@ class ReserveData {
     protected $psgMembers;
     protected array $errors = [];
     protected $errorFields = [];
+    protected $membersPosted = FALSE;
     protected $msgs;
     protected $resvPrompt;
     protected $insistCkinDemog;
@@ -244,11 +245,21 @@ class ReserveData {
     }
 
     /**
+     * Whether the family members (with their stay and primary guest choices) came from the page.
+     * @return bool
+     */
+    public function hasPostedMembers() {
+        return $this->membersPosted;
+    }
+
+    /**
      * Summary of setMembersFromPost
      * @param array $postMems
      * @return void
      */
     protected function setMembersFromPost($postMems) {
+
+        $this->membersPosted = TRUE;
 
         foreach ($postMems as $prefix => $memArray) {
 

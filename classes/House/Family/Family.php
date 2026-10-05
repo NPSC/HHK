@@ -212,6 +212,11 @@ class Family
     public function setGuestsStaying(\PDO $dbh, ReserveData &$rData, $resvIdGuest)
     {
 
+        // Redrawing after a save: keep the stay and primary guest choices the user posted.
+        if ($rData->hasPostedMembers()) {
+            return;
+        }
+
         if ($rData->getIdResv() > 0) {
 
             // Existing reservation...
