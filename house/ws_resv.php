@@ -219,7 +219,11 @@ try {
     		$idVisit = intval(filter_input(INPUT_POST, 'idv', FILTER_SANITIZE_NUMBER_INT), 10);
     	}
 
-    	if ($idHs > 0 && $idVisit > 0) {
+    	if (($hospErrors = Hospital::validateReferralPost($_POST)) != '') {
+
+    		$events = ['error' => $hospErrors];
+
+    	} else if ($idHs > 0 && $idVisit > 0) {
 
     		$hstay = new HospitalStay($dbh, 0, $idHs);
 
