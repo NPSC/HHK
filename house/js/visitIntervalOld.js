@@ -35,24 +35,56 @@ function viewInsurance(idName, eventTarget, detailDiv) {
 
 var fixedRate;  // used by VisitDialog.hs
 
-// Called by the report DataTable (AbstractReport::generateReportScript) after each draw.
-function drawCallback(settings) {
-    $('.hhk-viewVisit').button();
-}
-
 $(document).ready(function () {
 
-    let pmtMkup = $('#pmtMkup').val(),
+    let startYear = $('#startYear').val(),
+        columnDefs = $.parseJSON($('#columnDefs').val()),
+        pmtMkup = $('#pmtMkup').val(),
+        makeTable = $('#makeTable').val(),
+        dateFormat = $('#dateFormat').val(),
         rctMkup = $('#rctMkup').val(),
-        receiptPaymentId = $('#receiptPaymentId').val(),
-        receiptBilledToEmail = $('#receiptBilledToEmail').val();
+        defaultFields = $('#defaultFields').val();
 
-    fixedRate = $('#fixedRate').val();
+    $('#selCalendar').change(function () {
+        $('#selIntYear').show();
+        if ($(this).val() && $(this).val() != '19') {
+            $('#selIntMonth').hide();
+        } else {
+            $('#selIntMonth').show();
+        }
+        if ($(this).val() && $(this).val() != '18') {
+            $('.dates').hide();
+        } else {
+            $('.dates').show();
+            $('#selIntYear').hide();
+        }
+    });
+    $('#selCalendar').change();
 
-    $('input[type="submit"]').click(function () {
+    $('.ckdate').datepicker({
+        yearRange: startYear+':+02',
+        changeMonth: true,
+        changeYear: true,
+        autoSize: true,
+        numberOfMonths: 1,
+        dateFormat: 'yy-mm-dd'
+    });;
+
+
+    $('#btnHere, #btnExcel, #btnStatsOnly, #cbColClearAll, #cbColSelAll').button();
+    $('#btnHere, #btnExcel').click(function () {
         $('#paymentMessage').hide();
     });
-
+    $('#cbColClearAll').click(function () {
+        $('#selFld option').each(function () {
+            $(this).prop('selected', false);
+        });
+    });
+    $('#cbColSelAll').click(function () {
+        $('#selFld option').each(function () {
+            $(this).prop('selected', true);
+        });
+    });
     $('#keysfees').dialog({
         autoOpen: false,
         resizable: true,
@@ -75,10 +107,13 @@ $(document).ready(function () {
         title: 'Income Chooser'
     });
 
-    $(document).on('click', '.hhk-viewVisit', function () {
+    $('.hhk-viewVisit').button();
+    $('.hhk-viewVisit').click(function () {
         let vid = $(this).data('vid'),
             gid = $(this).data('gid'),
             span = $(this).data('span');
+
+        fixedRate = $('#fixedRate').val();
 
         const buttons = {
             "Show Statement": function () {
@@ -88,7 +123,7 @@ $(document).ready(function () {
                 window.open('ShowRegForm.php?vid=' + vid + '&span=' + span, '_blank');
             },
             "Save": function () {
-                saveFees(gid, vid, span, false, 'VisitInterval.php');
+                saveFees(gid, vid, span, false, 'VisitIntervalOld.php');
             },
             "Cancel": function () {
                 $(this).dialog("close");
@@ -97,6 +132,25 @@ $(document).ready(function () {
         viewVisit(gid, vid, buttons, 'Edit Visit #' + vid + '-' + span, '', span);
     });
 
+    if (makeTable === '1') {
+        $('div#printArea, div#stats').css('display', 'block');
+
+        $('#tblrpt').dataTable({
+            'columnDefs': [
+                {
+                    'targets': columnDefs,
+                    'type': 'date',
+                    'render': function (data, type, row) { return dateRender(data, type, dateFormat); }
+                }
+            ],
+            "displayLength": 50,
+            "lengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]],
+            "dom": '<"top ui-toolbar ui-helper-clearfix"if><"hhk-overflow-x"rt><"bottom ui-toolbar ui-helper-clearfix"lp>',
+        });
+        $('#printButton').button().click(function () {
+            $("div#printArea").printArea();
+        });
+    }
     if (rctMkup !== '') {
         showReceipt('#pmtRcpt', rctMkup, 'Payment Receipt', 550, receiptPaymentId, receiptBilledToEmail);
     }
@@ -111,6 +165,8 @@ $(document).ready(function () {
         }
     });
 
+    $('#includeFields').fieldSets({ 'reportName': 'visit', 'defaultFields': defaultFields});
+
     // disappear the pop-up room chooser.
     $(document).mousedown(function (event) {
         var target = $(event.target);
@@ -121,7 +177,7 @@ $(document).ready(function () {
 
     var detailDiv = $("<div>").attr('id', 'insDetailDiv');
     $("body").append(detailDiv);
-    $(document).on('click', '.insAction', function (event) {
+    $('#tblrpt').on('click', '.insAction', function (event) {
         viewInsurance($(this).data('idname'), event.target.id, detailDiv);
     });
 

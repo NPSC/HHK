@@ -54,6 +54,7 @@ define('GUEST_REFERRAL_JS', '<script src="js/guestReferral.js' . JSV . '"></scri
 define('REFERRAL_FORM_JS', 'js/referralForm.js' . JSV);
 define('TOPAZ_SIGWEB_JS', 'js/SigWebTablet.js' . JSV);
 define('VISIT_INTERVAL_JS', "js/visitInterval.js" . JSV);
+define('VISIT_INTERVAL_OLD_JS', "js/visitIntervalOld.js" . JSV);
 define('HOUSEKEEPING_JS', 'js/housekeeping.js' . JSV);
 
 //define('FULLCALENDAR_CSS', '<link href="css/fullcalendar5.11.0.min.css' . JSV . '"  rel="stylesheet" type="text/css" />');
