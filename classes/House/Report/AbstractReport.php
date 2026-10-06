@@ -454,7 +454,7 @@ abstract class AbstractReport {
                 }
 
             }catch(\Exception $e){
-                return array("error"=>"Email failed!  " . $mail->ErrorInfo);
+                return array("error"=>"Email failed!  " . $e->getMessage());
             }
 
         }

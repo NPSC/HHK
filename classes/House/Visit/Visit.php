@@ -600,7 +600,7 @@ class Visit {
                 $mail->send();
 
             } catch (\Exception $ex) {
-                $rtnMessage .= 'Email Failed.  ' . $mail->ErrorInfo;
+                $rtnMessage .= 'Email Failed.  ' . $ex->getMessage();
             }
         }
 

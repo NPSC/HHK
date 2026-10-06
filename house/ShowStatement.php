@@ -253,7 +253,7 @@ if (isset($_REQUEST['cmd'])) {
                     LinkNote::save($dbh, $noteText, $idRegistration, Note::PsgLink, '', $uS->username, $uS->ConcatVisitNotes);
                 }
             }catch (\Exception $e){
-                $return["error"] = "Email failed! " . $mail->ErrorInfo;
+                $return["error"] = "Email failed! " . $e->getMessage();
 
             }
 
