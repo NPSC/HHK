@@ -672,9 +672,10 @@ class HouseServices {
      * @param mixed $addnlCharge
      * @param mixed $adjDate
      * @param mixed $notes
+     * @param float $quantity
      * @return array<string>
      */
-    public static function saveHousePayment(\PDO $dbh, $idItem, $ord, $amt, $discount, $addnlCharge, $adjDate, $notes) {
+    public static function saveHousePayment(\PDO $dbh, $idItem, $ord, $amt, $discount, $addnlCharge, $adjDate, $notes, $quantity = 1) {
 
         $uS = Session::getInstance();
         $dataArray = array();
@@ -705,7 +706,7 @@ class HouseServices {
                 $discountItem = new Item($dbh, ItemId::Discount, $amount);
 
                 $invLine = new OneTimeInvoiceLine();
-                $invLine->createNewLine($discountItem, 1, $codes[$discount][1]);
+                $invLine->createNewLine($discountItem, $quantity, $codes[$discount][1]);
                 $invoice = new Invoice($dbh);
 
                 $invoice->newInvoice(
@@ -722,7 +723,7 @@ class HouseServices {
                 $invoice->addLine($dbh, $invLine, $uS->username);
 
                 // Pay the invoice
-                $invoice->updateInvoiceBalance($dbh, $amount, $uS->username);
+                $invoice->updateInvoiceBalance($dbh, round($amount * $quantity, 2), $uS->username);
 
                 $dataArray['reply'] = $codes[$discount][1] . ' ' . $discountLabel . ' Applied.  ';
 
@@ -741,7 +742,7 @@ class HouseServices {
             if (isset($codes[$addnlCharge])) {
 
                 $invLine = new OneTimeInvoiceLine();
-                $invLine->createNewLine($addnlChargeItem, 1, $codes[$addnlCharge][1]);
+                $invLine->createNewLine($addnlChargeItem, $quantity, $codes[$addnlCharge][1]);
 
                 if (is_null($invoice)) {
                     $invoice = new Invoice($dbh);
@@ -769,7 +770,7 @@ class HouseServices {
 
                     if ($t->getIdTaxedItem() == ItemId::AddnlCharge) {
                         $taxInvoiceLine = new TaxInvoiceLine();
-                        $taxInvoiceLine->createNewLine(new Item($dbh, $t->getIdTaxingItem(), $amount), $t->getDecimalTax(),  ' ('. $t->getTextPercentTax().')');
+                        $taxInvoiceLine->createNewLine(new Item($dbh, $t->getIdTaxingItem(), round($amount * $quantity, 2)), $t->getDecimalTax(),  ' ('. $t->getTextPercentTax().')');
                         $taxInvoiceLine->setSourceItemId(ItemId::AddnlCharge);
                         $invoice->addLine($dbh, $taxInvoiceLine, $uS->username);
                     }

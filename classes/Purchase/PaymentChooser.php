@@ -767,7 +767,11 @@ class PaymentChooser {
                 HTMLTable::makeTd('Select', array('class'=>'tdlabel')) . HTMLTable::makeTd($select));
 
         $feesTbl->addBodyTr(
-                HTMLTable::makeTd('Amount:', array('class'=>'tdlabel'))
+                HTMLTable::makeTd('Quantity:', array('class'=>'tdlabel'))
+                .HTMLTable::makeTd(HTMLInput::generateMarkup('1', array('name'=>'houseQuantity', 'size'=>'4', 'style'=>'text-align:right;', 'class'=>'ml-3'))));
+
+        $feesTbl->addBodyTr(
+                HTMLTable::makeTd('Unit Price:', array('class'=>'tdlabel'))
                 .HTMLTable::makeTd('$'.HTMLInput::generateMarkup('', array('name'=>'housePayment', 'size'=>'9', 'data-vid'=>$idVisit, 'style'=>'text-align:right;', 'class'=>'ml-2'))));
 
         if (isset($itemTaxSums[ItemId::AddnlCharge])) {
@@ -776,12 +780,12 @@ class PaymentChooser {
                 HTMLTable::makeTd('Tax ('. TaxedItem::suppressTrailingZeros($itemTaxSums[ItemId::AddnlCharge]*100).'):', array('class'=>'tdlabel'))
                 .HTMLTable::makeTd('$'.HTMLInput::generateMarkup('', array('name'=>'houseTax', 'size'=>'9', 'data-tax'=>$itemTaxSums[ItemId::AddnlCharge], 'readonly'=>'readonly', 'style'=>'text-align:right;', 'class'=>'ml-2')))
                     , array('class'=>'addnlChg', 'style'=>'display:none;'));
-
-            $feesTbl->addBodyTr(
-                HTMLTable::makeTd('Total:', array('class'=>'tdlabel'))
-                .HTMLTable::makeTd('$'.HTMLInput::generateMarkup('', array('name'=>'totalHousePayment', 'size'=>'9', 'readonly'=>'readonly', 'style'=>'text-align:right;', 'class'=>'ml-2')))
-                    , array('class'=>'addnlChg', 'style'=>'display:none;'));
         }
+
+        $feesTbl->addBodyTr(
+            HTMLTable::makeTd('Total:', array('class'=>'tdlabel'))
+            .HTMLTable::makeTd('$'.HTMLInput::generateMarkup('', array('name'=>'totalHousePayment', 'size'=>'9', 'readonly'=>'readonly', 'style'=>'text-align:right;', 'class'=>'ml-2')))
+                , array('class'=>'hhk-houseTotal'));
 
         $feesTbl->addBodyTr(
                 HTMLTable::makeTd('Date:', array('class'=>'tdlabel'))

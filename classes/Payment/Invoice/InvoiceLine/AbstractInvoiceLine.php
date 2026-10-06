@@ -289,6 +289,35 @@ abstract class AbstractInvoiceLine {
     }
 
     /**
+     * Description for display, with quantity and unit price appended to additional charge and discount lines when quantity is not 1.
+     * Not for storage - the stored description must match the gen_lookup description.
+     * @return string
+     */
+    public function getDisplayDescription() {
+        return self::formatDisplayDescription($this->getDescription(), $this->getItemId(), $this->getQuantity(), $this->getPrice());
+    }
+
+    /**
+     * Summary of formatDisplayDescription
+     * @param mixed $description
+     * @param mixed $itemId
+     * @param mixed $quantity
+     * @param mixed $price
+     * @return string
+     */
+    public static function formatDisplayDescription($description, $itemId, $quantity, $price) {
+
+        $qty = floatval($quantity);
+
+        if (in_array(intval($itemId), [ItemId::AddnlCharge, ItemId::Discount]) && $qty != 0 && $qty != 1) {
+            $qtyStr = rtrim(rtrim(number_format($qty, 2, '.', ''), '0'), '.');
+            return $description . ' (' . $qtyStr . ' @ $' . number_format(abs(floatval($price)), 2) . ')';
+        }
+
+        return (string)$description;
+    }
+
+    /**
      * Summary of getTypeId
      * @return mixed
      */

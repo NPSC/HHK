@@ -460,7 +460,7 @@ where
 		$tbl->addHeaderTr ( HTMLTable::makeTh ( 'Room' ) . HTMLTable::makeTh ( 'Item' ) . HTMLTable::makeTh ( 'Amount' ) );
 
 		foreach ( $this->getLines ( $dbh ) as $line ) {
-			$tbl->addBodyTr ( HTMLTable::makeTd ( $roomTitle , ['class'=>'invLineRoom']) . HTMLTable::makeTd ( $line->getDescription () , ['class'=>'invLineDesc']) . HTMLTable::makeTd ( number_format ( $line->getAmount (), 2 ), array (
+			$tbl->addBodyTr ( HTMLTable::makeTd ( $roomTitle , ['class'=>'invLineRoom']) . HTMLTable::makeTd ( $line->getDisplayDescription () , ['class'=>'invLineDesc']) . HTMLTable::makeTd ( number_format ( $line->getAmount (), 2 ), array (
 					'class' => 'tdlabel invLineAmt'
 			) ) );
 		}

@@ -1310,7 +1310,8 @@ input:checked + .hhk-slider:before {
     }
 }
 
-.addnlChg input[readonly] {
+.addnlChg input[readonly],
+.hhk-houseTotal input[readonly] {
 	background-color: transparent;
 	border: none;
 }

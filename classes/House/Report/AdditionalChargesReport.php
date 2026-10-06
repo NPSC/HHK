@@ -182,6 +182,7 @@ class AdditionalChargesReport extends AbstractReport implements ReportInterface 
     ifnull(pgn.Name_Last, '') as `pgLast`,
     ifnull(vs.Description, '') as `Status_Title`,
     ifnull(i.Invoice_Number, '') as `Invoice_Number`,
+    sum(ifnull(il.Quantity, 0)) as `Quantity`,
     sum(ifnull(il.Amount, '')) as `Invoice_Amount`,
     if(trim(ba.Name_Full) != '', ba.Name_Full, ba.Company) as `Billed To`,
     il.Description as `Additional Charge/Discount`,
@@ -305,6 +306,7 @@ where i.Deleted = 0 and " . $whDates . $whBilling . $whDiags . $whCharges . " gr
         $fields[] = array($this->addnlChargeLabel . '/' . $this->discountLabel, 'Additional Charge/Discount', 'checked', '', 'string', '20');
         $fields[] = array("Billed To", 'Billed To', 'checked', '', 'string', '20');
         //$fields[] = array("Nights Billed", "PaidNights", 'checked', '', 'string', '20');
+        $fields[] = array("Quantity", 'Quantity', 'checked', '', 'string', '10');
         $fields[] = array("Amount", 'Invoice_Amount', 'checked', '', 'string', '15');
         //$fields[] = array("Invoice Status", 'Invoice_Status_Title', 'checked', '', 'string',('MemberType", "patient", "Patient") . " Last", 'Name_Last', '
 
@@ -381,6 +383,7 @@ where i.Deleted = 0 and " . $whDates . $whBilling . $whDiags . $whCharges . " gr
 
         foreach($this->resultSet as $k=>$r) {
             $this->resultSet[$k]["Invoice_Amount"] = "$" . number_format($r["Invoice_Amount"],2);
+            $this->resultSet[$k]["Quantity"] = floatval($r["Quantity"]);
             if($outputType == ""){
                 $this->resultSet[$k]["Invoice_Number"] = HTMLContainer::generateMarkup('a', $r['Invoice_Number'], array('href'=>'ShowInvoice.php?invnum='.$r['Invoice_Number'], 'target'=>'_blank'));
                 $this->resultSet[$k]["idVisit"] = HTMLContainer::generateMarkup('div', $r['idVisit'], array('class'=>'hhk-viewVisit', 'data-gid'=>"", 'data-vid'=>$r['visitId'], 'data-span'=>$r['Span'], 'style'=>'display:inline-table;'));
@@ -420,7 +423,7 @@ where i.Deleted = 0 and " . $whDates . $whBilling . $whDiags . $whCharges . " gr
             $whCharges = " and il.description in (" . $whCharges . ")";
         }
 
-        $query = 'select il.description, count(*) as `count` from invoice_line il
+        $query = 'select il.description, sum(il.Quantity) as `count` from invoice_line il
 join invoice i on il.Invoice_Id = i.idInvoice
 join visit v on i.Order_Number = v.idVisit and i.Suborder_Number = v.Span
 where il.Item_Id = ' . ItemId::AddnlCharge . ' and 
@@ -429,7 +432,14 @@ concat(v.idVisit, "-", v.Span) in (' . $visitIds .') ' . $whCharges . '
 group by il.Description';
 
         $stmt = $this->dbh->query($query);
-        return $stmt->fetchAll(\PDO::FETCH_ASSOC);
+        $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+
+        // Quantity is DECIMAL; drop the trailing zeros
+        foreach ($rows as $k => $r) {
+            $rows[$k]['count'] = floatval($r['count']);
+        }
+
+        return $rows;
 
     }
 
@@ -631,7 +641,7 @@ group by de.`description` order by de.Order asc, de.`Code` asc
             $flds = array();
 
             foreach ($this->filteredFields as $f) {
-                $flds[] = $r[$f[1]];
+                $flds[] = ($f[1] == 'Quantity' ? floatval($r[$f[1]]) : $r[$f[1]]);
             }
 
             $row = $writer->convertStrings($hdr, $flds);

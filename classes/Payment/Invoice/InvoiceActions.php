@@ -5,6 +5,7 @@ namespace HHK\Payment\Invoice;
 use HHK\sec\Session;
 use HHK\HTMLControls\{HTMLTable, HTMLContainer};
 use HHK\Payment\Statement;
+use HHK\Payment\Invoice\InvoiceLine\AbstractInvoiceLine;
 use HHK\Exception\{RuntimeException, PaymentException};
 
 /**
@@ -62,6 +63,9 @@ class InvoiceActions {
         v.idVisit,
         v.Span,
         il.Description,
+        il.Item_Id,
+        il.Quantity,
+        il.Price,
         il.Amount as `LineAmount`,
         il.Deleted as `Item_Deleted`
     FROM
@@ -92,12 +96,12 @@ class InvoiceActions {
                     if ($l['Item_Deleted'] == 0 && $lines[0]['Deleted'] == 0) {
 
                         $tbl->addBodyTr(
-                                HTMLTable::makeTd($l['Description'], array('class' => 'tdlabel'))
+                                HTMLTable::makeTd(AbstractInvoiceLine::formatDisplayDescription($l['Description'], $l['Item_Id'], $l['Quantity'], $l['Price']), array('class' => 'tdlabel'))
                                 . HTMLTable::makeTd(number_format($l['LineAmount'], 2), array('style' => 'text-align:right;')));
                     } else {
                         // Show deleted Itmes
                         $tbl->addBodyTr(
-                                HTMLTable::makeTd($l['Description'], array('class' => 'tdlabel'))
+                                HTMLTable::makeTd(AbstractInvoiceLine::formatDisplayDescription($l['Description'], $l['Item_Id'], $l['Quantity'], $l['Price']), array('class' => 'tdlabel'))
                                 . HTMLTable::makeTd(number_format($l['LineAmount'], 2), array('style' => 'text-align:right;')));
                     }
                 }

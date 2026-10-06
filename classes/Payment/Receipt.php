@@ -64,7 +64,7 @@ class Receipt {
 					$taxAmt += $line->getAmount() - $lineAmt;
 				}
 
-				$tbl->addBodyTr(HTMLTable::makeTd($line->getDescription() . ':', array('class'=>'tdlabel', 'style'=>'font-size:.8em;')) . HTMLTable::makeTd(number_format($lineAmt, 2), array('style'=>'font-size:.8em;')));
+				$tbl->addBodyTr(HTMLTable::makeTd($line->getDisplayDescription() . ':', array('class'=>'tdlabel', 'style'=>'font-size:.8em;')) . HTMLTable::makeTd(number_format($lineAmt, 2), array('style'=>'font-size:.8em;')));
 			}
 
 			// Tax amount
@@ -75,7 +75,7 @@ class Receipt {
 		} else {
 			// No taxes.
 			foreach ($invoice->getLines($dbh) as $line) {
-				$tbl->addBodyTr(HTMLTable::makeTd($line->getDescription() . ':', array('class'=>'tdlabel', 'style'=>'font-size:.8em;')) . HTMLTable::makeTd(number_format($line->getAmount(), 2), array('style'=>'font-size:.8em;')));
+				$tbl->addBodyTr(HTMLTable::makeTd($line->getDisplayDescription() . ':', array('class'=>'tdlabel', 'style'=>'font-size:.8em;')) . HTMLTable::makeTd(number_format($line->getAmount(), 2), array('style'=>'font-size:.8em;')));
 			}
 		}
 	}
