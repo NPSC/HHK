@@ -735,6 +735,13 @@ class CloudbedsImport extends AbstractImport implements ImportInterface {
 
         // patient, PSG, registration and hospital stay
         $hospitalTitle = trim($values['hospital'] ?? '');
+        // no hospital field, but a referring source mapped to a hospital (see CloudbedsValueMaps::REFERRAL_SOURCE)
+        if ($hospitalTitle === '' && ($referralHospitalId = $this->config->getMappedHospitalId((string) ($values['referral.source'] ?? ''))) > 0) {
+            $hospitalTitle = $this->getHospitalTitle($referralHospitalId);
+            if ($hospitalTitle === '') {
+                $warnings[] = "The hospital mapped to referring source '{$values['referral.source']}' no longer exists in HHK";
+            }
+        }
         if ($hospitalTitle === '' && $this->config->getDefaultHospitalId() > 0) {
             $hospitalTitle = $this->getHospitalTitle($this->config->getDefaultHospitalId());
             if ($hospitalTitle === '') {

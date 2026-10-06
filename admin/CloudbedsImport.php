@@ -189,7 +189,7 @@ if (filter_has_var(INPUT_POST, "cmd")) {
                 $return = $invoiceImporter->startImport($limit);
                 break;
             case 'createMissingInvoiceItems':
-                $return = ["success" => $invoiceCsv->createMissingItems() . " item(s) created"];
+                $return = ["success" => $invoiceCsv->createMissingItems() . " additional charge(s) created"];
                 break;
             case 'retryInvoiceFailed':
                 $return = ["success" => $invoiceStaging->retryFailed() . " records will be retried"];
@@ -366,6 +366,12 @@ foreach ($stagedValues['statuses'] as $status) {
 }
 ksort($cbRooms, SORT_NATURAL | SORT_FLAG_CASE);
 ksort($cbMethods, SORT_NATURAL | SORT_FLAG_CASE);
+// referring sources (free text from the mapped custom field), each mapped to a hospital in the Referring Sources section
+$cbReferrals = [];
+foreach (array_keys($staging->summarizeGenLookupValues($mapper, ['referral.source' => 'referral'])['referral'] ?? []) as $referral) {
+    $cbReferrals[$referral] = $referral;
+}
+ksort($cbReferrals, SORT_NATURAL | SORT_FLAG_CASE);
 
 foreach ($staging->summarizeCustomFields($mapper) as $f) {
     $addCbField($f['scope'], $f);
@@ -565,6 +571,7 @@ $valueMapsMkup = HTMLContainer::generateMarkup('div',
     $valueMapSection(CloudbedsValueMaps::ROOM, 'Rooms', 'Which HHK room each Cloudbeds room is imported as. Rooms left as they are are matched to the HHK room with the same name, or created by that name if "Create Missing" (Rooms) is on above; the button here does the same thing now instead of waiting for import.', $cbRooms, $roomOptions, '-- Match by name --', fn() => '', $createRoomsBtn)
     . $valueMapSection(CloudbedsValueMaps::PAYMENT_METHOD, 'Payment Methods', 'How payments are recorded. Card and other methods are recorded as external payments.', $cbMethods, $toOptions(CloudbedsValueMaps::PAY_TYPE_CHOICES), '-- Default --', $methodDefault)
     . $valueMapSection(CloudbedsValueMaps::RESERVATION_STATUS, 'Reservation Statuses', 'What each Cloudbeds reservation status is imported as. Checked out and staying reservations also get a visit and its folio.', $cbStatuses, $toOptions(CloudbedsValueMaps::STATUS_CHOICES), '-- Default --', $statusDefault)
+    . $valueMapSection(CloudbedsValueMaps::REFERRAL_SOURCE, 'Referring Sources', 'Which HHK hospital each Cloudbeds referring source is imported as. Applies to reservations that don\'t name a hospital of their own; referring sources left as they are get the default hospital, if one is set.', $cbReferrals, $hospitalOptions, '-- Default hospital --', fn() => '')
     . $valueMapSection(CloudbedsValueMaps::CHARGE_ITEM, 'Charge Items', 'What each kind of folio charge is imported as on the invoice. Room rates are lodging. Anything left as default is an additional charge, or a discount when the amount is negative. Charges set to Do not import are left off the invoice.', $cbChargeTypes, $toOptions(CloudbedsValueMaps::CHARGE_ITEM_CHOICES), '-- Default --', $chargeDefault),
     ['class' => 'hhk-flex flex-wrap']);
 
@@ -1018,7 +1025,7 @@ if ($invoiceProgress['total'] > 0) {
                 <h2>Additional Charge Invoices (CSV)</h2>
                 <p>Creates a $0, already-paid invoice with one line for each row, on the visit found by the Cloudbeds reservation id the row names
                     (the same id the fetch/import above uses - a reservation has to already be imported as a visit before its invoices can be added).
-                    CSV columns: <strong>Reservation ID</strong>, <strong>Item</strong>, <strong>Date</strong>, and optionally <strong>Notes</strong> (copied to the invoice's Notes).
+                    CSV columns: <strong>Reservation Number</strong>, <strong>Item and Service Name</strong>, <strong>Service Date</strong>, and optionally <strong>Quantity</strong> (defaults to 1) and <strong>Transaction Notes</strong> (copied to the invoice's Notes).
                     One row is one invoice with one line - rows are not grouped.</p>
                 <p>
                     <input type="file" id="invoiceCsvFile" accept=".csv,text/csv">
@@ -1027,9 +1034,9 @@ if ($invoiceProgress['total'] > 0) {
                 </p>
 
                 <?php if (count($unmatchedItems) > 0) { ?>
-                <p class="ui-state-highlight ui-corner-all p-2"><?php echo count($unmatchedItems); ?> item name(s) in the staged rows don't match an existing HHK item:
+                <p class="ui-state-highlight ui-corner-all p-2"><?php echo count($unmatchedItems); ?> additional charge name(s) in the staged rows don't match an existing HHK additional charge (Addnl_Charge):
                     <?php echo cbEsc(implode(', ', array_keys($unmatchedItems))); ?>.
-                    <button class="ui-button ui-corner-all ml-2 cbAction cbCmd" data-cmd="createMissingInvoiceItems">Create Missing Items</button></p>
+                    <button class="ui-button ui-corner-all ml-2 cbAction cbCmd" data-cmd="createMissingInvoiceItems">Create Missing Additional Charges</button></p>
                 <?php } ?>
 
                 <div class="hhk-flex mt-2">

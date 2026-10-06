@@ -45,6 +45,7 @@ class CloudbedsConfigStore {
         CloudbedsValueMaps::PAYMENT_METHOD => 'paymentMethodMap',
         CloudbedsValueMaps::RESERVATION_STATUS => 'reservationStatusMap',
         CloudbedsValueMaps::CHARGE_ITEM => 'chargeItemMap',
+        CloudbedsValueMaps::REFERRAL_SOURCE => 'referralMap',
     ];
 
     /** crm_field_map.crm_object values */

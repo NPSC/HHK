@@ -5,7 +5,9 @@ use HHK\Payment\CashTX;
 use HHK\Payment\Invoice\Invoice;
 use HHK\Payment\Invoice\InvoiceLine\OneTimeInvoiceLine;
 use HHK\Payment\PaymentResponse\CashResponse;
+use HHK\Common;
 use HHK\Purchase\Item;
+use HHK\SysConst\ItemId;
 use HHK\sec\Session;
 
 /**
@@ -81,9 +83,9 @@ class CloudbedsInvoiceImporter {
             return $this->result(CloudbedsInvoiceStaging::SKIPPED, null, [], "Cloudbeds reservation $reservationId was not imported as a visit");
         }
 
-        $idItem = $this->findItemId((string) $row['item']);
-        if ($idItem === 0) {
-            return $this->result(CloudbedsInvoiceStaging::SKIPPED, null, [], "Item '{$row['item']}' does not exist in HHK - use Create Missing Items first");
+        $charge = $this->findAdditionalCharge((string) $row['item']);
+        if ($charge === null) {
+            return $this->result(CloudbedsInvoiceStaging::SKIPPED, null, [], "Additional charge '{$row['item']}' does not exist in HHK - use Create Missing Additional Charges first");
         }
 
         $data = $resv['hhkData'];
@@ -102,9 +104,11 @@ class CloudbedsInvoiceImporter {
         $invoice = new Invoice($this->dbh);
         $invoice->newInvoice($this->dbh, 0, $idPayor, $idRegistration, $idVisit, 0, $notes, (string) $row['invoiceDate'], $username, 'CSV additional charge');
 
-        $item = new Item($this->dbh, $idItem, 0);
+        // an additional charge is the AddnlCharge item with the charge's own name as the line description (see
+        // AbstractInvoiceLine::createNewLine()), the same way HouseServices records one from the charge dialog
+        $item = new Item($this->dbh, ItemId::AddnlCharge, 0);
         $line = new OneTimeInvoiceLine();
-        $line->createNewLine($item, 1);
+        $line->createNewLine($item, (float) $row['quantity'], $charge['Description']);
         $invoice->addLine($this->dbh, $line, $username);
 
         // record a $0 cash payment so the invoice reads as Paid rather than sitting Unpaid at a $0 balance
@@ -122,19 +126,21 @@ class CloudbedsInvoiceImporter {
     }
 
     /**
-     * Match an item name to an existing, non-deleted HHK item, case insensitive. 0 if none matches -
-     * CloudbedsInvoiceCsv::createMissingItems() is what creates one.
+     * Match an additional-charge name to an existing Addnl_Charge gen lookup value, case insensitive. Null if none
+     * matches - CloudbedsInvoiceCsv::createMissingItems() is what creates one.
+     *
+     * @return array{Code: string, Description: string}|null
      */
-    protected function findItemId(string $name): int {
+    protected function findAdditionalCharge(string $name): ?array {
         $needle = strtolower(trim($name));
 
-        foreach (Item::loadItems($this->dbh) as $item) {
-            if (strtolower(trim($item['Description'])) === $needle) {
-                return (int) $item['idItem'];
+        foreach (Common::readGenLookupsPDO($this->dbh, CloudbedsInvoiceCsv::ADDNL_CHARGE_TABLE) as $charge) {
+            if (strtolower(trim($charge['Description'])) === $needle) {
+                return $charge;
             }
         }
 
-        return 0;
+        return null;
     }
 
     protected function result(string $status, ?int $hhkId, array $data = [], string $message = ''): array {

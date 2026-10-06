@@ -179,4 +179,15 @@ class CloudbedsConfigTest extends TestCase
         $this->assertSame('7', $c->getRaw()['defaultHospital']);
         $this->assertSame(['1', '2'], $c->getRaw()['propertyIds']);
     }
+
+    public function testReferringSourceMapsToHospital(): void
+    {
+        $c = new CloudbedsConfig(['apiKey' => 'k', 'organizationId' => '1', 'propertyIds' => [42], 'referralMap' => ['VA appt' => '2', 'Fire EVAC' => '1']]);
+
+        // matched the same way room names are: case, spacing and punctuation don't matter
+        $this->assertSame(2, $c->getMappedHospitalId('va  APPT'));
+        $this->assertSame(1, $c->getMappedHospitalId('fire evac'));
+        $this->assertSame(0, $c->getMappedHospitalId('Appointments'), 'an unmapped source gets no hospital');
+        $this->assertSame(0, $c->getMappedHospitalId(''));
+    }
 }

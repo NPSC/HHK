@@ -32,6 +32,7 @@ class CloudbedsInvoiceStaging {
             `item` VARCHAR(255) NOT NULL,
             `invoiceDate` VARCHAR(30) NOT NULL,
             `notes` VARCHAR(1000) NOT NULL DEFAULT '',
+            `quantity` DECIMAL(22,10) NOT NULL DEFAULT 1,
             `status` ENUM('pending', 'processing', 'done', 'error', 'skipped') NOT NULL DEFAULT 'pending',
             `workerId` VARCHAR(32) NULL,
             `hhkId` INT NULL,
@@ -42,6 +43,12 @@ class CloudbedsInvoiceStaging {
             UNIQUE KEY `uq_row` (`rowHash`),
             KEY `idx_status` (`status`, `id`)
         ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4");
+
+        // tables created before the Quantity column existed
+        $stmt = $this->dbh->query("SHOW COLUMNS FROM `" . self::TBL_NAME . "` LIKE 'quantity'");
+        if ($stmt->rowCount() === 0) {
+            $this->dbh->exec("ALTER TABLE `" . self::TBL_NAME . "` ADD COLUMN `quantity` DECIMAL(22,10) NOT NULL DEFAULT 1 AFTER `notes`");
+        }
     }
 
     /**
@@ -58,9 +65,9 @@ class CloudbedsInvoiceStaging {
      *
      * @return bool true if a new row was inserted
      */
-    public function upsert(string $rowHash, string $reservationId, string $item, string $invoiceDate, string $notes): bool {
-        $stmt = $this->dbh->prepare("insert ignore into `" . self::TBL_NAME . "` (`rowHash`, `reservationId`, `item`, `invoiceDate`, `notes`) values (:rowHash, :reservationId, :item, :invoiceDate, :notes)");
-        $stmt->execute([':rowHash' => $rowHash, ':reservationId' => $reservationId, ':item' => $item, ':invoiceDate' => $invoiceDate, ':notes' => $notes]);
+    public function upsert(string $rowHash, string $reservationId, string $item, string $invoiceDate, string $notes, float $quantity = 1): bool {
+        $stmt = $this->dbh->prepare("insert ignore into `" . self::TBL_NAME . "` (`rowHash`, `reservationId`, `item`, `invoiceDate`, `notes`, `quantity`) values (:rowHash, :reservationId, :item, :invoiceDate, :notes, :quantity)");
+        $stmt->execute([':rowHash' => $rowHash, ':reservationId' => $reservationId, ':item' => $item, ':invoiceDate' => $invoiceDate, ':notes' => $notes, ':quantity' => $quantity]);
 
         return $stmt->rowCount() > 0;
     }

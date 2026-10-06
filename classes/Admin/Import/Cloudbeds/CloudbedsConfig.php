@@ -131,7 +131,7 @@ class CloudbedsConfig {
             throw new \InvalidArgumentException('stayedFrom must not be after stayedTo');
         }
 
-        foreach (['reservationStatusMap' => CloudbedsValueMaps::RESERVATION_STATUS, 'paymentMethodMap' => CloudbedsValueMaps::PAYMENT_METHOD, 'roomMap' => CloudbedsValueMaps::ROOM, 'chargeItemMap' => CloudbedsValueMaps::CHARGE_ITEM] as $key => $type) {
+        foreach (['reservationStatusMap' => CloudbedsValueMaps::RESERVATION_STATUS, 'paymentMethodMap' => CloudbedsValueMaps::PAYMENT_METHOD, 'roomMap' => CloudbedsValueMaps::ROOM, 'chargeItemMap' => CloudbedsValueMaps::CHARGE_ITEM, 'referralMap' => CloudbedsValueMaps::REFERRAL_SOURCE] as $key => $type) {
             if (isset($settings[$key]) && !is_array($settings[$key])) {
                 throw new \InvalidArgumentException("$key must be a list of mappings");
             }
@@ -255,6 +255,26 @@ class CloudbedsConfig {
         foreach ((array) ($this->cfg['roomMap'] ?? []) as $name => $idResource) {
             if (CloudbedsValueMaps::normalize(CloudbedsValueMaps::ROOM, (string) $name) === $wanted && ctype_digit((string) $idResource)) {
                 return (int) $idResource;
+            }
+        }
+
+        return 0;
+    }
+
+    /**
+     * The HHK hospital a Cloudbeds referring source (free text) is mapped to
+     *
+     * @return int idHospital, 0 if the value isn't mapped (the reservation then gets the default hospital, if any)
+     */
+    public function getMappedHospitalId(string $referralSource): int {
+        $wanted = CloudbedsValueMaps::normalize(CloudbedsValueMaps::REFERRAL_SOURCE, $referralSource);
+        if ($wanted === '') {
+            return 0;
+        }
+
+        foreach ((array) ($this->cfg['referralMap'] ?? []) as $name => $idHospital) {
+            if (CloudbedsValueMaps::normalize(CloudbedsValueMaps::REFERRAL_SOURCE, (string) $name) === $wanted && ctype_digit((string) $idHospital)) {
+                return (int) $idHospital;
             }
         }
 

@@ -65,6 +65,7 @@ class CloudbedsFieldMapper {
         ],
         'Hospital Stay' => [
             'hospital' => 'Hospital',
+            'referral.source' => 'Referring Source (maps to Hospital)',
             'diagnosis' => 'Diagnosis',
             'mrn' => 'MRN',
         ],

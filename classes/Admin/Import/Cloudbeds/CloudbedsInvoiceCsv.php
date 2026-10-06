@@ -1,15 +1,15 @@
 <?php
 namespace HHK\Admin\Import\Cloudbeds;
 
-use HHK\Purchase\Item;
-use HHK\SysConst\ItemType;
+use HHK\Common;
 
 /**
  * Parses and stages the $0 "additional charge" invoice CSV. Columns (header row required, order irrelevant):
- *  - Reservation ID (required): the Cloudbeds reservation id the invoice's visit is looked up by, see CloudbedsInvoiceImporter
- *  - Item (required): matched to an existing HHK item by name (case insensitive); see unmatchedItems()/createMissingItems()
- *  - Date (required): the invoice date, any format PHP's DateTime can parse
- *  - Notes (optional): appended to the invoice's Notes
+  - Reservation Number (required): the Cloudbeds reservation id the invoice's visit is looked up by, see CloudbedsInvoiceImporter
+  - Item and Service Name (required): matched to an existing HHK item by name (case insensitive); see unmatchedItems()/createMissingItems()
+  - Service Date (required): the invoice date, any format PHP's DateTime can parse
+  - Transaction Notes (optional): appended to the invoice's Notes
+  - Quantity (optional): how many of the item the invoice line is for - a positive number, 1 when the column is absent or blank
  *
  * One row is one invoice with one $0 line - there is no grouping of rows into a multi-line invoice.
  *
@@ -20,7 +20,10 @@ use HHK\SysConst\ItemType;
  */
 class CloudbedsInvoiceCsv {
 
-    public const REQUIRED_COLUMNS = ['Reservation ID', 'Item', 'Date'];
+    /** gen lookup table of the additional charges an invoice line can be for (see CloudbedsInvoiceImporter) */
+    public const ADDNL_CHARGE_TABLE = 'Addnl_Charge';
+
+    public const REQUIRED_COLUMNS =['Reservation Number', 'Item and Service Name', 'Service Date'];
 
     public function __construct(protected \PDO $dbh, protected CloudbedsInvoiceStaging $staging) {
         $this->staging->ensureTables();
@@ -55,13 +58,14 @@ class CloudbedsInvoiceCsv {
             $lineNum = $i + 2; // 1 is the header
             $r = array_combine($header, array_pad(array_slice($row, 0, count($header)), count($header), ''));
 
-            $reservationId = trim((string) ($r['Reservation ID'] ?? ''));
-            $item = trim((string) ($r['Item'] ?? ''));
-            $dateRaw = trim((string) ($r['Date'] ?? ''));
-            $notes = trim((string) ($r['Notes'] ?? ''));
+            $reservationId = trim((string) ($r['Reservation Number'] ?? ''));
+            $item = trim((string) ($r['Item and Service Name'] ?? ''));
+            $dateRaw = trim((string) ($r['Service Date'] ?? ''));
+            $notes = trim((string) ($r['Transaction Notes'] ?? ''));
+            $quantityRaw = trim((string) ($r['Quantity'] ?? ''));
 
             if ($reservationId === '' || $item === '' || $dateRaw === '') {
-                $errors[] = "Line $lineNum: Reservation ID, Item and Date are required";
+                $errors[] = "Line $lineNum: Reservation Number, Item and Service Name, and Service Date are required";
                 continue;
             }
 
@@ -71,11 +75,17 @@ class CloudbedsInvoiceCsv {
                 continue;
             }
 
+            $quantity = $quantityRaw === '' ? '1' : $quantityRaw;
+            if (!is_numeric($quantity) || (float) $quantity <= 0) {
+                $errors[] = "Line $lineNum: Quantity must be a positive number, got '$quantityRaw'";
+                continue;
+            }
+
             // the row's position in the file is part of the hash so two genuinely identical rows in one file both
             // stage, while re-uploading the same file is a no-op
-            $rowHash = sha1($reservationId . "\x1f" . $item . "\x1f" . $date . "\x1f" . $notes . "\x1f" . $i);
+            $rowHash = sha1($reservationId . "\x1f" . $item . "\x1f" . $date . "\x1f" . $notes . "\x1f" . $quantity . "\x1f" . $i);
 
-            if ($this->staging->upsert($rowHash, $reservationId, $item, $date, $notes)) {
+            if ($this->staging->upsert($rowHash, $reservationId, $item, $date, $notes, (float) $quantity)) {
                 $staged++;
             } else {
                 $duplicates++;
@@ -94,15 +104,16 @@ class CloudbedsInvoiceCsv {
     }
 
     /**
-     * Item names on not-yet-imported rows that don't match an existing, non-deleted HHK item by name (case
-     * insensitive), with how many such rows use each.
+     * Additional-charge names on not-yet-imported rows that don't match an existing Addnl_Charge gen lookup value (the
+     * HHK additional charges shown on visit invoices, see GuestEdit's charge dialog), case insensitive, with how many
+     * such rows use each.
      *
      * @return array<string, int>
      */
     public function unmatchedItems(): array {
         $known = [];
-        foreach (Item::loadItems($this->dbh) as $item) {
-            $known[$this->normalize($item['Description'])] = true;
+        foreach (Common::readGenLookupsPDO($this->dbh, self::ADDNL_CHARGE_TABLE) as $charge) {
+            $known[$this->normalize($charge['Description'])] = true;
         }
 
         $unmatched = [];
@@ -116,9 +127,8 @@ class CloudbedsInvoiceCsv {
     }
 
     /**
-     * Create a plain HHK item for every currently-unmatched item name (see unmatchedItems()), the same way a new tax
-     * item is created from the room/item builder (house/ResourceBuilder.php) - an `item` row plus an `item_type_map`
-     * row, just typed as a normal item instead of a tax.
+     * Create an Addnl_Charge gen lookup value for every currently-unmatched name (see unmatchedItems()), the same way
+     * ResourceBuilder adds one: type 'ca' (an additional charge), with a new 'g' code.
      *
      * @return int number created
      */
@@ -128,12 +138,14 @@ class CloudbedsInvoiceCsv {
 
         $this->dbh->beginTransaction();
         try {
+            // Substitute is the charge's default amount (the charge dialog reads it as a number) - a blank one shows as NaN
+            $stmt = $this->dbh->prepare("insert into `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `Type`, `Order`) values (:table, :code, :description, '0', 'ca', 0)");
             foreach ($names as $name) {
-                $stmt = $this->dbh->prepare("insert into `item` (`Description`, `Gl_Code`, `Percentage`, `Timeout_Days`, `First_Order_Id`) values (:description, '', 0, '', 0)");
-                $stmt->execute([':description' => mb_substr($name, 0, 1000)]);
-                $idItem = (int) $this->dbh->lastInsertId();
-
-                $this->dbh->exec("insert into `item_type_map` values ($idItem, " . ItemType::Items . ")");
+                $stmt->execute([
+                    ':table' => self::ADDNL_CHARGE_TABLE,
+                    ':code' => 'g' . Common::incCounter($this->dbh, 'codes'),
+                    ':description' => mb_substr($name, 0, 255),
+                ]);
                 $created++;
             }
             $this->dbh->commit();

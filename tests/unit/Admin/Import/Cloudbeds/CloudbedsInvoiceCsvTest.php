@@ -16,7 +16,7 @@ class InMemoryInvoiceStaging extends CloudbedsInvoiceStaging {
 
     public function ensureTables(): void {}
 
-    public function upsert(string $rowHash, string $reservationId, string $item, string $invoiceDate, string $notes): bool {
+    public function upsert(string $rowHash, string $reservationId, string $item, string $invoiceDate, string $notes, float $quantity = 1): bool {
         foreach ($this->rows as $row) {
             if ($row['rowHash'] === $rowHash) {
                 return false;
@@ -26,7 +26,7 @@ class InMemoryInvoiceStaging extends CloudbedsInvoiceStaging {
         $id = count($this->rows) + 1;
         $this->rows[$id] = [
             'id' => $id, 'rowHash' => $rowHash, 'reservationId' => $reservationId, 'item' => $item,
-            'invoiceDate' => $invoiceDate, 'notes' => $notes, 'status' => self::PENDING,
+            'invoiceDate' => $invoiceDate, 'notes' => $notes, 'quantity' => $quantity, 'status' => self::PENDING,
             'hhkId' => null, 'hhkData' => null, 'message' => null,
         ];
         return true;
@@ -78,7 +78,7 @@ class CloudbedsInvoiceCsvTest extends TestCase
 
     public function testValidRowsAreStaged(): void
     {
-        $this->writeCsv("Reservation ID,Item,Date,Notes\nR1,Pet Fee,2024-01-15,late checkout\nR2,Damage,2024-02-01,\n");
+        $this->writeCsv("Reservation Number,Item and Service Name,Service Date,Transaction Notes\nR1,Pet Fee,2024-01-15,late checkout\nR2,Damage,2024-02-01,\n");
         [$csv, $staging] = $this->csv();
 
         $result = $csv->upload($this->csvPath);
@@ -95,9 +95,48 @@ class CloudbedsInvoiceCsvTest extends TestCase
         $this->assertSame('', $rows[1]['notes'], 'Notes is optional');
     }
 
+    public function testQuantityIsStagedAndDefaultsToOne(): void
+    {
+        $this->writeCsv("Reservation Number,Item and Service Name,Service Date,Quantity\nR1,Pet Fee,2024-01-15,3\nR2,Damage,2024-02-01,\nR3,Damage,2024-02-02,1.5\n");
+        [$csv, $staging] = $this->csv();
+
+        $result = $csv->upload($this->csvPath);
+
+        $this->assertSame(3, $result['staged']);
+        $this->assertSame([], $result['errors']);
+        $rows = array_values($staging->rows);
+        $this->assertSame(3.0, $rows[0]['quantity']);
+        $this->assertSame(1.0, $rows[1]['quantity'], 'a blank Quantity cell means 1');
+        $this->assertSame(1.5, $rows[2]['quantity']);
+    }
+
+    public function testQuantityColumnIsOptional(): void
+    {
+        $this->writeCsv("Reservation Number,Item and Service Name,Service Date\nR1,Pet Fee,2024-01-15\n");
+        [$csv, $staging] = $this->csv();
+
+        $result = $csv->upload($this->csvPath);
+
+        $this->assertSame(1, $result['staged']);
+        $this->assertSame(1.0, array_values($staging->rows)[0]['quantity']);
+    }
+
+    public function testInvalidQuantityIsReportedAndSkipped(): void
+    {
+        $this->writeCsv("Reservation Number,Item and Service Name,Service Date,Quantity\nR1,Pet Fee,2024-01-15,0\nR2,Pet Fee,2024-01-15,-2\nR3,Pet Fee,2024-01-15,two\nR4,Pet Fee,2024-01-15,4\n");
+        [$csv, $staging] = $this->csv();
+
+        $result = $csv->upload($this->csvPath);
+
+        $this->assertSame(1, $result['staged'], 'only the valid row stages');
+        $this->assertCount(3, $result['errors']);
+        $this->assertStringContainsString('Line 2: Quantity must be a positive number', $result['errors'][0]);
+        $this->assertStringContainsString("got 'two'", $result['errors'][2]);
+    }
+
     public function testColumnOrderDoesNotMatter(): void
     {
-        $this->writeCsv("Item,Date,Reservation ID\nPet Fee,2024-01-15,R1\n");
+        $this->writeCsv("Item and Service Name,Service Date,Reservation Number\nPet Fee,2024-01-15,R1\n");
         [$csv, $staging] = $this->csv();
 
         $result = $csv->upload($this->csvPath);
@@ -110,11 +149,11 @@ class CloudbedsInvoiceCsvTest extends TestCase
 
     public function testMissingRequiredColumnThrows(): void
     {
-        $this->writeCsv("Item,Date\nPet Fee,2024-01-15\n");
+        $this->writeCsv("Item and Service Name,Service Date\nPet Fee,2024-01-15\n");
         [$csv] = $this->csv();
 
         $this->expectException(\RuntimeException::class);
-        $this->expectExceptionMessage('Reservation ID');
+        $this->expectExceptionMessage('Reservation Number');
         $csv->upload($this->csvPath);
     }
 
@@ -129,7 +168,7 @@ class CloudbedsInvoiceCsvTest extends TestCase
 
     public function testRowsMissingARequiredFieldAreReportedAndSkipped(): void
     {
-        $this->writeCsv("Reservation ID,Item,Date\n,Pet Fee,2024-01-15\nR2,,2024-01-15\nR3,Pet Fee,\nR4,Pet Fee,2024-01-15\n");
+        $this->writeCsv("Reservation Number,Item and Service Name,Service Date\n,Pet Fee,2024-01-15\nR2,,2024-01-15\nR3,Pet Fee,\nR4,Pet Fee,2024-01-15\n");
         [$csv] = $this->csv();
 
         $result = $csv->upload($this->csvPath);
@@ -143,7 +182,7 @@ class CloudbedsInvoiceCsvTest extends TestCase
 
     public function testUnparseableDateIsReportedAndSkipped(): void
     {
-        $this->writeCsv("Reservation ID,Item,Date\nR1,Pet Fee,not-a-date\n");
+        $this->writeCsv("Reservation Number,Item and Service Name,Service Date\nR1,Pet Fee,not-a-date\n");
         [$csv] = $this->csv();
 
         $result = $csv->upload($this->csvPath);
@@ -155,7 +194,7 @@ class CloudbedsInvoiceCsvTest extends TestCase
 
     public function testReuploadingTheSameFileStagesNothingTwice(): void
     {
-        $this->writeCsv("Reservation ID,Item,Date\nR1,Pet Fee,2024-01-15\nR2,Damage,2024-02-01\n");
+        $this->writeCsv("Reservation Number,Item and Service Name,Service Date\nR1,Pet Fee,2024-01-15\nR2,Damage,2024-02-01\n");
         [$csv, $staging] = $this->csv();
 
         $first = $csv->upload($this->csvPath);
@@ -170,7 +209,7 @@ class CloudbedsInvoiceCsvTest extends TestCase
     public function testTwoIdenticalRowsInOneFileBothStage(): void
     {
         // same reservation/item/date/notes twice - e.g. two separate $0 charges of the same kind on the same day
-        $this->writeCsv("Reservation ID,Item,Date\nR1,Pet Fee,2024-01-15\nR1,Pet Fee,2024-01-15\n");
+        $this->writeCsv("Reservation Number,Item and Service Name,Service Date\nR1,Pet Fee,2024-01-15\nR1,Pet Fee,2024-01-15\n");
         [$csv, $staging] = $this->csv();
 
         $result = $csv->upload($this->csvPath);
