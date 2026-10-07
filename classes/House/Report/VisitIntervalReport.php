@@ -1511,7 +1511,7 @@ ORDER BY s.idVisit , s.Visit_Span");
             HTMLContainer::generateMarkup('h3', 'Statistics')
             . HTMLContainer::generateMarkup('p', 'These numbers are specific to this report\'s selected filtering parameters.')
             . $sTbl->generateMarkup()
-            , ['id' => 'visitStats', 'class' => 'mb-3']);
+            , ['id' => 'visitStats', 'class' => 'hhk-visitdialog mb-3']);
 
     }
 
