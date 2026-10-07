@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace HHK;
 
 use DateTime;
@@ -29,34 +31,24 @@ use HHK\SysConst\ChecklistType;
 
 class Checklist
 {
-    const ChecklistRootTablename = 'Checklist';
+    public const string ChecklistRootTablename = 'Checklist';
 
     // gen_lookups.Attributes key marking a checklist item as required
-    const RequiredAttr = 'required';
+    public const string RequiredAttr = 'required';
 
     // gen_lookups.Attributes key for the color of a checklist item's calendar icon
-    const IconColorAttr = 'iconColor';
+    public const string IconColorAttr = 'iconColor';
 
     // Shown on the calendar for a missing required item that has no icon of its own
-    const DefaultMissingIcon = 'bi bi-exclamation-triangle-fill';
-
-    public string $checklistType;
-
-    public function __construct(\PDO $dbh, $checklistType) {
-
-        $this->checklistType = $checklistType;
-
-        Common::readGenLookupsPDO($dbh, self::ChecklistRootTablename, 'Order');
-
-    }
+    public const string DefaultMissingIcon = 'bi bi-exclamation-triangle-fill';
 
     /**
      * Creates a list of checklist categories with the USE column.
      * @param \PDO $dbh
-     * @param \HHK\sec\Labels $labels
+     * @param Labels $labels
      * @return string
      */
-    public static function createChecklistCategories(\PDO $dbh, Labels $labels) {
+    public static function createChecklistCategories(\PDO $dbh, Labels $labels): string {
 
         $checklistDescriptions = [
             ChecklistType::PSG => "This checklist applies to " . Labels::getString("statement", "psgPlural", "PSGs") . " as a whole and follow through from " . Labels::getString("guestEdit", "reservationTitle", "Reservation") . " to " . Labels::getString("guestEdit", "reservationTitle", "Reservation"),
@@ -73,7 +65,7 @@ class Checklist
      * @param \PDO $dbh
      * @return string
      */
-    public static function createChecklistTypes(\PDO $dbh) {
+    public static function createChecklistTypes(\PDO $dbh): string {
 
         // Chceklist category selectors
         $stmt = $dbh->query("SELECT
@@ -100,7 +92,7 @@ class Checklist
         return $selChecklists;
     }
 
-    public static function createEditMarkup(\PDO $dbh){
+    public static function createEditMarkup(\PDO $dbh): string{
 
         $labels = new Labels();
         $cblistSelections = self::createChecklistCategories($dbh, $labels);
@@ -140,10 +132,12 @@ class Checklist
 
     /**
      * Create a checklist for a user page
+     * @param \PDO $dbh
      * @param mixed $entityId Id for the checklist type.
+     * @param string $checklistType 
      * @return string
      */
-    public static function createChecklistMkup(\PDO $dbh, $entityId, $checklistType) {
+    public static function createChecklistMkup(\PDO $dbh, $entityId, string $checklistType): string {
 
         $clName = '';
         $checklistTbl = new HTMLTable();
@@ -224,7 +218,7 @@ ORDER BY g.`Order`;";
      * @param string $checklistType
      * @return int number of affected items
      */
-    public static function saveChecklist(\PDO $dbh, array $post, int $entityId, string $checklistType) {
+    public static function saveChecklist(\PDO $dbh, array $post, int $entityId, string $checklistType): int {
 
         $args = [
             'checklistDate' => ['filter'=>FILTER_SANITIZE_FULL_SPECIAL_CHARS, 'flags'=>FILTER_FORCE_ARRAY],
