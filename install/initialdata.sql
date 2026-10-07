@@ -3072,6 +3072,16 @@ Thank you
 		'1'
 	),
 	(
+		'stmtShowHospital',
+		'true',
+		'b',
+		'f',
+		'',
+		'Show Hospital on Statements',
+		'',
+		'1'
+	),
+	(
 		'sId',
 		'11',
 		'i',

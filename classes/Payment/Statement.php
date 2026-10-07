@@ -1440,7 +1440,9 @@ WHERE
             }
         }
 
-        $tbl->addBodyTr(HTMLTable::makeTd('Provider:', array('class'=>'tdlabel')) . HTMLTable::makeTd($hospital));
+        if($uS->stmtShowHospital){
+            $tbl->addBodyTr(HTMLTable::makeTd('Provider:', array('class'=>'tdlabel')) . HTMLTable::makeTd($hospital));
+        }
 
         // Set up balance prompt ..
         $bal = $totalCharge - ($totalThirdPayments + $totalGuestPayments);
