@@ -17,55 +17,29 @@ use HHK\TableLog\HouseLog;
 class NewGuest
 {
 
-    /**
-     *
-     * @var \DateTimeInterface
-     */
-    protected $startDT;
+    protected \DateTimeInterface $startDT;
 
-    /**
-     *
-     * @var \DateTimeInterface
-     */
-    protected $endDT;
 
-    /**
-     * Summary of numberNewGuests
-     * @var int
-     */
+    protected \DateTimeInterface $endDT;
+
+
     protected int $numberNewGuests;
-    /**
-     * Summary of numberReturnGuests
-     * @var int
-     */
+
     protected int $numberReturnGuests;
 
-    /**
-     * Summary of numberNewPSGs
-     * @var int
-     */
     protected int $numberNewPSGs;
-    /**
-     * Summary of numberReturnPSGs
-     * @var int
-     */
+
     protected int $numberReturnPSGs;
 
-    /**
-     * Summary of newGuestIds
-     * @var array
-     */
+
     protected array $newGuestIds;
-    /**
-     * Summary of newPSGIds
-     * @var array
-     */
+
     protected array $newPSGIds;
 
 
     /**
      */
-    public function __construct($startDate, $endDate)
+    public function __construct(\DateTimeInterface|string $startDate, \DateTimeInterface|string $endDate)
     {
         $this->setStartDT($startDate);
         $this->setEndDT($endDate);
@@ -204,7 +178,7 @@ class NewGuest
      * @param mixed $whereStr
      * @return string
      */
-    protected function queryNewGuests($pgTitle, $whereStr = '') {
+    protected function queryNewGuests($pgTitle, $whereStr = ''): string {
 
         return "SELECT
     s.idName,
@@ -392,7 +366,7 @@ ORDER BY `First Stay`";
     /**
      * @return int
      */
-    public function getNumberNewGuests()
+    public function getNumberNewGuests(): int
     {
         return $this->numberNewGuests;
     }
@@ -400,7 +374,7 @@ ORDER BY `First Stay`";
     /**
      * @return int
      */
-    public function getNumberReturnGuests()
+    public function getNumberReturnGuests(): int
     {
         return $this->numberReturnGuests;
     }
@@ -408,7 +382,7 @@ ORDER BY `First Stay`";
     /**
      * @return int
      */
-    public function getNumberNewPSGs()
+    public function getNumberNewPSGs(): int
     {
         return $this->numberNewPSGs;
     }
@@ -416,7 +390,7 @@ ORDER BY `First Stay`";
     /**
      * @return int
      */
-    public function getNumberReturnPSGs()
+    public function getNumberReturnPSGs(): int
     {
         return $this->numberReturnPSGs;
     }
@@ -425,7 +399,7 @@ ORDER BY `First Stay`";
     /**
      * @return \DateTimeInterface
      */
-    public function getStartDT()
+    public function getStartDT(): \DateTimeInterface
     {
         return $this->startDT;
     }
@@ -433,13 +407,13 @@ ORDER BY `First Stay`";
     /**
      * @return \DateTimeInterface
      */
-    public function getEndDT()
+    public function getEndDT(): \DateTimeInterface
     {
         return $this->endDT;
     }
 
 
-    public function setStartDT($startDate)
+    public function setStartDT(\DateTimeInterface|string $startDate): void
     {
         if ($startDate instanceof \DateTimeInterface) {
             $this->startDT = $startDate;
@@ -449,7 +423,7 @@ ORDER BY `First Stay`";
 
     }
 
-    public function setEndDT($endDate)
+    public function setEndDT(\DateTimeInterface|string $endDate): void
     {
         if ($endDate instanceof \DateTimeInterface) {
             $this->endDT = $endDate;
@@ -457,8 +431,6 @@ ORDER BY `First Stay`";
             $this->endDT = new \DateTime($endDate);
         }
     }
-
-
-
+    
 }
 
