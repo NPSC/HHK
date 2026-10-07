@@ -491,6 +491,47 @@ $(document).ready(function () {
     });
 
     
+    // Additional charge & discount amounts: strip non-numeric characters as the user types.
+    $("#mainTabs").on('input', '.hhk-chargeAmt', function () {
+        var val = this.value;
+        var stripped = (val.charAt(0) === '-' ? '-' : '') + val.replace(/[^0-9.]/g, '');
+
+        if (stripped !== val) {
+            var pos = Math.max(0, this.selectionStart - (val.length - stripped.length));
+            this.value = stripped;
+            this.setSelectionRange(pos, pos);
+        }
+    });
+
+    // On blur, default to 0. Charges are forced positive and discounts negative, both to 2 decimal places.
+    // Rate adjustments can be any positive or negative number and are not rounded.
+    $("#mainTabs").on('blur', '.hhk-chargeAmt', function () {
+        var amt = parseFloat(this.value),
+            sign = $(this).data('sign');
+
+        if (isNaN(amt)) {
+            amt = 0;
+        }
+
+        if (sign === 'any') {
+            this.value = (amt === 0 ? '0' : String(amt));
+            return;
+        }
+
+        if (sign === 'neg') {
+            amt = 0 - Math.abs(amt);
+        } else if (sign === 'pos') {
+            amt = Math.abs(amt);
+        }
+
+        // avoid showing "-0.00"
+        if (Math.abs(amt) < 0.005) {
+            amt = 0;
+        }
+
+        this.value = amt.toFixed(2);
+    });
+
     $("#mainTabs").on('click', '.hhk-saveLookup', function () {
         let $frm = $(this).closest('form');
         let sel = $frm.find('select.hhk-selLookup');

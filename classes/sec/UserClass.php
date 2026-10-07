@@ -623,6 +623,9 @@ class UserClass
      */
     public static function isLocalUser(\PDO $dbh, Session $uS, string $username = ''): bool
     {
+        if($username == ''){
+            $username = $uS->username;
+        }
         $u = self::getUserCredentials($dbh, $username);
         return (isset($u['idIdp']) && $u['idIdp'] > 0 ? false : true);
     }

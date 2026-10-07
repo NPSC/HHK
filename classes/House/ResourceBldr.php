@@ -132,6 +132,51 @@ class ResourceBldr
      * @param array $descriptions optional item descriptions
      * @return HTMLTable
      */
+    /**
+     * Which sign an amount in a charge/adjustment (Type 'ca') lookup table must have.
+     *
+     * @param string $tableName Addnl_Charge, House_Discount or Room_Rate_Adjustment
+     * @return string 'pos', 'neg' or 'any'
+     */
+    public static function chargeAmountSign(string $tableName): string {
+
+        return match ($tableName) {
+            'House_Discount' => 'neg',
+            'Room_Rate_Adjustment' => 'any',
+            default => 'pos',
+        };
+    }
+
+    /**
+     * Normalize an amount in a charge/adjustment (Type 'ca') lookup table.
+     * Additional charges are positive and discounts are negative, both to 2 decimal places.
+     * Room rate adjustment percentages keep their sign and are not rounded.
+     * Empty/invalid amounts are 0.
+     *
+     * @param string $tableName Addnl_Charge, House_Discount or Room_Rate_Adjustment
+     * @param mixed $amount
+     * @return string
+     */
+    public static function formatChargeAmount(string $tableName, $amount): string {
+
+        $amount = preg_replace('/[^0-9.\-]/', '', (string) $amount);
+        $amt = (is_numeric($amount) ? floatval($amount) : 0.0);
+
+        $sign = self::chargeAmountSign($tableName);
+
+        if ($sign == 'any') {
+            // rate adjustment percentage: any float, not rounded
+            return ($amt == 0 ? '0' : (string) $amt);
+        }
+
+        $amt = ($sign == 'neg' ? 0 - abs($amt) : abs($amt));
+
+        // round first so tiny values like -0.001 don't format as "-0.00"
+        $amt = round($amt, 2);
+
+        return number_format($amt == 0 ? 0 : $amt, 2, '.', '');
+    }
+
     public static function getSelections(\PDO $dbh, $tableName, $type, $labels, array $descriptions = []) {
 
         $uS = Session::getInstance();
@@ -257,12 +302,12 @@ Order by `t`.`List_Order`;");
                 ($type == GlTypeCodes::HA || $type == GlTypeCodes::CA || ($type == GlTypeCodes::Demographics && ($uS->RibbonColor == $tableName || $uS->RibbonBottomColor == $tableName))
                     ? HTMLTable::makeTd(
                         HTMLInput::generateMarkup(
-                            $d[2],
+                            ($type == GlTypeCodes::CA ? self::formatChargeAmount($tableName, $d[2]) : $d[2]),
                             [
                                 'size' => '10',
                                 'style' => 'text-align:right;',
                                 'name' => 'txtDiagAmt[' . $d[0] . ']'
-                            ]
+                            ] + ($type == GlTypeCodes::CA ? ['class' => 'hhk-chargeAmt', 'data-sign' => self::chargeAmountSign($tableName)] : [])
                         )
                     )
 
@@ -296,7 +341,8 @@ Order by `t`.`List_Order`;");
                 . ($tableName == DIAGNOSIS_TABLE_NAME && count($diagCats) > 0 ?
                     HTMLTable::makeTd(HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($diagCats, ''), ['name' => 'selDiagCat[0]'])) : '')
                 . ($type == GlTypeCodes::HA || $type == GlTypeCodes::CA ?
-                    HTMLTable::makeTd(HTMLInput::generateMarkup('', ['size' => '10', 'style' => 'text-align:right;', 'name' => 'txtDiagAmt[0]'])) : '')
+                    HTMLTable::makeTd(HTMLInput::generateMarkup('', ['size' => '10', 'style' => 'text-align:right;', 'name' => 'txtDiagAmt[0]']
+                        + ($type == GlTypeCodes::CA ? ['class' => 'hhk-chargeAmt', 'data-sign' => self::chargeAmountSign($tableName)] : []))) : '')
                 . HTMLTable::makeTd('New', ['colspan' => $colspan])
             );
         }
@@ -427,8 +473,12 @@ Order by `t`.`List_Order`;");
                     $aText = $labels->getString('MemberType', 'visitor', 'Guest').'s';
                 }
 
-                if (isset($_POST['txtDiagAmt'][0])) {
-                    $aText = filter_var($postLookups['txtDiagAmt'][0], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+                if (isset($postLookups['txtDiagAmt'][0])) {
+                    if ($type == GlTypeCodes::CA) {
+                        $aText = self::formatChargeAmount($tableName, $postLookups['txtDiagAmt'][0]);
+                    } else {
+                        $aText = filter_var($postLookups['txtDiagAmt'][0], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+                    }
                 }
 
                 $orderNumber = 0;
@@ -583,7 +633,9 @@ Order by `t`.`List_Order`;");
             if (isset($postLookups['txtDiagAmt'])) {
 
                 foreach ($postLookups['txtDiagAmt'] as $k => $a) {
-                    if (is_numeric($a)) {
+                    if ($type == GlTypeCodes::CA) {
+                        $a = self::formatChargeAmount($tableName, $a);
+                    } else if (is_numeric($a)) {
                         $a = floatval($a);
                     }
 

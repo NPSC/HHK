@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace HHK\House\Report;
 
 use HHK\Common;
@@ -10,7 +12,6 @@ use HHK\SysConst\ItemId;
 use HHK\sec\Labels;
 use HHK\sec\Session;
 use HHK\SysConst\VolMemberType;
-use RuntimeException;
 
 /*
  * The MIT License
@@ -46,110 +47,85 @@ use RuntimeException;
  */
 class ReportFilter {
 
-    const DATES = 18;
-    const MONTHS = 19;
-    const FISCAL_YEAR = 20;
-    const CAL_YEAR = 21;
-    const YEAR_2_DATE = 22;
+    const int DATES = 18;
+    const int MONTHS = 19;
+    const int FISCAL_YEAR = 20;
+    const int CAL_YEAR = 21;
+    const int YEAR_2_DATE = 22;
 
     /**
      * Summary of months
      * @var array
      */
-    protected $months;
+    protected array $months = [];
     /**
      * Summary of calendarOptions
      * @var array
      */
-    protected $calendarOptions;
+    protected array $calendarOptions = [];
 
-    protected $selectedCalendar;
+    protected int $selectedCalendar = 0;
 
-    protected $selectedMonths;
+    protected array $selectedMonths = [];
 
-    protected $selectedYear;
+    protected int $selectedYear = 0;
 
-    protected $selectedStart;
+    protected string $selectedStart = '';
 
-    protected $selectedEnd;
+    protected string $selectedEnd = '';
 
-    protected $fyDiffMonths;
-
-
-    protected $hospitals;
-
-    protected $hList;
-
-    protected $aList;
-
-    protected $selectedHosptials;
-
-    protected $selectedAssocs;
+    protected int $fyDiffMonths = 0;
 
 
-    protected $selectedResourceGroups;
+    protected array $hospitals = [];
 
-    protected $resourceGroups;
+    protected array $hList = [];
 
+    protected array $aList = [];
 
-    protected $selectedDiagnoses;
+    protected array $selectedHosptials = [];
 
-    public $diagnoses;
-    protected $diagnosisCategories;
-
-
-    protected $selectedBillingAgents;
-
-    public $billingAgents;
+    protected array $selectedAssocs = [];
 
 
-    protected $selectedPayTypes;
+    protected string $selectedResourceGroups = '';
 
-    protected $payTypes;
+    protected array $resourceGroups = [];
 
+    protected array $selectedDiagnoses = [];
 
-    protected $selectedPayStatuses;
+    public array $diagnoses = [];
+    protected array $diagnosisCategories = [];
 
-    protected $payStatuses;
+    protected array $selectedBillingAgents = [];
 
+    public array $billingAgents = [];
 
-    protected $selectedPaymentGateways;
+    protected array $selectedPayTypes = [];
 
-    protected $paymentGateways;
+    protected array $payTypes = [];
 
+    protected array $selectedPayStatuses = [];
 
-    protected $selectedInvoiceStatuses;
+    protected array $payStatuses = [];
 
-    protected $invoiceStatuses;
+    protected array $selectedPaymentGateways = [];
 
-    protected $selectedItems;
+    protected array $paymentGateways = [];
 
-    protected $items;
+    protected array $selectedInvoiceStatuses = [];
 
-    protected $reportStart;
+    protected array $invoiceStatuses = [];
 
-    protected $reportEnd;
+    protected array $selectedItems = [];
 
-    protected $queryEnd;
+    protected array $items = [];
 
-    /**
-     * Summary of __construct
-     */
-    public function __construct() {
-        $this->selectedAssocs = array();
-        $this->selectedHosptials = array();
-        $this->selectedResourceGroups = array();
-        $this->selectedDiagnoses = array();
-        $this->selectedBillingAgents = array();
-        $this->selectedPayStatuses = array();
-        $this->selectedPayTypes = array();
-        $this->selectedPaymentGateways = array();
-        $this->selectedMonths = array();
-        $this->hospitals = array();
-        $this->paymentGateways = array();
-        $this->selectedInvoiceStatuses = array();
-        $this->selectedItems = array();
-    }
+    protected string $reportStart = '';
+
+    protected string $reportEnd = '';
+
+    protected string $queryEnd = '';
 
     /**
      * Summary of createTimePeriod
@@ -157,9 +133,9 @@ class ReportFilter {
      * @param mixed $defaultCalendarOption
      * @param mixed $fiscalYearDiffMonths
      * @param mixed $omits
-     * @return ReportFilter
+     * @return static
      */
-    public function createTimePeriod($defaultYear, $defaultCalendarOption, $fiscalYearDiffMonths = 0, $omits = array()) {
+    public function createTimePeriod($defaultYear, $defaultCalendarOption, $fiscalYearDiffMonths = 0, $omits = array()): static {
         $this->months = array(
             0 => array(1, 'January'), 1 => array(2, 'February'),
             2 => array(3, 'March'), 3 => array(4, 'April'), 4 => array(5, 'May'), 5 => array(6, 'June'),
@@ -183,25 +159,25 @@ class ReportFilter {
             unset($this->calendarOptions[self::FISCAL_YEAR]);
         }
 
-        $this->selectedYear = $defaultYear;
-        $this->selectedCalendar = $defaultCalendarOption;
+        $this->selectedYear = intval($defaultYear);
+        $this->selectedCalendar = intval($defaultCalendarOption);
         $this->selectedMonths = array(date('m'));
-        $this->fyDiffMonths = $fiscalYearDiffMonths;
+        $this->fyDiffMonths = intval($fiscalYearDiffMonths);
         return $this;
     }
 
     /**
      * Summary of timePeriodMarkup
-     * @param mixed $prefix
+     * @param string $prefix
      * @return HTMLTable
      */
-    public function timePeriodMarkup($prefix = '') {
+    public function timePeriodMarkup($prefix = ''): HTMLTable {
 
         $uS = Session::getInstance();
 
         $monthSelector = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($this->months, $this->selectedMonths, FALSE), array('name' => 'selIntMonth[]', 'size'=>'12', 'multiple'=>'multiple'));
         $yearSelector = HTMLSelector::generateMarkup(static::getYearOptionsMarkup($this->selectedYear, ($uS->StartYear ? $uS->StartYear : "2013"), $this->fyDiffMonths, FALSE), array('name' => 'selIntYear', 'size'=>'12'));
-        $calSelector = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($this->calendarOptions, $this->selectedCalendar, FALSE), array('name' => 'selCalendar', 'size'=>'5'));
+        $calSelector = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($this->calendarOptions, (string) $this->selectedCalendar, FALSE), array('name' => 'selCalendar', 'size'=>'5'));
 
         $tbl = new HTMLTable();
 
@@ -235,7 +211,7 @@ class ReportFilter {
      * Summary of getTimePeriodScript
      * @return string
      */
-    public function getTimePeriodScript() {
+    public function getTimePeriodScript(): string {
         $uS = Session::getInstance();
         $ckdate = '';
 
@@ -271,9 +247,9 @@ $ckdate";
 
     /**
      * Summary of loadSelectedTimePeriod
-     * @return ReportFilter
+     * @return static
      */
-    public function loadSelectedTimePeriod() {
+    public function loadSelectedTimePeriod(): static {
 
         // gather input
         if (filter_has_var(INPUT_POST, 'selCalendar')) {
@@ -289,11 +265,11 @@ $ckdate";
         }
 
         if (filter_has_var(INPUT_POST, 'stDate')) {
-            $this->selectedStart = filter_input(INPUT_POST, 'stDate', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+            $this->selectedStart = (string) filter_input(INPUT_POST, 'stDate', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         }
 
         if (filter_has_var(INPUT_POST, 'enDate')) {
-            $this->selectedEnd = filter_input(INPUT_POST, 'enDate', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+            $this->selectedEnd = (string) filter_input(INPUT_POST, 'enDate', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         }
 
 
@@ -379,7 +355,7 @@ $ckdate";
         return $this;
     }
 
-    public static function getYearOptionsMarkup($slctd, $startYear, $fyMonths, $showAllYears = TRUE)
+    public static function getYearOptionsMarkup($slctd, $startYear, $fyMonths, $showAllYears = TRUE): string
     {
         $markup = "";
 
@@ -415,9 +391,9 @@ $ckdate";
 
     /**
      * Summary of createHospitals
-     * @return ReportFilter
+     * @return static
      */
-    public function createHospitals() {
+    public function createHospitals(): static {
 
         $uS = Session::getInstance();
 
@@ -443,7 +419,7 @@ $ckdate";
      * Summary of hospitalMarkup
      * @return HTMLTable
      */
-    public function hospitalMarkup() {
+    public function hospitalMarkup(): HTMLTable {
 
         $assocs = '';
         $labels = Labels::getLabels();
@@ -473,9 +449,9 @@ $ckdate";
 
     /**
      * Summary of loadSelectedHospitals
-     * @return ReportFilter
+     * @return static
      */
-    public function loadSelectedHospitals() {
+    public function loadSelectedHospitals(): static {
 
         if (filter_has_var(INPUT_POST, 'selAssoc')) {
             $reqs = $_POST['selAssoc'];
@@ -484,7 +460,7 @@ $ckdate";
                     $k = array_search("", $reqs);
                     unset($reqs[$k]);
                 }
-                $this->selectedAssocs = filter_var_array($reqs, FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+                $this->selectedAssocs = filter_var_array($reqs, FILTER_SANITIZE_FULL_SPECIAL_CHARS) ?: [];
             }
         }
 
@@ -495,7 +471,7 @@ $ckdate";
                     $k = array_search("", $reqs);
                     unset($reqs[$k]);
                 }
-                $this->selectedHosptials = filter_var_array($reqs, FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+                $this->selectedHosptials = filter_var_array($reqs, FILTER_SANITIZE_FULL_SPECIAL_CHARS) ?: [];
             }
         }
 
@@ -505,18 +481,18 @@ $ckdate";
     /**
      * Summary of createResourceGroups
      * @param \PDO $dbh
-     * @return ReportFilter
+     * @return static
      */
-    public function createResourceGroups(\PDO $dbh) {
+    public function createResourceGroups(\PDO $dbh): static {
 
         $uS = Session::getInstance();
 
         $rescGroups = Common::readGenLookupsPDO($dbh, 'Room_Group');
 
         if (isset($rescGroups[$uS->CalResourceGroupBy])) {
-            $this->selectedResourceGroups = $uS->CalResourceGroupBy;
+            $this->selectedResourceGroups = (string) $uS->CalResourceGroupBy;
         } else {
-            $this->selectedResourceGroups = reset($rescGroups)[0];
+            $this->selectedResourceGroups = (string) (reset($rescGroups)[0] ?? '');
         }
 
         $this->resourceGroups = HTMLSelector::removeOptionGroups($rescGroups);
@@ -525,12 +501,12 @@ $ckdate";
 
     /**
      * Summary of loadSelectedResourceGroups
-     * @return ReportFilter
+     * @return static
      */
-    public function loadSelectedResourceGroups() {
+    public function loadSelectedResourceGroups(): static {
 
         if (filter_has_var(INPUT_POST, 'selRoomGroup')) {
-            $this->selectedResourceGroups = filter_input(INPUT_POST, 'selRoomGroup', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+            $this->selectedResourceGroups = (string) filter_input(INPUT_POST, 'selRoomGroup', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         }
         return $this;
     }
@@ -539,7 +515,7 @@ $ckdate";
      * Summary of resourceGroupsMarkup
      * @return HTMLTable
      */
-    public function resourceGroupsMarkup() {
+    public function resourceGroupsMarkup(): HTMLTable {
 
         $rooms = HTMLSelector::generateMarkup( HTMLSelector::doOptionsMkup($this->resourceGroups, $this->selectedResourceGroups, FALSE),
                 array('name'=>'selRoomGroup', 'size'=>(count($this->resourceGroups)), 'style'=>'min-width:60px;'));
@@ -555,9 +531,9 @@ $ckdate";
     /**
      * Load diagnoses and categories
      * @param \PDO $dbh
-     * @return ReportFilter
+     * @return static
      */
-    public function createDiagnoses(\PDO $dbh){
+    public function createDiagnoses(\PDO $dbh): static{
         $this->diagnoses = Common::readGenLookupsPDO($dbh, 'Diagnosis', 'Description');
         $this->diagnosisCategories = Common::readGenLookupsPDO($dbh, 'Diagnosis_Category', 'Description');
 
@@ -577,14 +553,14 @@ $ckdate";
 
     /**
      * Summary of loadSelectedDiagnoses
-     * @return ReportFilter
+     * @return static
      */
-    public function loadSelectedDiagnoses() {
+    public function loadSelectedDiagnoses(): static {
 
         if (filter_has_var(INPUT_POST, 'selDiagnoses')) {
             $reqs = $_POST['selDiagnoses'];
             if (is_array($reqs)) {
-                $this->selectedDiagnoses = filter_var_array($reqs, FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+                $this->selectedDiagnoses = filter_var_array($reqs, FILTER_SANITIZE_FULL_SPECIAL_CHARS) ?: [];
             }
         }
 
@@ -595,7 +571,7 @@ $ckdate";
      * Summary of diagnosisMarkup
      * @return HTMLTable
      */
-    public function diagnosisMarkup() {
+    public function diagnosisMarkup(): HTMLTable {
 
         $diags = HTMLSelector::generateMarkup( HTMLSelector::doOptionsMkup($this->diagnoses, $this->selectedDiagnoses, FALSE),
         array('name'=>'selDiagnoses[]', 'size'=>(count($this->diagnoses)>12 ? '12' : count($this->diagnoses)), 'multiple'=>'multiple', 'style'=>'min-width:60px; width: 100%'));
@@ -611,9 +587,9 @@ $ckdate";
     /**
      * Load Billing Agents
      * @param \PDO $dbh
-     * @return ReportFilter
+     * @return static
      */
-    public function createBillingAgents(\PDO $dbh){
+    public function createBillingAgents(\PDO $dbh): static{
         $stmt = $dbh->query("SELECT n.idName, n.Name_First, n.Name_Last, n.Company " .
         " FROM name n join name_volunteer2 nv on n.idName = nv.idName and nv.Vol_Category = 'Vol_Type'  and nv.Vol_Code = '" . VolMemberType::BillingAgent . "' " .
         " where n.Member_Status='a' and n.Record_Member = 1 order by n.Name_Last, n.Name_First, n.Company");
@@ -643,15 +619,15 @@ $ckdate";
 
     /**
      * Summary of loadSelectedBillingAgents
-     * @return ReportFilter
+     * @return static
      */
-    public function loadSelectedBillingAgents() {
+    public function loadSelectedBillingAgents(): static {
 
         if (filter_has_var(INPUT_POST, 'selBillingAgents')) {
             $reqs = $_POST['selBillingAgents'];
             if (is_array($reqs)) {
-                $this->selectedBillingAgents = filter_var_array($reqs, FILTER_SANITIZE_FULL_SPECIAL_CHARS);
-                if($this->selectedBillingAgents[0] == ""){
+                $this->selectedBillingAgents = filter_var_array($reqs, FILTER_SANITIZE_FULL_SPECIAL_CHARS) ?: [];
+                if(isset($this->selectedBillingAgents[0]) && $this->selectedBillingAgents[0] == ""){
                     unset($this->selectedBillingAgents[0]);
                 }
             }
@@ -680,9 +656,9 @@ $ckdate";
     /**
      * Load Pay Types
      * @param \PDO $dbh
-     * @return ReportFilter
+     * @return static
      */
-    public function createPayTypes(\PDO $dbh){
+    public function createPayTypes(\PDO $dbh): static{
         $this->payTypes = array();
         
         $payTypes = Common::readGenLookupsPDO($dbh, GLTableNames::PayType, 'Order');
@@ -697,14 +673,14 @@ $ckdate";
 
     /**
      * Summary of loadSelectedPayTypes
-     * @return ReportFilter
+     * @return static
      */
-    public function loadSelectedPayTypes() {
+    public function loadSelectedPayTypes(): static {
 
         if (filter_has_var(INPUT_POST, 'selPayType')) {
             $reqs = $_POST['selPayType'];
             if (is_array($reqs)) {
-                $this->selectedPayTypes = filter_var_array($reqs, FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+                $this->selectedPayTypes = filter_var_array($reqs, FILTER_SANITIZE_FULL_SPECIAL_CHARS) ?: [];
             }
         }
 
@@ -715,7 +691,7 @@ $ckdate";
      * Summary of payTypesMarkup
      * @return HTMLTable
      */
-    public function payTypesMarkup() {
+    public function payTypesMarkup(): HTMLTable {
 
         $payTypeSelector = HTMLSelector::generateMarkup(
             HTMLSelector::doOptionsMkup($this->payTypes, $this->selectedPayTypes), array('name' => 'selPayType[]', 'size' => '7', 'multiple' => 'multiple'));
@@ -731,23 +707,23 @@ $ckdate";
     /**
      * Load Pay Statuses
      * @param \PDO $dbh
-     * @return ReportFilter
+     * @return static
      */
-    public function createPayStatuses(\PDO $dbh){
+    public function createPayStatuses(\PDO $dbh): static{
         $this->payStatuses = Common::readGenLookupsPDO($dbh, 'Payment_Status');
         return $this;
     }
 
     /**
      * Summary of loadSelectedPayStatuses
-     * @return ReportFilter
+     * @return static
      */
-    public function loadSelectedPayStatuses() {
+    public function loadSelectedPayStatuses(): static {
 
         if (filter_has_var(INPUT_POST, 'selPayStatus')) {
             $reqs = $_POST['selPayStatus'];
             if (is_array($reqs)) {
-                $this->selectedPayStatuses = filter_var_array($reqs, FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+                $this->selectedPayStatuses = filter_var_array($reqs, FILTER_SANITIZE_FULL_SPECIAL_CHARS) ?: [];
             }
         }
 
@@ -758,7 +734,7 @@ $ckdate";
      * Summary of payStatusMarkup
      * @return HTMLTable
      */
-    public function payStatusMarkup() {
+    public function payStatusMarkup(): HTMLTable {
 
         $statusSelector = HTMLSelector::generateMarkup(
             HTMLSelector::doOptionsMkup($this->payStatuses, $this->selectedPayStatuses), array('name' => 'selPayStatus[]', 'size' => '7', 'multiple' => 'multiple'));
@@ -774,23 +750,23 @@ $ckdate";
     /**
      * Load Invoice Statuses
      * @param \PDO $dbh
-     * @return ReportFilter
+     * @return static
      */
-    public function createInvoiceStatuses(\PDO $dbh){
+    public function createInvoiceStatuses(\PDO $dbh): static{
         $this->invoiceStatuses = Common::readGenLookupsPDO($dbh, 'Invoice_Status');
         return $this;
     }
 
     /**
      * Summary of loadSelectedInvoiceStatuses
-     * @return ReportFilter
+     * @return static
      */
-    public function loadSelectedInvoiceStatuses() {
+    public function loadSelectedInvoiceStatuses(): static {
 
         if (filter_has_var(INPUT_POST, 'selInvoiceStatus')) {
             $reqs = $_POST['selInvoiceStatus'];
             if (is_array($reqs)) {
-                $this->selectedInvoiceStatuses = filter_var_array($reqs, FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+                $this->selectedInvoiceStatuses = filter_var_array($reqs, FILTER_SANITIZE_FULL_SPECIAL_CHARS) ?: [];
             }
         }
 
@@ -801,7 +777,7 @@ $ckdate";
      * Summary of invoiceStatusMarkup
      * @return HTMLTable
      */
-    public function invoiceStatusMarkup() {
+    public function invoiceStatusMarkup(): HTMLTable {
 
         $statusSelector = HTMLSelector::generateMarkup(
             HTMLSelector::doOptionsMkup($this->invoiceStatuses, $this->selectedInvoiceStatuses), array('name' => 'selInvoiceStatus[]', 'size' => '4', 'multiple' => 'multiple', 'style'=>'width: 100%;'));
@@ -817,9 +793,9 @@ $ckdate";
     /**
      * Load Items
      * @param \PDO $dbh
-     * @return ReportFilter
+     * @return static
      */
-    public function createItems(\PDO $dbh){
+    public function createItems(\PDO $dbh): static{
 
         $uS = Session::getInstance();
         $addnlCharges = Common::readGenLookupsPDO($dbh, 'Addnl_Charge');
@@ -865,14 +841,14 @@ $ckdate";
 
     /**
      * Summary of loadSelectedItems
-     * @return ReportFilter
+     * @return static
      */
-    public function loadSelectedItems() {
+    public function loadSelectedItems(): static {
 
         if (filter_has_var(INPUT_POST, 'selItems')) {
             $reqs = $_POST['selItems'];
             if (is_array($reqs)) {
-                $this->selectedItems = filter_var_array($reqs, FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+                $this->selectedItems = filter_var_array($reqs, FILTER_SANITIZE_FULL_SPECIAL_CHARS) ?: [];
             }
         }
 
@@ -883,7 +859,7 @@ $ckdate";
      * Summary of itemsMarkup
      * @return HTMLTable
      */
-    public function itemsMarkup() {
+    public function itemsMarkup(): HTMLTable {
 
         $itemSelector = HTMLSelector::generateMarkup(
             HTMLSelector::doOptionsMkup($this->items, $this->selectedItems), array('name' => 'selItems[]', 'size' => (count($this->items) + 1), 'multiple' => 'multiple'));
@@ -899,9 +875,9 @@ $ckdate";
     /**
      * Load Payment Gateways
      * @param \PDO $dbh
-     * @return ReportFilter
+     * @return static
      */
-    public function createPaymentGateways(\PDO $dbh){
+    public function createPaymentGateways(\PDO $dbh): static{
         $this->paymentGateways = array();
         $uS = Session::getInstance();
 
@@ -920,14 +896,14 @@ $ckdate";
 
     /**
      * Summary of loadSelectedPaymentGateways
-     * @return ReportFilter
+     * @return static
      */
-    public function loadSelectedPaymentGateways() {
+    public function loadSelectedPaymentGateways(): static {
 
         if (filter_has_var(INPUT_POST, 'selGateway')) {
             $reqs = $_POST['selGateway'];
             if (is_array($reqs)) {
-                $this->selectedPaymentGateways = filter_var_array($reqs, FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+                $this->selectedPaymentGateways = filter_var_array($reqs, FILTER_SANITIZE_FULL_SPECIAL_CHARS) ?: [];
             }
         }
 
@@ -938,7 +914,7 @@ $ckdate";
      * Summary of paymentGatwaysMarkup
      * @return HTMLTable
      */
-    public function paymentGatewaysMarkup() {
+    public function paymentGatewaysMarkup(): HTMLTable {
 
         $gwSelector = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($this->paymentGateways, $this->selectedPaymentGateways), array('name' => 'selGateway[]', 'multiple' => 'multiple', 'size'=>(count($this->paymentGateways) + 1)));
 
@@ -954,7 +930,7 @@ $ckdate";
      * Summary of getSelectedHospitalsString
      * @return string
      */
-    public function getSelectedHospitalsString(){
+    public function getSelectedHospitalsString(): string {
         $hospList = $this->getHospitals();
         $hospitalTitles = "";
         foreach ($this->getSelectedHosptials() as $h) {
@@ -974,7 +950,7 @@ $ckdate";
      * Summary of getSelectedAssocString
      * @return string
      */
-    public function getSelectedAssocString(){
+    public function getSelectedAssocString(): string {
         $assocList = $this->getHospitals();
         $assocTitles = "";
         foreach ($this->getSelectedAssocs() as $h) {
@@ -994,7 +970,7 @@ $ckdate";
      * Summary of getSelectedBillingAgentsString
      * @return string
      */
-    public function getSelectedBillingAgentsString(){
+    public function getSelectedBillingAgentsString(): string {
         $billingList = $this->getBillingAgents();
         $billingTitles = "";
         foreach ($this->getSelectedBillingAgents() as $h) {
@@ -1010,7 +986,7 @@ $ckdate";
         }
     }
 
-    public function getSelectedDiagnosesString(){
+    public function getSelectedDiagnosesString(): string {
         $diagnosesList = $this->getDiagnoses();
         $diagnosesTitles = "";
         foreach ($this->getSelectedDiagnoses() as $h) {
@@ -1028,9 +1004,9 @@ $ckdate";
 
     /**
      * Summary of getSelectedResourceGroups
-     * @return array|mixed
+     * @return string
      */
-    public function getSelectedResourceGroups() {
+    public function getSelectedResourceGroups(): string {
         return $this->selectedResourceGroups;
     }
 
@@ -1038,15 +1014,15 @@ $ckdate";
      * Summary of getResourceGroups
      * @return array<array>
      */
-    public function getResourceGroups() {
+    public function getResourceGroups(): array {
         return $this->resourceGroups;
     }
 
     /**
      * Summary of getSelectedDiagnoses
-     * @return array|mixed
+     * @return array
      */
-    public function getSelectedDiagnoses() {
+    public function getSelectedDiagnoses(): array {
         return $this->selectedDiagnoses;
     }
 
@@ -1054,51 +1030,51 @@ $ckdate";
      * Summary of getBillingAgents
      * @return array<array>
      */
-    public function getBillingAgents() {
+    public function getBillingAgents(): array {
         return $this->billingAgents;
     }
 
     /**
      * Summary of getSelectedBillingAgents
-     * @return array|mixed
+     * @return array
      */
-    public function getSelectedBillingAgents() {
+    public function getSelectedBillingAgents(): array {
         return $this->selectedBillingAgents;
     }
 
-    public function getPayStatuses(){
+    public function getPayStatuses(): array {
         return $this->payStatuses;
     }
 
-    public function getSelectedPayStatuses(){
+    public function getSelectedPayStatuses(): array {
         return $this->selectedPayStatuses;
     }
 
-    public function getPayTypes(){
+    public function getPayTypes(): array {
         return $this->payTypes;
     }
 
-    public function getSelectedPayTypes(){
+    public function getSelectedPayTypes(): array {
         return $this->selectedPayTypes;
     }
 
-    public function getPaymentGateways(){
+    public function getPaymentGateways(): array {
         return $this->paymentGateways;
     }
 
-    public function getSelectedPaymentGateways(){
+    public function getSelectedPaymentGateways(): array {
         return $this->selectedPaymentGateways;
     }
 
-    public function getInvoiceStatuses(){
+    public function getInvoiceStatuses(): array {
         return $this->invoiceStatuses;
     }
 
-    public function getSelectedInvoiceStatuses(){
+    public function getSelectedInvoiceStatuses(): array {
         return $this->selectedInvoiceStatuses;
     }
 
-    public function getSelectedInvoiceStatusesString(){
+    public function getSelectedInvoiceStatusesString(): string {
         $list = $this->getInvoiceStatuses();
         $titles = "";
         foreach ($this->getSelectedInvoiceStatuses() as $h) {
@@ -1114,15 +1090,15 @@ $ckdate";
         }
     }
 
-    public function getItems(){
+    public function getItems(): array {
         return $this->items;
     }
 
-    public function getSelectedItems(){
+    public function getSelectedItems(): array {
         return $this->selectedItems;
     }
 
-    public function getSelectedItemsString(){
+    public function getSelectedItemsString(): string {
         $list = $this->getItems();
         $titles = "";
         foreach ($this->getSelectedItems() as $h) {
@@ -1142,7 +1118,7 @@ $ckdate";
      * Summary of getDiagnoses
      * @return array<array>
      */
-    public function getDiagnoses() {
+    public function getDiagnoses(): array {
         return $this->diagnoses;
     }
 
@@ -1150,7 +1126,7 @@ $ckdate";
      * Summary of getMonths
      * @return array
      */
-    public function getMonths() {
+    public function getMonths(): array {
         return $this->months;
     }
 
@@ -1158,55 +1134,55 @@ $ckdate";
      * Summary of getCalendarOptions
      * @return array<array>
      */
-    public function getCalendarOptions() {
+    public function getCalendarOptions(): array {
         return $this->calendarOptions;
     }
 
     /**
      * Summary of getSelectedCalendar
-     * @return int|mixed
+     * @return int
      */
-    public function getSelectedCalendar() {
+    public function getSelectedCalendar(): int {
         return $this->selectedCalendar;
     }
 
     /**
      * Summary of getSelectedMonths
-     * @return array|mixed
+     * @return array
      */
-    public function getSelectedMonths() {
+    public function getSelectedMonths(): array {
         return $this->selectedMonths;
     }
 
     /**
      * Summary of getSelectedYear
-     * @return int|mixed
+     * @return int
      */
-    public function getSelectedYear() {
+    public function getSelectedYear(): int {
         return $this->selectedYear;
     }
 
     /**
      * Summary of getSelectedStart
-     * @return mixed
+     * @return string
      */
-    public function getSelectedStart() {
+    public function getSelectedStart(): string {
         return $this->selectedStart;
     }
 
     /**
      * Summary of getSelectedEnd
-     * @return mixed
+     * @return string
      */
-    public function getSelectedEnd() {
+    public function getSelectedEnd(): string {
         return $this->selectedEnd;
     }
 
     /**
      * Summary of getHospitals
-     * @return array|mixed
+     * @return array
      */
-    public function getHospitals() {
+    public function getHospitals(): array {
         return $this->hospitals;
     }
 
@@ -1214,7 +1190,7 @@ $ckdate";
      * Summary of getHList
      * @return array<array>
      */
-    public function getHList() {
+    public function getHList(): array {
         return $this->hList;
     }
 
@@ -1222,23 +1198,23 @@ $ckdate";
      * Summary of getAList
      * @return array<array>
      */
-    public function getAList() {
+    public function getAList(): array {
         return $this->aList;
     }
 
     /**
      * Summary of getSelectedHosptials
-     * @return array|bool
+     * @return array
      */
-    public function getSelectedHosptials() {
+    public function getSelectedHosptials(): array {
         return $this->selectedHosptials;
     }
 
     /**
      * Summary of getSelectedAssocs
-     * @return array|bool
+     * @return array
      */
-    public function getSelectedAssocs() {
+    public function getSelectedAssocs(): array {
         return $this->selectedAssocs;
     }
 
@@ -1246,7 +1222,7 @@ $ckdate";
      * Summary of getReportStart
      * @return string
      */
-    public function getReportStart() {
+    public function getReportStart(): string {
         return $this->reportStart;
     }
 
@@ -1254,7 +1230,7 @@ $ckdate";
      * Summary of getReportEnd
      * @return string
      */
-    public function getReportEnd() {
+    public function getReportEnd(): string {
         return $this->reportEnd;
     }
 
@@ -1262,7 +1238,7 @@ $ckdate";
      * Summary of getQueryEnd
      * @return string
      */
-    public function getQueryEnd() {
+    public function getQueryEnd(): string {
         return $this->queryEnd;
     }
 

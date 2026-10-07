@@ -702,7 +702,8 @@ class HouseServices {
 
             if (isset($codes[$discount])) {
 
-                $amount = 0 - $amount;
+                // Discounts are always negative, whether entered/stored as positive or negative.
+                $amount = 0 - abs($amount);
                 $discountItem = new Item($dbh, ItemId::Discount, $amount);
 
                 $invLine = new OneTimeInvoiceLine();
