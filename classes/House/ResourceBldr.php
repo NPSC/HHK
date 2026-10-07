@@ -179,6 +179,8 @@ Order by `t`.`List_Order`;");
             $diags = Common::readGenLookupsPDO($dbh, $tableName, 'Order');
         }
 
+        $isChecklist = ($type == GlTypeCodes::Demographics && Checklist::isChecklistTable($tableName));
+
         $tbl = new HTMLTable();
 
         $hdrTr =
@@ -189,6 +191,7 @@ Order by `t`.`List_Order`;");
                 . ($type == GlTypeCodes::HA ? HTMLTable::makeTh('Days') : '')
                  . (($type == GlTypeCodes::Demographics || $tableName == "Calendar_Status_Colors") ? HTMLTable::makeTh('Font Color') . HTMLTable::makeTh('Background Color') : '')
                  . ($type == GlTypeCodes::Demographics ? HTMLTable::makeTh('Icon <a href="https://icons.getbootstrap.com/" target="_blank" class="ml-2" title="More Info"><i class="bi bi-info-circle-fill"></i></a>') : '')
+                 . ($isChecklist ? HTMLTable::makeTh('Required', ['title' => 'Unchecked required items show their icon on the calendar']) : '')
                   . ($type == GlTypeCodes::U ? '' : ($type == GlTypeCodes::m || $tableName == RESERV_STATUS_TABLE_NAME ? HTMLTable::makeTh('Use') : HTMLTable::makeTh('Delete') . HTMLTable::makeTh('Replace With')));
 
         $tbl->addHeaderTr($hdrTr);
@@ -271,6 +274,8 @@ Order by `t`.`List_Order`;");
 
                 self::makeRibbonColorMkup($type, $tableName, $d) .
 
+                ($isChecklist ? self::makeChecklistRequiredMkup($d) : '') .
+
                 $cbDelMU .
 
                 ($type != GlTypeCodes::m && $type != GlTypeCodes::U && $tableName != RESERV_STATUS_TABLE_NAME ?
@@ -284,7 +289,7 @@ Order by `t`.`List_Order`;");
         if ($type != GlTypeCodes::U && $type != GlTypeCodes::m && $tableName != RESERV_STATUS_TABLE_NAME) {
             // new entry row
 
-            $colspan = $type == GLTypeCodes::Demographics ? 5:2;
+            $colspan = $type == GLTypeCodes::Demographics ? ($isChecklist ? 6 : 5) : 2;
 
             $tbl->addBodyTr(
                 ($tableName != RESERV_STATUS_TABLE_NAME ?
@@ -369,6 +374,22 @@ Order by `t`.`List_Order`;");
             }
         }
         return $mkup;
+    }
+
+    public static function makeChecklistRequiredMkup(array $d){
+
+        $attributes = (!empty($d["Attributes"]) ? json_decode($d["Attributes"], true) : []);
+
+        $cbAttr = [
+            'name' => 'cbDiagRequired[' . $d[0] . ']',
+            'type' => 'checkbox',
+        ];
+
+        if (is_array($attributes) && !empty($attributes[Checklist::RequiredAttr])) {
+            $cbAttr['checked'] = 'checked';
+        }
+
+        return HTMLTable::makeTd(HTMLInput::generateMarkup('', $cbAttr), ['style' => 'text-align:center;']);
     }
 
     /**
@@ -556,12 +577,27 @@ Order by `t`.`List_Order`;");
                         };
                         break;
 
-                    case (ChecklistType::PSG || ChecklistType::Reservation || ChecklistType::Visit || ChecklistType::Hospital):
+                    case ChecklistType::PSG:
+                    case ChecklistType::Reservation:
+                    case ChecklistType::Visit:
+                    case ChecklistType::Hospital:
 
-                        $rep = function ($dbh, $newId, $oldId) {
-                            return $dbh->exec("update checklist_item set `GL_Code` = '$newId' where `GL_Code` = '$oldId';");
+                        $rep = function ($dbh, $newId, $oldId, $tblName) {
+                            $rowCount = 0;
+
+                            // IGNORE skips entities that already have the new item checked; their old rows are removed below.
+                            if ($newId != '') {
+                                $stmt = $dbh->prepare("update ignore checklist_item set `GL_Code` = :newId where `GL_TableName` = :tblName and `GL_Code` = :oldId;");
+                                $stmt->execute([':newId' => $newId, ':tblName' => $tblName, ':oldId' => $oldId]);
+                                $rowCount = $stmt->rowCount();
+                            }
+
+                            $stmt = $dbh->prepare("delete from checklist_item where `GL_TableName` = :tblName and `GL_Code` = :oldId;");
+                            $stmt->execute([':tblName' => $tblName, ':oldId' => $oldId]);
+
+                            return $rowCount + $stmt->rowCount();
                         };
-                        break; 
+                        break;
                 }
             }
 
@@ -576,6 +612,9 @@ Order by `t`.`List_Order`;");
                     }
                     if (isset($postLookups['txtDiagIconClass'][$k])) {
                         $attributes[$k]["iconClass"] = $postLookups['txtDiagIconClass'][$k];
+                    }
+                    if (Checklist::isChecklistTable($tableName)) {
+                        $attributes[$k][Checklist::RequiredAttr] = isset($postLookups['cbDiagRequired'][$k]);
                     }
                 }
             }

@@ -43,6 +43,14 @@ try {
     exit('<h2>The HHK Guest Tracking Site is not enabled.</h2>');
 }
 
+// Logout command?
+$log = filter_input(INPUT_GET, 'log', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+if ($log == "lo") {
+    $uS->destroy(true);
+    header('location:index.php');
+    exit();
+}
+
 // Get labels
 $labels = Labels::getLabels();
 

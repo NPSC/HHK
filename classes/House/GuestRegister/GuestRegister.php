@@ -2,6 +2,7 @@
 
 namespace HHK\House\GuestRegister;
 
+use HHK\Checklist;
 use HHK\Common;
 use HHK\House\ResourceView;
 use HHK\sec\Labels;
@@ -13,6 +14,7 @@ use HHK\House\Reservation\Reservation_1;
 use HHK\SysConst\VisitStatus;
 use HHK\SysConst\ReservationStatus;
 use HHK\SysConst\CalEventKind;
+use HHK\SysConst\ChecklistType;
 
 
 /*
@@ -216,6 +218,7 @@ where ru.idResource_use is null
 
         $uS = Session::getInstance();
         $events = array();
+        $checklistEvents = [];  // idRegistration => event indexes
         $p1d = new \DateInterval('P1D');
         $today = new \DateTime();
         $today->setTime(0, 0, 0);
@@ -401,6 +404,7 @@ where
             $s['vStatusCode'] = $r['Visit_Status'];
             $s['resourceEditable'] = 0;
             $event = new Event($s, $timezone);
+            $checklistEvents[$r['idRegistration']][] = count($events);
             $events[] = $event->toArray();
 
         }
@@ -653,11 +657,51 @@ where
             $s['fullName'] = htmlspecialchars_decode($r['Name_Full'], ENT_QUOTES);
 
             $event = new Event($s, $timezone);
+            $checklistEvents[$r['idRegistration']][] = count($events);
             $events[] = $event->toArray();
 
         }
 
+        if ($uS->useChecklists) {
+            $this->addChecklistIcons($dbh, $events, $checklistEvents);
+        }
+
         return $events;
+    }
+
+    /**
+     * Flag visit and reservation events whose PSG is missing required checklist items.
+     * @param \PDO $dbh
+     * @param array $events
+     * @param array $checklistEvents idRegistration => indexes into $events
+     * @return void
+     */
+    protected function addChecklistIcons(\PDO $dbh, array &$events, array $checklistEvents): void
+    {
+        $regIds = array_values(array_filter(array_map('intval', array_keys($checklistEvents))));
+
+        if (count($regIds) == 0) {
+            return;
+        }
+
+        $placeholders = implode(',', array_fill(0, count($regIds), '?'));
+        $stmt = $dbh->prepare("select `idRegistration`, `idPsg` from `registration` where `idRegistration` in ($placeholders);");
+        $stmt->execute($regIds);
+        $psgByReg = $stmt->fetchAll(\PDO::FETCH_KEY_PAIR);
+
+        $missing = Checklist::getMissingRequiredItems($dbh, array_values($psgByReg), ChecklistType::PSG);
+
+        if (count($missing) == 0) {
+            return;
+        }
+
+        foreach ($psgByReg as $idReg => $idPsg) {
+            if (isset($missing[$idPsg])) {
+                foreach ($checklistEvents[$idReg] as $i) {
+                    $events[$i]['checklistIcons'] = $missing[$idPsg];
+                }
+            }
+        }
     }
 
     protected function getEventTitle(array $r): string

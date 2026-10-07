@@ -31,6 +31,12 @@ class Checklist
 {
     const ChecklistRootTablename = 'Checklist';
 
+    // gen_lookups.Attributes key marking a checklist item as required
+    const RequiredAttr = 'required';
+
+    // Shown on the calendar for a missing required item that has no icon of its own
+    const DefaultMissingIcon = 'bi bi-exclamation-triangle-fill';
+
     public string $checklistType;
 
     public function __construct(\PDO $dbh, $checklistType) {
@@ -300,5 +306,85 @@ ORDER BY g.`Order`;";
 
         }
         return $affectedRows;
+    }
+
+    /**
+     * Is this gen_lookups table a checklist item table?
+     * @param string $tableName
+     * @return bool
+     */
+    public static function isChecklistTable(string $tableName): bool {
+        return in_array($tableName, [ChecklistType::PSG, ChecklistType::Reservation, ChecklistType::Visit, ChecklistType::Hospital], true);
+    }
+
+    /**
+     * Find the required checklist items that are not checked for each entity.
+     * @param \PDO $dbh
+     * @param array $entityIds
+     * @param string $checklistType
+     * @return array keyed by entity id, each a list of ['code', 'title', 'iconClass', 'color']. Entities missing nothing are omitted.
+     */
+    public static function getMissingRequiredItems(\PDO $dbh, array $entityIds, string $checklistType): array {
+
+        $entityIds = array_values(array_unique(array_filter(array_map('intval', $entityIds))));
+
+        if (count($entityIds) == 0) {
+            return [];
+        }
+
+        // Required items of an active checklist
+        $stmt = $dbh->prepare("
+SELECT
+    g.`Code`,
+    g.`Description`,
+    g.`Attributes`
+FROM
+    `gen_lookups` g
+        JOIN
+    `gen_lookups` `g2` ON `g`.`Table_Name` = `g2`.`Code`
+        AND `g2`.`Table_Name` = '" . self::ChecklistRootTablename . "'
+        AND `g2`.`Substitute` = 'y'
+WHERE g.Table_Name = :tblName
+ORDER BY g.`Order`;");
+        $stmt->execute([':tblName' => $checklistType]);
+
+        $required = [];
+        while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
+            $attributes = json_decode($r['Attributes'] ?? '', true);
+
+            if (is_array($attributes) && !empty($attributes[self::RequiredAttr])) {
+                $required[$r['Code']] = [
+                    'code' => $r['Code'],
+                    'title' => htmlspecialchars_decode($r['Description'], ENT_QUOTES),
+                    'iconClass' => (!empty($attributes['iconClass']) ? $attributes['iconClass'] : self::DefaultMissingIcon),
+                    'color' => (isset($attributes['fontColor']) && preg_match('/^#[0-9a-fA-F]{3,8}$/', $attributes['fontColor']) ? $attributes['fontColor'] : ''),
+                ];
+            }
+        }
+
+        if (count($required) == 0) {
+            return [];
+        }
+
+        // Checked items for these entities
+        $placeholders = implode(',', array_fill(0, count($entityIds), '?'));
+        $stmt = $dbh->prepare("select `Entity_Id`, `GL_Code` from checklist_item where `GL_TableName` = ? and `Value` = 1 and `Entity_Id` in ($placeholders);");
+        $stmt->execute(array_merge([$checklistType], $entityIds));
+
+        $checked = [];
+        while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
+            $checked[$r['Entity_Id']][$r['GL_Code']] = true;
+        }
+
+        $missing = [];
+        foreach ($entityIds as $id) {
+            foreach ($required as $code => $item) {
+                if (!isset($checked[$id][$code])) {
+                    $missing[$id][] = $item;
+                }
+            }
+        }
+
+        return $missing;
     }
 }

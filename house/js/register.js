@@ -1429,6 +1429,20 @@ $(document).ready(function () {
             titleEl.appendChild(document.createTextNode(info.event.title));
             titleEl.classList.add("ml-1");
 
+            // Icons for required checklist items that are not checked
+            let checklistEls = [];
+            if (Array.isArray(info.event.extendedProps.checklistIcons)) {
+                info.event.extendedProps.checklistIcons.forEach(function (item) {
+                    let iconEl = document.createElement('i');
+                    iconEl.className = item.iconClass + ' ml-1 hhk-checklist-missing';
+                    iconEl.title = item.title;
+                    if (item.color) {
+                        iconEl.style.color = item.color;
+                    }
+                    checklistEls.push(iconEl);
+                });
+            }
+
 			if (info.event.extendedProps.idReservation !== undefined) {
 
 				let chooserEl = document.createElement('Span');
@@ -1437,10 +1451,10 @@ $(document).ready(function () {
 				chooserEl.style.border = '0px solid black';
 				chooserEl.id = info.event.extendedProps.idResc
 
-				let arrayOfNodes = [chooserEl, titleEl];
+				let arrayOfNodes = [chooserEl, titleEl].concat(checklistEls);
 				return { domNodes: arrayOfNodes }
             } else {
-                return { domNodes: [titleEl] };
+                return { domNodes: [titleEl].concat(checklistEls) };
             }
 		},
 
@@ -1500,6 +1514,10 @@ $(document).ready(function () {
                     info.el.title = info.event.extendedProps.reason;
                 }else if (info.event.extendedProps.description && (info.event.extendedProps.kind === 'bo')) {
                     info.el.title = info.event.extendedProps.description;
+                }
+
+                if (Array.isArray(info.event.extendedProps.checklistIcons) && info.event.extendedProps.checklistIcons.length > 0) {
+                    info.el.title += ', Missing: ' + info.event.extendedProps.checklistIcons.map(function (item) { return item.title; }).join(', ');
                 }
 
 				info.event.setProp('display', 'auto');
