@@ -189,9 +189,9 @@ Order by `t`.`List_Order`;");
               . ($tableName == DIAGNOSIS_TABLE_NAME ? HTMLTable::makeTh('Category') : '')
                . ($type == GlTypeCodes::CA ? HTMLTable::makeTh('Amount') : '')
                 . ($type == GlTypeCodes::HA ? HTMLTable::makeTh('Days') : '')
-                 . (($type == GlTypeCodes::Demographics || $tableName == "Calendar_Status_Colors") ? HTMLTable::makeTh('Font Color') . HTMLTable::makeTh('Background Color') : '')
+                 . ((($type == GlTypeCodes::Demographics && !$isChecklist) || $tableName == "Calendar_Status_Colors") ? HTMLTable::makeTh('Font Color') . HTMLTable::makeTh('Background Color') : '')
                  . ($type == GlTypeCodes::Demographics ? HTMLTable::makeTh('Icon <a href="https://icons.getbootstrap.com/" target="_blank" class="ml-2" title="More Info"><i class="bi bi-info-circle-fill"></i></a>') : '')
-                 . ($isChecklist ? HTMLTable::makeTh('Required', ['title' => 'Unchecked required items show their icon on the calendar']) : '')
+                 . ($isChecklist ? HTMLTable::makeTh('Icon Color') . HTMLTable::makeTh('Required', ['title' => 'Unchecked required items show their icon on the calendar']) : '')
                   . ($type == GlTypeCodes::U ? '' : ($type == GlTypeCodes::m || $tableName == RESERV_STATUS_TABLE_NAME ? HTMLTable::makeTh('Use') : HTMLTable::makeTh('Delete') . HTMLTable::makeTh('Replace With')));
 
         $tbl->addHeaderTr($hdrTr);
@@ -274,7 +274,7 @@ Order by `t`.`List_Order`;");
 
                 self::makeRibbonColorMkup($type, $tableName, $d) .
 
-                ($isChecklist ? self::makeChecklistRequiredMkup($d) : '') .
+                ($isChecklist ? self::makeChecklistMkup($d) : '') .
 
                 $cbDelMU .
 
@@ -289,7 +289,7 @@ Order by `t`.`List_Order`;");
         if ($type != GlTypeCodes::U && $type != GlTypeCodes::m && $tableName != RESERV_STATUS_TABLE_NAME) {
             // new entry row
 
-            $colspan = $type == GLTypeCodes::Demographics ? ($isChecklist ? 6 : 5) : 2;
+            $colspan = $type == GLTypeCodes::Demographics ? 5:2;
 
             $tbl->addBodyTr(
                 ($tableName != RESERV_STATUS_TABLE_NAME ?
@@ -330,25 +330,28 @@ Order by `t`.`List_Order`;");
                 $backgroundColor = (isset($splits[1]) && $splits[1] != '' ? $splits[1] : ($uS->DefaultCalEventColor != '' ? $uS->DefaultCalEventColor : "#3788d8"));
             }
 
-            //font color
-            $mkup .= HTMLTable::makeTd(
-                HTMLInput::generateMarkup($fontColor,
-                [
-                    'size' => '10',
-                    'name' => 'txtDiagFontColor[' . $d[0] . ']',
-                    'type'=>'color'
-                ])
-            );
+            // Checklist items only color their icon - see makeChecklistMkup()
+            if (!Checklist::isChecklistTable($tableName)) {
+                //font color
+                $mkup .= HTMLTable::makeTd(
+                    HTMLInput::generateMarkup($fontColor,
+                    [
+                        'size' => '10',
+                        'name' => 'txtDiagFontColor[' . $d[0] . ']',
+                        'type'=>'color'
+                    ])
+                );
 
-            //background color
-            $mkup .= HTMLTable::makeTd(
-                HTMLInput::generateMarkup($backgroundColor,
-                [
-                    'size' => '10',
-                    'name' => 'txtDiagBkColor[' . $d[0] . ']',
-                    'type'=>'color'
-                ])
-            );
+                //background color
+                $mkup .= HTMLTable::makeTd(
+                    HTMLInput::generateMarkup($backgroundColor,
+                    [
+                        'size' => '10',
+                        'name' => 'txtDiagBkColor[' . $d[0] . ']',
+                        'type'=>'color'
+                    ])
+                );
+            }
 
             if ($type == GlTypeCodes::Demographics) {
                 //icon
@@ -376,20 +379,40 @@ Order by `t`.`List_Order`;");
         return $mkup;
     }
 
-    public static function makeChecklistRequiredMkup(array $d){
+    public static function makeChecklistMkup(array $d){
+        $uS = Session::getInstance();
 
         $attributes = (!empty($d["Attributes"]) ? json_decode($d["Attributes"], true) : []);
+
+        if (!is_array($attributes)) {
+            $attributes = [];
+        }
+
+        // Older items stored the icon color as fontColor
+        $iconColor = Checklist::getIconColor($attributes);
+        if ($iconColor == '') {
+            $iconColor = ($uS->DefCalEventTextColor != '' ? $uS->DefCalEventTextColor : "#ffffff");
+        }
+
+        $mkup = HTMLTable::makeTd(
+            HTMLInput::generateMarkup($iconColor,
+            [
+                'size' => '10',
+                'name' => 'txtDiagIconColor[' . $d[0] . ']',
+                'type'=>'color'
+            ])
+        );
 
         $cbAttr = [
             'name' => 'cbDiagRequired[' . $d[0] . ']',
             'type' => 'checkbox',
         ];
 
-        if (is_array($attributes) && !empty($attributes[Checklist::RequiredAttr])) {
+        if (!empty($attributes[Checklist::RequiredAttr])) {
             $cbAttr['checked'] = 'checked';
         }
 
-        return HTMLTable::makeTd(HTMLInput::generateMarkup('', $cbAttr), ['style' => 'text-align:center;']);
+        return $mkup . HTMLTable::makeTd(HTMLInput::generateMarkup('', $cbAttr), ['style' => 'text-align:center;']);
     }
 
     /**
@@ -613,9 +636,17 @@ Order by `t`.`List_Order`;");
                     if (isset($postLookups['txtDiagIconClass'][$k])) {
                         $attributes[$k]["iconClass"] = $postLookups['txtDiagIconClass'][$k];
                     }
-                    if (Checklist::isChecklistTable($tableName)) {
-                        $attributes[$k][Checklist::RequiredAttr] = isset($postLookups['cbDiagRequired'][$k]);
-                    }
+                }
+            }
+
+            // Checklist items have an icon color instead of font/background colors
+            if (Checklist::isChecklistTable($tableName) && isset($postLookups['txtDiagIconClass'])) {
+                foreach ($postLookups['txtDiagIconClass'] as $k => $iconClass) {
+                    $attributes[$k] = [
+                        "iconClass" => $iconClass,
+                        Checklist::IconColorAttr => ($postLookups['txtDiagIconColor'][$k] ?? ''),
+                        Checklist::RequiredAttr => isset($postLookups['cbDiagRequired'][$k]),
+                    ];
                 }
             }
 

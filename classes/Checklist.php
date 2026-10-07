@@ -34,6 +34,9 @@ class Checklist
     // gen_lookups.Attributes key marking a checklist item as required
     const RequiredAttr = 'required';
 
+    // gen_lookups.Attributes key for the color of a checklist item's calendar icon
+    const IconColorAttr = 'iconColor';
+
     // Shown on the calendar for a missing required item that has no icon of its own
     const DefaultMissingIcon = 'bi bi-exclamation-triangle-fill';
 
@@ -318,6 +321,19 @@ ORDER BY g.`Order`;";
     }
 
     /**
+     * Icon color from a checklist item's attributes. Items saved before the
+     * icon color existed kept it in fontColor.
+     * @param array $attributes decoded gen_lookups.Attributes
+     * @return string hex color, or '' when none is set
+     */
+    public static function getIconColor(array $attributes): string {
+
+        $color = $attributes[self::IconColorAttr] ?? ($attributes['fontColor'] ?? '');
+
+        return (is_string($color) && preg_match('/^#[0-9a-fA-F]{3,8}$/', $color) ? $color : '');
+    }
+
+    /**
      * Find the required checklist items that are not checked for each entity.
      * @param \PDO $dbh
      * @param array $entityIds
@@ -357,7 +373,7 @@ ORDER BY g.`Order`;");
                     'code' => $r['Code'],
                     'title' => htmlspecialchars_decode($r['Description'], ENT_QUOTES),
                     'iconClass' => (!empty($attributes['iconClass']) ? $attributes['iconClass'] : self::DefaultMissingIcon),
-                    'color' => (isset($attributes['fontColor']) && preg_match('/^#[0-9a-fA-F]{3,8}$/', $attributes['fontColor']) ? $attributes['fontColor'] : ''),
+                    'color' => self::getIconColor($attributes),
                 ];
             }
         }
