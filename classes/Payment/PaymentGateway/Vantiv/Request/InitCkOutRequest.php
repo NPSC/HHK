@@ -64,8 +64,8 @@ class InitCkOutRequest extends AbstractMercRequest {
     /**
      * Summary of execute
      * @param \SoapClient $txClient
-     * @param mixed $data
-     * @throws \HHK\Exception\PaymentException
+     * @param array $data
+     * @throws PaymentException
      * @return InitCkOutResponse
      */
     protected function execute(\SoapClient $txClient, array $data) {

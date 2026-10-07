@@ -16,18 +16,28 @@ use HHK\Common;
  */
 class selCtrl {
 
-    protected $labelArray;
-    protected $codeArray;
-    protected $valueArray;
+    protected array $labelArray;
+    protected array $codeArray;
+    protected array $valueArray;
     protected $htmlNameBase = "";
     protected $rows = 0;
     protected $class = "";
     protected $title = "";
     protected $multiple;
 
-    function __Construct($dbcon, $genLkupTabelName, $defaultVal, $htmlNameBase, $emptyOption, $title = "", $orderBy = "Description" ) {
+    /**
+     * Summary of __construct
+     * @param \PDO $dbh
+     * @param string $genLkupTabelName
+     * @param mixed $defaultVal
+     * @param mixed $htmlNameBase
+     * @param mixed $emptyOption
+     * @param string $title
+     * @param string $orderBy
+     */
+    public function __construct(\PDO $dbh, string $genLkupTabelName, $defaultVal, $htmlNameBase, $emptyOption, string $title = "", string $orderBy = "Description" ) {
 
-        $genRcrds = Common::readGenLookupsPDO($dbcon, $genLkupTabelName, $orderBy);
+        $genRcrds = Common::readGenLookupsPDO($dbh, $genLkupTabelName, $orderBy);
 
         if ($emptyOption) {
             $this->rows = count($genRcrds) + 1;

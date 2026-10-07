@@ -31,34 +31,34 @@ class NewGuest
 
     /**
      * Summary of numberNewGuests
-     * @var
+     * @var int
      */
     protected int $numberNewGuests;
     /**
      * Summary of numberReturnGuests
-     * @var
+     * @var int
      */
     protected int $numberReturnGuests;
 
     /**
      * Summary of numberNewPSGs
-     * @var
+     * @var int
      */
     protected int $numberNewPSGs;
     /**
      * Summary of numberReturnPSGs
-     * @var
+     * @var int
      */
     protected int $numberReturnPSGs;
 
     /**
      * Summary of newGuestIds
-     * @var
+     * @var array
      */
     protected array $newGuestIds;
     /**
      * Summary of newPSGIds
-     * @var
+     * @var array
      */
     protected array $newPSGIds;
 
