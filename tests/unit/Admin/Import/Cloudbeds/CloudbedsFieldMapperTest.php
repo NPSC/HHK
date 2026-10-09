@@ -48,6 +48,20 @@ class CloudbedsFieldMapperTest extends TestCase
         $this->assertSame([], $out['values']);
     }
 
+    public function testNoteLabelPrefersGuestProfileLabelOverItsInternalName(): void
+    {
+        // the Guest Profiles API shape's own "name" is a short internal key (e.g. "referral"), not the readable
+        // text - that's "label" instead, unlike the PMS shape, where "name" (customFieldName) already is the
+        // readable text and there is no "label" at all - confirmed against live data
+        $mapper = new CloudbedsFieldMapper(['guest' => ['referral' => 'note.psg']]);
+
+        $out = $mapper->apply('guest', [
+            ['customFieldId' => '20082', 'name' => 'referral', 'label' => 'Appointment Referring Source', 'value' => 'Husband- appt'],
+        ]);
+
+        $this->assertSame(['Appointment Referring Source: Husband- appt'], $out['notes']['note.psg']);
+    }
+
     public function testUnmappedFieldsCanBeDropped(): void
     {
         $mapper = new CloudbedsFieldMapper([], 'ignore');

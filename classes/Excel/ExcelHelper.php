@@ -33,7 +33,7 @@ class ExcelHelper extends \XLSXWriter{
     /**
      * Sets download headers and sends document to stdOut
      */
-    public function download(){
+    public function download(): never {
         header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
         header('Content-Disposition: attachment;filename="' . $this->filename . '.xlsx"');
         header('Cache-Control: max-age=0');

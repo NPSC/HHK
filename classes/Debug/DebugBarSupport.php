@@ -2,6 +2,7 @@
 
 namespace HHK\Debug;
 
+use DebugBar\DataCollector\MessagesCollector;
 use DebugBar\OpenHandler;
 use DebugBar\JavascriptRenderer;
 use DebugBar\Storage\FileStorage;
@@ -37,7 +38,7 @@ final class DebugBarSupport {
         self::$renderer->setAjaxHandlerEnableTab(true);
         self::$renderer->setAjaxHandlerAutoShow(false);
 
-        self::$debugBar['messages']->info('PHP Debugbar enabled');
+        self::messages()?->info('PHP Debugbar enabled');
         self::$initialized = true;
 
         ob_start([self::class, 'injectIntoHtml']);
@@ -50,11 +51,18 @@ final class DebugBarSupport {
 
     public static function addMessage(string $message, string $level = 'info'): void {
 
-        if (self::$debugBar === null || isset(self::$debugBar['messages']) === false) {
-            return;
+        self::messages()?->addMessage($message, $level);
+    }
+
+    private static function messages(): ?MessagesCollector {
+
+        if (self::$debugBar === null || self::$debugBar->hasCollector('messages') === false) {
+            return null;
         }
 
-        self::$debugBar['messages']->addMessage($message, $level);
+        $collector = self::$debugBar->getCollector('messages');
+
+        return $collector instanceof MessagesCollector ? $collector : null;
     }
 
     private static function shouldEnable(): bool {
@@ -234,7 +242,7 @@ final class DebugBarSupport {
         if (is_dir(self::STORAGE_PATH) && is_writable(self::STORAGE_PATH)) {
             self::$debugBar->setStorage(new FileStorage(self::STORAGE_PATH));
         } else {
-            self::$debugBar['messages']->warning('DebugBar storage unavailable; large AJAX payloads may fail');
+            self::messages()?->warning('DebugBar storage unavailable; large AJAX payloads may fail');
         }
 
         if (self::$renderer !== null) {

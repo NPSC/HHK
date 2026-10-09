@@ -10,6 +10,11 @@
 	--nav-active-color: #a14d4d;
 }
 
+.navbar.dev-mode {
+	--nav-bg-color: #5c72cc;
+	--nav-active-color: #3f3e8f;
+}
+
 body {
 	font-family: Lucida Grande,Lucida Sans,Arial,sans-serif;
 }

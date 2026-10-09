@@ -65,7 +65,6 @@ class CloudbedsFieldMapper {
         ],
         'Hospital Stay' => [
             'hospital' => 'Hospital',
-            'referral.source' => 'Referring Source (maps to Hospital)',
             'diagnosis' => 'Diagnosis',
             'mrn' => 'MRN',
         ],
@@ -132,6 +131,17 @@ class CloudbedsFieldMapper {
             'label' => (string) ($field['label'] ?? ''),
             'value' => is_scalar($value) ? trim((string) $value) : '',
         ];
+    }
+
+    /**
+     * The human-readable label for a field, used in a note line or the "unmapped" preview. The two Cloudbeds shapes
+     * disagree on which key holds it: the PMS shape's own "name" (customFieldName) always is one; the Guest Profiles
+     * API shape's "name" is actually a short internal key (e.g. "referral") and "label" holds the readable text
+     * (e.g. "Appointment Referring Source") instead - confirmed against live data, where the same field reached
+     * through both shapes produced two different-looking note lines for the one value before this preferred "label".
+     */
+    protected static function labelFor(array $f): string {
+        return $f['label'] !== '' ? $f['label'] : ($f['name'] !== '' ? $f['name'] : ($f['shortcode'] !== '' ? $f['shortcode'] : $f['id']));
     }
 
     /**
@@ -255,7 +265,7 @@ class CloudbedsFieldMapper {
                 continue;
             }
 
-            $label = $f['name'] !== '' ? $f['name'] : ($f['shortcode'] !== '' ? $f['shortcode'] : $f['id']);
+            $label = self::labelFor($f);
             $target = $this->targetFor($scope, $f);
 
             if ($target === null) {
@@ -295,7 +305,7 @@ class CloudbedsFieldMapper {
                 continue;
             }
 
-            $label = $f['name'] !== '' ? $f['name'] : ($f['shortcode'] !== '' ? $f['shortcode'] : $f['id']);
+            $label = self::labelFor($f);
             $target = $this->targetFor($primaryScope, $f) ?? $this->targetFor($secondaryScope, $f);
 
             if ($target === null) {

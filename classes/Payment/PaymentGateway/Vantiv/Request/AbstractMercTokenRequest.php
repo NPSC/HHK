@@ -48,10 +48,7 @@ abstract class AbstractMercTokenRequest extends AbstractMercRequest {
      * @var int
      */
     protected $tokenId;
-    /**
-     * Summary of transType
-     * @var
-     */
+
     protected $transType;
 
     /**

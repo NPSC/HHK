@@ -275,7 +275,7 @@ abstract class AbstractImport {
     /**
      * Search for person and or create them. if PSG is given, add the guest to the PSG.
      * @param array $r ["firstName", "LastName", "Middle", "Gender", "Ethnicity", "BirthDate", "Banned", "mediaSource", "Relationship_to_Patient", "Address", "Address2, "City", "County", "State", "ZipCode", "Country", "Phone", "Mobile", "Email"]
-     * @param mixed $psg
+     * @param PSG|bool $psg PSG to add the guest to, or false for none
      * @return Guest|bool
      */
     protected function addGuest(array $r, PSG|bool $psg = false){

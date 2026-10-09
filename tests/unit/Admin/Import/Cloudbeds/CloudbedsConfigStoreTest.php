@@ -84,6 +84,14 @@ class CloudbedsConfigStoreTest extends TestCase
         CloudbedsConfig::validateSettings($settings);
     }
 
+    public function testPlaceholderRoomCategoryIsParsedAndTrimmed(): void
+    {
+        $settings = CloudbedsConfigStore::settingsFromForm(['placeholderRoomCategory' => ' Sent_To_Hotel ']);
+        $this->assertSame('Sent_To_Hotel', $settings['placeholderRoomCategory']);
+        $this->assertSame('', CloudbedsConfigStore::settingsFromForm([])['placeholderRoomCategory'], 'off by default');
+        CloudbedsConfig::validateSettings($settings);
+    }
+
     public function testOnlySettingsAreReturned(): void
     {
         $existing = [
@@ -131,6 +139,16 @@ class CloudbedsConfigStoreTest extends TestCase
             'reservation' => [['hhk' => 'hospital', 'crm' => 'hosp']],
         ]);
         CloudbedsConfigStore::validateFieldMap([]);
+
+        $this->addToAssertionCount(1);
+    }
+
+    public function testANoteTargetCanBeMappedFromMoreThanOneField(): void
+    {
+        // unlike every other target, a note is meant to collect lines from several fields, not hold one value
+        CloudbedsConfigStore::validateFieldMap([
+            'guest' => [['hhk' => 'note.psg', 'crm' => 'Special Needs'], ['hhk' => 'note.psg', 'crm' => 'Referring Source']],
+        ]);
 
         $this->addToAssertionCount(1);
     }

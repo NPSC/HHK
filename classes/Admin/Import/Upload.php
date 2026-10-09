@@ -122,7 +122,7 @@ class Upload {
                     "Phone"    =>$faker->phoneNumber(),
                     "Street"   =>$faker->buildingNumber() . " " . $faker->streetName(),
                     "City"     =>$faker->city(),
-                    "State"    =>$faker->state(),
+                    "State"    =>$faker->format('state'),
                     "ZipCode"  =>$faker->postcode(),
                 ];
             }

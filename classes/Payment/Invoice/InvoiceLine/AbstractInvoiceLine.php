@@ -31,20 +31,14 @@ abstract class AbstractInvoiceLine {
      * @var int
      */
     protected $lineId;
-    /**
-     * Summary of amount
-     * @var
-     */
+
     protected $amount;
     /**
      * Summary of quantity
      * @var int
      */
     protected $quantity;
-    /**
-     * Summary of price
-     * @var
-     */
+
     protected $price;
     /**
      * Summary of itemId
@@ -76,25 +70,13 @@ abstract class AbstractInvoiceLine {
      * @var InvoiceLineRS
      */
     protected $invLineRs;
-    /**
-     * Summary of var
-     * @var
-     */
+
     protected $var;
-    /**
-     * Summary of carriedFrom
-     * @var
-     */
+
     protected $carriedFrom;
-    /**
-     * Summary of useDetail
-     * @var
-     */
+
     protected $useDetail;
-    /**
-     * Summary of isPercentage
-     * @var
-     */
+
     protected $isPercentage;
 
     /**

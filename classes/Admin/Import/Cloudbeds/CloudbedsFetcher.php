@@ -5,11 +5,13 @@ namespace HHK\Admin\Import\Cloudbeds;
  * Pulls data from Cloudbeds into the staging table, in resumable steps that each stay within a time budget so
  * they can be driven from repeated web requests:
  *
- *  1. guestList          which reservations count as a stay, from the PMS getGuestList endpoint (see CloudbedsConfig::getStayedFrom() etc),
- *                        plus a second pass for Confirmed reservations checking out from today onward (not yet checked in, but still
- *                        worth importing as a future reservation - see import specs.md). Seeds a reservation row per qualifying
- *                        reservation; nothing else ever creates one, so only reservations one of these two passes reports are ever
- *                        staged or imported.
+ *  1. guestList          which reservations to import, from the PMS getGuestList endpoint (see CloudbedsConfig::getStayedFrom() etc)
+ *                        and CloudbedsConfig::getStayStatuses() - checked_out/confirmed/canceled/no_show always, checked_in too when
+ *                        includeCurrentGuests() is set (not_confirmed/inquiry/deleted are never imported, too tentative to be worth a
+ *                        reservation record) - plus a second pass for Confirmed reservations checking out from today onward (not yet
+ *                        checked in, but still worth importing as a future reservation - see import specs.md), since the main pass's
+ *                        date range is normally bounded to the past. Seeds a reservation row per qualifying reservation; nothing else
+ *                        ever creates one, so only reservations one of these two passes reports are ever staged or imported.
  *  2. reservationFields  reservation custom fields, from the PMS API, filtered to the same timeframe. Also queues the main guest's
  *                        profile id to be fetched next - Cloudbeds only pairs a guest profile id with a PMS guest id for a
  *                        reservation's main guest (see CloudbedsGuestMatcher), so that pairing is the only way in.
@@ -226,7 +228,8 @@ class CloudbedsFetcher {
      * profile record, then match it against its own reservations (Guest Profiles API) to find which, if any, are
      * qualifying reservations already staged by guestList - that match is what "hasStay" means, and is also how the
      * profile id gets paired with a PMS guest id (CloudbedsGuestMatcher) so guest notes can be fetched later. Custom
-     * fields are only fetched for a profile that has a stay, since that is the only kind that gets imported.
+     * fields are fetched for every profile except a merged one (see importProfile() - even a companion who never
+     * confirms a stay of their own is still imported, by PMS guest id, when a reservation ties them to one).
      */
     protected function fetchProfiles(float $deadline): bool {
         $propertyIds = $this->config->getPropertyIds();
@@ -296,8 +299,10 @@ class CloudbedsFetcher {
                 $current = $this->staging->getPayload(CloudbedsStaging::PROFILE, $profileId) ?? ['id' => $profileId];
                 $payload = ($profile ?? []) + $current;
                 $payload['hasStay'] = $hasStay;
-                // custom fields are only useful for profiles that will actually be imported
-                $payload['customFields'] = $hasStay ? $this->client->getProfileCustomFields($profileId) : [];
+                // fetched for every profile except a merged one (its data belongs to the surviving profile instead) -
+                // even a companion who never confirms a stay of their own may still be a real guest on someone else's
+                // reservation (see importProfile()), and their own profile-level fields/notes matter there too
+                $payload['customFields'] = empty($payload['isMerged']) ? $this->client->getProfileCustomFields($profileId) : [];
 
                 $this->staging->setPayload((int) $row['id'], $payload);
                 $this->staging->markFetched((int) $row['id']);

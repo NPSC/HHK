@@ -49,7 +49,9 @@ class CloudbedsConfigTest extends TestCase
         $this->assertSame('', $c->getStayedFrom());
         $this->assertSame('', $c->getStayedTo());
         $this->assertFalse($c->includeCurrentGuests());
-        $this->assertSame(['checked_out'], $c->getStayStatuses());
+        $this->assertSame(['checked_out', 'confirmed', 'canceled', 'no_show'], $c->getStayStatuses());
+        $this->assertSame('', $c->getPlaceholderRoomCategory());
+        $this->assertSame('Sent_To_Hotel', $this->config(['placeholderRoomCategory' => ' Sent_To_Hotel '])->getPlaceholderRoomCategory());
     }
 
     public function testStayFilter(): void
@@ -58,7 +60,7 @@ class CloudbedsConfigTest extends TestCase
         $this->assertSame('2024-01-01', $c->getStayedFrom());
         $this->assertSame('2024-12-31', $c->getStayedTo());
         $this->assertTrue($c->includeCurrentGuests());
-        $this->assertSame(['checked_out', 'checked_in'], $c->getStayStatuses());
+        $this->assertSame(['checked_out', 'confirmed', 'canceled', 'no_show', 'checked_in'], $c->getStayStatuses());
 
         $this->assertSame('', $this->config(['stayedFrom' => '  '])->getStayedFrom(), 'blank means no bound');
     }
@@ -178,16 +180,5 @@ class CloudbedsConfigTest extends TestCase
         $c = $this->config(['defaultHospital' => '7']);
         $this->assertSame('7', $c->getRaw()['defaultHospital']);
         $this->assertSame(['1', '2'], $c->getRaw()['propertyIds']);
-    }
-
-    public function testReferringSourceMapsToHospital(): void
-    {
-        $c = new CloudbedsConfig(['apiKey' => 'k', 'organizationId' => '1', 'propertyIds' => [42], 'referralMap' => ['VA appt' => '2', 'Fire EVAC' => '1']]);
-
-        // matched the same way room names are: case, spacing and punctuation don't matter
-        $this->assertSame(2, $c->getMappedHospitalId('va  APPT'));
-        $this->assertSame(1, $c->getMappedHospitalId('fire evac'));
-        $this->assertSame(0, $c->getMappedHospitalId('Appointments'), 'an unmapped source gets no hospital');
-        $this->assertSame(0, $c->getMappedHospitalId(''));
     }
 }

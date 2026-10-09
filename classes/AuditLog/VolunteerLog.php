@@ -3,6 +3,7 @@ namespace HHK\AuditLog;
 
 use HHK\SysConst\VolStatus;
 use HHK\Tables\{EditRS, TableRSInterface, ActivityRS};
+use HHK\Tables\Name\NameVolunteerRS;
 
 /**
  * VolunteerLog.php
@@ -28,7 +29,7 @@ class VolunteerLog implements AuditLogInterface {
      * Write any updated fields to the log, according to iTableRS logme boolean.
      *
      * @param \PDO $dbh
-     * @param TableRSInterface $rs
+     * @param NameVolunteerRS $rs
      * @param int $id
      * @param string $user
      */
@@ -51,7 +52,7 @@ class VolunteerLog implements AuditLogInterface {
     /**
      *
      * @param \PDO $dbh
-     * @param TableRSInterface $rs
+     * @param NameVolunteerRS $rs
      * @param int $id
      * @param string $user
      *
@@ -88,7 +89,7 @@ class VolunteerLog implements AuditLogInterface {
     /**
      *
      * @param \PDO $dbh
-     * @param TableRSInterface $rs
+     * @param NameVolunteerRS $rs
      * @param int $id
      * @param string $user
      */
@@ -109,4 +110,3 @@ class VolunteerLog implements AuditLogInterface {
     }
 
 }
-?>

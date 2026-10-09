@@ -282,6 +282,17 @@ $setTbl->addBodyTr(HTMLTable::makeTh('Guest Notes') . HTMLTable::makeTd(
     $checkbox('importGuestNotes', !empty($saved['importGuestNotes'] ?? true), 'Import the notes on guests as member notes (one extra Cloudbeds request per guest when fetching)')
     . HTMLContainer::generateMarkup('div', 'Turning this on or off after a fetch has already run discards already-fetched data too, for the same reason.', ['class' => 'mt-1'])));
 
+// placeholder room category: for a confirmed reservation whose checkout has already passed with no room ever
+// assigned (sent to an outside hotel rather than housed here) - see CloudbedsImport::resolvePlaceholderRoom()
+$placeholderRoomCategorySaved = (string) ($saved['placeholderRoomCategory'] ?? '');
+$roomRptCatOptions = [['', '(off - skip these reservations)']];
+foreach (Common::readGenLookupsPDO($dbh, 'Room_Rpt_Cat') as $code => $cat) {
+    $roomRptCatOptions[] = [$code, cbEsc($cat['Description'])];
+}
+$setTbl->addBodyTr(HTMLTable::makeTh('Placeholder Room Category') . HTMLTable::makeTd(
+    HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($roomRptCatOptions, $placeholderRoomCategorySaved, FALSE), ['name' => 'placeholderRoomCategory'])
+    . HTMLContainer::generateMarkup('div', 'For a confirmed reservation with no room assigned whose check-out date has already passed - treated as sent to an outside hotel rather than housed here, so it is still tracked in HHK instead of skipped. The first available room in this category (by date) is used; if none are free, a new one is cloned from an existing room in the category, named "&lt;category&gt; &lt;next number&gt;".', ['class' => 'mt-1'])));
+
 // custom field mapping, modeled on the CRM export field mapping: rows of HHK field <-> Cloudbeds custom field for each kind of custom field.
 // The Cloudbeds fields come from the property's custom field definitions and from the fetched data.
 $cbFields = [CloudbedsFieldMapper::SCOPE_GUEST => [], CloudbedsFieldMapper::SCOPE_RESERVATION => []];
@@ -366,12 +377,6 @@ foreach ($stagedValues['statuses'] as $status) {
 }
 ksort($cbRooms, SORT_NATURAL | SORT_FLAG_CASE);
 ksort($cbMethods, SORT_NATURAL | SORT_FLAG_CASE);
-// referring sources (free text from the mapped custom field), each mapped to a hospital in the Referring Sources section
-$cbReferrals = [];
-foreach (array_keys($staging->summarizeGenLookupValues($mapper, ['referral.source' => 'referral'])['referral'] ?? []) as $referral) {
-    $cbReferrals[$referral] = $referral;
-}
-ksort($cbReferrals, SORT_NATURAL | SORT_FLAG_CASE);
 
 foreach ($staging->summarizeCustomFields($mapper) as $f) {
     $addCbField($f['scope'], $f);
@@ -571,7 +576,6 @@ $valueMapsMkup = HTMLContainer::generateMarkup('div',
     $valueMapSection(CloudbedsValueMaps::ROOM, 'Rooms', 'Which HHK room each Cloudbeds room is imported as. Rooms left as they are are matched to the HHK room with the same name, or created by that name if "Create Missing" (Rooms) is on above; the button here does the same thing now instead of waiting for import.', $cbRooms, $roomOptions, '-- Match by name --', fn() => '', $createRoomsBtn)
     . $valueMapSection(CloudbedsValueMaps::PAYMENT_METHOD, 'Payment Methods', 'How payments are recorded. Card and other methods are recorded as external payments.', $cbMethods, $toOptions(CloudbedsValueMaps::PAY_TYPE_CHOICES), '-- Default --', $methodDefault)
     . $valueMapSection(CloudbedsValueMaps::RESERVATION_STATUS, 'Reservation Statuses', 'What each Cloudbeds reservation status is imported as. Checked out and staying reservations also get a visit and its folio.', $cbStatuses, $toOptions(CloudbedsValueMaps::STATUS_CHOICES), '-- Default --', $statusDefault)
-    . $valueMapSection(CloudbedsValueMaps::REFERRAL_SOURCE, 'Referring Sources', 'Which HHK hospital each Cloudbeds referring source is imported as. Applies to reservations that don\'t name a hospital of their own; referring sources left as they are get the default hospital, if one is set.', $cbReferrals, $hospitalOptions, '-- Default hospital --', fn() => '')
     . $valueMapSection(CloudbedsValueMaps::CHARGE_ITEM, 'Charge Items', 'What each kind of folio charge is imported as on the invoice. Room rates are lodging. Anything left as default is an additional charge, or a discount when the amount is negative. Charges set to Do not import are left off the invoice.', $cbChargeTypes, $toOptions(CloudbedsValueMaps::CHARGE_ITEM_CHOICES), '-- Default --', $chargeDefault),
     ['class' => 'hhk-flex flex-wrap']);
 

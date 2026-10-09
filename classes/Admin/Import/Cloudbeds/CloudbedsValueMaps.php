@@ -30,10 +30,7 @@ final class CloudbedsValueMaps {
 
     public const CHARGE_ITEM = 'charge_item';
 
-    /** Cloudbeds referring source (free text) -> HHK hospital (idHospital), see CloudbedsConfig::getMappedHospitalId() */
-    public const REFERRAL_SOURCE = 'referral_source';
-
-    public const TYPES = [self::ROOM, self::PAYMENT_METHOD, self::RESERVATION_STATUS, self::CHARGE_ITEM, self::REFERRAL_SOURCE];
+    public const TYPES = [self::ROOM, self::PAYMENT_METHOD, self::RESERVATION_STATUS, self::CHARGE_ITEM];
 
     /** choice for a Cloudbeds status or charge type that shouldn't be imported */
     public const SKIP = 'skip';

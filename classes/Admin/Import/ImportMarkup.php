@@ -132,7 +132,7 @@ class ImportMarkup {
      * Find/match HHK gen lookups to a specific import field
      * @param string $genLookupTableName
      * @param string $importFieldName
-     * @return bool|array{id:int, HHK Name: string, Import Name: string}
+     * @return bool|array{id:int, "HHK Name": string, "Import Name": string}
      */
     public function getGenLookupInfo(string $genLookupTableName = "", string $importFieldName = ""){
         try{

@@ -63,7 +63,7 @@ class CloudbedsConfig {
     ];
 
     /** Settings saved in import_cloudbeds_settings. The rest of the config is the connection, the custom field mapping (crm_field_map) and the room, payment method and status mappings (import_cloudbeds_map). */
-    public const SETTING_KEYS = ['defaultHospital', 'createMissing', 'unmappedCustomFields', 'importGuestNotes', 'stayedFrom', 'stayedTo', 'includeCurrentGuests'];
+    public const SETTING_KEYS = ['defaultHospital', 'createMissing', 'unmappedCustomFields', 'importGuestNotes', 'stayedFrom', 'stayedTo', 'includeCurrentGuests', 'placeholderRoomCategory'];
 
     protected array $cfg;
     protected CloudbedsFieldMapper $fieldMapper;
@@ -131,7 +131,7 @@ class CloudbedsConfig {
             throw new \InvalidArgumentException('stayedFrom must not be after stayedTo');
         }
 
-        foreach (['reservationStatusMap' => CloudbedsValueMaps::RESERVATION_STATUS, 'paymentMethodMap' => CloudbedsValueMaps::PAYMENT_METHOD, 'roomMap' => CloudbedsValueMaps::ROOM, 'chargeItemMap' => CloudbedsValueMaps::CHARGE_ITEM, 'referralMap' => CloudbedsValueMaps::REFERRAL_SOURCE] as $key => $type) {
+        foreach (['reservationStatusMap' => CloudbedsValueMaps::RESERVATION_STATUS, 'paymentMethodMap' => CloudbedsValueMaps::PAYMENT_METHOD, 'roomMap' => CloudbedsValueMaps::ROOM, 'chargeItemMap' => CloudbedsValueMaps::CHARGE_ITEM] as $key => $type) {
             if (isset($settings[$key]) && !is_array($settings[$key])) {
                 throw new \InvalidArgumentException("$key must be a list of mappings");
             }
@@ -202,12 +202,27 @@ class CloudbedsConfig {
     }
 
     /**
-     * The Cloudbeds reservation statuses that getGuestList is filtered to, per includeCurrentGuests()
+     * The Cloudbeds reservation statuses that getGuestList's main pass is filtered to: every status worth importing
+     * except not_confirmed/inquiry (too tentative to be worth a reservation record) and deleted, plus checked_in per
+     * includeCurrentGuests(). confirmed is also covered on its own by fetchGuestList()'s second, unbounded-future pass.
      *
      * @return string[]
      */
     public function getStayStatuses(): array {
-        return $this->includeCurrentGuests() ? ['checked_out', 'checked_in'] : ['checked_out'];
+        $statuses = ['checked_out', 'confirmed', 'canceled', 'no_show'];
+        if ($this->includeCurrentGuests()) {
+            $statuses[] = 'checked_in';
+        }
+        return $statuses;
+    }
+
+    /**
+     * The Room_Rpt_Cat gen_lookups code to draw placeholder rooms from for a confirmed reservation whose checkout date
+     * is already past and has no room assigned (sent to an outside hotel, tracked in HHK as a placeholder room rather
+     * than a real one). '' means the feature is off: such a reservation's room-less segment is skipped as before.
+     */
+    public function getPlaceholderRoomCategory(): string {
+        return trim((string) ($this->cfg['placeholderRoomCategory'] ?? ''));
     }
 
     public function getFieldMapper(): CloudbedsFieldMapper {
@@ -255,26 +270,6 @@ class CloudbedsConfig {
         foreach ((array) ($this->cfg['roomMap'] ?? []) as $name => $idResource) {
             if (CloudbedsValueMaps::normalize(CloudbedsValueMaps::ROOM, (string) $name) === $wanted && ctype_digit((string) $idResource)) {
                 return (int) $idResource;
-            }
-        }
-
-        return 0;
-    }
-
-    /**
-     * The HHK hospital a Cloudbeds referring source (free text) is mapped to
-     *
-     * @return int idHospital, 0 if the value isn't mapped (the reservation then gets the default hospital, if any)
-     */
-    public function getMappedHospitalId(string $referralSource): int {
-        $wanted = CloudbedsValueMaps::normalize(CloudbedsValueMaps::REFERRAL_SOURCE, $referralSource);
-        if ($wanted === '') {
-            return 0;
-        }
-
-        foreach ((array) ($this->cfg['referralMap'] ?? []) as $name => $idHospital) {
-            if (CloudbedsValueMaps::normalize(CloudbedsValueMaps::REFERRAL_SOURCE, (string) $name) === $wanted && ctype_digit((string) $idHospital)) {
-                return (int) $idHospital;
             }
         }
 

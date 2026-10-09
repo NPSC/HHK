@@ -228,3 +228,8 @@ INSERT IGNORE INTO `sys_config`(`Key`,`Value`,`Type`,`Category`,`Description`,`S
 
 INSERT IGNORE INTO `sys_config`(`Key`,`Value`,`Type`,`Category`,`Description`,`Show`) VALUES 
 ('InsistMRN','false','b','p','Insist on user filling in the patients MRN',1);
+
+-- Allow more than one Cloudbeds custom field to map to the same note target (note.psg/note.reservation/note.member
+-- collect lines from several fields; everything else holds one value and keeps the old per-hhk_field uniqueness)
+ALTER TABLE `crm_field_map` DROP INDEX IF EXISTS `uq_gateway_object_field`;
+ALTER TABLE `crm_field_map` ADD UNIQUE KEY IF NOT EXISTS `uq_gateway_object_field_crm` (`gateway_id`, `crm_object`, `hhk_field`, `crm_field`);

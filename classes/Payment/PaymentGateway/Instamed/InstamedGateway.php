@@ -476,7 +476,7 @@ class InstamedGateway extends AbstractPaymentGateway {
 
             default:
 
-                $dataArray['warning'] = '** Void Invalid or Error. **  Message: ' . $csResp->getErrorMessage();
+                $dataArray['warning'] = '** Void Invalid or Error. **  Message: ' . $csResp->response->getErrorMessage();
         }
 
         return $dataArray;
@@ -512,7 +512,7 @@ class InstamedGateway extends AbstractPaymentGateway {
 
             default:
 
-                $dataArray['warning'] = $csResp->getErrorMessage();
+                $dataArray['warning'] = $csResp->response->getErrorMessage();
         }
 
         return $dataArray;

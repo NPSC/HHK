@@ -3,10 +3,12 @@ namespace HHK\Admin\Import\Cloudbeds;
 
 use HHK\Admin\Import\AbstractImport;
 use HHK\Admin\Import\ImportInterface;
+use HHK\Common;
 use HHK\House\Hospital\HospitalStay;
 use HHK\Note\LinkNote;
 use HHK\Note\Note;
 use HHK\sec\Session;
+use HHK\SysConst\ReservationStatus;
 use HHK\SysConst\VisitStatus;
 
 /**
@@ -523,17 +525,31 @@ class CloudbedsImport extends AbstractImport implements ImportInterface {
         $profileId = $row['cloudbedsId'];
         $payload = $row['payload'];
 
-        $existing = $this->findPersonByExternalId($profileId);
+        if (!empty($payload['isMerged'])) {
+            return $this->result(CloudbedsStaging::SKIPPED, null, [], 'Profile has been merged into another Cloudbeds profile');
+        }
+
+        // a profile whose own Guest Profiles API reservation list never confirms a stay (hasStay false) is a companion
+        // only ever discovered as a roommate on someone else's reservation (see CloudbedsFetcher::fetchProfiles()).
+        // ensureReservationPeople() identifies a companion like that by their PMS guest id, not this real Cloudbeds
+        // profile id (see PMS_GUEST_ID_PREFIX) - this must use that exact same external id, or the two paths create
+        // two separate people for the same guest. The PMS guest id comes from guestRefs, set by fetchProfiles()'s
+        // rememberGuest() the first time this profile turned up on a reservation it got paired to (CloudbedsGuestMatcher).
+        // A profile with neither a confirmed stay nor a guestRef was never actually tied to an imported reservation.
+        $hasStay = (bool) ($payload['hasStay'] ?? false);
+        $guestId = (string) ($payload['guestRefs'][0]['guestId'] ?? '');
+        if (!$hasStay && $guestId === '') {
+            return $this->result(CloudbedsStaging::SKIPPED, null, [], 'Not known to be connected to any imported reservation');
+        }
+        $externalId = $hasStay ? $profileId : self::pmsGuestExternalId($guestId);
+
+        $existing = $this->findPersonByExternalId($externalId);
         if ($existing > 0) {
             return $this->result(CloudbedsStaging::DONE, $existing, [], 'Already imported');
         }
 
-        if (!($payload['hasStay'] ?? false)) {
-            return $this->result(CloudbedsStaging::SKIPPED, null, [], 'No stay in the configured timeframe');
-        }
-
         $r = CloudbedsNormalizer::person($payload);
-        $r['externalId'] = $profileId;
+        $r['externalId'] = $externalId;
 
         $mapped = $this->mapper->apply(CloudbedsFieldMapper::SCOPE_GUEST, (array) ($payload['customFields'] ?? []));
         foreach ($mapped['values'] as $target => $value) {
@@ -721,12 +737,20 @@ class CloudbedsImport extends AbstractImport implements ImportInterface {
             }
         }
 
+        // the same field can genuinely appear in more than one of the three sources above (confirmed against live
+        // data: a field can be present on both the guest's own profile and the reservation's per-slot data) - a
+        // line that's byte-identical to one already added from an earlier source is the same field seen twice, not
+        // a second thing to say, so it's dropped rather than repeated in the note
+        foreach ($notes as $noteTarget => $lines) {
+            $notes[$noteTarget] = array_values(array_unique($lines));
+        }
+
         $mapped['notes'] = $notes;
 
         // guests: the reservation's guest list, keyed by PMS guest id (see ensureReservationPeople()). The mapped MRN
         // (if any) lets the main guest's first self-check-in recognize a name-only orphan patient a relative's
         // earlier, separate reservation already created for them (see findOrphanSelfPatient()).
-        $people = $this->ensureReservationPeople($summary, $realMainProfileId, $mainGuestId, trim($values['mrn'] ?? ''), $warnings);
+        $people = $this->ensureReservationPeople($summary, $realMainProfileId, $mainGuestId, trim($values['mrn'] ?? ''), (array) ($payload['guestIds'] ?? []), $warnings);
         if (count($people) === 0) {
             throw new \RuntimeException('Reservation has no importable guests');
         }
@@ -735,13 +759,6 @@ class CloudbedsImport extends AbstractImport implements ImportInterface {
 
         // patient, PSG, registration and hospital stay
         $hospitalTitle = trim($values['hospital'] ?? '');
-        // no hospital field, but a referring source mapped to a hospital (see CloudbedsValueMaps::REFERRAL_SOURCE)
-        if ($hospitalTitle === '' && ($referralHospitalId = $this->config->getMappedHospitalId((string) ($values['referral.source'] ?? ''))) > 0) {
-            $hospitalTitle = $this->getHospitalTitle($referralHospitalId);
-            if ($hospitalTitle === '') {
-                $warnings[] = "The hospital mapped to referring source '{$values['referral.source']}' no longer exists in HHK";
-            }
-        }
         if ($hospitalTitle === '' && $this->config->getDefaultHospitalId() > 0) {
             $hospitalTitle = $this->getHospitalTitle($this->config->getDefaultHospitalId());
             if ($hospitalTitle === '') {
@@ -833,12 +850,22 @@ class CloudbedsImport extends AbstractImport implements ImportInterface {
             // segment; a later re-fetch picks it up once Cloudbeds assigns a room. This only applies to a real, explicit
             // "no room" segment from Cloudbeds' own room list, not the single synthetic segment used below when
             // Cloudbeds gave no room breakdown for the reservation at all.
-            if ($hadRoomData && trim((string) ($room['roomName'] ?? '')) === '' && trim((string) ($room['roomId'] ?? '')) === '') {
-                continue;
-            }
+            $roomUnassigned = $hadRoomData && trim((string) ($room['roomName'] ?? '')) === '' && trim((string) ($room['roomId'] ?? '')) === '';
 
             $arrival = CloudbedsNormalizer::dateTime((string) ($room['checkInAt'] ?? $summary['checkInAt'] ?? ''), CloudbedsNormalizer::DEFAULT_ARRIVAL_TIME);
             $expectedDeparture = CloudbedsNormalizer::dateTime((string) ($room['checkOutAt'] ?? $summary['checkOutAt'] ?? ''), CloudbedsNormalizer::DEFAULT_DEPARTURE_TIME);
+
+            // the one exception to skipping a room-less segment: a confirmed reservation whose checkout has already
+            // passed was, in practice, sent to an outside hotel instead of housed here - tracked as a placeholder room
+            // (see CloudbedsConfig::getPlaceholderRoomCategory()) so it still shows up in HHK's own reservation history
+            $placeholderRoomCategory = $this->config->getPlaceholderRoomCategory();
+            $usePlaceholderRoom = $roomUnassigned && $placeholderRoomCategory !== '' && $cloudbedsStatus === 'confirmed'
+                && $expectedDeparture !== null && $expectedDeparture < date('Y-m-d H:i:s');
+
+            if ($roomUnassigned && !$usePlaceholderRoom) {
+                continue;
+            }
+
             if ($arrival === null || $expectedDeparture === null) {
                 throw new \RuntimeException('Reservation has no check-in/check-out dates');
             }
@@ -853,7 +880,9 @@ class CloudbedsImport extends AbstractImport implements ImportInterface {
                 $guestIds[$person['idName']] = ($person['idName'] === $primaryIdName);
             }
 
-            $idResource = $this->resolveResource((string) ($room['roomName'] ?? ''), $warnings);
+            $idResource = $usePlaceholderRoom
+                ? $this->resolvePlaceholderRoom($placeholderRoomCategory, $arrival, $expectedDeparture)
+                : $this->resolveResource((string) ($room['roomName'] ?? ''), $warnings);
 
             // this room segment's own status, not the reservation's overall one, decides whether it is done - a segment
             // Cloudbeds itself reports as checked out is departed regardless of what the guest's current (later) segment
@@ -881,16 +910,16 @@ class CloudbedsImport extends AbstractImport implements ImportInterface {
             ]);
             $reservationIds[] = $idResv;
 
-            $lines = array_merge(["Imported from Cloudbeds reservation #" . $reservationId], $mapped['notes']['note.reservation'] ?? []);
-            LinkNote::save($this->dbh, $this->noteText($lines), $idResv, Note::ResvLink, '', $uS->username);
-
+            // a room segment that becomes an HHK visit (checked in or checked out, not just a future reservation)
+            // gets this created first, so the note below can attach to the visit instead of the bare reservation
+            $idVisit = null;
             if ($segVisitStatus !== null) {
                 $stays = [];
                 foreach (array_keys($guestIds) as $idName) {
                     $stays[] = ['idName' => $idName, 'idRoom' => $idResource, 'checkin' => $arrival, 'checkout' => $segCheckedOut ? $expectedDeparture : null];
                 }
 
-                $visitIds[] = $this->insertVisit([
+                $idVisit = $this->insertVisit([
                     'idReservation' => $idResv,
                     'idRegistration' => $reg->getIdRegistration(),
                     'idHospitalStay' => $idHospitalStay,
@@ -902,6 +931,24 @@ class CloudbedsImport extends AbstractImport implements ImportInterface {
                     'status' => $segVisitStatus,
                     'stays' => $stays,
                 ]);
+                $visitIds[] = $idVisit;
+            }
+
+            // a visit note (LinkNote resolves it to the same reservation under the hood, just with a nicer "Visit #,
+            // Room X" title) when this segment actually became one; a reservation note otherwise - a future, not-yet-
+            // checked-in reservation has no visit to attach to.
+            $lines = array_merge(["Imported from Cloudbeds reservation #" . $reservationId], $mapped['notes']['note.reservation'] ?? []);
+            $idResvNote = $idVisit !== null
+                ? LinkNote::save($this->dbh, $this->noteText($lines), $idVisit, Note::VisitLink, '', $uS->username)
+                : LinkNote::save($this->dbh, $this->noteText($lines), $idResv, Note::ResvLink, '', $uS->username);
+
+            // backdated to this room segment's own check-in, not whenever the import happened to run - same reasoning
+            // as the Cloudbeds guest notes backdating below (addGuestNotes()): a reservation/visit note is per-visit
+            // information (a custom field mapped to note.reservation is exactly that - see import specs.md
+            // discussion on referring source/special needs), so it should read as having been written for that stay
+            if (is_int($idResvNote) && $idResvNote > 0) {
+                $stmt = $this->dbh->prepare("update `note` set `Timestamp` = :written where `idNote` = :idNote");
+                $stmt->execute([':written' => $arrival, ':idNote' => $idResvNote]);
             }
         }
 
@@ -941,12 +988,21 @@ class CloudbedsImport extends AbstractImport implements ImportInterface {
      * guest id here, which is namespaced (see PMS_GUEST_ID_PREFIX) so it can never be confused with, or overwrite, a
      * real profile id.
      *
+     * $guestProfileIds (the reservation's own [profile id => PMS guest id], from CloudbedsGuestMatcher - see
+     * fetchProfiles()) occasionally also pairs one companion, when the reservation has exactly one guest profile and
+     * one PMS guest left over once the main guest is accounted for - unlike $mainProfileId/$mainGuestId, this is never
+     * used for that companion's external id (still namespaced, since importProfile() would otherwise need to agree on
+     * the exact same reservation's pairing to not create a duplicate - safer to keep the two always in step), only to
+     * know their real profile id for addProfileNotesToPsg().
+     *
      * @return array<string, array{idName: int, row: array, main: bool, profileId: string}> keyed by PMS guest id
      *         (matches room['guestId']/additionalGuestIds, also PMS guest ids). 'profileId' is the person's real
-     *         Guest Profile id when known (always for the main guest), '' otherwise.
+     *         Guest Profile id when known (the main guest, always; a companion, only when $guestProfileIds paired
+     *         them), '' otherwise.
      */
-    protected function ensureReservationPeople(array $summary, string $mainProfileId, string $mainGuestId, string $mrn, array &$warnings): array {
+    protected function ensureReservationPeople(array $summary, string $mainProfileId, string $mainGuestId, string $mrn, array $guestProfileIds, array &$warnings): array {
         $people = [];
+        $profileIdsByGuestId = array_flip(array_map('strval', $guestProfileIds));
 
         foreach ((array) ($summary['guests'] ?? []) as $g) {
             $guestId = (string) ($g['id'] ?? '');
@@ -957,6 +1013,7 @@ class CloudbedsImport extends AbstractImport implements ImportInterface {
             $isMain = !empty($g['isMainGuest']) || ($mainGuestId !== '' && $guestId === $mainGuestId);
             $realProfileId = ($isMain && $mainProfileId !== '') ? $mainProfileId : '';
             $externalId = $realProfileId !== '' ? $realProfileId : self::pmsGuestExternalId($guestId);
+            $notesProfileId = $realProfileId !== '' ? $realProfileId : (string) ($profileIdsByGuestId[$guestId] ?? '');
 
             $r = CloudbedsNormalizer::person($g);
             $r['externalId'] = $externalId;
@@ -979,7 +1036,7 @@ class CloudbedsImport extends AbstractImport implements ImportInterface {
                 $idName = (int) $guest->getIdName();
             }
 
-            $people[$guestId] = ['idName' => $idName, 'row' => $r, 'main' => $isMain, 'profileId' => $realProfileId];
+            $people[$guestId] = ['idName' => $idName, 'row' => $r, 'main' => $isMain, 'profileId' => $notesProfileId];
         }
 
         return $people;
@@ -1175,6 +1232,118 @@ class CloudbedsImport extends AbstractImport implements ImportInterface {
 
         $warnings[] = "Room '$title' does not exist in HHK";
         return 0;
+    }
+
+    /**
+     * The first room in the placeholder category with no overlapping reservation or visit over the given dates, or a
+     * newly created one cloned from an existing room in that category if all are busy. See resolveResource()'s caller
+     * for when this is used instead - only a confirmed reservation whose checkout has already passed with no room
+     * ever assigned, which isn't a real stay to house, just one to keep a record of.
+     *
+     * @throws \RuntimeException if the category has no existing room to use as a template
+     */
+    protected function resolvePlaceholderRoom(string $category, string $arrival, string $expectedDeparture): int {
+        $stmt = $this->dbh->prepare("select ro.*, rr.idResource as idResource from `room` ro
+            join `resource_room` rr on rr.idRoom = ro.idRoom
+            where ro.Report_Category = :cat order by ro.idRoom");
+        $stmt->execute([':cat' => $category]);
+        $categoryRooms = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+
+        if (count($categoryRooms) === 0) {
+            throw new \RuntimeException("Placeholder room category '$category' has no rooms to use as a template - create at least one room in that category first");
+        }
+
+        foreach ($categoryRooms as $r) {
+            if ($this->roomIsAvailable((int) $r['idResource'], $arrival, $expectedDeparture)) {
+                return (int) $r['idResource'];
+            }
+        }
+
+        return $this->createPlaceholderRoom($category, $categoryRooms);
+    }
+
+    /**
+     * Whether no Committed/UnCommitted reservation and no non-Pending/Cancelled visit overlaps the given dates for
+     * this resource - the same overlap rule RoomChooser::hasOverlappingReservationOrVisit() uses when assigning a
+     * room to a new HHK reservation, simplified: there is no reservation/visit of our own yet to exclude.
+     */
+    protected function roomIsAvailable(int $idResource, string $arrival, string $expectedDeparture): bool {
+        $rStat = "'" . ReservationStatus::Committed . "','" . ReservationStatus::UnCommitted . "'";
+        $vStat = "'" . VisitStatus::Pending . "','" . VisitStatus::Cancelled . "'";
+
+        $stmt = $this->dbh->prepare("
+            select 1
+            from reservation r
+            where r.idResource = :idResource1
+              and r.Status in ($rStat)
+              and DATE(r.Expected_Arrival) < DATE(:dep1)
+              and DATE(r.Expected_Departure) > DATE(:arr1)
+            union
+            select 1
+            from visit v
+            where v.idResource = :idResource2
+              and v.Status not in ($vStat)
+              and (case when v.Status != 'a' then DATE(v.Span_Start) != DATE(v.Span_End) else 1=1 end)
+              and DATE(v.Arrival_Date) < DATE(:dep2)
+              and ifnull(DATE(v.Span_End), case when DATE(now()) > DATE(v.Expected_Departure) then AddDate(DATE(now()), 1) else DATE(v.Expected_Departure) end) > DATE(:arr2)
+            limit 1
+        ");
+        $stmt->execute([
+            ':idResource1' => $idResource, ':dep1' => $expectedDeparture, ':arr1' => $arrival,
+            ':idResource2' => $idResource, ':dep2' => $expectedDeparture, ':arr2' => $arrival,
+        ]);
+
+        return !$stmt->fetchColumn();
+    }
+
+    /**
+     * A new room in the placeholder category, cloned from one of its existing rooms' own attributes (so it behaves
+     * like the others in that category, unlike AbstractImport::createRoom()'s generic defaults), named
+     * "<category description> <next number>" per the category's own existing numbering.
+     *
+     * @param array $categoryRooms the category's existing rooms (room.* plus idResource), select ro.idRoom ascending -
+     *                              used both as the clone source and to work out the next number
+     */
+    protected function createPlaceholderRoom(string $category, array $categoryRooms): int {
+        $categories = Common::readGenLookupsPDO($this->dbh, 'Room_Rpt_Cat');
+        $description = trim((string) ($categories[$category]['Description'] ?? $category));
+
+        $next = 1;
+        foreach ($categoryRooms as $r) {
+            if (preg_match('/^' . preg_quote($description, '/') . '\s+(\d+)$/i', trim((string) $r['Title']), $m)) {
+                $next = max($next, (int) $m[1] + 1);
+            }
+        }
+        $title = "$description $next";
+
+        $template = $categoryRooms[0];
+        $stmt = $this->dbh->prepare("select * from `resource` where `idResource` = :id");
+        $stmt->execute([':id' => $template['idResource']]);
+        $templateResource = $stmt->fetch(\PDO::FETCH_ASSOC) ?: [];
+
+        $roomCols = $template;
+        unset($roomCols['idResource'], $roomCols['idRoom'], $roomCols['Title'], $roomCols['Timestamp']);
+        $roomCols['Title'] = $title;
+        $columns = implode(', ', array_map(fn($c) => "`$c`", array_keys($roomCols)));
+        $placeholders = implode(', ', array_map(fn($c) => ":$c", array_keys($roomCols)));
+        $stmt = $this->dbh->prepare("insert into `room` ($columns) values ($placeholders)");
+        $stmt->execute($roomCols);
+        $idRoom = (int) $this->dbh->lastInsertId();
+
+        $resourceCols = $templateResource;
+        unset($resourceCols['idResource'], $resourceCols['Title'], $resourceCols['Timestamp']);
+        $resourceCols['Title'] = $title;
+        $columns = implode(', ', array_map(fn($c) => "`$c`", array_keys($resourceCols)));
+        $placeholders = implode(', ', array_map(fn($c) => ":$c", array_keys($resourceCols)));
+        $stmt = $this->dbh->prepare("insert into `resource` (`idResource`, $columns) values (:idResource, $placeholders)");
+        $stmt->execute(array_merge([':idResource' => $idRoom], $resourceCols));
+
+        $stmt = $this->dbh->prepare("insert into `resource_room` (`idResource_room`,`idResource`,`idRoom`) values (:idRoom1, :idRoom2, :idRoom3)");
+        $stmt->execute([':idRoom1' => $idRoom, ':idRoom2' => $idRoom, ':idRoom3' => $idRoom]);
+
+        $this->rooms[trim(strtolower($title))] = $idRoom;
+
+        return $idRoom;
     }
 
     // ------------------------------------------------------------------------------------------------

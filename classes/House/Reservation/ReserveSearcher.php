@@ -103,6 +103,8 @@ class ReserveSearcher extends ActiveReservation {
             $this->reserveData->setResvChooser($mk);
         }
 
+        // choosers are set on reserveData; createMarkup() returns it
+        return null;
     }
 
     /**

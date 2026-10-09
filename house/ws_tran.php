@@ -4,7 +4,6 @@ use HHK\CreateMarkupFromDB;
 use HHK\CrmExport\AbstractExportManager;
 use HHK\CrmExport\Neon\NeonManager;
 use HHK\CrmExport\Salesforce\SalesforceManager;
-use HHK\CrmExport\Salesforce\SF_Connector;
 use HHK\Exception\RuntimeException;
 use HHK\Exception\UnexpectedValueException;
 use HHK\HTMLControls\HTMLTable;
@@ -142,7 +141,7 @@ try {
             }
 
             // Households
-            if (count($transfer->getHhReplies()) > 0) {
+            if ($transfer instanceof NeonManager && count($transfer->getHhReplies()) > 0) {
                 $events['households'] = $transfer->getHhReplies();
             }
 
@@ -248,20 +247,6 @@ try {
             } catch (RuntimeException $hex) {
                 $events = ['warning' => $hex->getMessage()];
             }
-
-            break;
-
-        case 'rmvAcctId':
-
-            $arguments = [
-                'id' => FILTER_SANITIZE_NUMBER_INT,
-            ];
-
-            $filtered = filter_input_array(INPUT_POST, $arguments);
-
-            $num = $transfer->setExcludeMembers($dbh, $filtered['id']);
-
-            $events = ['result' => $num . ' records updated.'];
 
             break;
 

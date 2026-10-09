@@ -73,6 +73,8 @@ interface ExportManagerInterface {
 
     public function getMaxPSGsPerBatch(): mixed;
 
+    public function getLinkRelatives(): bool;
+
     public function getLastUpdated(): mixed;
 
     public function getUpdatedBy(): mixed;

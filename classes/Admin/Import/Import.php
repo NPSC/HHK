@@ -437,8 +437,7 @@ class Import extends AbstractImport implements ImportInterface {
 
         }
 
-
-        
+        return null;
     }
 
     private function addVisit(array $r, array $guests, $reg, $hospStay, $resvId, $visitStatus = VisitStatus::CheckedOut){
@@ -660,7 +659,7 @@ class Import extends AbstractImport implements ImportInterface {
         $uS = Session::getInstance();
         $insertCount = 0;
 
-        $uploadedDocs = (new ImportMarkup($this->dbh))->getDoctorInfo();
+        $uploadedDocs = (new ImportMarkup($this->dbh))->getDoctorInfo($this->fieldMapping["doctor"]);
 
         foreach ($uploadedDocs as $doc) {
             $docId = $this->findPerson($doc["docFirst"], $doc["docLast"], VolMemberType::Doctor);

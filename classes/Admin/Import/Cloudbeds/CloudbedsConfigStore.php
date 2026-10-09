@@ -45,7 +45,6 @@ class CloudbedsConfigStore {
         CloudbedsValueMaps::PAYMENT_METHOD => 'paymentMethodMap',
         CloudbedsValueMaps::RESERVATION_STATUS => 'reservationStatusMap',
         CloudbedsValueMaps::CHARGE_ITEM => 'chargeItemMap',
-        CloudbedsValueMaps::REFERRAL_SOURCE => 'referralMap',
     ];
 
     /** crm_field_map.crm_object values */
@@ -290,7 +289,10 @@ class CloudbedsConfigStore {
                 if (strlen($crm) > 100) {
                     throw new \InvalidArgumentException("Cloudbeds field '$crm' is too long");
                 }
-                if (isset($seenHhk[$hhk])) {
+                // a note target is meant to collect lines from several fields (CloudbedsFieldMapper::apply() appends
+                // to it, it doesn't overwrite), unlike every other target, which holds one value - so only those are
+                // restricted to one field each
+                if (isset($seenHhk[$hhk]) && !str_starts_with($hhk, 'note.')) {
                     throw new \InvalidArgumentException("The HHK field '" . ($labels[$hhk] ?? $hhk) . "' is mapped more than once for $object custom fields");
                 }
                 if (isset($seenCrm[strtolower($crm)])) {
@@ -510,6 +512,7 @@ class CloudbedsConfigStore {
         $settings['stayedFrom'] = trim((string) ($post['stayedFrom'] ?? ''));
         $settings['stayedTo'] = trim((string) ($post['stayedTo'] ?? ''));
         $settings['includeCurrentGuests'] = !empty($post['includeCurrentGuests']);
+        $settings['placeholderRoomCategory'] = trim((string) ($post['placeholderRoomCategory'] ?? ''));
 
         return $settings;
     }

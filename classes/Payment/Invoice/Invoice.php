@@ -35,44 +35,25 @@ class Invoice {
 
 	protected InvoiceRS $invRs;
 
-	/**
-	 * Summary of invoiceNum
-	 * @var
-	 */
+
 	protected $invoiceNum;
-	/**
-	 * Summary of idInvoice
-	 * @var
-	 */
+
 	protected $idInvoice;
-	/**
-	 * Summary of amountToPay
-	 * @var
-	 */
+
 	protected $amountToPay;
-	/**
-	 * Summary of delegatedInvoiceNumber
-	 * @var
-	 */
+
 	protected $delegatedInvoiceNumber;
-	/**
-	 * Summary of delegatedStatus
-	 * @var
-	 */
+
 	protected $delegatedStatus;
-	/**
-	 * Summary of tax_exempt
-	 * @var
-	 */
+
 	protected $tax_exempt;
+	
 	/**
 	 * Summary of __construct
 	 * @param \PDO $dbh
 	 * @param mixed $invoiceNumber
 	 * @throws \RuntimeException
 	 */
-
-
 	function __construct(\PDO $dbh, $invoiceNumber = '') {
 		$this->invRs = new InvoiceRS ();
 		$this->idInvoice = 0;

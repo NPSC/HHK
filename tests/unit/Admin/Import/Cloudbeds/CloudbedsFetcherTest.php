@@ -267,8 +267,11 @@ class CloudbedsFetcherTest extends TestCase
         )));
     }
 
-    public function testProfilesWithNoQualifyingStayAreNotImported(): void
+    public function testProfilesWithNoConfirmedStayOfTheirOwnStillGetTheirCustomFieldsFetched(): void
     {
+        // hasStay no longer gates the custom fields call: a companion like P4 (discovered as a guest on R3, but has no
+        // reservations of its own) may still be imported by PMS guest id when a reservation pairs them to one (see
+        // CloudbedsImport::importProfile()), so their own profile-level data is needed too, not just the main guest's
         [, $staging, $client] = $this->fetch();
 
         $profiles = $staging->payloads('profile');
@@ -276,9 +279,9 @@ class CloudbedsFetcherTest extends TestCase
         $this->assertTrue($profiles['P1']['hasStay']);
         $this->assertContains('customFields:P1', $client->calls);
 
-        $this->assertFalse($profiles['P4']['hasStay'], 'discovered as a guest on R3, but has no reservations of its own');
-        $this->assertSame([], $profiles['P4']['customFields'], 'the extra API call is skipped for a profile that will not be imported');
-        $this->assertNotContains('customFields:P4', $client->calls);
+        $this->assertFalse($profiles['P4']['hasStay']);
+        $this->assertSame('for P4', $profiles['P4']['customFields'][0]['value']);
+        $this->assertContains('customFields:P4', $client->calls);
     }
 
     public function testMergedProfilesAreNeverImportedAndTheirReservationsAreNeverQueried(): void
@@ -303,7 +306,7 @@ class CloudbedsFetcherTest extends TestCase
         [, $staging2, $client2] = $this->fetch(['includeCurrentGuests' => true]);
         $this->assertTrue($staging2->payloads('profile')['P8']['hasStay']);
         $this->assertArrayHasKey('R6', $staging2->payloads('reservation'));
-        $this->assertNotEmpty(array_filter($client2->calls, fn($c) => str_starts_with($c, 'guestList:42:1:checked_out,checked_in')));
+        $this->assertNotEmpty(array_filter($client2->calls, fn($c) => str_starts_with($c, 'guestList:42:1:checked_out,confirmed,canceled,no_show,checked_in')));
     }
 
     public function testGuestListIsFilteredByTheConfiguredDateRange(): void
