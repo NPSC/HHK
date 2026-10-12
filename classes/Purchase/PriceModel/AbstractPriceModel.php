@@ -273,7 +273,7 @@ abstract class AbstractPriceModel {
      * @param mixed $tiers
      * @param \DateTime $startDT
      * @param string $separator
-     * @param int $totalGuestNites
+     * @param int|float $totalGuestNites
      * @return float|int
      */
     public function tiersMarkup($r, &$totalAmt, &$tbl, $tiers, &$startDT, $separator, &$totalGuestNites) {

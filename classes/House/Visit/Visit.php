@@ -781,7 +781,7 @@ class Visit {
 
 
         // copy old values for new visit rs
-        foreach ($this->visitRS as $p) {
+        foreach (get_object_vars($this->visitRS) as $p) {
             if ($p instanceof DB_Field) {
                 $p->setNewVal($p->getStoredVal());
             }

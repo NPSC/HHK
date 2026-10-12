@@ -153,7 +153,7 @@ class Constraints {
      *
      * @param \PDO $dbh
      * @param int $id
-     * @return string HTML markup of a single table row containing input controls
+     * @return array{row: string} HTML markup of a single table row containing input controls
      */
     public function editMarkup(\PDO $dbh, $id) {
 
@@ -207,7 +207,7 @@ class Constraints {
      * @param int $id
      * @param array $post
      * @param string $username
-     * @return string HTML markup of the new table of constraints
+     * @return array{constList: string}|array{error: string} HTML markup of the new table of constraints, or an error message
      */
     public function saveMarkup(\PDO $dbh, $id, $post, $username) {
 

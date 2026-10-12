@@ -38,7 +38,7 @@ class Photo {
 
     /**
      * Summary of image
-     * @var string
+     * @var ?string
      */
     protected $image;
 
@@ -130,13 +130,13 @@ class Photo {
      * Summary of saveGuestPhoto
      * @param \PDO $dbh
      * @param int $idGuest
-     * @param string $imageFile
+     * @param array $imageFile
      * @param int $imageSizePx
      * @param string $userName
      * @param int $defaultSizePx
      * @return void
      */
-    public function saveGuestPhoto(\PDO $dbh, $idGuest, $imageFile, $imageSizePx, $userName, $defaultSizePx = 100) {
+    public function saveGuestPhoto(\PDO $dbh, $idGuest, array $imageFile, $imageSizePx, $userName, $defaultSizePx = 100) {
 
         $id = intval($idGuest, 10);
 

@@ -41,6 +41,9 @@ use HHK\Payment\PaymentGateway\Vantiv\Response\CreditTokenResponse;
 */
 
 // Mercury Token transactions
+/**
+ * @extends AbstractMercRequest<CreditTokenResponse>
+ */
 abstract class AbstractMercTokenRequest extends AbstractMercRequest {
 
     /**

@@ -86,7 +86,7 @@ try {
 
             if (is_null($guestId) || $guestId === FALSE) {
                 throw new \Exception('GuestId missing');
-            } else if (is_null($guestPhoto) || $guestPhoto === FALSE) {
+            } else if (!is_array($guestPhoto)) {
                 throw new \Exception('guest Photo missing');
             }
 
@@ -207,7 +207,7 @@ try {
 
             $document = new Document($docId);
 
-            if($document->deleteDocument($dbh, $uS->username) > 0){
+            if($document->deleteDocument($dbh, $uS->username)){
                     $events = ["status"=> "success", "idDoc"=> $document->getIdDocument(), "msg"=>"Document deleted successfully"];
             }else{
                     $events = ["error" => "Unable to delete document"];

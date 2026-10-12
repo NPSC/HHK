@@ -1,9 +1,9 @@
 <?php
 namespace HHK\Payment\PaymentManager;
 
+use HHK\Payment\Invoice\Invoice;
 use HHK\sec\Labels;
 use HHK\SysConst\ExcessPay;
-use HHK\SysConst\ReservationStatus;
 use HHK\Exception\PaymentException;
 use HHK\Payment\Invoice\InvoiceLine\{HoldInvoiceLine, ReimburseInvoiceLine};
 use HHK\Purchase\Item;
@@ -35,9 +35,9 @@ class ResvPaymentManager extends PaymentManager
      * @param mixed $resv
      * @param mixed $idPayor
      * @param mixed $notes
-     * @return \HHK\Payment\Invoice\Invoice|null
+     * @return ?Invoice
      */
-    public function createInvoice(\PDO $dbh, $resv, $idPayor, $notes = '') {
+    public function createInvoice(\PDO $dbh, $resv, $idPayor, $notes = ''): Invoice|null {
 
         $uS = Session::getInstance();
 

@@ -3,6 +3,7 @@
 namespace HHK\Member\Role;
 
 use HHK\HTMLControls\{HTMLContainer, HTMLInput, HTMLTable};
+use HHK\House\PSG;
 use HHK\House\ReserveData\PSGMember\PSGMember;
 use HHK\Member\Address\{Address, Addresses, CleanAddress, Emails, Phones};
 use HHK\Member\EmergencyContact\EmergencyContact;
@@ -66,18 +67,18 @@ abstract class AbstractRole {
     protected $useHousePhone = FALSE;
     /**
      *
-     * @var EmergencyContact
+     * @var EmergencyContact|null
      */
     protected $emergContact;
 
     /**
      * Summary of patientPsg
-     * @var int
+     * @var PSG|null
      */
     protected $patientPsg;
     /**
      * Summary of idVisit
-     * @var int
+     * @var int|null
      */
     protected $idVisit;
     /**
@@ -87,7 +88,7 @@ abstract class AbstractRole {
     protected $title;
     /**
      * Summary of currentlyStaying
-     * @var bool
+     * @var bool|null Null until the current stay has been looked up.
      */
     protected $currentlyStaying;
     /**

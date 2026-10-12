@@ -3,7 +3,7 @@
 namespace HHK\Payment\PaymentGateway\Vantiv\Request;
 
 use HHK\Exception\PaymentException;
-use HHK\Payment\PaymentGateway\Vantiv\Response\CreditTokenResponse;
+use HHK\Payment\PaymentGateway\Vantiv\Response\AbstractMercResponse;
 use HHK\Exception\UnexpectedValueException;
 
 /**
@@ -41,6 +41,9 @@ use HHK\Exception\UnexpectedValueException;
 
 
 // Base class Mercury Request and Response objects.
+/**
+ * @template TResponse of AbstractMercResponse
+ */
 abstract class AbstractMercRequest {
 
     /**
@@ -67,7 +70,7 @@ abstract class AbstractMercRequest {
      * @param mixed $trace
      * @throws UnexpectedValueException
      * @throws \HHK\Exception\PaymentException
-     * @return CreditTokenResponse
+     * @return TResponse
      */
     public function submit(array $gway, $trace = FALSE) {
 
@@ -115,7 +118,7 @@ abstract class AbstractMercRequest {
      * Summary of execute
      * @param \SoapClient $txClient
      * @param array $data
-     * @return CreditTokenResponse
+     * @return TResponse
      */
     protected abstract function execute(\SoapClient $txClient, array $data);
 

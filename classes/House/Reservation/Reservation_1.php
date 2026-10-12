@@ -47,7 +47,7 @@ class Reservation_1 {
 
     /**
      * Summary of reservRs
-     * @var ReservationRS
+     * @var ReservationRS|null Null once the reservation has been deleted.
      */
     protected $reservRs;
 
@@ -1407,7 +1407,7 @@ where $typeList and (rc.`Retired_At` is null or date(rc.`Retired_At`) > '" . $ex
                 } else {
                     if ($resv->getStatus() == ReservationStatus::UnCommitted) {
                         $guestAttrs['class'] = 'ui-state-highlight';
-                        $guestAttrs['title'] = 'Reservation status is ' . $resv->getStatusTitle($dbh) . '.  ' . $guestAttrs['title'];
+                        $guestAttrs['title'] = 'Reservation status is ' . $resv->getStatusTitle($dbh) . '.  ';
                     }
 
                     $guestName = HTMLContainer::generateMarkup('span', $guestMember->getMemberName(), $guestAttrs);

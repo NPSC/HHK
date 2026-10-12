@@ -94,10 +94,10 @@ class PaymentManager {
      * @param Visit $visit
      * @param int $idPayor
      * @param string $notes
-     * @return Invoice
+     * @return ?Invoice
      * @throws RuntimeException
      */
-    public function createInvoice(\PDO $dbh, $visit, $idPayor, $notes = '') {
+    public function createInvoice(\PDO $dbh, $visit, $idPayor, $notes = ''): Invoice|null {
 
         $uS = Session::getInstance();
         $this->invoice = NULL;

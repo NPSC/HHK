@@ -24,7 +24,7 @@ abstract class AbstractTableLog {
 
         $logText = array();
 
-        foreach ($rs as $dbF) {
+        foreach (get_object_vars($rs) as $dbF) {
             if ($dbF instanceof DB_Field) {
 
                 if ($dbF->logMe() && !is_null($dbF->getNewVal()) && $dbF->getNewVal() != "") {
@@ -40,7 +40,7 @@ abstract class AbstractTableLog {
 
         $logText = array();
 
-        foreach ($rs as $dbF) {
+        foreach (get_object_vars($rs) as $dbF) {
             if ($dbF instanceof DB_Field) {
 
                 if ($dbF->logMe() && !is_null($dbF->getNewVal()) && $dbF->getNewVal() != $dbF->getStoredVal()) {

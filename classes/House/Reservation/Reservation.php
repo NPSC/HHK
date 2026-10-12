@@ -50,7 +50,7 @@ class Reservation {
 
     /**
      * Summary of payResult
-     * @var PaymentResult
+     * @var PaymentResult|null
      */
     protected $payResult;
 
@@ -435,7 +435,7 @@ WHERE r.idReservation = " . $rData->getIdResv());
     /**
      * Summary of save
      * @param \PDO $dbh
-     * @return ActiveReservation
+     * @return ActiveReservation|DeletedReservation The reservation object to continue with.
      */
     public function save(\PDO $dbh) {
 

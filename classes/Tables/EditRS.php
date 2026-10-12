@@ -64,7 +64,7 @@ class EditRS {
                         $whClause .= " " . $combiner . " " . $key . "=" . $val;
                     } else {
                         $whClause .= " " . $combiner . " " . $key . "=" . $parm;
-                        $paramList[$parm] = $$dbF;
+                        $paramList[$parm] = $dbF;
                     }
                 }
             }
@@ -102,8 +102,7 @@ class EditRS {
     public static function loadRow($row, TableRSInterface $rs) {
 
         if (is_array($row)) {
-            foreach ($rs as $dbF) {
-                //if (is_a($dbF, "DB_Field")) {
+            foreach (get_object_vars($rs) as $dbF) {
                 if($dbF instanceof DB_Field){
 
                     if (isset($row[$dbF->getColUnticked()])) {
@@ -124,7 +123,7 @@ class EditRS {
      */
     public static function updateStoredVals(TableRSInterface $rs) {
 
-        foreach ($rs as $dbF) {
+        foreach (get_object_vars($rs) as $dbF) {
 
 
             if($dbF instanceof DB_Field){
@@ -158,7 +157,7 @@ class EditRS {
         $changesToUpdate = FALSE;
 
         // collect parameter values and sql query "set" fragment pairs
-        foreach ($rs as $dbF) {
+        foreach (get_object_vars($rs) as $dbF) {
 
             if($dbF instanceof DB_Field){
 
@@ -229,7 +228,7 @@ class EditRS {
      */
     public static function isChanged(TableRSInterface $rs){
         $changesToUpdate = false;
-        foreach ($rs as $dbF) {
+        foreach (get_object_vars($rs) as $dbF) {
 
             if($dbF instanceof DB_Field){
 
@@ -258,7 +257,7 @@ class EditRS {
         $id = 0;
 
         // collect parameter values and sql query insert columns
-        foreach ($rs as $dbF) {
+        foreach (get_object_vars($rs) as $dbF) {
 
             if($dbF instanceof DB_Field){
 

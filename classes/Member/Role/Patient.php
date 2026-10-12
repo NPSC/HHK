@@ -56,7 +56,7 @@ class Patient extends AbstractRole {
     /**
      * Summary of getPatientPsg
      * @param \PDO $dbh
-     * @return PSG|int
+     * @return PSG
      */
     public function getPatientPsg(\PDO $dbh) {
 

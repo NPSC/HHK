@@ -62,7 +62,7 @@ class Import extends AbstractImport implements ImportInterface {
      * @param int $limit
      * @param bool $people
      * @param bool $visits
-     * @return array{batch: int, guests: int, patients: int, progress: array{imported: float|int, progress: float, remaining: mixed, success: bool, workerId: string}|array{ImportId: mixed, error: string, trace: string}}
+     * @return array{success: true, batch: int, workerId: string, patients: int, guests: int, progress: array{imported: float|int, remaining: mixed, progress: float}}|array{error: string, ImportId: mixed, trace: string}
      */
     public function startImport(int $limit = 100, bool $people = true, bool $visits = false): array{
         $uS = Session::getInstance();

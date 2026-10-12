@@ -83,7 +83,7 @@ class Remember
 
         $rowCount = $stmt->rowCount();
 
-        return $rowCount;
+        return ($rowCount > 0);
     }
 
     public function deleteTokens(\PDO $dbh, bool $allUserTokens = false) : int

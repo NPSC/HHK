@@ -37,7 +37,7 @@ Class UnsubscribeEventRequest extends AbstractDeluxeRequest {
             ]);
 
             $status = $resp->getStatusCode();
-            $this->responseCode = $status;
+            $this->responseCode = (string) $status;
 
             $this->responseBody = json_decode($resp->getBody()->getContents(), true);
             $this->responseCode = (isset($this->responseBody["responseCode"]) ? $this->responseBody["responseCode"] : $resp->getStatusCode());
@@ -57,7 +57,7 @@ Class UnsubscribeEventRequest extends AbstractDeluxeRequest {
             return true;
             
         }catch(BadResponseException $e){//error
-            $this->responseCode = $e->getResponse()->getStatusCode();
+            $this->responseCode = (string) $e->getResponse()->getStatusCode();
             $this->responseBody = json_decode($e->getResponse()->getBody()->getContents(), true);
             
             try {
