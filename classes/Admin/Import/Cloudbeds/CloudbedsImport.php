@@ -671,7 +671,8 @@ class CloudbedsImport extends AbstractImport implements ImportInterface {
      * only reads a room's own guestId anyway) and its own stay dates, used as that room's check-in/out when the
      * room itself does not separately say.
      *
-     * @return array{reservationStatus: string, guests: array[], rooms: array[], checkInAt: string, checkOutAt: string}
+     * @return array{reservationStatus: string, guests: array[], rooms: array[], checkInAt: string, checkOutAt: string}|array{}
+     *         empty when there is no pmsGuestList to build from either
      */
     protected static function syntheticSummaryFromPms(array $payload): array {
         $pmsGuestList = (array) ($payload['pmsGuestList'] ?? []);
