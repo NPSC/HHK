@@ -192,7 +192,7 @@ class CloudbedsFetcherTest extends TestCase
             // getGuestList's own guestNotes for G1: note '1' duplicates one getGuestNotes also returns (with a different,
             // wrong-looking text, to prove the getGuestNotes version wins) and note '10' is exclusive to getGuestList
             // (getGuestNotes never returns it, see testGuestListNotesFillGapsGetGuestNotesMisses())
-            ['reservationID' => 'R1', 'guestID' => 'G1', 'status' => 'checked_out', 'isMainGuest' => true, 'guestNotes' => [['ID' => '1', 'note' => 'stale duplicate, must be ignored'], ['ID' => '10', 'note' => 'only getGuestList has this one']]],
+            ['reservationID' => 'R1', 'guestID' => 'G1', 'status' => 'checked_out', 'isMainGuest' => true, 'guestNotes' => [['id' => '1', 'note' => 'stale duplicate, must be ignored'], ['id' => '10', 'note' => 'only getGuestList has this one']]],
             ['reservationID' => 'R1', 'guestID' => 'G2', 'status' => 'checked_out', 'isMainGuest' => false],
             ['reservationID' => 'R3', 'guestID' => 'G1', 'status' => 'checked_out', 'isMainGuest' => true],
             ['reservationID' => 'R3', 'guestID' => 'G5', 'status' => 'checked_out', 'isMainGuest' => false],
@@ -282,6 +282,25 @@ class CloudbedsFetcherTest extends TestCase
         $this->assertFalse($profiles['P4']['hasStay']);
         $this->assertSame('for P4', $profiles['P4']['customFields'][0]['value']);
         $this->assertContains('customFields:P4', $client->calls);
+    }
+
+    public function testAProfileThatNoLongerExistsDoesNotCrashTheFetch(): void
+    {
+        // queued from stale data (e.g. a reservation that named a profile Cloudbeds has since removed) - getProfileById()
+        // 404s (returns null, not in $client->profiles), so there is nothing to fetch custom fields for either; this must
+        // not throw and take the whole fetch down with it (confirmed a real failure mode against a live account)
+        $config = new CloudbedsConfig(['apiKey' => 'k', 'organizationId' => '1', 'propertyIds' => [42]]);
+        $staging = new InMemoryStaging($this->createStub(\PDO::class));
+        $client = new FakeCloudbeds($config, $this->createStub(\PDO::class), $this->createStub(ClientInterface::class));
+        $staging->upsert(CloudbedsStaging::PROFILE, 'GONE', ['id' => 'GONE']);
+
+        $result = (new CloudbedsFetcher($client, $staging, $config))->run(20);
+
+        $this->assertTrue($result['complete']);
+        $profiles = $staging->payloads('profile');
+        $this->assertFalse($profiles['GONE']['hasStay']);
+        $this->assertSame([], $profiles['GONE']['customFields']);
+        $this->assertNotContains('customFields:GONE', $client->calls);
     }
 
     public function testMergedProfilesAreNeverImportedAndTheirReservationsAreNeverQueried(): void

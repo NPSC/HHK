@@ -49,4 +49,43 @@ class CloudbedsImportTest extends TestCase
         $this->assertSame('pmsguest:182375451', $externalId);
         $this->assertFalse(ctype_digit($externalId), 'must not be confusable with a bare Guest Profile id');
     }
+
+    /**
+     * Confirmed against a live, future-dated confirmed reservation whose main guest's own Guest Profiles API
+     * reservation list never included it, leaving the real "summary" permanently [] (see importReservation()) -
+     * pmsGuestList (from fetchReservationFields(), always present once a reservation is staged) is the only other
+     * place the guest/room/date data importReservation() needs can come from.
+     */
+    public function testSyntheticSummaryFromPmsBuildsAnImportableSummary(): void
+    {
+        $payload = [
+            'guestListStatus' => 'confirmed',
+            'pmsGuestList' => [
+                '189577284' => [
+                    'guestID' => '189577284', 'guestFirstName' => 'Jeff', 'guestLastName' => 'Sellers',
+                    'guestEmail' => 'jeff@example.com', 'guestPhone' => '+17752770971', 'guestGender' => 'M',
+                    'startDate' => '2026-10-28', 'endDate' => '2026-10-29', 'isMainGuest' => true,
+                    'rooms' => [['roomID' => '349457-23', 'roomName' => '12 TWI shared bathroom R', 'roomCheckIn' => '2026-10-28', 'roomCheckOut' => '2026-10-29', 'roomStatus' => 'not_checked_in']],
+                ],
+            ],
+        ];
+
+        $summary = (new \ReflectionMethod(CloudbedsImport::class, 'syntheticSummaryFromPms'))->invoke(null, $payload);
+
+        $this->assertSame('confirmed', $summary['reservationStatus']);
+        $this->assertSame('2026-10-28', $summary['checkInAt']);
+        $this->assertSame('2026-10-29', $summary['checkOutAt']);
+        $this->assertSame(['id' => '189577284', 'firstName' => 'Jeff', 'lastName' => 'Sellers'], array_intersect_key($summary['guests'][0], ['id' => 1, 'firstName' => 1, 'lastName' => 1]));
+        $this->assertTrue($summary['guests'][0]['isMainGuest']);
+        $this->assertSame('349457-23', $summary['rooms'][0]['roomId']);
+        $this->assertSame('189577284', $summary['rooms'][0]['guestId']);
+        $this->assertSame('2026-10-28', $summary['rooms'][0]['checkInAt']);
+    }
+
+    public function testSyntheticSummaryFromPmsIsEmptyWithNoPmsGuestList(): void
+    {
+        $summary = (new \ReflectionMethod(CloudbedsImport::class, 'syntheticSummaryFromPms'))->invoke(null, []);
+
+        $this->assertSame([], $summary);
+    }
 }

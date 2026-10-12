@@ -579,12 +579,21 @@ class CloudbedsImport extends AbstractImport implements ImportInterface {
     /**
      * A profile's Cloudbeds guest notes and its note.member custom field, attached to the PSG the guest's reservation
      * joins rather than to the guest's own member record. Imported once per profile - tracked on the profile's own
-     * staging row - the first time that guest is encountered on a qualifying reservation, whichever PSG that turns out
-     * to be; a guest who later turns up on a different patient's reservation does not get the notes repeated there.
+     * staging row, holding the idPsg it was imported to - the first time that guest is encountered on a qualifying
+     * reservation, whichever PSG that turns out to be; a guest who later turns up on a different patient's reservation
+     * does not get the notes repeated there. Stored as the idPsg itself, not a plain flag, and re-checked against the
+     * psg table: a PSG recorded here can since have been deleted (e.g. test data cleanup, or an HHK-side undo) without
+     * this staging row ever being touched, and in that case the notes need to be (re-)added to whichever PSG this
+     * guest ends up on now, not treated as already done.
      */
     protected function addProfileNotesToPsg(string $profileId, int $idPsg): void {
         $row = $this->staging->getRow(CloudbedsStaging::PROFILE, $profileId);
-        if ($row === null || !empty($row['payload']['notesImportedToPsg'])) {
+        if ($row === null) {
+            return;
+        }
+
+        $importedToPsg = (int) ($row['payload']['notesImportedToPsg'] ?? 0);
+        if ($importedToPsg > 0 && $this->psgExists($importedToPsg)) {
             return;
         }
 
@@ -600,8 +609,14 @@ class CloudbedsImport extends AbstractImport implements ImportInterface {
             $this->addGuestNotes($idPsg, (array) ($payload['guestNotes'] ?? []));
         }
 
-        $payload['notesImportedToPsg'] = true;
+        $payload['notesImportedToPsg'] = $idPsg;
         $this->staging->setPayload((int) $row['id'], $payload);
+    }
+
+    protected function psgExists(int $idPsg): bool {
+        $stmt = $this->dbh->prepare("select 1 from `psg` where `idPsg` = :id");
+        $stmt->execute([':id' => $idPsg]);
+        return (bool) $stmt->fetchColumn();
     }
 
     /**
@@ -645,13 +660,98 @@ class CloudbedsImport extends AbstractImport implements ImportInterface {
     // ------------------------------------------------------------------------------------------------
 
     /**
+     * A reservation summary built from pmsGuestList (fetchReservationFields(), always present) in the shape
+     * importReservation() expects from the Guest Profiles API's own summary (guests/rooms using "id"/"firstName"/...,
+     * not pmsGuestList's "guestID"/"guestFirstName"/...) - used only when the real summary was never filled in.
+     * guestListStatus (set unconditionally whenever getGuestList stages a reservation) stands in for the missing
+     * reservationStatus - it is the only other place this account's status vocabulary is known from.
+     *
+     * Each pmsGuestList entry already carries its own room(s) (from the PMS's point of view, so guestId is always
+     * known directly - no Guest Profiles API "additionalGuestIds" grouping is possible here, but importReservation()
+     * only reads a room's own guestId anyway) and its own stay dates, used as that room's check-in/out when the
+     * room itself does not separately say.
+     *
+     * @return array{reservationStatus: string, guests: array[], rooms: array[], checkInAt: string, checkOutAt: string}
+     */
+    protected static function syntheticSummaryFromPms(array $payload): array {
+        $pmsGuestList = (array) ($payload['pmsGuestList'] ?? []);
+        if (count($pmsGuestList) === 0) {
+            return [];
+        }
+
+        $guests = [];
+        $rooms = [];
+        $checkInAt = '';
+        $checkOutAt = '';
+
+        foreach ($pmsGuestList as $guestId => $g) {
+            $guestId = (string) $guestId;
+            $guests[] = [
+                'id' => $guestId,
+                'firstName' => (string) ($g['guestFirstName'] ?? ''),
+                'lastName' => (string) ($g['guestLastName'] ?? ''),
+                'email' => (string) ($g['guestEmail'] ?? ''),
+                'phone' => (string) ($g['guestPhone'] ?? ''),
+                'cellPhone' => (string) ($g['guestCellPhone'] ?? ''),
+                'address1' => (string) ($g['guestAddress'] ?? ''),
+                'address2' => (string) ($g['guestAddress2'] ?? ''),
+                'city' => (string) ($g['guestCity'] ?? ''),
+                'state' => (string) ($g['guestState'] ?? ''),
+                'zip' => (string) ($g['guestZip'] ?? ''),
+                'country' => (string) ($g['guestCountry'] ?? ''),
+                'birthday' => (string) ($g['guestBirthdate'] ?? ''),
+                'gender' => (string) ($g['guestGender'] ?? ''),
+                'isMainGuest' => !empty($g['isMainGuest']),
+            ];
+
+            $startDate = (string) ($g['startDate'] ?? '');
+            $endDate = (string) ($g['endDate'] ?? '');
+            if ($startDate !== '' && ($checkInAt === '' || $startDate < $checkInAt)) {
+                $checkInAt = $startDate;
+            }
+            if ($endDate !== '' && $endDate > $checkOutAt) {
+                $checkOutAt = $endDate;
+            }
+
+            foreach ((array) ($g['rooms'] ?? []) as $r) {
+                $rooms[] = [
+                    'roomId' => (string) ($r['roomID'] ?? ''),
+                    'roomName' => (string) ($r['roomName'] ?? ''),
+                    'guestId' => $guestId,
+                    'additionalGuestIds' => [],
+                    'checkInAt' => (string) ($r['roomCheckIn'] ?? $startDate),
+                    'checkOutAt' => (string) ($r['roomCheckOut'] ?? $endDate),
+                    'status' => (string) ($r['roomStatus'] ?? ''),
+                ];
+            }
+        }
+
+        return [
+            'reservationStatus' => (string) ($payload['guestListStatus'] ?? ''),
+            'guests' => $guests,
+            'rooms' => $rooms,
+            'checkInAt' => $checkInAt,
+            'checkOutAt' => $checkOutAt,
+        ];
+    }
+
+    /**
      * @return array{status: string, hhkId: ?int, data: array, message: string}
      */
     protected function importReservation(array $row): array {
         $uS = Session::getInstance();
         $reservationId = $row['cloudbedsId'];
         $payload = $row['payload'];
+        // summary (the Guest Profiles API's own reservation object) is only ever filled in by fetchProfiles(), when
+        // some guest's own profile happens to self-report this reservation (see CloudbedsFetcher::fetchProfiles()) -
+        // the same thing that can leave a companion's hasStay false can also leave a reservation's summary empty
+        // (confirmed against a live, future-dated confirmed reservation whose main guest's own reservation list never
+        // included it). Falling back to the PMS-side data (always present, from fetchReservationFields()) instead of
+        // failing the whole reservation.
         $summary = (array) ($payload['summary'] ?? []);
+        if (count($summary) === 0) {
+            $summary = self::syntheticSummaryFromPms($payload);
+        }
         $warnings = [];
 
         $cloudbedsStatus = (string) ($summary['reservationStatus'] ?? '');
@@ -855,14 +955,24 @@ class CloudbedsImport extends AbstractImport implements ImportInterface {
             $arrival = CloudbedsNormalizer::dateTime((string) ($room['checkInAt'] ?? $summary['checkInAt'] ?? ''), CloudbedsNormalizer::DEFAULT_ARRIVAL_TIME);
             $expectedDeparture = CloudbedsNormalizer::dateTime((string) ($room['checkOutAt'] ?? $summary['checkOutAt'] ?? ''), CloudbedsNormalizer::DEFAULT_DEPARTURE_TIME);
 
-            // the one exception to skipping a room-less segment: a confirmed reservation whose checkout has already
-            // passed was, in practice, sent to an outside hotel instead of housed here - tracked as a placeholder room
-            // (see CloudbedsConfig::getPlaceholderRoomCategory()) so it still shows up in HHK's own reservation history
+            // three exceptions to skipping a room-less segment, none of which can wait for a later re-fetch to maybe
+            // assign a room (and risk never importing it at all):
+            //  - a confirmed reservation whose checkout has already passed was, in practice, sent to an outside hotel
+            //    instead of housed here - tracked as a placeholder room (see CloudbedsConfig::getPlaceholderRoomCategory())
+            //    so it still shows up in HHK's own reservation history
+            //  - any other confirmed reservation with no room yet (most commonly one still in the future - Cloudbeds
+            //    often doesn't assign a room until closer to check-in) is imported as a waitlisted reservation instead -
+            //    no room, no visit, same as HHK's own waitlist, rather than silently never showing up at all
+            //  - a canceled/no-show reservation is very often canceled before Cloudbeds ever gets to assign it a room
+            //    at all - skipping it here would silently drop the reservation-only record (no room, no visit) that
+            //    canceled/no-show reservations are otherwise imported to have at all
             $placeholderRoomCategory = $this->config->getPlaceholderRoomCategory();
             $usePlaceholderRoom = $roomUnassigned && $placeholderRoomCategory !== '' && $cloudbedsStatus === 'confirmed'
                 && $expectedDeparture !== null && $expectedDeparture < date('Y-m-d H:i:s');
+            $useWaitlist = $roomUnassigned && !$usePlaceholderRoom && $cloudbedsStatus === 'confirmed';
+            $noRoomCancellation = $roomUnassigned && !$usePlaceholderRoom && in_array($cloudbedsStatus, ['canceled', 'no_show'], true);
 
-            if ($roomUnassigned && !$usePlaceholderRoom) {
+            if ($roomUnassigned && !$usePlaceholderRoom && !$useWaitlist && !$noRoomCancellation) {
                 continue;
             }
 
@@ -893,6 +1003,8 @@ class CloudbedsImport extends AbstractImport implements ImportInterface {
             if ((string) ($room['status'] ?? '') === 'checked_out') {
                 $segResvStatus = CloudbedsConfig::DEFAULT_STATUS_MAP['checked_out']['reservation'];
                 $segVisitStatus = CloudbedsConfig::DEFAULT_STATUS_MAP['checked_out']['visit'];
+            } elseif ($useWaitlist) {
+                $segResvStatus = ReservationStatus::Waitlist;
             }
             $segCheckedOut = $segVisitStatus === VisitStatus::CheckedOut;
 

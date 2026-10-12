@@ -295,10 +295,19 @@ class CloudbedsClient {
 
     /**
      * @param string $profileId
-     * @return array[] custom fields as returned by the Guest Profiles API (customFieldId, name, label, value, ...)
+     * @return array[] custom fields as returned by the Guest Profiles API (customFieldId, name, label, value, ...),
+     *         empty if the profile no longer exists (same 404 tolerance as getProfileById())
      */
     public function getProfileCustomFields(string $profileId): array {
-        $page = $this->unwrapPage($this->request('GET', 'guest-profiles/v1/profiles/' . rawurlencode($profileId) . '/custom-fields', [], $this->profileHeaders()));
+        try {
+            $page = $this->unwrapPage($this->request('GET', 'guest-profiles/v1/profiles/' . rawurlencode($profileId) . '/custom-fields', [], $this->profileHeaders()));
+        } catch (\RuntimeException $e) {
+            if ($e->getCode() === 404) {
+                return [];
+            }
+            throw $e;
+        }
+
         return (array) ($page['data'] ?? []);
     }
 

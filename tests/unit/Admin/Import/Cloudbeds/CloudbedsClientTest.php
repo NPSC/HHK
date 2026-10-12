@@ -132,14 +132,27 @@ class CloudbedsClientTest extends TestCase
 
     public function testClientErrorsAreNotRetried(): void
     {
-        $c = $this->client([$this->json(['message' => 'Profile not found'], 404)]);
+        // getCustomFieldDefinitions has no 404 tolerance of its own (unlike getProfileById/getProfileCustomFields,
+        // which treat a 404 as "nothing to return" rather than an error - see testA404ProfileHasNoCustomFieldsInstead())
+        $c = $this->client([$this->json(['message' => 'Property not found'], 404)]);
 
         try {
-            $c->getProfileCustomFields('nope');
+            $c->getCustomFieldDefinitions('nope');
             $this->fail('expected exception');
         } catch (\RuntimeException $e) {
-            $this->assertStringContainsString('Profile not found', $e->getMessage());
+            $this->assertStringContainsString('Property not found', $e->getMessage());
         }
+        $this->assertCount(1, $this->history);
+        $this->assertSame([], $this->sleeps);
+    }
+
+    public function testA404ProfileHasNoCustomFieldsInstead(): void
+    {
+        // a profile id queued from stale data (e.g. a reservation naming a profile Cloudbeds has since removed) must
+        // not take the whole fetch down - same tolerance as getProfileById()
+        $c = $this->client([$this->json(['message' => 'Profile not found'], 404)]);
+
+        $this->assertSame([], $c->getProfileCustomFields('gone'));
         $this->assertCount(1, $this->history);
         $this->assertSame([], $this->sleeps);
     }

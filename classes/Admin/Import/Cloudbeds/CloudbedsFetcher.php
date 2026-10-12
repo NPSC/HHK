@@ -299,10 +299,12 @@ class CloudbedsFetcher {
                 $current = $this->staging->getPayload(CloudbedsStaging::PROFILE, $profileId) ?? ['id' => $profileId];
                 $payload = ($profile ?? []) + $current;
                 $payload['hasStay'] = $hasStay;
-                // fetched for every profile except a merged one (its data belongs to the surviving profile instead) -
-                // even a companion who never confirms a stay of their own may still be a real guest on someone else's
-                // reservation (see importProfile()), and their own profile-level fields/notes matter there too
-                $payload['customFields'] = empty($payload['isMerged']) ? $this->client->getProfileCustomFields($profileId) : [];
+                // fetched for every profile that still exists and isn't merged (a merged one's data belongs to the
+                // surviving profile instead) - even a companion who never confirms a stay of their own may still be a
+                // real guest on someone else's reservation (see importProfile()), and their own profile-level
+                // fields/notes matter there too. $profile is null when getProfileById() 404s (the profile id was
+                // queued from stale data - e.g. a reservation referencing a profile Cloudbeds has since removed).
+                $payload['customFields'] = ($profile !== null && empty($payload['isMerged'])) ? $this->client->getProfileCustomFields($profileId) : [];
 
                 $this->staging->setPayload((int) $row['id'], $payload);
                 $this->staging->markFetched((int) $row['id']);
@@ -363,7 +365,7 @@ class CloudbedsFetcher {
                     }
 
                     foreach ((array) ($ref['guestListNotes'] ?? []) as $note) {
-                        $noteId = (string) ($note['ID'] ?? '');
+                        $noteId = (string) ($note['id'] ?? '');
                         $key = $ref['guestId'] . ':' . ($noteId !== '' ? $noteId : md5(json_encode($note)));
                         // normalized to the same shape as a getGuestNotes note, minus the date/author it doesn't have
                         $notes[$key] ??= ['guestNoteID' => $noteId, 'guestNote' => (string) ($note['note'] ?? ''), 'userName' => '', 'dateCreated' => ''];
