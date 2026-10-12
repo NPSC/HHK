@@ -1901,7 +1901,7 @@ CREATE TABLE
         `display_order`   INT NOT NULL DEFAULT 0,
         PRIMARY KEY (`id`),
         -- crm_field included so several Cloudbeds fields can map to the same note target (note.psg/note.reservation/
-        -- note.member collect lines from several fields; everything else holds one value)
+        -- note.member collect lines from several fields - everything else holds one value)
         UNIQUE KEY `uq_gateway_object_field_crm` (`gateway_id`, `crm_object`, `hhk_field`, `crm_field`)
     ) ENGINE = InnoDB;
 
