@@ -290,6 +290,88 @@ class EditRS {
     }
 
     /**
+     * Update the rows matching a where clause EditRS can't express (ranges, IN, joins), one row at a time
+     * by primary key, so each change goes through EditRS::update.
+     *
+     * @param \PDO $dbh
+     * @param TableRSInterface $rs an empty RS of the table
+     * @param string $whereSql the SQL after WHERE, with named parameters
+     * @param array $params
+     * @param array $newVals column => new value
+     * @return int rows updated
+     */
+    public static function updateWhere(\PDO $dbh, TableRSInterface $rs, string $whereSql, array $params, array $newVals): int {
+
+        $count = 0;
+        foreach (self::selectWhere($dbh, $rs, $whereSql, $params) as [$rowRs, $pkWhere]) {
+
+            foreach ($newVals as $col => $val) {
+                $rowRs->$col->setNewVal($val);
+            }
+
+            $count += self::update($dbh, $rowRs, $pkWhere);
+        }
+
+        return $count;
+    }
+
+    /**
+     * Delete the rows matching a where clause EditRS can't express (ranges, IN, joins), one row at a time
+     * by primary key, so each delete goes through EditRS::delete.
+     *
+     * @param \PDO $dbh
+     * @param TableRSInterface $rs an empty RS of the table
+     * @param string $whereSql the SQL after WHERE, with named parameters
+     * @param array $params
+     * @return int rows deleted
+     */
+    public static function deleteWhere(\PDO $dbh, TableRSInterface $rs, string $whereSql, array $params = []): int {
+
+        $count = 0;
+        foreach (self::selectWhere($dbh, $rs, $whereSql, $params) as [$rowRs, $pkWhere]) {
+            if (self::delete($dbh, $rowRs, $pkWhere)) {
+                $count++;
+            }
+        }
+
+        return $count;
+    }
+
+    /**
+     * Load each row matching $whereSql into its own RS.
+     *
+     * @return array each [rs, primary key DB_Fields]
+     */
+    private static function selectWhere(\PDO $dbh, TableRSInterface $rs, string $whereSql, array $params): array {
+
+        $pkCols = self::primaryKeyCols($dbh, $rs->getTableName());
+        $class = get_class($rs);
+
+        // without a key each row's update would have no where clause
+        if (count($pkCols) == 0) {
+            throw new \RuntimeException('Table ' . $rs->getTableName() . ' has no primary key');
+        }
+
+        $stmt = $dbh->prepare("select * from `" . $rs->getTableName() . "` where " . $whereSql);
+        $stmt->execute($params);
+
+        $loaded = [];
+        foreach ($stmt->fetchAll(\PDO::FETCH_ASSOC) as $r) {
+            $rowRs = new $class();
+            self::loadRow($r, $rowRs);
+
+            $pkWhere = [];
+            foreach ($pkCols as $col) {
+                $pkWhere[] = $rowRs->$col;
+            }
+
+            $loaded[] = [$rowRs, $pkWhere];
+        }
+
+        return $loaded;
+    }
+
+    /**
      * Summary of isChanged
      * @param \HHK\Tables\TableRSInterface $rs
      * @return bool

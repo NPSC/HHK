@@ -14,6 +14,9 @@ use HHK\HTMLControls\{HTMLTable,HTMLInput, HTMLSelector};
 use HHK\House\Insurance\Insurance;
 use HHK\SysConst\ReservationStatus;
 use HHK\Tables\LookupsRS;
+use HHK\Tables\House\{ResourceRS, RoomRS};
+use HHK\Tables\Name\{NameDemogRS, NameRS, Name_GuestRS};
+use HHK\Tables\Registration\{Hospital_StayRS, NoteRS};
 
 
 /**
@@ -23,6 +26,36 @@ use HHK\Tables\LookupsRS;
  */
 class ResourceBldr
 {
+
+    /**
+     * Seed an empty lookup list with a 'New Entry' row, for the Add buttons on the builder pages.
+     * Does nothing if the list already has entries, so a refreshed or double-submitted form is harmless.
+     *
+     * @param \PDO $dbh
+     * @param string $tableName gen_lookups Table_Name
+     * @param string $type gen_lookups Type
+     * @return void
+     */
+    public static function addNewLookupEntry(\PDO $dbh, $tableName, $type) {
+
+        $glRs = new GenLookupsRS();
+        $glRs->Table_Name->setStoredVal($tableName);
+        $glRs->Type->setStoredVal($type);
+
+        if (count(EditRS::select($dbh, $glRs, [$glRs->Table_Name, $glRs->Type])) > 0) {
+            return;
+        }
+
+        // unique code, the same way the lookup editor makes new entries
+        $glRs = new GenLookupsRS();
+        $glRs->Table_Name->setNewVal($tableName);
+        $glRs->Code->setNewVal('g' . Common::incCounter($dbh, 'codes'));
+        $glRs->Description->setNewVal('New Entry');
+        $glRs->Type->setNewVal($type);
+        $glRs->Order->setNewVal(10);
+        EditRS::insert($dbh, $glRs);
+    }
+
 
     /**
      * Summary of saveArchive
@@ -520,11 +553,18 @@ Order by `t`.`List_Order`;");
 
                 if ($tableName == 'Gender') {
                     $rep = function ($dbh, $newId, $oldId, $tableName) {
-                        return $dbh->exec("update name set `$tableName` = '$newId' where `$tableName` = '$oldId';");
+                        return EditRS::replaceValue($dbh, new NameRS(), $tableName, $oldId, $newId);
                     };
                 } else {
                     $rep = function ($dbh, $newId, $oldId, $tableName) {
-                        return $dbh->exec("update name_demog set `$tableName` = '$newId' where `$tableName` = '$oldId';");
+                        if (property_exists(NameDemogRS::class, $tableName)) {
+                            return EditRS::replaceValue($dbh, new NameDemogRS(), $tableName, $oldId, $newId);
+                        }
+
+                        // a demographic column NameDemogRS doesn't define
+                        $stmt = $dbh->prepare("update name_demog set `" . str_replace('`', '', $tableName) . "` = :newId where `" . str_replace('`', '', $tableName) . "` = :oldId");
+                        $stmt->execute([':newId' => $newId, ':oldId' => $oldId]);
+                        return $stmt->rowCount();
                     };
                 }
             } else {
@@ -533,7 +573,7 @@ Order by `t`.`List_Order`;");
                     case 'Patient_Rel_Type':
 
                         $rep = function ($dbh, $newId, $oldId) {
-                            return $dbh->exec("update name_guest set Relationship_Code = '$newId' where Relationship_Code = '$oldId';");
+                            return EditRS::replaceValue($dbh, new Name_GuestRS(), 'Relationship_Code', $oldId, $newId);
                         };
 
                         $verify = "Select n.Relationship_Code from name_guest n left join gen_lookups g on n.Relationship_Code = g.Code Where g.Table_Name = 'Patient_Rel_Type' and g.Code is null;";
@@ -542,7 +582,7 @@ Order by `t`.`List_Order`;");
                     case 'Diagnosis':
 
                         $rep = function ($dbh, $newId, $oldId) {
-                            return $dbh->exec("update hospital_stay set Diagnosis = '$newId' where Diagnosis = '$oldId';");
+                            return EditRS::replaceValue($dbh, new Hospital_StayRS(), 'Diagnosis', $oldId, $newId);
                         };
 
                         $verify = "select hs.Diagnosis from hospital_stay hs left join gen_lookups g on hs.Diagnosis = g.Code where g.Table_Name = 'Diagnosis' and g.Code is null;";
@@ -551,14 +591,26 @@ Order by `t`.`List_Order`;");
                     case 'Diagnosis_Category':
 
                         $rep = function ($dbh, $newId, $oldId) {
-                            return $dbh->exec("update gen_lookups set Substitute = '$newId' where Substitute = '$oldId' and Table_Name = 'Diagnosis';");
+                            $glRs = new GenLookupsRS();
+                            $glRs->Table_Name->setStoredVal('Diagnosis');
+                            $glRs->Substitute->setStoredVal($oldId);
+                            $glRs->Substitute->setNewVal($newId);
+                            return EditRS::update($dbh, $glRs, array($glRs->Table_Name, $glRs->Substitute));
                         };
                         break;
 
                     case 'Staff_Note_Category':
 
                         $rep = function ($dbh, $newId, $oldId) {
-                           return $dbh->exec("update note n join link_note sn on n.idNote = sn.idNote and sn.linkType = 'staff' set n.Category = '$newId' where n.Category = '$oldId';");
+                            // staff notes only
+                            $stmt = $dbh->prepare("select distinct n.idNote from note n join link_note sn on n.idNote = sn.idNote and sn.linkType = 'staff' where n.Category = :oldId");
+                            $stmt->execute([':oldId' => $oldId]);
+
+                            $count = 0;
+                            foreach ($stmt->fetchAll(\PDO::FETCH_COLUMN) as $idNote) {
+                                $count += EditRS::updateFields($dbh, new NoteRS(), ['idNote' => $idNote], ['Category' => $newId]);
+                            }
+                            return $count;
                         };
 
                         $verify = "select n.Category from note n left join gen_lookups g on n.Category = g.Code where g.Table_Name = 'Staff_Note_Category' and g.Code is null;";
@@ -567,42 +619,28 @@ Order by `t`.`List_Order`;");
                     case 'Location':
 
                         $rep = function ($dbh, $newId, $oldId) {
-                            return $dbh->exec("update hospital_stay set Location = '$newId' where Location = '$oldId';");
-                        };
-                        break;
-
-                    case 'OSS_Codes':
-
-                        $rep = function ($dbh, $newId, $oldId) {
-                            return $dbh->exec("update resource_use set OSS_Code = '$newId' where OSS_Code = '$oldId';");
+                            return EditRS::replaceValue($dbh, new Hospital_StayRS(), 'Location', $oldId, $newId);
                         };
                         break;
 
                     case 'Utilization_Category':
 
                         $rep = function ($dbh, $newId, $oldId) {
-                            return $dbh->exec("update resource set Utilization_Category = '$newId' where Utilization_Category = '$oldId';");
-                        };
-                        break;
-
-                    case 'Ins_Type':
-
-                        $rep = function ($dbh, $newId, $oldId) {
-                            return $dbh->exec("update insurance set `Type` = '$newId' where `Type` = '$oldId';");
+                            return EditRS::replaceValue($dbh, new ResourceRS(), 'Utilization_Category', $oldId, $newId);
                         };
                         break;
 
                     case 'Room_Cleaning_Days':
 
                         $rep = function ($dbh, $newId, $oldId) {
-                            return $dbh->exec("update room set `Cleaning_Cycle_Code` = '$newId' where `Cleaning_Cycle_Code` = '$oldId';");
+                            return EditRS::replaceValue($dbh, new RoomRS(), 'Cleaning_Cycle_Code', $oldId, $newId);
                         };
                         break;
 
                     case 'NoReturnReason':
 
                         $rep = function ($dbh, $newId, $oldId) {
-                            return $dbh->exec("update name_demog set `No_Return` = '$newId' where `No_Return` = '$oldId';");
+                            return EditRS::replaceValue($dbh, new NameDemogRS(), 'No_Return', $oldId, $newId);
                         };
                         break;
 
@@ -680,11 +718,23 @@ Order by `t`.`List_Order`;");
                         if (isset($postLookups['cbDiagDel'][$c])) {
                             $use = 'y';
                             if (isset($demos[$tableName])) {
-                                $on = $orderNumber + 100;
-                                $dbh->exec("Insert Ignore into `gen_lookups` (`Table_Name`, `Code`, `Description`, `Order`) values ('RibbonColors', '$c', '$desc', '$on');");
+                                $ribbonRs = new GenLookupsRS();
+                                $ribbonRs->Table_Name->setStoredVal('RibbonColors');
+                                $ribbonRs->Code->setStoredVal($c);
+
+                                if (count(EditRS::select($dbh, $ribbonRs, array($ribbonRs->Table_Name, $ribbonRs->Code))) == 0) {
+                                    $ribbonRs->Table_Name->setNewVal('RibbonColors');
+                                    $ribbonRs->Code->setNewVal($c);
+                                    $ribbonRs->Description->setNewVal($desc);
+                                    $ribbonRs->Order->setNewVal($orderNumber + 100);
+                                    EditRS::insert($dbh, $ribbonRs);
+                                }
                             }
                         } else {
-                            $dbh->exec("DELETE FROM `gen_lookups` where `Table_Name` = 'Ribbon_Colors' and `Code` = '$c';");
+                            $ribbonRs = new GenLookupsRS();
+                            $ribbonRs->Table_Name->setStoredVal('RibbonColors');
+                            $ribbonRs->Code->setStoredVal($c);
+                            EditRS::delete($dbh, $ribbonRs, array($ribbonRs->Table_Name, $ribbonRs->Code));
                         }
 
                         $gluRs->Description->setNewVal($desc);

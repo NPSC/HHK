@@ -707,7 +707,8 @@ WHERE
         if (isset($post['txtRetired'])) {
             $retiredAt = filter_var($post['txtRetired'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
             if ($retiredAt == '') {
-                $dbh->exec("UPDATE resource set `Retired_At` = null where idResource = '" . $resc->getIdResource() . "';");
+                // saved with the rest of the record by saveRecord() below
+                $resc->resourceRS->Retired_At->setNewVal(null);
             } else {
                 try {
                     $retiredDT = new \DateTime($retiredAt);

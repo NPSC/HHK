@@ -3,6 +3,8 @@
 namespace HHK\House\Constraint;
 
 use HHK\SysConst\ConstraintType;
+use HHK\Tables\EditRS;
+use HHK\Tables\Attribute\ConstraintEntityRS;
 
 /**
  * AbstractConstraintsEntity.php
@@ -166,11 +168,19 @@ where c.Status = 'a' and c.Type = :tpe");
 
             if (isset($capturedConstraints[$id]) && $c['isActive'] == 0) {
 
-                $dbh->exec("insert Into `constraint_entity` (idConstraint, idEntity, `Type`) values ($id, ". $this->getIdEntity() . ", '" . $this->getConstraintType() . "' )");
+                $ceRs = new ConstraintEntityRS();
+                $ceRs->idConstraint->setNewVal($id);
+                $ceRs->idEntity->setNewVal($this->getIdEntity());
+                $ceRs->Type->setNewVal($this->getConstraintType());
+                EditRS::insert($dbh, $ceRs);
 
 
             } else if (isset($capturedConstraints[$id]) === FALSE && $c['isActive'] == 1) {
-                $dbh->exec("Delete from `constraint_entity` where idConstraint = $id and idEntity = ". $this->getIdEntity() . " and `Type` = '" . $this->getConstraintType() . "'");
+                $ceRs = new ConstraintEntityRS();
+                $ceRs->idConstraint->setStoredVal($id);
+                $ceRs->idEntity->setStoredVal($this->getIdEntity());
+                $ceRs->Type->setStoredVal($this->getConstraintType());
+                EditRS::delete($dbh, $ceRs, array($ceRs->idConstraint, $ceRs->idEntity, $ceRs->Type));
 
             }
 

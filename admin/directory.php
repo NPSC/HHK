@@ -4,6 +4,8 @@ use HHK\Admin\Reports\MailList;
 use HHK\sec\{Session, WebInit};
 use HHK\HTMLControls\{chkBoxCtrl, selCtrl};
 use HHK\Admin\Reports\DirectoryReport;
+use HHK\Tables\EditRS;
+use HHK\Tables\GenLookupsRS;
 
 /**
  * directory.php
@@ -57,7 +59,19 @@ if (filter_has_var(INPUT_POST, 'btnPrep')) {
     $affectedRows = MailList::fillMailistTable($dbh, $uS->SolicitBuffer);
 
     if ($affectedRows > 0) {
-        $dbh->exec("replace into gen_lookups (`Table_Name`, `Code`, `Description`) values ('Mail_List', 'Refresh_Date', '" . date('Y-m-d') . "')");
+        if (EditRS::updateFields($dbh, new GenLookupsRS(), ['Table_Name' => 'Mail_List', 'Code' => 'Refresh_Date'], ['Description' => date('Y-m-d')]) == 0) {
+            $glRs = new GenLookupsRS();
+            $glRs->Table_Name->setStoredVal('Mail_List');
+            $glRs->Code->setStoredVal('Refresh_Date');
+
+            // first refresh: no row yet
+            if (count(EditRS::select($dbh, $glRs, [$glRs->Table_Name, $glRs->Code])) == 0) {
+                $glRs->Table_Name->setNewVal('Mail_List');
+                $glRs->Code->setNewVal('Refresh_Date');
+                $glRs->Description->setNewVal(date('Y-m-d'));
+                EditRS::insert($dbh, $glRs);
+            }
+        }
     }
 
 }

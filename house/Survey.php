@@ -3,6 +3,8 @@
 use HHK\sec\{Session, WebInit};
 use HHK\HTMLControls\HTMLTable;
 use HHK\Excel\ExcelHelper;
+use HHK\Tables\EditRS;
+use HHK\Tables\GenLookupsRS;
 
 
 /**
@@ -195,7 +197,7 @@ order by h.idPsg, na.Address_1, na.Address_2";
     if ($excel) {
 
         // update the saved survey date.
-        $dbh->exec("update gen_lookups set Description = '$endDate' where Table_Name='Guest_Survey' and Code = 'Survey_Date'");
+        EditRS::updateFields($dbh, new GenLookupsRS(), ['Table_Name' => 'Guest_Survey', 'Code' => 'Survey_Date'], ['Description' => $endDate]);
 
         $writer->download();
     }

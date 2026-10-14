@@ -18,7 +18,7 @@ use HHK\SysConst\ConstraintType;
 use HHK\TableLog\{ReservationLog, VisitLog};
 use HHK\Tables\EditRS;
 use HHK\Tables\Registration\RegistrationRS;
-use HHK\Tables\Reservation\{ReservationRS, Reservation_GuestRS, Reservation_MultipleRS};
+use HHK\Tables\Reservation\{ReservationInvoiceLineRS, ReservationRS, Reservation_GuestRS, Reservation_MultipleRS};
 use HHK\Tables\Attribute\ConstraintEntityRS;
 use HHK\Tables\{LinkDocRS, LinkNoteRS};
 use HHK\Tables\House\{ResourceRS, RoomRS};
@@ -242,6 +242,46 @@ class Reservation_1 {
         }
 
         return new Reservation_1($resvRs);
+    }
+
+    /**
+     * Link an invoice's lodging MOA lines to a reservation (its prepayment), skipping lines already linked.
+     *
+     * @param \PDO $dbh
+     * @param int $idResv
+     * @param int $idInvoice
+     * @param string|null $typeId only lines of this invoice line type
+     * @return int lines linked
+     */
+    public static function linkPrepaymentLines(\PDO $dbh, $idResv, $idInvoice, $typeId = null) {
+
+        $query = "select idInvoice_Line from invoice_line where Invoice_Id = :idInv and Item_Id = :item";
+        $params = [':idInv' => $idInvoice, ':item' => ItemId::LodgingMOA];
+
+        if (!is_null($typeId)) {
+            $query .= " and Type_Id = :type";
+            $params[':type'] = $typeId;
+        }
+
+        $stmt = $dbh->prepare($query);
+        $stmt->execute($params);
+
+        $count = 0;
+        foreach ($stmt->fetchAll(\PDO::FETCH_COLUMN) as $idLine) {
+
+            $rilRs = new ReservationInvoiceLineRS();
+            $rilRs->Reservation_Id->setStoredVal($idResv);
+            $rilRs->Invoice_Line_id->setStoredVal($idLine);
+
+            if (count(EditRS::select($dbh, $rilRs, [$rilRs->Reservation_Id, $rilRs->Invoice_Line_id])) == 0) {
+                $rilRs->Reservation_Id->setNewVal($idResv);
+                $rilRs->Invoice_Line_id->setNewVal($idLine);
+                EditRS::insert($dbh, $rilRs);
+                $count++;
+            }
+        }
+
+        return $count;
     }
 
     /**

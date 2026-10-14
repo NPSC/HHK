@@ -10,6 +10,7 @@ use HHK\Exception\RuntimeException;
 use HHK\SysConst\VolMemberType;
 use HHK\HTMLControls\HTMLContainer;
 use HHK\Tables\EditRS;
+use HHK\Tables\GenLookupsRS;
 use HHK\Tables\Name\NameDemogRS;
 use HHK\sec\Session;
 use HHK\SysConst\ItemId;
@@ -83,12 +84,18 @@ class GLParameters {
                     // Process password
                     if ($desc != '' && $desc != $g[1] && $desc != '********') {
                         $desc = Crypto::encryptMessage($desc);
-                        $dbh->exec("update `gen_lookups` set `Description` = '$desc' where `Table_Name` = '" .$this->tableName . "' and `Code` = '" . $g[0] . "'");
+
+                        // keep the (encrypted) password out of the activity log - just note that it changed
+                        $auditWas = EditRS::$auditEnabled;
+                        EditRS::$auditEnabled = false;
+                        EditRS::updateFields($dbh, new GenLookupsRS(), ['Table_Name' => $this->tableName, 'Code' => $g[0]], ['Description' => $desc]);
+                        EditRS::$auditEnabled = $auditWas;
+
+                        EditRS::logActivity($dbh, $this->tableName . ' password changed', [], 'default', 'gen_lookups');
                     }
 
                 } else {
-                    $desc = addslashes($desc);
-                    $dbh->exec("update `gen_lookups` set `Description` = '$desc' where `Table_Name` = '" .$this->tableName . "' and `Code` = '" . $g[0] . "'");
+                    EditRS::updateFields($dbh, new GenLookupsRS(), ['Table_Name' => $this->tableName, 'Code' => $g[0]], ['Description' => $desc]);
                 }
             }
         }

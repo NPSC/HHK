@@ -34,13 +34,14 @@ use HHK\SysConst\RateStatus;
 use HHK\SysConst\RoomRateCategories;
 use HHK\SysConst\WebRole;
 use HHK\TableLog\HouseLog;
-use HHK\Tables\Attribute\AttributeRS;
+use HHK\Tables\Attribute\{AttributeEntityRS, AttributeRS, ConstraintAttributeRS};
 use HHK\Tables\DocumentRS;
 use HHK\Tables\EditRS;
 use HHK\Tables\GenLookupsRS;
+use HHK\Tables\Payment\PaymentMethodRS;
 use HHK\Tables\House\Rate_BreakpointRS;
 use HHK\Tables\House\Room_RateRS;
-use HHK\Tables\Item\ItemRS;
+use HHK\Tables\Item\{ItemItemRS, ItemRS, ItemTypeMapRS};
 use HHK\Tables\Registration\HospitalRS;
 
 /**
@@ -98,26 +99,19 @@ $breakpointMessage = '';
 // Get labels
 $labels = Labels::getLabels();
 
-// Add diags and locations buttons
-if (isset($_POST['btnAddDiags'])) {
-    $dbh->exec("insert into gen_lookups (`Table_Name`, `Code`, `Description`, `Type`, `Order`) values ('Diagnosis', 'q9', 'New Entry', 'h', 10 )");
-    $tabActive = "#lkTable";
-}
+// Add buttons for diagnoses, locations, house discounts and additional charges
+$newEntryButtons = [
+    'btnAddDiags' => ['Diagnosis', 'h'],
+    'btnAddLocs' => ['Location', 'h'],
+    'btnHouseDiscs' => ['House_Discount', 'ca'],
+    'btnAddnlCharge' => ['Addnl_Charge', 'ca'],
+];
 
-if (isset($_POST['btnAddLocs'])) {
-    $dbh->exec("insert into gen_lookups (`Table_Name`, `Code`, `Description`, `Type`, `Order`) values ('Location', 'q9', 'New Entry', 'h', 10 )");
-    $tabActive = "#lkTable";
-}
-
-// Add House Discounts and additional charges.
-if (isset($_POST['btnHouseDiscs'])) {
-    $dbh->exec("insert into gen_lookups (`Table_Name`, `Code`, `Description`, `Type`, `Order`) values ('House_Discount', 'q9', 'New Entry', 'ca', 10 )");
-    $tabActive = "#lkTable";
-}
-
-if (isset($_POST['btnAddnlCharge'])) {
-    $dbh->exec("insert into gen_lookups (`Table_Name`, `Code`, `Description`, `Type`, `Order`) values ('Addnl_Charge', 'q9', 'New Entry', 'ca', 10 )");
-    $tabActive = "#lkTable";
+foreach ($newEntryButtons as $btn => [$glTable, $glType]) {
+    if (isset($_POST[$btn])) {
+        ResourceBldr::addNewLookupEntry($dbh, $glTable, $glType);
+        $tabActive = "#lkTable";
+    }
 }
 
 // Lookups
@@ -313,7 +307,7 @@ if (isset($_POST['btnkfSave'])) {
             if (isset($_POST['ptGlCode'][$t[0]])) {
                 $gl = filter_var($_POST['ptGlCode'][$t[0]], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
-                $dbh->exec("Update payment_method set Gl_Code = '$gl' where idPayment_method = " . $t[0]);
+                EditRS::updateFields($dbh, new PaymentMethodRS(), ['idPayment_method' => $t[0]], ['Gl_Code' => $gl]);
             }
         }
     }
@@ -386,7 +380,7 @@ if (isset($_POST['btnkfSave'])) {
             $order = intval(filter_var($order, FILTER_SANITIZE_NUMBER_INT), 10);
 
             if ($code !== '' && isset($payTypes[$code])) {
-                $dbh->exec("UPDATE gen_lookups SET `Order` = $order WHERE `Table_Name` = 'Pay_Type' AND `Code` = '$code'");
+                EditRS::updateFields($dbh, new GenLookupsRS(), ['Table_Name' => 'Pay_Type', 'Code' => $code], ['Order' => $order]);
             }
         }
     }
@@ -470,7 +464,7 @@ if (isset($_POST['btnkfSave'])) {
         } else if ($newHhSize > 0 && $newHhSize < $currentHhSize) {
 
             // Delete the extra size rows
-            $numDeleted = $dbh->exec("delete from `rate_breakpoint` where Household_Size > $newHhSize");
+            $numDeleted = EditRS::deleteWhere($dbh, new Rate_BreakpointRS(), "Household_Size > :hhSize", [':hhSize' => $newHhSize]);
 
             if ($numDeleted > 0) {
                 $logText = 'Deleted household sizes greater than ' . $newHhSize;
@@ -534,13 +528,13 @@ if (isset($_POST['btnkfSave'])) {
             $lastCat = $ratCats[$newRateSize - 1];
 
             // Delete the extra size rows
-            $numDeleted = $dbh->exec("delete from `rate_breakpoint` where Rate_Category > '$lastCat';");
+            $numDeleted = EditRS::deleteWhere($dbh, new Rate_BreakpointRS(), "Rate_Category > :lastCat", [':lastCat' => $lastCat]);
 
             if ($numDeleted > 0) {
                 $logText = 'Deleted Rate Categories over ' . $lastCat;
                 HouseLog::logFinAssist($dbh, 'delete', 0, $logText, $uS->username);
 
-                $dbh->exec("update `room_rate` set `Status` = '" . RateStatus::NotActive . "' where Rate_Breakpoint_Category > '$lastCat';");
+                EditRS::updateWhere($dbh, new Room_RateRS(), "Rate_Breakpoint_Category > :lastCat", [':lastCat' => $lastCat], ['Status' => RateStatus::NotActive]);
             }
         }
 
@@ -607,14 +601,10 @@ if (isset($_POST['btnhSave'])) {
             }
 
             // Delete any attribute entries
-            $query = "delete from attribute_entity where idEntity = :id and Type = :tpe";
-            $stmt = $dbh->prepare($query);
-            $stmt->execute(
-                [
-                    ':id' => $idHosp,
-                    ':tpe' => AttributeTypes::Hospital
-                ]
-            );
+            $aeRs = new AttributeEntityRS();
+            $aeRs->idEntity->setStoredVal($idHosp);
+            $aeRs->Type->setStoredVal(AttributeTypes::Hospital);
+            EditRS::delete($dbh, $aeRs, [$aeRs->idEntity, $aeRs->Type]);
             continue;
         }
 
@@ -742,8 +732,13 @@ if (isset($_POST['btnAttrSave'])) {
             );
 
             // delete from attribute_entity
-            $dbh->query("Delete from attribute_entity where idAttribute = $idAttr");
-            $dbh->query("Delete from constraint_attribute where idAttribute = $idAttr");
+            $aeRs = new AttributeEntityRS();
+            $aeRs->idAttribute->setStoredVal($idAttr);
+            EditRS::delete($dbh, $aeRs, [$aeRs->idAttribute]);
+
+            $caRs = new ConstraintAttributeRS();
+            $caRs->idAttribute->setStoredVal($idAttr);
+            EditRS::delete($dbh, $caRs, [$caRs->idAttribute]);
 
             continue;
         }
@@ -829,14 +824,14 @@ if (isset($_POST['btnItemSave'])) {
 
             $desc = filter_var($_POST['txtItem'][$idItem], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
-            $dbh->exec("update `item` set `Description` = '$desc' where `idItem` = " . $idItem);
+            EditRS::updateFields($dbh, new ItemRS(), ['idItem' => $idItem], ['Description' => $desc]);
         }
 
         if (isset($_POST['txtGlCode'][$idItem])) {
 
             $glCode = filter_var($_POST['txtGlCode'][$idItem], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
-            $dbh->exec("update `item` set `Gl_Code` = '$glCode' where `idItem` = " . $idItem);
+            EditRS::updateFields($dbh, new ItemRS(), ['idItem' => $idItem], ['Gl_Code' => $glCode]);
         }
 
         if (isset($_POST['cbtax'][$idItem])) {
@@ -846,7 +841,15 @@ if (isset($_POST['btnItemSave'])) {
                 $idTaxItem = intval(filter_var($t, FILTER_SANITIZE_NUMBER_INT), 10);
 
                 if ($idTaxItem > 0) {
-                    $dbh->exec("Replace into item_item (idItem, Item_Id) values ($idItem, $idTaxItem)");
+                    $iiRs = new ItemItemRS();
+                    $iiRs->idItem->setStoredVal($idItem);
+                    $iiRs->Item_Id->setStoredVal($idTaxItem);
+
+                    if (count(EditRS::select($dbh, $iiRs, [$iiRs->idItem, $iiRs->Item_Id])) == 0) {
+                        $iiRs->idItem->setNewVal($idItem);
+                        $iiRs->Item_Id->setNewVal($idTaxItem);
+                        EditRS::insert($dbh, $iiRs);
+                    }
                 }
             }
         }
@@ -855,7 +858,10 @@ if (isset($_POST['btnItemSave'])) {
         foreach ($taxItemMap as $m) {
             if ($m['idItem'] == $idItem && !isset($_POST['cbtax'][$idItem][$m['Item_Id']])) {
 
-                $dbh->exec("delete from item_item where idItem = $idItem and Item_Id = " . $m['Item_Id']);
+                $iiRs = new ItemItemRS();
+                $iiRs->idItem->setStoredVal($idItem);
+                $iiRs->Item_Id->setStoredVal($m['Item_Id']);
+                EditRS::delete($dbh, $iiRs, [$iiRs->idItem, $iiRs->Item_Id]);
             }
         }
     }
@@ -863,6 +869,27 @@ if (isset($_POST['btnItemSave'])) {
 
 if (isset($_POST['btnTaxSave'])) {
     $tabActive = "#taxTable";
+
+    // create a tax item and map it to the tax item type
+    $insertTaxItem = function (\PDO $dbh, $desc, $glCode, $percentage, $maxDays, $firstOrderId): int {
+
+        $itemRs = new ItemRS();
+        $itemRs->Description->setNewVal($desc);
+        $itemRs->Gl_Code->setNewVal($glCode);
+        $itemRs->Percentage->setNewVal($percentage);
+        $itemRs->Timeout_Days->setNewVal($maxDays);
+        $itemRs->First_Order_Id->setNewVal($firstOrderId);
+        $newItemId = intval(EditRS::insert($dbh, $itemRs));
+
+        if ($newItemId > 0) {
+            $mapRs = new ItemTypeMapRS();
+            $mapRs->Item_Id->setNewVal($newItemId);
+            $mapRs->Type_Id->setNewVal(ItemType::Tax);
+            EditRS::insert($dbh, $mapRs);
+        }
+
+        return $newItemId;
+    };
 
     $sitems = $dbh->query("Select i.idItem, i.Description, i.Gl_Code, i.Percentage, i.Timeout_Days, i.First_Order_Id, i.Last_Order_Id
         from item i join item_type_map itm on itm.Item_Id = i.idItem and itm.Type_Id = " . ItemType::Tax);
@@ -899,34 +926,25 @@ if (isset($_POST['btnTaxSave'])) {
                 } else {
 
                     // save this one with the last order id
-                    $dbh->exec("update `item` set `Description` = '$desc', `Gl_Code` = '$glCode', Last_Order_Id = $maxVisitId " . " where `idItem` = " . $i['idItem']);
+                    EditRS::updateFields($dbh, new ItemRS(), ['idItem' => $i['idItem']], ['Description' => $desc, 'Gl_Code' => $glCode, 'Last_Order_Id' => $maxVisitId]);
 
                     // Create the a new item with the new percentage or maxDays
-                    $dbh->exec("insert into `item` (`Description`, `Gl_Code`, `Percentage`, `Timeout_Days`, First_Order_Id) " . "Values ('$desc', '$glCode', '$percentage', '$maxDays', $nextVisitId)");
-
-                    $newItemId = $dbh->lastInsertId();
-
-                    // Add to the item type map
-                    if ($newItemId > 0) {
-                        $dbh->exec("insert into `item_type_map` Values ('" . $newItemId . "', '" . ItemType::Tax . "')");
-                    }
+                    $newItemId = $insertTaxItem($dbh, $desc, $glCode, $percentage, $maxDays, $nextVisitId);
 
                     // Get the items these tax
                     $tstmt = $dbh->query("SELECT idItem from item_item where Item_Id = " . $i['idItem']);
 
                     // add to item_item to connet with the taxed item id.
                     while ($t = $tstmt->fetch(\PDO::FETCH_NUM)) {
-                        $dbh->exec("Insert into item_item (idItem, Item_Id) values (" . $t[0] . ", $newItemId)");
+                        $iiRs = new ItemItemRS();
+                        $iiRs->idItem->setNewVal($t[0]);
+                        $iiRs->Item_Id->setNewVal($newItemId);
+                        EditRS::insert($dbh, $iiRs);
                     }
                 }
             } else {
 
-                $stmt = $dbh->prepare("update `item` set `Description` = :description, `Gl_Code` = :glCode where `idItem` = :idItem");
-                $stmt->execute([
-                    ":description" => $desc,
-                    ":glCode" => $glCode ? $glCode : "",
-                    ":idItem" => $i["idItem"]
-                ]);
+                EditRS::updateFields($dbh, new ItemRS(), ['idItem' => $i['idItem']], ['Description' => $desc, 'Gl_Code' => $glCode ? $glCode : ""]);
             }
         }
     }
@@ -939,18 +957,7 @@ if (isset($_POST['btnTaxSave'])) {
         $percentage = filter_var($_POST['txttPercentage'][0], FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION);
         $maxDays = filter_var($_POST['txttMaxDays'][0], FILTER_SANITIZE_NUMBER_INT);
 
-        $stmt = $dbh->prepare("insert into `item` (`Description`, `Gl_Code`, `Percentage`, `Timeout_Days`, First_Order_Id) Values (:description, :glCode, :percentage, :maxDays, :nextVisitId)");
-        $stmt->execute([
-            ":description" => $desc,
-            ":glCode" => $glCode ? $glCode : "",
-            ":percentage" => $percentage,
-            ":maxDays" => $maxDays,
-            ":nextVisitId" => $nextVisitId
-        ]);
-
-        if ($dbh->lastInsertId() > 0) {
-            $dbh->exec("insert into `item_type_map` Values ('" . $dbh->lastInsertId() . "', '" . ItemType::Tax . "')");
-        }
+        $insertTaxItem($dbh, $desc, $glCode ? $glCode : "", $percentage, $maxDays, $nextVisitId);
     }
 }
 
@@ -988,7 +995,7 @@ if (isset($_POST['ldfm'])) {
     if (empty($formDef)) {
 
         $formDef = "FormDef-" . Common::incCounter($dbh, 'codes');
-        $dbh->exec("UPDATE `gen_lookups` SET `Substitute` = '$formDef' WHERE `Table_Name` = 'Form_Upload' AND `Code` = '$formType'");
+        EditRS::updateFields($dbh, new GenLookupsRS(), ['Table_Name' => 'Form_Upload', 'Code' => $formType], ['Substitute' => $formDef]);
     }
 
     $formstmt = $dbh->query("Select g.`Code`, g.`Description`, d.`Doc`, d.idDocument, ifnull(d.Abstract, '') as `Abstract` from `document` d join gen_lookups g on d.idDocument = g.`Substitute` where g.`Table_Name` = '$formDef' order by g.Order asc");
@@ -1195,10 +1202,7 @@ if (isset($_POST['docAction']) && $_POST["docAction"] == "docUpload") {
         $ustmt->execute();
 
         if ($applyAll) {
-            $applyAllSql = "UPDATE `document` d join gen_lookups g on d.idDocument = g.Substitute and g.Table_Name = 'Reg_Agreement' SET Abstract = :abstract";
-            $astmt = $dbh->prepare($applyAllSql);
-            $astmt->bindParam(":abstract", $abstract);
-            $astmt->execute();
+            EditRS::updateWhere($dbh, new DocumentRS(), "idDocument in (select Substitute from gen_lookups where Table_Name = 'Reg_Agreement')", [], ['Abstract' => $abstract]);
         }
 
         $dbh->commit();
@@ -1220,8 +1224,12 @@ if (isset($_POST['docAction']) && $_POST['docAction'] == "docDelete" && isset($_
 
         $tabActive = "#formUpload";
 
-        $dbh->exec("UPDATE `document` d JOIN `gen_lookups` g ON g.`Table_Name` = '$formDef' AND g.`Code` = '$docCode' SET d.`status` = 'd' WHERE `idDocument` = g.`Substitute`");
-        $dbh->exec("DELETE FROM gen_lookups where `Table_Name` = '$formDef' AND `Code` = '$docCode'");
+        EditRS::updateWhere($dbh, new DocumentRS(), "idDocument in (select Substitute from gen_lookups where Table_Name = :formDef and Code = :docCode)", [':formDef' => $formDef, ':docCode' => $docCode], ['Status' => 'd']);
+
+        $glRs = new GenLookupsRS();
+        $glRs->Table_Name->setStoredVal($formDef);
+        $glRs->Code->setStoredVal($docCode);
+        EditRS::delete($dbh, $glRs, [$glRs->Table_Name, $glRs->Code]);
 
         if (isset($_POST['docfrmtype'])) {
             $formType = filter_var($_POST['docfrmtype'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
@@ -1295,7 +1303,7 @@ if (stripos($content_type, 'application/json') !== false) {
         $output = "";
         try {
             foreach ($data->order as $i => $v) {
-                $dbh->exec("UPDATE `gen_lookups` SET `Order` = $i WHERE `Table_Name` = '" . $data->formDef . "' AND `Code` = '$v';");
+                EditRS::updateFields($dbh, new GenLookupsRS(), ['Table_Name' => $data->formDef, 'Code' => $v], ['Order' => $i]);
             }
         } catch (\Exception $e) {
             echo json_encode(["status" => "error", "message" => $e->getMessage()]);

@@ -529,30 +529,25 @@ class Import extends AbstractImport implements ImportInterface {
         //make reservation
         $arrival = (new \DateTime($r['ArrivalDate']))->format("Y-m-d 16:00:00");
         $departure = (new \DateTime($r['DepartureDate']))->format('Y-m-d 10:00:00');
-        $stmt = $this->dbh->prepare("insert into reservation (`idRegistration`, `idGuest`,`idHospital_Stay`, `idResource`, `Expected_Arrival`, `Expected_Departure`, `Actual_Arrival`, `Actual_Departure`, `Number_Guests`, `Status`) VALUES(:idRegistration, :idGuest, :idHospitalStay, :idResource, :expectedArrival, :expectedDeparture, :actualArrival, :actualDeparture, :numGuests, :status)");
-        $stmt->execute(array(
-            ":idRegistration"=>$reg->getIdRegistration(),
-            ":idGuest"=>($primaryGuestId > 0 ? $primaryGuestId : $guests[0]["idName"]),
-            ":idHospitalStay"=>$hospStay->getIdHospital_Stay(),
-            ":idResource"=>$idResource,
-            ":expectedArrival"=>$arrival,
-            ":expectedDeparture"=>$departure,
-            ":actualArrival"=>$arrival,
-            ":actualDeparture"=>$departure,
-            ":numGuests"=>count($guests),
-            ":status"=>$resvStatus
-        ));
-        $resvId = $this->dbh->lastInsertId();
+        $resvGuests = [];
+        foreach ($guests as $guest) {
+            $resvGuests[$guest["idName"]] = ($guest['PrimaryGuest'] == "Yes");
+        }
+
+        $resvId = $this->insertReservation([
+            "idRegistration" => $reg->getIdRegistration(),
+            "idGuest" => ($primaryGuestId > 0 ? $primaryGuestId : $guests[0]["idName"]),
+            "idHospitalStay" => $hospStay->getIdHospital_Stay(),
+            "idResource" => $idResource,
+            "expectedArrival" => $arrival,
+            "expectedDeparture" => $departure,
+            "actualArrival" => $arrival,
+            "actualDeparture" => $departure,
+            "status" => $resvStatus,
+            "guests" => $resvGuests,
+        ]);
 
         if ($resvId) {
-            foreach($guests as $k=>$guest){
-                $stmt = $this->dbh->prepare("insert ignore into reservation_guest (`idReservation`, `idGuest`,`Primary_Guest`) VALUES(:idReservation, :idGuest, :primaryGuest)");
-                $stmt->execute(array(
-                    ":idReservation" => $resvId,
-                    ":idGuest" => $guest["idName"],
-                    ":primaryGuest" => ($guest['PrimaryGuest'] == "Yes" ? 1:0)
-                ));
-            }
 
             //add Notes
             if($r["Notes"] != ""){

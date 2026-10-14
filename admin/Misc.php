@@ -7,6 +7,7 @@ use HHK\AuditLog\NameLog;
 use HHK\sec\{Session, WebInit};
 use HHK\SysConst\GLTableNames;
 use HHK\Tables\EditRS;
+use HHK\Tables\GenLookupsRS;
 use HHK\Tables\Name\{NamePhoneRS, NameRS};
 use HHK\Admin\SiteDbBackup;
 use HHK\Member\AbstractMember;
@@ -182,24 +183,26 @@ if (isset($_POST["btnGenLookups"])) {
                 $stmt1->execute(array($selTbl, $code));
                 $row = $stmt1->fetchAll(PDO::FETCH_NUM);
 
-                $query = "";
-                $params = array();
+                $saved = FALSE;
 
                 if ($row[0][0] == 0 && $selCode == "n_$") {
                     // add a new code with desc.
-                    $query = "insert into gen_lookups (Table_Name, Code, Description, Substitute) values (?, ?, ?, ?)";
-                    $params = array($selTbl, $code, $desc, $subt);
+                    $glRs = new GenLookupsRS();
+                    $glRs->Table_Name->setNewVal($selTbl);
+                    $glRs->Code->setNewVal($code);
+                    $glRs->Description->setNewVal($desc);
+                    $glRs->Substitute->setNewVal($subt);
+                    EditRS::insert($dbh, $glRs);
+                    $saved = TRUE;
                 } else if ($row[0][0] > 0 && $selCode != "n_$") {
                     // just update the description
-                    $query = "update gen_lookups set Description = ?, Substitute = ? where Table_Name = ? and Code = ?";
-                    $params = array($desc, $subt, $selTbl, $code);
+                    EditRS::updateFields($dbh, new GenLookupsRS(), ['Table_Name' => $selTbl, 'Code' => $code], ['Description' => $desc, 'Substitute' => $subt]);
+                    $saved = TRUE;
                 } else {
                     $lookUpAlert->set_Text("sorry, don't understand (been a long day)");
                 }
 
-                if ($query != "") {
-                    $upStmt = $dbh->prepare($query);
-                    $upStmt->execute($params);
+                if ($saved) {
                     $lookUpAlert->set_Context(AlertMessage::Success);
                     $lookUpAlert->set_Text("Okay");
                 }

@@ -359,14 +359,9 @@ function deleteDonation(PDO $dbh, $donId, $uname)
 
     if ($donId > 0) {
         // mark donation record as deleted
-        $query = "update donations set Status='d', Last_Updated=now(), Updated_By=:ub where iddonations = :did;";
-        $stmt = $dbh->prepare($query);
-        $stmt->execute(array(
-            ':ub' => $uname,
-            ':did' => $donId
-        ));
+        $count = EditRS::updateFields($dbh, new DonationsRS(), ['iddonations' => $donId], ['Status' => 'd', 'Last_Updated' => date('Y-m-d H:i:s'), 'Updated_By' => $uname]);
 
-        if ($stmt->rowCount() == 1) {
+        if ($count == 1) {
             $reply["success"] = "Donation Deleted.  ";
         } else {
             $reply["error"] = "Donation not found.  ";

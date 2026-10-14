@@ -20,7 +20,7 @@ use HHK\sec\{SecurityComponent, Session, SysConfig};
 use HHK\HTMLControls\{HTMLContainer, HTMLInput, HTMLSelector, HTMLTable};
 use HHK\Exception\{RuntimeException, PaymentException};
 use HHK\Payment\GatewayResponse\GatewayResponseInterface;
-use HHK\Tables\House\LocationRS;
+use HHK\Tables\House\{LocationRS, RoomRS};
 use HHK\TableLog\AbstractTableLog;
 use HHK\TableLog\HouseLog;
 
@@ -1261,7 +1261,8 @@ class VantivGateway extends AbstractPaymentGateway {
             EditRS::loadRow($r[0], $locRs);
             $idLocation = $locRs->idLocation->getStoredVal();
 
-            $num = $dbh->exec("update room set idLocation = $idLocation");
+            // every room
+            $num = EditRS::updateWhere($dbh, new RoomRS(), "1 = 1", [], ['idLocation' => $idLocation]);
         }
 
         return $num;

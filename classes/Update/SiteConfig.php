@@ -10,6 +10,7 @@ use HHK\Exception\RuntimeException;
 use HHK\Payment\PaymentGateway\AbstractPaymentGateway;
 use HHK\TableLog\HouseLog;
 use HHK\Tables\EditRS;
+use HHK\Tables\GenLookupsRS;
 use HHK\Tables\House\Desig_HolidaysRS;
 use HHK\sec\{Session, SysConfig};
 use HHK\US_Holidays;
@@ -296,13 +297,8 @@ class SiteConfig {
 
             // build control name
 
-            if (isset($ctrl[$h['Code']])) {
-                // set this holidy
-                $dbh->exec("update gen_lookups set Substitute = '1' where Table_Name = 'Holiday' and Code = '". $h['Code'] ."'");
-            } else {
-                // skip this holiday
-                $dbh->exec("update gen_lookups set Substitute = '' where Table_Name = 'Holiday' and Code = '". $h['Code'] ."'");
-            }
+            // '1' = observe this holiday, '' = skip it
+            EditRS::updateFields($dbh, new GenLookupsRS(), ['Table_Name' => 'Holiday', 'Code' => $h['Code']], ['Substitute' => (isset($ctrl[$h['Code']]) ? '1' : '')]);
 
         }
 

@@ -13,6 +13,9 @@ use HHK\SysConst\VolMemberType;
 use HHK\Tables\Visit\VisitRS;
 use HHK\SysConst\VisitStatus;
 use HHK\Tables\EditRS;
+use HHK\Tables\House\{ResourceRS, ResourceRoomRS, RoomRS};
+use HHK\Tables\Registration\{HospitalRS, VehicleRS};
+use HHK\Tables\Reservation\{ReservationRS, Reservation_GuestRS};
 use HHK\Tables\Name\NameRS;
 use HHK\Tables\Visit\StaysRS;
 use HHK\Tables\GenLookupsRS;
@@ -385,31 +388,42 @@ abstract class AbstractImport {
     protected function insertReservation(array $d): int {
         $uS = Session::getInstance();
 
-        $stmt = $this->dbh->prepare("insert into reservation (`idRegistration`, `idGuest`,`idHospital_Stay`, `idResource`, `Expected_Arrival`, `Expected_Departure`, `Actual_Arrival`, `Actual_Departure`, `Number_Guests`, `Status`, `Notes`, `Title`, `Updated_By`, `Last_Updated`) VALUES(:idRegistration, :idGuest, :idHospitalStay, :idResource, :expectedArrival, :expectedDeparture, :actualArrival, :actualDeparture, :numGuests, :status, :notes, :title, :updatedBy, now())");
-        $stmt->execute(array(
-            ":idRegistration"=>$d["idRegistration"],
-            ":idGuest"=>$d["idGuest"],
-            ":idHospitalStay"=>$d["idHospitalStay"] ?? 0,
-            ":idResource"=>$d["idResource"] ?? 0,
-            ":expectedArrival"=>$d["expectedArrival"],
-            ":expectedDeparture"=>$d["expectedDeparture"],
-            ":actualArrival"=>$d["actualArrival"] ?? null,
-            ":actualDeparture"=>$d["actualDeparture"] ?? null,
-            ":numGuests"=>max(1, count($d["guests"] ?? [])),
-            ":status"=>$d["status"],
-            ":notes"=>$d["notes"] ?? '',
-            ":title"=>$d["title"] ?? '',
-            ":updatedBy"=>$uS->username ?? 'admin',
-        ));
-        $idResv = (int) $this->dbh->lastInsertId();
+        $resvRs = new ReservationRS();
+        $resvRs->idRegistration->setNewVal($d["idRegistration"]);
+        $resvRs->idGuest->setNewVal($d["idGuest"]);
+        $resvRs->idHospital_Stay->setNewVal($d["idHospitalStay"] ?? 0);
+        $resvRs->idResource->setNewVal($d["idResource"] ?? 0);
+        $resvRs->Expected_Arrival->setNewVal($d["expectedArrival"]);
+        $resvRs->Expected_Departure->setNewVal($d["expectedDeparture"]);
+        // no actual dates stays NULL
+        if (!empty($d["actualArrival"])) {
+            $resvRs->Actual_Arrival->setNewVal($d["actualArrival"]);
+        }
+        if (!empty($d["actualDeparture"])) {
+            $resvRs->Actual_Departure->setNewVal($d["actualDeparture"]);
+        }
+        $resvRs->Number_Guests->setNewVal(max(1, count($d["guests"] ?? [])));
+        $resvRs->Status->setNewVal($d["status"]);
+        $resvRs->Notes->setNewVal($d["notes"] ?? '');
+        $resvRs->Title->setNewVal($d["title"] ?? '');
+        $resvRs->Updated_By->setNewVal($uS->username ?? 'admin');
+        $resvRs->Last_Updated->setNewVal(date('Y-m-d H:i:s'));
 
-        $rgStmt = $this->dbh->prepare("insert ignore into reservation_guest (`idReservation`, `idGuest`,`Primary_Guest`) VALUES(:idReservation, :idGuest, :primaryGuest)");
+        // EditRS::insert's return, not lastInsertId() - the activity log insert runs after it
+        $idResv = (int) EditRS::insert($this->dbh, $resvRs);
+
         foreach (($d["guests"] ?? []) as $idGuest => $isPrimary) {
-            $rgStmt->execute(array(
-                ":idReservation" => $idResv,
-                ":idGuest" => $idGuest,
-                ":primaryGuest" => ($isPrimary ? 1 : 0)
-            ));
+            $rgRs = new Reservation_GuestRS();
+            $rgRs->idReservation->setStoredVal($idResv);
+            $rgRs->idGuest->setStoredVal($idGuest);
+
+            // insert ignore
+            if (count(EditRS::select($this->dbh, $rgRs, [$rgRs->idReservation, $rgRs->idGuest])) == 0) {
+                $rgRs->idReservation->setNewVal($idResv);
+                $rgRs->idGuest->setNewVal($idGuest);
+                $rgRs->Primary_Guest->setNewVal($isPrimary ? 1 : 0);
+                EditRS::insert($this->dbh, $rgRs);
+            }
         }
 
         return $idResv;
@@ -486,27 +500,24 @@ abstract class AbstractImport {
             }
         }
 
-        $stmt = $this->dbh->prepare("insert into vehicle (`idRegistration`, `Make`,`Model`, `Color`, `State_Reg`, `License_Number`) VALUES(:idReg, :make, :model, :color, :state, :license)");
-        $stmt->execute(array(
-            ":idReg" => $reg->getIdRegistration(),
-            ":make" => substr(trim($v["make"] ?? ''), 0, 45),
-            ":model" => substr(trim($v["model"] ?? ''), 0, 45),
-            ":color" => substr(trim($v["color"] ?? ''), 0, 45),
-            ":state" => substr(trim($v["state"] ?? ''), 0, 2),
-            ":license" => $license
-        ));
+        $this->insertVehicleRow($reg, substr(trim($v["make"] ?? ''), 0, 45), substr(trim($v["model"] ?? ''), 0, 45),
+            substr(trim($v["color"] ?? ''), 0, 45), substr(trim($v["state"] ?? ''), 0, 2), $license);
     }
 
     protected function addVehicle(array $vehicle, Registration $reg){
-        $stmt = $this->dbh->prepare("insert into vehicle (`idRegistration`, `Make`,`Model`, `Color`, `State_Reg`, `License_Number`) VALUES(:idReg, :make, :model, :color, :state, :license)");
-                $stmt->execute(array(
-                    ":idReg" => $reg->getIdRegistration(),
-                    ":make" => "",
-                    ":model" => substr(trim($vehicle["prop_Vehicle_1___Make___Model"]), 0,45),
-                    ":color" => substr(trim($vehicle["prop_Vehicle_1___Color"]), 0, 45),
-                    ":state" => "",
-                    ":license" => substr(trim($vehicle["prop_Vehicle_1___License_No_"]), 0, 15)
-                ));
+        $this->insertVehicleRow($reg, "", substr(trim($vehicle["prop_Vehicle_1___Make___Model"]), 0,45),
+            substr(trim($vehicle["prop_Vehicle_1___Color"]), 0, 45), "", substr(trim($vehicle["prop_Vehicle_1___License_No_"]), 0, 15));
+    }
+
+    private function insertVehicleRow(Registration $reg, string $make, string $model, string $color, string $state, string $license): void {
+        $carRs = new VehicleRS();
+        $carRs->idRegistration->setNewVal($reg->getIdRegistration());
+        $carRs->Make->setNewVal($make);
+        $carRs->Model->setNewVal($model);
+        $carRs->Color->setNewVal($color);
+        $carRs->State_Reg->setNewVal($state);
+        $carRs->License_Number->setNewVal($license);
+        EditRS::insert($this->dbh, $carRs);
     }
 
     /**
@@ -739,24 +750,41 @@ WHERE n.Name_First = '" . $newFirst . "' AND n.Name_Last = '" . $newLast . "'";
      */
     protected function createRoom(string $title): int {
         // create room record
-        $stmt = $this->dbh->prepare("insert into room (`idHouse`,`Item_Id`,`Title`,`Type`,`Category`,`Status`,`State`,`Availability`, `Max_Occupants`,`Min_Occupants`,`Rate_Code`,`Key_Deposit_Code`,`Cleaning_Cycle_Code`, `idLocation`) VALUES"
-                . " (0, 1, :roomTitle, 'r', 'dh', 'a', 'a', 'a', 4, 0,'rb', 'k0', 'a', 1);");
-        $stmt->execute(array(":roomTitle"=>$title));
-        $idRoom = (int) $this->dbh->lastInsertId();
+        $roomRs = new RoomRS();
+        foreach (['idHouse' => 0, 'Item_Id' => 1, 'Title' => $title, 'Type' => 'r', 'Category' => 'dh', 'Status' => 'a', 'State' => 'a', 'Availability' => 'a',
+                'Max_Occupants' => 4, 'Min_Occupants' => 0, 'Rate_Code' => 'rb', 'Key_Deposit_Code' => 'k0', 'Cleaning_Cycle_Code' => 'a', 'idLocation' => 1] as $col => $val) {
+            $roomRs->$col->setNewVal($val);
+        }
+        $idRoom = (int) EditRS::insert($this->dbh, $roomRs);
 
-        // create resource record
-        $stmt = $this->dbh->prepare("insert into resource (`idResource`,`idSponsor`,`Title`,`Utilization_Category`,`Type`,`Status`) values "
-                . "(:idRoom, 0, :roomTitle, 'uc1', 'room', 'a')");
-        $stmt->execute(array(":idRoom"=>$idRoom, ":roomTitle"=>$title));
-
-        // Resource-Room
-        $stmt = $this->dbh->prepare("insert into resource_room (`idResource_room`,`idResource`,`idRoom`) values "
-                . "(:idRoom, :idRoom2, :idRoom3)");
-        $stmt->execute(array(":idRoom" => $idRoom,":idRoom2" => $idRoom,":idRoom3" => $idRoom));
+        // create resource record, same id as the room
+        $this->insertResourceForRoom($idRoom, ['idSponsor' => 0, 'Title' => $title, 'Utilization_Category' => 'uc1', 'Type' => 'room', 'Status' => 'a']);
 
         $this->rooms[trim(strtolower($title))] = $idRoom;
 
         return $idRoom;
+    }
+
+    /**
+     * Create the resource and resource_room records for a new room, all three using the room's id.
+     *
+     * @param int $idRoom
+     * @param array $resourceVals resource column => value
+     * @return void
+     */
+    protected function insertResourceForRoom(int $idRoom, array $resourceVals): void {
+        $rescRs = new ResourceRS();
+        $rescRs->idResource->setNewVal($idRoom);
+        foreach ($resourceVals as $col => $val) {
+            $rescRs->$col->setNewVal($val);
+        }
+        EditRS::insert($this->dbh, $rescRs);
+
+        $rrRs = new ResourceRoomRS();
+        $rrRs->idResource_room->setNewVal($idRoom);
+        $rrRs->idResource->setNewVal($idRoom);
+        $rrRs->idRoom->setNewVal($idRoom);
+        EditRS::insert($this->dbh, $rrRs);
     }
 
     /**
@@ -766,9 +794,11 @@ WHERE n.Name_First = '" . $newFirst . "' AND n.Name_Last = '" . $newLast . "'";
      * @return int idHospital
      */
     protected function createHospital(string $title): int {
-        $stmt = $this->dbh->prepare("insert into `hospital` (`Title`, `Type`, `Status`) values (:title, 'h','a');");
-        $stmt->execute(array(":title"=>$title));
-        $idHospital = (int) $this->dbh->lastInsertId();
+        $hospRs = new HospitalRS();
+        $hospRs->Title->setNewVal($title);
+        $hospRs->Type->setNewVal('h');
+        $hospRs->Status->setNewVal('a');
+        $idHospital = (int) EditRS::insert($this->dbh, $hospRs);
 
         $this->hospitals[strtolower($title)] = $idHospital;
 

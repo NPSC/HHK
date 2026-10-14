@@ -21,7 +21,6 @@ use HHK\Payment\PaymentGateway\AbstractPaymentGateway;
 use HHK\Payment\PaymentManager\PaymentManager;
 use HHK\Purchase\{CheckinCharges, PaymentChooser, RateChooser};
 use HHK\SysConst\{GLTableNames, ItemPriceCode, ReservationStatus, VisitStatus};
-use HHK\SysConst\ItemId;
 use HHK\Tables\EditRS;
 use HHK\Tables\Payment\InvoiceRS;
 use HHK\Tables\Reservation\ReservationRS;
@@ -637,7 +636,7 @@ FROM reservation r
 
             // Relate Invoice to Reservation
             if ($numRows > 1 && ! is_Null($this->payResult) && $this->payResult->getIdInvoice() > 0 && $this->reserveData->getIdResv() > 0) {
-                $dbh->exec("insert ignore into `reservation_invoice_line` select '".$this->reserveData->getIdResv()."', il.idInvoice_Line from invoice_line il where il.Invoice_Id = " .$this->payResult->getIdInvoice() . " and il.Item_Id = '" . ItemId::LodgingMOA . "'");
+                Reservation_1::linkPrepaymentLines($dbh, $this->reserveData->getIdResv(), $this->payResult->getIdInvoice());
             }
 
         }

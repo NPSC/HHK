@@ -6,7 +6,8 @@ use HHK\House\Room\Room;
 use HHK\SysConst\{AttributeTypes, RoomType, VisitStatus};
 use HHK\TableLog\RoomLog;
 use HHK\Tables\EditRS;
-use HHK\Tables\House\{ResourceRS, RoomRS};
+use HHK\Tables\House\{ResourceRS, ResourceRoomRS, RoomRS};
+use HHK\Tables\Attribute\AttributeEntityRS;
 use HHK\Exception\RuntimeException;
 
 /**
@@ -135,15 +136,18 @@ order by r.Util_Priority;", array(\PDO::ATTR_CURSOR => \PDO::CURSOR_FWDONLY));
         $rooms = $this->getRooms();
 
         // set the room priority
-        $dbh->query("update room set Util_Priority = '" . $this->getUtilPriority() . "' where idRoom = $id");
+        EditRS::updateFields($dbh, new RoomRS(), ['idRoom' => $id], ['Util_Priority' => $this->getUtilPriority()]);
 
         if (count($rooms) == 0) {
             // add room
-            $dbh->query("insert into resource_room (idResource, idRoom) values (" . $this->getIdResource() . "," . $id . ")");
+            $rrRs = new ResourceRoomRS();
+            $rrRs->idResource->setNewVal($this->getIdResource());
+            $rrRs->idRoom->setNewVal($id);
+            EditRS::insert($dbh, $rrRs);
 
         } else if (isset($rooms[$id]) === FALSE) {
             // update to new room id.
-            $dbh->query("update resource_room set idRoom = " . $id . " where idResource = " . $this->getIdResource());
+            EditRS::updateWhere($dbh, new ResourceRoomRS(), "idResource = :idResc", [':idResc' => $this->getIdResource()], ['idRoom' => $id]);
 
         } else {
             return;
@@ -333,14 +337,15 @@ order by r.Util_Priority;", array(\PDO::ATTR_CURSOR => \PDO::CURSOR_FWDONLY));
      */
     public function deleteResource(\PDO $dbh, $username) {
 
-        $query = "delete from resource_room where idResource = :id";
-        $stmt = $dbh->prepare($query);
-        $stmt->execute(array(':id'=>$this->getIdResource()));
+        $rrRs = new ResourceRoomRS();
+        $rrRs->idResource->setStoredVal($this->getIdResource());
+        EditRS::delete($dbh, $rrRs, array($rrRs->idResource));
 
         // Delete from attribure entities
-        $query = "delete from attribute_entity where idEntity = :id and Type = :tpe";
-        $stmt = $dbh->prepare($query);
-        $stmt->execute(array(':id' => $this->getIdResource(), ':tpe' => AttributeTypes::Resource));
+        $aeRs = new AttributeEntityRS();
+        $aeRs->idEntity->setStoredVal($this->getIdResource());
+        $aeRs->Type->setStoredVal(AttributeTypes::Resource);
+        EditRS::delete($dbh, $aeRs, array($aeRs->idEntity, $aeRs->Type));
 
         $cnt = EditRS::delete($dbh, $this->resourceRS, array($this->resourceRS->idResource));
 

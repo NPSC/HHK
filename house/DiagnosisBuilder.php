@@ -122,12 +122,12 @@ $labels = Labels::getLabels();
 
 // Add diags and locations buttons
 if (isset($_POST['btnAddDiags'])) {
-    $dbh->exec("insert into gen_lookups (`Table_Name`, `Code`, `Description`, `Type`, `Order`) values ('Diagnosis', 'q9', 'New Entry', 'h', 10 )");
+    ResourceBldr::addNewLookupEntry($dbh, 'Diagnosis', 'h');
     $tabIndex = 5;
 }
 
 if (isset($_POST['btnAddLocs'])) {
-    $dbh->exec("insert into gen_lookups (`Table_Name`, `Code`, `Description`, `Type`, `Order`) values ('Location', 'q9', 'New Entry', 'h', 10 )");
+    ResourceBldr::addNewLookupEntry($dbh, 'Location', 'h');
     $tabIndex = 5;
 }
 

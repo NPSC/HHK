@@ -248,10 +248,8 @@ class Document {
         $counter = 0;
 
         if ($this->idDocument > 0 && $guestId >= 0) {
-            $query = 'update `link_doc` set idGuest = "' . intval($guestId) . '" where idDocument = "' . $this->idDocument . '";';
-            $stmt = $dbh->prepare($query);
-            $stmt->execute();
-            return $dbh->lastInsertId();
+            // idGuest is part of link_doc's key and may be set to 0, so load each row first
+            return EditRS::updateWhere($dbh, new LinkDocRS(), "idDocument = :idDoc", [':idDoc' => $this->idDocument], ['idGuest' => intval($guestId)]);
         }
 
         return $counter;

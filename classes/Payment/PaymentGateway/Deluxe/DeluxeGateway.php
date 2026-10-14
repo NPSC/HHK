@@ -42,7 +42,7 @@ use HHK\SysConst\TransType;
 use HHK\TableLog\AbstractTableLog;
 use HHK\TableLog\HouseLog;
 use HHK\Tables\EditRS;
-use HHK\Tables\House\LocationRS;
+use HHK\Tables\House\{LocationRS, RoomRS};
 use HHK\Tables\Payment\Payment_AuthRS;
 use HHK\Tables\Payment\PaymentRS;
 use HHK\Tables\PaymentGW\CC_Hosted_GatewayRS;
@@ -1246,7 +1246,8 @@ order by pa.Timestamp desc");
             EditRS::loadRow($r[0], $locRs);
             $idLocation = $locRs->idLocation->getStoredVal();
 
-            $num = $dbh->exec("update room set idLocation = $idLocation");
+            // every room
+            $num = EditRS::updateWhere($dbh, new RoomRS(), "1 = 1", [], ['idLocation' => $idLocation]);
         }
 
         return $num;

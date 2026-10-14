@@ -400,6 +400,18 @@ class AuditableTest extends TestCase {
         $this->assertSame(0, EditRS::replaceValue($this->db, new ThingRS(), 'Status', 'b', 'b'));
     }
 
+    public function testUpdateWhereAndDeleteWhereGoRowByRow(): void {
+        $this->db->tables['thing'][] = ['idThing' => '6', 'Span' => '0', 'Status' => 'b', 'Notes' => '', 'Password' => '', 'Last_Updated' => null];
+        $this->db->tables['thing'][] = ['idThing' => '7', 'Span' => '0', 'Status' => 'c', 'Notes' => '', 'Password' => '', 'Last_Updated' => null];
+
+        $this->assertSame(2, EditRS::updateWhere($this->db, new ThingRS(), "Status = :a or Status = :b", [':a' => 'a', ':b' => 'b'], ['Notes' => 'x']));
+        $this->assertSame(['x', 'x', ''], array_column($this->db->tables['thing'], 'Notes'));
+
+        $this->assertSame(2, EditRS::deleteWhere($this->db, new ThingRS(), "Notes = :n", [':n' => 'x']));
+        $this->assertSame(['7'], array_column($this->db->tables['thing'], 'idThing'));
+        $this->assertSame(['updated', 'updated', 'deleted', 'deleted'], array_column($this->db->log, 'event'));
+    }
+
     public function testIgnoredColumnOnlyWritesNothing(): void {
         $this->updateThing(['Last_Updated' => '2026-01-01 09:00:00']);
         $this->assertCount(0, $this->db->log);
