@@ -2,6 +2,7 @@
 namespace Tests\Unit\Tables;
 
 use HHK\AuditLog\LogOptions;
+use HHK\Payment\PaymentSvcs;
 use HHK\Tables\AbstractTableRS;
 use HHK\Tables\EditRS;
 use HHK\Tables\Fields\{DB_Field, DbIntSanitizer, DbStrSanitizer, DbDateSanitizer};
@@ -273,6 +274,7 @@ class QuietWidgetRS extends WidgetRS {
 
 #[CoversClass(EditRS::class)]
 #[CoversClass(LogOptions::class)]
+#[CoversClass(PaymentSvcs::class)]
 class AuditableTest extends TestCase {
 
     private FakeAuditPdo $db;
@@ -341,6 +343,40 @@ class AuditableTest extends TestCase {
         $this->assertSame('a', $p['snapshot']['Status']);
         $this->assertSame('***', $p['snapshot']['Password']);
         $this->assertStringNotContainsString('newsecret', $this->db->log[0]['properties']);
+    }
+
+    /** like Invoice::_deleteInvoice() marking all of an invoice's lines deleted in one update */
+    public function testMultiRowUpdateLogsEachRecord(): void {
+        $this->db->tables['thing'][] = ['idThing' => '5', 'Span' => '2', 'Status' => 'a', 'Notes' => '', 'Password' => '', 'Last_Updated' => null];
+        $this->db->tables['thing'][] = ['idThing' => '5', 'Span' => '3', 'Status' => 'z', 'Notes' => '', 'Password' => '', 'Last_Updated' => null];
+
+        $rs = new ThingRS();
+        $rs->idThing->setStoredVal(5);
+        $rs->Status->setNewVal('z');
+        EditRS::update($this->db, $rs, [$rs->idThing]);
+
+        $this->assertSame(['idThing=5,Span=1', 'idThing=5,Span=2'], array_column($this->db->log, 'record_key'), 'span 3 was already z');
+        $this->assertSame(['Status' => 'a'], $this->props(1)['old']);
+    }
+
+    public function testDeletePaymentRecordsRemovesAndLogsChildren(): void {
+        $this->db->pks += ['payment' => ['idPayment'], 'payment_invoice' => ['idPayment_Invoice'], 'payment_info_check' => ['idpayment_info_Check'], 'payment_auth' => ['idPayment_auth']];
+        $this->db->tables += [
+            'payment' => [['idPayment' => '7', 'Amount' => '10.00'], ['idPayment' => '8', 'Amount' => '5.00']],
+            'payment_invoice' => [['idPayment_Invoice' => '1', 'Payment_Id' => '7', 'Invoice_Id' => '3'], ['idPayment_Invoice' => '2', 'Payment_Id' => '8', 'Invoice_Id' => '3']],
+            'payment_info_check' => [['idpayment_info_Check' => '4', 'idPayment' => '7', 'Check_Number' => '1001']],
+            'payment_auth' => [],
+        ];
+
+        PaymentSvcs::deletePaymentRecords($this->db, 7);
+
+        $this->assertSame(['8'], array_column($this->db->tables['payment'], 'idPayment'));
+        $this->assertSame(['8'], array_column($this->db->tables['payment_invoice'], 'Payment_Id'));
+        $this->assertCount(0, $this->db->tables['payment_info_check']);
+        $this->assertSame(
+            ['payment_invoice', 'payment_info_check', 'payment'],
+            array_column(array_filter($this->db->log, fn($r) => $r['event'] == 'deleted'), 'subject_type')
+        );
     }
 
     public function testIgnoredColumnOnlyWritesNothing(): void {

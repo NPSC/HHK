@@ -14,6 +14,7 @@ use HHK\Exception\RuntimeException;
 use HHK\Tables\CmsGatewayRS;
 use HHK\Tables\EditRS;
 use HHK\Tables\Name\NameRS;
+use HHK\Tables\Visit\StaysRS;
 use HHK\Member\MemberSearch;
 use HHK\AuditLog\NameLog;
 use HHK\CrmExport\ExportManagerInterface;
@@ -949,8 +950,14 @@ class NeonManager extends AbstractExportManager {
 
         if (count($idList) > 0) {
 
-            $parm = "(" . implode(',', $idList) . ") ";
-            return $dbh->exec("Update stays set Recorded = 1 where idStays in $parm");
+            $count = 0;
+            foreach ($idList as $idStays) {
+                $stayRs = new StaysRS();
+                $stayRs->idStays->setStoredVal($idStays);
+                $stayRs->Recorded->setNewVal(1);
+                $count += EditRS::update($dbh, $stayRs, [$stayRs->idStays]);
+            }
+            return $count;
 
         }
 

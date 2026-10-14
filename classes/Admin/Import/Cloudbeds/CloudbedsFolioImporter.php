@@ -17,6 +17,8 @@ use HHK\Purchase\Item;
 use HHK\sec\Session;
 use HHK\SysConst\ItemId;
 use HHK\SysConst\PayType;
+use HHK\Tables\EditRS;
+use HHK\Tables\Payment\PaymentRS;
 
 /**
  * Turns a Cloudbeds folio into an HHK invoice with its payments.
@@ -347,8 +349,15 @@ class CloudbedsFolioImporter {
         $result->feePaymentAccepted($this->dbh, $uS, $response, $invoice);
 
         // keep the Cloudbeds transaction id on the payment
-        $stmt = $this->dbh->prepare("update `payment` set `External_Id` = :externalId where `idPayment` = :idPayment");
-        $stmt->execute([':externalId' => substr($payment['id'], 0, 45), ':idPayment' => $response->getIdPayment()]);
+        $payRs = new PaymentRS();
+        $payRs->idPayment->setStoredVal($response->getIdPayment());
+        $rows = EditRS::select($this->dbh, $payRs, [$payRs->idPayment]);
+
+        if (count($rows) > 0) {
+            EditRS::loadRow($rows[0], $payRs);
+            $payRs->External_Id->setNewVal(substr($payment['id'], 0, 45));
+            EditRS::update($this->dbh, $payRs, [$payRs->idPayment]);
+        }
     }
 
     protected function externalTitle(array $payment): string {

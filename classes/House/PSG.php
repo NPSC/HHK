@@ -13,7 +13,7 @@ use HHK\TableLog\VisitLog;
 use HHK\Tables\EditRS;
 use HHK\Tables\Name\{Name_GuestRS, NameRS};
 use HHK\Tables\Registration\PSG_RS;
-use HHK\Tables\Visit\Visit_LogRS;
+use HHK\Tables\Visit\{StaysRS, VisitRS, Visit_LogRS, Visit_onLeaveRS};
 
 /**
  * PSG.php
@@ -31,8 +31,8 @@ use HHK\Tables\Visit\Visit_LogRS;
 
 class PSG {
 
-    public $psgRS;
-    public $psgMembers = array();
+    public PSG_RS $psgRS;
+    public array $psgMembers = array();
 
     public function __construct(\PDO $dbh, $idPsg = 0, $idPatient = 0) {
 
@@ -142,13 +142,21 @@ where r.idPsg = :idPsg and s.idName = :idGuest and DATEDIFF(s.Span_End_Date, s.S
 
                 foreach($stays as $stay){
                     if($stay['VisitStayCount'] == 1){
-                        $query = "delete from visit v where idVisit = :idVisit and Visit_Span = :visitSpan";
-                        $stmt = $dbh->prepare($query);
-                        $stmt->execute(array(':idVisit'=>$stay['idVisit'], ':visitSpan'=>$stay['Visit_Span']));
+                        // the guest's stay is the only one in this span: remove the span too
+                        $visitRs = new VisitRS();
+                        $visitRs->idVisit->setStoredVal($stay['idVisit']);
+                        $visitRs->Span->setStoredVal($stay['Visit_Span']);
+                        EditRS::delete($dbh, $visitRs, array($visitRs->idVisit, $visitRs->Span));
+
+                        $olRs = new Visit_onLeaveRS();
+                        $olRs->idVisit->setStoredVal($stay['idVisit']);
+                        $olRs->Span->setStoredVal($stay['Visit_Span']);
+                        EditRS::delete($dbh, $olRs, array($olRs->idVisit, $olRs->Span));
                     }
-                    $query = "delete from stays where idStays = :idStays";
-                    $stmt = $dbh->prepare($query);
-                    $stmt->execute(array(':idStays'=>$stay['idStays']));
+
+                    $stayRs = new StaysRS();
+                    $stayRs->idStays->setStoredVal($stay['idStays']);
+                    EditRS::delete($dbh, $stayRs, array($stayRs->idStays));
                 }
 
                 return TRUE;

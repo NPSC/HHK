@@ -5,7 +5,7 @@ namespace HHK\Payment\PaymentGateway\Local;
 use HHK\Common;
 use HHK\Member\Role\Guest;
 use HHK\Member\AbstractMember;
-use HHK\Payment\{CreditToken, Receipt, Transaction};
+use HHK\Payment\{CreditToken, PaymentSvcs, Receipt, Transaction};
 use HHK\Payment\Invoice\Invoice;
 use HHK\Payment\PaymentGateway\AbstractPaymentGateway;
 use HHK\Payment\PaymentGateway\CreditPayments\{ReturnReply, SaleReply, VoidReply};
@@ -433,9 +433,7 @@ class LocalGateway extends AbstractPaymentGateway {
 		Transaction::recordTransaction($dbh, $vr, '', TransType::undoRetrn, TransMethod::Token);
 
 		// Payment records.
-		$dbh->exec("delete from payment_invoice where Payment_Id = " . $payRs->idPayment->getStoredVal ());
-		$dbh->exec("delete from payment_auth where idPayment = " . $payRs->idPayment->getStoredVal ());
-		$dbh->exec("delete from payment where idPayment = " . $payRs->idPayment->getStoredVal ());
+		PaymentSvcs::deletePaymentRecords($dbh, $payRs->idPayment->getStoredVal ());
 
 		$invoice->updateInvoiceBalance($dbh, $pAuthRs->Approved_Amount->getStoredVal (), $uS->username);
 		// delete invoice

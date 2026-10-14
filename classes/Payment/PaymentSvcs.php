@@ -14,7 +14,7 @@ use HHK\Payment\PaymentResult\{PaymentResult, ReturnResult, CofResult};
 use HHK\SysConst\{InvoiceStatus, PayType, PaymentStatusCode, PaymentMethod};
 use HHK\sec\Session;
 use HHK\Tables\EditRS;
-use HHK\Tables\Payment\{PaymentRS, Payment_AuthRS, PaymentInfoCheckRS};
+use HHK\Tables\Payment\{PaymentRS, Payment_AuthRS, PaymentInfoCheckRS, PaymentInvoiceRS};
 use HHK\HTMLControls\{HTMLContainer};
 use HHK\Exception\PaymentException;
 use PHPMailer\PHPMailer\PHPMailer;
@@ -40,6 +40,36 @@ use RuntimeException;
 
 class PaymentSvcs {
 
+    /**
+     * Delete a payment and the rows that hang off it, through EditRS so the activity log records them.
+     *
+     * @param \PDO $dbh
+     * @param int $idPayment
+     * @return void
+     */
+    public static function deletePaymentRecords(\PDO $dbh, $idPayment) {
+
+        $idPayment = intval($idPayment);
+        if ($idPayment < 1) {
+            return;
+        }
+
+        $piRs = new PaymentInvoiceRS();
+        $piRs->Payment_Id->setStoredVal($idPayment);
+        EditRS::delete($dbh, $piRs, [$piRs->Payment_Id]);
+
+        $checkRs = new PaymentInfoCheckRS();
+        $checkRs->idPayment->setStoredVal($idPayment);
+        EditRS::delete($dbh, $checkRs, [$checkRs->idPayment]);
+
+        $authRs = new Payment_AuthRS();
+        $authRs->idPayment->setStoredVal($idPayment);
+        EditRS::delete($dbh, $authRs, [$authRs->idPayment]);
+
+        $payRs = new PaymentRS();
+        $payRs->idPayment->setStoredVal($idPayment);
+        EditRS::delete($dbh, $payRs, [$payRs->idPayment]);
+    }
 
     /**
      * Summary of payAmount
