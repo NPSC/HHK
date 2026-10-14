@@ -98,17 +98,32 @@ function processAction(PDO $dbh, $tbl, $cde, $colr, $desc, $repl, $action, &$vol
 
                 // Valid replacement code?
                 if (count($rowsReplace) == 1) {
-                    // Make any needed replacements in Name_Volunteer
-                    // if any member has a vol record for the old code AND a record for the new code, delete the old code.
-                    $qu = "delete  nv  from name_volunteer2 nv join name_volunteer2 nv2 on nv.idName = nv2.idName
-                        where nv.Vol_Category=" . $dbh->quote($tbl) . " and nv.Vol_Code=" . $dbh->quote($cde)
-                            . " and nv2.Vol_Category=" . $dbh->quote($tbl) . " and nv2.Vol_Code= " . $dbh->quote($repl);
-                    $dbh->exec($qu);
+                    // Make any needed replacements in Name_Volunteer, one member at a time:
+                    // a member who already has the replacement code loses the old code, everyone else is moved to the replacement.
+                    $nvRs = new NameVolunteerRS();
+                    $nvRs->Vol_Category->setStoredVal($tbl);
+                    $nvRs->Vol_Code->setStoredVal($cde);
 
-                    // Now we are free to simply change the old code to the replacement code.
-                    $query = "update name_volunteer2 set Vol_Code= " . $dbh->quote($repl) . ", Updated_By=" . $dbh->quote($_SESSION["username"]) . ", Last_Updated=Now()
-                    where Vol_Category=" . $dbh->quote($tbl) . " and Vol_Code=" . $dbh->quote($cde) . ";";
-                    $dbh->exec($query);
+                    foreach (EditRS::select($dbh, $nvRs, array($nvRs->Vol_Category, $nvRs->Vol_Code)) as $r) {
+
+                        $oldRs = new NameVolunteerRS();
+                        EditRS::loadRow($r, $oldRs);
+                        $oldKey = array($oldRs->idName, $oldRs->Vol_Category, $oldRs->Vol_Code);
+
+                        $replRs = new NameVolunteerRS();
+                        $replRs->idName->setStoredVal($oldRs->idName->getStoredVal());
+                        $replRs->Vol_Category->setStoredVal($tbl);
+                        $replRs->Vol_Code->setStoredVal($repl);
+
+                        if (count(EditRS::select($dbh, $replRs, array($replRs->idName, $replRs->Vol_Category, $replRs->Vol_Code))) > 0) {
+                            EditRS::delete($dbh, $oldRs, $oldKey);
+                        } else {
+                            $oldRs->Vol_Code->setNewVal($repl);
+                            $oldRs->Updated_By->setNewVal($_SESSION["username"]);
+                            $oldRs->Last_Updated->setNewVal(date('Y-m-d H:i:s'));
+                            EditRS::update($dbh, $oldRs, $oldKey);
+                        }
+                    }
 
                     // delete orig from gen_lookups
                     EditRS::delete($dbh, $gl, array($gl->Table_Name, $gl->Code));

@@ -6,7 +6,7 @@ use HHK\HTMLControls\{HTMLContainer, HTMLInput, HTMLTable};
 use HHK\Member\Address\AbstractContactPoint;
 use HHK\SysConst\{GLTableNames, MemDesignation, MemStatus};
 use HHK\Tables\EditRS;
-use HHK\Tables\Name\{NameDemogRS, NameRS};
+use HHK\Tables\Name\{NameDemogRS, NameRS, NameVolunteerRS};
 use HHK\sec\Session;
 use HHK\AuditLog\NameLog;
 use HHK\Exception\{RuntimeException, MemberException, UnexpectedValueException, InvalidArgumentException};
@@ -969,11 +969,26 @@ abstract class AbstractMember {
     public function retireAllVolunteer(\PDO $dbh, $user) {
 
         // Retire all volunteer stints
-        $query = "update name_volunteer2 set Vol_Status = 'i', Vol_End = now(), Updated_By=:byuser, Last_Updated=now()
-            where idName = :id and Vol_Status <> 'i' and Vol_Category <> 'Vol_Type';";
-        $stmt = $dbh->prepare($query);
+        $nvRs = new NameVolunteerRS();
+        $nvRs->idName->setStoredVal($this->nameRS->idName->getStoredVal());
 
-        return $stmt->execute(array(':id'=>$this->nameRS->idName, ':byuser'=>$user));
+        foreach (EditRS::select($dbh, $nvRs, array($nvRs->idName)) as $r) {
+
+            $nvRs = new NameVolunteerRS();
+            EditRS::loadRow($r, $nvRs);
+
+            if ($nvRs->Vol_Status->getStoredVal() == 'i' || $nvRs->Vol_Category->getStoredVal() == 'Vol_Type') {
+                continue;
+            }
+
+            $nvRs->Vol_Status->setNewVal('i');
+            $nvRs->Vol_End->setNewVal(date('Y-m-d H:i:s'));
+            $nvRs->Updated_By->setNewVal($user);
+            $nvRs->Last_Updated->setNewVal(date('Y-m-d H:i:s'));
+            EditRS::update($dbh, $nvRs, array($nvRs->idName, $nvRs->Vol_Category, $nvRs->Vol_Code));
+        }
+
+        return TRUE;
     }
 
     /**

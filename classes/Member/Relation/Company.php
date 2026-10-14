@@ -79,10 +79,7 @@ class Company extends AbstractRelation {
 
         if ($rId > 0 && $empId <> $rId) {
             // Update employee record
-            $query = "update  name n, name c set n.Company_Id = :id, n.Company = c.Company
-                where n.idName = :empId and n.Record_Member = 1 and c.idName = :id3 and c.Record_Company = 1 and n.Company_Id <> :id2;";
-            $stmt = $dbh->prepare($query);
-            $stmt->execute(array(':id'=>$rId, ':id2'=>$rId, ':id3'=>$rId, ':empId'=>$empId));
+            self::linkCompany($dbh, $empId, $rId);
 
             $nRS = new NameRS();
             $nRS->idName->setStoredVal($empId);
@@ -105,10 +102,7 @@ class Company extends AbstractRelation {
 
         $uS = Session::getInstance();
 
-        $query = "update name n set n.Company_Id = 0, n.Company = '', n.Company_CareOf = '' where n.idName = :id;";
-        $stmt = $dbh->prepare($query);
-        $idw = $this->getIdName();
-        $stmt->execute(array(':id'=> $idw));
+        self::unlinkCompany($dbh, $this->getIdName());
 
         $nRS = new NameRS();
         $nRS->idName->setStoredVal($this->getIdName());

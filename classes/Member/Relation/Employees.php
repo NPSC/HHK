@@ -144,11 +144,7 @@ where c.Id = :id;";
 
         if ($rId > 0 && $rId <> $this->getIdName()) {
             // Update employee record
-            $query = "update  name n, name c set n.Company_Id = :id, n.Company = c.Company
-                where n.idName = :empId and n.Record_Member = 1 and c.idName = :id2 and c.Record_Company = 1 and n.Company_Id <> :id3;";
-            $stmt = $dbh->prepare($query);
-            $idVar = $this->getIdName();
-            $stmt->execute(array(':id'=>$idVar, ':id3'=>$idVar, ':id2'=>$idVar, ':empId'=>$rId));
+            self::linkCompany($dbh, $rId, $this->getIdName());
 
             $nRS = new NameRS();
             $nRS->idName->setStoredVal($rId);
@@ -173,9 +169,7 @@ where c.Id = :id;";
 
         $rId = intval($rId);
 
-        $query = "update name n set n.Company_Id = 0, n.Company = '', n.Company_CareOf = '' where n.idName = :rId;";
-        $stmt = $dbh->prepare($query);
-        $stmt->execute(array(':rId'=>$rId));
+        self::unlinkCompany($dbh, $rId);
 
         $nRS = new NameRS();
         $nRS->idName->setStoredVal($rId);
@@ -200,13 +194,19 @@ where c.Id = :id;";
            return "Bad Employee Id";
        }
 
-       if ($flag === TRUE) {
-            $query = "update name n set n.Company_CareOf = 'y' where n.idName = :rId and n.Company_Id > 0;";
-       } else {
-           $query = "update name n set n.Company_CareOf = '' where n.idName = :rId;";
-       }
-        $stmt = $dbh->prepare($query);
-        $stmt->execute(array(':rId'=>$rId));
+        $empRs = new NameRS();
+        $empRs->idName->setStoredVal($rId);
+        $rows = EditRS::select($dbh, $empRs, array($empRs->idName));
+
+        // care-of only applies to an employee with a company
+        if (count($rows) == 1) {
+            EditRS::loadRow($rows[0], $empRs);
+
+            if ($flag !== TRUE || $empRs->Company_Id->getStoredVal() > 0) {
+                $empRs->Company_CareOf->setNewVal($flag === TRUE ? 'y' : '');
+                EditRS::update($dbh, $empRs, array($empRs->idName));
+            }
+        }
 
         $nRS = new NameRS();
         $nRS->idName->setStoredVal($rId);

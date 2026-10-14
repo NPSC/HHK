@@ -4,6 +4,8 @@ namespace HHK;
 
 use Exception;
 use HHK\HTMLControls\HTMLContainer;
+use HHK\Tables\EditRS;
+use HHK\Tables\Name\{NameDemogRS, PhotoRS};
 
 /*
  * The MIT License
@@ -156,17 +158,23 @@ class Photo {
 
         if ($this->getImageId() > 0) {
 
-            $update = "UPDATE photo SET `Image_Type` = '" . $this->getImageType() . "', `Image` = '" . $this->getImageBase64() . "' , `Updated_By` = '" . $userName . "', timestamp = current_timestamp WHERE `idPhoto` = " . $this->getImageId() . ";";
-            $dbh->exec($update);
+            EditRS::updateFields($dbh, new PhotoRS(), ['idPhoto' => $this->getImageId()], [
+                'Image_Type' => $this->getImageType(),
+                'Image' => $this->getImageBase64(),
+                'Updated_By' => $userName,
+                'timestamp' => date('Y-m-d H:i:s'),
+            ]);
 
         } else {
 
-            $insert = "INSERT INTO photo (`Image_Type`, `Image`, `Updated_By`) VALUES ('" . $this->getImageType() . "', '" . $this->getImageBase64() . "', '" . $userName . "');";
-            $dbh->exec($insert);
+            $photoRs = new PhotoRS();
+            $photoRs->Image_Type->setNewVal($this->getImageType());
+            $photoRs->Image->setNewVal($this->getImageBase64());
+            $photoRs->Updated_By->setNewVal($userName);
 
-            $this->setImageId($dbh->lastInsertId());
+            $this->setImageId(EditRS::insert($dbh, $photoRs));
 
-            $dbh->exec("UPDATE name_demog SET `Guest_Photo_Id` = " . $this->getImageId() . " WHERE `idName` = $id");
+            EditRS::updateFields($dbh, new NameDemogRS(), ['idName' => $id], ['Guest_Photo_Id' => $this->getImageId()]);
         }
 
     }

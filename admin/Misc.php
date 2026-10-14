@@ -7,7 +7,7 @@ use HHK\AuditLog\NameLog;
 use HHK\sec\{Session, WebInit};
 use HHK\SysConst\GLTableNames;
 use HHK\Tables\EditRS;
-use HHK\Tables\Name\NameRS;
+use HHK\Tables\Name\{NamePhoneRS, NameRS};
 use HHK\Admin\SiteDbBackup;
 use HHK\Member\AbstractMember;
 use HHK\SysConst\CodeVersion;
@@ -240,7 +240,7 @@ if (isset($_POST['btnClnPhone'])) {
 
         $srch = str_replace('(', '', str_replace(')', '', str_replace('-', '', str_replace(' ', '', $new))));
 
-        $n += $dbh->exec("update name_phone set Phone_Num = '$new', Phone_Search = '$srch' where idName = " . $r['idName'] . " and Phone_Code='" . $r['Phone_Code'] . "'");
+        $n += EditRS::updateFields($dbh, new NamePhoneRS(), ['idName' => $r['idName'], 'Phone_Code' => $r['Phone_Code']], ['Phone_Num' => $new, 'Phone_Search' => $srch]);
     }
 
     $cleanMsg = $n . " phone records cleaned.";

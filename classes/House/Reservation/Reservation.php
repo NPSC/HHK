@@ -1533,18 +1533,18 @@ WHERE
                     if ($r['idGuest'] == $g->getId()) {
                         $isListed = TRUE;
 
+                        $rgRs = new Reservation_GuestRS();
+                        EditRS::loadRow($r, $rgRs);
+
                         // Still staying?
                         if ($g->isStaying() === FALSE) {
                             // Delete record
-                            $dbh->exec("Delete from reservation_guest where idReservation = " . $this->reserveData->getIdResv() . " and idGuest = " . $g->getId());
+                            EditRS::delete($dbh, $rgRs, array($rgRs->idReservation, $rgRs->idGuest));
+                        } else {
+                            // Is this the primary guest?
+                            $rgRs->Primary_Guest->setNewVal($g->isPrimaryGuest() ? '1' : '');
+                            EditRS::update($dbh, $rgRs, array($rgRs->idReservation, $rgRs->idGuest));
                         }
-
-                        // Is this the primary guest?
-                        $priGuestFlag = '';
-                        if ($g->isPrimaryGuest()) {
-                            $priGuestFlag = '1';
-                        }
-                        $dbh->exec("update reservation_guest set Primary_Guest = '$priGuestFlag' where idReservation = " . $this->reserveData->getIdResv() . " and idGuest = " . $g->getId());
 
                         break;
                     }

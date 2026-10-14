@@ -13,6 +13,7 @@ use HHK\SysConst\VolMemberType;
 use HHK\Tables\Visit\VisitRS;
 use HHK\SysConst\VisitStatus;
 use HHK\Tables\EditRS;
+use HHK\Tables\Name\NameRS;
 use HHK\Tables\Visit\StaysRS;
 use HHK\Tables\GenLookupsRS;
 use HHK\Common;
@@ -71,8 +72,7 @@ abstract class AbstractImport {
     }
 
     protected function setExternalId(int|string $idName, string $externalId): void {
-        $stmt = $this->dbh->prepare("update `name` set `External_Id` = :externalId where `idName` = :idName");
-        $stmt->execute([":externalId"=>$externalId, ":idName"=>$idName]);
+        EditRS::updateFields($this->dbh, new NameRS(), ['idName' => $idName], ['External_Id' => $externalId]);
     }
 
     /**

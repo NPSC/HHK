@@ -194,12 +194,13 @@ class EditRS {
             }
 
             // now run through the where parameter array
+            // (own placeholder names, so a column can be both set and matched on)
             foreach ($whereDbFieldArray as $dbF) {
                 if ($dbF->getDbType() == \PDO::PARAM_BOOL) {
                     $whClause .= " and " . $dbF->getCol() . "=" . $dbF->getStoredVal();
                 } else {
-                    $whClause .= " and " . $dbF->getCol() . "=" . $dbF->getParam();
-                    $paramList[] = array("param" => $dbF->getParam(), "value" => $dbF->getStoredVal(), "type" => $dbF->getDbType());
+                    $whClause .= " and " . $dbF->getCol() . "=" . $dbF->getParam() . "_wh";
+                    $paramList[] = array("param" => $dbF->getParam() . "_wh", "value" => $dbF->getStoredVal(), "type" => $dbF->getDbType());
                 }
 
             }
@@ -227,6 +228,65 @@ class EditRS {
             }
         }
         return $rowCount;
+    }
+
+    /**
+     * Load one record by its key, set new values on it and update it.  Loading first means a new value
+     * that equals a field's default is still written.
+     *
+     * @param \PDO $dbh
+     * @param TableRSInterface $rs an empty RS of the table
+     * @param array $keyVals column => value, must match exactly one row
+     * @param array $newVals column => new value
+     * @return int rows updated (0 when the key did not match exactly one row)
+     */
+    public static function updateFields(\PDO $dbh, TableRSInterface $rs, array $keyVals, array $newVals): int {
+
+        $where = [];
+        foreach ($keyVals as $col => $val) {
+            $rs->$col->setStoredVal($val);
+            $where[] = $rs->$col;
+        }
+
+        $rows = self::select($dbh, $rs, $where);
+
+        if (count($rows) != 1) {
+            return 0;
+        }
+
+        self::loadRow($rows[0], $rs);
+
+        foreach ($newVals as $col => $val) {
+            $rs->$col->setNewVal($val);
+        }
+
+        $count = self::update($dbh, $rs, $where);
+        self::updateStoredVals($rs);
+
+        return $count;
+    }
+
+    /**
+     * Change $col from $oldVal to $newVal in every row that has it, e.g. when a lookup code is replaced.
+     * The column must be updateOnChange.
+     *
+     * @param \PDO $dbh
+     * @param TableRSInterface $rs an empty RS of the table
+     * @param string $col
+     * @param mixed $oldVal
+     * @param mixed $newVal
+     * @return int rows updated
+     */
+    public static function replaceValue(\PDO $dbh, TableRSInterface $rs, string $col, $oldVal, $newVal): int {
+
+        if ($oldVal == $newVal) {
+            return 0;
+        }
+
+        $rs->$col->setStoredVal($oldVal);
+        $rs->$col->setNewVal($newVal);
+
+        return self::update($dbh, $rs, [$rs->$col]);
     }
 
     /**

@@ -425,7 +425,7 @@ class Import extends AbstractImport implements ImportInterface {
                 }
 
                 // external id
-                $this->dbh->exec("update `name` set `External_Id` = " . $r['importId'] . " where `idName` = " . $name->get_idName());
+                $this->setExternalId($name->get_idName(), (string) $r['importId']);
 
                 $this->importedGuests++;
 
@@ -697,7 +697,9 @@ class Import extends AbstractImport implements ImportInterface {
     public function undoImport(): array{
         try{
             $this->dbh->beginTransaction();
-            $this->dbh->exec("update `name` set `Member_Status` = 'tbd' where `External_Id` != ''");
+            // bulk - one summary entry in the activity log rather than a row per name
+            $numNames = $this->dbh->exec("update `name` set `Member_Status` = 'tbd' where `External_Id` != ''");
+            EditRS::logActivity($this->dbh, "Import undone: $numNames names set to To Be Deleted", ['names' => $numNames], 'import');
             $this->dbh->exec("update `" . Upload::TBL_NAME . "` set `imported` = null");
         }catch(\Exception $e){
             if($this->dbh->inTransaction()){

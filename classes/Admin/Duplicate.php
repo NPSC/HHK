@@ -10,6 +10,9 @@ use HHK\HTMLControls\HTMLTable;
 use HHK\SysConst\MemStatus;
 use HHK\SysConst\RelLinkType;
 use HHK\SysConst\VolMemberType;
+use HHK\Tables\EditRS;
+use HHK\Tables\Name\NameRS;
+use HHK\Tables\Registration\Hospital_StayRS;
 
 /**
  * Duplicate.php
@@ -446,6 +449,26 @@ WHERE
         return $markup;
     }
 
+    /**
+     * Point hospital stays at the kept referral agent or doctor and mark the duplicate To Be Deleted.
+     *
+     * @param \PDO $dbh
+     * @param int $keepId
+     * @param int $dupId
+     * @param string $hsCol hospital_stay column: idReferralAgent or idDoctor
+     * @return void
+     */
+    private static function mergeHospStayName(\PDO $dbh, $keepId, $dupId, $hsCol) {
+
+        // all of the duplicate's hospital stays
+        $hsRs = new Hospital_StayRS();
+        $hsRs->$hsCol->setStoredVal($dupId);
+        $hsRs->$hsCol->setNewVal($keepId);
+        EditRS::update($dbh, $hsRs, [$hsRs->$hsCol]);
+
+        EditRS::updateFields($dbh, new NameRS(), ['idName' => $dupId], ['Member_Status' => MemStatus::ToBeDeleted]);
+    }
+
     public static function combine(\PDO $dbh, $mType, $id) {
 
         $reply = '';
@@ -472,11 +495,7 @@ where nv.Vol_Category = 'Vol_Type' and nv.Vol_Code = '" . VolMemberType::Referra
                             continue;
                         }
 
-                        $dbh->exec("update hospital_stay set idReferralAgent = $id "
-                            . "where idReferralAgent = " . $r[0]);
-
-                        $dbh->exec("update name set Member_Status = '" . MemStatus::ToBeDeleted . "' "
-                            . " where idName = " . $r[0]);
+                        self::mergeHospStayName($dbh, $id, $r[0], 'idReferralAgent');
 
                         $reply = 'Okay';
                     }
@@ -505,11 +524,7 @@ where nv.Vol_Category = 'Vol_Type' and nv.Vol_Code = '" . VolMemberType::Doctor 
                             continue;
                         }
 
-                        $dbh->exec("update hospital_stay set idDoctor = $id "
-                            . "where idDoctor = " . $r[0]);
-
-                        $dbh->exec("update name set Member_Status = '" . MemStatus::ToBeDeleted . "' "
-                            . " where idName = " . $r[0]);
+                        self::mergeHospStayName($dbh, $id, $r[0], 'idDoctor');
 
                         $reply = 'Okay';
                     }

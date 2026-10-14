@@ -6,7 +6,7 @@ use HHK\HTMLControls\{HTMLContainer, HTMLTable, HTMLInput, HTMLSelector};
 use HHK\Tables\EditRS;
 use HHK\Tables\Registration\VehicleRS;
 use HHK\sec\Labels;
-use HHK\Tables\Reservation\ReservationRS;
+use HHK\Tables\Reservation\{ReservationRS, Reservation_VehicleRS};
 
 /**
  * Vehicle.php
@@ -414,12 +414,19 @@ WHERE
                     unset($post['cbVehResv']);
                 }
 
+                $rvRs = new Reservation_VehicleRS();
+                $rvRs->idReservation->setStoredVal($idResv);
+                $rvRs->idVehicle->setStoredVal($carRS->idVehicle->getStoredVal());
+
                 if (isset($post['cbVehResv'][$k])) {
-                    $stmt = $dbh->prepare("INSERT IGNORE INTO `reservation_vehicle` (`idReservation`, `idVehicle`, `idName`) VALUES (:idReservation, :idVehicle, :idName);");
-                    $stmt->execute([":idReservation"=>$idResv, ":idVehicle"=>$carRS->idVehicle->getStoredVal(), ":idName"=>0]);
+                    if (count(EditRS::select($dbh, $rvRs, [$rvRs->idReservation, $rvRs->idVehicle])) == 0) {
+                        $rvRs->idReservation->setNewVal($idResv);
+                        $rvRs->idVehicle->setNewVal($carRS->idVehicle->getStoredVal());
+                        $rvRs->idName->setNewVal(0);
+                        EditRS::insert($dbh, $rvRs);
+                    }
                 }else{
-                    $stmt = $dbh->prepare("DELETE FROM `reservation_vehicle` WHERE `idReservation` = :idReservation AND `idVehicle` = :idVehicle;");
-                    $stmt->execute([":idReservation"=>$idResv, ":idVehicle"=>$carRS->idVehicle->getStoredVal()]);
+                    EditRS::delete($dbh, $rvRs, [$rvRs->idReservation, $rvRs->idVehicle]);
                 }
             }
 
@@ -428,9 +435,16 @@ WHERE
         if($idResv > 0){
             $noVeh = isset($post['cbNoVehicle']) ? 1:0;
 
-            $stmt = $dbh->prepare("UPDATE `reservation` SET `No_Vehicle` = :noVehicle where idReservation = :idReservation;");
-            $stmt->execute([":idReservation"=>$idResv, ":noVehicle"=>$noVeh]);
-            
+            $resvRs = new ReservationRS();
+            $resvRs->idReservation->setStoredVal($idResv);
+            $resvRows = EditRS::select($dbh, $resvRs, [$resvRs->idReservation]);
+
+            if (count($resvRows) > 0) {
+                EditRS::loadRow($resvRows[0], $resvRs);
+                $resvRs->No_Vehicle->setNewVal($noVeh);
+                EditRS::update($dbh, $resvRs, [$resvRs->idReservation]);
+            }
+
             if($reservRS instanceof ReservationRS){
                 $reservRS->No_Vehicle->setStoredVal($noVeh);
             }

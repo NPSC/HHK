@@ -379,6 +379,27 @@ class AuditableTest extends TestCase {
         );
     }
 
+    /** a plain EditRS::update would skip Status = '' because '' is the field's default */
+    public function testUpdateFieldsWritesValueEqualToDefault(): void {
+        $n = EditRS::updateFields($this->db, new ThingRS(), ['idThing' => 5, 'Span' => 1], ['Status' => '']);
+
+        $this->assertSame(1, $n);
+        $this->assertSame('', $this->db->tables['thing'][0]['Status']);
+        $this->assertSame(['Status' => 'a'], $this->props(0)['old']);
+
+        $this->assertSame(0, EditRS::updateFields($this->db, new ThingRS(), ['idThing' => 99, 'Span' => 1], ['Status' => 'x']), 'no such record');
+    }
+
+    public function testReplaceValueChangesEveryMatchingRow(): void {
+        $this->db->tables['thing'][] = ['idThing' => '6', 'Span' => '0', 'Status' => 'a', 'Notes' => '', 'Password' => '', 'Last_Updated' => null];
+        $this->db->tables['thing'][] = ['idThing' => '7', 'Span' => '0', 'Status' => 'b', 'Notes' => '', 'Password' => '', 'Last_Updated' => null];
+
+        $this->assertSame(2, EditRS::replaceValue($this->db, new ThingRS(), 'Status', 'a', 'c'));
+        $this->assertSame(['c', 'c', 'b'], array_column($this->db->tables['thing'], 'Status'));
+        $this->assertCount(2, $this->db->log);
+        $this->assertSame(0, EditRS::replaceValue($this->db, new ThingRS(), 'Status', 'b', 'b'));
+    }
+
     public function testIgnoredColumnOnlyWritesNothing(): void {
         $this->updateThing(['Last_Updated' => '2026-01-01 09:00:00']);
         $this->assertCount(0, $this->db->log);
