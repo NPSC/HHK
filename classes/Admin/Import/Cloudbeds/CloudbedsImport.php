@@ -959,8 +959,9 @@ class CloudbedsImport extends AbstractImport implements ImportInterface {
             // three exceptions to skipping a room-less segment, none of which can wait for a later re-fetch to maybe
             // assign a room (and risk never importing it at all):
             //  - a confirmed reservation whose checkout has already passed was, in practice, sent to an outside hotel
-            //    instead of housed here - tracked as a placeholder room (see CloudbedsConfig::getPlaceholderRoomCategory())
-            //    so it still shows up in HHK's own reservation history
+            //    instead of housed here - tracked as a checked-out visit in a placeholder room (see
+            //    CloudbedsConfig::getPlaceholderRoomCategory()) rather than left as a bare pending reservation, since
+            //    the stay itself is already over
             //  - any other confirmed reservation with no room yet (most commonly one still in the future - Cloudbeds
             //    often doesn't assign a room until closer to check-in) is imported as a waitlisted reservation instead -
             //    no room, no visit, same as HHK's own waitlist, rather than silently never showing up at all
@@ -1001,7 +1002,11 @@ class CloudbedsImport extends AbstractImport implements ImportInterface {
             // segment, so it follows the reservation's own overall status
             $segResvStatus = $resvStatus;
             $segVisitStatus = $visitStatus;
-            if ((string) ($room['status'] ?? '') === 'checked_out') {
+            if ((string) ($room['status'] ?? '') === 'checked_out' || $usePlaceholderRoom) {
+                // a placeholder-room segment is, in practice, a completed stay (just at an outside hotel instead of
+                // here) - the whole point of the checkout-already-passed condition that routes it here - so it's
+                // recorded as a checked-out visit, the same as a real room's own completed stay, not left as a bare
+                // pending reservation with nothing to show it ever happened
                 $segResvStatus = CloudbedsConfig::DEFAULT_STATUS_MAP['checked_out']['reservation'];
                 $segVisitStatus = CloudbedsConfig::DEFAULT_STATUS_MAP['checked_out']['visit'];
             } elseif ($useWaitlist) {
@@ -1351,7 +1356,7 @@ class CloudbedsImport extends AbstractImport implements ImportInterface {
      * The first room in the placeholder category with no overlapping reservation or visit over the given dates, or a
      * newly created one cloned from an existing room in that category if all are busy. See resolveResource()'s caller
      * for when this is used instead - only a confirmed reservation whose checkout has already passed with no room
-     * ever assigned, which isn't a real stay to house, just one to keep a record of.
+     * ever assigned, imported as a completed, checked-out stay in this placeholder room rather than housed here.
      *
      * @throws \RuntimeException if the category has no existing room to use as a template
      */
