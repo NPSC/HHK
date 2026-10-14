@@ -79,16 +79,7 @@ class Backup extends AbstractMultiFactorAuth {
 
     public function saveSecret(\PDO $dbh): bool {
         if($this->username && $this->secret != ''){
-            $query = "update w_users set backupSecret = :secret, Last_Updated = now() where User_Name = :username and Status='a';";
-            $stmt = $dbh->prepare($query);
-            $stmt->execute(array(
-                ':secret' => $this->secret,
-                ':username' => $this->username
-            ));
-
-            if ($stmt->rowCount() == 1) {
-                UserClass::insertUserLog($dbh, UserClass::OTPSecChanged, $this->username);
-            }
+            $this->writeSecretColumn($dbh, 'backupSecret', $this->secret);
             return true;
         }else{
             return false;
@@ -98,15 +89,7 @@ class Backup extends AbstractMultiFactorAuth {
     public function disable(\PDO $dbh) : bool
     {
         if($this->username && $this->secret != ''){
-            $query = "update w_users set backupSecret = '', Last_Updated = now() where User_Name = :username and Status='a';";
-            $stmt = $dbh->prepare($query);
-            $stmt->execute(array(
-                ':username' => $this->username
-            ));
-
-            if ($stmt->rowCount() == 1) {
-                UserClass::insertUserLog($dbh, UserClass::OTPSecChanged, $this->username);
-            }
+            $this->writeSecretColumn($dbh, 'backupSecret', '');
             $this->secret = '';
             return true;
         }else{

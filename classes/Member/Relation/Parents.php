@@ -144,10 +144,7 @@ where r.Relation_Type='". RelLinkType::Parnt ."' and r.Status='a' and r.idName =
      * @return string
      */
     public function removeRelationship(\PDO $dbh, $rId) {
-        $qq = "Delete from relationship where Relation_Type='". $this->relCode->getCode() ."' and (idName=:id or Target_Id=:id2 ) and (idName=:rId or Target_Id=:rId2 )";
-        $stmt = $dbh->prepare($qq);
-        $idw = $this->getIdName();
-        $stmt->execute(array(':id'=>$idw, ':rId'=>$rId, ':id2'=>$idw, ':rId2'=>$rId));
+        self::deleteRelationships($dbh, $this->relCode->getCode(), $this->getIdName(), $rId);
 
         return "Parent Deleted.  ";
 

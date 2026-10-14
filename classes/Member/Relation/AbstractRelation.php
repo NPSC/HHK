@@ -71,6 +71,40 @@ abstract class AbstractRelation {
      * @return Children|Company|Employees|Parents|Partner|Relatives|Siblings|null
      */
     /**
+     * Delete the relationship rows of one type that involve $id, and $rId too when given.
+     *
+     * @param \PDO $dbh
+     * @param string $relCode Relation_Type
+     * @param int $id
+     * @param int|null $rId
+     * @return int rows deleted
+     */
+    protected static function deleteRelationships(\PDO $dbh, $relCode, $id, $rId = null) {
+
+        $query = "select idRelationship from relationship where Relation_Type = :rcode and (idName = :id or Target_Id = :id2)";
+        $params = array(':rcode' => $relCode, ':id' => $id, ':id2' => $id);
+
+        if (!is_null($rId)) {
+            $query .= " and (idName = :rId or Target_Id = :rId2)";
+            $params[':rId'] = $rId;
+            $params[':rId2'] = $rId;
+        }
+
+        $stmt = $dbh->prepare($query);
+        $stmt->execute($params);
+
+        $count = 0;
+        foreach ($stmt->fetchAll(\PDO::FETCH_COLUMN) as $idRel) {
+            $relRs = new RelationsRS();
+            $relRs->idRelationship->setStoredVal($idRel);
+            EditRS::delete($dbh, $relRs, array($relRs->idRelationship));
+            $count++;
+        }
+
+        return $count;
+    }
+
+    /**
      * Link an individual member to a company and copy the company name.  Does nothing unless the employee
      * is an individual member, the company is an organization and the link is new.
      *

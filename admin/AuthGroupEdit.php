@@ -4,7 +4,7 @@ use HHK\sec\{SecurityComponent, Session, UserClass, WebInit};
 use HHK\HTMLControls\HTMLContainer;
 use HHK\HTMLControls\{HTMLInput, HTMLSelector, HTMLTable};
 use HHK\Tables\EditRS;
-use HHK\Tables\WebSec\{W_groupsRS, W_auth_ipRS};
+use HHK\Tables\WebSec\{W_groupsRS, W_auth_ipRS, W_group_ipRS};
 
 /**
  * AuthGroupEdit.php
@@ -62,18 +62,32 @@ if (filter_has_var(INPUT_POST, 'btnSave')) {
                 EditRS::update($dbh, $wgRS, array($wgRS->Group_Code));
             }
 
-            //set ip access
-            $query = "DELETE FROM `w_group_ip` WHERE `Group_Code` = '$gc'";
-            $stmt = $dbh->prepare($query);
-            $stmt->execute();
+            //set ip access - remove unchecked addresses, add new ones
+            $postedIps = array();
+            if (isset($_POST[$wgRS->IP_Restricted->getColUnticked()][$gc]) && is_array($_POST[$wgRS->IP_Restricted->getColUnticked()][$gc])) {
+                $postedIps = array_values(array_unique($_POST[$wgRS->IP_Restricted->getColUnticked()][$gc]));
+            }
 
-            if (isset($_POST[$wgRS->IP_Restricted->getColUnticked()][$gc]) && count($_POST[$wgRS->IP_Restricted->getColUnticked()][$gc]) > 0) {
+            $gipRs = new W_group_ipRS();
+            $gipRs->Group_Code->setStoredVal($gc);
+            $existingIps = array();
 
-                foreach ($_POST[$wgRS->IP_Restricted->getColUnticked()][$gc] as $ipAddr) {
-                    $query = "INSERT INTO `w_group_ip` (`Group_Code`, `IP_addr`) VALUES('$gc', '$ipAddr');";
-                    $stmt = $dbh->prepare($query);
-                    $stmt->execute();
+            foreach (EditRS::select($dbh, $gipRs, array($gipRs->Group_Code)) as $r) {
+                $rowRs = new W_group_ipRS();
+                EditRS::loadRow($r, $rowRs);
+
+                if (in_array($rowRs->IP_addr->getStoredVal(), $postedIps) && !in_array($rowRs->IP_addr->getStoredVal(), $existingIps)) {
+                    $existingIps[] = $rowRs->IP_addr->getStoredVal();
+                } else {
+                    EditRS::delete($dbh, $rowRs, array($rowRs->id));
                 }
+            }
+
+            foreach (array_diff($postedIps, $existingIps) as $ipAddr) {
+                $newRs = new W_group_ipRS();
+                $newRs->Group_Code->setNewVal($gc);
+                $newRs->IP_addr->setNewVal($ipAddr);
+                EditRS::insert($dbh, $newRs);
             }
         }
     }

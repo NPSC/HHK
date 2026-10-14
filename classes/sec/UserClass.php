@@ -6,6 +6,7 @@ use HHK\Crypto;
 use HHK\sec\MFA\AbstractMultiFactorAuth;
 use HHK\SysConst\WebRole;
 use HHK\Tables\WebSec\W_auth_ipRS;
+use HHK\Tables\WebSec\W_usersRS;
 use HHK\Tables\EditRS;
 use HHK\sec\MFA\GoogleAuthenticator;
 use HHK\sec\MFA\Email;
@@ -180,9 +181,7 @@ class UserClass
         try {
         $id = intval($userId, 10);
 
-        $stmt = "update w_users set `Chg_PW` = '1', `Last_Updated` = '" . date("Y-m-d H:i:s") . "' where idName = $id";
-
-        if ($dbh->exec($stmt) > 0) {
+        if (EditRS::updateFields($dbh, new W_usersRS(), ['idName' => $id], ['Chg_PW' => 1, 'Last_Updated' => date("Y-m-d H:i:s")]) > 0) {
             self::insertUserLog($dbh, UserClass::Expired, 'forcePwReset', date("Y-m-d H:i:s"));
         }
         } catch (\Exception $e) {}
@@ -417,16 +416,15 @@ class UserClass
         }
 
         if ($success) {
-            $query = "update w_users set PW_Change_Date = now(), PW_Updated_By = :uname, Enc_PW = :newPw, Chg_PW = :reset, Status = 'a' where idName = :id;";
-            $stmt = $dbh->prepare($query);
-            $stmt->execute(array(
-                ':uname' => $ssn->username,
-                ':newPw' => $newPwHash,
-                ':id' => $id,
-                ':reset' => "$resetNextLogin"
-            ));
+            $count = EditRS::updateFields($dbh, new W_usersRS(), ['idName' => $id], [
+                'PW_Change_Date' => date('Y-m-d H:i:s'),
+                'PW_Updated_By' => $ssn->username,
+                'Enc_PW' => $newPwHash,
+                'Chg_PW' => "$resetNextLogin",
+                'Status' => 'a',
+            ]);
 
-            if ($stmt->rowCount() == 1) {
+            if ($count == 1) {
                 $this->insertUserLog($dbh, UserClass::PW_Changed, $uname);
 
                 $query = "insert into w_user_passwords (idUser, Enc_PW) values(:idUser, :newPw);";
@@ -486,14 +484,13 @@ class UserClass
 
             $newPwHash = password_hash($newPw . $uS->sitePepper, PASSWORD_ARGON2ID);
 
-            $query = "update w_users set PW_Change_Date = now(), PW_Updated_By = 'install', Enc_PW = :newPw where idName = :id;";
-            $stmt = $dbh->prepare($query);
-            $stmt->execute(array(
-                ':newPw' => $newPwHash,
-                ':id' => $id
-            ));
+            $count = EditRS::updateFields($dbh, new W_usersRS(), ['idName' => $id], [
+                'PW_Change_Date' => date('Y-m-d H:i:s'),
+                'PW_Updated_By' => 'install',
+                'Enc_PW' => $newPwHash,
+            ]);
 
-            if ($stmt->rowCount() == 1) {
+            if ($count == 1) {
 
                 $this->insertUserLog($dbh, UserClass::PW_New, 'install');
                 return TRUE;
@@ -657,8 +654,7 @@ class UserClass
                 $today = $now->setTime(0, 0);
                 $lastChangeDays = $date->diff($today)->format('%a');
                 if ($lastChangeDays >= $passResetDays) {
-                    $stmt = "update w_users set `Chg_PW` = '1', `Last_Updated` = '" . $deactivateDate->format("Y-m-d H:i:s") . "' where idName = $user[idName]";
-                    if ($dbh->exec($stmt) > 0) {
+                    if (EditRS::updateFields($dbh, new W_usersRS(), ['idName' => $user['idName']], ['Chg_PW' => 1, 'Last_Updated' => $deactivateDate->format("Y-m-d H:i:s")]) > 0) {
                         $user['Chg_PW'] = '1';
                         self::insertUserLog($dbh, UserClass::Expired, $user['User_Name'], $deactivateDate->format("Y-m-d H:i:s"));
                     }
@@ -962,8 +958,7 @@ WHERE n.idName is not null and u.Status IN ('a', 'd') and n.`Member_Status` = 'a
                 $lastLoginDays = $date->diff($today)->format('%a');
                 $lastUpdatedDays = $lastUpdated->diff($today)->format('%a');
                 if ($lastLoginDays >= $userInactiveDays && $lastUpdatedDays >= $userInactiveDays) {
-                    $stmt = "update w_users set `Status` = 'd', `Updated_By` = 'HHK', `Last_Updated` = '" . $deactivateDate->format("Y-m-d H:i:s") . "' where idName = $user[idName]";
-                    if ($dbh->exec($stmt) > 0) {
+                    if (EditRS::updateFields($dbh, new W_usersRS(), ['idName' => $user['idName']], ['Status' => 'd', 'Updated_By' => 'HHK', 'Last_Updated' => $deactivateDate->format("Y-m-d H:i:s")]) > 0) {
                         $user['Status'] = 'd';
                         self::insertUserLog($dbh, UserClass::Lockout, $user['User_Name'], $deactivateDate->format("Y-m-d H:i:s"), TRUE);
                     }

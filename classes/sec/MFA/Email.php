@@ -93,16 +93,7 @@ where u.User_Name = :uname";
     public function saveSecret(\PDO $dbh) : bool
     {
         if($this->username && $this->secret != ''){
-            $query = "update w_users set emailSecret = :secret, Last_Updated = now() where User_Name = :username and Status='a';";
-            $stmt = $dbh->prepare($query);
-            $stmt->execute(array(
-                ':secret' => $this->secret,
-                ':username' => $this->username
-            ));
-
-            if ($stmt->rowCount() == 1) {
-                UserClass::insertUserLog($dbh, UserClass::OTPSecChanged, $this->username);
-            }
+            $this->writeSecretColumn($dbh, 'emailSecret', $this->secret);
             return true;
         }else{
             return false;
@@ -112,15 +103,7 @@ where u.User_Name = :uname";
     public function disable(\PDO $dbh) : bool
     {
         if($this->username && $this->secret != ''){
-            $query = "update w_users set emailSecret = '', Last_Updated = now() where User_Name = :username and Status='a';";
-            $stmt = $dbh->prepare($query);
-            $stmt->execute(array(
-                ':username' => $this->username
-            ));
-
-            if ($stmt->rowCount() == 1) {
-                UserClass::insertUserLog($dbh, UserClass::OTPSecChanged, $this->username);
-            }
+            $this->writeSecretColumn($dbh, 'emailSecret', '');
             $this->secret = '';
             return true;
         }else{
