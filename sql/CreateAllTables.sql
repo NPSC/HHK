@@ -81,6 +81,38 @@ CREATE TABLE
     ) ENGINE = InnoDB AUTO_INCREMENT = 1;
 
 -- -----------------------------------------------------
+-- Table `activity_log`
+-- Same columns, types and index names as spatie/laravel-activitylog v4, so the data carries over to Laravel.
+-- record_key and is_checkpoint are virtual columns over properties, plus extra indexes for filtering by id.
+-- -----------------------------------------------------
+CREATE TABLE
+    IF NOT EXISTS `activity_log` (
+        `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+        `log_name` VARCHAR(255) NULL DEFAULT NULL,
+        `description` TEXT NOT NULL,
+        `subject_type` VARCHAR(255) NULL DEFAULT NULL,
+        `event` VARCHAR(255) NULL DEFAULT NULL,
+        `subject_id` BIGINT UNSIGNED NULL DEFAULT NULL,
+        `causer_type` VARCHAR(255) NULL DEFAULT NULL,
+        `causer_id` BIGINT UNSIGNED NULL DEFAULT NULL,
+        `properties` JSON NULL DEFAULT NULL,
+        `batch_uuid` CHAR(36) NULL DEFAULT NULL,
+        `created_at` TIMESTAMP NULL DEFAULT NULL,
+        `updated_at` TIMESTAMP NULL DEFAULT NULL,
+        `record_key` VARCHAR(191) AS (JSON_UNQUOTE(JSON_EXTRACT(`properties`, '$.key'))) VIRTUAL,
+        `is_checkpoint` TINYINT(1) AS (JSON_EXTRACT(`properties`, '$.checkpoint') IS NOT NULL) VIRTUAL,
+        PRIMARY KEY (`id`),
+        KEY `subject` (`subject_type`, `subject_id`),
+        KEY `causer` (`causer_type`, `causer_id`),
+        KEY `activity_log_log_name_index` (`log_name`),
+        KEY `idx_al_record` (`subject_type`, `record_key`, `id`),
+        KEY `idx_al_subject_id` (`subject_type`, `subject_id`, `id`),
+        KEY `idx_al_causer_time` (`causer_type`, `causer_id`, `created_at`),
+        KEY `idx_al_batch` (`batch_uuid`),
+        KEY `idx_al_created` (`created_at`)
+    ) ENGINE = InnoDB;
+
+-- -----------------------------------------------------
 -- Table `attribute`
 -- -----------------------------------------------------
 CREATE TABLE

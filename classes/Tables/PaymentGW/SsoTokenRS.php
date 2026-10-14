@@ -3,6 +3,7 @@ namespace HHK\Tables\PaymentGW;
 
 use HHK\Tables\AbstractTableRS;
 use HHK\Tables\Fields\{DB_Field, DbStrSanitizer, DbIntSanitizer, DbDateSanitizer, DbDecimalSanitizer};
+use HHK\AuditLog\LogOptions;
 
 /**
  * SsoTokenRS.php
@@ -31,6 +32,14 @@ class SsoTokenRS extends AbstractTableRS {
     public DB_Field $Updated_By;  // varchar(45) NOT NULL DEFAULT '',
     public DB_Field $Last_Updated;  // datetime DEFAULT NULL,
     public DB_Field $Timestamp;  // timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    /**
+     * Short-lived tokens - not written to the activity log.
+     */
+    public function getActivitylogOptions(): LogOptions {
+        return LogOptions::defaults()->disableLogging();
+    }
+
     
     function __construct($TableName = 'ssotoken') {
         $this->Token = new DB_Field('Token', '', new DbStrSanitizer(136), TRUE, TRUE);

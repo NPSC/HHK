@@ -233,3 +233,6 @@ INSERT IGNORE INTO `sys_config`(`Key`,`Value`,`Type`,`Category`,`Description`,`S
 -- collect lines from several fields - everything else holds one value and keeps the old per-hhk_field uniqueness)
 ALTER TABLE `crm_field_map` DROP INDEX IF EXISTS `uq_gateway_object_field`;
 ALTER TABLE `crm_field_map` ADD UNIQUE KEY IF NOT EXISTS `uq_gateway_object_field_crm` (`gateway_id`, `crm_object`, `hhk_field`, `crm_field`);
+
+INSERT IGNORE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `Order`) VALUES
+('cronJobTypes', 'PurgeActivityLogJob', 'Purge Old Activity Log', '', 0);

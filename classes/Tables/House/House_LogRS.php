@@ -3,6 +3,7 @@ namespace HHK\Tables\House;
 
 use HHK\Tables\AbstractTableRS;
 use HHK\Tables\Fields\{DB_Field, DbStrSanitizer, DbIntSanitizer, DbDateSanitizer};
+use HHK\AuditLog\LogOptions;
 
 /**
  * House_LogRS.php
@@ -24,6 +25,13 @@ class House_LogRS extends AbstractTableRS {
     public DB_Field $Str2;  // VARCHAR(45) NOT NULL DEFAULT '' 0 ,
     public DB_Field $Log_Text;  // VARCHAR(5000) NOT NULL DEFAULT '' ,
     public DB_Field $Timestamp;  // TIMESTAMP NOT NULL DEFAULT now()
+
+    /**
+     * Log table - not written to the activity log.
+     */
+    public function getActivitylogOptions(): LogOptions {
+        return LogOptions::defaults()->disableLogging();
+    }
 
 
     function __construct($TableName = "house_log") {

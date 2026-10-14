@@ -266,6 +266,14 @@ VALUES
 		'',
 		0
 	),
+	(
+		'cronJobTypes',
+		'PurgeActivityLogJob',
+		'Purge Old Activity Log',
+		'',
+		'',
+		0
+	),
 	('dayIncrements', '', 'Never', '', '', '6'),
 	('dayIncrements', '30', '30 days', '', '', '1'),
 	('dayIncrements', '60', '60 days', '', '', '2'),

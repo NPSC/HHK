@@ -3,6 +3,7 @@ namespace HHK\Tables\House;
 
 use HHK\Tables\AbstractTableRS;
 use HHK\Tables\Fields\{DB_Field, DbIntSanitizer, DbStrSanitizer, DbDateSanitizer};
+use HHK\AuditLog\LogOptions;
 
 /**
  * CleaningLogRS.php
@@ -24,6 +25,13 @@ class CleaningLogRS extends AbstractTableRS {
     public DB_Field $Last_Deep_Clean;   // datetime DEFAULT NULL,
     public DB_Field $Username;   // varchar(45) NOT NULL DEFAULT ''
     public DB_Field $Timestamp;   // TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+
+    /**
+     * Log table - not written to the activity log.
+     */
+    public function getActivitylogOptions(): LogOptions {
+        return LogOptions::defaults()->disableLogging();
+    }
 
     function __construct($TableName = 'cleaning_log') {
         $this->idResource = new DB_Field('idResource', 0, new DbIntSanitizer());

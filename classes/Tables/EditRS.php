@@ -22,6 +22,8 @@ use HHK\Tables\Fields\DB_Field;
  */
 class EditRS {
 
+    use Auditable;
+
     /**
      *
      * @param \PDO $dbh
@@ -207,6 +209,8 @@ class EditRS {
                 $query .= " where " . $whClause;
             }
 
+            $beforeRows = self::auditBeforeWrite($dbh, $rs, $whereDbFieldArray);
+
             $stmt = $dbh->prepare($query);
 
             // build statement parameters
@@ -217,6 +221,10 @@ class EditRS {
             $stmt->execute();
 
             $rowCount = $stmt->rowCount();
+
+            if ($rowCount > 0) {
+                self::auditUpdate($dbh, $rs, $beforeRows);
+            }
         }
         return $rowCount;
     }
@@ -297,6 +305,8 @@ class EditRS {
 
             $id = $dbh->lastInsertId();
 
+            self::auditInsert($dbh, $rs, $id);
+
         }
 
         return $id;
@@ -338,11 +348,14 @@ class EditRS {
             $whClause = substr($whClause, 4);
             $query .= " where " . $whClause;
 
+            $beforeRows = self::auditBeforeWrite($dbh, $rs, $whereDbFieldArray, $combiner);
+
             $stmt = $dbh->prepare($query);
 
             if ($stmt->execute($paramList) === FALSE) {
                 return FALSE;
             } else {
+                self::auditDelete($dbh, $rs, $beforeRows);
                 return TRUE;
             }
         } else {

@@ -3,6 +3,7 @@ namespace HHK\Tables\Visit;
 
 use HHK\Tables\AbstractTableRS;
 use HHK\Tables\Fields\{DB_Field, DbIntSanitizer, DbStrSanitizer, DbDateSanitizer};
+use HHK\AuditLog\LogOptions;
 
 /**
  * Visit_LogRS.php
@@ -28,6 +29,14 @@ class Visit_LogRS extends AbstractTableRS {
     public DB_Field $Status;  // varchar(15) NOT NULL DEFAULT '',
     public DB_Field $Log_Text;  // VARCHAR(5000) NOT NULL DEFAULT '' ,
     public DB_Field $Timestamp;  // TIMESTAMP NOT NULL DEFAULT now()
+
+    /**
+     * Log table - not written to the activity log.
+     */
+    public function getActivitylogOptions(): LogOptions {
+        return LogOptions::defaults()->disableLogging();
+    }
+
     
     
     function __construct($TableName = "visit_log") {

@@ -3,6 +3,7 @@ namespace HHK\Tables;
 
 use HHK\Tables\AbstractTableRS;
 use HHK\Tables\Fields\{DB_Field, DbBlobSanitizer, DbStrSanitizer, DbDateSanitizer};
+use HHK\AuditLog\LogOptions;
 
 /**
  * Notification_LogRS.php
@@ -22,6 +23,13 @@ class Notification_LogRS extends AbstractTableRS {
     public DB_Field $From;
     public DB_Field $Log_Text;
     public DB_Field $Log_Details;
+
+    /**
+     * Log table - not written to the activity log.
+     */
+    public function getActivitylogOptions(): LogOptions {
+        return LogOptions::defaults()->disableLogging();
+    }
 
     function __construct($TableName = "notification_log") {
 
