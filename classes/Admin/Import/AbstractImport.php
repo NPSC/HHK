@@ -700,7 +700,7 @@ WHERE n.Name_First = '" . $newFirst . "' AND n.Name_Last = '" . $newLast . "'";
             if(!isset($this->genLookups[$tableKey])){
                 $this->genLookups[$tableKey] = [];
                 foreach(Common::readGenLookupsPDO($this->dbh, $genlookupTableName) as $r) {
-                    $this->genLookups[$tableKey][strtolower($r[1])] = $r[0];
+                    $this->genLookups[$tableKey][trim(strtolower($r[1]))] = $r[0];
                 }
             }
         }

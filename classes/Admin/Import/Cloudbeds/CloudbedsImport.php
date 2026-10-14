@@ -1434,9 +1434,14 @@ class CloudbedsImport extends AbstractImport implements ImportInterface {
         $stmt->execute([':id' => $template['idResource']]);
         $templateResource = $stmt->fetch(\PDO::FETCH_ASSOC) ?: [];
 
+        // Status is forced to active regardless of what the template room had - a freshly created placeholder room
+        // is meant to be usable immediately, and cloning a template that happens to be inactive (or, as found on a
+        // live site, has a blank Status - likely from a room created by a different path) must not silently carry
+        // that over, the same way AbstractImport::createRoom() always hardcodes an active new room
         $roomCols = $template;
         unset($roomCols['idResource'], $roomCols['idRoom'], $roomCols['Title'], $roomCols['Timestamp']);
         $roomCols['Title'] = $title;
+        $roomCols['Status'] = 'a';
         $columns = implode(', ', array_map(fn($c) => "`$c`", array_keys($roomCols)));
         $placeholders = implode(', ', array_map(fn($c) => ":$c", array_keys($roomCols)));
         $stmt = $this->dbh->prepare("insert into `room` ($columns) values ($placeholders)");
@@ -1446,6 +1451,7 @@ class CloudbedsImport extends AbstractImport implements ImportInterface {
         $resourceCols = $templateResource;
         unset($resourceCols['idResource'], $resourceCols['Title'], $resourceCols['Timestamp']);
         $resourceCols['Title'] = $title;
+        $resourceCols['Status'] = 'a';
         $columns = implode(', ', array_map(fn($c) => "`$c`", array_keys($resourceCols)));
         $placeholders = implode(', ', array_map(fn($c) => ":$c", array_keys($resourceCols)));
         $stmt = $this->dbh->prepare("insert into `resource` (`idResource`, $columns) values (:idResource, $placeholders)");

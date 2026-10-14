@@ -539,12 +539,11 @@ $valueMapSection = function (string $type, string $title, string $help, array $s
         ['class' => 'ui-widget ui-widget-content ui-corner-all p-2 mb-3 mr-2']);
 };
 
-$savedRoomIds = array_column($savedValueMap(CloudbedsValueMaps::ROOM), 'hhk');
+// every HHK room, not just active ones - mapping is about matching a Cloudbeds room name to whatever room it really
+// is in HHK, so hiding an inactive one here would make it impossible to ever map to (or notice at all)
 $roomOptions = [];
 foreach ($hhkRooms as $r) {
-    if ($r[2] == 'a' || in_array((string) $r[0], $savedRoomIds, true)) {
-        $roomOptions[] = [$r[0], $r[1]];
-    }
+    $roomOptions[] = [$r[0], $r[2] == 'a' ? $r[1] : $r[1] . ' (inactive)'];
 }
 
 // rooms Cloudbeds has that aren't mapped to, and don't match the name of, an existing HHK room. Counted from the
