@@ -5,7 +5,7 @@ use HHK\HTMLControls\{HTMLContainer, HTMLTable};
 use HHK\sec\{Session};
 use HHK\ColumnSelectors;
 use HHK\SysConst\GLTableNames;
-use HHK\ExcelHelper;
+use HHK\Excel\ExcelHelper;
 use HHK\sec\Labels;
 use HHK\TableLog\HouseLog;
 

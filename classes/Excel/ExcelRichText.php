@@ -1,6 +1,6 @@
 <?php
 
-namespace HHK;
+namespace HHK\Excel;
 
 /**
  * ExcelRichText.php

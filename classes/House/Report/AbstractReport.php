@@ -8,7 +8,7 @@ use HHK\HTMLControls\HTMLInput;
 use HHK\Notification\Mail\HHKMailer;
 use HHK\sec\Session;
 use HHK\HTMLControls\HTMLTable;
-use HHK\ExcelHelper;
+use HHK\Excel\ExcelHelper;
 use HHK\sec\Labels;
 use HHK\TableLog\HouseLog;
 
@@ -492,7 +492,7 @@ abstract class AbstractReport {
                 }
 
             }catch(\Exception $e){
-                return array("error"=>"Email failed!  " . $mail->ErrorInfo);
+                return array("error"=>"Email failed!  " . $e->getMessage());
             }
 
         }

@@ -1,7 +1,7 @@
 <?php
 
 use HHK\Common;
-use HHK\ExcelHelper;
+use HHK\Excel\ExcelHelper;
 use HHK\Exception\RuntimeException;
 use HHK\History;
 use HHK\House\OperatingHours;

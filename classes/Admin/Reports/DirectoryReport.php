@@ -23,7 +23,7 @@ use HHK\MailList;
 use HHK\HTMLControls\chkBoxCtrl;
 use HHK\HTMLControls\selCtrl;
 use HHK\SysConst\SalutationCodes;
-use HHK\ExcelHelper;
+use HHK\Excel\ExcelHelper;
 
 class DirectoryReport
 {

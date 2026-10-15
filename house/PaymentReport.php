@@ -12,7 +12,7 @@ use HHK\HTMLControls\{HTMLContainer, HTMLTable, HTMLSelector};
 use HHK\SysConst\{PaymentMethod, PaymentStatusCode};
 use HHK\Payment\Statement;
 use HHK\House\Report\PaymentReport;
-use HHK\ExcelHelper;
+use HHK\Excel\ExcelHelper;
 use HHK\sec\Labels;
 use HHK\SysConst\ItemPriceCode;
 use HHK\Payment\CreditToken;

@@ -16,7 +16,7 @@ use HHK\SysConst\ReservationStatus;
 use HHK\HTMLControls\HTMLTable;
 use HHK\HTMLControls\HTMLContainer;
 use HHK\CreateMarkupFromDB;
-use HHK\ExcelHelper;
+use HHK\Excel\ExcelHelper;
 use HHK\sec\Labels;
 use HHK\House\Report\ReportFilter;
 use HHK\TableLog\HouseLog;

@@ -5,6 +5,7 @@ namespace HHK;
 use HHK\Admin\MemberSalutation\OrganizationSalutation;
 use HHK\Admin\MemberSalutation\IndividualSalutation;
 use HHK\SysConst\SalutationPurpose;
+use HHK\Excel\ExcelHelper;
 
 /**
  * MailList.php

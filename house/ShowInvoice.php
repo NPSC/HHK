@@ -150,7 +150,7 @@ try {
                         //update invoice EmailDate
                         $invoice->setEmailDate($dbh, new DateTime(), $uS->username);
                     } catch (\Exception $e) {
-                        $msg .= "Email failed!  " . $e->getMessage() . $mail->ErrorInfo;
+                        $msg .= "Email failed!  " . $e->getMessage();
                     }
                 }
             }
