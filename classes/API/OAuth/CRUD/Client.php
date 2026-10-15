@@ -10,7 +10,7 @@ use HHK\sec\Session;
 use HHK\sec\UserClass;
 use HHK\TableLog\HouseLog;
 use HHK\Tables\EditRS;
-use HHK\Tables\OAuth\OauthClientRS;
+use HHK\Tables\OAuth\{OauthClientRS, OauthClientScopeRS};
 
 
 class Client {
@@ -107,12 +107,7 @@ class Client {
         EditRS::insert($this->dbh, $client);
 
         $availableScopes = Common::readGenLookupsPDO($this->dbh, "Oauth_Scopes");
-        $stmt = $this->dbh->prepare("INSERT IGNORE INTO `oauth_client_scopes` (`oauth_client`, `oauth_scope`) VALUES (:client_id, :scope)");
-        foreach($scopes as $scope){
-            if(isset($availableScopes[$scope])){
-                $stmt->execute(["client_id"=>$clientId, "scope"=>$scope]);
-            }
-        }
+        $this->saveScopes($clientId, array_filter($scopes, fn($scope) => isset($availableScopes[$scope])));
 
         $logText = HouseLog::getInsertText($client);
         $logText["scopes"] = $scopes;
@@ -121,6 +116,40 @@ class Client {
         $this->clientId = $clientId;
         $client = $this->getClient(true);
         return ["client"=>$this->getClient(), "accessTokens"=>[]];
+    }
+
+    /**
+     * Make a client's scopes match $scopes: removes the ones no longer listed, adds the new ones.
+     *
+     * @param string $clientId
+     * @param array $scopes
+     * @return void
+     */
+    protected function saveScopes(string $clientId, array $scopes): void {
+
+        $scopes = array_values(array_unique($scopes));
+
+        $scopeRs = new OauthClientScopeRS();
+        $scopeRs->oauth_client->setStoredVal($clientId);
+        $current = [];
+
+        foreach (EditRS::select($this->dbh, $scopeRs, [$scopeRs->oauth_client]) as $r) {
+            if (in_array($r['oauth_scope'], $scopes)) {
+                $current[] = $r['oauth_scope'];
+            } else {
+                $delRs = new OauthClientScopeRS();
+                $delRs->oauth_client->setStoredVal($clientId);
+                $delRs->oauth_scope->setStoredVal($r['oauth_scope']);
+                EditRS::delete($this->dbh, $delRs, [$delRs->oauth_client, $delRs->oauth_scope]);
+            }
+        }
+
+        foreach (array_diff($scopes, $current) as $scope) {
+            $newRs = new OauthClientScopeRS();
+            $newRs->oauth_client->setNewVal($clientId);
+            $newRs->oauth_scope->setNewVal($scope);
+            EditRS::insert($this->dbh, $newRs);
+        }
     }
 
     public function updateClient(string|null $name = null, array|null $scopes = null,  bool $revoked = false){
@@ -146,13 +175,7 @@ class Client {
                 
                 //scopes
                 if(is_array($scopes)){
-                    $delstmt = $this->dbh->prepare("delete from `oauth_client_scopes` where oauth_client = :clientId");
-                    $delstmt->execute([":clientId"=>$this->clientId]);
-
-                    $insertstmt = $this->dbh->prepare("insert into `oauth_client_scopes` (`oauth_client`, `oauth_scope`) values (:clientId, :clientScope)");
-                    foreach($scopes as $scope){
-                        $insertstmt->execute([":clientId"=>$this->clientId, ":clientScope"=>$scope]);
-                    }
+                    $this->saveScopes($this->clientId, $scopes);
                     $logText["scopes"] = $scopes;
                 }
 

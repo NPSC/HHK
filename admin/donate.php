@@ -10,6 +10,7 @@ use HHK\Exception\RuntimeException;
 use HHK\HTMLControls\{HTMLContainer, HTMLInput, HTMLTable};
 use HHK\Member\AbstractMember;
 use HHK\Donation\Campaign;
+use HHK\Donation\Donation;
 
 /**
  * donate.php
@@ -333,14 +334,10 @@ function recordDonation(PDO $dbh, $maxDonationAmt, $id, $parms)
 
         if ($donId > 0) {
 
-            // insert vol_type = d if not there already...
-            $query = "call InsertDonor(" . $id . ");";
-            $dbh->exec($query);
+            Donation::markAsDonor($dbh, $id);
 
             if ($assocId > 0) {
-                // insert vol_type = d if not there already...
-                $query = "call InsertDonor(" . $assocId . ");";
-                $dbh->exec($query);
+                Donation::markAsDonor($dbh, $assocId);
             }
 
             $reply["success"] = "ok";

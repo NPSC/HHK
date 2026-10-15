@@ -113,14 +113,10 @@ class Donation {
 
         if ($donId > 0) {
 
-            // insert vol_type = d if not there already...
-            $query = "call InsertDonor(" . $this->getDonorId() . ");";
-            $dbh->exec($query);
+            self::markAsDonor($dbh, $this->getDonorId());
 
             if ($this->getAssocDonorId() > 0) {
-                // insert vol_type = d if not there already...
-                $query = "call InsertDonor(" . $this->getAssocDonorId() . ");";
-                $dbh->exec($query);
+                self::markAsDonor($dbh, $this->getAssocDonorId());
             }
 
         } else {
@@ -130,6 +126,26 @@ class Donation {
         return $donId;
     }
 
+
+    /**
+     * Give a member the donor volunteer type (vol_type = d) if they don't have it.  The InsertDonor
+     * procedure writes name_volunteer2 and activity directly, so it gets one activity log entry.
+     *
+     * @param \PDO $dbh
+     * @param int $idName
+     * @return void
+     */
+    public static function markAsDonor(\PDO $dbh, $idName) {
+
+        $idName = intval($idName);
+        if ($idName == 0) {
+            return;
+        }
+
+        $dbh->prepare("call InsertDonor(:id);")->execute([':id' => $idName]);
+
+        EditRS::logActivity($dbh, "Marked as a donor (InsertDonor)", ['idName' => $idName], 'default', 'name', $idName);
+    }
 
     public function setCampaign(\PDO $dbh, $campaignCode) {
 

@@ -392,7 +392,7 @@ where
 
     public static function expandOther(\PDO $dbh, $nameLastFirst, $mType) {
 
-        $stmt = $dbh->query("SELECT
+        $stmt = $dbh->prepare("SELECT
     n.idName, n.Name_Full, 
     CASE WHEN n.Preferred_Phone = 'no' THEN 'No Phone' ELSE ifnull(np.Phone_Num, '') END as Phone_Num, 
     CASE WHEN n.Preferred_Email = 'no' THEN 'No Email' ELSE ifnull(ne.Email, '') END as Email
@@ -405,9 +405,10 @@ FROM
         JOIN
     name_volunteer2 nv ON n.idName = nv.idName
         AND nv.Vol_Category = 'Vol_Type'
-        AND nv.Vol_Code = '$mType'
+        AND nv.Vol_Code = :mType
 WHERE
-    n.Member_Status='a' and n.Name_Full = '$nameLastFirst'");
+    n.Member_Status='a' and n.Name_Full = :nameLastFirst");
+        $stmt->execute([':mType' => $mType, ':nameLastFirst' => $nameLastFirst]);
 
         $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
         $tbl = new HTMLTable();
@@ -476,7 +477,8 @@ WHERE
         if ($mType == VolMemberType::ReferralAgent && $id > 0) {
             // combine referral agents into this agent.
 
-            $stmt = $dbh->query("SELECT Name_Last_First FROM name WHERE idName = $id");
+            $stmt = $dbh->prepare("SELECT Name_Last_First FROM name WHERE idName = :id");
+            $stmt->execute([':id' => $id]);
 
             $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
@@ -486,8 +488,9 @@ WHERE
 
                 if ($nameLastFirst != '') {
 
-                    $stmt = $dbh->query("select n.idName from name n join name_volunteer2 nv on n.idName = nv.idName
-where nv.Vol_Category = 'Vol_Type' and nv.Vol_Code = '" . VolMemberType::ReferralAgent . "' and n.Name_Last_First = '$nameLastFirst'");
+                    $stmt = $dbh->prepare("select n.idName from name n join name_volunteer2 nv on n.idName = nv.idName
+where nv.Vol_Category = 'Vol_Type' and nv.Vol_Code = :volCode and n.Name_Last_First = :nameLastFirst");
+                    $stmt->execute([':volCode' => VolMemberType::ReferralAgent, ':nameLastFirst' => $nameLastFirst]);
 
                     while ($r = $stmt->fetch(\PDO::FETCH_NUM)) {
 
@@ -505,7 +508,8 @@ where nv.Vol_Category = 'Vol_Type' and nv.Vol_Code = '" . VolMemberType::Referra
         } else if ($mType == VolMemberType::Doctor && $id > 0) {
             // combine referral agents into this agent.
 
-            $stmt = $dbh->query("SELECT Name_Last_First FROM name WHERE idName = $id");
+            $stmt = $dbh->prepare("SELECT Name_Last_First FROM name WHERE idName = :id");
+            $stmt->execute([':id' => $id]);
 
             $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
@@ -515,8 +519,9 @@ where nv.Vol_Category = 'Vol_Type' and nv.Vol_Code = '" . VolMemberType::Referra
 
                 if ($nameLastFirst != '') {
 
-                    $stmt = $dbh->query("select n.idName from name n join name_volunteer2 nv on n.idName = nv.idName
-where nv.Vol_Category = 'Vol_Type' and nv.Vol_Code = '" . VolMemberType::Doctor . "' and n.Name_Last_First = '$nameLastFirst'");
+                    $stmt = $dbh->prepare("select n.idName from name n join name_volunteer2 nv on n.idName = nv.idName
+where nv.Vol_Category = 'Vol_Type' and nv.Vol_Code = :volCode and n.Name_Last_First = :nameLastFirst");
+                    $stmt->execute([':volCode' => VolMemberType::Doctor, ':nameLastFirst' => $nameLastFirst]);
 
                     while ($r = $stmt->fetch(\PDO::FETCH_NUM)) {
 
@@ -549,8 +554,14 @@ where nv.Vol_Category = 'Vol_Type' and nv.Vol_Code = '" . VolMemberType::Doctor 
         }
 
         //$affRows = $dbh->exec("call combinePSG($sPsgId, $dPsgId);");
-        $stmt = $dbh->query("call combinePSG($sPsgId, $dPsgId);");
+        $stmt = $dbh->prepare("call combinePSG(:keep, :remove);");
+        $stmt->execute([':keep' => $sPsgId, ':remove' => $dPsgId]);
         $rtn = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+
+        // the procedure rewrites 10+ tables directly - one summary entry
+        if (isset($rtn[0]['msg'])) {
+            EditRS::logActivity($dbh, "PSG $dPsgId combined into PSG $sPsgId (combinePSG)", ['kept_idPsg' => $sPsgId, 'removed_idPsg' => $dPsgId], 'default', 'psg', $sPsgId);
+        }
 
         return (isset($rtn[0])? $rtn[0]: array('error'=>'Query failed'));
 
@@ -577,8 +588,14 @@ where nv.Vol_Category = 'Vol_Type' and nv.Vol_Code = '" . VolMemberType::Doctor 
             return array('error'=>'Cannot remove ID ' . $dPsgId . " because they are a patient. Try removing the duplicate guest instead, or search for duplicate patients first");
         }
 
-        $stmt = $dbh->query("call remove_dup_guest($sPsgId, $dPsgId);");
+        $stmt = $dbh->prepare("call remove_dup_guest(:keep, :remove);");
+        $stmt->execute([':keep' => $sPsgId, ':remove' => $dPsgId]);
         $rtn = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+
+        // the procedure rewrites 10+ tables directly - one summary entry
+        if (isset($rtn[0]['msg'])) {
+            EditRS::logActivity($dbh, "Duplicate guest $dPsgId merged into $sPsgId (remove_dup_guest)", ['kept_idName' => $sPsgId, 'removed_idName' => $dPsgId], 'default', 'name', $sPsgId);
+        }
 
         return (isset($rtn[0])? $rtn[0]: array('error'=>'Query failed'));
 

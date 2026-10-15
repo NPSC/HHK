@@ -1002,8 +1002,15 @@ abstract class AbstractMember {
         // delete web login
         $query = "call del_webuser(:id, :byuser);";
         $stmt = $dbh->prepare($query);
+        $idName = $this->nameRS->idName->getStoredVal();
 
-        return $stmt->execute(array(':id'=>$this->nameRS->idName, ':byuser'=>$user));
+        if ($stmt->execute(array(':id'=>$idName, ':byuser'=>$user))) {
+            // the procedure deletes w_users, w_auth and id_securitygroup directly
+            EditRS::logActivity($dbh, "Web user deleted (del_webuser)", ['idName' => $idName], 'default', 'name', $idName);
+            return TRUE;
+        }
+
+        return FALSE;
     }
 
     /**

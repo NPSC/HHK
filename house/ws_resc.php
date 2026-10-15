@@ -26,6 +26,7 @@ use HHK\SysConst\ReservationStatus;
 use HHK\SysConst\RoomState;
 use HHK\SysConst\WebPageCode;
 use HHK\Update\SiteConfig;
+use HHK\Tables\EditRS;
 
 
 
@@ -104,8 +105,10 @@ try {
                 throw new \Exception("GuestId missing");
             } else {
                 // Delete it.
-                $delete = "CALL delete_guest_photo($guestId)";
-                $dbh->exec($delete);
+                $dbh->prepare("CALL delete_guest_photo(:id)")->execute([':id' => $guestId]);
+
+                // the procedure deletes the photo and clears name_demog directly
+                EditRS::logActivity($dbh, "Guest photo deleted (delete_guest_photo)", ['idName' => $guestId], 'default', 'name', $guestId);
             }
 
             break;

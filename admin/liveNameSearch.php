@@ -158,8 +158,11 @@ exit();
 
 function deleteWuRow(PDO $dbh, $admin, $usr) {
 
-    $query = "call del_webuser ($usr, '$admin');";
-    $dbh->exec($query);
+    $stmt = $dbh->prepare("call del_webuser(:id, :admin);");
+    $stmt->execute([':id' => intval($usr), ':admin' => $admin]);
+
+    // the procedure deletes w_users, w_auth and id_securitygroup directly
+    EditRS::logActivity($dbh, "Web user deleted (del_webuser)", ['idName' => intval($usr)], 'default', 'name', intval($usr));
     $events = array("success" => "deleted: " . $usr);
 
     return $events;

@@ -31,6 +31,7 @@ use HHK\SysConst\MemBasis;
 use HHK\SysConst\PhonePurpose;
 use HHK\SysConst\WebPageCode;
 use HHK\TableLog\NotificationLog;
+use HHK\Tables\EditRS;
 
 /**
  * ws_resv.php
@@ -227,7 +228,10 @@ try {
 
     		if ($newHsId != $idHs) {
     			// Update visit and reservation
-    			$dbh->exec("call updt_visit_hospstay($idVisit, $newHsId);");
+    			$dbh->prepare("call updt_visit_hospstay(:idVisit, :idHs);")->execute([':idVisit' => $idVisit, ':idHs' => $newHsId]);
+
+    			// the procedure updates visit and reservation directly
+    			EditRS::logActivity($dbh, "Visit $idVisit moved to hospital stay $newHsId (updt_visit_hospstay)", ['idVisit' => $idVisit, 'old_idHospital_Stay' => $idHs, 'new_idHospital_Stay' => $newHsId], 'default', 'visit', $idVisit);
     		}
 
     		$events = ['success' => 'Hospital Saved', 'newHsId' => $newHsId];

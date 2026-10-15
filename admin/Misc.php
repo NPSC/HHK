@@ -414,10 +414,18 @@ if (filter_has_var(INPUT_POST, "btnDelIds")) {
         $delDupsAlert->set_Text("Visits exist! Names not deleted. Ids with existing stays are: " . $stayIds);
     } else {
 
+        // the members the procedure is about to delete, for the activity log
+        $tbdIds = $dbh->query("select idName from name where Member_Status = 'u' or Member_Status = 'TBD'")->fetchAll(\PDO::FETCH_COLUMN);
+
         // delete the name and associated records.
         $delStmt = $dbh->query("call delete_names_u_tbd;");
         $response = $delStmt->fetchAll(\PDO::FETCH_ASSOC);
         $delStmt->nextRowset();
+
+        // the procedure deletes the names and their records directly - one summary entry
+        if (isset($response[0]['msg'])) {
+            EditRS::logActivity($dbh, count($tbdIds) . " members deleted (delete_names_u_tbd)", ['idNames' => array_map('intval', $tbdIds)]);
+        }
 
 
         if (isset($response[0]['msg'])) {
