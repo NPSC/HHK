@@ -16,7 +16,7 @@ Last updated: 2026-10-03
 |---|---|
 | `house/GuestCensusReport.php` | Page: builds the report and handles the Run Here / Excel buttons |
 | `classes/House/Report/GuestCensusReport.php` | Report class (extends `AbstractReport`) |
-| `classes/House/Report/AbstractReport.php` | Shared report base. This branch added `$printKeepHtml` and the `writeExcelFooter()` hook. (`$printFooter` was added, then removed 2026-10-05; see "Totals row".) The screen hook `makeFooterMkup()` already existed (Will, 2026-07-28); the Item Report uses it for an on-screen total only |
+| `classes/House/Report/AbstractReport.php` | Shared report base. This branch added `$printKeepHtml`, `$pdfButton` and the `writeExcelFooter()` hook. `$pdfButton` hands the document to a page-defined `pdfCustomize(doc, dt)`, the same way the class already picks up a page-defined `drawCallback`. (`$printFooter` was added, then removed 2026-10-05; see "Totals row".) The screen hook `makeFooterMkup()` already existed (Will, 2026-07-28); the Item Report uses it for an on-screen total only |
 | `classes/ExcelHelper.php`, `classes/ExcelRichText.php` | Excel cells with red and black text runs |
 | `classes/House/ResourceView.php`, `classes/House/Room/Room.php`, `classes/Tables/House/RoomRS.php` | Room Sleeping Spaces in Resource Builder |
 
@@ -141,7 +141,7 @@ This follows the Visit Interval Report's definition of paid.
 | Screen | Bootstrap pills linking to Guest Edit; red when unpaid, grey when paid | HTML in the cell |
 | Print | `Smith (3)` in red/bold or black | The roster cell carries a `data-print` attribute with plain colored markup. `AbstractReport` prints that instead (`$printKeepHtml`); other cells print as plain text. No totals row (see "Totals row") |
 | Excel | `Smith (3)` in red or black | `ExcelRichText` cell; the `ExcelHelper::writeCell()` override writes colored text runs |
-| PDF | Browser print to PDF | Not verified with Will |
+| PDF | `Smith (3)` in red/bold or black | A **PDF** button next to Print (added 2026-10-10). DataTables' `pdf` export, built in the browser with pdfmake, which is already in HHK's DataTables bundle (as on the Waitlist Report). `AbstractReport::$pdfButton` turns the button on. The page's `pdfCustomize(doc, dt)` adds the summary lines under the title, turns each roster party into a colored text run (pdfmake can't render HTML), and sets landscape column widths. Cells are centered except the roster, which stays left-aligned. No totals row and no logo |
 
 ## Names are stored HTML-encoded (fixed)
 
@@ -233,7 +233,7 @@ From the review in `Roast.md`, checked against the code.
   - It's a single portrait page with the summary box below the table.
 
 **Still open:**
-- **PDF:** the spec says "downloadable to excel and pdf". Is browser print to PDF good enough?
+- **PDF:** a PDF button now exists (see "Output formats"). Confirm with Anayat that it meets the spec's "downloadable to excel and pdf".
 - **Email:** the Email button sends the report without Bootstrap, so the roster pills lose red and black (not tested). Does Anayat email this report?
 
 **Not yet measured:** the speed of a 12-month range on a realistic database. The price model runs once per visit with any payment. Dev data is too small to tell.

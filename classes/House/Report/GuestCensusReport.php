@@ -71,6 +71,7 @@ class GuestCensusReport extends AbstractReport implements ReportInterface {
         parent::__construct($dbh, $this->inputSetReportName, $request);
 
         $this->printKeepHtml = true;
+        $this->pdfButton = true;
     }
 
     public function makeQuery(): void {

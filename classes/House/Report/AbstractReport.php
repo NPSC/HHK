@@ -49,6 +49,7 @@ abstract class AbstractReport {
     protected string $statsMkup = "";
     protected int $defaultSortCol = 0;
     protected bool $printKeepHtml = false;  // cells with a data-print attribute applies markup (e.g. colored text)
+    protected bool $pdfButton = false;      // add a PDF button next to Print; the page can define pdfCustomize(doc, dt) to adjust the document
 
     /**
      * @param \PDO $dbh
@@ -274,7 +275,21 @@ abstract class AbstractReport {
                         //.addClass("compact")
                         .css("font-size", "inherit");
                 }
-            },
+            },' . ($this->pdfButton ? '
+            {
+                extend: "pdf",
+                className: "ui-corner-all",
+                orientation: "landscape",
+                pageSize: "LETTER",
+                text: "Download to PDF",
+                title: "' . $this->reportTitle . '",
+                filename: "' . $this->reportTitle . '",
+                customize: function (doc, config, dt) {
+                    if(typeof pdfCustomize === "function"){
+                        pdfCustomize(doc, dt);
+                    }
+                }
+            },' : '') . '
             {
                 text: "Email",
                 className: "ui-corner-all",
