@@ -522,8 +522,13 @@ trait Auditable {
      */
     private static function causer(): array {
 
-        if (session_status() === PHP_SESSION_ACTIVE && !empty($_SESSION['uid'])) {
-            return [(int)$_SESSION['uid'], (string)($_SESSION['username'] ?? '')];
+        if (session_status() === PHP_SESSION_ACTIVE && !empty($_SESSION['username'])) {
+
+            // causer_id is unsigned (spatie schema) and the built-in admin user's id is -1,
+            // so a non-positive id is left out; properties.user still names who it was
+            $uid = (int)($_SESSION['uid'] ?? 0);
+
+            return [($uid > 0 ? $uid : null), (string)$_SESSION['username']];
         }
 
         return [null, (PHP_SAPI === 'cli' ? 'cli' : '')];

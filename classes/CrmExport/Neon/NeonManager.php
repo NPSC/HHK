@@ -15,6 +15,7 @@ use HHK\Tables\CmsGatewayRS;
 use HHK\Tables\EditRS;
 use HHK\Tables\Name\NameRS;
 use HHK\Tables\Visit\StaysRS;
+use HHK\Tables\Crm\NeonTypeMapRS;
 use HHK\Member\MemberSearch;
 use HHK\AuditLog\NameLog;
 use HHK\CrmExport\ExportManagerInterface;
@@ -2124,8 +2125,9 @@ where n.External_Id != '" . self::EXCLUDE_TERM . "' AND n.Member_Status = '" . M
                     if ($neonTypeCode == '') {
                         // delete if previously set
                         if (isset($mappedItems[$hhkCode]) && $mappedItems[$hhkCode]['Neon_Type_Code'] != '') {
-                            $stmt = $dbh->prepare("delete from neon_type_map where idNeon_type_map = :id");
-                            $stmt->execute([':id' => $mappedItems[$hhkCode]['idNeon_type_map']]);
+                            $ntmRs = new NeonTypeMapRS();
+                            $ntmRs->idNeon_type_map->setStoredVal($mappedItems[$hhkCode]['idNeon_type_map']);
+                            EditRS::delete($dbh, $ntmRs, [$ntmRs->idNeon_type_map]);
                         }
 
                         continue;
@@ -2134,18 +2136,7 @@ where n.External_Id != '" . self::EXCLUDE_TERM . "' AND n.Member_Status = '" . M
                         continue;
                     }
 
-                    //upsert
-                    $stmt = $dbh->prepare("INSERT INTO neon_type_map (List_Name, Neon_Name, Neon_Type_Code, Neon_Type_Name, HHK_Type_Code, Updated_By, Last_Updated)
-                        VALUES (:name, :item, :n, :k, :typeCode, :user, now())
-                        ON DUPLICATE KEY UPDATE Neon_Name = VALUES(Neon_Name), Neon_Type_Code = VALUES(Neon_Type_Code), Neon_Type_Name = VALUES(Neon_Type_Name), Updated_By = VALUES(Updated_By), Last_Updated = VALUES(Last_Updated)");
-                    $stmt->execute([
-                        ':name' => $list['List_Name'],
-                        ':item' => $list['List_Item'],
-                        ':n' => $neonTypeCode,
-                        ':k' => $neonItems[$neonTypeCode],
-                        ':typeCode' => $hhkCode,
-                        ':user' => $uS->username,
-                    ]);
+                    self::upsertNeonTypeMap($dbh, $list['List_Name'], $hhkCode, $list['List_Item'], $neonTypeCode, $neonItems[$neonTypeCode], $uS->username);
                 }
             }
         }
@@ -2154,6 +2145,19 @@ where n.External_Id != '" . self::EXCLUDE_TERM . "' AND n.Member_Status = '" . M
         $this->saveHhkNeonSource($dbh);
 
         return ["type"=>"success", "text"=>$this->getServiceTitle() . " settings saved."];
+    }
+
+    /**
+     * Map an HHK code to a Neon list item, keyed on (List_Name, HHK_Type_Code) - the table's unique key.
+     */
+    protected static function upsertNeonTypeMap(\PDO $dbh, $listName, $hhkCode, $neonName, $neonTypeCode, $neonTypeName, $username) {
+        EditRS::upsert($dbh, new NeonTypeMapRS(), ['List_Name' => $listName, 'HHK_Type_Code' => $hhkCode], [
+            'Neon_Name' => $neonName,
+            'Neon_Type_Code' => $neonTypeCode,
+            'Neon_Type_Name' => $neonTypeName,
+            'Updated_By' => $username,
+            'Last_Updated' => date('Y-m-d H:i:s'),
+        ]);
     }
 
     protected function saveHhkNeonSource(\PDO $dbh){
@@ -2170,25 +2174,16 @@ where n.External_Id != '" . self::EXCLUDE_TERM . "' AND n.Member_Status = '" . M
             
             if(isset($source['name']) && $source['name'] == self::SOURCE){
                 $found = true;
-                //upsert
-                $stmt = $dbh->prepare("INSERT INTO neon_type_map (List_Name, Neon_Name, Neon_Type_Code, Neon_Type_Name, HHK_Type_Code, Updated_By, Last_Updated)
-                    VALUES (:name, :item, :n, :k, :typeCode, :user, now())
-                    ON DUPLICATE KEY UPDATE Neon_Name = VALUES(Neon_Name), Neon_Type_Code = VALUES(Neon_Type_Code), Neon_Type_Name = VALUES(Neon_Type_Name), Updated_By = VALUES(Updated_By), Last_Updated = VALUES(Last_Updated)");
-                $stmt->execute([
-                    ':name' => "sources",
-                    ':item' => "source",
-                    ':n' => $source['id'],
-                    ':k' => $source['name'],
-                    ':typeCode' => self::SOURCE,
-                    ':user' => $uS->username,
-                ]);
+                self::upsertNeonTypeMap($dbh, "sources", self::SOURCE, "source", $source['id'], $source['name'], $uS->username);
                 return;
             }
         }
         
         if($found == false){
-            $stmt = $dbh->prepare("delete from neon_type_map where List_Name = :name and HHK_Type_Code = :code");
-            $stmt->execute([':name'=>"sources", ':code'=>self::SOURCE]);
+            $ntmRs = new NeonTypeMapRS();
+            $ntmRs->List_Name->setStoredVal("sources");
+            $ntmRs->HHK_Type_Code->setStoredVal(self::SOURCE);
+            EditRS::delete($dbh, $ntmRs, [$ntmRs->List_Name, $ntmRs->HHK_Type_Code]);
         }
     }
 

@@ -412,6 +412,27 @@ class AuditableTest extends TestCase {
         $this->assertSame(['updated', 'updated', 'deleted', 'deleted'], array_column($this->db->log, 'event'));
     }
 
+    public function testUpsertInsertsThenUpdates(): void {
+        // no row yet: insert with key + values
+        $this->assertSame(1, EditRS::upsert($this->db, new ThingRS(), ['idThing' => 9, 'Span' => 0], ['Status' => 'n']));
+        $this->assertSame('n', end($this->db->tables['thing'])['Status']);
+
+        // existing row: update it
+        $this->assertSame(1, EditRS::upsert($this->db, new ThingRS(), ['idThing' => 9, 'Span' => 0], ['Status' => 'm']));
+        $this->assertCount(2, $this->db->tables['thing']);
+        $this->assertSame('m', end($this->db->tables['thing'])['Status']);
+
+        // unchanged: nothing written
+        $this->assertSame(0, EditRS::upsert($this->db, new ThingRS(), ['idThing' => 9, 'Span' => 0], ['Status' => 'm']));
+    }
+
+    public function testUpsertRefusesAmbiguousKey(): void {
+        $this->db->tables['thing'][] = ['idThing' => '5', 'Span' => '2', 'Status' => 'a', 'Notes' => '', 'Password' => '', 'Last_Updated' => null];
+
+        $this->expectException(\RuntimeException::class);
+        EditRS::upsert($this->db, new ThingRS(), ['idThing' => 5], ['Status' => 'z']);
+    }
+
     public function testIgnoredColumnOnlyWritesNothing(): void {
         $this->updateThing(['Last_Updated' => '2026-01-01 09:00:00']);
         $this->assertCount(0, $this->db->log);

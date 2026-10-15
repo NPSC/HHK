@@ -267,6 +267,51 @@ class EditRS {
     }
 
     /**
+     * Update the row matching $keyVals, or insert one (with the key and new values) if there isn't one.
+     *
+     * @param \PDO $dbh
+     * @param TableRSInterface $rs an empty RS of the table
+     * @param array $keyVals column => value, must match at most one row
+     * @param array $newVals column => new value
+     * @return int rows written (0 when the existing row already had these values)
+     */
+    public static function upsert(\PDO $dbh, TableRSInterface $rs, array $keyVals, array $newVals): int {
+
+        $where = [];
+        foreach ($keyVals as $col => $val) {
+            $rs->$col->setStoredVal($val);
+            $where[] = $rs->$col;
+        }
+
+        $rows = self::select($dbh, $rs, $where);
+
+        if (count($rows) > 1) {
+            throw new \RuntimeException('upsert key matched ' . count($rows) . ' rows in ' . $rs->getTableName());
+        }
+
+        if (count($rows) == 1) {
+            self::loadRow($rows[0], $rs);
+
+            foreach ($newVals as $col => $val) {
+                $rs->$col->setNewVal($val);
+            }
+
+            $count = self::update($dbh, $rs, $where);
+            self::updateStoredVals($rs);
+            return $count;
+        }
+
+        $class = get_class($rs);
+        $newRs = new $class();
+        foreach ($keyVals + $newVals as $col => $val) {
+            $newRs->$col->setNewVal($val);
+        }
+        self::insert($dbh, $newRs);
+
+        return 1;
+    }
+
+    /**
      * Change $col from $oldVal to $newVal in every row that has it, e.g. when a lookup code is replaced.
      * The column must be updateOnChange.
      *

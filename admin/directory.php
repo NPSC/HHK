@@ -59,19 +59,7 @@ if (filter_has_var(INPUT_POST, 'btnPrep')) {
     $affectedRows = MailList::fillMailistTable($dbh, $uS->SolicitBuffer);
 
     if ($affectedRows > 0) {
-        if (EditRS::updateFields($dbh, new GenLookupsRS(), ['Table_Name' => 'Mail_List', 'Code' => 'Refresh_Date'], ['Description' => date('Y-m-d')]) == 0) {
-            $glRs = new GenLookupsRS();
-            $glRs->Table_Name->setStoredVal('Mail_List');
-            $glRs->Code->setStoredVal('Refresh_Date');
-
-            // first refresh: no row yet
-            if (count(EditRS::select($dbh, $glRs, [$glRs->Table_Name, $glRs->Code])) == 0) {
-                $glRs->Table_Name->setNewVal('Mail_List');
-                $glRs->Code->setNewVal('Refresh_Date');
-                $glRs->Description->setNewVal(date('Y-m-d'));
-                EditRS::insert($dbh, $glRs);
-            }
-        }
+        EditRS::upsert($dbh, new GenLookupsRS(), ['Table_Name' => 'Mail_List', 'Code' => 'Refresh_Date'], ['Description' => date('Y-m-d')]);
     }
 
 }

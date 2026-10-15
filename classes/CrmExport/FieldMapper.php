@@ -1,6 +1,9 @@
 <?php
 namespace HHK\CrmExport;
 
+use HHK\Tables\EditRS;
+use HHK\Tables\Crm\CrmFieldMapRS;
+
 /**
  * Loads CRM field mappings from crm_field_map and translates canonical
  * vguest_canonical row keys into the field names expected by a specific CRM object.
@@ -94,7 +97,9 @@ class FieldMapper {
      * Wipe any existing mappings for this gateway and reseed with service defaults.
      */
     public static function resetToDefaults(\PDO $dbh, int $gatewayId, string $serviceName): void {
-        $dbh->prepare("DELETE FROM `crm_field_map` WHERE `gateway_id` = :gw")->execute(['gw' => $gatewayId]);
+        $mapRs = new CrmFieldMapRS();
+        $mapRs->gateway_id->setStoredVal($gatewayId);
+        EditRS::delete($dbh, $mapRs, [$mapRs->gateway_id]);
         self::insertDefaults($dbh, $gatewayId, $serviceName);
     }
 
@@ -112,23 +117,16 @@ class FieldMapper {
             return;
         }
 
-        $insert = $dbh->prepare(
-            "INSERT INTO `crm_field_map`
-                (`gateway_id`, `crm_object`, `hhk_field`, `crm_field`,
-                 `in_search`, `in_export`, `display_order`)
-             VALUES (:gw, :obj, :hhk, :crm, :srch, :exp, :ord)"
-        );
-
         foreach ($defaults as $i => $row) {
-            $insert->execute([
-                'gw'   => $gatewayId,
-                'obj'  => $row[0],
-                'hhk'  => $row[1],
-                'crm'  => $row[2],
-                'srch' => $row[3],
-                'exp'  => $row[4],
-                'ord'  => ($i + 1) * 10,
-            ]);
+            $mapRs = new CrmFieldMapRS();
+            $mapRs->gateway_id->setNewVal($gatewayId);
+            $mapRs->crm_object->setNewVal($row[0]);
+            $mapRs->hhk_field->setNewVal($row[1]);
+            $mapRs->crm_field->setNewVal($row[2]);
+            $mapRs->in_search->setNewVal($row[3]);
+            $mapRs->in_export->setNewVal($row[4]);
+            $mapRs->display_order->setNewVal(($i + 1) * 10);
+            EditRS::insert($dbh, $mapRs);
         }
     }
 
