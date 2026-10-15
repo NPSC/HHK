@@ -219,6 +219,14 @@ class Room {
     }
 
     /**
+     * Summary of getStandardOccupants
+     * @return mixed
+     */
+    public function getStandardOccupants() {
+        return $this->roomRS->Standard_Occupants->getStoredVal();
+    }
+
+    /**
      * Summary of isClean
      * @return bool
      */

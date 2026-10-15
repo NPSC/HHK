@@ -3803,6 +3803,14 @@ VALUES
 		'',
 		''
 	),
+	(
+		'bednight',
+		'bed night',
+		's',
+		'vi',
+		'',
+		'Default: bed night'
+	),
 	('rtnDeposit', 'Deposit Refund', 's', 'pc', '', ''),
 	(
 		'RmFeesPledged',
