@@ -135,13 +135,13 @@ class GuestCensusReport extends AbstractReport implements ReportInterface {
      */
     private function getSummaryStats(): array {
 
-        $uS = Session::getInstance();
         $t = $this->totals;
         $nights = count($this->resultSet);
         $occupied = $t['RoomsOccupied'] ?? 0;
         $unpaid = $t['RoomsUnpaid'] ?? 0;
         $people = $t['PeopleInHouse'] ?? 0;
         $checkedIn = $t['CheckedIn'] ?? 0;
+        $bedNights = $nights * $this->getStandardOccupants();
 
         $guestsCanceled = 0;
         foreach (array_keys($this->cancelCodes) as $code) {
@@ -151,13 +151,8 @@ class GuestCensusReport extends AbstractReport implements ReportInterface {
         $stats = [
             'Number of ' . Labels::getString('memberType', 'guest', 'Guest') . 's Canceled' => (string) $guestsCanceled,
             'Percentage of Rooms Unpaid' => ($occupied > 0 ? round(100 * $unpaid / $occupied) . "% ($unpaid / $occupied room nights)" : 'n/a'),
+            'Percentage of Bednights' => ($bedNights > 0 ? round(100 * $people / $bedNights) . "% ($people / $bedNights bednights)" : 'n/a - set Standard Occupants in Resource Builder'),
         ];
-
-        // Sleeping Spaces are only editable in Resource Builder when showSleepingSpaces is on.
-        if ($uS->showSleepingSpaces) {
-            $bedNights = $nights * $this->getSleepingSpaces();
-            $stats['Percentage of Bednights'] = ($bedNights > 0 ? round(100 * $people / $bedNights) . "% ($people / $bedNights bednights)" : 'n/a - set Sleeping Spaces in Resource Builder');
-        }
 
         $stats['Average Length of Stay'] = ($checkedIn > 0 ? number_format($people / $checkedIn, 2) . " nights ($people / $checkedIn checked in)" : 'n/a');
 
@@ -169,12 +164,12 @@ class GuestCensusReport extends AbstractReport implements ReportInterface {
     }
 
     /**
-     * Total sleeping spaces of the rooms in service during the report period - rooms
+     * Total standard occupants of the rooms in service during the report period - rooms
      * whose resources were all retired before the period starts are left out.
      */
-    private function getSleepingSpaces(): int {
+    private function getStandardOccupants(): int {
 
-        $stmt = $this->dbh->query("select ifnull(sum(r.Sleeping_Spaces), 0)
+        $stmt = $this->dbh->query("select ifnull(sum(r.Standard_Occupants), 0)
 from room r
 where exists (select 1 from resource_room rr join resource re on rr.idResource = re.idResource
     where rr.idRoom = r.idRoom and (re.Retired_At is null or date(re.Retired_At) > '" . $this->filter->getReportStart() . "'))");

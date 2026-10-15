@@ -219,11 +219,11 @@ class Room {
     }
 
     /**
-     * Summary of getSleepingSpaces
+     * Summary of getStandardOccupants
      * @return mixed
      */
-    public function getSleepingSpaces() {
-        return $this->roomRS->Sleeping_Spaces->getStoredVal();
+    public function getStandardOccupants() {
+        return $this->roomRS->Standard_Occupants->getStoredVal();
     }
 
     /**
