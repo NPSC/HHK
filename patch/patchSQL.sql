@@ -234,8 +234,10 @@ select `idPage`, 'gr' from `page` where `File_Name` = 'GuestCensusReport.php';
 -- add Import page (hidden by default)
 call `new_webpage`('Import.php',2,'Import',1,'a','34','l','p','','',now(),'db');
 
--- Room standard occupants (Guest Census Report bednight percentage); renames the earlier Sleeping_Spaces column
+-- Room standard occupants (Guest Census Report bednight percentage), renames the earlier Sleeping_Spaces column
 ALTER TABLE `room` CHANGE COLUMN IF EXISTS `Sleeping_Spaces` `Standard_Occupants` INT(11) NOT NULL DEFAULT 0;
 ALTER TABLE `room` ADD COLUMN IF NOT EXISTS `Standard_Occupants` INT(11) NOT NULL DEFAULT 0 AFTER `Min_Occupants`;
 UPDATE `room` SET `Standard_Occupants` = `Max_Occupants` WHERE `Standard_Occupants` = 0;
 delete from `sys_config` where `Key` = 'showSleepingSpaces';
+INSERT IGNORE INTO `labels` (`Key`,`Value`,`Type`,`Category`,`Header`,`Description`)
+VALUES ('bednight','bed night','s','vi','','Default: bed night');

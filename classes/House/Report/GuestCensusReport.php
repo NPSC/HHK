@@ -11,7 +11,7 @@ use HHK\sec\Session;
 use HHK\sec\Labels;
 use HHK\Purchase\PriceModel\AbstractPriceModel;
 use HHK\Purchase\VisitCharges;
-use HHK\SysConst\{ItemId, InvoiceStatus, ReservationStatusType};
+use HHK\SysConst\{ItemId, InvoiceStatus, ReservationStatusType, ResourceStatus};
 
 
 /**
@@ -50,6 +50,9 @@ class GuestCensusReport extends AbstractReport implements ReportInterface {
 
     /** @var array<string,int> column key => total over the report period, for every integer column */
     private array $totals = [];
+
+    /** @var int sum of Standard_Occupants over the rooms in service at the start of the report period */
+    private int $standardOccupants = 0;
 
     /** @var string[] visits whose paid nights couldn't be calculated, shown in the summary */
     private array $warnings = [];
@@ -91,6 +94,9 @@ class GuestCensusReport extends AbstractReport implements ReportInterface {
         $fields[] = array("Rooms Unpaid", 'RoomsUnpaid', 'checked', '', 'integer', '10');
         $fields[] = array("Rooms Occupied", 'RoomsOccupied', 'checked', '', 'integer', '10');
         $fields[] = array("People in House", 'PeopleInHouse', 'checked', '', 'integer', '10');
+        $bednights = Labels::getString('visit', 'bednight', 'Bednight') . 's';
+
+        $fields[] = array("Available $bednights", 'AvailBednights', 'checked', '', 'integer', '10');
         $fields[] = array("Guest Roster", 'GuestRoster', 'checked', '', 'string', '40');
 
         foreach ($this->cancelCodes as $code => $title) {
@@ -98,7 +104,7 @@ class GuestCensusReport extends AbstractReport implements ReportInterface {
         }
 
         foreach ($this->cancelCodes as $code => $title) {
-            $fields[] = array('Bednights Canceled: ' . $title, 'Bednights_' . $code, 'checked', '', 'integer', '10');
+            $fields[] = array("$bednights Canceled: " . $title, 'Bednights_' . $code, 'checked', '', 'integer', '10');
         }
 
         return $fields;
@@ -122,7 +128,7 @@ class GuestCensusReport extends AbstractReport implements ReportInterface {
                 $tbl->addBodyTr(HTMLTable::makeTh($label, ['class'=>'tdlabel']) . HTMLTable::makeTd($value));
             }
 
-            $mkup .= $tbl->generateMarkup(['class'=>'mt-2']);
+            $mkup .= $tbl->generateMarkup(['class'=>'mt-2 hhk-visitdialog']);
         }
 
         return $mkup;
@@ -141,7 +147,9 @@ class GuestCensusReport extends AbstractReport implements ReportInterface {
         $unpaid = $t['RoomsUnpaid'] ?? 0;
         $people = $t['PeopleInHouse'] ?? 0;
         $checkedIn = $t['CheckedIn'] ?? 0;
-        $bedNights = $nights * $this->getStandardOccupants();
+        $bednightLabel = Labels::getString('visit', 'bednight', 'Bednight') . 's';
+        $bedNights = $t['AvailBednights'] ?? 0;
+        $fullBedNights = $nights * $this->standardOccupants;
 
         $guestsCanceled = 0;
         foreach (array_keys($this->cancelCodes) as $code) {
@@ -151,7 +159,9 @@ class GuestCensusReport extends AbstractReport implements ReportInterface {
         $stats = [
             'Number of ' . Labels::getString('memberType', 'guest', 'Guest') . 's Canceled' => (string) $guestsCanceled,
             'Percentage of Rooms Unpaid' => ($occupied > 0 ? round(100 * $unpaid / $occupied) . "% ($unpaid / $occupied room nights)" : 'n/a'),
-            'Percentage of Bednights' => ($bedNights > 0 ? round(100 * $people / $bedNights) . "% ($people / $bedNights bednights)" : 'n/a - set Standard Occupants in Resource Builder'),
+            "Percentage of $bednightLabel" => ($bedNights > 0 ? round(100 * $people / $bedNights) . "% ($people people in house / $bedNights available " . strtolower($bednightLabel) . ")" : 'n/a - set Standard Occupancy in Resource Builder'),
+            "Available $bednightLabel" => ($fullBedNights > 0 ? "$bedNights ({$this->standardOccupants} standard occupancy x $nights nights ($fullBedNights) - "
+                . ($fullBedNights - $bedNights) . " unavailable " . strtolower($bednightLabel) . ')' : 'n/a'),
         ];
 
         $stats['Average Length of Stay'] = ($checkedIn > 0 ? number_format($people / $checkedIn, 2) . " nights ($people / $checkedIn checked in)" : 'n/a');
@@ -164,17 +174,72 @@ class GuestCensusReport extends AbstractReport implements ReportInterface {
     }
 
     /**
-     * Total standard occupants of the rooms in service during the report period - rooms
-     * whose resources were all retired before the period starts are left out.
+     * Standard_Occupants of each room that can be used that night: the room has a
+     * resource that isn't retired yet and isn't Out of Service or Unavailable
+     * (resource_use) that night. Rooms whose resources were all retired before the
+     * period starts, and rooms with no resource, aren't counted at all.
+     *
+     * Also sets $this->standardOccupants, the nightly total before anything is taken out.
+     *
+     * @return array<string,int> date (Y-m-d) => available bednights
      */
-    private function getStandardOccupants(): int {
+    private function getAvailableBednightsByDay(string $start, string $queryEnd): array {
 
-        $stmt = $this->dbh->query("select ifnull(sum(r.Standard_Occupants), 0)
+        $stmt = $this->dbh->query("select rr.idRoom, r.Standard_Occupants, rr.idResource, ifnull(date(re.Retired_At), '') as Retired
 from room r
-where exists (select 1 from resource_room rr join resource re on rr.idResource = re.idResource
-    where rr.idRoom = r.idRoom and (re.Retired_At is null or date(re.Retired_At) > '" . $this->filter->getReportStart() . "'))");
+    join resource_room rr on rr.idRoom = r.idRoom
+    join resource re on rr.idResource = re.idResource
+where r.Standard_Occupants > 0
+    and (re.Retired_At is null or date(re.Retired_At) > '" . $start . "')");
 
-        return intval($stmt->fetchColumn());
+        // idRoom => [Standard_Occupants, [idResource => Y-m-d retired, or '']]
+        $rooms = [];
+        while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
+            $rooms[$r['idRoom']][0] = intval($r['Standard_Occupants']);
+            $rooms[$r['idRoom']][1][$r['idResource']] = $r['Retired'];
+        }
+
+        $this->standardOccupants = array_sum(array_column($rooms, 0));
+
+        // A resource_use runs from its start date up to (not including) its end date, at least one night;
+        // an open-ended one runs past the report period.
+        $stmt = $this->dbh->query("select idResource, date(Start_Date) as StartDate, ifnull(date(End_Date), '" . $queryEnd . "') as EndDate
+from resource_use
+where `Status` in ('" . ResourceStatus::OutOfService . "', '" . ResourceStatus::Unavailable . "')
+    and date(Start_Date) < '" . $queryEnd . "'
+    and ifnull(date(End_Date), '" . $queryEnd . "') >= '" . $start . "'");
+
+        $blocked = [];
+        while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
+
+            $curDate = new \DateTime(max($r['StartDate'], $start));
+            $endDt = new \DateTime(min(max($r['EndDate'], date('Y-m-d', strtotime($r['StartDate'] . ' +1 day'))), $queryEnd));
+
+            for (; $curDate < $endDt; $curDate->add(new \DateInterval('P1D'))) {
+                $blocked[$r['idResource']][$curDate->format('Y-m-d')] = true;
+            }
+        }
+
+        $avail = [];
+        $curDate = new \DateTime($start);
+        $endDt = new \DateTime($queryEnd);
+
+        for (; $curDate < $endDt; $curDate->add(new \DateInterval('P1D'))) {
+
+            $d = $curDate->format('Y-m-d');
+            $avail[$d] = 0;
+
+            foreach ($rooms as [$occupants, $resources]) {
+                foreach ($resources as $idResource => $retired) {
+                    if (($retired == '' || $d < $retired) && !isset($blocked[$idResource][$d])) {
+                        $avail[$d] += $occupants;
+                        break;
+                    }
+                }
+            }
+        }
+
+        return $avail;
     }
 
     protected function makeFooterMkup(HTMLTable $tbl): void {
@@ -231,6 +296,7 @@ where exists (select 1 from resource_room rr join resource re on rr.idResource =
         $dayRooms = $this->getRoomsByDay($start, $queryEnd);
         [$checkIns, $checkOuts] = $this->getCheckInOutCountsByDay($start, $queryEnd);
         [$cancelCounts, $cancelBednights] = $this->getCancellationsByDay($start, $queryEnd);
+        $availBednights = $this->getAvailableBednightsByDay($start, $queryEnd);
 
         $curDate = new \DateTime($start);
         $endDt = new \DateTime($queryEnd);
@@ -310,6 +376,7 @@ where exists (select 1 from resource_room rr join resource re on rr.idResource =
                 'RoomsUnpaid' => $roomsUnpaid,
                 'RoomsOccupied' => count($rooms),
                 'PeopleInHouse' => $peopleInHouse,
+                'AvailBednights' => $availBednights[$d] ?? 0,
                 'GuestRoster' => ($this->dispType == 'excel' ? $excelRoster
                     : (count($rosterParts) > 0 ? HTMLContainer::generateMarkup('span', implode('', $rosterParts), ['data-print' => htmlspecialchars(implode(', ', $printParts), ENT_QUOTES)]) : '')),
             ];
