@@ -2,6 +2,7 @@
 namespace HHK\Admin\Import;
 
 
+use HHK\Common;
 use HHK\Member\AbstractMember;
 use HHK\Member\Role\Doctor;
 use HHK\Member\Role\Patient;
@@ -274,6 +275,253 @@ class Import extends AbstractImport implements ImportInterface {
     }
 
     /**
+     * Generate fake patients, guests, reservations and visits using fakerphp/faker.
+     * Dev-mode only - caller is responsible for enforcing that restriction.
+     *
+     * Stays are placed into free gaps between existing reservations/visits (and each other), so
+     * nothing overlaps. Stays ending on/before today become checked-out reservations + visits;
+     * stays starting on/after today become committed reservations only. No stay spans today.
+     *
+     * @param int $numGuests Number of fake patient/guest/reservation/visit sets to create
+     * @param \DateTimeInterface $frameStart Earliest arrival date
+     * @param \DateTimeInterface $frameEnd Latest departure date
+     * @return array{success: true, created: int, skippedReservations: int, pastVisits: int, futureReservations: int}|array{error: string}|array{error: string, created: int, skippedReservations: int, pastVisits: int, futureReservations: int}
+     */
+    public function generateFakeData(int $numGuests, \DateTimeInterface $frameStart, \DateTimeInterface $frameEnd){
+
+        if($numGuests <= 0){
+            return array("error"=>"Number of guests must be > 0");
+        }
+
+        $frameStart = \DateTimeImmutable::createFromInterface($frameStart)->setTime(0, 0);
+        $frameEnd = \DateTimeImmutable::createFromInterface($frameEnd)->setTime(0, 0);
+        if($frameEnd <= $frameStart){
+            return array("error"=>"End date must be after start date.");
+        }
+
+        $this->getHospitals();
+        $this->getRooms();
+
+        if(empty($this->hospitals)){
+            return array("error"=>"No hospitals found. Please add a hospital before generating fake data.");
+        }
+        if(empty($this->rooms)){
+            return array("error"=>"No rooms found. Please add a room before generating fake data.");
+        }
+
+        $faker = \Faker\Factory::create('en_US');
+        $hospitalTitles = array_keys($this->hospitals);
+        $gaps = $this->loadRoomGaps($frameStart, $frameEnd);
+        $today = (new \DateTimeImmutable())->setTime(0, 0);
+        $created = 0;
+        $skippedReservations = 0;
+        $pastVisits = 0;
+        $futureReservations = 0;
+
+        for($i = 0; $i < $numGuests; $i++){
+            try{
+                $this->dbh->beginTransaction();
+                $stay = null;
+
+                $patientRow = array(
+                    "FirstName" => $faker->firstName(),
+                    "Middle" => "",
+                    "LastName" => $faker->unique()->lastName(),
+                    "Phone" => $faker->numerify('##########'),
+                    "Mobile" => $faker->numerify('##########'),
+                    "Email" => $faker->unique()->safeEmail(),
+                    "Address" => $faker->streetAddress(),
+                    "Address2" => "",
+                    "City" => $faker->city(),
+                    "County" => "",
+                    "State" => \Faker\Provider\en_US\Address::stateAbbr(),
+                    "ZipCode" => $faker->postcode(),
+                    "Hospital" => $faker->randomElement($hospitalTitles),
+                    "importId" => 0,
+                );
+
+                $patArray = $this->addPatient($patientRow, false);
+
+                $guest = false;
+                if($patArray["psg"] instanceof PSG){
+                    $guestRow = array(
+                        "FirstName" => $faker->firstName(),
+                        "LastName" => $faker->unique()->lastName(),
+                        "Middle" => "",
+                        "Phone" => $patientRow["Phone"],
+                        "Mobile" => $patientRow["Mobile"],
+                        "Email" => $faker->unique()->safeEmail(),
+                        "Address" => $patientRow["Address"],
+                        "Address2" => "",
+                        "City" => $patientRow["City"],
+                        "County" => "",
+                        "State" => $patientRow["State"],
+                        "ZipCode" => $patientRow["ZipCode"],
+                        "importId" => 0,
+                    );
+
+                    $guest = $this->addGuest($guestRow, $patArray["psg"]);
+                }
+
+                if($guest instanceof Guest && $patArray["hospStay"] instanceof HospitalStay){
+                    $stay = $this->takeStayFromGaps($gaps, $faker);
+
+                    if($stay !== null){
+                        $resvRow = array(
+                            "RoomNum" => $stay["room"],
+                            "ArrivalDate" => $stay["arrival"]->format("Y-m-d"),
+                            "DepartureDate" => $stay["departure"]->format("Y-m-d"),
+                            "Notes" => ($faker->boolean(30) ? $faker->sentence() : ""),
+                        );
+
+                        $guestArr = array(array("idName"=>$guest->getIdName(), "PrimaryGuest"=>"Yes"));
+
+                        if($stay["departure"] <= $today){
+                            $resvId = $this->addReservation($guestArr, $patArray["reg"], $patArray["hospStay"], $resvRow);
+                            $this->addVisit($resvRow, $guestArr, $patArray["reg"], $patArray["hospStay"], $resvId);
+                        }else{
+                            $this->addReservation($guestArr, $patArray["reg"], $patArray["hospStay"], $resvRow, ReservationStatus::Committed);
+                        }
+                    }else{
+                        $skippedReservations++;
+                    }
+                }
+
+                $this->dbh->commit();
+                $created++;
+                if($stay !== null){
+                    if($stay["departure"] <= $today){
+                        $pastVisits++;
+                    }else{
+                        $futureReservations++;
+                    }
+                }
+
+            }catch(\Exception $e){
+                if($this->dbh->inTransaction()){
+                    $this->dbh->rollBack();
+                }
+                return array("error"=>$e->getMessage(), "created"=>$created, "skippedReservations"=>$skippedReservations, "pastVisits"=>$pastVisits, "futureReservations"=>$futureReservations);
+            }
+        }
+
+        return array("success"=>true, "created"=>$created, "skippedReservations"=>$skippedReservations, "pastVisits"=>$pastVisits, "futureReservations"=>$futureReservations);
+    }
+
+    /**
+     * Build the list of free [start, end) date gaps per room inside the time frame, excluding
+     * nights already taken by a reservation or visit. Gaps are also split at today so a
+     * generated stay is either fully in the past or fully in the future.
+     *
+     * A departure day may equal the next arrival day (same-day turnover), matching
+     * RoomChooser::hasOverlappingReservationOrVisit().
+     *
+     * @return array<int, array{room: string, start: \DateTimeImmutable, end: \DateTimeImmutable}>
+     */
+    private function loadRoomGaps(\DateTimeImmutable $frameStart, \DateTimeImmutable $frameEnd): array
+    {
+        $query = "select r.idResource, DATE(r.Expected_Arrival) as `start`, DATE(r.Expected_Departure) as `end`
+            from `reservation` r
+            where r.idResource > 0
+              and r.Status in ('" . ReservationStatus::Committed . "','" . ReservationStatus::UnCommitted . "','" . ReservationStatus::Staying . "','" . ReservationStatus::Checkedout . "')
+              and DATE(r.Expected_Arrival) < DATE(:frameEnd1)
+              and DATE(r.Expected_Departure) > DATE(:frameStart1)
+            union all
+            select v.idResource, DATE(v.Arrival_Date), ifnull(DATE(v.Span_End), greatest(DATE(v.Expected_Departure), CURDATE()))
+            from `visit` v
+            where v.idResource > 0
+              and v.Status not in ('" . VisitStatus::Pending . "','" . VisitStatus::Cancelled . "')
+              and DATE(v.Arrival_Date) < DATE(:frameEnd2)
+              and ifnull(DATE(v.Span_End), greatest(DATE(v.Expected_Departure), CURDATE())) > DATE(:frameStart2)";
+
+        $stmt = $this->dbh->prepare($query);
+        $stmt->execute(array(
+            ":frameStart1"=>$frameStart->format("Y-m-d"), ":frameEnd1"=>$frameEnd->format("Y-m-d"),
+            ":frameStart2"=>$frameStart->format("Y-m-d"), ":frameEnd2"=>$frameEnd->format("Y-m-d"),
+        ));
+
+        $booked = array();
+        while($row = $stmt->fetch(\PDO::FETCH_ASSOC)){
+            $booked[$row["idResource"]][] = array("start"=>new \DateTimeImmutable($row["start"]), "end"=>new \DateTimeImmutable($row["end"]));
+        }
+
+        // Treat today as a zero-length booking so gaps get split there
+        $today = (new \DateTimeImmutable())->setTime(0, 0);
+        $splitAtToday = ($today > $frameStart && $today < $frameEnd);
+
+        $gaps = array();
+        foreach($this->rooms as $roomTitle => $idResource){
+            $intervals = $booked[$idResource] ?? array();
+            if($splitAtToday){
+                $intervals[] = array("start"=>$today, "end"=>$today);
+            }
+            usort($intervals, fn($a, $b) => $a["start"] <=> $b["start"]);
+
+            $cursor = $frameStart;
+            foreach($intervals as $iv){
+                if($iv["start"] > $cursor){
+                    $gaps[] = array("room"=>$roomTitle, "start"=>$cursor, "end"=>min($iv["start"], $frameEnd));
+                }
+                if($iv["end"] > $cursor){
+                    $cursor = $iv["end"];
+                }
+                if($cursor >= $frameEnd){
+                    break;
+                }
+            }
+            if($cursor < $frameEnd){
+                $gaps[] = array("room"=>$roomTitle, "start"=>$cursor, "end"=>$frameEnd);
+            }
+        }
+
+        return $gaps;
+    }
+
+    /**
+     * Pick a random stay (1-10 nights) out of the free gaps and remove it from them so later
+     * stays can't overlap it. Gaps are weighted by length so stays spread evenly over the frame.
+     *
+     * @param array $gaps from loadRoomGaps(), modified in place
+     * @return array{room: string, arrival: \DateTimeImmutable, departure: \DateTimeImmutable}|null null when no space is left
+     */
+    private function takeStayFromGaps(array &$gaps, \Faker\Generator $faker): ?array
+    {
+        $totalNights = 0;
+        foreach($gaps as $gap){
+            $totalNights += $gap["start"]->diff($gap["end"])->days;
+        }
+        if($totalNights < 1){
+            return null;
+        }
+
+        $pick = $faker->numberBetween(1, $totalNights);
+        foreach($gaps as $k => $gap){
+            $gapNights = $gap["start"]->diff($gap["end"])->days;
+            $pick -= $gapNights;
+            if($pick > 0){
+                continue;
+            }
+
+            $nights = $faker->numberBetween(1, min(10, $gapNights));
+            $offset = $faker->numberBetween(0, $gapNights - $nights);
+            $arrival = $gap["start"]->modify("+$offset days");
+            $departure = $arrival->modify("+$nights days");
+
+            unset($gaps[$k]);
+            if($arrival > $gap["start"]){
+                $gaps[] = array("room"=>$gap["room"], "start"=>$gap["start"], "end"=>$arrival);
+            }
+            if($departure < $gap["end"]){
+                $gaps[] = array("room"=>$gap["room"], "start"=>$departure, "end"=>$gap["end"]);
+            }
+
+            return array("room"=>$gap["room"], "arrival"=>$arrival, "departure"=>$departure);
+        }
+
+        return null;
+    }
+
+    /**
      * Summary of addDonor
      * @param array $r
      * @param mixed $memType
@@ -537,8 +785,8 @@ class Import extends AbstractImport implements ImportInterface {
             ":idResource"=>$idResource,
             ":expectedArrival"=>$arrival,
             ":expectedDeparture"=>$departure,
-            ":actualArrival"=>$arrival,
-            ":actualDeparture"=>$departure,
+            ":actualArrival"=>($resvStatus == ReservationStatus::Checkedout ? $arrival : null),
+            ":actualDeparture"=>($resvStatus == ReservationStatus::Checkedout ? $departure : null),
             ":numGuests"=>count($guests),
             ":status"=>$resvStatus
         ));

@@ -47,6 +47,8 @@ abstract class AbstractReport {
     protected bool $rendered = false;
     protected string $statsMkup = "";
     protected int $defaultSortCol = 0;
+    protected bool $printKeepHtml = false;  // cells with a data-print attribute applies markup (e.g. colored text)
+    protected bool $pdfButton = false;      // add a PDF button next to Print; the page can define pdfCustomize(doc, dt) to adjust the document
 
     /**
      * @param \PDO $dbh
@@ -187,6 +189,15 @@ abstract class AbstractReport {
     protected function makeFooterMkup(HTMLTable $tbl): void {
     }
 
+    /**
+     * Optional hook for subclasses to write rows (eg. totals) or sheets after the data rows of the Excel download.
+     * No-op by default.
+     *
+     * @param ExcelHelper $writer
+     */
+    protected function writeExcelFooter(ExcelHelper $writer): void {
+    }
+
     public function generateSummaryMkup():string {
 
         $uS = Session::getInstance();
@@ -233,7 +244,17 @@ abstract class AbstractReport {
             {
                 extend: "print",
                 className: "ui-corner-all",
-                autoPrint: true,
+                autoPrint: true,' . ($this->printKeepHtml ? '
+                exportOptions: {
+                    stripHtml: false,
+                    format: {
+                        body: function (data) {
+                            var cell = $("<div>").html(data);
+                            var alt = cell.children("[data-print]");
+                            return alt.length ? alt.attr("data-print") : $("<div>").text(cell.text()).html();
+                        }
+                    }
+                },' : '') . '
                 paperSize: "letter",
                 title: function(){
                     return "' . $this->reportTitle . '";
@@ -254,7 +275,21 @@ abstract class AbstractReport {
                         //.addClass("compact")
                         .css("font-size", "inherit");
                 }
-            },
+            },' . ($this->pdfButton ? '
+            {
+                extend: "pdf",
+                className: "ui-corner-all",
+                orientation: "landscape",
+                pageSize: "LETTER",
+                text: "Download to PDF",
+                title: "' . $this->reportTitle . '",
+                filename: "' . $this->reportTitle . '",
+                customize: function (doc, config, dt) {
+                    if(typeof pdfCustomize === "function"){
+                        pdfCustomize(doc, dt);
+                    }
+                }
+            },' : '') . '
             {
                 text: "Email",
                 className: "ui-corner-all",
@@ -385,6 +420,8 @@ abstract class AbstractReport {
             $row = $writer->convertStrings($hdr, $flds);
             $writer->writeSheetRow("Sheet1", $row);
         }
+        
+        $this->writeExcelFooter($writer);
 
         HouseLog::logDownload($this->dbh, $this->reportTitle, "Excel", $this->reportTitle . " for " . $this->filter->getReportStart() . " - " . $this->filter->getReportEnd() . " downloaded", $uS->username);
 

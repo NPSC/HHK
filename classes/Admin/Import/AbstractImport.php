@@ -617,6 +617,7 @@ WHERE n.Name_First = '" . $newFirst . "' AND n.Name_Last = '" . $newLast . "'";
     }
 
     protected function getHospitals(){
+        $this->hospitals = [];
         $stmt = $this->dbh->query("Select idHospital, Title from hospital");
         while ($h = $stmt->fetch(\PDO::FETCH_ASSOC)) {
             $this->hospitals[strtolower($h['Title'])] = $h['idHospital'];
@@ -624,6 +625,7 @@ WHERE n.Name_First = '" . $newFirst . "' AND n.Name_Last = '" . $newLast . "'";
     }
 
     protected function getRooms(){
+        $this->rooms = [];
         $stmt = $this->dbh->query("Select idResource, Title from resource");
         while ($h = $stmt->fetch(\PDO::FETCH_ASSOC)) {
             $this->rooms[trim(strtolower($h['Title']))] = $h['idResource'];

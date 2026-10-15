@@ -222,7 +222,7 @@ SELECT 'hospitals', CONCAT(`Value`, 's'), 's', 'h', '', '' FROM `labels` WHERE `
 
 
 
-INSERT IGNORE INTO `sys_config`(`Key`,`Value`,`Type`,`Category`,`Description`,`Show`) VALUES 
+INSERT IGNORE INTO `sys_config`(`Key`,`Value`,`Type`,`Category`,`Description`,`Show`) VALUES
 ("stmtShowBirthDate", "false","b","f","Show Patient Birthdate on Statements","1");
 
 
@@ -233,3 +233,19 @@ INSERT IGNORE INTO `sys_config`(`Key`,`Value`,`Type`,`Category`,`Description`,`S
 -- collect lines from several fields - everything else holds one value and keeps the old per-hhk_field uniqueness)
 ALTER TABLE `crm_field_map` DROP INDEX IF EXISTS `uq_gateway_object_field`;
 ALTER TABLE `crm_field_map` ADD UNIQUE KEY IF NOT EXISTS `uq_gateway_object_field_crm` (`gateway_id`, `crm_object`, `hhk_field`, `crm_field`);
+-- add Guest Census Report (hidden by default)
+call `new_webpage`('GuestCensusReport.php',31,'Guest Census Report',1,'h','102','u','p','','',now(),'ga');
+
+INSERT IGNORE INTO `page_securitygroup` (`idPage`,`Group_Code`)
+select `idPage`, 'gr' from `page` where `File_Name` = 'GuestCensusReport.php';
+
+-- add Import page (hidden by default)
+call `new_webpage`('Import.php',2,'Import',1,'a','34','l','p','','',now(),'db');
+
+-- Room standard occupants (Guest Census Report bednight percentage), renames the earlier Sleeping_Spaces column
+ALTER TABLE `room` CHANGE COLUMN IF EXISTS `Sleeping_Spaces` `Standard_Occupants` INT(11) NOT NULL DEFAULT 0;
+ALTER TABLE `room` ADD COLUMN IF NOT EXISTS `Standard_Occupants` INT(11) NOT NULL DEFAULT 0 AFTER `Min_Occupants`;
+UPDATE `room` SET `Standard_Occupants` = `Max_Occupants` WHERE `Standard_Occupants` = 0;
+delete from `sys_config` where `Key` = 'showSleepingSpaces';
+INSERT IGNORE INTO `labels` (`Key`,`Value`,`Type`,`Category`,`Header`,`Description`)
+VALUES ('bednight','bed night','s','vi','','Default: bed night');

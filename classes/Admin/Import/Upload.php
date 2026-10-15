@@ -10,16 +10,9 @@ class Upload {
     protected array $rawData;
     const TBL_NAME = "import";
 
-    public function __construct(\PDO $dbh, array|int $file) {
+    public function __construct(\PDO $dbh, array $file) {
         $this->dbh = $dbh;
-        
-        if(is_array($file)){
-            $this->rawData = $this->parseFile($file);
-        //}elseif(is_int($file) && $file > 0){
-        //    $this->rawData = $this->makeFakeMembers($file);
-        }else{
-            throw new ErrorException("CSV file or number of fake members is required");
-        }
+        $this->rawData = $this->parseFile($file);
     }
 
     public function upload(){
