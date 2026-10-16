@@ -284,12 +284,11 @@ class UserClass
             $ipRS->IP_addr->setStoredVal($ipAddr);
 
             // check if IP is assigned to a group
-            $query = "select * from w_group_ip where IP_addr = '$ipAddr'";
-            $stmt = $dbh->prepare($query);
-            $stmt->execute();
+            $stmt = $dbh->prepare("select * from w_group_ip where IP_addr = :ip");
+            $stmt->execute([':ip' => $ipAddr]);
             if ($stmt->rowCount() == 0) { // only revoke if no groups are assigned
                 if (count(EditRS::select($dbh, $ipRS, array(
-                    $ipAddr
+                    $ipRS->IP_addr
                 ))) > 0) { // If IP is found
                     if (EditRS::delete($dbh, $ipRS, array(
                         $ipRS->IP_addr

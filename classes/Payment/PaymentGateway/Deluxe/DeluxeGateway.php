@@ -294,6 +294,10 @@ class DeluxeGateway extends AbstractPaymentGateway
     protected function saveCOF(\PDO $dbh, array $data) {
 
         $uS = Session::getInstance();
+
+        // these come straight from the request
+        $idGuest = intval($data['id'] ?? 0, 10);
+        $idPsg = intval($data['psg'] ?? 0, 10);
         $billingFirstName = "";
         $billingLastName = "";
         $result = [];
@@ -306,9 +310,10 @@ class DeluxeGateway extends AbstractPaymentGateway
         }
 
         //get billing name
-        if (isset($data['id']) && $data['id'] > 0 && $data["nameOnCard"] == "CardHolder") {
+        if ($idGuest > 0 && isset($data["nameOnCard"]) && $data["nameOnCard"] == "CardHolder") {
 
-			$stmt = $dbh->query("select ifnull(n.Name_First, '') as `Name_First`, ifnull(n.Name_Last, '') as `Name_Last` from name n where n.idName = " . $data['id']);
+			$stmt = $dbh->prepare("select ifnull(n.Name_First, '') as `Name_First`, ifnull(n.Name_Last, '') as `Name_Last` from name n where n.idName = :id");
+			$stmt->execute([':id' => $idGuest]);
 
 			$rows = $stmt->fetchAll ( \PDO::FETCH_ASSOC );
 
@@ -335,13 +340,13 @@ class DeluxeGateway extends AbstractPaymentGateway
             $respBody["maskedAcct"] = substr($data["maskedPan"], -4);
 
             if($respBody["amountApproved"] == "1" && isset($respBody["paymentId"])){
-                $vr = new AuthorizeCreditResponse($response, $data['id'], $data['psg']);
+                $vr = new AuthorizeCreditResponse($response, $idGuest, $idPsg);
                 if($vr->getStatus() == AbstractCreditPayments::STATUS_APPROVED){
                     // save token
                     $idToken = CreditToken::storeToken($dbh, $vr->idRegistration, $vr->idPayor, $response);
 
                     $result["success"] = "New Card saved successfully";
-                    $result["COFmkup"] = HouseServices::guestEditCreditTable($dbh, $data['psg'], $data['id'], 'g');
+                    $result["COFmkup"] = HouseServices::guestEditCreditTable($dbh, $idPsg, $idGuest, 'g');
                     $result['idx'] = 'g';
                 }else{
                     $result["warning"] = $vr->response->getResponseMessage();

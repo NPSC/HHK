@@ -65,7 +65,7 @@ function campaignList(PDO $dbh, string $yr): array {
     return array("success" => "No Campaigns Found");
 }
 
-function campaignReport(PDO $dbh, string $rbsel, string $yr, string $fyMonthsAdjust): string {
+function campaignReport(PDO $dbh, string $rbsel, string $yr, int $fyMonthsAdjust): string {
 
     // Year where-clause
     $whClause = "";
@@ -175,7 +175,7 @@ function campaignReport(PDO $dbh, string $rbsel, string $yr, string $fyMonthsAdj
     return $txtreport . "</table>";
 }
 
-function campaignInKindReport(PDO $dbh, string $rbsel, string $yr, $fyMonthsAdjust) {
+function campaignInKindReport(PDO $dbh, string $rbsel, string $yr, int $fyMonthsAdjust) {
 
     // Year where-clause
     $whClause = "";
@@ -279,7 +279,8 @@ switch ($c) {
 
         $yr = filter_var(urldecode($_REQUEST["rptyear"]), FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
-        $fyMonths = filter_var(urldecode($_REQUEST["fymonths"]), FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+        // a whole number of months - it goes into the SQL unquoted (INTERVAL n MONTH)
+        $fyMonths = intval(filter_var(urldecode($_REQUEST["fymonths"] ?? '0'), FILTER_SANITIZE_NUMBER_INT), 10);
 
         $events = array('success' => campaignReport($dbh, $rb, $yr, $fyMonths) . campaignInKindReport($dbh, $rb, $yr, $fyMonths));
 
