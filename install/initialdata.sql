@@ -6394,18 +6394,6 @@ VALUES
 		's'
 	),
 	(
-		130,
-		'DiagnosisBuilder.php',
-		31,
-		'Diagnosis Builder',
-		'',
-		1,
-		'h',
-		'79',
-		'n',
-		'p'
-	),
-	(
 		131,
 		'CheckingIn.php',
 		31,
@@ -6669,7 +6657,6 @@ VALUES
 	(128, 'ga'),
 	(128, 'ro'),
 	(129, 'db'),
-	(130, 'ga'),
 	(131, 'g'),
 	(131, 'ga'),
 	(132, 'ga'),

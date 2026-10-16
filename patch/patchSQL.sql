@@ -236,3 +236,7 @@ ALTER TABLE `crm_field_map` ADD UNIQUE KEY IF NOT EXISTS `uq_gateway_object_fiel
 
 INSERT IGNORE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `Order`) VALUES
 ('cronJobTypes', 'PurgeActivityLogJob', 'Purge Old Activity Log', '', 0);
+
+-- Retire DiagnosisBuilder.php: Diagnosis/Location lookups are edited on Resource Builder (the file is now a redirect)
+delete from `page_securitygroup` where `idPage` in (select idPage from `page` where `File_Name` = "DiagnosisBuilder.php");
+delete from `page` where `File_Name` = "DiagnosisBuilder.php";
