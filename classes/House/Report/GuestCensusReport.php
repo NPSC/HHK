@@ -166,7 +166,7 @@ class GuestCensusReport extends AbstractReport implements ReportInterface {
                 . ($fullBedNights - $bedNights) . " unavailable " . strtolower($bednightLabel) . ')' : 'n/a'),
         ];
 
-        $stats['Average Length of Stay'] = ($checkedIn > 0 ? number_format($people / $checkedIn, 2) . " nights ($people / $checkedIn checked in)" : 'n/a');
+        $stats['Average Length of Stay'] = ($checkedIn > 0 ? number_format($people / $checkedIn, 2) . " nights ($people people in house / $checkedIn checked in)" : 'n/a');
 
         if (count($this->warnings) > 0) {
             $stats['Warning'] = 'Paid nights could not be calculated, so these visits show as unpaid: ' . implode('; ', $this->warnings);
