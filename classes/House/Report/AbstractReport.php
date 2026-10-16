@@ -48,7 +48,7 @@ abstract class AbstractReport {
     protected string $statsMkup = "";
     protected int $defaultSortCol = 0;
     protected bool $printKeepHtml = false;  // cells with a data-print attribute applies markup (e.g. colored text)
-    protected bool $pdfButton = false;      // add a PDF button next to Print; the page can define pdfCustomize(doc, dt) to adjust the document
+    protected bool $pdfButton = false;      // add a PDF button next to Print, with the #repSummary section above the table; the page can define pdfCustomize(doc, dt) to adjust the document
 
     /**
      * @param \PDO $dbh
@@ -215,6 +215,12 @@ abstract class AbstractReport {
         $dateTimeColumnDefs = json_encode($this->colSelector->getDateTimeColumnDefs());
         $dayColumnDefs = json_encode($this->colSelector->getDayColumnDefs());
 
+        // Report title as quoted, escaped JS strings. pdfmake and the jQuery UI dialog title write plain text, so they
+        // get the decoded title; the print view writes the title as HTML, so it keeps the entities.
+        $jsonFlags = JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT;
+        $textTitle = json_encode(html_entity_decode($this->reportTitle, ENT_QUOTES | ENT_HTML5, 'UTF-8'), $jsonFlags);
+        $htmlTitle = json_encode($this->reportTitle, $jsonFlags);
+
         $uS = Session::getInstance();
 
         return '
@@ -257,7 +263,7 @@ abstract class AbstractReport {
                 },' : '') . '
                 paperSize: "letter",
                 title: function(){
-                    return "' . $this->reportTitle . '";
+                    return ' . $htmlTitle . ';
                 },
                 messageTop: function(){
                     return document.getElementById("repSummary").outerHTML;
@@ -282,9 +288,53 @@ abstract class AbstractReport {
                 orientation: "landscape",
                 pageSize: "LETTER",
                 text: "Download to PDF",
-                title: "' . $this->reportTitle . '",
-                filename: "' . $this->reportTitle . '",
+                title: ' . $textTitle . ',
+                filename: ' . $textTitle . ',
+                footer: true,
                 customize: function (doc, config, dt) {
+
+                    // Summary section above the report table: #repSummary paragraphs as text lines, its tables as
+                    // borderless tables with bold right-aligned labels. The logo is left out.
+                    var summary = $("#repSummary");
+                    var stack = [];
+
+                    summary.find("p, table").filter(function () { return $(this).parents("table").length === 0; }).each(function () {
+
+                        if (this.nodeName === "P") {
+                            stack.push({text: $(this).text(), margin: [0, 0, 0, 2]});
+                            return;
+                        }
+
+                        var body = [];
+                        $(this).children("thead, tbody, tfoot").children("tr").each(function () {
+                            var row = $(this).children("th, td").map(function (i) {
+                                return {text: $(this).text().trim(), bold: (i === 0 || this.nodeName === "TH"), alignment: (i === 0 ? "right" : "left")};
+                            }).get();
+                            if (row.length > 0) {
+                                body.push(row);
+                            }
+                        });
+
+                        if (body.length === 0) {
+                            return;
+                        }
+
+                        // pdfmake needs every row to have the same number of cells.
+                        var cols = Math.max.apply(null, body.map(function (r) { return r.length; }));
+                        body.forEach(function (r) { while (r.length < cols) { r.push({text: ""}); } });
+
+                        stack.push({
+                            table: {widths: body[0].map(function (c, i) { return (i === cols - 1 ? "*" : "auto"); }), body: body},
+                            layout: "noBorders",
+                            margin: [0, 4, 0, 4]
+                        });
+                    });
+
+                    if (stack.length > 0) {
+                        var tableIdx = doc.content.findIndex(function (c) { return c.table; });
+                        doc.content.splice(tableIdx, 0, {stack: stack, margin: [0, 0, 0, 8]});
+                    }
+
                     if(typeof pdfCustomize === "function"){
                         pdfCustomize(doc, dt);
                     }
@@ -309,7 +359,7 @@ abstract class AbstractReport {
         $("#em' . $this->inputSetReportName . 'RptDialog").dialog({
             autoOpen:false,
             modal:true,
-            title: "Email ' . html_entity_decode($this->reportTitle) . '",
+            title: "Email " + ' . $textTitle . ',
             width: "auto",
             buttons: {
                 "Send":function(){

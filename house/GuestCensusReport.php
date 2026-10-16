@@ -75,27 +75,20 @@ if (isset($_POST['btnExcel-' . $report->getInputSetReportName()])) {
                 var dateFormat = '<?php echo $labels->getString("momentFormats", "report", "MMM D, YYYY"); ?>';
                 var columnDefs = $.parseJSON('<?php echo json_encode($report->colSelector->getColumnDefs()); ?>');
 
-                // PDF button: summary lines under the title, and the guest roster in red/black.
+                // PDF button: compact layout, and the guest roster in red/black.
                 // pdfmake can't render HTML, so each party in the print markup becomes a colored text run.
                 var pdfCustomize = function (doc, dt) {
 
-                    var summary = [];
-                    $('#repSummary p').each(function () {
-                        summary.push($(this).text());
-                    });
-                    $('#repSummary th.tdlabel').each(function () {
-                        summary.push($(this).text() + ': ' + $(this).next('td').text());
-                    });
-
+                    // The summary section (in a stack block) is added by AbstractReport, so the first top-level table is the report.
                     var tableIdx = doc.content.findIndex(function (c) { return c.table; });
-                    doc.content.splice(tableIdx, 0, {text: summary.join('\n'), margin: [0, 0, 0, 8]});
-                    tableIdx++;
 
                     doc.pageMargins = [20, 20, 20, 20];
                     doc.defaultStyle.fontSize = 8;
                     doc.styles.tableHeader.fontSize = 7;
                     doc.styles.tableBodyEven.alignment = 'center';
                     doc.styles.tableBodyOdd.alignment = 'center';
+                    doc.styles.tableFooter.fontSize = 8;
+                    doc.styles.tableFooter.alignment = 'center';
 
                     var body = doc.content[tableIdx].table.body;
                     var rosterCol = body[0].findIndex(function (c) { return c.text === 'Guest Roster'; });
@@ -117,7 +110,8 @@ if (isset($_POST['btnExcel-' . $report->getInputSetReportName()])) {
                     var dataCol = dt.columns().header().toArray().findIndex(function (h) { return $(h).text() === 'Guest Roster'; });
                     var rows = dt.rows({search: 'applied', order: 'applied'}).data();
 
-                    for (var i = 1; i < body.length; i++) {
+                    // body is the header row, one row per data row, then the totals row.
+                    for (var i = 1; i <= rows.length; i++) {
 
                         var markup = $('<div>').html(rows[i - 1][dataCol]).children('[data-print]').attr('data-print');
 
