@@ -61,8 +61,7 @@ class Vehicle {
 
         if ($tag != '') {
 
-            $tag = addslashes($tag) . '%';
-            $stmt = $dbh->query("SELECT COUNT(v.idVehicle),
+            $stmt = $dbh->prepare("SELECT COUNT(v.idVehicle),
     v.*,
     IFNULL(r.Title, '') AS `Room`,
     IFNULL(vs.idVisit, 0) AS `idVisit`,
@@ -82,7 +81,8 @@ FROM
 		LEFT JOIN
 	`name` n on ng.idName = n.idName
 WHERE
-    v.License_Number LIKE '$tag' GROUP BY v.idVehicle");
+    v.License_Number LIKE :tag GROUP BY v.idVehicle");
+            $stmt->execute([':tag' => $tag . '%']);
 
             $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 

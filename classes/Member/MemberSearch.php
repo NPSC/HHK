@@ -179,14 +179,14 @@ class MemberSearch {
         } else if ($basis == VolMemberType::ReferralAgent || $basis == VolMemberType::Doctor) {
 
                 $query2 = "SELECT distinct n.idName, n.Name_Last, n.Name_First, n.Name_Nickname, ifnull(nw.Phone_Num, '') as `WorkPhone`, ifnull(nw.Phone_Extension, '') as `WorkExt`, ifnull(nc.Phone_Num, '') as `CellPhone`, ifnull(ne.Email, '') as `Email`
-FROM name n join name_volunteer2 nv on n.idName = nv.idName and nv.Vol_Category = 'Vol_Type'  and nv.Vol_Code = '$basis'
+FROM name n join name_volunteer2 nv on n.idName = nv.idName and nv.Vol_Category = 'Vol_Type'  and nv.Vol_Code = :basis
 left join name_phone nw on n.idName = nw.idName and nw.Phone_Code = '" . PhonePurpose::Work . "'
 left join name_phone nc on n.idName = nc.idName and nc.Phone_Code = '" . PhonePurpose::Cell . "'
 left join name_email ne on n.idName = ne.idName and n.Preferred_Email = ne.Purpose
 where n.idName>0 and n.Member_Status='a' and n.Record_Member = 1 AND MATCH(n.`Name_Search`) AGAINST (:search in boolean mode) order by n.Name_Last, n.Name_First;";
 
             $stmt = $dbh->prepare($query2);
-            $stmt->execute([':search'=>$this->buildFulltextQuery($this->letters)]);
+            $stmt->execute([':search'=>$this->buildFulltextQuery($this->letters), ':basis'=>$basis]);
             $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
             foreach ($rows as $r) {
@@ -238,20 +238,21 @@ where n.idName>0 and n.Member_Status='a' and n.Record_Member = 1 AND MATCH(n.`Na
 
             if ($baId > 0) {
                 // search on id
-                $stmt = $dbh->query("SELECT n.idName, n.Name_Last, n.Name_First, n.Name_Nickname, n.Company, nd.tax_exempt  " .
-                        " FROM name n join name_volunteer2 nv on n.idName = nv.idName and nv.Vol_Category = 'Vol_Type'  and nv.Vol_Code = '$basis'" .
+                $stmt = $dbh->prepare("SELECT n.idName, n.Name_Last, n.Name_First, n.Name_Nickname, n.Company, nd.tax_exempt  " .
+                        " FROM name n join name_volunteer2 nv on n.idName = nv.idName and nv.Vol_Category = 'Vol_Type'  and nv.Vol_Code = :basis" .
                         " join name_demog nd on n.idName = nd.idName" .
-                        " where n.Member_Status='a' and n.Record_Member = 1 and n.idName = $baId");
+                        " where n.Member_Status='a' and n.Record_Member = 1 and n.idName = :baId");
+                $stmt->execute([':basis' => $basis, ':baId' => $baId]);
 
             } else {
 
                 $query2 = "SELECT distinct n.idName, n.Name_Last, n.Name_First, n.Name_Nickname, n.Company, nd.tax_exempt
-FROM name n join name_volunteer2 nv on n.idName = nv.idName and nv.Vol_Category = 'Vol_Type'  and nv.Vol_Code = '$basis'
+FROM name n join name_volunteer2 nv on n.idName = nv.idName and nv.Vol_Category = 'Vol_Type'  and nv.Vol_Code = :basis
  join name_demog nd on n.idName = nd.idName
 where n.idName>0 and n.Member_Status='a' and n.Record_Member = 1 AND (MATCH(n.`Name_Search`) AGAINST (:search in boolean mode) or n.`Name_Search` LIKE :searchLike) order by n.Company, n.Name_Last, n.Name_First;";
 
                 $stmt = $dbh->prepare($query2);
-                $stmt->execute([':search'=>$this->buildFulltextQuery($this->letters), ':searchLike'=>'%'.$this->letters.'%']);
+                $stmt->execute([':search'=>$this->buildFulltextQuery($this->letters), ':searchLike'=>'%'.$this->letters.'%', ':basis'=>$basis]);
             }
 
 

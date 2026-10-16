@@ -111,7 +111,8 @@ if (filter_has_var(INPUT_POST, "table")) {
 
     $tableName = substr(filter_var($_POST["table"], FILTER_SANITIZE_FULL_SPECIAL_CHARS), 0, 45);
 
-    $res = $dbh->query("Select Code, Description, Substitute from gen_lookups where Table_Name='" . $tableName . "';");
+    $res = $dbh->prepare("Select Code, Description, Substitute from gen_lookups where Table_Name = :tbl;");
+    $res->execute([':tbl' => $tableName]);
 
     $code = array(
         "Code" => "",

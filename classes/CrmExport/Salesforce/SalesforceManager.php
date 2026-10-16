@@ -629,6 +629,9 @@ class SalesforceManager extends AbstractExportManager {
         $this->traceData = '';
 
 
+        // whole positive ids only - they go into an IN () list
+        $sourceIds = array_values(array_filter(array_map(fn($id) => intval($id, 10), $sourceIds), fn($id) => $id > 0));
+
         if (count($sourceIds) == 0) {
             $replys[0] = ['error' => "The list of HHK Id's to send is empty."];
             return $replys;

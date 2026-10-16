@@ -140,7 +140,8 @@ if (isset($_POST['btnkfSave'])) {
         $dAmt = filter_var($_POST['srrAmt'][0], FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION);
 
         // Check for an entry with the same description
-        $stmt = $dbh->query("Select count(*) from gen_lookups where `Table_Name` = 'Static_Room_Rate' and LOWER(`Description`) = '" . strtolower($dText) . "';");
+        $stmt = $dbh->prepare("Select count(*) from gen_lookups where `Table_Name` = 'Static_Room_Rate' and LOWER(`Description`) = :desc;");
+        $stmt->execute([':desc' => strtolower($dText)]);
         $rows = $stmt->fetchAll(PDO::FETCH_NUM);
 
         if ($rows[0][0] == 0) {
@@ -972,7 +973,8 @@ if (isset($_POST['ldfm'])) {
     $rarry = Common::readGenLookupsPDO($dbh, 'Form_Upload');
 
     // get available doc replacements
-    $replacementStmt = $dbh->query("SELECT `idTemplate_tag`, `Tag_Title`, `Tag_Name` FROM `template_tag` WHERE `Doc_Name` = '$formType' order by Tag_Title");
+    $replacementStmt = $dbh->prepare("SELECT `idTemplate_tag`, `Tag_Title`, `Tag_Name` FROM `template_tag` WHERE `Doc_Name` = :docName order by Tag_Title");
+    $replacementStmt->execute([':docName' => $formType]);
     $replacementRows = $replacementStmt->fetchAll();
     $rTbl = new HTMLTable();
 
@@ -1346,7 +1348,8 @@ if (isset($_POST['txtformLang'])) {
             $langCode = '';
 
             // lookup teh language
-            $lstmt = $dbh->query("Select `ISO_639_1` as `Code` from `language` where `Title` = '$lang';");
+            $lstmt = $dbh->prepare("Select `ISO_639_1` as `Code` from `language` where `Title` = :lang;");
+            $lstmt->execute([':lang' => $lang]);
             $langRows = $lstmt->fetchAll(PDO::FETCH_ASSOC);
 
             if (count($langRows) > 0) {
