@@ -257,6 +257,21 @@ Order by `t`.`List_Order`;");
             $diags = Common::readGenLookupsPDO($dbh, $tableName, 'Order');
         }
 
+        // "Replace With" options, built once.  Each row's dropdown is sent empty and filled from the hidden
+        // template in the header when needed (rescBuilder.js) - a full copy per row was N x N options.
+        $replaceOptions = $diags;
+        if ($type == GLTypeCodes::CA) {
+            // fix option group issue on additional charges
+            foreach ($replaceOptions as $k => $diag) {
+                unset($replaceOptions[$k][2]);
+            }
+        }
+
+        $hasReplaceCol = ($type != GlTypeCodes::m && $type != GlTypeCodes::U && $tableName != RESERV_STATUS_TABLE_NAME);
+        $replaceTemplate = ($hasReplaceCol
+            ? HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($replaceOptions, ''), ['class' => 'hhk-replaceWithTemplate', 'style' => 'display:none;', 'disabled' => 'disabled'])
+            : '');
+
         $tbl = new HTMLTable();
 
         $hdrTr =
@@ -267,7 +282,7 @@ Order by `t`.`List_Order`;");
                 . ($type == GlTypeCodes::HA ? HTMLTable::makeTh('Days') : '')
                  . (($type == GlTypeCodes::Demographics || $tableName == "Calendar_Status_Colors") ? HTMLTable::makeTh('Font Color') . HTMLTable::makeTh('Background Color') : '')
                  . ($type == GlTypeCodes::Demographics ? HTMLTable::makeTh('Icon <a href="https://icons.getbootstrap.com/" target="_blank" class="ml-2" title="More Info"><i class="bi bi-info-circle-fill"></i></a>') : '')
-                  . ($type == GlTypeCodes::U ? '' : ($type == GlTypeCodes::m || $tableName == RESERV_STATUS_TABLE_NAME ? HTMLTable::makeTh('Use') : HTMLTable::makeTh('Delete') . HTMLTable::makeTh('Replace With')));
+                  . ($type == GlTypeCodes::U ? '' : ($type == GlTypeCodes::m || $tableName == RESERV_STATUS_TABLE_NAME ? HTMLTable::makeTh('Use') : HTMLTable::makeTh('Delete') . HTMLTable::makeTh('Replace With' . $replaceTemplate, ['class' => 'hhk-replaceWithCol', 'style' => 'display:none;'])));
 
         $tbl->addHeaderTr($hdrTr);
 
@@ -300,13 +315,6 @@ Order by `t`.`List_Order`;");
                     'class' => 'hhkdiagdelcb',
                     'data-did' => 'selDiagDel[' . $d[0] . ']'
                 )));
-            }
-
-            //fix option group issue on additional charges
-            if($type == GLTypeCodes::CA){
-                foreach($diags as &$diag){
-                    unset($diag[2]);
-                }
             }
 
             $txtDiagAttrs = ['name' => 'txtDiag[' . $d[0] . ']', 'title' => (isset($descriptions[$d[0]]) ? $descriptions[$d[0]] : '')];
@@ -351,8 +359,8 @@ Order by `t`.`List_Order`;");
 
                 $cbDelMU .
 
-                ($type != GlTypeCodes::m && $type != GlTypeCodes::U && $tableName != RESERV_STATUS_TABLE_NAME ?
-                    HTMLTable::makeTd(HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($diags, ''), ['name' => 'selDiagDel[' . $d[0] . ']']))
+                ($hasReplaceCol ?
+                    HTMLTable::makeTd(HTMLSelector::generateMarkup('', ['name' => 'selDiagDel[' . $d[0] . ']', 'class' => 'hhk-replaceWith', 'style' => 'display:none;']), ['class' => 'hhk-replaceWithCol', 'style' => 'display:none;'])
                     : '')
 
             );
@@ -758,7 +766,7 @@ Order by `t`.`List_Order`;");
             } else if (isset($postLookups['selmisc'])) {
                 static::replaceLookups($dbh, $postLookups['selmisc'], $codeArray, (isset($postLookups['cbDiagDel']) ? $postLookups['cbDiagDel'] : array()));
             } else {
-                static::replaceGenLk($dbh, $tableName, $codeArray, $amounts, $attributes, $orderNums, (isset($postLookups['cbDiagDel']) ? $postLookups['cbDiagDel'] : NULL), $rep, (isset($postLookups['cbDiagDel']) ? $postLookups['selDiagDel'] : array()));
+                static::replaceGenLk($dbh, $tableName, $codeArray, $amounts, $attributes, $orderNums, (isset($postLookups['cbDiagDel']) ? $postLookups['cbDiagDel'] : NULL), $rep, (isset($postLookups['cbDiagDel']) ? ($postLookups['selDiagDel'] ?? array()) : array()));
             }
         }
 
@@ -892,7 +900,8 @@ Order by `t`.`List_Order`;");
                         // delete
                         if (is_null($replace) === FALSE) {
 
-                            $rowCount = $replace($dbh, $replaceWith[$code], $code, $tblName);
+                            // no choice made posts nothing now (the dropdowns start empty) - same as the old blank option
+                            $rowCount = $replace($dbh, $replaceWith[$code] ?? '', $code, $tblName);
 
                             if ($rowCount !== FALSE) {
                                 $rowsAffected += $rowCount;

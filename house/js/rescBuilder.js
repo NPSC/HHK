@@ -532,6 +532,20 @@ $(document).ready(function () {
         this.value = amt.toFixed(2);
     });
 
+    // Lookup "Replace With" dropdowns are sent hidden and empty.  Show one only while its row's Delete is checked,
+    // filling it from the table's template the first time; the whole column shows only while something is checked.
+    $("#mainTabs").on('change', 'input.hhkdiagdelcb', function () {
+        let $table = $(this).closest('table'),
+            $sel = $(this).closest('tr').find('select.hhk-replaceWith');
+
+        if (this.checked && $sel.children('option').length === 0) {
+            $sel.html($table.find('select.hhk-replaceWithTemplate').html());
+        }
+
+        $sel.toggle(this.checked);
+        $table.find('.hhk-replaceWithCol').toggle($table.find('input.hhkdiagdelcb:checked').length > 0);
+    });
+
     $("#mainTabs").on('click', '.hhk-saveLookup', function () {
         let $frm = $(this).closest('form');
         let sel = $frm.find('select.hhk-selLookup');
