@@ -268,8 +268,8 @@ VALUES
 	),
 	(
 		'cronJobTypes',
-		'PurgeActivityLogJob',
-		'Purge Old Activity Log',
+		'PurgeAuditLogJob',
+		'Purge Old Audit Log',
 		'',
 		'',
 		0

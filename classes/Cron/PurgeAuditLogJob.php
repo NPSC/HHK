@@ -6,7 +6,7 @@ use HHK\Exception\RuntimeException;
 use HHK\Tables\EditRS;
 
 /**
- * PurgeActivityLogJob.php
+ * PurgeAuditLogJob.php
  *
  * @author    Will Ireland <wireland@nonprofitsoftwarecorp.org>
  * @copyright 2010-2026 <nonprofitsoftwarecorp.org>
@@ -15,10 +15,10 @@ use HHK\Tables\EditRS;
  */
 
 /**
- * Deletes activity_log rows older than the retention period, keeping a rollup checkpoint for each
+ * Deletes audit_log rows older than the retention period, keeping a rollup checkpoint for each
  * record that still existed then (see Auditable::purgeActivityBefore()).  No job scheduled = keep forever.
  */
-class PurgeActivityLogJob extends AbstractJob implements JobInterface {
+class PurgeAuditLogJob extends AbstractJob implements JobInterface {
 
     public array $paramTemplate = [
         "retentionMonths" => [

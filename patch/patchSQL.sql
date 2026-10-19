@@ -235,7 +235,7 @@ ALTER TABLE `crm_field_map` DROP INDEX IF EXISTS `uq_gateway_object_field`;
 ALTER TABLE `crm_field_map` ADD UNIQUE KEY IF NOT EXISTS `uq_gateway_object_field_crm` (`gateway_id`, `crm_object`, `hhk_field`, `crm_field`);
 
 INSERT IGNORE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `Order`) VALUES
-('cronJobTypes', 'PurgeActivityLogJob', 'Purge Old Activity Log', '', 0);
+('cronJobTypes', 'PurgeAuditLogJob', 'Purge Old Audit Log', '', 0);
 
 -- Retire DiagnosisBuilder.php: Diagnosis/Location lookups are edited on Resource Builder (the file is now a redirect)
 delete from `page_securitygroup` where `idPage` in (select idPage from `page` where `File_Name` = "DiagnosisBuilder.php");

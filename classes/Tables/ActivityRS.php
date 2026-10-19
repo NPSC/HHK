@@ -1,6 +1,7 @@
 <?php
 namespace HHK\Tables;
 
+use HHK\AuditLog\LogOptions;
 use HHK\Tables\Fields\{DB_Field, DbIntSanitizer, DbStrSanitizer, DbDecimalSanitizer, DbDateSanitizer};
 
 /**
@@ -50,6 +51,13 @@ class ActivityRS extends AbstractTableRS {
     public DB_Field $Grace_Period;   // int(11) NOT NULL DEFAULT '0',
     public DB_Field $Timestamp;   // timestamp NULL DEFAULT CURRENT_TIMESTAMP,
 
+    /**
+     * Log table - not written to the activity log.
+     */
+    public function getActivitylogOptions(): LogOptions {
+        return LogOptions::defaults()->disableLogging();
+    }
+    
 
     function __construct($TableName = "activity") {
 

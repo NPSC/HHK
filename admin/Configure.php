@@ -9,6 +9,7 @@ use HHK\Update\{SiteConfig, UpdateSite, SiteLog, Patch};
 use HHK\CreateMarkupFromDB;
 use HHK\HTMLControls\{HTMLContainer, HTMLSelector};
 use HHK\CrmExport\AbstractExportManager;
+use HHK\AuditLog\AuditLogViewer;
 
 /**
  * Configure.php
@@ -192,7 +193,8 @@ $logSelRows = [
     ['rr','Rooms Log'],
     ['ll','Lookups Log'],
     ['nl', 'Notification Log'],
-    ['api', 'HHK API Access Log']
+    ['api', 'HHK API Access Log'],
+    ['al', 'Audit Log']
 ];
 
 try {
@@ -315,6 +317,7 @@ foreach ($logSelRows as $r) {
                     HTMLContainer::generateMarkup('a', $r[1], array('href' => '#tc' . $r[0])), array('id' => 'li' . $r[0]));
 
     $content = HTMLContainer::generateMarkup('h3', $r[1], ['style' => 'background-color:#D3D3D3; padding:10px;'])
+            . ($r[0] == 'al' ? AuditLogViewer::filterMarkup($dbh) : '')
             . HTMLContainer::generateMarkup('div', "<table id='tableli$r[0]' style='width:100%;' cellpadding='0' cellspacing='0' border='0'></table>", []);
 
     $tabContent .= HTMLContainer::generateMarkup('div',

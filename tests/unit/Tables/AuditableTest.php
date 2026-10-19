@@ -21,7 +21,7 @@ class FakeAuditPdo extends \PDO {
     /** @var array<string, array[]> data tables */
     public array $tables = [];
 
-    /** @var array[] activity_log rows */
+    /** @var array[] audit_log rows */
     public array $log = [];
 
     public string $now = '2026-01-01 08:00:00';
@@ -104,7 +104,7 @@ class FakeAuditStmt extends \PDOStatement {
             foreach ($db->pks[$m[1]] ?? [] as $i => $c) {
                 $this->result[] = ['Seq_in_index' => $i + 1, 'Column_name' => $c];
             }
-        } else if (str_contains($q, 'activity_log')) {
+        } else if (str_contains($q, 'audit_log')) {
             $this->activity($q, $prm);
         } else if (preg_match('/^select \* from `?(\w+)`? where (.+)$/', $q, $m)) {
             $this->result = array_values(array_filter($db->tables[$m[1]], fn($r) => $this->match($r, $m[2], $prm)));
@@ -171,7 +171,7 @@ class FakeAuditStmt extends \PDOStatement {
     private function activity(string $q, array $prm): void {
         $db = $this->db;
 
-        if (preg_match('/^insert into `activity_log` \((.+)\) values \((.+)\)$/', $q, $m)) {
+        if (preg_match('/^insert into `audit_log` \((.+)\) values \((.+)\)$/', $q, $m)) {
             $row = ['id' => count($db->log) ? max(array_column($db->log, 'id')) + 1 : 1];
             $vals = array_map('trim', explode(',', $m[2]));
             foreach (array_map('trim', explode(',', $m[1])) as $i => $c) {
@@ -189,7 +189,7 @@ class FakeAuditStmt extends \PDOStatement {
             }
             $this->result = $r ? [$r] : [];
 
-        } else if (preg_match('/^update `activity_log` set properties = :p/', $q)) {
+        } else if (preg_match('/^update `audit_log` set properties = :p/', $q)) {
             foreach ($db->log as &$r) {
                 if ($r['id'] == $prm[':id']) {
                     $r['properties'] = $prm[':p'];
@@ -225,7 +225,7 @@ class FakeAuditStmt extends \PDOStatement {
         } else if (str_contains($q, 'record_key is null')) {
             $db->log = array_values(array_filter($db->log, fn($r) => !($r['created_at'] < $prm[':c'] && is_null($r['record_key']))));
 
-        } else if (str_starts_with($q, 'delete from `activity_log`')) {
+        } else if (str_starts_with($q, 'delete from `audit_log`')) {
             $db->log = array_values(array_filter($db->log, fn($r) => !($r['subject_type'] == $prm[':t'] && $r['record_key'] == $prm[':k'] && $r['created_at'] < $prm[':c'])));
 
         } else {

@@ -7,7 +7,7 @@ use HHK\Tables\Fields\DB_Field;
 /**
  * Auditable.php
  *
- * Writes every EditRS insert/update/delete to `activity_log`, which uses the exact schema of
+ * Writes every EditRS insert/update/delete to `audit_log`, which uses the exact schema of
  * spatie/laravel-activitylog v4 (plus two virtual search columns and extra indexes).
  *
  * properties JSON:
@@ -32,7 +32,7 @@ trait Auditable {
     /** Turn off to skip auditing, e.g. for bulk jobs. */
     public static bool $auditEnabled = true;
 
-    const AUDIT_TABLE = 'activity_log';
+    const AUDIT_TABLE = 'audit_log';
     const CHECKPOINT_EVERY = 20;
     const MERGE_WINDOW_SECONDS = 120;
     const MAX_VALUE_LENGTH = 4096;
@@ -68,7 +68,7 @@ trait Auditable {
         try {
             self::insertActivity($dbh, $logName, $description, null, $subjectType, $subjectId, $properties);
         } catch (\Throwable $e) {
-            error_log('Activity log write failed: ' . $e->getMessage());
+            error_log('Audit log write failed: ' . $e->getMessage());
         }
     }
 
@@ -90,7 +90,7 @@ trait Auditable {
         try {
             return EditRS::select($dbh, $rs, $whereDbFieldArray, $combiner);
         } catch (\Throwable $e) {
-            error_log('Activity log before-image failed for ' . $rs->getTableName() . ': ' . $e->getMessage());
+            error_log('Audit log before-image failed for ' . $rs->getTableName() . ': ' . $e->getMessage());
             return [];
         }
     }
@@ -134,7 +134,7 @@ trait Auditable {
             ]);
 
         } catch (\Throwable $e) {
-            error_log('Activity log insert failed for ' . $rs->getTableName() . ': ' . $e->getMessage());
+            error_log('Audit log insert failed for ' . $rs->getTableName() . ': ' . $e->getMessage());
         }
     }
 
@@ -195,7 +195,7 @@ trait Auditable {
             }
 
         } catch (\Throwable $e) {
-            error_log('Activity log update failed for ' . $rs->getTableName() . ': ' . $e->getMessage());
+            error_log('Audit log update failed for ' . $rs->getTableName() . ': ' . $e->getMessage());
         }
     }
 
@@ -224,7 +224,7 @@ trait Auditable {
             }
 
         } catch (\Throwable $e) {
-            error_log('Activity log delete failed for ' . $rs->getTableName() . ': ' . $e->getMessage());
+            error_log('Audit log delete failed for ' . $rs->getTableName() . ': ' . $e->getMessage());
         }
     }
 

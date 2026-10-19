@@ -81,12 +81,13 @@ CREATE TABLE
     ) ENGINE = InnoDB AUTO_INCREMENT = 1;
 
 -- -----------------------------------------------------
--- Table `activity_log`
--- Same columns, types and index names as spatie/laravel-activitylog v4, so the data carries over to Laravel.
+-- Table `audit_log`
+-- Same columns, types and index names as spatie/laravel-activitylog v4, so the data carries over to Laravel
+-- (set its activitylog.table_name config to audit_log).
 -- record_key and is_checkpoint are virtual columns over properties, plus extra indexes for filtering by id.
 -- -----------------------------------------------------
 CREATE TABLE
-    IF NOT EXISTS `activity_log` (
+    IF NOT EXISTS `audit_log` (
         `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
         `log_name` VARCHAR(255) NULL DEFAULT NULL,
         `description` TEXT NOT NULL,
@@ -104,7 +105,7 @@ CREATE TABLE
         PRIMARY KEY (`id`),
         KEY `subject` (`subject_type`, `subject_id`),
         KEY `causer` (`causer_type`, `causer_id`),
-        KEY `activity_log_log_name_index` (`log_name`),
+        KEY `audit_log_log_name_index` (`log_name`),
         KEY `idx_al_record` (`subject_type`, `record_key`, `id`),
         KEY `idx_al_subject_id` (`subject_type`, `subject_id`, `id`),
         KEY `idx_al_causer_time` (`causer_type`, `causer_id`, `created_at`),
