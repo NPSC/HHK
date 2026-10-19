@@ -232,3 +232,7 @@ update `sys_config` set `Description` = "Insist on user filling in birthdates fo
 
 INSERT IGNORE INTO `sys_config`(`Key`,`Value`,`Type`,`Category`,`Description`,`Show`) VALUES 
 ("stmtShowHospital", "true","b","f","Show Hospital on Statements","1");
+
+INSERT IGNORE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `Type`, `Order`) VALUES
+	('Web_User_Actions', 'RA', 'Identity Verified', '', '', 0),
+	('Web_User_Actions', 'RAF', 'Identity Verification Failed', '', '', 0);

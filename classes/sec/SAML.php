@@ -83,6 +83,72 @@ class SAML {
     }
 
     /**
+     * Build a forced (ForceAuthn) sign in request for re-authenticating a user who is already logged in.  See ReauthGuard.
+     *
+     * @param string $relayState
+     * @return array{url: string, requestId: string}
+     */
+    public function startReauth(string $relayState): array{
+        if($this->IdpConfig['Status'] != 'a' || !isset($this->auth)){
+            throw new \Exception("SSO Provider not enabled");
+        }
+
+        $url = $this->auth->login($relayState, [], true, false, true);
+
+        return ['url' => $url, 'requestId' => $this->auth->getLastRequestID()];
+    }
+
+    /**
+     * Validate a re-authentication response.  Unlike acs(), this never logs in or provisions the user.
+     *
+     * @param string $requestId ID of the AuthnRequest the response must answer
+     * @throws AuthException
+     * @return array{nameId: string, authnInstant: int|null}
+     */
+    public function processReauthResponse(string $requestId): array{
+        if(!isset($this->auth)){
+            throw new AuthException("SSO Provider not enabled");
+        }
+
+        $this->auth->processResponse($requestId);
+
+        if (!empty($this->auth->getErrors()) || !$this->auth->isAuthenticated()) {
+            $ex = $this->auth->getLastErrorException();
+            throw new AuthException("Identity verification failed" . ($ex ? ": " . $ex->getMessage() : ""));
+        }
+
+        return ['nameId' => $this->auth->getNameId(), 'authnInstant' => $this->getLastAuthnInstant()];
+    }
+
+    /**
+     * AuthnInstant of the last processed response, which php-saml does not expose.
+     *
+     * @return int|null
+     */
+    private function getLastAuthnInstant(): ?int{
+        $xml = $this->auth->getLastResponseXML();
+        if(empty($xml)){
+            return null;
+        }
+
+        $dom = new \DOMDocument();
+        if(Utils::loadXML($dom, $xml) === false){
+            return null;
+        }
+
+        // php-saml has already rejected responses that do not hold exactly one (signed) assertion
+        $xpath = new \DOMXPath($dom);
+        $xpath->registerNamespace('saml', \OneLogin\Saml2\Constants::NS_SAML);
+        $nodes = $xpath->query('//saml:Assertion/saml:AuthnStatement/@AuthnInstant');
+
+        if($nodes === false || $nodes->length !== 1){
+            return null;
+        }
+
+        return Utils::parseSAML2Time($nodes->item(0)->nodeValue);
+    }
+
+    /**
      * Attribute Consumer Service
      *
      * Handles the SAML Response from the IdP

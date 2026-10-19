@@ -65,8 +65,6 @@ class UserClass
      */
     public function _checkLogin(\PDO $dbh, $username, $password, bool $rememberMe = FALSE, bool $checkOTP = true, $otpMethod = '', $otp = '')
     {
-        $ssn = Session::getInstance();
-
         if ($this->testTries() === FALSE) {
             $this->logMessage = "Too many log-in attempts.  ";
             return FALSE;
@@ -84,24 +82,7 @@ class UserClass
             }
 
             //check PW
-            $match = false;
-            //new method
-            if($r != NULL && stripos($r['Enc_PW'], '$argon2id') === 0 && isset($ssn->sitePepper) && password_verify(filter_var($password, FILTER_SANITIZE_ADD_SLASHES) . $ssn->sitePepper, $r['Enc_PW'])){
-                $match = true;
-            }else if ($r != NULL && stripos($r['Enc_PW'], '$argon2id') === 0 ) {
-                //old sanitizer )o:
-                // Sanitize and try again - equivelant to FILTER_SANITIZE_STRING
-                $str = preg_replace('/\x00|<[^>]*>?/', '', $password);
-                $password = str_replace(["'", '"'], ['&#39;', '&#34;'], $str);
-
-                if(isset($ssn->sitePepper) && password_verify($password . $ssn->sitePepper, $r['Enc_PW'])){
-                    $this->forcePwReset($dbh, $r['idName']);
-                    $match = true;
-                }
-            }else if ($r != NULL && $r['Enc_PW'] == md5($password)) { //old method
-                $this->forcePwReset($dbh, $r['idName']);
-                $match = true;
-            }
+            $match = ($r != NULL && $this->passwordMatches($dbh, $r, $password));
 
             if ($match && $r['Status'] == 'a') {
                 $success = false;
@@ -883,6 +864,125 @@ class UserClass
             $stmt = $dbh->prepare("insert into w_user_log (`Username`, `Access_Date`, `IP`, `Action`) values (:username, :timestamp , :remoteIp, :action)");
             $stmt->execute(array(':username'=>$username, ':timestamp'=>$timestamp, ':remoteIp'=>$remoteIp, ':action'=>$action));
         }
+    }
+
+    /**
+     * Reset a local user's password on an admin's behalf without checking the admin's own password.
+     * Callers must have re-verified the admin some other way (see ReauthGuard).  The user must
+     * change the password at their next login.
+     *
+     * @param \PDO $dbh
+     * @param int $id idName of the user to reset
+     * @param string $newPw
+     * @return bool
+     */
+    public function adminResetPassword(\PDO $dbh, int $id, string $newPw): bool
+    {
+        $ssn = Session::getInstance();
+
+        $usersRS = new \HHK\Tables\WebSec\W_usersRS();
+        $usersRS->idName->setStoredVal($id);
+        $rows = EditRS::select($dbh, $usersRS, array($usersRS->idName));
+
+        if (count($rows) != 1) {
+            $this->logMessage = "User not found";
+            return FALSE;
+        }
+
+        EditRS::loadRow($rows[0], $usersRS);
+
+        if ($usersRS->idIdp->getStoredVal() > 0) {
+            $this->logMessage = "This user signs in with SSO and has no HHK password";
+            return FALSE;
+        }
+
+        if(isset($ssn->sitePepper) && $ssn->sitePepper != ''){
+            $newPwHash = password_hash($newPw . $ssn->sitePepper, PASSWORD_ARGON2ID);
+        }else{
+            $newPwHash = password_hash($newPw, PASSWORD_ARGON2ID);
+        }
+
+        $usersRS->Enc_PW->setNewVal($newPwHash);
+        $usersRS->PW_Change_Date->setNewVal(date('Y-m-d H:i:s'));
+        $usersRS->PW_Updated_By->setNewVal($ssn->username);
+        $usersRS->Chg_PW->setNewVal(1);
+        $usersRS->Status->setNewVal('a');
+
+        if (EditRS::update($dbh, $usersRS, array($usersRS->idName)) != 1) {
+            $this->logMessage = "Password could not be saved";
+            return FALSE;
+        }
+
+        $this->insertUserLog($dbh, UserClass::PW_Changed, $usersRS->User_Name->getStoredVal());
+
+        $stmt = $dbh->prepare("insert into w_user_passwords (idUser, Enc_PW) values(:idUser, :newPw);");
+        $stmt->execute(array(
+            ':idUser' => $id,
+            ':newPw' => $newPwHash
+        ));
+
+        return TRUE;
+    }
+
+    /**
+     * Check a local user's password for re-authentication (see ReauthGuard).  Unlike _checkLogin(),
+     * this does not log the user in again.  Shares the login attempt counter.
+     *
+     * @param \PDO $dbh
+     * @param string $username
+     * @param string $password
+     * @return bool
+     */
+    public function verifyPassword(\PDO $dbh, string $username, string $password): bool
+    {
+        if ($this->testTries() === FALSE) {
+            $this->logMessage = "Too many attempts.  Log out and log in again.";
+            return FALSE;
+        }
+
+        $r = self::getUserCredentials($dbh, $username);
+
+        if ($r == NULL || !empty($r['idIdp']) || $r['Status'] != 'a' || !$this->passwordMatches($dbh, $r, $password)) {
+            $this->incrementTries();
+            $this->logMessage = "Incorrect password.";
+            return FALSE;
+        }
+
+        $this->resetTries();
+        return TRUE;
+    }
+
+    /**
+     * Does the password match the user's stored hash?  Legacy hashes force a password reset.
+     *
+     * @param \PDO $dbh
+     * @param array $r User credentials row
+     * @param string $password
+     * @return bool
+     */
+    private function passwordMatches(\PDO $dbh, array $r, string $password): bool
+    {
+        $ssn = Session::getInstance();
+
+        //new method
+        if(stripos($r['Enc_PW'], '$argon2id') === 0 && isset($ssn->sitePepper) && password_verify(filter_var($password, FILTER_SANITIZE_ADD_SLASHES) . $ssn->sitePepper, $r['Enc_PW'])){
+            return true;
+        }else if (stripos($r['Enc_PW'], '$argon2id') === 0 ) {
+            //old sanitizer )o:
+            // Sanitize and try again - equivelant to FILTER_SANITIZE_STRING
+            $str = preg_replace('/\x00|<[^>]*>?/', '', $password);
+            $password = str_replace(["'", '"'], ['&#39;', '&#34;'], $str);
+
+            if(isset($ssn->sitePepper) && password_verify($password . $ssn->sitePepper, $r['Enc_PW'])){
+                $this->forcePwReset($dbh, $r['idName']);
+                return true;
+            }
+        }else if ($r['Enc_PW'] == md5($password)) { //old method
+            $this->forcePwReset($dbh, $r['idName']);
+            return true;
+        }
+
+        return false;
     }
 
     /**
