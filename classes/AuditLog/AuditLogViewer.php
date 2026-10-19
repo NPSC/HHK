@@ -53,14 +53,16 @@ class AuditLogViewer {
             $field('Table', HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($tables, '', TRUE), ['id' => 'alTable', 'class' => 'hhk-alFilter']))
             . $field('Record Id', HTMLInput::generateMarkup('', ['id' => 'alSubjectId', 'type' => 'number', 'min' => '1', 'style' => 'width:7em;', 'class' => 'hhk-alFilter']))
             . $field('Record Key', HTMLInput::generateMarkup('', ['id' => 'alRecordKey', 'size' => '18', 'placeholder' => 'idVisit=5,Span=1', 'class' => 'hhk-alFilter']))
-            . $field('User', HTMLInput::generateMarkup('', ['id' => 'alUser', 'size' => '12', 'class' => 'hhk-alFilter']))
+            // autocomplete box; the chosen username goes in the hidden alUser filter
+            . $field('User', HTMLInput::generateMarkup('', ['id' => 'alUserSearch', 'type' => 'search', 'size' => '16', 'autocomplete' => 'off', 'placeholder' => 'Name or username', 'title' => 'Enter at least 2 characters to search']))
+            . HTMLInput::generateMarkup('', ['id' => 'alUser', 'type' => 'hidden', 'class' => 'hhk-alFilter'])
             . $field('Event', HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup(self::EVENTS, '', TRUE), ['id' => 'alEvent', 'class' => 'hhk-alFilter']))
             . $field('From', HTMLInput::generateMarkup('', ['id' => 'alFrom', 'type' => 'date', 'class' => 'hhk-alFilter']))
             . $field('To', HTMLInput::generateMarkup('', ['id' => 'alTo', 'type' => 'date', 'class' => 'hhk-alFilter']))
             . $field('Batch', HTMLInput::generateMarkup('', ['id' => 'alBatch', 'size' => '12', 'class' => 'hhk-alFilter']))
-            . HTMLInput::generateMarkup('Clear Filters', ['type' => 'button', 'id' => 'alClear', 'class' => 'mb-2']);
+            . HTMLInput::generateMarkup('Clear Filters', ['type' => 'button', 'id' => 'alClear', 'class' => 'mb-2 ui-button ui-state-default ui-corner-all']);
 
-        return HTMLContainer::generateMarkup('div', $controls, ['id' => 'alFilters', 'class' => 'd-flex flex-wrap align-items-center mb-2']);
+        return HTMLContainer::generateMarkup('div', $controls, ['id' => 'alFilters', 'class' => 'd-flex flex-wrap align-items-center mb-2 mt-3']);
     }
 
     /**
@@ -151,6 +153,40 @@ class AuditLogViewer {
         }
 
         return (count($conds) > 0 ? ['condition' => implode(' AND ', $conds), 'bindings' => $binds] : null);
+    }
+
+    /**
+     * Users matching $letters by username or name, for the User filter's autocomplete
+     * (createRoleAutoComplete's format).  The value is the username, which is what the log keeps.
+     *
+     * @param \PDO $dbh
+     * @param string $letters
+     * @param int $limit
+     * @return array{total: int, limit: int, results: array}
+     */
+    public static function userSearch(\PDO $dbh, string $letters, int $limit = 10): array {
+
+        $like = '%' . addcslashes(trim($letters), '%_\\') . '%';
+
+        $stmt = $dbh->prepare("select u.User_Name, ifnull(n.Name_First, '') as Name_First, ifnull(n.Name_Last, '') as Name_Last
+            from w_users u left join `name` n on u.idName = n.idName
+            where u.User_Name like :l1 or n.Name_First like :l2 or n.Name_Last like :l3 or concat(n.Name_First, ' ', n.Name_Last) like :l4
+            order by n.Name_Last, n.Name_First, u.User_Name");
+        $stmt->execute([':l1' => $like, ':l2' => $like, ':l3' => $like, ':l4' => $like]);
+        $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+
+        $results = [];
+        foreach (array_slice($rows, 0, $limit) as $r) {
+            $name = trim($r['Name_First'] . ' ' . $r['Name_Last']);
+            $results[] = [
+                'id' => $r['User_Name'],
+                'value' => $r['User_Name'],
+                // the autocomplete menu renders fullName as html
+                'fullName' => htmlspecialchars($name !== '' ? $name . ' (' . $r['User_Name'] . ')' : $r['User_Name']),
+            ];
+        }
+
+        return ['total' => count($rows), 'limit' => $limit, 'results' => $results];
     }
 
     /**

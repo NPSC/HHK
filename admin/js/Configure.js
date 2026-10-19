@@ -1193,8 +1193,37 @@ $(document).on('change', "#numAddrCalc", function(){
             }
         });
 
+        // User: pick from the name search like the Register page's; Enter filters by the typed username as-is
+        // (e.g. 'cli', or a user who has since been deleted)
+        let $userSearch = $('#alUserSearch');
+        createRoleAutoComplete($userSearch, 2, {cmd: 'auditLogUsers'},
+            function (item) {
+                if (item.value) {
+                    $userSearch.val(item.value);
+                    $('#alUser').val(item.value);
+                    table.ajax.reload();
+                }
+            },
+            false, 'ws_gen.php');
+
+        $userSearch.on('input', function () {
+            // cleared, including with the search box's x button
+            if ($(this).val() === '' && $('#alUser').val() !== '') {
+                $('#alUser').val('');
+                table.ajax.reload();
+            }
+        }).on('keydown', function (e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                $(this).autocomplete('close');
+                $('#alUser').val($(this).val().trim());
+                table.ajax.reload();
+            }
+        });
+
         $('#alClear').on('click', function () {
             $('#alFilters .hhk-alFilter').val('');
+            $userSearch.val('');
             table.ajax.reload();
         });
 
@@ -1208,6 +1237,7 @@ $(document).on('change', "#numAddrCalc", function(){
         }).on('click', 'a.hhk-alRecordLink', function (e) {
             e.preventDefault();
             $('#alFilters .hhk-alFilter').val('');
+            $userSearch.val('');
             $('#alTable').val($(this).data('table'));
             if ($(this).data('key') !== '') {
                 $('#alRecordKey').val($(this).data('key'));
@@ -1218,6 +1248,7 @@ $(document).on('change', "#numAddrCalc", function(){
         }).on('click', 'a.hhk-alBatchLink', function (e) {
             e.preventDefault();
             $('#alFilters .hhk-alFilter').val('');
+            $userSearch.val('');
             $('#alBatch').val($(this).data('batch'));
             table.ajax.reload();
         });

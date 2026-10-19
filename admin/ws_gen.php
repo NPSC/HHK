@@ -219,6 +219,12 @@ try {
 
             break;
 
+        case "auditLogUsers":
+
+            $events = AuditLogViewer::userSearch($dbh, (string)filter_input(INPUT_GET, 'letters', FILTER_UNSAFE_RAW));
+
+            break;
+
         case "showOauthClients":
 
             $columns = array(

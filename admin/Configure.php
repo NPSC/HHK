@@ -368,6 +368,7 @@ $authIdpList = SAML::getIdpList($dbh, false);
         <script type="text/javascript" src="<?php echo NOTY_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo NOTY_SETTINGS_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo BUFFER_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo CREATE_AUTO_COMPLETE_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo CONFIGURE_JS; ?>"></script>
     </head>
     <body <?php if ($wInit->testVersion) {
