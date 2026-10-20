@@ -109,6 +109,7 @@ abstract class AbstractReport {
         $this->filterMkup = $descriptionMkup . HTMLContainer::generateMarkup("div", $this->filterMkup, array("id"=>"filterSelectors", "class"=>"hhk-flex"));
         $btnMkup = HTMLContainer::generateMarkup("div",
             $filterOptsMkup .
+            $this->makeExtraButtonsMkup() .
             HTMLInput::generateMarkup("Run Here", array("type"=>"submit", "name"=>"btnHere-" . $this->getInputSetReportName(), "class"=>"ui-button ui-corner-all ui-widget")) .
             ($excelDownload ? HTMLInput::generateMarkup("Download to Excel", array("type"=>"submit", "name"=>"btnExcel-" . $this->getInputSetReportName(), "class"=>"ui-button ui-corner-all ui-widget")) : '')
         , array("id"=>"filterBtns", "class"=>"mt-3"));
@@ -163,11 +164,11 @@ abstract class AbstractReport {
         foreach($this->resultSet as $r){
             $tr = '';
             foreach ($this->filteredFields as $f) {
-                if($outputType == "email" && isset($f[7]) && $f[7] == "date"){
+                if($outputType == "email" && isset($f[7]) && $f[7] == "date" && $r[$f[1]] != ''){
                     $fieldDT = new \DateTime($r[$f[1]]);
                     $r[$f[1]] = $fieldDT->format("M j, Y");
                 }
-                $tr .= HTMLTable::makeTd($r[$f[1]]);
+                $tr .= HTMLTable::makeTd($r[$f[1]], $this->getCellAttrs($f));
             }
 
             $tbl->addBodyTr($tr);
@@ -185,6 +186,22 @@ abstract class AbstractReport {
      * No-op by default.
      */
     protected function makeFooterMkup(HTMLTable $tbl): void {
+    }
+
+    /**
+     * Optional hook for subclasses to set attributes (eg. alignment) on a field's body cells.
+     * None by default.
+     */
+    protected function getCellAttrs(array $field): array {
+        return [];
+    }
+
+    /**
+     * Optional hook for subclasses to add submit buttons before "Run Here".
+     * None by default.
+     */
+    protected function makeExtraButtonsMkup(): string {
+        return '';
     }
 
     public function generateSummaryMkup():string {
