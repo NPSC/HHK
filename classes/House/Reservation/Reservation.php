@@ -1355,9 +1355,10 @@ WHERE
      * @param \HHK\House\Reservation\Reservation_1 $resv
      * @param int $idRescPosted
      * @param array $reservStatuses
+     * @param bool $useRoomDefaultRate Switch to the new room's default rate category.
      * @return string
      */
-    protected function setRoomChoice(\PDO $dbh, Reservation_1 &$resv, $idRescPosted, $reservStatuses = []) {
+    protected function setRoomChoice(\PDO $dbh, Reservation_1 &$resv, $idRescPosted, $reservStatuses = [], $useRoomDefaultRate = FALSE) {
 
         $uS = Session::getInstance();
 
@@ -1371,39 +1372,17 @@ WHERE
             return '';
         }
 
-        if ($idRescPosted == 0 || $idRescPosted == 9999) {
-            // Waitlisting the Reservation.
-            $resv->setIdResource(0);
-            $resv->setStatus(ReservationStatus::Waitlist);
-            $resv->saveReservation($dbh, $resv->getIdRegistration(), $uS->username);
-            return 'Waitlisted  ';
-        }
-
-        $resv->getConstraints($dbh, true);
-        $roomChooser = new RoomChooser($dbh, $resv, 1, new \DateTime($resv->getExpectedArrival()), new \DateTime($resv->getExpectedDeparture()));
-        $resources = $roomChooser->findResources($dbh, SecurityComponent::is_Authorized(ReserveData::GUEST_ADMIN));
-
-        // Does the resource fit the requirements?
-        if (($resv->isActive($reservStatuses)) && isset($resources[$idRescPosted]) === FALSE) {
-
-            //  room is in use
-            $this->reserveData->addError('Chosen Room is unavailable.  ');
-            //$resv->setIdResource(0);
-            //$resv->setStatus(ReservationStatus::Waitlist);
-
-        } else {
-
-            $resv->setIdResource($idRescPosted);
-
-            // Update Status.
-            if ($resv->getStatus() != ReservationStatus::Committed && $resv->getStatus() != ReservationStatus::UnCommitted) {
-                $resv->setStatus($uS->InitResvStatus);
-            }
+        if ($resv->assignRoom($dbh, $idRescPosted, SecurityComponent::is_Authorized(ReserveData::GUEST_ADMIN), $useRoomDefaultRate) === FALSE) {
+            $this->reserveData->addError($resv->getResultMessage());
         }
 
         $resv->saveReservation($dbh, $resv->getIdRegistration(), $uS->username);
 
-        return (isset($resources[$idRescPosted]) ? $resources[$idRescPosted]->optGroup : "");
+        if ($idRescPosted == 0 || $idRescPosted == 9999) {
+            return 'Waitlisted  ';
+        }
+
+        return $resv->getRoomWarning();
 
     }
 

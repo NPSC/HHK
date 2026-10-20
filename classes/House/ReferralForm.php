@@ -18,6 +18,8 @@ use HHK\Member\Role\{AbstractRole, Patient, Guest};
 use HHK\Tables\EditRS;
 use HHK\Tables\Name\NameAddressRS;
 use HHK\House\Reservation\Reservation_1;
+use HHK\House\ReserveData\ReserveData;
+use HHK\sec\SecurityComponent;
 use HHK\House\Hospital\HospitalStay;
 use HHK\Tables\Reservation\Reservation_GuestRS;
 use HHK\Member\ProgressiveSearch\SearchNameData\SearchNameDataInterface;
@@ -723,6 +725,13 @@ class ReferralForm
 			->setExpectedDeparture($this->CkoutDT->format('Y-m-d'))
 			->setNumberGuests(count($guests) + 1)
 			->setIdReferralDoc($this->referralDocId);
+
+		// Waitlist if the assigned room is not available on the referral's dates.
+		if (($resv->getStatus() == ReservationStatus::Committed || $resv->getStatus() == ReservationStatus::UnCommitted)
+				&& $resv->getIdResource() > 0
+				&& is_null($resv->findRoomForChange($dbh, $resv->getIdResource(), SecurityComponent::is_Authorized(ReserveData::GUEST_ADMIN)))) {
+			$resv->assignRoom($dbh, 0, FALSE, FALSE);
+		}
 
 		$resv->saveReservation($dbh, $reg->getIdRegistration(), $uS->username);
 		$resv->saveConstraints($dbh, array());

@@ -10,6 +10,7 @@ use HHK\House\Constraint\{ConstraintsReservation, ConstraintsVisit};
 use HHK\House\Hospital\HospitalStay;
 use HHK\House\Resource\AbstractResource;
 use HHK\House\Room\Room;
+use HHK\House\Room\RoomChooser;
 use HHK\Member\RoleMember\GuestMember;
 use HHK\Note\{LinkNote, Note};
 use HHK\SysConst\{MemBasis, ReservationStatus, RoomState, VisitStatus, RoomRateCategories, ItemId, InvoiceStatus};
@@ -27,6 +28,10 @@ use HHK\Exception\RuntimeException;
 use HHK\Exception\UnexpectedValueException;
 use HHK\US_Holidays;
 use HHK\SysConst\ReservationStatusType;
+use HHK\SysConst\ItemPriceCode;
+use HHK\House\ReserveData\ReserveData;
+use HHK\Purchase\RateChooser;
+use HHK\sec\SecurityComponent;
 
 /**
  * Reservation_1.php
@@ -130,6 +135,12 @@ class Reservation_1 {
      * @var string
      */
     protected $resultMessage = '';
+
+    /**
+     * Not suitable or too small notice from assignRoom()
+     * @var string
+     */
+    protected $roomWarning = '';
 
     /**
      * Summary of reserveStatusType
@@ -280,59 +291,51 @@ class Reservation_1 {
     }
 
     /**
-     * Summary of move
+     * Move the reservation by a number of days, and optionally to another room.
      * @param \PDO $dbh
      * @param int $startDelta
      * @param int $endDelta
      * @param string $uname
-     * @param bool $forceNewResource
+     * @param bool $forceNewResource Waitlist the reservation if its room is not available on the new dates.
      * @param int|null $idRescPosted
      * @return bool
      */
     public function move(\PDO $dbh, $startDelta, $endDelta, $uname, $forceNewResource = FALSE, $idRescPosted = null) {
-        $uS = Session::getInstance();
-        
-        $startInterval = new \DateInterval('P' . abs($startDelta) . 'D');
-        $endInterval = new \DateInterval('P' . abs($endDelta) . 'D');
 
-        $oldStartTxt = (new \DateTime($this->getExpectedArrival()))->format('M j, Y');
-        $oldEndTxt = (new \DateTime($this->getExpectedDeparture()))->format('M j, Y');
         $newStartDT = new \DateTime($this->getExpectedArrival());
         $newEndDt = new \DateTime($this->getExpectedDeparture());
 
-        if ($endDelta < 0 || $startDelta < 0) {
+        $newStartDT->modify(intval($startDelta, 10) . ' days');
+        $newEndDt->modify(intval($endDelta, 10) . ' days');
 
-            // Move back
-            $newEndDt->sub($endInterval);
-            $newStartDT->sub($startInterval);
+        return $this->changeRoomAndDates($dbh, $newStartDT, $newEndDt, $uname, $forceNewResource, $idRescPosted);
+    }
 
-            // Validity check
-            if ($endDelta < 0 && $startDelta == 0) {
-                $endDATE = new \DateTime($newEndDt->format('Y-m-d 00:00:00'));
-                $startDATE = new \DateTime($newStartDT->format('Y-m-d 00:00:00'));
-                if ($endDATE <= $startDATE) {
-                    $this->resultMessage = "The End date precedes the Start date.  ";
-                    return FALSE;
-                }
+    /**
+     * Change the dates and optionally the room of a reservation that is not checked in, and save it.
+     *
+     * Room rules are shared with the reservation page through assignRoom().
+     *
+     * @param \PDO $dbh
+     * @param \DateTimeInterface $newStartDT
+     * @param \DateTimeInterface $newEndDt
+     * @param string $uname
+     * @param bool $forceNewResource Waitlist the reservation if its room is not available on the new dates.
+     * @param int|string|null $idRescPosted Null keeps the current room; 0 or 9999 waitlists.
+     * @return bool
+     */
+    public function changeRoomAndDates(\PDO $dbh, \DateTimeInterface $newStartDT, \DateTimeInterface $newEndDt, $uname, $forceNewResource = FALSE, $idRescPosted = null) {
 
-            }
+        $isAuthorized = SecurityComponent::is_Authorized(ReserveData::GUEST_ADMIN);
 
+        $oldStartTxt = (new \DateTime($this->getExpectedArrival()))->format('M j, Y');
+        $oldEndTxt = (new \DateTime($this->getExpectedDeparture()))->format('M j, Y');
+        $oldIdResc = intval($this->getIdResource(), 10);
+        $wasWaitlisted = ($this->getStatus() == ReservationStatus::Waitlist);
 
-        } else {
-
-            // Spring ahead
-            $newEndDt->add($endInterval);
-            $newStartDT->add($startInterval);
-
-            // Validity check
-            if ($startDelta > 0 && $endDelta == 0) {
-                $endDATE = new \DateTime($newEndDt->format('Y-m-d 00:00:00'));
-                $startDATE = new \DateTime($newStartDT->format('Y-m-d 00:00:00'));
-                if ($endDATE <= $startDATE) {
-                    $this->resultMessage = "The End date precedes the Start date.  ";
-                    return FALSE;
-                }
-            }
+        if ($newEndDt->format('Y-m-d') <= $newStartDT->format('Y-m-d')) {
+            $this->resultMessage = "The End date precedes the Start date.  ";
+            return FALSE;
         }
 
         // Check for pre-existing visits
@@ -342,8 +345,6 @@ class Reservation_1 {
             return FALSE;
         }
 
-        $rescs = array();
-
         // check if house closed
         $closedMsg = '';
         $operatingHours = new OperatingHours($dbh);
@@ -351,131 +352,154 @@ class Reservation_1 {
             $closedMsg = " - Info: The house is closed on the new arrival date";
         }
 
-        $requestedRescId = null;
+        $this->setExpectedArrival($newStartDT->format('Y-m-d'));
+        $this->setExpectedDeparture($newEndDt->format('Y-m-d'));
+
+        $roomChanged = '';
+        $roomWarning = '';
+
         if ($idRescPosted !== null && $idRescPosted !== '') {
-            $requestedRescId = intval($idRescPosted, 10);
-        }
 
-        if ($this->getStatus() == ReservationStatus::Waitlist) {
+            if ($this->assignRoom($dbh, $idRescPosted, $isAuthorized, TRUE) === FALSE) {
+                return FALSE;
+            }
 
-            // move the reservation
-            $this->setExpectedArrival($newStartDT->format('Y-m-d'));
-            $this->setExpectedDeparture($newEndDt->format('Y-m-d'));
+            $roomWarning = $this->getRoomWarning();
 
-            $roomChanged = '';
-            if ($requestedRescId !== null) {
-                if ($requestedRescId == 0 || $requestedRescId == 9999) {
-                    $this->setIdResource(0);
-                } else {
-                    $rescs = $this->findResources($dbh, $newStartDT->format('Y-m-d 17:00:00'), $newEndDt->format('Y-m-d 09:00:00'), $this->getNumberGuests(), array('room','rmtroom','part'), TRUE);
-                    if (isset($rescs[$requestedRescId]) === FALSE) {
-                        $this->resultMessage = 'Chosen Room is unavailable.  ';
-                        return FALSE;
-                    }
-
-                    $this->setIdResource($requestedRescId);
-                    $this->setStatus($uS->InitResvStatus);
-
-                    $roomChanged = 'to room ' . $rescs[$requestedRescId]->getTitle() . '.  ';
+            if ($this->getIdResource() == 0) {
+                if ($wasWaitlisted === FALSE) {
+                    $roomChanged = 'to waitlist.  ';
                 }
+            } else if ($this->getIdResource() != $oldIdResc) {
+                $roomChanged = 'to room ' . AbstractResource::getResourceObj($dbh, $this->getIdResource())->getTitle() . '.  ';
             }
 
-            $this->saveReservation($dbh, $this->getIdRegistration(), $uname);
+        } else if ($oldIdResc > 0 && is_null($this->findRoomForChange($dbh, $oldIdResc, $isAuthorized))) {
 
-            if ($roomChanged !== '') {
-                $this->resultMessage = 'Reservation changed ' . $roomChanged . $closedMsg;
-            } else {
-                $this->resultMessage = 'Reservation moved.' . $closedMsg;
-            }
-            return TRUE;
-
-        } else {
-
-            if ($requestedRescId !== null && ($requestedRescId == 0 || $requestedRescId == 9999)) {
-                $this->setExpectedArrival($newStartDT->format('Y-m-d'));
-                $this->setExpectedDeparture($newEndDt->format('Y-m-d'));
+            // Current room is not available on the new dates.
+            if ($forceNewResource) {
+                // Used by admin/system workflows to free room assignments.
                 $this->setIdResource(0);
                 $this->setStatus(ReservationStatus::Waitlist);
-
-                $this->saveReservation($dbh, $this->getIdRegistration(), $uname);
-                $this->resultMessage = 'Reservation waitlisted' . $closedMsg;
-                return TRUE;
-            }
-
-            // Check for vacant rooms
-            $rescs = $this->findResources($dbh, $newStartDT->format('Y-m-d 17:00:00'), $newEndDt->format('Y-m-d 09:00:00'), $this->getNumberGuests(), array('room','rmtroom','part'), TRUE);
-
-            if (count($rescs) > 0) {
-
-                // move the reservation
-                $this->setExpectedArrival($newStartDT->format('Y-m-d'));
-                $this->setExpectedDeparture($newEndDt->format('Y-m-d'));
-
-                // Keep the current room unless a specific room was requested.
-                $roomChanged = '';
-                if ($requestedRescId !== null) {
-                    if (isset($rescs[$requestedRescId]) === FALSE) {
-                        $this->resultMessage = 'Chosen Room is unavailable.  ';
-                        return FALSE;
-                    }
-
-                    if ($requestedRescId != $this->getIdResource()) {
-                        $this->setIdResource($requestedRescId);
-                        $resc = $rescs[$requestedRescId];
-                        $roomChanged = 'to room ' . $resc->getTitle() . '.  ';
-                    }
-
-                } else if (isset($rescs[$this->getIdResource()]) === FALSE) {
-                    if ($forceNewResource) {
-                        // Used by admin/system workflows to free room assignments.
-                        $this->setIdResource('0');
-                        $this->setStatus(ReservationStatus::Waitlist);
-                        $roomChanged = 'to waitlist.  ';
-                    } else {
-                        $this->resultMessage = 'The date range is not available.  ';
-                        return FALSE;
-                    }
-                }
-
-                $this->saveReservation($dbh, $this->getIdRegistration(), $uname);
-
-                $newStartTxt = $newStartDT->format('M j, Y');
-                $newEndTxt = $newEndDt->format('M j, Y');
-                $dateChangedMsg = '';
-                if ($oldStartTxt !== $newStartTxt || $oldEndTxt !== $newEndTxt) {
-                    $dateChangedMsg = 'from ' . $oldStartTxt . ' - ' . $oldEndTxt . ' to ' . $newStartTxt . ' - ' . $newEndTxt . '  ';
-                }
-
-                $this->resultMessage = 'Reservation changed ' . $dateChangedMsg . $roomChanged . $closedMsg;
-                return TRUE;
-
+                $roomChanged = 'to waitlist.  ';
             } else {
-
-                if ($requestedRescId !== null) {
-                    $this->resultMessage = 'Chosen Room is unavailable.  ';
-                    return FALSE;
-
-                } else if ($forceNewResource) {
-
-                    // move the reservation
-                    $this->setExpectedArrival($newStartDT->format('Y-m-d'));
-                    $this->setExpectedDeparture($newEndDt->format('Y-m-d'));
-
-                    $this->setIdResource('0');
-                    $this->setStatus(ReservationStatus::Waitlist);
-
-                    $this->saveReservation($dbh, $this->getIdRegistration(), $uname);
-
-                    $this->resultMessage = 'Reservation waitlisted';
-                    return TRUE;
-
-                } else {
-
-                    $this->resultMessage = 'The date range is not available.  ';
-                    return FALSE;
-                }
+                $this->resultMessage = 'The date range is not available.  ';
+                return FALSE;
             }
         }
+
+        $this->saveReservation($dbh, $this->getIdRegistration(), $uname);
+
+        $newStartTxt = $newStartDT->format('M j, Y');
+        $newEndTxt = $newEndDt->format('M j, Y');
+        $dateChangedMsg = '';
+        if ($oldStartTxt !== $newStartTxt || $oldEndTxt !== $newEndTxt) {
+            $dateChangedMsg = 'from ' . $oldStartTxt . ' - ' . $oldEndTxt . ' to ' . $newStartTxt . ' - ' . $newEndTxt . '  ';
+        }
+
+        $this->resultMessage = 'Reservation changed ' . $dateChangedMsg . $roomChanged . ($roomWarning == '' ? '' : ' WARNING: ' . $roomWarning . '  ') . $closedMsg;
+        return TRUE;
+    }
+
+    /**
+     * Assign a room to the reservation using the same rules as the reservation page.  Does not save.
+     *
+     * 0 or 9999 waitlists the reservation.  On failure, see getResultMessage().
+     *
+     * @param \PDO $dbh
+     * @param int|string $idResc
+     * @param bool $isAuthorized Guest admins may choose rooms that are not suitable or too small.
+     * @param bool $useRoomDefaultRate Switch to the new room's default rate category.  The reservation page sets the rate itself.
+     * @return bool
+     */
+    public function assignRoom(\PDO $dbh, $idResc, $isAuthorized, $useRoomDefaultRate) {
+
+        $uS = Session::getInstance();
+        $idResc = intval($idResc, 10);
+        $this->roomWarning = '';
+
+        if ($idResc == 0 || $idResc == 9999) {
+            // Waitlisting the Reservation.
+            $this->setIdResource(0);
+            $this->setStatus(ReservationStatus::Waitlist);
+            return TRUE;
+        }
+
+        $resc = $this->findRoomForChange($dbh, $idResc, $isAuthorized);
+
+        if (is_null($resc)) {
+            $this->resultMessage = 'Chosen Room is unavailable.  ';
+            return FALSE;
+        }
+
+        if ($useRoomDefaultRate && $idResc != $this->getIdResource()) {
+            $this->applyRoomDefaultRate($dbh, $resc);
+        }
+
+        $this->setIdResource($idResc);
+
+        // Update Status.
+        if ($this->getStatus() != ReservationStatus::Committed && $this->getStatus() != ReservationStatus::UnCommitted) {
+            $this->setStatus($uS->InitResvStatus);
+        }
+
+        $this->roomWarning = ($resc->optGroup ?? '');
+
+        return TRUE;
+    }
+
+    /**
+     * Find a room that can take this reservation on its expected dates.
+     * @param \PDO $dbh
+     * @param int $idResc
+     * @param bool $isAuthorized Guest admins may choose rooms that are not suitable or too small.
+     * @return AbstractResource|null
+     */
+    public function findRoomForChange(\PDO $dbh, $idResc, $isAuthorized) {
+
+        $this->getConstraints($dbh, true);
+        $roomChooser = new RoomChooser($dbh, $this, 1, new \DateTime($this->getExpectedArrival()), new \DateTime($this->getExpectedDeparture()));
+        $resources = $roomChooser->findResources($dbh, $isAuthorized);
+
+        return $resources[intval($idResc, 10)] ?? NULL;
+    }
+
+    /**
+     * Not suitable or too small notice for the last room assigned by assignRoom().
+     * @return string
+     */
+    public function getRoomWarning() {
+        return $this->roomWarning;
+    }
+
+    /**
+     * Use the new room's default rate category, the same as changing rooms on the reservation page.
+     * @param \PDO $dbh
+     * @param AbstractResource $resc
+     * @return void
+     */
+    protected function applyRoomDefaultRate(\PDO $dbh, AbstractResource $resc) {
+
+        $uS = Session::getInstance();
+        $rateCategory = $resc->getDefaultRoomCategory();
+
+        if ($rateCategory == '' || $uS->RoomPriceModel == ItemPriceCode::Basic) {
+            return;
+        }
+
+        if (SecurityComponent::is_Authorized(ReserveData::GUEST_ADMIN) === FALSE && $uS->RateChangeAuth) {
+            return;
+        }
+
+        $rateChooser = new RateChooser($dbh);
+
+        if ($rateChooser->validateCategory($rateCategory) === FALSE || $this->getRoomRateCategory() == $rateCategory) {
+            return;
+        }
+
+        $rateRs = $rateChooser->getPriceModel()->getCategoryRateRs(0, $rateCategory);
+        $this->setIdRoomRate($rateRs->idRoom_rate->getStoredVal());
+        $this->setRoomRateCategory($rateCategory);
     }
 
     /**
