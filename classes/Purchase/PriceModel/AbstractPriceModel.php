@@ -907,6 +907,34 @@ where PriceModel = '$priceModelCode' order by `breakpointOrder` desc, FA_Categor
     }
 
     /**
+     * Insert a price model's starting room rates.
+     *
+     * @param \PDO $dbh
+     * @param string $modelCode
+     * @param array $rates each [idRoom_rate, Title, FA_Category, Rate_Breakpoint_Category, Reduced_Rate_1, Reduced_Rate_2, Reduced_Rate_3, Min_Rate]
+     * @return void
+     */
+    protected static function insertRates(\PDO $dbh, $modelCode, array $rates) {
+
+        foreach ($rates as [$idRate, $title, $faCategory, $breakpointCategory, $rate1, $rate2, $rate3, $minRate]) {
+
+            $rateRs = new Room_RateRS();
+            $rateRs->idRoom_rate->setNewVal($idRate);
+            $rateRs->Title->setNewVal($title);
+            $rateRs->FA_Category->setNewVal($faCategory);
+            $rateRs->Rate_Breakpoint_Category->setNewVal($breakpointCategory);
+            $rateRs->PriceModel->setNewVal($modelCode);
+            $rateRs->Reduced_Rate_1->setNewVal($rate1);
+            $rateRs->Reduced_Rate_2->setNewVal($rate2);
+            $rateRs->Reduced_Rate_3->setNewVal($rate3);
+            $rateRs->Min_Rate->setNewVal($minRate);
+            $rateRs->Status->setNewVal('a');
+
+            EditRS::insert($dbh, $rateRs);
+        }
+    }
+
+    /**
      * Summary of installRates
      * @param \PDO $dbh
      * @param mixed $modelCode

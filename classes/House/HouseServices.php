@@ -45,6 +45,7 @@ use HHK\SysConst\RoomState;
 use HHK\SysConst\VisitStatus;
 use HHK\TableLog\VisitLog;
 use HHK\Tables\EditRS;
+use HHK\Tables\Payment\InvoiceRS;
 use HHK\Tables\Visit\StaysRS;
 use HHK\Tables\Visit\VisitRS;
 use HHK\Tables\Visit\Visit_LogRS;
@@ -1341,7 +1342,18 @@ class HouseServices {
             $room2->saveRoom($dbh, $uname, TRUE, $roomStatus);
 
             // Update invoices
-            $dbh->exec("Update invoice set Suborder_Number = " . $visit->getSpan() . " where Order_Number = " . $visit->getIdVisit() . " and Suborder_Number != ". $visit->getSpan());
+            $invRs = new InvoiceRS();
+            $invRs->Order_Number->setStoredVal($visit->getIdVisit());
+
+            foreach (EditRS::select($dbh, $invRs, [$invRs->Order_Number]) as $r) {
+                $invRs = new InvoiceRS();
+                EditRS::loadRow($r, $invRs);
+
+                if ($invRs->Suborder_Number->getStoredVal() != $visit->getSpan()) {
+                    $invRs->Suborder_Number->setNewVal($visit->getSpan());
+                    EditRS::update($dbh, $invRs, [$invRs->idInvoice]);
+                }
+            }
 
             if($dbh->inTransaction()){
                 $dbh->commit();
@@ -1571,11 +1583,11 @@ class HouseServices {
 
                 if ($idGt > 0) {
 
-                    $cnt = $dbh->exec("update guest_token set Token = '' where idGuest_token = " . $idGt);
+                    $gtRs = CreditToken::getTokenRsFromId($dbh, $idGt);
+                    $gtRs->Token->setNewVal('');
 
-                    if ($cnt > 0) {
-                        $gtRs = CreditToken::getTokenRsFromId($dbh, $idGt);
-                        $msg .= 'Card ' . $gtRs->MaskedAccount->getStoredVal() . ', Name ' . $gtRs->CardHolderName->getStoredVal() . ' deleted.  ';
+                    if (EditRS::update($dbh, $gtRs, [$gtRs->idGuest_token]) > 0) {
+                        $msg .='Card ' . $gtRs->MaskedAccount->getStoredVal() . ', Name ' . $gtRs->CardHolderName->getStoredVal() . ' deleted.  ';
                     }
                 }
             }

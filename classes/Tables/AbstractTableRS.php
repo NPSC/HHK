@@ -1,5 +1,8 @@
 <?php
 namespace HHK\Tables;
+
+use HHK\AuditLog\LogOptions;
+
 /**
  * AbstractTableRS.php
  *
@@ -31,6 +34,16 @@ abstract class AbstractTableRS implements TableRSInterface {
      */
     public function getTableName() {
         return $this->tableName;
+    }
+
+    /**
+     * Activity log settings for this table (see Auditable).  Override to tune or opt out.
+     * Same method name as spatie/laravel-activitylog's LogsActivity.
+     *
+     * @return LogOptions
+     */
+    public function getActivitylogOptions(): LogOptions {
+        return LogOptions::defaults();
     }
 
 }

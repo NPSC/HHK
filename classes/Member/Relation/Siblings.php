@@ -4,6 +4,8 @@ namespace HHK\Member\Relation;
 
 use HHK\HTMLControls\{HTMLContainer, HTMLTable};
 use HHK\SysConst\RelLinkType;
+use HHK\Tables\EditRS;
+use HHK\Tables\Name\RelationsRS;
 
 /**
  * Siblings.php
@@ -101,18 +103,20 @@ where
         // Compare group codes, Check each case because they all require different processing
         if ($my_gc != 0 && $ur_gc != 0 && $my_gc != $ur_gc) {
             // we each have our own group code.  covert ur's to mine
-            $q = "update relationship set Group_Code = $my_gc where Group_Code = $ur_gc and Relation_Type = '$RelCode'";
-            $dbh->exec($q);
+            $q = "merge";
+            $relRs = new RelationsRS();
+            $relRs->Group_Code->setStoredVal($ur_gc);
+            $relRs->Relation_Type->setStoredVal($RelCode);
+            $relRs->Group_Code->setNewVal($my_gc);
+            EditRS::update($dbh, $relRs, array($relRs->Group_Code, $relRs->Relation_Type));
         } else if ($my_gc != 0 && $ur_gc == 0) {
             // add ur to my group code
-            $q = "Insert into relationship (idName, Group_Code, Relation_Type, Status, Date_Added, Updated_By)
-                values ($rId, $my_gc, '$RelCode', 'a', now(), '" . $user . "');";
-            $dbh->exec($q);
+            $q = "add";
+            self::insertGroupMember($dbh, $rId, $my_gc, $RelCode, $user);
         } else if ($my_gc == 0 && $ur_gc != 0) {
             // add me to ur group code
-            $q = "Insert into relationship (idName, Group_Code, Relation_Type, Status, Date_Added, Updated_By)
-                values ($id, $ur_gc, '$RelCode', 'a', now(), '" . $user . "');";
-            $dbh->exec($q);
+            $q = "add";
+            self::insertGroupMember($dbh, $id, $ur_gc, $RelCode, $user);
         } else if ($my_gc == 0 && $ur_gc == 0) {
 
             // Get a new group code.
@@ -126,12 +130,9 @@ where
             }
 
             // Insert 2 new records.
-            $q = "Insert into relationship (idName, Group_Code, Relation_Type, Status, Date_Added, Updated_By)
-                values ($id, $relCtr, '$RelCode', 'a', now(), '" . $user . "');";
-            $dbh->exec($q);
-            $q = "Insert into relationship (idName, Group_Code, Relation_Type, Status, Date_Added, Updated_By)
-                values ($rId, $relCtr, '$RelCode', 'a', now(), '" . $user . "');";
-            $dbh->exec($q);
+            $q = "new";
+            self::insertGroupMember($dbh, $id, $relCtr, $RelCode, $user);
+            self::insertGroupMember($dbh, $rId, $relCtr, $RelCode, $user);
         }
 
         //
@@ -150,11 +151,34 @@ where
      * @return string
      */
     public function removeRelationship(\PDO $dbh, $rId) {
-        $qq = "Delete from relationship where Relation_Type='". $this->relCode->getCode() ."' and idName=:rId ";
-        $stmt = $dbh->prepare($qq);
-        $stmt->execute(array(':rId'=>$rId));
+        $relRs = new RelationsRS();
+        $relRs->Relation_Type->setStoredVal($this->relCode->getCode());
+        $relRs->idName->setStoredVal($rId);
+        EditRS::delete($dbh, $relRs, array($relRs->Relation_Type, $relRs->idName));
+
         return "Sibling/Relative Deleted.  ";
 
+    }
+
+    /**
+     * Add a member to a sibling/relative group.
+     *
+     * @param \PDO $dbh
+     * @param int $idName
+     * @param string $groupCode
+     * @param string $relCode
+     * @param string $user
+     * @return void
+     */
+    protected static function insertGroupMember(\PDO $dbh, $idName, $groupCode, $relCode, $user) {
+        $relRs = new RelationsRS();
+        $relRs->idName->setNewVal($idName);
+        $relRs->Group_Code->setNewVal($groupCode);
+        $relRs->Relation_Type->setNewVal($relCode);
+        $relRs->Status->setNewVal('a');
+        $relRs->Date_Added->setNewVal(date('Y-m-d H:i:s'));
+        $relRs->Updated_By->setNewVal($user);
+        EditRS::insert($dbh, $relRs);
     }
 
 }

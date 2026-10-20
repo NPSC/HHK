@@ -379,9 +379,8 @@ class RateChooser {
             if ($spanId > $visit->getSpan()) {
 
                 // Increment the Visit span id
-                $upStmt = $dbh->prepare("UPDATE `visit` SET `Span`= :newSpan WHERE `idVisit`= :idVisit and `Span`= :span");
-                $upStmt->execute(array(':newSpan' => $spanId + 1, ':idVisit' => $idVisit, ':span' => $spanId));
-                $upcount = $upStmt->rowCount();
+                $spanRs->Span->setNewVal($spanId + 1);
+                $upcount = EditRS::update($dbh, $spanRs, array($spanRs->idVisit, $spanRs->Span));
 
                 if ($upcount != 1) {
                     $reply .= "Error on visit update, span Id = " . $spanId;

@@ -15,10 +15,13 @@ use HHK\Member\RoleMember\GuestMember;
 use HHK\Note\{LinkNote, Note};
 use HHK\SysConst\{MemBasis, ReservationStatus, RoomState, VisitStatus, RoomRateCategories, ItemId, InvoiceStatus};
 use HHK\SysConst\ReferralFormStatus;
+use HHK\SysConst\ConstraintType;
 use HHK\TableLog\{ReservationLog, VisitLog};
 use HHK\Tables\EditRS;
 use HHK\Tables\Registration\RegistrationRS;
-use HHK\Tables\Reservation\ReservationRS;
+use HHK\Tables\Reservation\{ReservationInvoiceLineRS, ReservationRS, Reservation_GuestRS, Reservation_MultipleRS};
+use HHK\Tables\Attribute\ConstraintEntityRS;
+use HHK\Tables\{LinkDocRS, LinkNoteRS};
 use HHK\Tables\House\{ResourceRS, RoomRS};
 use HHK\sec\Labels;
 use HHK\sec\Session;
@@ -250,6 +253,46 @@ class Reservation_1 {
         }
 
         return new Reservation_1($resvRs);
+    }
+
+    /**
+     * Link an invoice's lodging MOA lines to a reservation (its prepayment), skipping lines already linked.
+     *
+     * @param \PDO $dbh
+     * @param int $idResv
+     * @param int $idInvoice
+     * @param string|null $typeId only lines of this invoice line type
+     * @return int lines linked
+     */
+    public static function linkPrepaymentLines(\PDO $dbh, $idResv, $idInvoice, $typeId = null) {
+
+        $query = "select idInvoice_Line from invoice_line where Invoice_Id = :idInv and Item_Id = :item";
+        $params = [':idInv' => $idInvoice, ':item' => ItemId::LodgingMOA];
+
+        if (!is_null($typeId)) {
+            $query .= " and Type_Id = :type";
+            $params[':type'] = $typeId;
+        }
+
+        $stmt = $dbh->prepare($query);
+        $stmt->execute($params);
+
+        $count = 0;
+        foreach ($stmt->fetchAll(\PDO::FETCH_COLUMN) as $idLine) {
+
+            $rilRs = new ReservationInvoiceLineRS();
+            $rilRs->Reservation_Id->setStoredVal($idResv);
+            $rilRs->Invoice_Line_id->setStoredVal($idLine);
+
+            if (count(EditRS::select($dbh, $rilRs, [$rilRs->Reservation_Id, $rilRs->Invoice_Line_id])) == 0) {
+                $rilRs->Reservation_Id->setNewVal($idResv);
+                $rilRs->Invoice_Line_id->setNewVal($idLine);
+                EditRS::insert($dbh, $rilRs);
+                $count++;
+            }
+        }
+
+        return $count;
     }
 
     /**
@@ -655,22 +698,35 @@ class Reservation_1 {
 
         // Set referal doc to archived
         $this->updateReferralFormDocStatus($dbh, ReferralFormStatus::Archived);
-        $dbh->exec("delete from `link_doc` where `idReservation` = '" . $this->getIdReservation(). "'");
+        $ldRs = new LinkDocRS();
+        $ldRs->idReservation->setStoredVal($this->getIdReservation());
+        EditRS::delete($dbh, $ldRs, array($ldRs->idReservation));
 
 
 
         //move notes to PSG
         $idPsg = $this->getIdPsg($dbh);
         if($idPsg > 0 && $this->getIdReservation() > 0) {
-            $dbh->exec("update ignore `link_note` set linkType = '" . Note::PsgLink . "', idLink = " . $idPsg . " where `linkType` = '" . Note::ResvLink . "' and `idLink` = " . $this->getIdReservation());
-            $dbh->exec("delete from `link_note` where `linkType` = '" . Note::ResvLink . "' and `idLink` = " . $this->getIdReservation());
+            $lnRs = new LinkNoteRS();
+            $lnRs->linkType->setStoredVal(Note::ResvLink);
+            $lnRs->idLink->setStoredVal($this->getIdReservation());
+            $lnRs->linkType->setNewVal(Note::PsgLink);
+            $lnRs->idLink->setNewVal($idPsg);
+            EditRS::update($dbh, $lnRs, array($lnRs->linkType, $lnRs->idLink));
+
+            // any left behind
+            $lnRs = new LinkNoteRS();
+            $lnRs->linkType->setStoredVal(Note::ResvLink);
+            $lnRs->idLink->setStoredVal($this->getIdReservation());
+            EditRS::delete($dbh, $lnRs, array($lnRs->linkType, $lnRs->idLink));
         }
         
 
         // Delete
-        $cnt = $dbh->exec("Delete from reservation where idReservation = " . $this->getIdReservation());
+        $resvRs = new ReservationRS();
+        $resvRs->idReservation->setStoredVal($this->getIdReservation());
 
-        if ($cnt == 1) {
+        if (count(EditRS::select($dbh, $resvRs, array($resvRs->idReservation))) == 1 && EditRS::delete($dbh, $resvRs, array($resvRs->idReservation))) {
             $logText = VisitLog::getDeleteText($this->reservRs, $this->getIdReservation());
 
             ReservationLog::logReservation($dbh, $this->reservRs->idReservation->getStoredVal(),
@@ -681,10 +737,22 @@ class Reservation_1 {
                 $this->reservRs->idGuest->getStoredVal(),
                 $logText, "delete", $uname);
 
-            $dbh->exec("Delete from reservation_guest where idReservation = " . $this->getIdReservation());
-            $dbh->exec("Delete from constraint_entity where idEntity = " . $this->getIdReservation());
-            $dbh->exec("delete from reservation_multiple where Child_Id = " . $this->getIdReservation());
-            $dbh->exec("delete from reservation_multiple where Host_Id = " . $this->getIdReservation());
+            $rgRs = new Reservation_GuestRS();
+            $rgRs->idReservation->setStoredVal($this->getIdReservation());
+            EditRS::delete($dbh, $rgRs, array($rgRs->idReservation));
+
+            // only this reservation's own constraints - hospital constraints use the hospital id as idEntity
+            foreach (array(ConstraintType::Reservation, ConstraintType::Visit) as $cType) {
+                $ceRs = new ConstraintEntityRS();
+                $ceRs->idEntity->setStoredVal($this->getIdReservation());
+                $ceRs->Type->setStoredVal($cType);
+                EditRS::delete($dbh, $ceRs, array($ceRs->idEntity, $ceRs->Type));
+            }
+
+            $rmRs = new Reservation_MultipleRS();
+            $rmRs->Child_Id->setStoredVal($this->getIdReservation());
+            $rmRs->Host_Id->setStoredVal($this->getIdReservation());
+            EditRS::delete($dbh, $rmRs, array($rmRs->Child_Id, $rmRs->Host_Id), 'or');
 
             $this->reservRs = NULL;
 

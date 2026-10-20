@@ -3,6 +3,7 @@ namespace HHK\Tables\PaymentGW;
 
 use HHK\Tables\AbstractTableRS;
 use HHK\Tables\Fields\{DB_Field, DbStrSanitizer, DbIntSanitizer, DbDateSanitizer, DbDecimalSanitizer};
+use HHK\AuditLog\LogOptions;
 
 /**
  * Card_IdRS.php
@@ -32,6 +33,13 @@ class Card_IdRS extends AbstractTableRS {
     public DB_Field $InvoiceNumber;   // varchar(36) NOT NULL DEFAULT '',
     public DB_Field $Amount;  // DECIMAL(11,2) NOT NULL DEFAULT 0.00,
     public DB_Field $Merchant;   // varchar(45) NOT NULL DEFAULT '',
+
+    /**
+     * Short-lived hosted-checkout handshake rows, deleted on return - not written to the activity log.
+     */
+    public function getActivitylogOptions(): LogOptions {
+        return LogOptions::defaults()->disableLogging();
+    }
 
 
     function __construct($TableName = "card_id") {

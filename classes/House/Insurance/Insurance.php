@@ -112,12 +112,7 @@ class Insurance {
                             $new = $insurance["replaceWith"];
 
                             //replace name_insurance
-                            $query = "update `name_insurance` set `Insurance_Id` = :newId where `Insurance_Id` = :oldId";
-                            $stmt = $dbh->prepare($query);
-                            $stmt->bindValue(":newId", $new);
-                            $stmt->bindValue(":oldId", $old);
-                            $stmt->execute();
-                            $affectedNameCount = $stmt->rowCount();
+                            $affectedNameCount = EditRS::replaceValue($dbh, new Name_InsuranceRS(), 'Insurance_Id', $old, $new);
 
                             $nameInsuranceRS = new Name_InsuranceRS();
                             $nameInsuranceRS->Insurance_Id->setStoredVal($old);

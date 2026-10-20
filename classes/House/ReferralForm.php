@@ -16,6 +16,7 @@ use HHK\HTMLControls\HTMLInput;
 use HHK\sec\Session;
 use HHK\Member\Role\{AbstractRole, Patient, Guest};
 use HHK\Tables\EditRS;
+use HHK\Tables\LinkNoteRS;
 use HHK\Tables\Name\NameAddressRS;
 use HHK\House\Reservation\Reservation_1;
 use HHK\House\ReserveData\ReserveData;
@@ -741,9 +742,9 @@ class ReferralForm
 		$resv->saveConstraints($dbh, array());
 
 		if (count($guests) > 0) {
-			$query = "delete from `reservation_guest` where idReservation = :idReservation";
-			$stmt = $dbh->prepare($query);
-			$stmt->execute([":idReservation" => $resv->getIdReservation()]);
+			$rgDelRs = new Reservation_GuestRS();
+			$rgDelRs->idReservation->setStoredVal($resv->getIdReservation());
+			EditRS::delete($dbh, $rgDelRs, [$rgDelRs->idReservation]);
 
 			foreach ($guests as $g) {
 				if($g != $psg->getIdPatient()){
@@ -836,9 +837,12 @@ class ReferralForm
 	{
 		$stmt = $dbh->prepare("select * from `link_note` where `idLink` = :docId and `linkType` = 'document'");
 		$stmt->execute([":docId" => $idDoc]);
-		$insertStmt = $dbh->prepare("INSERT INTO `link_note` (`idNote`, `linkType`, `idLink`) VALUES(:noteId, 'reservation', :resvId)");
 		foreach ($stmt->fetchAll() as $row) {
-			$insertStmt->execute([':resvId' => $resvId, ':noteId' => $row['idNote']]);
+			$lnRs = new LinkNoteRS();
+			$lnRs->idNote->setNewVal($row['idNote']);
+			$lnRs->linkType->setNewVal('reservation');
+			$lnRs->idLink->setNewVal($resvId);
+			EditRS::insert($dbh, $lnRs);
 		}
 	}
 

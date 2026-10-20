@@ -9,7 +9,7 @@ use HHK\Payment\Invoice\InvoiceLine\{AbstractInvoiceLine, InvoiceInvoiceLine};
 use HHK\Purchase\Item;
 use HHK\SysConst\{InvoiceStatus, ItemId, GLTableNames, BillStatus, PaymentMethod, VolMemberType, VolStatus};
 use HHK\Tables\EditRS;
-use HHK\Tables\Payment\{InvoiceRS, InvoiceLineRS};
+use HHK\Tables\Payment\{InvoiceRS, InvoiceLineRS, PaymentRS, PaymentInvoiceRS};
 use HHK\HTMLControls\{HTMLTable, HTMLContainer};
 use HHK\House\Registration;
 use HHK\Exception\{RuntimeException, PaymentException};
@@ -314,8 +314,17 @@ where pi.Invoice_Id = " . $this->getIdInvoice () );
 						$idPayInv = intval ( $rows [0] [1] );
 
 						if ($idPayment > 0) {
-							$dbh->exec ( "delete from payment where idPayment = $idPayment" );
-							$dbh->exec ( "delete from payment_invoice where idPayment_Invoice = $idPayInv" );
+							$payRs = new PaymentRS ();
+							$payRs->idPayment->setStoredVal ( $idPayment );
+							EditRS::delete ( $dbh, $payRs, array (
+									$payRs->idPayment
+							) );
+
+							$piRs = new PaymentInvoiceRS ();
+							$piRs->idPayment_Invoice->setStoredVal ( $idPayInv );
+							EditRS::delete ( $dbh, $piRs, array (
+									$piRs->idPayment_Invoice
+							) );
 						}
 					}
 
@@ -1329,8 +1338,23 @@ where pi.Invoice_Id in ($whAssoc)";
 	private function _deleteInvoice(\PDO $dbh, $id, $user) {
 		if ($id > 0) {
 
-			$dbh->exec ( "update invoice set Deleted = 1, Last_Updated = now(), Updated_By = '$user' where idInvoice = $id" );
-			$dbh->exec ( "update invoice_line set Deleted = 1 where Invoice_Id = $id" );
+			// Deleted's default stored value is 0, so setting 1 is always written
+			$invRs = new InvoiceRS ();
+			$invRs->idInvoice->setStoredVal ( $id );
+			$invRs->Deleted->setNewVal ( 1 );
+			$invRs->Last_Updated->setNewVal ( date ( 'Y-m-d H:i:s' ) );
+			$invRs->Updated_By->setNewVal ( $user );
+			EditRS::update ( $dbh, $invRs, array (
+					$invRs->idInvoice
+			) );
+
+			// all of the invoice's lines
+			$ilRs = new InvoiceLineRS ();
+			$ilRs->Invoice_Id->setStoredVal ( $id );
+			$ilRs->Deleted->setNewVal ( 1 );
+			EditRS::update ( $dbh, $ilRs, array (
+					$ilRs->Invoice_Id
+			) );
 
 			return TRUE;
 		}

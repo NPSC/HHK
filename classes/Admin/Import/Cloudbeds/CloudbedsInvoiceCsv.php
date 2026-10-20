@@ -2,6 +2,8 @@
 namespace HHK\Admin\Import\Cloudbeds;
 
 use HHK\Common;
+use HHK\Tables\EditRS;
+use HHK\Tables\GenLookupsRS;
 
 /**
  * Parses and stages the $0 "additional charge" invoice CSV. Columns (header row required, order irrelevant):
@@ -139,13 +141,15 @@ class CloudbedsInvoiceCsv {
         $this->dbh->beginTransaction();
         try {
             // Substitute is the charge's default amount (the charge dialog reads it as a number) - a blank one shows as NaN
-            $stmt = $this->dbh->prepare("insert into `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `Type`, `Order`) values (:table, :code, :description, '0', 'ca', 0)");
             foreach ($names as $name) {
-                $stmt->execute([
-                    ':table' => self::ADDNL_CHARGE_TABLE,
-                    ':code' => 'g' . Common::incCounter($this->dbh, 'codes'),
-                    ':description' => mb_substr($name, 0, 255),
-                ]);
+                $glRs = new GenLookupsRS();
+                $glRs->Table_Name->setNewVal(self::ADDNL_CHARGE_TABLE);
+                $glRs->Code->setNewVal('g' . Common::incCounter($this->dbh, 'codes'));
+                $glRs->Description->setNewVal(mb_substr($name, 0, 255));
+                $glRs->Substitute->setNewVal('0');
+                $glRs->Type->setNewVal('ca');
+                $glRs->Order->setNewVal(0);
+                EditRS::insert($this->dbh, $glRs);
                 $created++;
             }
             $this->dbh->commit();

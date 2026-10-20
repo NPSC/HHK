@@ -7,7 +7,8 @@ use HHK\AuditLog\NameLog;
 use HHK\sec\{Session, WebInit};
 use HHK\SysConst\GLTableNames;
 use HHK\Tables\EditRS;
-use HHK\Tables\Name\NameRS;
+use HHK\Tables\GenLookupsRS;
+use HHK\Tables\Name\{NamePhoneRS, NameRS};
 use HHK\Admin\SiteDbBackup;
 use HHK\Member\AbstractMember;
 use HHK\SysConst\CodeVersion;
@@ -110,7 +111,8 @@ if (filter_has_var(INPUT_POST, "table")) {
 
     $tableName = substr(filter_var($_POST["table"], FILTER_SANITIZE_FULL_SPECIAL_CHARS), 0, 45);
 
-    $res = $dbh->query("Select Code, Description, Substitute from gen_lookups where Table_Name='" . $tableName . "';");
+    $res = $dbh->prepare("Select Code, Description, Substitute from gen_lookups where Table_Name = :tbl;");
+    $res->execute([':tbl' => $tableName]);
 
     $code = array(
         "Code" => "",
@@ -182,24 +184,26 @@ if (isset($_POST["btnGenLookups"])) {
                 $stmt1->execute(array($selTbl, $code));
                 $row = $stmt1->fetchAll(PDO::FETCH_NUM);
 
-                $query = "";
-                $params = array();
+                $saved = FALSE;
 
                 if ($row[0][0] == 0 && $selCode == "n_$") {
                     // add a new code with desc.
-                    $query = "insert into gen_lookups (Table_Name, Code, Description, Substitute) values (?, ?, ?, ?)";
-                    $params = array($selTbl, $code, $desc, $subt);
+                    $glRs = new GenLookupsRS();
+                    $glRs->Table_Name->setNewVal($selTbl);
+                    $glRs->Code->setNewVal($code);
+                    $glRs->Description->setNewVal($desc);
+                    $glRs->Substitute->setNewVal($subt);
+                    EditRS::insert($dbh, $glRs);
+                    $saved = TRUE;
                 } else if ($row[0][0] > 0 && $selCode != "n_$") {
                     // just update the description
-                    $query = "update gen_lookups set Description = ?, Substitute = ? where Table_Name = ? and Code = ?";
-                    $params = array($desc, $subt, $selTbl, $code);
+                    EditRS::updateFields($dbh, new GenLookupsRS(), ['Table_Name' => $selTbl, 'Code' => $code], ['Description' => $desc, 'Substitute' => $subt]);
+                    $saved = TRUE;
                 } else {
                     $lookUpAlert->set_Text("sorry, don't understand (been a long day)");
                 }
 
-                if ($query != "") {
-                    $upStmt = $dbh->prepare($query);
-                    $upStmt->execute($params);
+                if ($saved) {
                     $lookUpAlert->set_Context(AlertMessage::Success);
                     $lookUpAlert->set_Text("Okay");
                 }
@@ -240,7 +244,7 @@ if (isset($_POST['btnClnPhone'])) {
 
         $srch = str_replace('(', '', str_replace(')', '', str_replace('-', '', str_replace(' ', '', $new))));
 
-        $n += $dbh->exec("update name_phone set Phone_Num = '$new', Phone_Search = '$srch' where idName = " . $r['idName'] . " and Phone_Code='" . $r['Phone_Code'] . "'");
+        $n += EditRS::updateFields($dbh, new NamePhoneRS(), ['idName' => $r['idName'], 'Phone_Code' => $r['Phone_Code']], ['Phone_Num' => $new, 'Phone_Search' => $srch]);
     }
 
     $cleanMsg = $n . " phone records cleaned.";
@@ -411,10 +415,18 @@ if (filter_has_var(INPUT_POST, "btnDelIds")) {
         $delDupsAlert->set_Text("Visits exist! Names not deleted. Ids with existing stays are: " . $stayIds);
     } else {
 
+        // the members the procedure is about to delete, for the activity log
+        $tbdIds = $dbh->query("select idName from name where Member_Status = 'u' or Member_Status = 'TBD'")->fetchAll(\PDO::FETCH_COLUMN);
+
         // delete the name and associated records.
         $delStmt = $dbh->query("call delete_names_u_tbd;");
         $response = $delStmt->fetchAll(\PDO::FETCH_ASSOC);
         $delStmt->nextRowset();
+
+        // the procedure deletes the names and their records directly - one summary entry
+        if (isset($response[0]['msg'])) {
+            EditRS::logActivity($dbh, count($tbdIds) . " members deleted (delete_names_u_tbd)", ['idNames' => array_map('intval', $tbdIds)]);
+        }
 
 
         if (isset($response[0]['msg'])) {

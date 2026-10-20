@@ -10,6 +10,7 @@ use HHK\Exception\RuntimeException;
 use HHK\HTMLControls\{HTMLContainer, HTMLInput, HTMLTable};
 use HHK\Member\AbstractMember;
 use HHK\Donation\Campaign;
+use HHK\Donation\Donation;
 
 /**
  * donate.php
@@ -333,14 +334,10 @@ function recordDonation(PDO $dbh, $maxDonationAmt, $id, $parms)
 
         if ($donId > 0) {
 
-            // insert vol_type = d if not there already...
-            $query = "call InsertDonor(" . $id . ");";
-            $dbh->exec($query);
+            Donation::markAsDonor($dbh, $id);
 
             if ($assocId > 0) {
-                // insert vol_type = d if not there already...
-                $query = "call InsertDonor(" . $assocId . ");";
-                $dbh->exec($query);
+                Donation::markAsDonor($dbh, $assocId);
             }
 
             $reply["success"] = "ok";
@@ -359,14 +356,9 @@ function deleteDonation(PDO $dbh, $donId, $uname)
 
     if ($donId > 0) {
         // mark donation record as deleted
-        $query = "update donations set Status='d', Last_Updated=now(), Updated_By=:ub where iddonations = :did;";
-        $stmt = $dbh->prepare($query);
-        $stmt->execute(array(
-            ':ub' => $uname,
-            ':did' => $donId
-        ));
+        $count = EditRS::updateFields($dbh, new DonationsRS(), ['iddonations' => $donId], ['Status' => 'd', 'Last_Updated' => date('Y-m-d H:i:s'), 'Updated_By' => $uname]);
 
-        if ($stmt->rowCount() == 1) {
+        if ($count == 1) {
             $reply["success"] = "Donation Deleted.  ";
         } else {
             $reply["error"] = "Donation not found.  ";

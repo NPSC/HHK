@@ -3,6 +3,7 @@ namespace HHK\Tables\PaymentGW;
 
 use HHK\Tables\AbstractTableRS;
 use HHK\Tables\Fields\{DB_Field, DbStrSanitizer, DbIntSanitizer, DbDateSanitizer, DbDecimalSanitizer};
+use HHK\AuditLog\LogOptions;
 
 /**
  * Guest_TokenRS.php
@@ -30,6 +31,13 @@ class Gateway_TransactionRS extends AbstractTableRS {
     public DB_Field $idPayment_Detail;   // int(11) NOT NULL DEFAULT '0',
     public DB_Field $Created_By;   // varchar(45) NOT NULL DEFAULT '',
     public DB_Field $Timestamp;   // timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    /**
+     * Log of raw gateway requests and responses - not written to the activity log.
+     */
+    public function getActivitylogOptions(): LogOptions {
+        return LogOptions::defaults()->disableLogging();
+    }
 
     function __construct($TableName = "gateway_transaction") {
         $this->idgateway_transaction = new DB_Field("idgateway_transaction", 0, new DbIntSanitizer(), TRUE, TRUE);

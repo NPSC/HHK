@@ -274,8 +274,12 @@ class RepeatReservations {
 
             if ($idResv > 0) {
                 // record new child
-                $numRows = $dbh->exec("Insert into reservation_multiple (`Host_Id`, `Child_Id`, `Status`) VALUES(" . $resv1->getIdReservation() . ", $idResv, 'a')");
-                if ($numRows != 1) {
+                $rmRs = new Reservation_MultipleRS();
+                $rmRs->Host_Id->setNewVal($resv1->getIdReservation());
+                $rmRs->Child_Id->setNewVal($idResv);
+                $rmRs->Status->setNewVal('a');
+
+                if (EditRS::insert($dbh, $rmRs) < 1) {
                     throw new RuntimeException('Insert faild: reservtion_multiple');
                 }
             }

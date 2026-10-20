@@ -32,6 +32,7 @@ class W_usersRS extends AbstractTableRS {
     public DB_Field $PW_Change_Date;  // DATETIME NULL
     public DB_Field $PW_Updated_By;  // VARCHAR(45) NOT NULL DEFAULT ''
     public DB_Field $Chg_PW; // bool
+    public DB_Field $pass_rules; // bool NOT NULL DEFAULT TRUE
     public DB_Field $Status;  // varchar(4) NOT NULL DEFAULT '',
     public DB_Field $Last_Updated;  // datetime DEFAULT NULL,
     public DB_Field $Updated_By;  // varchar(45) DEFAULT '',
@@ -53,6 +54,7 @@ class W_usersRS extends AbstractTableRS {
         $this->PW_Change_Date = new DB_Field("PW_Change_Date", NULL, new DbDateSanitizer("Y-m-d H:i:s"), TRUE, TRUE);
         $this->PW_Updated_By = new DB_Field("PW_Updated_By", "", new DbStrSanitizer(45), FALSE);
         $this->Chg_PW = new DB_Field("Chg_PW", '0', new DbIntSanitizer(), TRUE, TRUE);
+        $this->pass_rules = new DB_Field("pass_rules", '1', new DbIntSanitizer(), TRUE, TRUE);
 
         $this->Status = new DB_Field("Status", "", new DbStrSanitizer(4), TRUE, TRUE);
         $this->Updated_By = new DB_Field("Updated_By", "", new DbStrSanitizer(45), FALSE);

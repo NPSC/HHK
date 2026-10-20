@@ -2,6 +2,9 @@
 
 namespace HHK\Note;
 
+use HHK\Tables\EditRS;
+use HHK\Tables\LinkNoteRS;
+
 /**
  * LinkNote.php
  *
@@ -130,12 +133,11 @@ class LinkNote {
 
             if ($linkId >= 0) {
 
-                $stmt = $dbh->prepare("INSERT INTO `link_note` (`linkType`, `idLink`, `idNote`) values (:linkType, :linkId, :idNote);");
-                $stmt->execute([
-                    ':linkType'=>$linkType,
-                    ':linkId'=>$linkId,
-                    ':idNote'=>$note->getIdNote()
-                ]);
+                $lnRs = new LinkNoteRS();
+                $lnRs->linkType->setNewVal($linkType);
+                $lnRs->idLink->setNewVal($linkId);
+                $lnRs->idNote->setNewVal($note->getIdNote());
+                EditRS::insert($dbh, $lnRs);
 
             } else {
                 return 'The link id is missing ';

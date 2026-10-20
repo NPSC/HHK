@@ -9,6 +9,7 @@ use HHK\sec\{Session, SecurityComponent, UserClass, WebInit};
 use HHK\SysConst\WebPageCode;
 use HHK\Tables\EditRS;
 use HHK\DataTableServer\SSP;
+use HHK\AuditLog\AuditLogViewer;
 use HHK\Exception\RuntimeException;
 use HHK\Member\WebUser;
 use HHK\Member\Relation\AbstractRelation;
@@ -214,7 +215,19 @@ try {
                 array( 'db' => 'Timestamp', 'dt' => 'Timestamp'),
                 );
             $events = SSP::complex ( $_GET, $dbh, "api_access_log", "idLog", $columns, null, $where);
-    
+
+            break;
+
+        case "showAuditLog":
+
+            $events = AuditLogViewer::dataTable($dbh, $_GET);
+
+            break;
+
+        case "auditLogUsers":
+
+            $events = AuditLogViewer::userSearch($dbh, (string)filter_input(INPUT_GET, 'letters', FILTER_UNSAFE_RAW));
+
             break;
 
         case "showOauthClients":

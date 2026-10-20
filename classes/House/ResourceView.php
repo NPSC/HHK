@@ -712,7 +712,8 @@ WHERE
         if (isset($post['txtRetired'])) {
             $retiredAt = filter_var($post['txtRetired'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
             if ($retiredAt == '') {
-                $dbh->exec("UPDATE resource set `Retired_At` = null where idResource = '" . $resc->getIdResource() . "';");
+                // saved with the rest of the record by saveRecord() below
+                $resc->resourceRS->Retired_At->setNewVal(null);
             } else {
                 try {
                     $retiredDT = new \DateTime($retiredAt);
@@ -1229,13 +1230,14 @@ ORDER BY $orderBy;");
             return $returnRows;
         }
 
-        $stmt = $dbh->query("
+        $stmt = $dbh->prepare("
         	select pg.`Name_Full` as 'Primary Guest', rp.`Number_Guests` as 'Guests', DATE(rp.`Expected_Arrival`) as 'Arrival Date', DATE(rp.`Expected_Departure`) as 'Expected Departure', rp.`Title` as 'Room', DATEDIFF(rp.`Expected_Departure`, rp.`Expected_Arrival`) as 'Nights'
 			from vresv_patient rp
 			left join `name` pg on rp.idGuest = pg.idName
 			where rp.`Status` in ('" . ReservationStatus::Committed . "', '" . ReservationStatus::UnCommitted . "', '" . ReservationStatus::Waitlist . "') "
-            . "and DATE(`Expected_Arrival`) <= DATE('$endCiDate') order by `Expected_Arrival`;
+            . "and DATE(`Expected_Arrival`) <= DATE(:endDate) order by `Expected_Arrival`;
         ");
+        $stmt->execute([':endDate' => $endCiDate]);
 
         return $stmt->fetchAll(\PDO::FETCH_ASSOC);
     }
@@ -1258,7 +1260,7 @@ ORDER BY $orderBy;");
             return $returnRows;
         }
 
-        $stmt = $dbh->query("select
+        $stmt = $dbh->prepare("select
         r.idRoom,
         ifnull(v.idVisit, 0) as idVisit,
         r.`Title`,
@@ -1280,7 +1282,8 @@ ORDER BY $orderBy;");
         gen_lookups g on g.Table_Name = 'Visit_Status' and g.Code = v.`Status`
             left join
         note nt on nt.idNote = (select ln.idNote from link_note ln join note n on ln.idNote = n.idNote where ln.idLink = r.idRoom and ln.linkType = 'room' and n.Status = 'a' order by ln.idNote desc limit 1)
-    where ifnull(DATE(v.Span_End), DATE(datedefaultnow(v.Expected_Departure))) between Date('$startCoDate') and Date('$endCoDate');");
+    where ifnull(DATE(v.Span_End), DATE(datedefaultnow(v.Expected_Departure))) between Date(:startDate) and Date(:endDate);");
+        $stmt->execute([':startDate' => $startCoDate, ':endDate' => $endCoDate]);
 
 
         while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {

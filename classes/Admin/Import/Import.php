@@ -673,7 +673,7 @@ class Import extends AbstractImport implements ImportInterface {
                 }
 
                 // external id
-                $this->dbh->exec("update `name` set `External_Id` = " . $r['importId'] . " where `idName` = " . $name->get_idName());
+                $this->setExternalId($name->get_idName(), (string) $r['importId']);
 
                 $this->importedGuests++;
 
@@ -777,30 +777,25 @@ class Import extends AbstractImport implements ImportInterface {
         //make reservation
         $arrival = (new \DateTime($r['ArrivalDate']))->format("Y-m-d 16:00:00");
         $departure = (new \DateTime($r['DepartureDate']))->format('Y-m-d 10:00:00');
-        $stmt = $this->dbh->prepare("insert into reservation (`idRegistration`, `idGuest`,`idHospital_Stay`, `idResource`, `Expected_Arrival`, `Expected_Departure`, `Actual_Arrival`, `Actual_Departure`, `Number_Guests`, `Status`) VALUES(:idRegistration, :idGuest, :idHospitalStay, :idResource, :expectedArrival, :expectedDeparture, :actualArrival, :actualDeparture, :numGuests, :status)");
-        $stmt->execute(array(
-            ":idRegistration"=>$reg->getIdRegistration(),
-            ":idGuest"=>($primaryGuestId > 0 ? $primaryGuestId : $guests[0]["idName"]),
-            ":idHospitalStay"=>$hospStay->getIdHospital_Stay(),
-            ":idResource"=>$idResource,
-            ":expectedArrival"=>$arrival,
-            ":expectedDeparture"=>$departure,
-            ":actualArrival"=>($resvStatus == ReservationStatus::Checkedout ? $arrival : null),
-            ":actualDeparture"=>($resvStatus == ReservationStatus::Checkedout ? $departure : null),
-            ":numGuests"=>count($guests),
-            ":status"=>$resvStatus
-        ));
-        $resvId = $this->dbh->lastInsertId();
+        $resvGuests = [];
+        foreach ($guests as $guest) {
+            $resvGuests[$guest["idName"]] = ($guest['PrimaryGuest'] == "Yes");
+        }
+
+        $resvId = $this->insertReservation([
+            "idRegistration" => $reg->getIdRegistration(),
+            "idGuest" => ($primaryGuestId > 0 ? $primaryGuestId : $guests[0]["idName"]),
+            "idHospitalStay" => $hospStay->getIdHospital_Stay(),
+            "idResource" => $idResource,
+            "expectedArrival" => $arrival,
+            "expectedDeparture" => $departure,
+            "actualArrival" => ($resvStatus == ReservationStatus::Checkedout ? $arrival : null),
+            "actualDeparture" => ($resvStatus == ReservationStatus::Checkedout ? $departure : null),
+            "status" => $resvStatus,
+            "guests" => $resvGuests,
+        ]);
 
         if ($resvId) {
-            foreach($guests as $k=>$guest){
-                $stmt = $this->dbh->prepare("insert ignore into reservation_guest (`idReservation`, `idGuest`,`Primary_Guest`) VALUES(:idReservation, :idGuest, :primaryGuest)");
-                $stmt->execute(array(
-                    ":idReservation" => $resvId,
-                    ":idGuest" => $guest["idName"],
-                    ":primaryGuest" => ($guest['PrimaryGuest'] == "Yes" ? 1:0)
-                ));
-            }
 
             //add Notes
             if($r["Notes"] != ""){
@@ -945,7 +940,9 @@ class Import extends AbstractImport implements ImportInterface {
     public function undoImport(): array{
         try{
             $this->dbh->beginTransaction();
-            $this->dbh->exec("update `name` set `Member_Status` = 'tbd' where `External_Id` != ''");
+            // bulk - one summary entry in the activity log rather than a row per name
+            $numNames = $this->dbh->exec("update `name` set `Member_Status` = 'tbd' where `External_Id` != ''");
+            EditRS::logActivity($this->dbh, "Import undone: $numNames names set to To Be Deleted", ['names' => $numNames], 'import');
             $this->dbh->exec("update `" . Upload::TBL_NAME . "` set `imported` = null");
         }catch(\Exception $e){
             if($this->dbh->inTransaction()){

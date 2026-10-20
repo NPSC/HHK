@@ -4,7 +4,7 @@ use HHK\HTMLControls\{HTMLContainer, HTMLTable};
 use HHK\Member\AbstractMember;
 use HHK\SysConst\{MemStatus, RelLinkType};
 use HHK\Tables\EditRS;
-use HHK\Tables\Name\RelationsRS;
+use HHK\Tables\Name\{NameRS, RelationsRS};
 
 /**
  * AbstractRelation.php
@@ -70,6 +70,86 @@ abstract class AbstractRelation {
      * @param mixed $idName
      * @return Children|Company|Employees|Parents|Partner|Relatives|Siblings|null
      */
+    /**
+     * Delete the relationship rows of one type that involve $id, and $rId too when given.
+     *
+     * @param \PDO $dbh
+     * @param string $relCode Relation_Type
+     * @param int $id
+     * @param int|null $rId
+     * @return int rows deleted
+     */
+    protected static function deleteRelationships(\PDO $dbh, $relCode, $id, $rId = null) {
+
+        $query = "select idRelationship from relationship where Relation_Type = :rcode and (idName = :id or Target_Id = :id2)";
+        $params = array(':rcode' => $relCode, ':id' => $id, ':id2' => $id);
+
+        if (!is_null($rId)) {
+            $query .= " and (idName = :rId or Target_Id = :rId2)";
+            $params[':rId'] = $rId;
+            $params[':rId2'] = $rId;
+        }
+
+        $stmt = $dbh->prepare($query);
+        $stmt->execute($params);
+
+        $count = 0;
+        foreach ($stmt->fetchAll(\PDO::FETCH_COLUMN) as $idRel) {
+            $relRs = new RelationsRS();
+            $relRs->idRelationship->setStoredVal($idRel);
+            EditRS::delete($dbh, $relRs, array($relRs->idRelationship));
+            $count++;
+        }
+
+        return $count;
+    }
+
+    /**
+     * Link an individual member to a company and copy the company name.  Does nothing unless the employee
+     * is an individual member, the company is an organization and the link is new.
+     *
+     * @param \PDO $dbh
+     * @param int $empId
+     * @param int $companyId
+     * @return void
+     */
+    protected static function linkCompany(\PDO $dbh, $empId, $companyId) {
+
+        $empRs = new NameRS();
+        $empRs->idName->setStoredVal($empId);
+        $empRows = EditRS::select($dbh, $empRs, array($empRs->idName));
+
+        $coRs = new NameRS();
+        $coRs->idName->setStoredVal($companyId);
+        $coRows = EditRS::select($dbh, $coRs, array($coRs->idName));
+
+        if (count($empRows) != 1 || count($coRows) != 1) {
+            return;
+        }
+
+        EditRS::loadRow($empRows[0], $empRs);
+        EditRS::loadRow($coRows[0], $coRs);
+
+        if ($empRs->Record_Member->getStoredVal() != 1 || $coRs->Record_Company->getStoredVal() != 1 || $empRs->Company_Id->getStoredVal() == $companyId) {
+            return;
+        }
+
+        $empRs->Company_Id->setNewVal($companyId);
+        $empRs->Company->setNewVal($coRs->Company->getStoredVal());
+        EditRS::update($dbh, $empRs, array($empRs->idName));
+    }
+
+    /**
+     * Remove a member's company link.
+     *
+     * @param \PDO $dbh
+     * @param int $empId
+     * @return void
+     */
+    protected static function unlinkCompany(\PDO $dbh, $empId) {
+        EditRS::updateFields($dbh, new NameRS(), ['idName' => $empId], ['Company_Id' => 0, 'Company' => '', 'Company_CareOf' => '']);
+    }
+
     public static function instantiateRelation(\PDO $dbh, $relCode, $idName) {
 
         switch ($relCode) {

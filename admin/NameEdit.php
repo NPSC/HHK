@@ -12,6 +12,8 @@ use HHK\sec\{SecurityComponent, Session, WebInit};
 use HHK\Volunteer\VolunteerCategory;
 use HHK\Member\Address\{Address, Phones, Emails, Addresses};
 use HHK\sec\SAML;
+use HHK\Tables\EditRS;
+use HHK\Tables\Name\NameRS;
 
 /**
  * NameEdit.php
@@ -214,8 +216,12 @@ if(filter_has_var(INPUT_POST, "btnSubmit")){
         foreach ($uS->siteList as $s) {
             if ($s["Site_Code"] == 'h' && $name->getMemberDesignation() == MemDesignation::Organization) {
 
-                $dbh->exec("UPDATE `name` n LEFT JOIN `name_volunteer2` nv ON n.idName = nv.idName
-SET n.Record_Member = 1 WHERE n.Record_Member != 1 and n.idName = $id AND nv.idName IS NOT NULL AND nv.Vol_Category = 'Vol_Type' AND nv.Vol_Code = 'ba'");
+                $stmt = $dbh->prepare("select count(*) from `name_volunteer2` where `idName` = :id and `Vol_Category` = 'Vol_Type' and `Vol_Code` = 'ba'");
+                $stmt->execute([':id' => $id]);
+
+                if ($stmt->fetchColumn() > 0) {
+                    EditRS::updateFields($dbh, new NameRS(), ['idName' => $id], ['Record_Member' => 1]);
+                }
 
                 break;
             }

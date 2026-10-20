@@ -213,11 +213,15 @@ class SAML {
 
             if(!isset($user['Role_Id']) || (isset($user['idIdp']) && $user['idIdp'] != $this->IdpId)){
                 //register Web User
-                $query = "call register_web_user(" . $idName . ", '', '" . $this->auth->getNameId() . "', '" . $this->auditUser . "', 'p', '" . $role . "', '', '', 0, " . $this->IdpId . ");";
-                if($this->dbh->exec($query) === false){
+                $stmt = $this->dbh->prepare("call register_web_user(:id, '', :uname, :admin, 'p', :role, '', '', 0, :idpId);");
+                if($stmt->execute([':id' => $idName, ':uname' => $this->auth->getNameId(), ':admin' => $this->auditUser, ':role' => $role, ':idpId' => $this->IdpId]) === false){
                     $err = $this->dbh->errorInfo();
                     return array("error"=>$err[0] . "; " . $err[2]);
                 }
+
+                // the procedure writes w_users, w_auth and id_securitygroup directly
+                EditRS::logActivity($this->dbh, "Web user " . $this->auth->getNameId() . " registered by SAML sign-in (register_web_user)",
+                    ['idName' => $idName, 'username' => $this->auth->getNameId(), 'role' => $role, 'idIdp' => $this->IdpId], 'default', 'name', intval($idName));
             }else{
 
                 // update w_auth table with new role

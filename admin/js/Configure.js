@@ -1028,6 +1028,8 @@ $(document).on('change', "#numAddrCalc", function(){
                             row.child(formatAPIDetails(row.data())).show();
                         }
                     });
+                } else if (pid == "lial") {
+                    initAuditLog('#table' + pid);
                 } else {
 
                     $('#table' + pid).dataTable({
@@ -1052,6 +1054,205 @@ $(document).on('change', "#numAddrCalc", function(){
             }
         }
     });
+
+    // Audit Log tab (see classes/AuditLog/AuditLogViewer.php).  Logged values are user data - always escape.
+    function alEsc(v) {
+        if (v === null || v === undefined) {
+            return '';
+        }
+        if (typeof v === 'object') {
+            v = JSON.stringify(v);
+        }
+        return $('<div>').text(String(v)).html();
+    }
+
+    function alChanges(p) {
+        let rows = [];
+        let attrs = p.attributes || {}, old = p.old || {};
+
+        $.each(attrs, function (col, val) {
+            rows.push({col: col, old: old.hasOwnProperty(col) ? old[col] : null, val: val});
+        });
+        return rows;
+    }
+
+    function alSummary(row) {
+        let p = row.properties || {};
+        let changes = alChanges(p);
+
+        if (row.event === 'updated') {
+            let parts = changes.slice(0, 3).map(function (c) {
+                return '<strong>' + alEsc(c.col) + '</strong>: ' + alEsc(c.old) + ' &rarr; ' + alEsc(c.val);
+            });
+            if (changes.length > 3) {
+                parts.push('+' + (changes.length - 3) + ' more');
+            }
+            return parts.join('<br>');
+        }
+        if (row.event === 'created' || row.event === 'deleted') {
+            return changes.length + ' fields';
+        }
+        return alEsc(row.description);
+    }
+
+    function alDetails(row) {
+        let p = row.properties || {};
+        let html = '<div class="p-2">';
+        let changes = alChanges(p);
+
+        if (changes.length > 0) {
+            html += '<table class="mb-2"><tr><th>Field</th>' + (row.event === 'updated' ? '<th>Old</th>' : '') + '<th>' + (row.event === 'deleted' ? 'Value' : 'New') + '</th></tr>';
+            $.each(changes, function (i, c) {
+                html += '<tr><td><strong>' + alEsc(c.col) + '</strong></td>' + (row.event === 'updated' ? '<td>' + alEsc(c.old) + '</td>' : '') + '<td>' + alEsc(c.val) + '</td></tr>';
+            });
+            html += '</table>';
+        }
+
+        if (p.snapshot) {
+            html += '<div class="mb-2"><em>Checkpoint: full record before this change is stored.</em></div>';
+        }
+
+        html += '<div>Batch: ' + (row.batch_uuid ? '<a href="#" class="hhk-alBatchLink" data-batch="' + alEsc(row.batch_uuid) + '">' + alEsc(row.batch_uuid) + '</a> (show everything from this request)' : '') + '</div>';
+        html += '<div>Source: ' + alEsc(p.source) + '</div>';
+        html += '<div>Description: ' + alEsc(row.description) + '</div>';
+
+        return html + '</div>';
+    }
+
+    function initAuditLog(tableId) {
+
+        let filterData = function (d) {
+            $('#alFilters .hhk-alFilter').each(function () {
+                d[this.id] = $(this).val();
+            });
+            d.cmd = 'showAuditLog';
+        };
+
+        let table = $(tableId).DataTable({
+            "columns": [
+                {"className": 'dt-control', "orderable": false, "searchable": false, "data": null, "defaultContent": '', "title": ''},
+                {"data": 'created_at', "title": 'Date', "searchable": false, render: function (data, type) {
+                    return dateRender(data, type, 'MMM D YYYY h:mm:ss a');
+                }},
+                {"data": 'properties', "title": 'User', "orderable": false, "searchable": false, render: function (data) {
+                    return alEsc(data && data.user ? data.user : '');
+                }},
+                {"data": 'event', "title": 'Event', render: function (data) {
+                    return alEsc(data ? data : 'summary');
+                }},
+                {"data": 'subject_type', "title": 'Table', render: function (data) {
+                    return alEsc(data);
+                }},
+                {"data": 'record_key', "title": 'Record', render: function (data, type, row) {
+                    if (!row.subject_type) {
+                        return '';
+                    }
+                    // the id (the table is in the previous column); a visit span reads like the visit dialog title, "<idVisit>-<Span>"
+                    let id = row.subject_id;
+                    let span = (row.subject_type === 'visit' && data) ? String(data).match(/Span=(-?\d+)/) : null;
+                    if (span) {
+                        id = row.subject_id + '-' + span[1];
+                    } else if (id === null || id === undefined || id === '') {
+                        // no integer key column (e.g. gen_lookups) - show the key itself
+                        id = data;
+                    }
+                    let label = id;
+                    return '<a href="#" class="hhk-alRecordLink" data-table="' + alEsc(row.subject_type) + '" data-key="' + alEsc(data) + '" data-id="' + alEsc(row.subject_id) + '" title="Show this record\'s history">' + alEsc(label) + '</a>';
+                }},
+                {"data": 'description', "title": 'Change', "orderable": false, render: function (data, type, row) {
+                    return alSummary(row);
+                }}
+            ],
+            "serverSide": true,
+            "processing": true,
+            "autoWidth": false,
+            "language": {"sSearch": "Search Log:"},
+            "order": [[1, 'desc']],
+            "pageLength": 25,
+            "lengthMenu": [[25, 50, 100], [25, 50, 100]],
+            "dom": '<"top"lf><"hhk-overflow-x"rt><"bottom"ip>',
+            ajax: {
+                url: 'ws_gen.php',
+                data: filterData
+            }
+        });
+
+        // reload on filter change; text inputs wait for typing to stop
+        let timer;
+        $('#alFilters').on('change', 'select.hhk-alFilter, input[type=date].hhk-alFilter', function () {
+            table.ajax.reload();
+        }).on('input', 'input.hhk-alFilter:not([type=date])', function () {
+            clearTimeout(timer);
+            timer = setTimeout(function () { table.ajax.reload(); }, 400);
+        }).on('keydown', 'input.hhk-alFilter', function (e) {
+            // the filters sit inside the logs tab's form - Enter would submit it and reload the page
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                clearTimeout(timer);
+                table.ajax.reload();
+            }
+        });
+
+        // User: pick from the name search like the Register page's; Enter filters by the typed username as-is
+        // (e.g. 'cli', or a user who has since been deleted)
+        let $userSearch = $('#alUserSearch');
+        createRoleAutoComplete($userSearch, 2, {cmd: 'auditLogUsers'},
+            function (item) {
+                if (item.value) {
+                    $userSearch.val(item.value);
+                    $('#alUser').val(item.value);
+                    table.ajax.reload();
+                }
+            },
+            false, 'ws_gen.php');
+
+        $userSearch.on('input', function () {
+            // cleared, including with the search box's x button
+            if ($(this).val() === '' && $('#alUser').val() !== '') {
+                $('#alUser').val('');
+                table.ajax.reload();
+            }
+        }).on('keydown', function (e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                $(this).autocomplete('close');
+                $('#alUser').val($(this).val().trim());
+                table.ajax.reload();
+            }
+        });
+
+        $('#alClear').on('click', function () {
+            $('#alFilters .hhk-alFilter').val('');
+            $userSearch.val('');
+            table.ajax.reload();
+        });
+
+        $(tableId).on('click', 'td.dt-control', function () {
+            let row = table.row($(this).closest('tr'));
+            if (row.child.isShown()) {
+                row.child.hide();
+            } else {
+                row.child(alDetails(row.data())).show();
+            }
+        }).on('click', 'a.hhk-alRecordLink', function (e) {
+            e.preventDefault();
+            $('#alFilters .hhk-alFilter').val('');
+            $userSearch.val('');
+            $('#alTable').val($(this).data('table'));
+            if ($(this).data('key') !== '') {
+                $('#alRecordKey').val($(this).data('key'));
+            } else {
+                $('#alSubjectId').val($(this).data('id'));
+            }
+            table.ajax.reload();
+        }).on('click', 'a.hhk-alBatchLink', function (e) {
+            e.preventDefault();
+            $('#alFilters .hhk-alFilter').val('');
+            $userSearch.val('');
+            $('#alBatch').val($(this).data('batch'));
+            table.ajax.reload();
+        });
+    }
 
     function formatAPIDetails(row){
         return `

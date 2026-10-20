@@ -1,6 +1,6 @@
 <?php
 namespace HHK\TableLog;
-use HHK\DataTableServer\DataTableServer;
+
 use HHK\DataTableServer\SSP;
 use HHK\Tables\ExternalAPILogRS;
 use Psr\Http\Message\RequestInterface;

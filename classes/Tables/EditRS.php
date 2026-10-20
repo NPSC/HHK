@@ -22,6 +22,8 @@ use HHK\Tables\Fields\DB_Field;
  */
 class EditRS {
 
+    use Auditable;
+
     /**
      *
      * @param \PDO $dbh
@@ -192,12 +194,13 @@ class EditRS {
             }
 
             // now run through the where parameter array
+            // (own placeholder names, so a column can be both set and matched on)
             foreach ($whereDbFieldArray as $dbF) {
                 if ($dbF->getDbType() == \PDO::PARAM_BOOL) {
                     $whClause .= " and " . $dbF->getCol() . "=" . $dbF->getStoredVal();
                 } else {
-                    $whClause .= " and " . $dbF->getCol() . "=" . $dbF->getParam();
-                    $paramList[] = array("param" => $dbF->getParam(), "value" => $dbF->getStoredVal(), "type" => $dbF->getDbType());
+                    $whClause .= " and " . $dbF->getCol() . "=" . $dbF->getParam() . "_wh";
+                    $paramList[] = array("param" => $dbF->getParam() . "_wh", "value" => $dbF->getStoredVal(), "type" => $dbF->getDbType());
                 }
 
             }
@@ -206,6 +209,8 @@ class EditRS {
                 $whClause = substr($whClause, 4);
                 $query .= " where " . $whClause;
             }
+
+            $beforeRows = self::auditBeforeWrite($dbh, $rs, $whereDbFieldArray);
 
             $stmt = $dbh->prepare($query);
 
@@ -217,8 +222,198 @@ class EditRS {
             $stmt->execute();
 
             $rowCount = $stmt->rowCount();
+
+            if ($rowCount > 0) {
+                self::auditUpdate($dbh, $rs, $beforeRows);
+            }
         }
         return $rowCount;
+    }
+
+    /**
+     * Load one record by its key, set new values on it and update it.  Loading first means a new value
+     * that equals a field's default is still written.
+     *
+     * @param \PDO $dbh
+     * @param TableRSInterface $rs an empty RS of the table
+     * @param array $keyVals column => value, must match exactly one row
+     * @param array $newVals column => new value
+     * @return int rows updated (0 when the key did not match exactly one row)
+     */
+    public static function updateFields(\PDO $dbh, TableRSInterface $rs, array $keyVals, array $newVals): int {
+
+        $where = [];
+        foreach ($keyVals as $col => $val) {
+            $rs->$col->setStoredVal($val);
+            $where[] = $rs->$col;
+        }
+
+        $rows = self::select($dbh, $rs, $where);
+
+        if (count($rows) != 1) {
+            return 0;
+        }
+
+        self::loadRow($rows[0], $rs);
+
+        foreach ($newVals as $col => $val) {
+            $rs->$col->setNewVal($val);
+        }
+
+        $count = self::update($dbh, $rs, $where);
+        self::updateStoredVals($rs);
+
+        return $count;
+    }
+
+    /**
+     * Update the row matching $keyVals, or insert one (with the key and new values) if there isn't one.
+     *
+     * @param \PDO $dbh
+     * @param TableRSInterface $rs an empty RS of the table
+     * @param array $keyVals column => value, must match at most one row
+     * @param array $newVals column => new value
+     * @return int rows written (0 when the existing row already had these values)
+     */
+    public static function upsert(\PDO $dbh, TableRSInterface $rs, array $keyVals, array $newVals): int {
+
+        $where = [];
+        foreach ($keyVals as $col => $val) {
+            $rs->$col->setStoredVal($val);
+            $where[] = $rs->$col;
+        }
+
+        $rows = self::select($dbh, $rs, $where);
+
+        if (count($rows) > 1) {
+            throw new \RuntimeException('upsert key matched ' . count($rows) . ' rows in ' . $rs->getTableName());
+        }
+
+        if (count($rows) == 1) {
+            self::loadRow($rows[0], $rs);
+
+            foreach ($newVals as $col => $val) {
+                $rs->$col->setNewVal($val);
+            }
+
+            $count = self::update($dbh, $rs, $where);
+            self::updateStoredVals($rs);
+            return $count;
+        }
+
+        $class = get_class($rs);
+        $newRs = new $class();
+        foreach ($keyVals + $newVals as $col => $val) {
+            $newRs->$col->setNewVal($val);
+        }
+        self::insert($dbh, $newRs);
+
+        return 1;
+    }
+
+    /**
+     * Change $col from $oldVal to $newVal in every row that has it, e.g. when a lookup code is replaced.
+     * The column must be updateOnChange.
+     *
+     * @param \PDO $dbh
+     * @param TableRSInterface $rs an empty RS of the table
+     * @param string $col
+     * @param mixed $oldVal
+     * @param mixed $newVal
+     * @return int rows updated
+     */
+    public static function replaceValue(\PDO $dbh, TableRSInterface $rs, string $col, $oldVal, $newVal): int {
+
+        if ($oldVal == $newVal) {
+            return 0;
+        }
+
+        $rs->$col->setStoredVal($oldVal);
+        $rs->$col->setNewVal($newVal);
+
+        return self::update($dbh, $rs, [$rs->$col]);
+    }
+
+    /**
+     * Update the rows matching a where clause EditRS can't express (ranges, IN, joins), one row at a time
+     * by primary key, so each change goes through EditRS::update.
+     *
+     * @param \PDO $dbh
+     * @param TableRSInterface $rs an empty RS of the table
+     * @param string $whereSql the SQL after WHERE, with named parameters
+     * @param array $params
+     * @param array $newVals column => new value
+     * @return int rows updated
+     */
+    public static function updateWhere(\PDO $dbh, TableRSInterface $rs, string $whereSql, array $params, array $newVals): int {
+
+        $count = 0;
+        foreach (self::selectWhere($dbh, $rs, $whereSql, $params) as [$rowRs, $pkWhere]) {
+
+            foreach ($newVals as $col => $val) {
+                $rowRs->$col->setNewVal($val);
+            }
+
+            $count += self::update($dbh, $rowRs, $pkWhere);
+        }
+
+        return $count;
+    }
+
+    /**
+     * Delete the rows matching a where clause EditRS can't express (ranges, IN, joins), one row at a time
+     * by primary key, so each delete goes through EditRS::delete.
+     *
+     * @param \PDO $dbh
+     * @param TableRSInterface $rs an empty RS of the table
+     * @param string $whereSql the SQL after WHERE, with named parameters
+     * @param array $params
+     * @return int rows deleted
+     */
+    public static function deleteWhere(\PDO $dbh, TableRSInterface $rs, string $whereSql, array $params = []): int {
+
+        $count = 0;
+        foreach (self::selectWhere($dbh, $rs, $whereSql, $params) as [$rowRs, $pkWhere]) {
+            if (self::delete($dbh, $rowRs, $pkWhere)) {
+                $count++;
+            }
+        }
+
+        return $count;
+    }
+
+    /**
+     * Load each row matching $whereSql into its own RS.
+     *
+     * @return array each [rs, primary key DB_Fields]
+     */
+    private static function selectWhere(\PDO $dbh, TableRSInterface $rs, string $whereSql, array $params): array {
+
+        $pkCols = self::primaryKeyCols($dbh, $rs->getTableName());
+        $class = get_class($rs);
+
+        // without a key each row's update would have no where clause
+        if (count($pkCols) == 0) {
+            throw new \RuntimeException('Table ' . $rs->getTableName() . ' has no primary key');
+        }
+
+        $stmt = $dbh->prepare("select * from `" . $rs->getTableName() . "` where " . $whereSql);
+        $stmt->execute($params);
+
+        $loaded = [];
+        foreach ($stmt->fetchAll(\PDO::FETCH_ASSOC) as $r) {
+            $rowRs = new $class();
+            self::loadRow($r, $rowRs);
+
+            $pkWhere = [];
+            foreach ($pkCols as $col) {
+                $pkWhere[] = $rowRs->$col;
+            }
+
+            $loaded[] = [$rowRs, $pkWhere];
+        }
+
+        return $loaded;
     }
 
     /**
@@ -297,6 +492,8 @@ class EditRS {
 
             $id = $dbh->lastInsertId();
 
+            self::auditInsert($dbh, $rs, $id);
+
         }
 
         return $id;
@@ -338,11 +535,14 @@ class EditRS {
             $whClause = substr($whClause, 4);
             $query .= " where " . $whClause;
 
+            $beforeRows = self::auditBeforeWrite($dbh, $rs, $whereDbFieldArray, $combiner);
+
             $stmt = $dbh->prepare($query);
 
             if ($stmt->execute($paramList) === FALSE) {
                 return FALSE;
             } else {
+                self::auditDelete($dbh, $rs, $beforeRows);
                 return TRUE;
             }
         } else {

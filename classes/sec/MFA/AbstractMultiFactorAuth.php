@@ -2,6 +2,10 @@
 
 namespace HHK\sec\MFA;
 
+use HHK\sec\UserClass;
+use HHK\Tables\EditRS;
+use HHK\Tables\WebSec\W_usersRS;
+
 abstract class AbstractMultiFactorAuth {
 
     protected $secret;
@@ -56,6 +60,24 @@ abstract class AbstractMultiFactorAuth {
      * @return bool
      */
     public abstract function saveSecret(\PDO $dbh): bool;
+
+    /**
+     * Set one of the active user's secret columns through EditRS, so the activity log records it,
+     * and note the change in the user log.
+     *
+     * @param \PDO $dbh
+     * @param string $col w_users secret column
+     * @param string $value '' to clear it
+     * @return void
+     */
+    protected function writeSecretColumn(\PDO $dbh, string $col, string $value): void {
+
+        $count = EditRS::updateFields($dbh, new W_usersRS(), ['User_Name' => $this->username, 'Status' => 'a'], [$col => $value, 'Last_Updated' => date('Y-m-d H:i:s')]);
+
+        if ($count == 1) {
+            UserClass::insertUserLog($dbh, UserClass::OTPSecChanged, $this->username);
+        }
+    }
 
     /**
      * Disable this two factor method

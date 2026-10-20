@@ -121,9 +121,7 @@ class Partner extends AbstractRelation {
         $id = $this->getIdName();
         $uS = Session::getInstance();
 
-        $qq = "Delete from relationship where Relation_Type='" . $this->relCode->getCode() . "' and (idName=:id or Target_Id=:id2 )";
-        $stmt = $dbh->prepare($qq);
-        $stmt->execute(array(':id'=>$id, ':id2'=>$id));
+        self::deleteRelationships($dbh, $this->relCode->getCode(), $id);
 
         $relRS = new relationsRS();
         $relRS->Relation_Type->setStoredVal($this->relCode->getCode());

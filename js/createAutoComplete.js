@@ -148,8 +148,11 @@ function createAutoComplete(txtCtrl, minChars, inputParms, selectFunction, shoNe
 }
 
 
-function createRoleAutoComplete(txtCtrl, minChars, inputParms, selectFunction, shoNew) {
+function createRoleAutoComplete(txtCtrl, minChars, inputParms, selectFunction, shoNew, searchURL) {
     "use strict";
+    if (searchURL === undefined || searchURL === null) {
+        searchURL = "../house/roleSearch.php";
+    }
     var cache = {};
     
     
@@ -202,7 +205,7 @@ function createRoleAutoComplete(txtCtrl, minChars, inputParms, selectFunction, s
 
             inputParms.letters = term;
 
-            $.getJSON("../house/roleSearch.php", inputParms, function(data) {
+            $.getJSON(searchURL, inputParms, function(data) {
 
                 if (data.gotopage) {
                     response();

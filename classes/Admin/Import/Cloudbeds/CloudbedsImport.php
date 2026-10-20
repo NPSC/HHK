@@ -10,6 +10,8 @@ use HHK\Note\Note;
 use HHK\sec\Session;
 use HHK\SysConst\ReservationStatus;
 use HHK\SysConst\VisitStatus;
+use HHK\Tables\EditRS;
+use HHK\Tables\House\RoomRS;
 
 /**
  * Imports people, reservations/visits and folios (as invoices and payments) from Cloudbeds.
@@ -1443,27 +1445,37 @@ class CloudbedsImport extends AbstractImport implements ImportInterface {
         // is meant to be usable immediately, and cloning a template that happens to be inactive (or, as found on a
         // live site, has a blank Status - likely from a room created by a different path) must not silently carry
         // that over, the same way AbstractImport::createRoom() always hardcodes an active new room
-        $roomCols = $template;
-        unset($roomCols['idResource'], $roomCols['idRoom'], $roomCols['Title'], $roomCols['Timestamp']);
-        $roomCols['Title'] = $title;
-        $roomCols['Status'] = 'a';
-        $columns = implode(', ', array_map(fn($c) => "`$c`", array_keys($roomCols)));
-        $placeholders = implode(', ', array_map(fn($c) => ":$c", array_keys($roomCols)));
-        $stmt = $this->dbh->prepare("insert into `room` ($columns) values ($placeholders)");
-        $stmt->execute($roomCols);
-        $idRoom = (int) $this->dbh->lastInsertId();
+        // copy the template through RoomRS so the new room is in the activity log
+        $roomRs = new RoomRS();
+        $notInRs = [];
+        foreach ($template as $col => $val) {
+            if (in_array($col, ['idResource', 'idRoom', 'Title', 'Timestamp'])) {
+                continue;
+            }
+            if (property_exists($roomRs, $col)) {
+                if (!is_null($val)) {
+                    $roomRs->$col->setNewVal($val);
+                }
+            } else {
+                $notInRs[$col] = $val;
+            }
+        }
+        $roomRs->Title->setNewVal($title);
+        $roomRs->Status->setNewVal('a');
+        $idRoom = (int) EditRS::insert($this->dbh, $roomRs);
+
+        // room columns RoomRS doesn't define (images, display colors)
+        if ($idRoom > 0 && count($notInRs) > 0) {
+            $sets = implode(', ', array_map(fn($c) => "`$c` = :$c", array_keys($notInRs)));
+            $stmt = $this->dbh->prepare("update `room` set $sets where `idRoom` = :idRoomNew");
+            $stmt->execute(array_merge($notInRs, [':idRoomNew' => $idRoom]));
+        }
 
         $resourceCols = $templateResource;
         unset($resourceCols['idResource'], $resourceCols['Title'], $resourceCols['Timestamp']);
         $resourceCols['Title'] = $title;
         $resourceCols['Status'] = 'a';
-        $columns = implode(', ', array_map(fn($c) => "`$c`", array_keys($resourceCols)));
-        $placeholders = implode(', ', array_map(fn($c) => ":$c", array_keys($resourceCols)));
-        $stmt = $this->dbh->prepare("insert into `resource` (`idResource`, $columns) values (:idResource, $placeholders)");
-        $stmt->execute(array_merge([':idResource' => $idRoom], $resourceCols));
-
-        $stmt = $this->dbh->prepare("insert into `resource_room` (`idResource_room`,`idResource`,`idRoom`) values (:idRoom1, :idRoom2, :idRoom3)");
-        $stmt->execute([':idRoom1' => $idRoom, ':idRoom2' => $idRoom, ':idRoom3' => $idRoom]);
+        $this->insertResourceForRoom($idRoom, array_filter($resourceCols, fn($v) => !is_null($v)));
 
         $this->rooms[trim(strtolower($title))] = $idRoom;
 

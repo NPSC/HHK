@@ -3,6 +3,7 @@ namespace HHK\Tables;
 
 use HHK\Tables\AbstractTableRS;
 use HHK\Tables\Fields\{DB_Field, DbBlobSanitizer, DbStrSanitizer, DbDateSanitizer};
+use HHK\AuditLog\LogOptions;
 
 /**
  * ExternalAPILogRS.php
@@ -24,6 +25,13 @@ class ExternalAPILogRS extends AbstractTableRS {
     public DB_Field $request;
     public DB_Field $response;
     public DB_Field $username;
+
+    /**
+     * Log table - not written to the activity log.
+     */
+    public function getActivitylogOptions(): LogOptions {
+        return LogOptions::defaults()->disableLogging();
+    }
 
     function __construct($TableName = "external_api_log") {
 

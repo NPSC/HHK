@@ -147,12 +147,18 @@ class SysConfig {
             throw new RuntimeException('System Configuration database table name or key not specified.  ');
         }
 
-        if($category){
-            $query = "select `Value`,`Type` from `" . $tableName . "` where `Key` = '$key' and `Category` = '$category' ";
-        }else{
-            $query = "select `Value`,`Type` from `" . $tableName . "` where `Key` = '$key' ";
+        // the table name can't be bound, so it must be a plain identifier
+        if (!preg_match('/^[A-Za-z0-9_]+$/', $tableName)) {
+            throw new RuntimeException('Bad System Configuration table name.  ');
         }
-        $stmt = $dbh->query($query);
+
+        if($category){
+            $stmt = $dbh->prepare("select `Value`,`Type` from `" . $tableName . "` where `Key` = :key and `Category` = :category ");
+            $stmt->execute([':key' => $key, ':category' => $category]);
+        }else{
+            $stmt = $dbh->prepare("select `Value`,`Type` from `" . $tableName . "` where `Key` = :key ");
+            $stmt->execute([':key' => $key]);
+        }
         $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
         if (count($rows) == 1) {

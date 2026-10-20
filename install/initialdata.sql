@@ -266,6 +266,14 @@ VALUES
 		'',
 		0
 	),
+	(
+		'cronJobTypes',
+		'PurgeAuditLogJob',
+		'Purge Old Audit Log',
+		'',
+		'',
+		0
+	),
 	('dayIncrements', '', 'Never', '', '', '6'),
 	('dayIncrements', '30', '30 days', '', '', '1'),
 	('dayIncrements', '60', '60 days', '', '', '2'),
@@ -4482,106 +4490,6 @@ VALUES
 
 -- ;
 --
--- insert users
---
-REPLACE into `name` (
-	idName,
-	Name_Last,
-	Name_First,
-	Member_Type,
-	Member_Status,
-	Record_Member,
-	Record_Company,
-	Company
-)
-values
-	(-1, 'admin', 'the', 'ai', 'a', 1, 0, ''),
-	(10, 'User', 'NPSC', 'ai', 'a', 1, 0, ''),
-	(11, '', '', 'np', 'a', 0, 1, 'Hospitality House');
-
--- ;
-REPLACE INTO `w_auth` (
-	`idName`,
-	`Role_Id`,
-	`Organization_Id`,
-	`Policy_id`,
-	`Updated_By`,
-	`Last_Updated`,
-	`User_Name`,
-	`Status`
-)
-VALUES
-	(-1, '10', 'p', 0, 'admin', now(), 'admin', 'a'),
-	(
-		10,
-		'10',
-		'p',
-		0,
-		'admin',
-		now(),
-		'npscuser',
-		'a'
-	);
-
--- ;
-REPLACE INTO `w_users` (
-	`idName`,
-	`User_Name`,
-	`Enc_PW`,
-	`Chg_PW`,
-	`pass_rules`,
-	`Status`,
-	`Certificate`,
-	`Cookie`,
-	`Session`,
-	`Ip`,
-	`Verify_Address`,
-	`Last_Login`,
-	`Hash_PW`,
-	`Updated_By`,
-	`Last_Updated`,
-	`Timestamp`
-)
-VALUES
-	(
-		-1,
-		'admin',
-		'539e17171312c324d3c23908f85f3149',
-		false,
-		false,
-		'a',
-		'',
-		'',
-		'',
-		'',
-		'done',
-		NULL,
-		'',
-		'',
-		NULL,
-		now()
-	),
-	(
-		10,
-		'npscuser',
-		'VEFhRldOWVFqVmZ5bjhENVZvd29ldz09',
-		false,
-		false,
-		'a',
-		'',
-		'',
-		'',
-		'',
-		'done',
-		NULL,
-		'',
-		'',
-		NULL,
-		now()
-	);
-
--- ;
---
 -- Table `w_groups`
 --
 REPLACE INTO `w_groups` (
@@ -6406,18 +6314,6 @@ VALUES
 		's'
 	),
 	(
-		130,
-		'DiagnosisBuilder.php',
-		31,
-		'Diagnosis Builder',
-		'',
-		1,
-		'h',
-		'79',
-		'n',
-		'p'
-	),
-	(
 		131,
 		'CheckingIn.php',
 		31,
@@ -6705,7 +6601,6 @@ VALUES
 	(128, 'ga'),
 	(128, 'ro'),
 	(129, 'db'),
-	(130, 'ga'),
 	(131, 'g'),
 	(131, 'ga'),
 	(132, 'ga'),

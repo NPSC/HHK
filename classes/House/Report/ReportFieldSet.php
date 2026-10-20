@@ -3,6 +3,8 @@ namespace HHK\House\Report;
 
 use HHK\sec\SecurityComponent;
 use HHK\sec\Session;
+use HHK\Tables\EditRS;
+use HHK\Tables\ReportFieldSetRS;
 
 /**
  * ReportFieldSet.php
@@ -116,10 +118,16 @@ class ReportFieldSet {
         if(($global && $admin) || !$global){ //only admin users can create global fieldsets
 
             try{
-                $query = "INSERT INTO report_field_sets (`Title`, `Report`, `Fields`, `Global`, `Created_by`) VALUES(:title, :report, :fields, :global, :createdBy);";
-                $stmt = $dbh->prepare($query);
-                $success = $stmt->execute([":title"=>$title, ":report"=>$report, ":fields"=>$fieldsJSON, ":global"=>$global, ":createdBy"=>$uname]);
-                $idFieldSet = $dbh->lastInsertId();
+                $fsRs = new ReportFieldSetRS();
+                $fsRs->Title->setNewVal($title);
+                $fsRs->Report->setNewVal($report);
+                $fsRs->Fields->setNewVal($fieldsJSON);
+                $fsRs->Global->setNewVal($global);
+                $fsRs->Created_by->setNewVal($uname);
+
+                // EditRS::insert's return, not lastInsertId() - the activity log insert runs after it
+                $idFieldSet = EditRS::insert($dbh, $fsRs);
+                $success = ($idFieldSet > 0);
             }catch(\PDOException $e){
                 if($e->errorInfo[1] == '1062'){
                     return ['error'=>"Field set '" . $title . "' already exists."];
@@ -155,9 +163,9 @@ class ReportFieldSet {
 
             $fieldsJSON = json_encode($fields);
 
-            $query = "UPDATE `report_field_sets` SET `Title` = :title, `Fields` = :fields, `Updated_by` = :updatedBy where `idFieldSet` = :idFieldSet";
-            $stmt = $dbh->prepare($query);
-            $success = $stmt->execute([":title"=>$title, ":fields"=>$fieldsJSON, ":updatedBy"=>$uname, ":idFieldSet"=>$idFieldSet]);
+            // isAuthorized() found the set, so no change is still a success
+            EditRS::updateFields($dbh, new ReportFieldSetRS(), ['idFieldSet' => $idFieldSet], ['Title' => $title, 'Fields' => $fieldsJSON, 'Updated_by' => $uname]);
+            $success = TRUE;
 
             if($success){
                 return ['success'=>"Field set updated successfully", 'fieldSet'=>['idFieldSet'=>$idFieldSet, 'title'=>$title]];
@@ -172,8 +180,9 @@ class ReportFieldSet {
     public static function deleteFieldSet(\PDO $dbh, int $idFieldSet){
 
         if(self::isAuthorized($dbh, $idFieldSet)){ //authorized
-            $stmt  = $dbh->prepare("DELETE FROM `report_field_sets` where `idFieldSet` = :idFieldSet");
-            $success = $stmt->execute([":idFieldSet"=>$idFieldSet]);
+            $fsRs = new ReportFieldSetRS();
+            $fsRs->idFieldSet->setStoredVal($idFieldSet);
+            $success = EditRS::delete($dbh, $fsRs, [$fsRs->idFieldSet]);
             if($success){
                 return ['success'=>'Field set deleted successfully', 'idFieldSet'=>$idFieldSet];
             }else{

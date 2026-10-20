@@ -6,6 +6,9 @@ use HHK\HTMLControls\HTMLContainer;
 use HHK\HTMLControls\HTMLInput;
 use HHK\HTMLControls\HTMLTable;
 use HHK\sec\Session;
+use HHK\Tables\EditRS;
+use HHK\Tables\GenLookupsRS;
+use HHK\Tables\House\OperatingScheduleRS;
 
 /**
  * OperatingHours.php
@@ -114,8 +117,9 @@ class OperatingHours {
         $uS = Session::getInstance();
 
         //delete old non_cleaning_days
-        $stmt = $this->dbh->prepare("delete from gen_lookups where Table_Name = 'Non_Cleaning_Day'");
-        $stmt->execute();
+        $glRs = new GenLookupsRS();
+        $glRs->Table_Name->setStoredVal('Non_Cleaning_Day');
+        EditRS::delete($this->dbh, $glRs, array($glRs->Table_Name));
 
         for ($d = 0; $d < 7; $d++) {
 
@@ -155,8 +159,7 @@ class OperatingHours {
                         $day["Closed"] != ($postedDay["Closed"] ? 1:0)
                     ){
                         $changed = true;
-                        $stmt = $this->dbh->prepare("update `operating_schedules` set `End_Date` = :end where `idDay` = " . $day["idDay"] . ";");
-                        $stmt->execute([":end"=>(new \DateTime())->format("Y-m-d H:i:s")]);
+                        EditRS::updateFields($this->dbh, new OperatingScheduleRS(), ['idDay' => $day["idDay"]], ['End_Date' => (new \DateTime())->format("Y-m-d H:i:s")]);
                     }
 
                 }
@@ -164,17 +167,20 @@ class OperatingHours {
 
             if($found == false || $changed == true){
                 //insert new hours
-                $stmt = $this->dbh->prepare("INSERT INTO `operating_schedules` (`Day`, `Start_Date`, `End_Date`, `Open_At`, `Closed_At`, `Non_Cleaning`, `Closed`, `Updated_By`) VALUES(:day, :start, :end, :openAt, :closedAt, :nonCleaning, :closed, :updatedby)");
-                $stmt->execute([
-                    ":day"=>$d,
-                    ":start"=>(new \DateTime())->format("Y-m-d H:i:s"),
-                    ":end"=>null,
-                    ":openAt"=>($postedDay["Open_At"] == '' ? null : $postedDay["Open_At"]),
-                    ":closedAt"=>($postedDay["Closed_At"] == '' ? null : $postedDay["Closed_At"]),
-                    ":nonCleaning"=>($postedDay["Non_Cleaning"] ? 1:0),
-                    ":closed"=>($postedDay["Closed"] ? 1:0),
-                    ":updatedby"=>$uS->username
-                ]);
+                $osRs = new OperatingScheduleRS();
+                $osRs->Day->setNewVal($d);
+                $osRs->Start_Date->setNewVal((new \DateTime())->format("Y-m-d H:i:s"));
+                // empty times stay NULL
+                if ($postedDay["Open_At"] != '') {
+                    $osRs->Open_At->setNewVal($postedDay["Open_At"]);
+                }
+                if ($postedDay["Closed_At"] != '') {
+                    $osRs->Closed_At->setNewVal($postedDay["Closed_At"]);
+                }
+                $osRs->Non_Cleaning->setNewVal($postedDay["Non_Cleaning"] ? 1:0);
+                $osRs->Closed->setNewVal($postedDay["Closed"] ? 1:0);
+                $osRs->Updated_By->setNewVal($uS->username);
+                EditRS::insert($this->dbh, $osRs);
             }
         }
         $this->loadCurrentHours();

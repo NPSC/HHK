@@ -21,8 +21,8 @@ use HHK\Payment\PaymentGateway\AbstractPaymentGateway;
 use HHK\Payment\PaymentManager\PaymentManager;
 use HHK\Purchase\{CheckinCharges, PaymentChooser, RateChooser};
 use HHK\SysConst\{GLTableNames, ItemPriceCode, ReservationStatus, VisitStatus};
-use HHK\SysConst\ItemId;
 use HHK\Tables\EditRS;
+use HHK\Tables\Payment\InvoiceRS;
 use HHK\Tables\Reservation\ReservationRS;
 use HHK\Exception\NotFoundException;
 use HHK\CrmExport\AbstractExportManager;
@@ -615,20 +615,28 @@ FROM reservation r
         if ($uS->AcceptResvPaymt) {
 
             // Add Order_Number to reservation pre-payment invoices.
-            $numRows = $dbh->exec("
-            UPDATE invoice i
+            $stmt = $dbh->prepare("
+            SELECT DISTINCT i.*
+            FROM invoice i
                     JOIN
                 invoice_line il on il.Invoice_Id = i.idInvoice
                     JOIN
                 reservation_invoice_line ri ON ri.Invoice_Line_Id = il.idInvoice_Line
-            SET
-                i.Order_Number = ".$visit->getIdVisit()."
             WHERE
-                ri.Reservation_Id = " . $visit->getIdReservation());
+                ri.Reservation_Id = :idResv");
+            $stmt->execute([':idResv' => $visit->getIdReservation()]);
+
+            $numRows = 0;
+            foreach ($stmt->fetchAll(\PDO::FETCH_ASSOC) as $r) {
+                $invRs = new InvoiceRS();
+                EditRS::loadRow($r, $invRs);
+                $invRs->Order_Number->setNewVal($visit->getIdVisit());
+                $numRows += EditRS::update($dbh, $invRs, [$invRs->idInvoice]);
+            }
 
             // Relate Invoice to Reservation
             if ($numRows > 1 && ! is_Null($this->payResult) && $this->payResult->getIdInvoice() > 0 && $this->reserveData->getIdResv() > 0) {
-                $dbh->exec("insert ignore into `reservation_invoice_line` select '".$this->reserveData->getIdResv()."', il.idInvoice_Line from invoice_line il where il.Invoice_Id = " .$this->payResult->getIdInvoice() . " and il.Item_Id = '" . ItemId::LodgingMOA . "'");
+                Reservation_1::linkPrepaymentLines($dbh, $this->reserveData->getIdResv(), $this->payResult->getIdInvoice());
             }
 
         }

@@ -16,6 +16,8 @@ use HHK\Payment\PaymentSvcs;
 use HHK\Payment\PaymentGateway\AbstractPaymentGateway;
 use HHK\sec\Labels;
 use HHK\SysConst\RoomRateCategories;
+use HHK\Tables\EditRS;
+use HHK\Tables\Name\NameDemogRS;
 
 
 /**
@@ -92,7 +94,7 @@ function saveBa(\PDO $dbh, $post) {
 				$id = intval($parts[1]);
 				$gl = filter_var($v, FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
-				$dbh->exec("Update name_demog set Gl_Code_Debit = '$gl' where idName = $id");
+				EditRS::updateFields($dbh, new NameDemogRS(), ['idName' => $id], ['Gl_Code_Debit' => $gl]);
 			}
 		}
 

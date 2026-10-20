@@ -154,9 +154,7 @@ class TransferTX {
         $transRs = Transaction::recordTransaction($dbh, $pr, '', TransType::undoRetrn, TransMethod::Cash);
         $pr->setIdTrans($transRs->idTrans->getStoredVal());
 
-        $dbh->exec("delete from payment_invoice where Payment_Id = $idPayment");
-        $dbh->exec("delete from payment_info_check where idPayment = $idPayment");
-        $dbh->exec("delete from payment where idPayment = $idPayment");
+        PaymentSvcs::deletePaymentRecords($dbh, $idPayment);
 
     }
 

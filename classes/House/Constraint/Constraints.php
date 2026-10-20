@@ -5,7 +5,7 @@ namespace HHK\House\Constraint;
 use HHK\Common;
 use HHK\CreateMarkupFromDB;
 use HHK\Tables\EditRS;
-use HHK\Tables\Attribute\ConstraintRS;
+use HHK\Tables\Attribute\{ConstraintAttributeRS, ConstraintRS};
 use HHK\HTMLControls\HTMLContainer;
 use HHK\HTMLControls\HTMLInput;
 use HHK\HTMLControls\HTMLSelector;
@@ -306,7 +306,9 @@ class Constraints {
             EditRS::delete($dbh, $conRs, array($conRs->idConstraint));
 
             // delete from constraint_attribute
-            $dbh->query("Delete from constraint_attribute where idConstraint = $id");
+            $caRs = new ConstraintAttributeRS();
+            $caRs->idConstraint->setStoredVal($id);
+            EditRS::delete($dbh, $caRs, array($caRs->idConstraint));
 
         }
 

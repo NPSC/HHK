@@ -3,6 +3,7 @@ namespace HHK\Tables\Reservation;
 
 use HHK\Tables\AbstractTableRS;
 use HHK\Tables\Fields\{DB_Field, DbIntSanitizer, DbStrSanitizer, DbDateSanitizer};
+use HHK\AuditLog\LogOptions;
 
 /**
  * Reservation_LogRS.php
@@ -30,6 +31,14 @@ class Reservation_LogRS extends AbstractTableRS {
     public DB_Field $idResource;  // int(11) NOT NULL DEFAULT '0',
     public DB_Field $Log_Text;  // VARCHAR(5000) NOT NULL DEFAULT '' ,
     public DB_Field $Timestamp;  // TIMESTAMP NOT NULL DEFAULT now()
+
+    /**
+     * Log table - not written to the activity log.
+     */
+    public function getActivitylogOptions(): LogOptions {
+        return LogOptions::defaults()->disableLogging();
+    }
+
     
     function __construct($TableName = "reservation_log") {
         

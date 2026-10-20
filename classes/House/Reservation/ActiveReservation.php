@@ -25,6 +25,7 @@ use HHK\SysConst\ItemId;
 use HHK\Tables\EditRS;
 use HHK\Tables\Reservation\Reservation_GuestRS;
 use HHK\Tables\Reservation\ReservationRS;
+use HHK\Tables\Reservation\ReservationInvoiceLineRS;
 
 
 
@@ -322,7 +323,7 @@ class ActiveReservation extends Reservation {
                 $newIdResv = RepeatReservations::makeNewReservation($dbh, $resv, $newArrival, $departure, $resv->getIdResource(), $oldResvStatus, $guests);
 
                 if($uS->AcceptResvPaymt && $resv->getIdReservation() > 0 && $newIdResv > 0 && isset($post["selexcpay"]) && $post["selexcpay"] == ExcessPay::MoveToResv){
-                    $dbh->exec("UPDATE `reservation_invoice_line` set `Reservation_Id` = " . $newIdResv . " where `Reservation_Id` = " . $resv->getIdReservation());
+                    EditRS::replaceValue($dbh, new ReservationInvoiceLineRS(), 'Reservation_Id', $resv->getIdReservation(), $newIdResv);
                 }
 
                 return $newIdResv;
@@ -525,9 +526,9 @@ class ActiveReservation extends Reservation {
             // Relate Invoice to Reservation
             if (! is_Null($this->payResult) && $this->payResult->getIdInvoice() > 0 && $resv->getIdReservation() > 0) {
                 if(isset($post["selexcpay"]) && $post["selexcpay"] == ExcessPay::Hold){ //if putting overpayment towards general MOA, only link prepayment MOA payout to reservation
-                    $dbh->exec("insert ignore into `reservation_invoice_line` select '".$resv->getIdReservation()."', il.idInvoice_Line from invoice_line il where il.Invoice_Id = " .$this->payResult->getIdInvoice() . " and il.Item_Id = '" . ItemId::LodgingMOA . "' and il.Type_Id = '" . InvoiceLineType::Reimburse . "'");
+                    Reservation_1::linkPrepaymentLines($dbh, $resv->getIdReservation(), $this->payResult->getIdInvoice(), InvoiceLineType::Reimburse);
                 }else{
-                    $dbh->exec("insert ignore into `reservation_invoice_line` select '".$resv->getIdReservation()."', il.idInvoice_Line from invoice_line il where il.Invoice_Id = " .$this->payResult->getIdInvoice() . " and il.Item_Id = '" . ItemId::LodgingMOA . "'");
+                    Reservation_1::linkPrepaymentLines($dbh, $resv->getIdReservation(), $this->payResult->getIdInvoice());
                 }
             }
 

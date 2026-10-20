@@ -394,14 +394,16 @@ class WebUser {
             }
 
             // Register the user
-            $query = "call register_web_user($id, '', '$wUserName', '$admin', 'p', '$role', '$pwHash', '', 1, 0);";
-
             try{
-                $dbh->exec($query);
+                $stmt = $dbh->prepare("call register_web_user(:id, '', :uname, :admin, 'p', :role, :pw, '', 1, 0);");
+                $stmt->execute([':id' => $id, ':uname' => $wUserName, ':admin' => $admin, ':role' => $role, ':pw' => $pwHash]);
             }catch(\PDOException $e){
                 $err = $dbh->errorInfo();
                 return array("error"=>$err[2]);
             }
+
+            // the procedure writes w_users, w_auth and id_securitygroup directly
+            EditRS::logActivity($dbh, "Web user $wUserName registered (register_web_user)", ['idName' => $id, 'username' => $wUserName, 'role' => $role], 'default', 'name', intval($id));
 
             UserClass::insertUserLog($dbh, "PS", $wUserName);
 

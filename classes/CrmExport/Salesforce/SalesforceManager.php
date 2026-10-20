@@ -13,6 +13,7 @@ use HHK\Exception\RuntimeException;
 use HHK\SysConst\RelLinkType;
 use HHK\Tables\CmsGatewayRS;
 use HHK\Tables\EditRS;
+use HHK\Tables\Crm\{CrmFieldMapRS, SfTypeMapRS};
 use HHK\Tables\Name\Name_GuestRS;
 use HHK\HTMLControls\{HTMLContainer, HTMLTable, HTMLInput, HTMLSelector};
 use HHK\sec\Session;
@@ -627,6 +628,9 @@ class SalesforceManager extends AbstractExportManager {
         $this->trace = $trace == 'true' ? TRUE : FALSE;
         $this->traceData = '';
 
+
+        // whole positive ids only - they go into an IN () list
+        $sourceIds = array_values(array_filter(array_map(fn($id) => intval($id, 10), $sourceIds), fn($id) => $id > 0));
 
         if (count($sourceIds) == 0) {
             $replys[0] = ['error' => "The list of HHK Id's to send is empty."];
@@ -1980,12 +1984,6 @@ JS;
             $existing[$r['HHK_Type_Code']] = (int) $r['idSf_type_map'];
         }
 
-        $ins = $dbh->prepare(
-            "INSERT INTO `sf_type_map` (`List_Name`, `SF_Type_Code`, `SF_Type_Name`, `HHK_Type_Code`)
-             VALUES (:ln, :sfCode, :sfName, :hhkCode)
-             ON DUPLICATE KEY UPDATE `SF_Type_Code` = VALUES(`SF_Type_Code`), `SF_Type_Name` = VALUES(`SF_Type_Name`)"
-        );
-        $del = $dbh->prepare("DELETE FROM `sf_type_map` WHERE `idSf_type_map` = :id");
         $count = 0;
 
         foreach ($pklmap as $hhkCode => $sfCode) {
@@ -1994,15 +1992,16 @@ JS;
 
             if ($sfCode === '') {
                 if (isset($existing[$hhkCode])) {
-                    $del->execute(['id' => $existing[$hhkCode]]);
+                    $mapRs = new SfTypeMapRS();
+                    $mapRs->idSf_type_map->setStoredVal($existing[$hhkCode]);
+                    EditRS::delete($dbh, $mapRs, [$mapRs->idSf_type_map]);
                     $count++;
                 }
             } elseif (\in_array($sfCode, $validSfCodes, true)) {
-                $ins->execute([
-                    'ln'      => $listName,
-                    'sfCode'  => $sfCode,
-                    'sfName'  => $this->picklists[$sfObject][$sfField][$sfCode] ?? $sfCode,
-                    'hhkCode' => $hhkCode,
+                // (List_Name, HHK_Type_Code) is the table's unique key
+                EditRS::upsert($dbh, new SfTypeMapRS(), ['List_Name' => $listName, 'HHK_Type_Code' => $hhkCode], [
+                    'SF_Type_Code' => $sfCode,
+                    'SF_Type_Name' => $this->picklists[$sfObject][$sfField][$sfCode] ?? $sfCode,
                 ]);
                 $count++;
             }
@@ -2473,18 +2472,6 @@ JS;
             return 'Field mappings not saved. ' . \implode(' ', $errors);
         }
 
-        $del = $dbh->prepare("DELETE FROM `crm_field_map` WHERE `gateway_id` = :gw AND `crm_object` = :obj");
-        $ins = $dbh->prepare(
-            "INSERT INTO `crm_field_map`
-                 (`gateway_id`, `crm_object`, `hhk_field`, `crm_field`, `in_export`, `in_search`, `display_order`)
-             VALUES (:gw, :obj, :hhk, :crm, :exp, :srch, :ord)
-             ON DUPLICATE KEY UPDATE
-                 `crm_field` = VALUES(`crm_field`),
-                 `in_export` = VALUES(`in_export`),
-                 `in_search` = VALUES(`in_search`),
-                 `display_order` = VALUES(`display_order`)"
-        );
-
         $count = 0;
 
         foreach ($objects as $obj) {
@@ -2493,7 +2480,15 @@ JS;
                 continue;
             }
 
-            $del->execute(['gw' => $gatewayId, 'obj' => $obj]);
+            // this object's current mappings, so only changes get written
+            $existingRs = new CrmFieldMapRS();
+            $existingRs->gateway_id->setStoredVal($gatewayId);
+            $existingRs->crm_object->setStoredVal($obj);
+            $existingMaps = [];
+            foreach (EditRS::select($dbh, $existingRs, [$existingRs->gateway_id, $existingRs->crm_object]) as $r) {
+                // lower case: the unique key compares case-insensitively
+                $existingMaps[strtolower($r['hhk_field'] . '|' . $r['crm_field'])] = $r['id'];
+            }
 
             foreach ($hhkFields as $i => $hhkField) {
                 $hhkField = trim(strip_tags((string) $hhkField));
@@ -2503,16 +2498,21 @@ JS;
                     continue;
                 }
 
-                $ins->execute([
-                    'gw'   => $gatewayId,
-                    'obj'  => $obj,
-                    'hhk'  => $hhkField,
-                    'crm'  => $crmField,
-                    'exp'  => (int) ($expArrays[$obj][$i] ?? 1),
-                    'srch' => (int) ($srchArrays[$obj][$i] ?? 0),
-                    'ord'  => ($i + 1) * 10,
+                // (gateway_id, crm_object, hhk_field, crm_field) is the table's unique key
+                EditRS::upsert($dbh, new CrmFieldMapRS(), ['gateway_id' => $gatewayId, 'crm_object' => $obj, 'hhk_field' => $hhkField, 'crm_field' => $crmField], [
+                    'in_export' => (int) ($expArrays[$obj][$i] ?? 1),
+                    'in_search' => (int) ($srchArrays[$obj][$i] ?? 0),
+                    'display_order' => ($i + 1) * 10,
                 ]);
+                unset($existingMaps[strtolower($hhkField . '|' . $crmField)]);
                 $count++;
+            }
+
+            // mappings no longer posted
+            foreach ($existingMaps as $idMap) {
+                $delRs = new CrmFieldMapRS();
+                $delRs->id->setStoredVal($idMap);
+                EditRS::delete($dbh, $delRs, [$delRs->id]);
             }
         }
 

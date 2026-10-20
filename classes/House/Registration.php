@@ -251,7 +251,7 @@ where
             return false;
         }
 
-        return $dbh->exec("update registration set Pref_Token_Id = $tokenId where idregistration = $regId and Pref_Token_Id != $tokenId");
+        return EditRS::updateFields($dbh, new RegistrationRS(), ['idRegistration' => $regId], ['Pref_Token_Id' => $tokenId]);
     }
 
     /**
