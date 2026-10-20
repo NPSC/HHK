@@ -33,11 +33,13 @@ class OAuthServer
         $this->privateKeyPath = $keyPath . "/oauth/private.key";
         $this->publicKeyPath = $keyPath . "/oauth/public.key";
 
-        if(file_exists($keyPath . "/oauth/encryptionKey.txt")){
-            $this->encryptionKey = file_get_contents($keyPath . "/oauth/encryptionKey.txt");
-        }else{
-            $this->encryptionKey = 'L7/AxZDnKHKX5yWWJBAEs0ZE5TVydMxbbt6gFxMeIDk='; // generate using base64_encode(random_bytes(32))
+        // generate using base64_encode(random_bytes(32))
+        $encryptionKeyPath = $keyPath . "/oauth/encryptionKey.txt";
+        $encryptionKey = is_readable($encryptionKeyPath) ? file_get_contents($encryptionKeyPath) : false;
+        if($encryptionKey === false || $encryptionKey === ''){
+            throw new \RuntimeException("OAuth encryption key not found or unreadable at " . $encryptionKeyPath);
         }
+        $this->encryptionKey = $encryptionKey;
         
         // Setup the authorization server
         $this->authServer = new AuthorizationServer(
