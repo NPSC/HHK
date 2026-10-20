@@ -46,8 +46,19 @@ if (isset($_REQUEST["cmd"])) {
 $events = [];
 try {
 
+// Viewing or changing two step verification once it is set up needs a fresh identity check, so
+// whoever finds an unattended session can't copy or replace it (see ReauthGuard).
+if (in_array($c, ['gen2fa', 'get2fa', 'save2fa', 'disable2fa'])
+        && count(UserClass::getOtpMethods(UserClass::getUserCredentials($dbh, $uS->username) ?? [])) > 0
+        && !\HHK\sec\ReauthGuard::check(\HHK\sec\ReauthGuard::PURPOSE_MFA)) {
+    $c = 'reauthRequired';
+}
 
 switch ($c) {
+
+    case "reauthRequired":
+        $events = \HHK\sec\ReauthGuard::requiredResponse(\HHK\sec\ReauthGuard::PURPOSE_MFA);
+        break;
 
     case "delRel":
 

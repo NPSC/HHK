@@ -250,6 +250,12 @@ $(document).ready(
 			var chPwButtons = {
 				"Save" : function() {
 
+					// SSO users have no password to change
+					if ($('#utxtOldPw').length === 0) {
+						$(this).dialog("close");
+						return;
+					}
+
 					var oldpw = $('#utxtOldPw'), pw1 = $('#utxtNewPw1'), pw2 = $('#utxtNewPw2'), oldpwMD5, newpwMD5, challVar = $(
 							"#challVar").val(), msg = $('#pwChangeErrMsg'), qmsg = $('#SecQuestionErrMsg'), success = false;
 					$('div#chgPassword').find("input").prop("type",

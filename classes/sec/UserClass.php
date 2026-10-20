@@ -602,8 +602,11 @@ class UserClass
      * @param string $username
      * @return bool
      */
-    public static function isLocalUser(\PDO $dbh, $uS, $username = false): bool
+    public static function isLocalUser(\PDO $dbh, Session $uS, string $username = ''): bool
     {
+        if($username == ''){
+            $username = $uS->username;
+        }
         $u = self::getUserCredentials($dbh, $username);
         return (isset($u['idIdp']) && $u['idIdp'] > 0 ? false : true);
     }
@@ -683,116 +686,139 @@ class UserClass
         $userAr = UserClass::getUserCredentials($dbh, $uS->username);
         $authProvider = self::getAuthProvider($dbh, $uS);
 
-        $mkup = '<div id="dchgPw" class="hhk-tdbox hhk-visitdialog" style="font-size: .9em; display:none;">';
+        // re-authentication dialog, for two step verification changes here and guarded pages
+        $mkup = '<script type="text/javascript" src="../js/reauth.js' . JSV . '"></script>';
+        $mkup .= '<div id="dchgPw" class="hhk-tdbox hhk-visitdialog" style="font-size: .9em; display:none;">';
         $passwordTitle = 'Change your Password';
 
-        if(self::isLocalUser($dbh, $uS)){
+        // SSO users get two step verification too: it is how they re-verify their identity (see ReauthGuard)
+        $isLocal = self::isLocalUser($dbh, $uS);
 
-            $ga = new GoogleAuthenticator($userAr);
-            $email = new Email($userAr);
+        $ga = new GoogleAuthenticator($userAr);
+        $email = new Email($userAr);
 
+        $mkup .= '
+            <div class="row">';
+
+        if ($isLocal && self::isPassExpired($dbh, $uS)){
             $mkup .= '
-                <div class="row">';
-
-            if (self::isPassExpired($dbh, $uS)){
-                $mkup .= '
-                <div class="ui-widget hhk-visitdialog col-12 PassExpDesc" style="margin-bottom: 1em;">
-            		<div class="ui-corner-all hhk-tdbox ui-widget-content ui-state-highlight" style="padding: 5px;">
-                        <p class="m-2">Your <strong>password</strong> has expired, please choose a new one below</p>
-                    </div>
+            <div class="ui-widget hhk-visitdialog col-12 PassExpDesc" style="margin-bottom: 1em;">
+        		<div class="ui-corner-all hhk-tdbox ui-widget-content ui-state-highlight" style="padding: 5px;">
+                    <p class="m-2">Your <strong>password</strong> has expired, please choose a new one below</p>
                 </div>
-                ';
-            }
-
-            if ($uS->Enforce2fa && self::hasTOTP($dbh, $uS->username) == false){
-                $mkup .= '
-                <div class="ui-widget hhk-visitdialog col-12 PassExpDesc" style="margin-bottom: 1em;">
-            		<div class="ui-corner-all hhk-tdbox ui-widget-content ui-state-highlight" style="padding: 5px;">
-                        <p class="m-2"><strong>Two Step Verification</strong> has not been enabled on this account yet, please enable it below</p>
-                    </div>
-                </div>
-                ';
-            }
-
-            $mkup .= '<div class="col-md-6">';
-
-            //2 factor authentication
-            $mkup .= '
-                <div class="ui-widget hhk-visitdialog hhk-row" style="margin-bottom: 1em;">
-                    <div class="ui-widget-header ui-state-default ui-corner-top" style="padding: 5px;">
-            			Two Step Verification
-            		</div>
-            		<div class="ui-corner-bottom hhk-tdbox ui-widget-content" style="padding: 5px;">
-            ';
-
-            if(self::hasTOTP($dbh, $uS->username)){
-                $remember = new Remember($userAr);
-                $activeDevices = count($remember->getTokens($dbh));
-
-                $mkup.= '<p style="margin: 0.5em">Two Step Verification is ON</p>';
-
-                if($activeDevices > 0){
-                    $mkup .= '<div class="hhk-flex my-2" style="justify-content: space-between" id="savedDevices"><p style="margin: 0.5em">You have ' . $activeDevices . ' saved devices</p>
-                            <button id="clearDevices">Clear saved devices</button></div>';
-                }
-
-            }else{
-                $mkup.= '
-                    <p style="margin: 0.5em">Two Step Verification is OFF</p>
-                    <p style="margin: 0.5em">Two step verification adds a second layer of security to your account by requiring you to enter a temporary code in addition to your password when logging in.</p>
-                ';
-            }
-
-            $mkup .= '<div id="mfaTabs">
-            <ul>'.
-                ($userAr['idName'] > 0 ? '<li><a href="#mfaEmail">Email</a></li>' : '') .
-                '<li><a href="#mfaAuthenticator">Authenticator</a></li>
-            </ul>' .
-
-            ($userAr['idName'] > 0 ? '<div id="mfaEmail" class="mfaContent">' . $email->getEditMarkup($dbh) . '</div>' : '') .
-            '<div id="mfaAuthenticator" class="mfaContent">' . $ga->getEditMarkup($dbh) . '</div>
-            </div>';
-
-            $mkup .= '
-
-                    </div>
-                </div>
-                </div> <!--end col-md-6 -->
-                <div class="col-md-6" id="chgPassword">
-            ';
-
-            // password markup
-            $minPassLength = ($uS->minPassLength > 8 ? $uS->minPassLength : 8);
-            $mkup .= '
-                <div class="ui-widget hhk-visitdialog hhk-row" style="margin-bottom: 1em;">
-            		<div class="ui-widget-header ui-state-default ui-corner-top" style="padding: 5px;">' . $passwordTitle . '</div>
-            		<div class="ui-corner-bottom hhk-tdbox ui-widget-content" style="padding: 5px;">
-
-                        <table style="width: 100%"><tr>
-                                <td class="tdlabel">User Name:</td><td style="background-color: white;"><span id="utxtUserName">' . $uS->username . '</span></td>
-                            </tr><tr>
-                                <td class="tdlabel">Enter Old Password:</td><td class="hhk-flex"><input style="width: 100%" id="utxtOldPw" type="password" value=""  /><button class="showPw" style="font-size: .75em; margin-left: 1em;" tabindex="-1">Show</button></td>
-                            </tr><tr>
-                                <td class="tdlabel">Enter New Password:</td><td class="hhk-flex"><input style="width: 100%" id="utxtNewPw1" type="password" value=""  /><button class="showPw" style="font-size: .75em; margin-left: 1em;" tabindex="-1">Show</button></td>
-                            </tr><tr>
-                                <td class="tdlabel">New Password Again:</td><td class="hhk-flex"><input style="width: 100%" id="utxtNewPw2" type="password" value=""  /><button class="showPw" style="font-size: .75em; margin-left: 1em;" tabindex="-1">Show</button></td>
-                            </tr><tr>
-                                <td colspan ="2"><span style="font-size: smaller;">Passwords must have at least ' . $minPassLength . ' characters with at least 1 uppercase letter, 1 lowercase letter, a number and a symbol. It cannot include &lt; or &gt;. Do not use names or dictionary words</span></td>
-                            </tr>
-                        </table>
-                        <div id="pwChangeErrMsg" style="color:red; text-align:center;" class="mt-1"></div>
-                    </div>
-                </div>
-                </div> <!--end col-md-6 -->
-                </div> <!--end row -->';
-
-            $mkup .= "</div>";
-        }else{
-            $mkup .= '
-                <p>Your account is managed by ' . $authProvider . ', please reach out to them for help with your account</p>
-                </div>
+            </div>
             ';
         }
+
+        if ($isLocal && $uS->Enforce2fa && self::hasTOTP($dbh, $uS->username) == false){
+            $mkup .= '
+            <div class="ui-widget hhk-visitdialog col-12 PassExpDesc" style="margin-bottom: 1em;">
+        		<div class="ui-corner-all hhk-tdbox ui-widget-content ui-state-highlight" style="padding: 5px;">
+                    <p class="m-2"><strong>Two Step Verification</strong> has not been enabled on this account yet, please enable it below</p>
+                </div>
+            </div>
+            ';
+        }
+
+        $mkup .= '<div class="col-md-6">';
+
+        //2 factor authentication
+        $mkup .= '
+            <div class="ui-widget hhk-visitdialog hhk-row" style="margin-bottom: 1em;">
+                <div class="ui-widget-header ui-state-default ui-corner-top" style="padding: 5px;">
+        			Two Step Verification
+        		</div>
+        		<div class="ui-corner-bottom hhk-tdbox ui-widget-content" style="padding: 5px;">
+        ';
+
+        if(self::hasTOTP($dbh, $uS->username)){
+            $remember = new Remember($userAr);
+            $activeDevices = count($remember->getTokens($dbh));
+
+            $mkup.= '<p style="margin: 0.5em">Two Step Verification is ON</p>';
+
+            // saved devices only skip two step verification at a local login
+            if($isLocal && $activeDevices > 0){
+                $mkup .= '<div class="hhk-flex my-2" style="justify-content: space-between" id="savedDevices"><p style="margin: 0.5em">You have ' . $activeDevices . ' saved devices</p>
+                        <button id="clearDevices">Clear saved devices</button></div>';
+            }
+
+        }else if ($isLocal){
+            $mkup.= '
+                <p style="margin: 0.5em">Two Step Verification is OFF</p>
+                <p style="margin: 0.5em">Two step verification adds a second layer of security to your account by requiring you to enter a temporary code in addition to your password when logging in.</p>
+            ';
+        }else{
+            $mkup.= '
+                <p style="margin: 0.5em">Two Step Verification is OFF</p>
+                <p style="margin: 0.5em">You sign in with ' . $authProvider . ', so two step verification is not used when you log in.  It is used to confirm your identity before sensitive changes, such as managing user accounts.</p>
+            ';
+        }
+
+        $mkup .= '<div id="mfaTabs">
+        <ul>'.
+            ($userAr['idName'] > 0 ? '<li><a href="#mfaEmail">Email</a></li>' : '') .
+            '<li><a href="#mfaAuthenticator">Authenticator</a></li>
+        </ul>' .
+
+        ($userAr['idName'] > 0 ? '<div id="mfaEmail" class="mfaContent">' . $email->getEditMarkup($dbh) . '</div>' : '') .
+        '<div id="mfaAuthenticator" class="mfaContent">' . $ga->getEditMarkup($dbh) . '</div>
+        </div>';
+
+        $mkup .= '
+
+                </div>
+            </div>
+            </div> <!--end col-md-6 -->
+        ';
+
+        if (!$isLocal) {
+            $mkup .= '
+            <div class="col-md-6">
+                <div class="ui-widget hhk-visitdialog hhk-row" style="margin-bottom: 1em;">
+                    <div class="ui-widget-header ui-state-default ui-corner-top" style="padding: 5px;">Password</div>
+                    <div class="ui-corner-bottom hhk-tdbox ui-widget-content" style="padding: 5px;">
+                        <p style="margin: 0.5em">Your account is managed by ' . $authProvider . ', please reach out to them for help with your password.</p>
+                    </div>
+                </div>
+            </div> <!--end col-md-6 -->
+            </div> <!--end row -->
+            </div>';
+
+            return $mkup;
+        }
+
+        $mkup .= '
+            <div class="col-md-6" id="chgPassword">
+        ';
+
+        // password markup
+        $minPassLength = ($uS->minPassLength > 8 ? $uS->minPassLength : 8);
+        $mkup .= '
+            <div class="ui-widget hhk-visitdialog hhk-row" style="margin-bottom: 1em;">
+        		<div class="ui-widget-header ui-state-default ui-corner-top" style="padding: 5px;">' . $passwordTitle . '</div>
+        		<div class="ui-corner-bottom hhk-tdbox ui-widget-content" style="padding: 5px;">
+
+                    <table style="width: 100%"><tr>
+                            <td class="tdlabel">User Name:</td><td style="background-color: white;"><span id="utxtUserName">' . $uS->username . '</span></td>
+                        </tr><tr>
+                            <td class="tdlabel">Enter Old Password:</td><td class="hhk-flex"><input style="width: 100%" id="utxtOldPw" type="password" value=""  /><button class="showPw" style="font-size: .75em; margin-left: 1em;" tabindex="-1">Show</button></td>
+                        </tr><tr>
+                            <td class="tdlabel">Enter New Password:</td><td class="hhk-flex"><input style="width: 100%" id="utxtNewPw1" type="password" value=""  /><button class="showPw" style="font-size: .75em; margin-left: 1em;" tabindex="-1">Show</button></td>
+                        </tr><tr>
+                            <td class="tdlabel">New Password Again:</td><td class="hhk-flex"><input style="width: 100%" id="utxtNewPw2" type="password" value=""  /><button class="showPw" style="font-size: .75em; margin-left: 1em;" tabindex="-1">Show</button></td>
+                        </tr><tr>
+                            <td colspan ="2"><span style="font-size: smaller;">Passwords must have at least ' . $minPassLength . ' characters with at least 1 uppercase letter, 1 lowercase letter, a number and a symbol. It cannot include &lt; or &gt;. Do not use names or dictionary words</span></td>
+                        </tr>
+                    </table>
+                    <div id="pwChangeErrMsg" style="color:red; text-align:center;" class="mt-1"></div>
+                </div>
+            </div>
+            </div> <!--end col-md-6 -->
+            </div> <!--end row -->';
+
+        $mkup .= "</div>";
+
         return $mkup;
     }
 
@@ -945,6 +971,60 @@ class UserClass
         if ($r == NULL || !empty($r['idIdp']) || $r['Status'] != 'a' || !$this->passwordMatches($dbh, $r, $password)) {
             $this->incrementTries();
             $this->logMessage = "Incorrect password.";
+            return FALSE;
+        }
+
+        $this->resetTries();
+        return TRUE;
+    }
+
+    /**
+     * Two step verification methods the user has set up, default first.
+     *
+     * @param array $userAr User credentials row
+     * @return array e.g. ['authenticator', 'backup']
+     */
+    public static function getOtpMethods(array $userAr): array
+    {
+        $methods = [];
+        foreach (['authenticator' => 'totpSecret', 'email' => 'emailSecret', 'backup' => 'backupSecret'] as $method => $field) {
+            if (!empty($userAr[$field])) {
+                $methods[] = $method;
+            }
+        }
+        return $methods;
+    }
+
+    /**
+     * Check a two step verification code for re-authentication (see ReauthGuard).  Unlike
+     * _checkLogin(), this does not log the user in again or honor remembered devices.
+     * Shares the login attempt counter.
+     *
+     * @param \PDO $dbh
+     * @param string $username
+     * @param string $method authenticator, email or backup
+     * @param string $code
+     * @return bool
+     */
+    public function verifyOtp(\PDO $dbh, string $username, string $method, string $code): bool
+    {
+        if ($this->testTries() === FALSE) {
+            $this->logMessage = "Too many attempts.  Log out and log in again.";
+            return FALSE;
+        }
+
+        $r = self::getUserCredentials($dbh, $username);
+
+        $mfaObj = match (in_array($method, self::getOtpMethods($r ?? []), true) ? $method : '') {
+            'authenticator' => new GoogleAuthenticator($r),
+            'email' => new Email($r),
+            'backup' => new Backup($r),
+            default => null,
+        };
+
+        if ($mfaObj === null || $r['Status'] != 'a' || !$mfaObj->verifyCode($dbh, trim($code))) {
+            $this->incrementTries();
+            $this->logMessage = "Incorrect verification code.";
             return FALSE;
         }
 

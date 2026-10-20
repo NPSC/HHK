@@ -7,8 +7,7 @@ use HHK\sec\ReauthGuard;
 /**
  * ws_reauth.php
  *
- * Web Service for step-up re-authentication (see ReauthGuard).  SSO re-authentication
- * starts and finishes in ws_SSO.php.
+ * Web Service for step-up re-authentication (see ReauthGuard).
  *
  * @author    Will Ireland <wireland@nonprofitsoftwarecorp.org>
  * @copyright 2010-2026 <nonprofitsoftwarecorp.org>
@@ -47,8 +46,19 @@ try {
                 $events = ["error" => "Bad request"];
                 break;
             }
-            ReauthGuard::verifyPassword($dbh, $purpose, filter_input(INPUT_POST, "pw", FILTER_UNSAFE_RAW) ?? '');
+            ReauthGuard::verify($dbh, $purpose,
+                filter_input(INPUT_POST, "secret", FILTER_UNSAFE_RAW) ?? '',
+                filter_input(INPUT_POST, "otpMethod", FILTER_SANITIZE_FULL_SPECIAL_CHARS) ?? '');
             $events = ["success" => true, "expiresIn" => ReauthGuard::expiresIn($purpose)];
+            break;
+
+        case 'sendcode':
+            if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+                $events = ["error" => "Bad request"];
+                break;
+            }
+            ReauthGuard::sendEmailCode($dbh, $purpose);
+            $events = ["success" => true];
             break;
 
         default:

@@ -4,7 +4,6 @@ use HHK\Common;
 use HHK\sec\Session;
 use HHK\sec\Login;
 use HHK\sec\SAML;
-use HHK\sec\ReauthGuard;
 use HHK\sec\SysConfig;
 use HHK\sec\SecurityComponent;
 
@@ -20,12 +19,6 @@ use HHK\sec\SecurityComponent;
  */
 
 require ("../house/homeIncludes.php");
-
-// A re-authentication response arrives cross-site without the session cookie; relay it before
-// a session is started so we don't replace the user's session cookie.  See ReauthGuard.
-if (ReauthGuard::isRelayRequest(filter_var($_REQUEST["cmd"] ?? '', FILTER_SANITIZE_FULL_SPECIAL_CHARS))) {
-    ReauthGuard::relayResponse();
-}
 
 try {
 
@@ -65,25 +58,8 @@ try {
             $saml->login();
             break;
         case 'acs':
-            if (ReauthGuard::isRelayedResponse()) {
-                try {
-                    $purpose = ReauthGuard::completeSso($dbh, $idpId);
-                    ReauthGuard::renderResult(true, $purpose, 'Your identity has been verified.');
-                } catch (Exception $ex) {
-                    ReauthGuard::renderResult(false, '', $ex->getMessage());
-                }
-            }
             $saml = new SAML($dbh, $idpId);
             $saml->acs();
-            break;
-        case 'reauth':
-            $purpose = filter_var($_REQUEST["purpose"] ?? '', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
-            try {
-                header('Location: ' . ReauthGuard::startSso($dbh, $purpose));
-                exit();
-            } catch (Exception $ex) {
-                ReauthGuard::renderResult(false, $purpose, $ex->getMessage());
-            }
             break;
         case 'metadata':
             if(SecurityComponent::is_Admin()){
