@@ -39,13 +39,15 @@ use HHK\Payment\PaymentGateway\Vantiv\Response\VerifyCkOutResponse;
 
 
 // Credit Payment Hosted transactions
-
+/**
+ * @extends AbstractMercRequest<VerifyCkOutResponse>
+ */
 class VerifyCkOutRequest extends AbstractMercRequest{
 
     /**
      * Summary of execute
      * @param \SoapClient $txClient
-     * @param mixed $data
+     * @param array $data
      * @return VerifyCkOutResponse
      */
     protected function execute(\SoapClient $txClient, array $data): VerifyCkOutResponse {

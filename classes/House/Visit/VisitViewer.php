@@ -1170,8 +1170,7 @@ where `Deleted` = 0 and `Status` = 'up'
 
         $reply = '';
 
-        $today = new \DateTimeImmutable();
-        $today->setTime(0,0,0);
+        $today = new \DateTimeImmutable('today');
         $stayCoversSpan = FALSE;
         $stayFound = FALSE;
         $earliestStart = new \DateTime('2900-01-01');

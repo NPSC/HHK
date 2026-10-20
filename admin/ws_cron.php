@@ -97,7 +97,7 @@ foreach($jobs as $job){
             }
 
             if(isset($time) && $time != ""){
-                $jobObjs[] = $jobObj;
+                $jobObjs[$job['idJob']] = $jobObj;
                 $scheduler->call(function($jobObj){
                         $jobObj->run();
                     },array("jobObj"=>$jobObj))
@@ -111,8 +111,8 @@ foreach($jobs as $job){
 $scheduler->run();
 
 //Gather results
-foreach($jobObjs as $jobObj){
-    $results[$jobObj->idJob] = ["status"=>$jobObj->status, "logMsg"=>$jobObj->logMsg];
+foreach($jobObjs as $idJob=>$jobObj){
+    $results[$idJob] = ["status"=>$jobObj->getStatus(), "logMsg"=>$jobObj->getLogMsg()];
 }
 
 //send results as json

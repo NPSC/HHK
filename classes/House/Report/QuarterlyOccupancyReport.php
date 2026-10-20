@@ -2,7 +2,7 @@
 namespace HHK\House\Report;
 
 use HHK\Common;
-use HHK\ExcelHelper;
+use HHK\Excel\ExcelHelper;
 use HHK\sec\Session;
 use HHK\HTMLControls\HTMLTable;
 use HHK\HTMLControls\HTMLContainer;

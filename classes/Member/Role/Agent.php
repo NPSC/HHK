@@ -32,6 +32,7 @@ class Agent extends AbstractRole{
      */
     public function __construct(\PDO $dbh, $idPrefix, $id, $title = 'Referral Agent') {
 
+        $this->dbh = $dbh;
         $this->currentlyStaying = NULL;
         $this->idVisit = NULL;
         $this->emergContact = NULL;

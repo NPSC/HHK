@@ -2,8 +2,8 @@
 
 namespace HHK\Member\Role;
 
-use HHK\Common;
 use HHK\HTMLControls\{HTMLContainer, HTMLInput, HTMLTable};
+use HHK\House\PSG;
 use HHK\House\ReserveData\PSGMember\PSGMember;
 use HHK\Member\Address\{Address, Addresses, CleanAddress, Emails, Phones};
 use HHK\Member\EmergencyContact\EmergencyContact;
@@ -27,6 +27,9 @@ use HHK\sec\Labels;
  * @author Eric
  */
 abstract class AbstractRole {
+
+
+    protected ?\PDO $dbh = null;
 
     /**
      *
@@ -64,18 +67,18 @@ abstract class AbstractRole {
     protected $useHousePhone = FALSE;
     /**
      *
-     * @var EmergencyContact
+     * @var EmergencyContact|null
      */
     protected $emergContact;
 
     /**
      * Summary of patientPsg
-     * @var int
+     * @var PSG|null
      */
     protected $patientPsg;
     /**
      * Summary of idVisit
-     * @var int
+     * @var int|null
      */
     protected $idVisit;
     /**
@@ -85,7 +88,7 @@ abstract class AbstractRole {
     protected $title;
     /**
      * Summary of currentlyStaying
-     * @var bool
+     * @var bool|null Null until the current stay has been looked up.
      */
     protected $currentlyStaying;
     /**
@@ -93,15 +96,9 @@ abstract class AbstractRole {
      * @var string
      */
     public $status = '';
-    /**
-     * Summary of checkinDate
-     * @var
-     */
+
     protected $checkinDate;
-    /**
-     * Summary of expectedCheckOut
-     * @var
-     */
+
     protected $expectedCheckOut;
     /**
      * Summary of incompleteEmergContact
@@ -537,9 +534,8 @@ where r.idPsg = $idPsg and s.idName = " . $id;
     public function getAddrObj() {
 
         if (is_null($this->addr)) {
-            $dbh = Common::initPDO(true);
             $uS = Session::getInstance();
-            $this->addr = new Address($dbh, $this->roleMember, $uS->nameLookups[GLTableNames::AddrPurpose]);
+            $this->addr = new Address($this->dbh, $this->roleMember, $uS->nameLookups[GLTableNames::AddrPurpose]);
         }
         return $this->addr;
     }
@@ -550,9 +546,8 @@ where r.idPsg = $idPsg and s.idName = " . $id;
      */
     public function getPhonesObj() {
         if (is_null($this->phones)) {
-            $dbh = Common::initPDO(true);
             $uS = Session::getInstance();
-            $this->phones = new Phones($dbh, $this->roleMember, $uS->nameLookups[GLTableNames::PhonePurpose]);
+            $this->phones = new Phones($this->dbh, $this->roleMember, $uS->nameLookups[GLTableNames::PhonePurpose]);
         }
         return $this->phones;
     }
@@ -563,9 +558,8 @@ where r.idPsg = $idPsg and s.idName = " . $id;
      */
     public function getEmailsObj() {
         if (is_null($this->emails)) {
-            $dbh = Common::initPDO(true);
             $uS = Session::getInstance();
-            $this->emails = new Emails($dbh, $this->roleMember, $uS->nameLookups[GLTableNames::EmailPurpose]);
+            $this->emails = new Emails($this->dbh, $this->roleMember, $uS->nameLookups[GLTableNames::EmailPurpose]);
         }
         return $this->emails;
     }

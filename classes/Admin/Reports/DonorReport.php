@@ -20,7 +20,7 @@ use HHK\sec\Session;
 use HHK\Admin\VolCats;
 use HHK\Admin\MemberSalutation\IndividualSalutation;
 use HHK\Admin\MemberSalutation\OrganizationSalutation;
-use HHK\ExcelHelper;
+use HHK\Excel\ExcelHelper;
 use PDO;
 
 class DonorReport

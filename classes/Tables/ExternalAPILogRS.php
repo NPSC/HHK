@@ -24,7 +24,6 @@ class ExternalAPILogRS extends AbstractTableRS {
     public DB_Field $request;
     public DB_Field $response;
     public DB_Field $username;
-    public DB_Field $Timestamp;
 
     function __construct($TableName = "external_api_log") {
 
@@ -37,7 +36,6 @@ class ExternalAPILogRS extends AbstractTableRS {
         $this->request = new DB_Field("request", "", new DbBlobSanitizer(), true, true);
         $this->response = new DB_Field("response", "", new DbBlobSanitizer(), true, true);
         $this->username = new DB_Field("username", "", new DbStrSanitizer(255), true, true);
-        //$this->Timestamp = new DB_Field("Timestamp", NULL, new DbDateSanitizer("Y-m-d H:i:s.u"), FALSE);
         parent::__construct($TableName);
 
     }

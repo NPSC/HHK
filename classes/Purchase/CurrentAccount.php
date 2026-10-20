@@ -389,7 +389,7 @@ class CurrentAccount {
 
     /**
      * Summary of getTaxExemptRoomFees
-     * @return int
+     * @return float
      */
     public function getTaxExemptRoomFees() {
         return $this->taxExemptRoomFees;
@@ -421,7 +421,7 @@ class CurrentAccount {
 
     /**
      * Summary of getTaxedRoomFeeBalance
-     * @return int
+     * @return float
      */
     public function getTaxedRoomFeeBalance(){
         return $this->taxedroomFeeBalance;

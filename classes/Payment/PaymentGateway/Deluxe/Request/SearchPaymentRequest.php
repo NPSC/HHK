@@ -24,11 +24,11 @@ Class SearchPaymentRequest extends AbstractDeluxeRequest {
                 \GuzzleHttp\RequestOptions::JSON => $requestData
             ]);
 
-            $this->responseCode = $resp->getStatusCode();
+            $this->responseCode = (string) $resp->getStatusCode();
             $this->responseBody = json_decode($resp->getBody()->getContents(), true);
 
         }catch(BadResponseException $e){//error
-            $this->responseCode = $e->getResponse()->getStatusCode();
+            $this->responseCode = (string) $e->getResponse()->getStatusCode();
             $this->responseBody = json_decode($e->getResponse()->getBody()->getContents(), true);
         }
         

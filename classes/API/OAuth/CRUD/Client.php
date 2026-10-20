@@ -18,9 +18,7 @@ class Client {
     protected \PDO $dbh;
     protected $clientId;
 
-    protected OauthClientRS $oauthClientRS;
-
-    protected array $activeAccessTokens;
+    protected array $activeAccessTokens = [];
 
     public function __construct(\PDO $dbh, $clientId = false) {
         $this->dbh = $dbh;
@@ -94,7 +92,7 @@ class Client {
      * 
      * @param string $name
      * @param array $scopes
-     * @return array{client: mixed, client_id: string, client_secret: string}
+     * @return array{client: mixed, accessTokens: array{}}
      */
     public function generateNewClient(string $name, array $scopes = []){
         $uS = Session::getInstance();

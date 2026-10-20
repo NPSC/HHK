@@ -1,6 +1,6 @@
 <?php
 
-use HHK\Duplicate;
+use HHK\Admin\Duplicate;
 use HHK\HTMLControls\HTMLInput;
 use HHK\sec\{Session, WebInit};
 use HHK\HTMLControls\{HTMLContainer, HTMLSelector};

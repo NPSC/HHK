@@ -136,8 +136,8 @@ abstract class AbstractPaymentGateway {
      * @param mixed $post
      * @param mixed $payNotes
      * @param mixed $userName
-     * @throws \HHK\Exception\PaymentException
-     * @return never
+     * @throws \HHK\Exception\PaymentException when the gateway does not support webhooks
+     * @return bool
      */
     public function processWebhook(\PDO $dbh, $post, $payNotes, $userName) {
         throw new PaymentException('Webhook not implemeneted');

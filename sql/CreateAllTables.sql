@@ -1811,6 +1811,7 @@ CREATE TABLE
         `Availability` VARCHAR(15) NOT NULL DEFAULT '',
         `Max_Occupants` INT (11) NOT NULL DEFAULT '0',
         `Min_Occupants` INT (11) NOT NULL DEFAULT '0',
+        `Standard_Occupants` INT (11) NOT NULL DEFAULT '0',
         `Beds_King` INT (11) NOT NULL DEFAULT '0',
         `Beds_Queen` INT (11) NOT NULL DEFAULT '0',
         `Beds_Utility` INT NOT NULL DEFAULT 0,
@@ -1900,7 +1901,9 @@ CREATE TABLE
         `transform`       VARCHAR(100) NULL DEFAULT NULL,
         `display_order`   INT NOT NULL DEFAULT 0,
         PRIMARY KEY (`id`),
-        UNIQUE KEY `uq_gateway_object_field` (`gateway_id`, `crm_object`, `hhk_field`)
+        -- crm_field included so several Cloudbeds fields can map to the same note target (note.psg/note.reservation/
+        -- note.member collect lines from several fields - everything else holds one value)
+        UNIQUE KEY `uq_gateway_object_field_crm` (`gateway_id`, `crm_object`, `hhk_field`, `crm_field`)
     ) ENGINE = InnoDB;
 
 -- Table `sf_type_map`

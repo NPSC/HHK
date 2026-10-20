@@ -20,12 +20,9 @@ class ConstraintAttributes {
      *
      * @var array
      */
-    protected $attributes;
-    /**
-     *
-     * @var int
-     */
-    protected $constraint;
+    protected array $attributes;
+
+    protected Constraint $constraint;
 
     /**
      *
@@ -39,11 +36,11 @@ class ConstraintAttributes {
 
     }
 
-    public function getAttributes() {
+    public function getAttributes(): array {
         return $this->attributes;
     }
 
-    public function getActiveAttributes() {
+    public function getActiveAttributes(): array {
 
         $roomAttrs = array();
         foreach ($this->attributes as $k => $a) {
@@ -55,7 +52,7 @@ class ConstraintAttributes {
         return $roomAttrs;
     }
 
-    protected function loadAttributes(\PDO $dbh) {
+    protected function loadAttributes(\PDO $dbh): array {
 
         $attrs = array();
 
@@ -89,7 +86,7 @@ ORDER by a.Type, a.idAttribute");
      * @param \PDO $dbh
      * @param array $capturedAttributes
      */
-    public function saveAttributes(\PDO $dbh, $capturedAttributes) {
+    public function saveAttributes(\PDO $dbh, array $capturedAttributes): void {
 
         foreach ($this->attributes as $k => $v) {
 
@@ -116,4 +113,3 @@ ORDER by a.Type, a.idAttribute");
         $this->attributes = $this->loadAttributes($dbh);
     }
 }
-?>

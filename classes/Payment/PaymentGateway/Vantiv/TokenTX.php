@@ -15,6 +15,7 @@ use HHK\Payment\PaymentGateway\Vantiv\Request\CreditReversalTokenRequest;
 use HHK\Payment\PaymentGateway\Vantiv\Request\CreditSaleTokenRequest;
 use HHK\Payment\PaymentGateway\Vantiv\Request\CreditVoidReturnTokenRequest;
 use HHK\Payment\PaymentGateway\Vantiv\Request\CreditVoidSaleTokenRequest;
+use HHK\Payment\PaymentResponse\AbstractCreditResponse;
 
 /**
  * TokenTX.php
@@ -37,9 +38,12 @@ class TokenTX {
      *
      * @param \PDO $dbh
      * @param int $idGuest
-     * @param string $gwName
+     * @param int $idReg
+     * @param VantivGateway $gway
      * @param CreditSaleTokenRequest $cstReq
-     * @return TokenResponse
+     * @param string $payNotes
+     * @param string $payDate
+     * @return AbstractCreditResponse
      */
     public static function CreditSaleToken(\PDO $dbh, $idGuest, $idReg, VantivGateway $gway, CreditSaleTokenRequest $cstReq, $payNotes, $payDate) {
 

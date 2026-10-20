@@ -40,24 +40,21 @@ class Reservation {
      * Summary of reservRs
      * @var ReservationRS
      */
-    protected $reservRs;
+    protected ?ReservationRS $reservRs;
 
     /**
      * Summary of family
      * @var Family
      */
-    protected $family;
+    protected ?Family $family;
 
     /**
      * Summary of payResult
-     * @var PaymentResult
+     * @var PaymentResult|null
      */
     protected $payResult;
 
-    /**
-     * Summary of cofResult
-     * @var
-     */
+
     protected $cofResult;
     /**
      * Summary of gotoCheckingIn
@@ -68,24 +65,25 @@ class Reservation {
 
     /**
      * Summary of __construct
-     * @param \HHK\House\ReserveData\ReserveData $reserveData
-     * @param mixed $reservRs
-     * @param mixed $family
+     * @param ReserveData $reserveData
+     * @param ?ReservationRS $reservRS
+     * @param ?Family $family
      */
-    function __construct(ReserveData $reserveData, $reservRs, $family) {
+    function __construct(ReserveData $reserveData, ?ReservationRS $reservRS, ?Family $family) {
 
         $this->reserveData = $reserveData;
-        $this->reservRs = $reservRs;
+        $this->reservRs = $reservRS;
         $this->family = $family;
     }
 
     /**
      * Summary of reservationFactoy
      * @param \PDO $dbh
-     * @throws \HHK\Exception\RuntimeException
+     * @param array $inputData
+     * @throws RuntimeException
      * @return ActiveReservation|CheckedoutReservation|DeletedReservation|Reservation|ReserveSearcher|StaticReservation|StayingReservation
      */
-    public static function reservationFactoy(\PDO $dbh, $inputData) {
+    public static function reservationFactoy(\PDO $dbh, array $inputData) {
 
         $uS = Session::getInstance();
 
@@ -148,8 +146,8 @@ class Reservation {
     /**
      * Summary of loadReservation
      * @param \PDO $dbh
-     * @param \HHK\House\ReserveData\ReserveData $rData
-     * @throws \HHK\Exception\NotFoundException
+     * @param ReserveData $rData
+     * @throws NotFoundException
      * @return ActiveReservation|CheckedoutReservation|DeletedReservation|StaticReservation|StayingReservation
      */
     public static function loadReservation(\PDO $dbh, ReserveData $rData) {
@@ -278,7 +276,7 @@ WHERE r.idReservation = " . $rData->getIdResv());
     /**
      * Summary of createFamilyMarkup
      * @param \PDO $dbh
-     * @param mixed $formUserData
+     * @param array $formUserData
      * @return array<string>|void
      */
     protected function createFamilyMarkup(\PDO $dbh, array $formUserData = []) {
@@ -347,7 +345,7 @@ WHERE r.idReservation = " . $rData->getIdResv());
     /**
      * Summary of createHospitalMarkup
      * @param \PDO $dbh
-     * @param mixed $refHospital
+     * @param array $refHospital
      * @return void
      */
     protected function createHospitalMarkup(\PDO $dbh, array $refHospital = []) {
@@ -437,7 +435,7 @@ WHERE r.idReservation = " . $rData->getIdResv());
     /**
      * Summary of save
      * @param \PDO $dbh
-     * @return ActiveReservation
+     * @return ActiveReservation|DeletedReservation The reservation object to continue with.
      */
     public function save(\PDO $dbh) {
 
@@ -857,7 +855,7 @@ WHERE r.idReservation = " . $rData->getIdResv());
     /**
      * Summary of vehicleMarkup
      * @param \PDO $dbh
-     * @param mixed $refVehicle
+     * @param array $refVehicle
      * @return string
      */
     protected function vehicleMarkup(\PDO $dbh, array $refVehicle = []) {
@@ -978,14 +976,15 @@ where rg.idReservation =" . $r['idReservation']);
     /**
      *
      * @param Reservation_1 $resv
-     * @param array $limResvStatuses
+     * @param array $resvStatuses
      * @param array $payTypes
      * @param string $psgCheckboxes  Markup
      * @param Labels $labels
      * @param bool $showPayWith
+     * @param float $moaBalance
      * @return string
      */
-    public function createStatusChooser(Reservation_1 $resv, array $resvStatuses, array $payTypes, $psgChecboxes, $labels, $showPayWith, $moaBalance = 0) {
+    public function createStatusChooser(Reservation_1 $resv, array $resvStatuses, array $payTypes, string $psgCheckboxes, Labels $labels, bool $showPayWith, float $moaBalance = 0) {
 
         $uS = Session::getInstance();
         $tbl2 = new HTMLTable();
@@ -1052,17 +1051,17 @@ where rg.idReservation =" . $r['idReservation']);
                     HTMLContainer::generateMarkup('legend', $labels->getString('referral', 'statusLabel', 'Reservation Status'), array('style'=>'font-weight:bold;'))
                     . $tbl2->generateMarkup() . $mk2,
                     ['class'=>'hhk-panel'])
-            , ['class'=>'mr-3 d-inline-block']) . $psgChecboxes;
+            , ['class'=>'mr-3 d-inline-block']) . $psgCheckboxes;
 
     }
 
     /**
      * Summary of findConflictingStays
      * @param \PDO $dbh
-     * @param mixed $psgMembers
-     * @param mixed $arrivalDT
+     * @param array $psgMembers
+     * @param ?\DateTimeInterface $arrivalDT
      * @param mixed $idPsg
-     * @param mixed $departureDT
+     * @param ?\DateTimeInterface $departureDT
      * @param mixed $idVisit
      * @param mixed $idSpan
      * @return int
@@ -1159,9 +1158,9 @@ WHERE
      * @param \PDO $dbh
      * @param mixed $idPsg
      * @param mixed $idResv
-     * @param mixed $psgMembers
-     * @param mixed $arrivalDT
-     * @param mixed $departDT
+     * @param array $psgMembers
+     * @param ?\DateTimeInterface $arrivalDT
+     * @param ?\DateTimeInterface $departDT
      * @param mixed $resvPrompt
      * @return int
      */
@@ -1234,9 +1233,8 @@ WHERE
     /**
      * Summary of setRoomRate
      * @param \PDO $dbh
-     * @param \HHK\House\Registration $reg
+     * @param Registration $reg
      * @param \HHK\House\Reservation\Reservation_1 $resv
-     * @param mixed $post
      * @return void
      */
     protected function setRoomRate(\PDO $dbh, Registration $reg, Reservation_1 &$resv) {
@@ -1549,7 +1547,7 @@ WHERE
     /**
      * Summary of setDates
 
-     * @throws \HHK\Exception\RuntimeException
+     * @throws RuntimeException
      * @return void
      */
     public function setDates() {

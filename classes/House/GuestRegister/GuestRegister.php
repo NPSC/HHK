@@ -29,9 +29,9 @@ use HHK\SysConst\ChecklistType;
 class GuestRegister
 {
 
-    protected int $noAssocId;
-    protected array $ribbonColors;
-    protected array $robbonBottomColors;
+    protected int $noAssocId = 0;
+    protected array $ribbonColors = [];
+    protected array $robbonBottomColors = [];
     const WAITLIST_RESC_ID = '9999';
 
     public static function getCalendarRescs(\PDO $dbh, string $startDate, string $endDate, string $timezone, string $rescGroupBy): array

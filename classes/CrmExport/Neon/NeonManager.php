@@ -36,7 +36,6 @@ class NeonManager extends AbstractExportManager {
 
     protected int $pageNumber = 0;
     protected RelationshipMapper $relationshipMapper;
-    protected array $hhkToNeonRelationMap;
 
     const SearchViewName = 'vguest_search_neon';
 
@@ -50,6 +49,7 @@ class NeonManager extends AbstractExportManager {
     public function __construct(\PDO $dbh, string $cmsName) {
         parent::__construct($dbh, $cmsName);
         $this->neonWebServiceV2 = new NeonWebService($dbh, $this->getUserId(), Crypto::decryptMessage($this->getPassword()));
+        $this->relationshipMapper = new RelationshipMapper($dbh);
     }
 
     public function searchMembers (array $searchCriteria): array {
@@ -817,9 +817,6 @@ class NeonManager extends AbstractExportManager {
         foreach ($badUpdateIds as $b) {
             unset($guestIds[$b]);
         }
-
-        // Relationship Mapper object.
-        $this->relationshipMapper = new RelationshipMapper($dbh);
 
         // Create or update households.
         $this->sendHouseholds($dbh, $guestIds, $visits, $rels, $badUpdateIds);

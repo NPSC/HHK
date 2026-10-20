@@ -17,7 +17,7 @@ use HHK\Member\Address\Address;
 class GoogleDistance extends AbstractDistance {
 
     private CONST APICOST = 0.005;
-    private array $UncalculatedAddresses;
+    private array $UncalculatedAddresses = [];
 
     protected const TYPE = "driving";
 

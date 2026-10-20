@@ -1,6 +1,6 @@
 <?php
 
-use HHK\ColumnSelectors;
+use HHK\House\Report\ColumnSelectors;
 use HHK\Common;
 use HHK\House\Visit\VisitIntervalOldRpt;
 use HHK\Exception\RuntimeException;

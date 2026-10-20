@@ -848,7 +848,7 @@ order by pa.Timestamp desc");
     /**
      *
      * @param \PDO $dbh
-     * @param mixed $payTable
+     * @param mixed $payTbl
      * @param mixed $index
      */
     public function selectPaymentMarkup(\PDO $dbh, &$payTbl, $index = '') {

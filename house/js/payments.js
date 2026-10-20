@@ -42,6 +42,42 @@ function roundTo(n, digits) {
     return Math.round(n) / multiplicator;
 }
 
+/**
+ * Restrict text inputs to numbers.  Non-numeric characters are stripped as the user types,
+ * and the value is formatted once the user leaves the field.
+ *
+ * @param {jQuery} $inputs
+ * @param {function} formatter value formatter run on blur; defaults to 2 decimal places (money)
+ * @returns {undefined}
+ */
+function setupNumericInputs($inputs, formatter) {
+    "use strict";
+
+    if (typeof formatter !== 'function') {
+        formatter = function (val) {
+            var amt = parseFloat(val);
+            return isNaN(amt) ? '' : amt.toFixed(2);
+        };
+    }
+
+    // Strip non-numeric, non-decimal characters as the user types.
+    $inputs.on('input', function () {
+        var val = this.value;
+        var stripped = val.replace(/[^0-9.]/g, '');
+
+        if (stripped !== val) {
+            var pos = Math.max(0, this.selectionStart - (val.length - stripped.length));
+            this.value = stripped;
+            this.setSelectionRange(pos, pos);
+        }
+    });
+
+    // Format once the user leaves the field.
+    $inputs.on('blur', function () {
+        this.value = formatter(this.value);
+    });
+}
+
 
 function getApplyDiscDiag(orderNumber, $diagBox) {
     "use strict";
@@ -81,6 +117,7 @@ function getApplyDiscDiag(orderNumber, $diagBox) {
                             "Save": function () {
 
                                 var amt = parseFloat($('#housePayment').val().replace('$', '').replace(',', '')),
+                                        qty = parseFloat($('#houseQuantity').val()),
                                         tax = parseFloat($('#houseTax').val()),
                                         vid = $('#housePayment').data('vid'),
                                         item = '',
@@ -93,6 +130,9 @@ function getApplyDiscDiag(orderNumber, $diagBox) {
                                 if (isNaN(tax)) {
                                     tax = 0;
                                 }
+                                if (isNaN(qty) || qty <= 0) {
+                                    qty = 1;
+                                }
 
                                 if ($('#cbAdjustPmt1').prop('checked')) {
                                     item = $('#cbAdjustPmt1').data('item');
@@ -100,7 +140,7 @@ function getApplyDiscDiag(orderNumber, $diagBox) {
                                     item = $('#cbAdjustPmt2').data('item');
                                 }
 
-                                saveDiscountPayment(vid, item, amt, $('#selHouseDisc').val(), $('#selAddnlChg').val(), adjDate, notes);
+                                saveDiscountPayment(vid, item, amt, $('#selHouseDisc').val(), $('#selAddnlChg').val(), adjDate, notes, qty);
                                 $(this).dialog('close');
                             },
                             "Cancel": function () {
@@ -112,6 +152,14 @@ function getApplyDiscDiag(orderNumber, $diagBox) {
 
                         $("#cbAdjustType").buttonset();
 
+                        setupNumericInputs($('#housePayment'));
+
+                        // Quantity: whole or fractional units, never empty or zero.
+                        setupNumericInputs($('#houseQuantity'), function (val) {
+                            var qty = parseFloat(val);
+                            return (isNaN(qty) || qty <= 0) ? '1' : String(roundTo(qty, 2));
+                        });
+
                         $('#cbAdjustPmt1, #cbAdjustPmt2').change(function () {
 
                             var hid = $(this).data('hid'),
@@ -120,6 +168,7 @@ function getApplyDiscDiag(orderNumber, $diagBox) {
                             $('.' + hid).val('');
                             $('.' + sho).val('');
                             $('#housePayment').val('');
+                            $('#houseQuantity').val('1');
                             $('#housePayment').change();
 
                             $('.' + sho).show();
@@ -136,26 +185,34 @@ function getApplyDiscDiag(orderNumber, $diagBox) {
                             $('#housePayment').change();
                         });
 
-                        $('#housePayment').change(function () {
+                        $('#housePayment, #houseQuantity').change(function () {
+
+                            var tax = 0.0,
+                                    amt = parseFloat($('#housePayment').val().replace('$', '').replace(',', '')),
+                                    qty = parseFloat($('#houseQuantity').val()),
+                                    subTotal = 0.0,
+                                    taxAmt = 0.0,
+                                    totalAmt = 0.0;
+
                             if ($('#cbAdjustPmt2').prop('checked') && $('#houseTax').length > 0) {
-
-                                var tax = parseFloat($('#houseTax').data('tax')),
-                                        amt = parseFloat($('#housePayment').val().replace('$', '').replace(',', '')),
-                                        taxAmt = 0.0,
-                                        totalAmt = 0.0;
-
-                                if (isNaN(tax)) {
-                                    tax = 0;
-                                }
-                                if (isNaN(amt)) {
-                                    amt = 0;
-                                }
-
-                                taxAmt = tax * amt;
-                                totalAmt = amt + taxAmt;
-                                $('#houseTax').val((taxAmt > 0 ? (taxAmt).toFixed(2) : ''));
-                                $('#totalHousePayment').val((totalAmt > 0 ? totalAmt.toFixed(2) : ''));
+                                tax = parseFloat($('#houseTax').data('tax'));
                             }
+
+                            if (isNaN(tax)) {
+                                tax = 0;
+                            }
+                            if (isNaN(amt)) {
+                                amt = 0;
+                            }
+                            if (isNaN(qty) || qty <= 0) {
+                                qty = 1;
+                            }
+
+                            subTotal = roundTo(qty * amt, 2);
+                            taxAmt = tax * subTotal;
+                            totalAmt = subTotal + taxAmt;
+                            $('#houseTax').val((taxAmt > 0 ? (taxAmt).toFixed(2) : ''));
+                            $('#totalHousePayment').val((totalAmt > 0 ? totalAmt.toFixed(2) : ''));
                         });
 
                         if ($('#cbAdjustPmt1').length > 0) {
@@ -183,9 +240,10 @@ function getApplyDiscDiag(orderNumber, $diagBox) {
  * @param {type} addnlCharge
  * @param {type} adjDate
  * @param {string} notes
+ * @param {number} qty
  * @returns {undefined}
  */
-function saveDiscountPayment(orderNumber, item, amt, discount, addnlCharge, adjDate, notes) {
+function saveDiscountPayment(orderNumber, item, amt, discount, addnlCharge, adjDate, notes, qty) {
     "use strict";
     $.post('ws_ckin.php',
             {
@@ -196,7 +254,8 @@ function saveDiscountPayment(orderNumber, item, amt, discount, addnlCharge, adjD
                 dsc: discount,
                 chg: addnlCharge,
                 adjDate: adjDate,
-                notes: notes
+                notes: notes,
+                qty: qty
             },
             function (data) {
                 if (data) {
@@ -958,23 +1017,7 @@ function setupPayments(rate, idVisit, visitSpan, $diagBox, strInvoiceBox) {
         chg = $('.hhk-mcred');
     }
 
-    // Strip non-numeric, non-decimal characters as the user types in money fields.
-    $('.hhk-money').on('input', function () {
-        var val = this.value;
-        var stripped = val.replace(/[^0-9.]/g, '');
-
-        if (stripped !== val) {
-            var pos = Math.max(0, this.selectionStart - (val.length - stripped.length));
-            this.value = stripped;
-            this.setSelectionRange(pos, pos);
-        }
-    });
-
-    // Format money fields to 2 decimal places once the user leaves the field.
-    $('.hhk-money').on('blur', function () {
-        var amt = parseFloat(this.value);
-        this.value = isNaN(amt) ? '' : amt.toFixed(2);
-    });
+    setupNumericInputs($('.hhk-money'));
 
     if (ptsel.length > 0) {
         ptsel.on('change', function () {

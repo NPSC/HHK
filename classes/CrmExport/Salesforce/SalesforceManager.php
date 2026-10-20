@@ -64,16 +64,16 @@ class SalesforceManager extends AbstractExportManager {
 
     protected $transferResult;
     protected $errorResult;
-    protected ?SF_connector $webService = null;
+    protected ?SF_Connector $webService = null;
     private ?string $webServiceError = null;
 
     protected $uniqueGuests;
-    protected bool $trace;
+    protected bool $trace = false;
     protected $traceData;
-    protected array $picklists;
+    protected array $picklists = [];
     protected array $objectFields = [];
     protected array $hhkFieldDetails = [];
-    protected FieldMapper $fieldMapper;
+    protected ?FieldMapper $fieldMapper = null;
 
     const string LOG_SERVICE_NAME = "SalesForce";
 
@@ -118,7 +118,7 @@ class SalesforceManager extends AbstractExportManager {
      * failed to initialize. Used to guard every call into the Salesforce API.
      * @throws RuntimeException
      */
-    protected function getWebService(): SF_connector {
+    protected function getWebService(): SF_Connector {
         if ($this->webService === null) {
             throw new RuntimeException('Salesforce connection is unavailable: ' . $this->webServiceError);
         }
@@ -611,7 +611,7 @@ class SalesforceManager extends AbstractExportManager {
      * Summary of upsertMembers Bulk insert/update of members
      * @param \PDO $dbh
      * @param array $sourceIds
-     * @param mixed $trace
+     * @param bool $trace
      * @param bool $linkRelatives
      * @return array
      */
@@ -2414,6 +2414,17 @@ JS;
     }
 
     /**
+     * Read one of the field mapping arrays POSTed from createFieldMappingSection.
+     * Each is keyed by CRM object, then by row index: fldmap_x[Contact][0] = value.
+     *
+     * @return array<string, array<int|string, mixed>>
+     */
+    private static function postedFieldMap(string $name): array {
+        $posted = filter_input(INPUT_POST, $name, \FILTER_DEFAULT, \FILTER_REQUIRE_ARRAY) ?: [];
+        return array_filter($posted, 'is_array');
+    }
+
+    /**
      * Persist field mapping changes POSTed from createFieldMappingSection.
      * Does a per-object delete-then-reinsert so removed rows are honoured.
      */
@@ -2425,10 +2436,10 @@ JS;
 
         $objects = ['Contact', 'Account', 'npe4__Relationship__c'];
 
-        $hhkArrays  = filter_input(INPUT_POST, 'fldmap_hhk',  \FILTER_DEFAULT, \FILTER_REQUIRE_ARRAY) ?: [];
-        $crmArrays  = filter_input(INPUT_POST, 'fldmap_crm',  \FILTER_DEFAULT, \FILTER_REQUIRE_ARRAY) ?: [];
-        $expArrays  = filter_input(INPUT_POST, 'fldmap_exp',  \FILTER_DEFAULT, \FILTER_REQUIRE_ARRAY) ?: [];
-        $srchArrays = filter_input(INPUT_POST, 'fldmap_srch', \FILTER_DEFAULT, \FILTER_REQUIRE_ARRAY) ?: [];
+        $hhkArrays  = self::postedFieldMap('fldmap_hhk');
+        $crmArrays  = self::postedFieldMap('fldmap_crm');
+        $expArrays  = self::postedFieldMap('fldmap_exp');
+        $srchArrays = self::postedFieldMap('fldmap_srch');
 
         // Check submitted data has a non-empty CRM mapping for a given HHK field
         $hasMappedField = function (string $obj, string $hhkField) use ($hhkArrays, $crmArrays): bool {

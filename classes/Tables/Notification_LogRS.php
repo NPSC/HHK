@@ -22,7 +22,6 @@ class Notification_LogRS extends AbstractTableRS {
     public DB_Field $From;
     public DB_Field $Log_Text;
     public DB_Field $Log_Details;
-    public DB_Field $Timestamp;
 
     function __construct($TableName = "notification_log") {
 
@@ -33,7 +32,6 @@ class Notification_LogRS extends AbstractTableRS {
         $this->From = new DB_Field("From", "", new DbStrSanitizer(255), true, true);
         $this->Log_Text = new DB_Field("Log_Text", "", new DbStrSanitizer(255), true, true);
         $this->Log_Details = new DB_Field("Log_Details", "{}", new DbBlobSanitizer(), true, true);
-        //$this->Timestamp = new DB_Field("Timestamp", NULL, new DbDateSanitizer("Y-m-d H:i:s.u"), FALSE);
         parent::__construct($TableName);
 
     }

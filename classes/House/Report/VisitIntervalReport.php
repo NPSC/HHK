@@ -3,7 +3,7 @@
 namespace HHK\House\Report;
 
 use HHK\Common;
-use HHK\ExcelHelper;
+use HHK\Excel\ExcelHelper;
 use HHK\House\Resource\ResourceTypes;
 use HHK\HTMLControls\HTMLContainer;
 use HHK\HTMLControls\HTMLInput;

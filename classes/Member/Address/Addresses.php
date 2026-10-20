@@ -24,13 +24,6 @@ use HHK\Tables\Name\NamePhoneRS;
  */
 class Addresses {
 
-
-    /** @var Emails/ContactPoint */
-    public $email;
-
-    /** @var Phones/ContactPoint */
-    public $phone;
-
     /**
      *
      * @param Phones $phone

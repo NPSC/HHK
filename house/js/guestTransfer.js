@@ -11,33 +11,6 @@ var stopTransfer,
     username;
 
 
-function updateLocal(id) {
-    var postUpdate = $.post('ws_tran.php', {cmd: 'rmvAcctId', id: id});
-
-    postUpdate.done(function (incmg) {
-        $('div#retrieve').empty();
-
-        if (!incmg) {
-            alert('Bad Reply from Server');
-            return;
-        }
-
-        if (incmg.error) {
-            if (incmg.gotopage) {
-                window.open(incmg.gotopage, '_self');
-            }
-            // Stop Processing and return.
-            flagAlertMessage(incmg.error, true);
-            return;
-        }
-
-        if (incmg.result) {
-            flagAlertMessage(incmg.result, false);
-
-        }
-    });
-}
-
 function upsert(transferIds, trace) {
     const parms = {
         cmd: 'upsert',

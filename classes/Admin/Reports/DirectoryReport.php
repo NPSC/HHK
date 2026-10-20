@@ -19,11 +19,11 @@ namespace HHK\Admin\Reports;
  * @param string $type Relationship link type
  * @return array suitable for XLSXWriter
  */
-use HHK\MailList;
+use HHK\Admin\Reports\MailList;
 use HHK\HTMLControls\chkBoxCtrl;
 use HHK\HTMLControls\selCtrl;
 use HHK\SysConst\SalutationCodes;
-use HHK\ExcelHelper;
+use HHK\Excel\ExcelHelper;
 
 class DirectoryReport
 {

@@ -63,7 +63,7 @@ class Document {
     protected ?string $lastUpdated = null;
     protected string $updatedBy = '';
     protected $createdOn = '';
-    private DocumentRS$documentRS;
+    private ?DocumentRS $documentRS = null;
 
     /**
      *
@@ -71,8 +71,7 @@ class Document {
      */
     public function __construct($idDocument = 0) {
 
-        $id = intval($idDocument, 10);
-        $this->idDocument = $id;
+        $this->idDocument = intval($idDocument, 10);
     }
 
     /**
@@ -406,12 +405,12 @@ class Document {
      *
      * @param \PDO $dbh
      * @param string $username
-     * @return int the number of rows affected
+     * @return bool
      */
-    public function deleteDocument(\PDO $dbh, $username, bool $forceDelete = FALSE) {
+    public function deleteDocument(\PDO $dbh, $username, bool $forceDelete = FALSE): bool {
 
         $uS = Session::getInstance();
-        $counter = 0;
+        $deleted = false;
 
         if ($this->getIdDocument() > 0 && $this->loadDocument($dbh)) {
 
@@ -424,19 +423,20 @@ class Document {
                 if($deleted){
                     $logText = DocumentLog::getDeleteText($this->documentRS, $this->getIdDocument());
                     DocumentLog::logDocument($dbh, $this->getIdDocument(), 0, 0, 0, $logText, "delete", $uS->username);
+                    $deleted = true;
                 }
-                return $deleted;
             }else{
-                $counter = EditRS::update($dbh, $this->documentRS, array($this->documentRS->idDocument));
-                if($counter > 0){
+                $deleted = (EditRS::update($dbh, $this->documentRS, array($this->documentRS->idDocument)) > 0);
+                if($deleted){
                     $logText = DocumentLog::getUpdateText($this->documentRS);
                     DocumentLog::logDocument($dbh, $this->getIdDocument(), 0, 0, 0, $logText, "update", $uS->username);
+                    $deleted = true;
                 }
                 EditRS::updateStoredVals($this->documentRS);
             }
         }
 
-        return $counter;
+        return $deleted;
     }
 
     /**

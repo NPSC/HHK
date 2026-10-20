@@ -2,9 +2,9 @@
 
 use HHK\HTMLControls\{HTMLContainer, HTMLTable, HTMLInput, HTMLSelector};
 use HHK\sec\{Session, WebInit};
-use HHK\ColumnSelectors;
+use HHK\House\Report\ColumnSelectors;
 use HHK\SysConst\GLTableNames;
-use HHK\ExcelHelper;
+use HHK\Excel\ExcelHelper;
 use HHK\sec\Labels;
 use HHK\House\Report\ReportFilter;
 use HHK\House\Report\NewGuest;

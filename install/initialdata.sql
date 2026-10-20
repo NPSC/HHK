@@ -3825,6 +3825,14 @@ VALUES
 		'',
 		''
 	),
+	(
+		'bednight',
+		'bed night',
+		's',
+		'vi',
+		'',
+		'Default: bed night'
+	),
 	('rtnDeposit', 'Deposit Refund', 's', 'pc', '', ''),
 	(
 		'RmFeesPledged',
@@ -6528,6 +6536,30 @@ VALUES
 		'35',
 		'e',
 		'p'
+	),
+	(
+		141,
+		'GuestCensusReport.php',
+		31,
+		'Guest Census Report',
+		'',
+		1,
+		'h',
+		'102',
+		'u',
+		'p'
+	),
+	(
+		142,
+		'Import.php',
+		2,
+		'Import',
+		'',
+		1,
+		'a',
+		'34',
+		'l',
+		'p'
 	);
 
 -- ;
@@ -6692,7 +6724,10 @@ VALUES
 	(139, 'h'),
 	(139, 'mm'),
 	(139, 'ro'),
-	(140, 'mm');
+	(140, 'mm'),
+	(141, 'ga'),
+	(141, 'gr'),
+	(142, 'db');
 
 -- ;
 UNLOCK TABLES;

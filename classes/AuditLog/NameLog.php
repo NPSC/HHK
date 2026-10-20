@@ -35,8 +35,7 @@ class NameLog implements AuditLogInterface {
             $typeCode = "." . $typeCode;
         }
 
-        foreach ($rs as $dbF) {
-            //if (is_a($dbF, "DB_Field")) {
+        foreach (get_object_vars($rs) as $dbF) {
             if($dbF instanceof DB_Field){
 
                 if ($dbF->logMe() && !is_null($dbF->getNewVal()) && $dbF->getNewVal() != "") {
@@ -63,8 +62,7 @@ class NameLog implements AuditLogInterface {
             $typeCode = "." . $typeCode;
         }
 
-        foreach ($rs as $dbF) {
-            //if (is_a($dbF, "DB_Field")) {
+        foreach (get_object_vars($rs) as $dbF) {
             if($dbF instanceof DB_Field){
 
                 if ($dbF->logMe() && !is_null($dbF->getNewVal()) && $dbF->getNewVal() != $dbF->getStoredVal()) {

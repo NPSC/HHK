@@ -22,45 +22,21 @@ use HHK\sec\Session;
 
 class SiteDbBackup {
 
-    /**
-     * Summary of return_var
-     * @var
-     */
+
     public $return_var;
-    /**
-     * Summary of bkupMessage
-     * @var
-     */
+
     protected $bkupMessage;
-    /**
-     * Summary of fileName
-     * @var
-     */
+
     protected $fileName;
-    /**
-     * Summary of filePath
-     * @var
-     */
+
     protected $filePath;
-    /**
-     * Summary of dumpErrorFile
-     * @var
-     */
+
     protected $dumpErrorFile;
-    /**
-     * Summary of clrFileSize
-     * @var
-     */
+
     protected $clrFileSize;
-    /**
-     * Summary of dbBkUpFlag
-     * @var
-     */
+
     protected $dbBkUpFlag;
-    /**
-     * Summary of config
-     * @var
-     */
+
     protected $config;
 
 

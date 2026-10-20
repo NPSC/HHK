@@ -7,7 +7,7 @@ use HHK\HTMLControls\{HTMLContainer, HTMLTable};
 use HHK\Payment\Statement;
 use HHK\SysConst\{GLTableNames, PaymentMethod, PaymentStatusCode};
 use HHK\sec\Session;
-use HHK\ExcelHelper;
+use HHK\Excel\ExcelHelper;
 
 
 /*

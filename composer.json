@@ -48,6 +48,7 @@
 		"stan" : "vendor/bin/phpstan analyse"
 	},
 	"require-dev": {
+		"fakerphp/faker": "^1.24",
 		"phpstan/phpstan": "^2.1",
 		"phpunit/phpunit": "^11.5",
 		"php-debugbar/php-debugbar": "^3.4",

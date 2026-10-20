@@ -679,7 +679,15 @@ try {
             $notes = filter_var($_POST['notes'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         }
 
-        $events = HouseServices::saveHousePayment($dbh, $idItem, $ord, $amt, $discount, $addnlCharge, $adjDate, $notes);
+        $qty = 1;
+        if (isset($_POST["qty"])) {
+            $qty = floatval(filter_var($_POST["qty"], FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION));
+            if ($qty <= 0) {
+                $qty = 1;
+            }
+        }
+
+        $events = HouseServices::saveHousePayment($dbh, $idItem, $ord, $amt, $discount, $addnlCharge, $adjDate, $notes, $qty);
 
         break;
 

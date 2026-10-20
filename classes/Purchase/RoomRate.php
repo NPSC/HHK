@@ -42,7 +42,7 @@ class RoomRate {
             }
 
             $rateCategories[$rc->FA_Category->getStoredVal()] = array(0=>$rc->FA_Category->getStoredVal(),
-                1=>self::titleAddAmount($rc->Title->getStoredVal(), $rc->FA_Category->getStoredVal(), number_format($rc->Reduced_Rate_1->getStoredVal(), $decimals)),
+                1=>self::titleAddAmount($rc->Title->getStoredVal(), $rc->FA_Category->getStoredVal(), $rc->Reduced_Rate_1->getStoredVal()),
                 2=>number_format($rc->Reduced_Rate_1->getStoredVal(), $decimals));
         }
 
@@ -58,7 +58,7 @@ class RoomRate {
             }
 
             $rateCategories[$rateRs->FA_Category->getStoredVal()] = array(0=>$rateRs->FA_Category->getStoredVal(),
-                1=>'*'.self::titleAddAmount($rateRs->Title->getStoredVal(), $rateRs->FA_Category->getStoredVal(), number_format($rateRs->Reduced_Rate_1->getStoredVal())),
+                1=>'*'.self::titleAddAmount($rateRs->Title->getStoredVal(), $rateRs->FA_Category->getStoredVal(), $rateRs->Reduced_Rate_1->getStoredVal()),
                 2=>number_format($rateRs->Reduced_Rate_1->getStoredVal(), $decimals));
 
         }
@@ -79,7 +79,7 @@ class RoomRate {
         $titles = array();
 
         foreach ($rows as $r) {
-            $titles[$r['idRoom_rate']] = self::titleAddAmount($r['Title'], $r['FA_Category'], number_format($r['Reduced_Rate_1']));
+            $titles[$r['idRoom_rate']] = self::titleAddAmount($r['Title'], $r['FA_Category'], $r['Reduced_Rate_1']);
         }
 
         $titles[0] = '';
@@ -112,7 +112,7 @@ class RoomRate {
         if(isset($rows[0])) {
 
             $r = $rows[0];
-            return self::titleAddAmount($r['Title'], $r['FA_Category'], number_format($r['Reduced_Rate_1']), $rateAdjust);
+            return self::titleAddAmount($r['Title'], $r['FA_Category'], $r['Reduced_Rate_1'], $rateAdjust);
         }
 
         return 'Undefined';
@@ -123,19 +123,21 @@ class RoomRate {
      * Summary of titleAddAmount
      * @param string $title
      * @param string $faCategory
-     * @param string $amt
-     * @return mixed
+     * @param float|string $amt raw (unformatted) rate amount
+     * @param float|int|string $rateAdjust percent adjustment
+     * @return string
      */
     protected static function titleAddAmount($title, $faCategory, $amt, $rateAdjust = 0) {
 
         if ($faCategory != RoomRateCategories::Fixed_Rate_Category) {
-            $title .= ': $' .$amt;
+            $amt = (float) $amt;
+            $title .= ': $' . number_format($amt, floor($amt) != $amt ? 2 : 0);
 
             if($rateAdjust != 0){
-                $adjustedAmt = round($amt * (1 + $rateAdjust/100), 2);
-                $title .= " (Adjusted: $" . $adjustedAmt . ")";
+                $adjustedAmt = round($amt * (1 + (float) $rateAdjust / 100), 2);
+                $title .= " (Adjusted: $" . number_format($adjustedAmt, floor($adjustedAmt) != $adjustedAmt ? 2 : 0) . ")";
             }
-            
+
         }
 
         return $title;

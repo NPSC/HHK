@@ -22,41 +22,18 @@ use HHK\Common;
  */
 class Registration {
 
-    /**
-     * Summary of regRS
-     * @var
-     */
-    protected $regRS;
+    protected RegistrationRS $regRS;
 
-    /**
-     * Summary of isNew
-     * @var
-     */
-    public $isNew;
-    /**
-     * Summary of depositBalance
-     * @var
-     */
+    public bool $isNew;
+
     protected $depositBalance;
-    /**
-     * Summary of lodgingMOA
-     * @var
-     */
+
     protected $lodgingMOA;
-    /**
-     * Summary of prepaymentMOA
-     * @var
-     */
+
     protected $prepaymentMOA;
-    /**
-     * Summary of donations
-     * @var
-     */
+
     protected $donations;
-    /**
-     * Summary of rawRow
-     * @var
-     */
+
     protected $rawRow;
 
     /**
@@ -67,7 +44,7 @@ class Registration {
      */
     public function __construct(\PDO $dbh, $idPsg, $idRegistration = 0) {
 
-        $this->regRS = new RegistrationRs();
+        $this->regRS = new RegistrationRS();
         $rows = array();
         $this->rawRow = array();
         $this->isNew = TRUE;
@@ -550,7 +527,7 @@ where
      * @param \PDO $dbh
      * @param int $idPsg
      * @param string $uname
-     * @throws \HHK\Exception\RuntimeException
+     * @throws RuntimeException
      * @return string
      */
     public function saveRegistrationRs(\PDO $dbh, $idPsg, $uname) {

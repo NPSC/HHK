@@ -220,7 +220,7 @@ class PriceNdayBlock extends AbstractPriceModel {
 
         if ($blocks > 0) {
             $tiers[] = array('rate'=>number_format($blockRate * $adjRatio,2), 'days'=>($blocks * $interval), 'amt'=>($blocks * $blockRate) * $adjRatio, 'dtext'=>($blocks * $interval) . ' (' . $blocks . ')');
-            $this->blocks = $blocks;
+            $this->blocks = (int) $blocks;
         }
 
         if ($freeNites > 0) {
@@ -242,7 +242,7 @@ class PriceNdayBlock extends AbstractPriceModel {
      * @param mixed $tiers
      * @param mixed $startDT
      * @param string $separator
-     * @param int $totalGuestNites
+     * @param int|float $totalGuestNites
      * @return float|int
      */
     public function tiersMarkup($r, &$totalAmt, &$tbl, $tiers, &$startDT, $separator, &$totalGuestNites) {

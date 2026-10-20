@@ -16,7 +16,7 @@ namespace HHK\Admin\Reports;
 use HHK\HTMLControls\selCtrl;
 use HHK\sec\Session;
 use HHK\Admin\VolCats;
-use HHK\ExcelHelper;
+use HHK\Excel\ExcelHelper;
 use PDO;
 
 

@@ -9,6 +9,7 @@ use HHK\sec\Session;
 use HHK\SysConst\{InvoiceLineType, InvoiceStatus, ItemId, PaymentMethod, PaymentStatusCode, GLTableNames};
 use HHK\HTMLControls\{HTMLTable, HTMLContainer};
 use HHK\House\Registration;
+use HHK\Payment\Invoice\InvoiceLine\AbstractInvoiceLine;
 use Mpdf\Mpdf;
 
 /**
@@ -473,7 +474,7 @@ class Statement {
                         $item = array(
                             'orderNum'=>$r['vid'] . '-' . $r['span'],
                             'date'=>$invDate->format('M j, Y'),
-                            'desc'=>$l['Description'],
+                            'desc'=>AbstractInvoiceLine::formatDisplayDescription($l['Description'], $l['Item_Id'], $l['Quantity'], $l['Price']),
                             'amt'=>number_format($addChgAmt,2)
                         );
 
@@ -495,7 +496,7 @@ class Statement {
                         $item = array(
                             'orderNum'=>$r['vid'] . '-' . $r['span'],
                             'date'=>$invDate->format('M j, Y'),
-                            'desc'=>$l['Description'],
+                            'desc'=>AbstractInvoiceLine::formatDisplayDescription($l['Description'], $l['Item_Id'], $l['Quantity'], $l['Price']),
                             'amt'=>number_format($discAmt,2)
                         );
 
@@ -837,7 +838,7 @@ class Statement {
                         $initialTd = '';
                     }
 
-                    $descs[] = $initialTd . HTMLTable::makeTd('$'.number_format($l['Amount'],2) . ';  ' .$l['Description'], array('colspan'=>'4', 'style'=>'font-size:.8em'));
+                    $descs[] = $initialTd . HTMLTable::makeTd('$'.number_format($l['Amount'],2) . ';  ' . AbstractInvoiceLine::formatDisplayDescription($l['Description'], $l['Item_Id'], $l['Quantity'], $l['Price']), array('colspan'=>'4', 'style'=>'font-size:.8em'));
                     $numPayments++;
 
                 }
@@ -974,7 +975,7 @@ class Statement {
                     }
 
                     $tr = $initialTd
-                    .HTMLTable::makeTd($l['Description'], array_merge($mattrs, array('colspan'=>'3')))
+                    .HTMLTable::makeTd(AbstractInvoiceLine::formatDisplayDescription($l['Description'], $l['Item_Id'], $l['Quantity'], $l['Price']), array_merge($mattrs, array('colspan'=>'3')))
                     .HTMLTable::makeTd(($l['Status'] == InvoiceStatus::Unpaid ? 'Pending' : 'Paid'), $mattrs)
                     .HTMLTable::makeTd('$'.number_format($l['Amount'],2), $vattrs);
 
@@ -1069,7 +1070,7 @@ from vlist_inv_pments lp
         $pments = self::processPayments($stmt, array('Last', 'First', 'Company'));
 
         // items
-        $ilStmt = $dbh->query("select il.Invoice_Id, il.idInvoice_line, il.Type_Id, il.Amount, il.Description, il.Item_Id, il.Source_Item_Id, i.tax_exempt, i.Delegated_Invoice_Id, i.Order_Number, i.Suborder_Number, i.Invoice_Date, i.Status
+        $ilStmt = $dbh->query("select il.Invoice_Id, il.idInvoice_line, il.Type_Id, il.Amount, il.Description, il.Item_Id, il.Quantity, il.Price, il.Source_Item_Id, i.tax_exempt, i.Delegated_Invoice_Id, i.Order_Number, i.Suborder_Number, i.Invoice_Date, i.Status
 from invoice_line il join invoice i on il.Invoice_Id = i.idInvoice
 left join invoice_line_type ilt on il.Type_Id = ilt.id
 where i.Deleted = 0 and il.Deleted = 0 and i.idGroup = $idRegistration order by i.idGroup, il.Invoice_Id, ilt.Order_Position");
@@ -1195,7 +1196,7 @@ from vlist_inv_pments `lp` left join `name` n ON lp.Sold_To_Id = n.idName
         $pments = self::processPayments($stmt, array('Last', 'First', 'Company'));
 
         // Items
-        $ilStmt = $dbh->query("select il.Invoice_Id, il.idInvoice_line, il.Type_Id, il.Amount, il.Description, il.Item_Id, il.Source_Item_Id, i.tax_exempt, i.Delegated_Invoice_Id, i.Order_Number, i.Suborder_Number, i.Invoice_Date, i.Status
+        $ilStmt = $dbh->query("select il.Invoice_Id, il.idInvoice_line, il.Type_Id, il.Amount, il.Description, il.Item_Id, il.Quantity, il.Price, il.Source_Item_Id, i.tax_exempt, i.Delegated_Invoice_Id, i.Order_Number, i.Suborder_Number, i.Invoice_Date, i.Status
 from invoice_line il join invoice i on il.Invoice_Id = i.idInvoice and il.Deleted = 0
 left join invoice_line_type ilt on il.Type_Id = ilt.id
 where i.Deleted = 0 and i.Order_Number = $idVisit order by il.Invoice_Id, ilt.Order_Position");

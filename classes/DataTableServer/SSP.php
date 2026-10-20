@@ -518,7 +518,7 @@ class SSP {
 	 * when executing a query with sql_exec()
 	 *
 	 * @param  array &$a    Array of bindings
-	 * @param  *      $val  Value to bind
+	 * @param  mixed      $val  Value to bind
 	 * @param  int    $type PDO field type
 	 * @return string       Bound key to be used in the SQL where this parameter
 	 *   would be used.

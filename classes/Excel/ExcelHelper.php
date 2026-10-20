@@ -1,6 +1,6 @@
 <?php
 
-namespace HHK;
+namespace HHK\Excel;
 
 /**
  * ExcelHelper.php
@@ -33,12 +33,41 @@ class ExcelHelper extends \XLSXWriter{
     /**
      * Sets download headers and sends document to stdOut
      */
-    public function download(){
+    public function download(): never {
         header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
         header('Content-Disposition: attachment;filename="' . $this->filename . '.xlsx"');
         header('Cache-Control: max-age=0');
         $this->writeToStdOut();
         exit();
+    }
+
+    /**
+     * Adds ExcelRichText cells (an inline string of colored runs) to the cell types XLSXWriter knows.
+     */
+    protected function writeCell(\XLSXWriter_BuffererWriter &$file, $row_number, $column_number, $value, $num_format_type, $cell_style_idx)
+    {
+        if ($value instanceof ExcelRichText && !$value->isEmpty()) {
+
+            $runs = '';
+
+            foreach ($value->getRuns() as [$text, $color]) {
+
+                $rPr = '';
+
+                // A run with its own properties doesn't inherit the cell font, so match XLSXWriter's default font.
+                // An uncolored run has none, and keeps the cell's font (eg. bold).
+                if (preg_match('/^#[0-9a-fA-F]{6}$/', $color)) {
+                    $rPr = '<rPr><rFont val="Arial"/><sz val="10"/><color rgb="FF' . strtoupper(substr($color, 1)) . '"/></rPr>';
+                }
+
+                $runs .= '<r>' . $rPr . '<t xml:space="preserve">' . self::xmlspecialchars($text) . '</t></r>';
+            }
+
+            $file->write('<c r="' . self::xlsCell($row_number, $column_number) . '" s="' . $cell_style_idx . '" t="inlineStr"><is>' . $runs . '</is></c>');
+            return;
+        }
+
+        parent::writeCell($file, $row_number, $column_number, $value, $num_format_type, $cell_style_idx);
     }
 
     /**
@@ -54,13 +83,27 @@ class ExcelHelper extends \XLSXWriter{
 
         foreach($header as $val){
             if($val == "string" && isset($row[$n])){
-                $row[$n] = html_entity_decode(strval($row[$n]), ENT_QUOTES, 'UTF-8'); //decode html entities
-                $row[$n] = strip_tags($row[$n]); //remove html tags
+                if ($row[$n] instanceof ExcelRichText) {
+                    $row[$n] = $row[$n]->mapText([self::class, 'convertString']); // each colored run, same as a plain string
+                } else {
+                    $row[$n] = self::convertString(strval($row[$n]));
+                }
             }
             $n++;
         }
 
         return $row;
+    }
+
+    /**
+     * Decodes html entities and removes html tags
+     *
+     * @param string $val
+     * @return string
+     */
+    public static function convertString(string $val): string {
+        $val = html_entity_decode($val, ENT_QUOTES, 'UTF-8'); //decode html entities
+        return strip_tags($val); //remove html tags
     }
 
     /**

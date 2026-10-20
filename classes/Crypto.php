@@ -15,9 +15,9 @@ namespace HHK;
 
 class Crypto {
 
-    private const KEY = "017d609a4b2d8910685595C8df";
+    protected const KEY = "017d609a4b2d8910685595C8df";
 
-    private const IV = "fYfhHeDmf j98UUy4";
+    protected const IV = "fYfhHeDmf j98UUy4";
 
     public static function encryptMessage(string $input): string
     {
@@ -40,7 +40,7 @@ class Crypto {
      *
      * @return string
      */
-    private static function encrypt_decrypt(string $action, string $string, string $secret_key, string $secret_iv): string
+    protected static function encrypt_decrypt(string $action, string $string, string $secret_key, string $secret_iv): string
     {
         $output = false;
         $encrypt_method = "AES-256-CBC";

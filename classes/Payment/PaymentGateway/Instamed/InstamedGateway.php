@@ -64,14 +64,14 @@ class InstamedGateway extends AbstractPaymentGateway {
     //Response Messages
     const RESPONSE_APPROVED = 'APPROVAL';
 
-    protected string $ssoUrl;
-    protected string $soapUrl;
-    protected string $NvpUrl;
-    protected string $saleUrl;
-    protected string $saleTokenUrl;
-    protected string $cofUrl;
-    protected string $returnUrl;
-    protected string $voidUrl;
+    protected string $ssoUrl = '';
+    protected string $NvpUrl = '';
+    protected string $saleUrl = 'https://online.instamed.com/providers/Form/PatientPayments/NewPaymentSimpleSSO';
+    protected string $saleTokenUrl = 'https://connect.instamed.com/payment/NVP.aspx?';
+    protected string $cofUrl = 'https://online.instamed.com/providers/Form/PatientPayments/NewPaymentPlanSimpleSSO';
+    protected string $returnUrl = 'https://online.instamed.com/providers/Form/PatientPayments/RefundPaymentSSO?';
+    protected string $voidUrl = 'https://online.instamed.com/providers/Form/PatientPayments/VoidPaymentSSO?';
+
 
     public static function getPaymentMethod() {
         return PaymentMethod::Charge;
@@ -476,7 +476,7 @@ class InstamedGateway extends AbstractPaymentGateway {
 
             default:
 
-                $dataArray['warning'] = '** Void Invalid or Error. **  Message: ' . $csResp->getErrorMessage();
+                $dataArray['warning'] = '** Void Invalid or Error. **  Message: ' . $csResp->response->getErrorMessage();
         }
 
         return $dataArray;
@@ -512,7 +512,7 @@ class InstamedGateway extends AbstractPaymentGateway {
 
             default:
 
-                $dataArray['warning'] = $csResp->getErrorMessage();
+                $dataArray['warning'] = $csResp->response->getErrorMessage();
         }
 
         return $dataArray;
@@ -1073,11 +1073,6 @@ group by pa.Approved_Amount having `Total` >= $amount;");
 
         $this->credentials = new InstamedCredentials($gwRs);
 
-        $this->saleTokenUrl = 'https://connect.instamed.com/payment/NVP.aspx?';
-        $this->saleUrl = 'https://online.instamed.com/providers/Form/PatientPayments/NewPaymentSimpleSSO';
-        $this->cofUrl = 'https://online.instamed.com/providers/Form/PatientPayments/NewPaymentPlanSimpleSSO';
-        $this->voidUrl = 'https://online.instamed.com/providers/Form/PatientPayments/VoidPaymentSSO?';
-        $this->returnUrl = 'https://online.instamed.com/providers/Form/PatientPayments/RefundPaymentSSO?';
     }
 
     protected function doHeaderRequest($data) {

@@ -30,7 +30,6 @@ use HHK\SysConst\VolMemberType;
 
 class BillingAgentReport extends AbstractReport implements ReportInterface {
 
-    public array $diags;
     public array $demogs;
     public array $billingAgents;
     public array $selectedBillingAgents;

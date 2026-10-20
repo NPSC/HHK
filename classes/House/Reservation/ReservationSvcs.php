@@ -280,7 +280,7 @@ class ReservationSvcs
                     $dataArray['status'] = 'success';
 
                 }catch(\Exception $e){
-                    $dataArray['mesg'] = "Email failed!  " . $mail->ErrorInfo;
+                    $dataArray['mesg'] = "Email failed!  " . $e->getMessage();
                     $dataArray['status'] = 'error';
                 }
             } else {

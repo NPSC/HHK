@@ -93,7 +93,7 @@ class Note {
      * Summary of noteRS
      * @var NoteRS
      */
-    private NoteRS $noteRS;
+    private ?NoteRS $noteRS = null;
 
     /**
      *
@@ -101,8 +101,7 @@ class Note {
      */
     public function __construct($idNote = 0) {
 
-        $id = intval($idNote, 10);
-        $this->idNote = $id;
+        $this->idNote = intval($idNote, 10);
 
     }
 

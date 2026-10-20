@@ -2,7 +2,7 @@
 
 use HHK\sec\{Session, WebInit};
 use HHK\HTMLControls\chkBoxCtrl;
-use HHK\ExcelHelper;
+use HHK\Excel\ExcelHelper;
 use HHK\AlertControl\AlertMessage;
 
 /**
@@ -163,9 +163,6 @@ function doReports(PDO $dbh, chkBoxCtrl $cbMemStatus, chkBoxCtrl $cbRptType, $is
 
         // Did we catch any reports?
         if (count($rpts) > 0) {
-            // Shave the last comma off the label list
-            $sumaryRows["Reports"] = substr($sumaryRows["Reports"], 0, -2);
-
             $rptClause = "";
             // Put the where clause together
             foreach ($rpts as $v) {

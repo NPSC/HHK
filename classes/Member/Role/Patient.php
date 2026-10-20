@@ -36,6 +36,7 @@ class Patient extends AbstractRole {
      */
     public function __construct(\PDO $dbh, $idPrefix, $id, $title = 'Patient') {
 
+        $this->dbh = $dbh;
         $this->currentlyStaying = NULL;
         $this->idVisit = NULL;
         $this->emergContact = NULL;
@@ -55,7 +56,7 @@ class Patient extends AbstractRole {
     /**
      * Summary of getPatientPsg
      * @param \PDO $dbh
-     * @return PSG|int
+     * @return PSG
      */
     public function getPatientPsg(\PDO $dbh) {
 

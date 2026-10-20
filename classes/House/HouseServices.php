@@ -71,8 +71,8 @@ class HouseServices {
      *
      * @param \PDO $dbh
      * @param int $idGuest Supply either this or the next
-     * @param int $idVisit
-     * @param int $span span = 'max' means load last visit span, otherwise load int value
+     * @param int $idV
+     * @param int $idSpan span = 'max' means load last visit span, otherwise load int value
      * @param boolean $isAdmin Administrator flag
      * @param string $action Processing code with various settings.
      * @param array $coStayDates Dates for an early checkout. Adjusts the final payments
@@ -587,7 +587,7 @@ class HouseServices {
      * Summary of payInvoice
      * @param \PDO $dbh
      * @param int $idPayor
-     * @param mixed $post
+     * @param array $post
      * @return array
      */
     public static function payInvoice(\PDO $dbh, $idPayor, array $post) {
@@ -672,9 +672,10 @@ class HouseServices {
      * @param mixed $addnlCharge
      * @param mixed $adjDate
      * @param mixed $notes
+     * @param float $quantity
      * @return array<string>
      */
-    public static function saveHousePayment(\PDO $dbh, $idItem, $ord, $amt, $discount, $addnlCharge, $adjDate, $notes) {
+    public static function saveHousePayment(\PDO $dbh, $idItem, $ord, $amt, $discount, $addnlCharge, $adjDate, $notes, $quantity = 1) {
 
         $uS = Session::getInstance();
         $dataArray = array();
@@ -701,11 +702,12 @@ class HouseServices {
 
             if (isset($codes[$discount])) {
 
-                $amount = 0 - $amount;
+                // Discounts are always negative, whether entered/stored as positive or negative.
+                $amount = 0 - abs($amount);
                 $discountItem = new Item($dbh, ItemId::Discount, $amount);
 
                 $invLine = new OneTimeInvoiceLine();
-                $invLine->createNewLine($discountItem, 1, $codes[$discount][1]);
+                $invLine->createNewLine($discountItem, $quantity, $codes[$discount][1]);
                 $invoice = new Invoice($dbh);
 
                 $invoice->newInvoice(
@@ -722,7 +724,7 @@ class HouseServices {
                 $invoice->addLine($dbh, $invLine, $uS->username);
 
                 // Pay the invoice
-                $invoice->updateInvoiceBalance($dbh, $amount, $uS->username);
+                $invoice->updateInvoiceBalance($dbh, round($amount * $quantity, 2), $uS->username);
 
                 $dataArray['reply'] = $codes[$discount][1] . ' ' . $discountLabel . ' Applied.  ';
 
@@ -741,7 +743,7 @@ class HouseServices {
             if (isset($codes[$addnlCharge])) {
 
                 $invLine = new OneTimeInvoiceLine();
-                $invLine->createNewLine($addnlChargeItem, 1, $codes[$addnlCharge][1]);
+                $invLine->createNewLine($addnlChargeItem, $quantity, $codes[$addnlCharge][1]);
 
                 if (is_null($invoice)) {
                     $invoice = new Invoice($dbh);
@@ -769,7 +771,7 @@ class HouseServices {
 
                     if ($t->getIdTaxedItem() == ItemId::AddnlCharge) {
                         $taxInvoiceLine = new TaxInvoiceLine();
-                        $taxInvoiceLine->createNewLine(new Item($dbh, $t->getIdTaxingItem(), $amount), $t->getDecimalTax(),  ' ('. $t->getTextPercentTax().')');
+                        $taxInvoiceLine->createNewLine(new Item($dbh, $t->getIdTaxingItem(), round($amount * $quantity, 2)), $t->getDecimalTax(),  ' ('. $t->getTextPercentTax().')');
                         $taxInvoiceLine->setSourceItemId(ItemId::AddnlCharge);
                         $invoice->addLine($dbh, $taxInvoiceLine, $uS->username);
                     }
@@ -1358,10 +1360,10 @@ class HouseServices {
     /**
      * Summary of undoCheckout
      * @param \PDO $dbh
-     * @param \HHK\House\Visit\Visit $visit
+     * @param Visit $visit
      * @param \DateTime $newExpectedDT
      * @param mixed $uname
-     * @throws \HHK\Exception\RuntimeException
+     * @throws RuntimeException
      * @return string
      */
     public static function undoCheckout(\PDO $dbh, Visit $visit, \DateTime $newExpectedDT, $uname) {
@@ -1667,7 +1669,9 @@ class HouseServices {
      *
      * @param \PDO $dbh
      * @param int $idVisit
-     * @param int $dayDelta
+     * @param int $span
+     * @param int $startDelta
+     * @param int $endDelta
      * @return array
      */
     public static function moveVisit(\PDO $dbh, $idVisit, $span, $startDelta, $endDelta) {

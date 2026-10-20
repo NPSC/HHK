@@ -2,7 +2,7 @@
 
 use HHK\sec\{Session, WebInit};
 use HHK\HTMLControls\HTMLTable;
-use HHK\ExcelHelper;
+use HHK\Excel\ExcelHelper;
 
 
 /**

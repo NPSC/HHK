@@ -46,7 +46,7 @@ Class VoidRequest extends AbstractDeluxeRequest {
             ]);
 
             $status = $resp->getStatusCode();
-            $this->responseCode = $status;
+            $this->responseCode = (string) $status;
 
             $this->responseBody = json_decode($resp->getBody()->getContents(), true);
 
@@ -78,7 +78,7 @@ Class VoidRequest extends AbstractDeluxeRequest {
             return $response;
 
         }catch(BadResponseException $e){//error
-            $this->responseCode = $e->getResponse()->getStatusCode();
+            $this->responseCode = (string) $e->getResponse()->getStatusCode();
             $this->responseBody = json_decode($e->getResponse()->getBody()->getContents(), true);
             
             try {

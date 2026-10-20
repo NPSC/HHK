@@ -18,7 +18,7 @@ use HHK\CreateMarkupFromDB;
 use HHK\HTMLControls\selCtrl;
 use HHK\sec\Session;
 use HHK\SysConst\VolCalendarStatus;
-use HHK\ExcelHelper;
+use HHK\Excel\ExcelHelper;
 use PDO;
 
 class TimeReport

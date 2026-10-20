@@ -22,8 +22,17 @@ class chkBoxCtrl {
     private $rows = 0;
     protected $class = "";
 
-    function __Construct($con, $genLkupTabelName, $title, $htmlNameBase, $defaultVal, $sort = "Code") {
-        $this->genRcrds = Common::readGenLookupsPDO($con, $genLkupTabelName, $sort);
+    /**
+     * Summary of __construct
+     * @param \PDO $dbh
+     * @param string $genLkupTabelName
+     * @param string $title
+     * @param string $htmlNameBase
+     * @param bool $defaultVal
+     * @param string $sort
+     */
+    public function __construct(\PDO $dbh, string $genLkupTabelName, string $title, string $htmlNameBase, bool $defaultVal, string $sort = "Code") {
+        $this->genRcrds = Common::readGenLookupsPDO($dbh, $genLkupTabelName, $sort);
         $this->rows = count($this->genRcrds);
         $this->htmlNameBase = $htmlNameBase;
         $this->title = $title;

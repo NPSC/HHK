@@ -1,6 +1,6 @@
 <?php
 
-use HHK\MailList;
+use HHK\Admin\Reports\MailList;
 use HHK\sec\{Session, WebInit};
 use HHK\HTMLControls\{chkBoxCtrl, selCtrl};
 use HHK\Admin\Reports\DirectoryReport;

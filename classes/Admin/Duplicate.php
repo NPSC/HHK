@@ -1,7 +1,8 @@
 <?php
 
-namespace HHK;
+namespace HHK\Admin;
 
+use HHK\CreateMarkupFromDB;
 use HHK\House\PSG;
 use HHK\HTMLControls\HTMLContainer;
 use HHK\HTMLControls\HTMLInput;
