@@ -91,6 +91,11 @@ try {
             ]);
             $parms = $post['parms'] ?? [];
 
+            if (!\HHK\sec\ReauthGuard::check(\HHK\sec\ReauthGuard::PURPOSE_WEB_USER)) {
+                $events = \HHK\sec\ReauthGuard::requiredResponse(\HHK\sec\ReauthGuard::PURPOSE_WEB_USER);
+                break;
+            }
+
             $events = WebUser::saveUname($dbh, $uS->username, $parms, $maintFlag);
 
             break;
@@ -536,6 +541,12 @@ try {
 
         case "accesslog":
             $events = AccessLog($dbh, $_GET);
+
+            break;
+
+        case "adresetpw":
+
+            $events = adminResetPW($dbh, filter_input(INPUT_POST, "uid", FILTER_SANITIZE_NUMBER_INT));
 
             break;
 
@@ -1139,4 +1150,33 @@ function updateCronJob(\PDO $dbh, $idJob, $title, $type, array $params, $interva
         }
     }
     return array("error"=>"<strong>Error</strong><br>" . implode("<br>", $errors));
+}
+
+/**
+ * Admin password reset from the Web Account dialog.  The admin re-authenticated when opening it (see ReauthGuard).
+ * @param PDO $dbh
+ * @param int $wUserId
+ * @return array
+ */
+function adminResetPW(PDO $dbh, $wUserId) {
+
+    if (!SecurityComponent::is_Admin()) {
+        return array('error' => 'Insufficient authorization.  Password is unchanged.');
+    }
+
+    if (!\HHK\sec\ReauthGuard::check(\HHK\sec\ReauthGuard::PURPOSE_WEB_USER)) {
+        return \HHK\sec\ReauthGuard::requiredResponse(\HHK\sec\ReauthGuard::PURPOSE_WEB_USER);
+    }
+
+    $u = new UserClass();
+    $uS = Session::getInstance();
+
+    $minPassLength = ($uS->minPassLength > 8 ? $uS->minPassLength : 8);
+    $newPw = $u->generateStrongPassword($minPassLength);
+
+    if ($u->adminResetPassword($dbh, intval($wUserId), $newPw) === TRUE) {
+        return array('success' => 'Password updated.', 'tempPW' => $newPw);
+    }
+
+    return array('error' => $u->logMessage . '.  Password is unchanged.');
 }

@@ -1446,6 +1446,8 @@ VALUES
 	('Web_User_Status', 'w', 'Waiting', '', '', 0),
 	('Web_User_Status', 'x', 'Prohibited', '', '', 0),
 	('Web_User_Actions', 'L', 'Login', '', '', '0'),
+	('Web_User_Actions', 'RA', 'Identity Verified', '', '', '0'),
+	('Web_User_Actions', 'RAF', 'Identity Verification Failed', '', '', '0'),
 	(
 		'Web_User_Actions',
 		'PS',

@@ -1,21 +1,29 @@
 function addrPrefs(memData) {
     "use strict";
-    $('input.prefPhone').each(function () {
+    // The User Settings dialog (#dchgPw) has its own copy of the email controls, with the same ids,
+    // so leave its controls out of the member's preferences.
+    function member(selector) {
+        return $(selector).not('#dchgPw *');
+    }
+    function memberCtl(id) {
+        return member('[id="' + id + '"]');
+    }
+    member('input.prefPhone').each(function () {
         if (this.checked) {
             memData.phonePref = this.value;
         }
     });
-    $('input.prefEmail').each(function () {
+    member('input.prefEmail').each(function () {
         if (this.checked) {
             memData.emailPref = this.value;
         }
     });
-    $('input.addrPrefs').each(function () {
+    member('input.addrPrefs').each(function () {
         if (this.checked) {
             memData.addrPref = this.value;
         }
     });
-    $('input.addrPrefs').click(function () {
+    member('input.addrPrefs').click(function () {
         var indx = this.value, adr1, cty, foundOne;
 
         adr1 = document.getElementById("adraddress1" + indx);
@@ -26,14 +34,14 @@ function addrPrefs(memData) {
             foundOne = false;
 
             // see if the old preferred  - then we check it and done.
-            if (memData.addrPref != "" && $("#adraddress1" + memData.addrPref).val() != "") {
-                $('#rbPrefMail' + memData.addrPref).prop('checked', true);
+            if (memData.addrPref != "" && memberCtl("adraddress1" + memData.addrPref).val() != "") {
+                memberCtl('rbPrefMail' + memData.addrPref).prop('checked', true);
                 foundOne = true;
             }
 
             if (!foundOne) {
-                $('input.addrPrefs').each(function () {
-                    if ($("#adraddress1" + this.value).val() != "") {
+                member('input.addrPrefs').each(function () {
+                    if (memberCtl("adraddress1" + this.value).val() != "") {
                         $(this).prop('checked', true);
                         memData.addrPref = this.value;
 
@@ -43,23 +51,23 @@ function addrPrefs(memData) {
         }
     });
     // enforce the Preferred phone number actually has a number
-    $('input.prefPhone').change(function () {
-        var foundOne, ctl = $("#txtPhone" + this.value);
+    member('input.prefPhone').change(function () {
+        var foundOne, ctl = memberCtl("txtPhone" + this.value);
         if (ctl !== null && ctl.val() == "") {
             alert("This Phone Number is blank.  It cannot be the 'preferred' phone number.");
             this.checked = false;
             foundOne = false;
 
             // see if the old preferred phone has a number - then we check it and done.
-            if (memData.phonePref != "" && $("#txtPhone" + memData.phonePref).val() != "") {
-                $('#ph' + memData.phonePref).prop('checked', true);
+            if (memData.phonePref != "" && memberCtl("txtPhone" + memData.phonePref).val() != "") {
+                memberCtl('ph' + memData.phonePref).prop('checked', true);
                 foundOne = true;
             }
 
             // If we did not check a rb, then find one that has a textbox with info in it
             if (!foundOne) {
-                $('input.prefPhone').each(function () {
-                    if ($("#txtPhone" + this.value).val() != "") {
+                member('input.prefPhone').each(function () {
+                    if (memberCtl("txtPhone" + this.value).val() != "") {
                         $(this).prop('checked', true);
                         memData.phonePref = this.value;
                         return;
@@ -69,22 +77,22 @@ function addrPrefs(memData) {
         }
     });
     // Enforce preferred Email has a value defined.
-    $('input.prefEmail').change(function () {
-        var ctl = $("#txtEmail" + this.value), foundOne;
+    member('input.prefEmail').change(function () {
+        var ctl = memberCtl("txtEmail" + this.value), foundOne;
         if (ctl != null && ctl.val() == "") {
             alert("This Email Address is blank.  It cannot be the 'preferred' Email address.");
             foundOne = false;
             this.checked = false;
 
-            if (memData.emailPref != "" && $("#txtEmail" + memData.emailPref).val() != "") {
-                $('#em' + memData.emailPref).prop('checked', true);
+            if (memData.emailPref != "" && memberCtl("txtEmail" + memData.emailPref).val() != "") {
+                memberCtl('em' + memData.emailPref).prop('checked', true);
                 foundOne = true;
             }
 
             // If we did not check a rb, then find one that has a textbox with info in it
             if (!foundOne) {
-                $('input.prefEmail').each(function () {
-                    if ($("#txtEmail" + this.value).val() != "") {
+                member('input.prefEmail').each(function () {
+                    if (memberCtl("txtEmail" + this.value).val() != "") {
                         $(this).prop('checked', true);
                         memData.emailPref = this.value;
                         return;

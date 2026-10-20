@@ -560,6 +560,11 @@ $alertMessage = $alertMsg->createMarkup();
                     <input type="checkbox" class="hhk-undonate" />
                 </div>
             </div>
+            <?php if (\HHK\sec\ReauthGuard::isAuthorizedFor(\HHK\sec\ReauthGuard::PURPOSE_WEB_USER)) { ?>
+            <div id="webUserGuard" style="display:none;" data-purpose="<?php echo \HHK\sec\ReauthGuard::PURPOSE_WEB_USER; ?>" data-id="<?php echo intval($id); ?>" data-name="<?php echo htmlspecialchars($memberData['memName']); ?>"></div>
+            <script type="text/javascript" src="../js/reauth.js<?php echo JSV; ?>"></script>
+            <script type="text/javascript" src="js/webUserGuard.js<?php echo JSV; ?>"></script>
+            <?php } ?>
             <div id="zipSearch" class="hhk-tdbox-noborder"  style="display:none;">
                 <table style="width:100%;">
                     <tr>
