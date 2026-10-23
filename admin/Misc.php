@@ -47,24 +47,26 @@ function getChangeLog(\PDO $dbh, $naIndex, $stDate = "", $endDate = "") {
     $whDates = "";
     $whereName = "";
     $logParams = [];
+    $actParams = [];
 
     if ($stDate != "") {
         $logDates = " AND `Date_Time` >= :logStart ";
         $whDates = " AND `a`.`Effective_Date` >= :actStart ";
         $logParams[':logStart'] = $stDate;
-        $logParams[':actStart'] = $stDate;
+        $actParams[':actStart'] = $stDate;
     }
 
     if ($endDate != "") {
         $logDates .= " AND `Date_Time` <= :logEnd ";
         $whDates .= " AND `a`.`Effective_Date` <= :actEnd ";
         $logParams[':logEnd'] = $endDate;
-        $logParams[':actEnd'] = $endDate;
+        $actParams[':actEnd'] = $endDate;
     }
 
     if ($naIndex != 0) {
         $whereName = " AND `idName` = :naIndex1 ";
         $logParams[':naIndex1'] = $naIndex;
+        $actParams[':naIndex1'] = $naIndex;
     }
 
     $result2 = $dbh->prepare("SELECT * FROM `name_log` WHERE 1=1 " . $whereName . $logDates . " ORDER BY `Date_Time` DESC LIMIT 200;");
@@ -98,7 +100,7 @@ LEFT JOIN `gen_lookups` `g3` ON `g3`.`Table_Name` = 'Vol_Rank' AND `g3`.`Code` =
         WHERE `a`.`Type` = 'vol' $whereName $whDates ORDER BY `a`.`Effective_Date` DESC LIMIT 100;";
 
     $result3 = $dbh->prepare($query);
-    $result3->execute($logParams);
+    $result3->execute($actParams);
 
     while ($row2 = $result3->fetch(\PDO::FETCH_ASSOC)) {
 
