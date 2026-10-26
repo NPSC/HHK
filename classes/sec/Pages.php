@@ -74,7 +74,8 @@ class Pages {
         $pageErrors = "";
 
         // Get list of security groups
-        $stmtg = $dbh->query("Select Group_Code, Title, '' as Substitute from w_groups");
+        $stmtg = $dbh->prepare("Select Group_Code, Title, '' as Substitute from w_groups");
+        $stmtg->execute();
         while ($r = $stmtg->fetch(\PDO::FETCH_NUM)) {
             $secGroups[$r[0]] = $r;
         }
@@ -327,7 +328,8 @@ from page p left join page_securitygroup s on p.idPage = s.idPage
         $secGroups = array();
 
         // Get list of security groups
-        $stmtg = $dbh->query("Select Group_Code, Title, '' as Substitute from w_groups");
+        $stmtg = $dbh->prepare("Select Group_Code, Title, '' as Substitute from w_groups");
+        $stmtg->execute();
         while ($r = $stmtg->fetch(\PDO::FETCH_NUM)) {
             $secGroups[$r[0]] = $r;
         }

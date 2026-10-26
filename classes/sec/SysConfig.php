@@ -37,18 +37,19 @@ class SysConfig {
             throw new RuntimeException('System Configuration database table name or category not specified.  ');
         }
 
-        if(is_array($category)){
-            foreach($category as $key=>$cat){
-                $category[$key] = "'" . $cat . "'";
-            }
-            $category = implode(",", $category);
-        }else{
-            $category = "'" . $category . "'";
+        $categories = (is_array($category) ? $category : [$category]);
+
+        $catPh = [];
+        $catParams = [];
+        foreach ($categories as $i => $cat) {
+            $catPh[] = ':cat' . $i;
+            $catParams[':cat' . $i] = $cat;
         }
 
         $rows = [];
         try {
-            $stmt = $dbh->query("select `Key`,`Value`,`Type` from `" . $tableName . "` where Category in ($category) order by `Key`");
+            $stmt = $dbh->prepare("select `Key`,`Value`,`Type` from `" . $tableName . "` where Category in (" . implode(', ', $catPh) . ") order by `Key`");
+            $stmt->execute($catParams);
             $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
         
             foreach ($rows as $r) {
@@ -82,7 +83,8 @@ class SysConfig {
         }
 
         try{
-            $stmt = $dbh->query("select `Value`,`Type` from `" . $tableName . "` where `Key` = '$key' ");
+            $stmt = $dbh->prepare("select `Value`,`Type` from `" . $tableName . "` where `Key` = :key ");
+            $stmt->execute([':key' => $key]);
             $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
         }catch(\Exception $e){
             $rows = array();
@@ -113,7 +115,8 @@ class SysConfig {
         }
 
         try{
-            $stmt = $dbh->query("select * from `" . $tableName . "` where `Key` = '$key' ");
+            $stmt = $dbh->prepare("select * from `" . $tableName . "` where `Key` = :key ");
+            $stmt->execute([':key' => $key]);
             $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
         }catch(\Exception $e){
             $rows = array();

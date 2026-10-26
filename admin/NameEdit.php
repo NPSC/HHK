@@ -395,8 +395,6 @@ $plus5 = time() + (1 * 60 * 60);
 
 $squirm = Crypto::encryptMessage(date("Y/m/d H:i:s", $plus5));
 
-$PWresultMessage = "";
-
 // Instantiate the alert message control
 //$alertMsg = new alertMessage("divAlert1");
 $alertMsg->set_DisplayAttr("none");
@@ -545,21 +543,6 @@ $alertMessage = $alertMsg->createMarkup();
                     <tr><td><input type="hidden" id="hdnRelCode" value=""/></td><td></td></tr>
                 </table>
             </div>
-            <div id="achgPw" class="hhk-member-detail" style="display:none;font-size:0.95em;">
-            	<div style="margin: 0.5em 0 0.5em 0;">The user's password will be reset to a random temporary password. <br>They will be required to change their password when they log in.</div>
-                <table>
-                    <tr>
-                        <td class="tdlabel">User Name</td><td><input id="txtUserName" type="text" value="<?php echo $userName; ?>" class="ro ignrSave" readonly="readonly" style="width: 100%" /></td>
-                    </tr><tr>
-                        <td class="tdlabel">Admin Password</td><td style="display: flex"><input id="txtOldPw" type="password" value="" title="Enter your password, not the users old password." /><button class="showPw" style="font-size: .75em; margin-left: 1em;" tabindex="-1">Show</button></td>
-                    </tr><tr>
-                        <td colspan ="2">
-                        	<span id="apwChangeErrMsg"><?php echo $PWresultMessage; ?></span>
-                        	<div id="apwNewPW" style="display:hidden; margin: 0.5em 0 0.5em 0;"></div>
-                        </td>
-                    </tr>
-                </table>
-            </div>
             <div id="vdon" style="display:none;font-size:0.9em;">
                 <?php echo $donateMkup; ?>
                 <div id="divListDonation">
@@ -567,7 +550,7 @@ $alertMessage = $alertMsg->createMarkup();
                 </div>
             </div>
             <?php if (\HHK\sec\ReauthGuard::isAuthorizedFor(\HHK\sec\ReauthGuard::PURPOSE_WEB_USER)) { ?>
-            <div id="webUserGuard" style="display:none;" data-purpose="<?php echo \HHK\sec\ReauthGuard::PURPOSE_WEB_USER; ?>" data-id="<?php echo intval($id); ?>" data-name="<?php echo htmlspecialchars($memberData['memName']); ?>"></div>
+            <div id="webUserGuard" style="display:none;" data-purpose="<?php echo \HHK\sec\ReauthGuard::PURPOSE_WEB_USER; ?>" data-id="<?php echo intval($id); ?>" data-name="<?php echo htmlspecialchars($memberData['memName']); ?>" data-minpw="<?php echo max(8, intval($uS->minPassLength)); ?>"></div>
             <script type="text/javascript" src="../js/reauth.js<?php echo JSV; ?>"></script>
             <script type="text/javascript" src="js/webUserGuard.js<?php echo JSV; ?>"></script>
             <?php } ?>
@@ -583,7 +566,9 @@ $alertMessage = $alertMsg->createMarkup();
                 </table>
             </div>
             <div id="vwebUser" style="display:none; font-size: 0.9em;">
-                <?php echo $webUserDialogMarkup; ?>
+                <form id="vwebUserForm">
+                    <?php echo $webUserDialogMarkup; ?>
+                </form>
             </div>
         </div>  <!-- div id="page"-->
         <?php if ($uS->ShowGuestPhoto) {

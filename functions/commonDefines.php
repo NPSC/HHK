@@ -65,7 +65,6 @@ define('CREATE_AUTO_COMPLETE_JS', '../js/createAutoComplete.js' . JSV);
 define('ADDR_PREFS_JS', '../js/addrPrefs-min.js' . JSV);
 define('STATE_COUNTRY_JS', '../js/stateCountry.js' . JSV);
 define('PAG_JS', '../js/pag.js' . JSV);
-define('LOGIN_JS', '../js/login.js' . JSV);
 define('MOMENT_JS', '../js/moment.min.js' . JSV);
 define('MULTISELECT_JS', '../js/jquery.multiselect.min.js' . JSV);
 define('DR_PICKER_JS', '../js/daterangepicker.hhk.min.js' . JSV);

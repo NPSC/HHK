@@ -264,3 +264,10 @@ INSERT IGNORE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitu
 -- Retire DiagnosisBuilder.php: Diagnosis/Location lookups are edited on Resource Builder (the file is now a redirect)
 delete from `page_securitygroup` where `idPage` in (select idPage from `page` where `File_Name` = "DiagnosisBuilder.php");
 delete from `page` where `File_Name` = "DiagnosisBuilder.php";
+
+-- Login is shared at the site root (house/ and admin/ index.php redirect there)
+UPDATE `page` SET `File_Name` = '_../index.php?log=lo' WHERE `File_Name` = '_index.php?log=lo';
+
+-- Identity providers can be hidden from the login page and from non-Admin users
+ALTER TABLE `w_idp`
+  ADD COLUMN IF NOT EXISTS `Show` BOOL DEFAULT TRUE AFTER `IdP_ManageRoles`;

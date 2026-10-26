@@ -23,9 +23,9 @@ class WebInit {
 
     /**
      * Summary of page
-     * @var ScriptAuthClass
+     * @var SitePage
      */
-    public $page;
+    public SitePage $page;
 
     /**
      * Summary of menuTitle
@@ -77,7 +77,7 @@ class WebInit {
      * @param string $page_Type
      * @param bool $addCSP
      */
-    function __construct($page_Type = WebPageCode::Page, $addCSP = TRUE) {
+    public function __construct($page_Type = WebPageCode::Page, $addCSP = TRUE) {
 
         $secComp = new SecurityComponent();
         $secComp->rerouteIfNotLoggedIn($page_Type, 'index.php');
@@ -100,7 +100,7 @@ class WebInit {
         }
 
         // Page authorization check
-        $this->page = new ScriptAuthClass($this->dbh);
+        $this->page = new SitePage($this->dbh);
 
         $this->page->Authorize_Or_Die();
 
@@ -221,10 +221,11 @@ class WebInit {
      * @param Session $uS
      * @return void
      */
-    public static function loadNameLookups(\PDO $dbh, $uS){
+    public static function loadNameLookups(\PDO $dbh, Session $uS){
         $query = "select `Table_Name`, `Code`, `Description`, `Substitute` from `gen_lookups`
             where `Table_Name` in ('Address_Purpose','Email_Purpose','rel_type', 'NoReturnReason', 'Member_Basis','mem_status','Name_Prefix','Name_Suffix','Phone_Type', 'Pay_Type', 'Salutation', 'Role_Codes', 'Referral_Form_Status') order by `Table_Name`, `Code`;";
-        $stmt = $dbh->query($query);
+        $stmt = $dbh->prepare($query);
+        $stmt->execute();
 
         $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
         $nameLookups = array();
@@ -254,7 +255,7 @@ class WebInit {
      * @param Session $uS
      * @return mixed
      */
-    public function reloadGenLkUps($uS) {
+    public function reloadGenLkUps(Session $uS) {
 
         $this->loadNameLookups($this->dbh, $uS);
 
@@ -297,7 +298,8 @@ class WebInit {
             where `Table_Name` in ('Patient_Rel_Type', 'Key_Deposit_Code', 'Room_Category', 'Static_Room_Rate', 'Room_Rate_Adjustment', 'Room_Type', 'Resource_Type', 'Resource_Status', 'Room_Status', 'Visit_Status')
             UNION select `Category` as `Table_Name`, `Code`, `Title` as `Description`, `Other` as `Substitute` from `lookups` where `Use` = 'y'
             order by `Table_Name`, `Description`;";
-        $stmt = $this->dbh->query($query);
+        $stmt = $this->dbh->prepare($query);
+        $stmt->execute();
 
         $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
         $nameLookups = array();
@@ -308,7 +310,8 @@ class WebInit {
 
         //get hospitals with status
         $query = "select idHospital, IF(`status`='r', concat(`Title`, ' (Retired)'), `Title`) as `Title`, `Type`, `Status`, `Reservation_Style`, `Stay_Style` from hospital where `Status` in ('a','r') order by `Status` asc, `Title` asc";
-        $stmt = $this->dbh->query($query);
+        $stmt = $this->dbh->prepare($query);
+        $stmt->execute();
         $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
         foreach ($rows as $r) {
@@ -349,8 +352,9 @@ class WebInit {
         // get session instance
         $uS = Session::getInstance();
 
-        $stmt = $this->dbh->query("select `Table_Name`, `Code`, `Description`, `Substitute` from `gen_lookups`
+        $stmt = $this->dbh->prepare("select `Table_Name`, `Code`, `Description`, `Substitute` from `gen_lookups`
             where `Table_Name` in ('Vol_Category', 'Vol_Rank') order by `Table_Name`, `Description`;");
+        $stmt->execute();
         $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
         $nameLookups = array();
 

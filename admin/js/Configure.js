@@ -10,7 +10,11 @@ $(document).ready(function () {
     var cronLogTable;
     var dateFormat = $('#dateFormat').val();
     var notyMsg = $('#notymsg').val();
-    notyMsg = JSON.parse(notyMsg);
+    try {
+        notyMsg = JSON.parse(notyMsg);
+    } catch {
+        notyMsg = null;
+    }
 
     var dtCols = [
         {
@@ -168,7 +172,7 @@ $(document).on('change', "#numAddrCalc", function(){
 
 	//display noty
 
-	if(notyMsg.type){
+	if(notyMsg && notyMsg.type){
 		flagAlertMessage(notyMsg.text, notyMsg.type);
 	}
 

@@ -88,17 +88,18 @@ class Remember
 
     public function deleteTokens(\PDO $dbh, bool $allUserTokens = false) : int
     {
+        $params = array(':idName'=>$this->userAr['idName']);
+
         if($allUserTokens){ //delete all user tokens
             $sql = "DELETE FROM w_user_tokens where `idName` = :idName";
         }else{ //only delete expired tokens
-            $sql = "DELETE FROM w_user_tokens where `idName` = :idName and `Expires` < " . time();
+            $sql = "DELETE FROM w_user_tokens where `idName` = :idName and `Expires` < :now";
+            $params[':now'] = time();
         }
 
         $stmt = $dbh->prepare($sql);
 
-        $stmt->execute(array(
-            ':idName'=>$this->userAr['idName']
-        ));
+        $stmt->execute($params);
 
         $rowCount = $stmt->rowCount();
 

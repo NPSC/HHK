@@ -116,7 +116,7 @@ class Login {
         }
     }
 
-    public function checkPost(\PDO $dbh, $post, $defaultPage) {
+    public function checkPost(\PDO $dbh, array $post, string $defaultPage): array {
 
         $otpMsgs = [
             'authenticator'=>'Enter the one-time <strong>Authenticator</strong> code',
@@ -182,18 +182,40 @@ class Login {
 
                 WebInit::resetSessionIdle(); //extend idle session to prevent double login
 
+                // A stored per-user default page can belong to either the Admin or House
+                // site (see WebUser's page picker), and is checked here before the browser
+                // has landed on either one - is_Authorized() can't see it, since it only
+                // reads $uS->webPages for whichever site is currently loaded (this shared
+                // login page's own site). resolveAuthorizedPage() looks the page's real
+                // site up directly and, on success, returns it already prefixed with that
+                // site's own relative path (e.g. "house/register.php") since a bare
+                // filename can't otherwise be routed to the right site.
                 if ($pge == $defaultPage && $u->getDefaultPage() != '') {
-                    $pge = $u->getDefaultPage();
-                }
 
-                try {
-                    if (SecurityComponent::is_Authorized($pge, true)) {
-                        $events['page'] = $pge;
+                    $resolvedPge = SecurityComponent::resolveAuthorizedPage($dbh, $u->getDefaultPage(), ['a', 'h']);
+
+                    if ($resolvedPge != '') {
+                        $events['page'] = $resolvedPge;
                     } else {
-                        $this->validateMsg .= "Unauthorized for page: " . $pge;
+                        $this->validateMsg .= "Unauthorized for page: " . SecurityComponent::getPageTitle($u->getDefaultPage(), $dbh);
                     }
-                }catch(AuthException $e){
-                    $this->validateMsg .= $e->getMessage();
+
+                } else {
+
+                    // A return page (xf) from one of the sites carries that site's folder, e.g.
+                    // "house/register.php?id=4" (see house/index.php), so check it against that
+                    // site's pages rather than this shared root login page's own.
+                    $sitePath = SecurityComponent::splitSitePath($pge);
+
+                    try {
+                        if ($sitePath !== null ? SecurityComponent::is_Authorized($sitePath[1], true, $sitePath[0], $dbh) : SecurityComponent::is_Authorized($pge, true)) {
+                            $events['page'] = $pge;
+                        } else {
+                            $this->validateMsg .= "Unauthorized for page: " . SecurityComponent::getPageTitle($pge, $dbh);
+                        }
+                    }catch(AuthException $e){
+                        $this->validateMsg .= $e->getMessage();
+                    }
                 }
             }
 
@@ -204,35 +226,7 @@ class Login {
 
     }
 
-    public static function IEMsg(){
-        try {
-            if ($userAgentArray = @get_browser(NULL, TRUE)) {
-
-                if (is_array($userAgentArray)) {
-
-                    $browserName = $userAgentArray['parent'];
-
-                    if($browserName && $browserName == "IE 11.0 for Desktop"){
-                        // Instantiate the alert message control
-                        $alertMsg = new AlertMessage("IEAlert");
-                        $alertMsg->set_DisplayAttr("block");
-                        $alertMsg->set_Context(AlertMessage::Alert);
-                        $alertMsg->set_iconId("alrIcon");
-                        $alertMsg->set_styleId("alrResponse");
-                        $alertMsg->set_txtSpanId("alrMessage");
-                        $alertMsg->set_Text("Internet Explorer 11 detected<span style='margin-top: 0.5em; display: block'>HHK may not function as intended. For the best experience, consider using a supported browser such as Edge, Chrome or Firefox. If you are required to continue using IE 11, and are having trouble with HHK, please contact NPSC.</span>");
-
-                        return HTMLContainer::generateMarkup("div", HTMLContainer::generateMarkup('div', HTMLContainer::generateMarkup("div", $alertMsg->createMarkup()), array("class"=>"col-xl-10")), array("class"=>"row justify-content-center mb-3"));
-                    }
-                }
-            }
-        } catch (\Exception $d) {
-        }
-
-        return '';
-    }
-
-    public static function trainingMsg(){
+    public static function trainingMsg(): string{
         $uS = Session::getInstance();
 
         if($uS->testVersion){
@@ -250,7 +244,7 @@ class Login {
         }
     }
 
-    public function loginForm($uname = '') {
+    public function loginForm($uname = ''): string {
 
         if ($uname != '' && $this->userName == '') {
             $this->setUserName($uname);
@@ -267,7 +261,7 @@ class Login {
         $hdr = HTMLContainer::generateMarkup("div", "Login", array("class"=>"ui-widget-header ui-corner-top p-1", "id"=>"loginTitle"));
 
         $userRow = HTMLContainer::generateMarkup("div",
-            HTMLContainer::generateMarkup("label", 'User Name:', array("class"=>"col-4 pr-0 tdlabel")) .
+            HTMLContainer::generateMarkup("label", 'Username:', array("class"=>"col-4 pr-0 tdlabel", "for"=>"txtUname")) .
             HTMLContainer::generateMarkup("div",
                 HTMLInput::generateMarkup($this->userName, array('id'=>'txtUname', "class"=>"w-100")) .
                 HTMLContainer::generateMarkup('span', '', array('id'=>'errUname', 'class'=>'hhk-logerrmsg'))
@@ -275,11 +269,11 @@ class Login {
         , array("class"=>"row mt-3 mx-0", "id"=>"userRow"));
 
         $pwRow = HTMLContainer::generateMarkup("div",
-            HTMLContainer::generateMarkup("label", 'Password:', array("class"=>"col-4 pr-0 tdlabel")) .
+            HTMLContainer::generateMarkup("label", 'Password:', array("class"=>"col-4 pr-0 tdlabel", "for"=>"txtPW")) .
             HTMLContainer::generateMarkup("div",
                 HTMLContainer::generateMarkup("div",
                     HTMLInput::generateMarkup("", array('id'=>'txtPW', 'type'=>"password", "class"=>"w-100")) .
-                    '<button type="button" class="showPw mx-1 ui-button" tabindex="-1">Show</button>'
+                    '<button type="button" class="showPw mx-1 ui-button" tabindex="-1" title="Show password"><i class="bi bi-eye-fill"></i></button>'
                 , array("class"=>"d-flex")) .
                 HTMLContainer::generateMarkup('span', '', array('id'=>'errPW', 'class'=>'hhk-logerrmsg'))
             , array("class"=>"col-8"))
@@ -324,23 +318,13 @@ class Login {
 
     }
 
-    public static function rssWidget($title) {
-
-        $hdr = HTMLContainer::generateMarkup("div", $title, array("class"=>"ui-widget-header ui-corner-top p-1 center"));
-
-        $content = '<div id="hhk-loading-spinner" class="center p-3"><img src="../images/ui-anim_basic_16x16.gif"></div>';
-
-        return HTMLContainer::generateMarkup("div", HTMLContainer::generateMarkup('div', HTMLContainer::generateMarkup("div", $hdr . HTMLContainer::generateMarkup("div", $content, array("class"=>"ui-widget-content ui-corner-bottom")), array("class"=>"ui-widget")), array('class'=>'col-12')), array("class"=>"row justify-content-center mb-3 rssWidget",));
-
-    }
-
-    public static function welcomeWidget($title, $rootURL = '..') {
+    public static function welcomeWidget(string $title, $rootURL = ''): string {
 
         $uS = Session::getInstance();
 
         $hdr = HTMLContainer::generateMarkup("div", $title, array("class"=>"ui-widget-header ui-corner-top p-1 center"));
 
-        $content = '<div id="hhk-loading-spinner" class="center p-3 ui-widget-content ui-corner-bottom"><img src="' . $rootURL . '/images/ui-anim_basic_16x16.gif"></div>';
+        $content = '<div id="hhk-loading-spinner" class="center p-3 ui-widget-content ui-corner-bottom"><img src="' . $rootURL . 'images/ui-anim_basic_16x16.gif"></div>';
         $content .= HTMLContainer::generateMarkup("div",HTMLContainer::generateMarkup("div", '', ['class'=>'welcomeContent']), ['id'=>'welcomeWidget', 'class'=>'d-none ui-widget-content ui-corner-bottom', 'data-url'=>$uS->loginFeedURL]);
         //$content .= '<iframe src="' . $uS->loginFeedURL . '" width="100%" height="320px" frameborder="0" marginwidth="0" marginheight="0" scrolling="no" id="welcomeWidget" class="d-none ui-widget-content ui-corner-bottom"></iframe>';
 
@@ -348,19 +332,7 @@ class Login {
 
     }
 
-    public static function getRssData($feedurl) {
-        $content = @file_get_contents($feedurl);
-        if($content !== false){
-            header("Content-Type: text/xml");
-            echo $content;
-        }else{
-            http_response_code(503);
-            echo "Unable to Fetch data";
-        }
-        exit;
-    }
-
-    public static function getLinksMarkup(Session $uS, \PDO $dbh){
+    public static function getLinksMarkup(\PDO $dbh): string{
         $tutorialSiteURL = SysConfig::getKeyValue($dbh, 'sys_config', 'Tutorial_URL');
         $trainingSiteURL = SysConfig::getKeyValue($dbh, 'sys_config', 'Training_URL');
         $extLinkIcon = "<span class='ui-icon ui-icon-extlink'></span>";
@@ -381,7 +353,7 @@ class Login {
         return $linkMkup;
     }
 
-    public static function getNewsletterMarkup(){
+    public static function getNewsletterMarkup(): string{
 
         $uS = Session::getInstance();
 
@@ -399,7 +371,7 @@ class Login {
         }
     }
 
-    public static function getFooterMarkup(){
+    public static function getFooterMarkup(): string{
         $copyYear = date('Y');
 
         return HTMLContainer::generateMarkup("div",

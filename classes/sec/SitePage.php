@@ -9,14 +9,14 @@ use HHK\Common;
 use PDO;
 
 /**
- * ScriptAuthClass.php
+ * SitePage.php
  *
  * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
  * @copyright 2010-2017 <nonprofitsoftwarecorp.org>
  * @license   MIT
  * @link      https://github.com/NPSC/HHK
  */
-class ScriptAuthClass extends SecurityComponent {
+class SitePage extends SecurityComponent {
 
     private $siteCode = "";
 
@@ -65,9 +65,11 @@ class ScriptAuthClass extends SecurityComponent {
         // try reading the page table
         if ($this->siteCode != "" && $this->getFileName() != "") {
 
-            if (isset($uS->webPages[$this->getFileName()]) && !is_null($uS->webPages[$this->getFileName()])) {
+            $wsCode = strtolower($this->siteCode);
 
-                $page = $uS->webPages[$this->getFileName()];
+            if (isset($uS->webPages[$wsCode][$this->getFileName()]) && !is_null($uS->webPages[$wsCode][$this->getFileName()])) {
+
+                $page = $uS->webPages[$wsCode][$this->getFileName()];
 
                 $this->pageCodes = $page["Codes"];
                 $this->pageTitle = $page["Title"];
@@ -83,21 +85,25 @@ class ScriptAuthClass extends SecurityComponent {
     }
 
     /**
-     * Summary of loadWebSite
+     * Loads all web sites into $uS->siteList, if not already loaded.
+     *
+     * Callers that need site/group info without a full SitePage context
+     * (e.g. SAML::acs(), which lands on a session that may never have
+     * visited an ordinary site page) must call this explicitly first -
+     * nothing else populates siteList on that path.
      * @param PDO $dbh
      * @throws RuntimeException
-     * @return mixed
      */
-    protected function loadWebSite(PDO $dbh) {
+    public static function loadSiteList(PDO $dbh): void {
 
         $uS = Session::getInstance();
-
 
         // Load all the web sites.
         if (isset($uS->siteList) === FALSE) {
 
-            $stmt = $dbh->query("Select Site_Code, Required_Group_Code, Relative_Address, Index_Page, Default_Page, Description, Path_To_CSS as `Class`
-                from web_sites where Relative_Address != '';");
+            $stmt = $dbh->prepare("SELECT `Site_Code`, `Required_Group_Code`, `Relative_Address`, `Index_Page`, `Default_Page`, `Description`, `Path_To_CSS` AS `Class`
+                FROM `web_sites` WHERE `Relative_Address` != '';");
+            $stmt->execute();
 
             $sl = array();
 
@@ -138,16 +144,32 @@ class ScriptAuthClass extends SecurityComponent {
                 throw new RuntimeException("web_sites records not found.");
             }
         }
+    }
 
-        // Is our web site page list loaded?
-        if (isset($uS->webSite) && $uS->webSite["Relative_Address"] == $this->getHhkSiteDir()) {
+    /**
+     * Summary of loadWebSite
+     * @param PDO $dbh
+     * @throws RuntimeException
+     * @return mixed
+     */
+    protected function loadWebSite(PDO $dbh) {
+
+        $uS = Session::getInstance();
+
+        self::loadSiteList($dbh);
+
+        // Is our web site page list loaded? Also require the current site's nested webPages
+        // entry, not just $uS->webSite - a session already mid-flight when webPages' shape
+        // changed (flat File_Name-keyed -> nested by site code) would otherwise keep its
+        // stale flat cache forever, since nothing else forces a reload once webSite matches.
+        if (isset($uS->webSite) && $uS->webSite["Relative_Address"] == $this->getHhkSiteDir()
+            && isset($uS->webPages[strtolower($uS->webSite["Site_Code"])])) {
 
             return $uS->webSite;
         }
 
         // Load Site
         unset($uS->webSite);
-        unset($uS->webPages);
 
         foreach ($uS->siteList as $ws) {
 
@@ -160,67 +182,32 @@ class ScriptAuthClass extends SecurityComponent {
 
         if (isset($uS->webSite)) {
 
-            $wsCode = strtolower($uS->webSite["Site_Code"]);
-            $where = " where p.Web_Site = '$wsCode' and p.Hide = 0 ";
-            $orderBy = " order by p.Type, p.Menu_Parent, p.Menu_Position";
+            $myWsCode = strtolower($uS->webSite["Site_Code"]);
 
-            // Get list of pages
-            $query = "select
-                p.idPage as idPage,
-                p.File_Name,
-                p.Title as Title,
-                p.Type as Type,
-                p.Menu_Parent,
-                p.Menu_Position,
-                case
-                    when p.Login_Page_Id > 0 then p1.File_Name
-                    else ''
-                end as Login_Page,
-                ifnull(s.Group_Code, '') as Group_Code
-            from
-                page p
-                    left join
-                page p1 ON p.Login_Page_Id = p1.idPage
-                    left join
-                page_securitygroup s ON p.idPage = s.idPage";
+            // Load this site's pages, plus every other configured site's, into
+            // $uS->webPages[siteCode][fileName] - nested per site (rather than one flat
+            // File_Name-keyed array) so a File_Name reused across sites (e.g. "register.php"
+            // in both House and Admin) can't collide and corrupt another site's authorization
+            // check. Caching every site up front (not just this one) lets pages on other
+            // sites - a per-user default page, or an 'xf' redirect target hit before login -
+            // be looked up (for authorization or just their Title) without a fresh query.
+            // Session's __get/__set can't mutate a nested array in place, so build the whole
+            // array locally and assign it back in one shot.
+            $wp = is_array($uS->webPages) ? $uS->webPages : array();
 
-            try {
-                $stmt = $dbh->query($query . $where . $orderBy);
-            } catch (\PDOException $pex) {
-                $where = " where p.Web_Site = '$wsCode' ";
-                $stmt = $dbh->query($query . $where . $orderBy);
-            }
+            foreach ($uS->siteList as $ws) {
 
-            if ($stmt->rowCount() > 0) {
-                $wp = array();
-                $lastId = 0;
+                $wsCode = strtolower($ws["Site_Code"]);
 
-                while ($r = $stmt->fetch(PDO::FETCH_ASSOC)) {
-
-                    if ($lastId == $r['idPage']) {
-
-                        $wp[$r['File_Name']]['Codes'][] = $r['Group_Code'];
-
-                    } else {
-
-                        $wp[$r['File_Name']] = array(
-                            'idPage' => $r['idPage'],
-                            'Title' => $r['Title'],
-                            'Type' => $r['Type'],
-                            'Parent' => $r['Menu_Parent'],
-                            'Position' => $r['Menu_Position'],
-                            'Login' => $r['Login_Page'],
-                            'Codes' => array($r['Group_Code'])
-                        );
-                    }
-
-                    $lastId = $r['idPage'];
+                if (isset($wp[$wsCode])) {
+                    continue;
                 }
 
-                $uS->webPages = $wp;
-            } else {
-                throw new RuntimeException("Web pages list not found.");
+                $wp[$wsCode] = $this->loadSitePages($dbh, $wsCode, $wsCode == $myWsCode);
             }
+
+            $uS->webPages = $wp;
+
         } else {
 
             throw new RuntimeException("web_sites not found.  Host: " . $this->getRootURL() . "  Doc Root: " . $this->getHhkSiteDir());
@@ -230,12 +217,94 @@ class ScriptAuthClass extends SecurityComponent {
 
     }
 
+    /**
+     * Queries the page list for one site. A pure read - the caller merges the result into
+     * $uS->webPages, since Session's magic __get/__set can't mutate a nested array in place.
+     * @param PDO $dbh
+     * @param string $wsCode lower-cased Site_Code
+     * @param bool $required throw if this site has no visible pages, instead of caching an
+     *  empty list - use for the site actually being served, where that indicates a real
+     *  configuration error, not just an unrelated site with nothing (yet) marked visible.
+     * @return array<string, array> pages for this site, keyed by File_Name
+     * @throws RuntimeException
+     */
+    private function loadSitePages(PDO $dbh, string $wsCode, bool $required): array {
+
+        $where = " WHERE `p`.`Web_Site` = :wsCode AND `p`.`Hide` = 0 ";
+        $orderBy = " ORDER BY `p`.`Type`, `p`.`Menu_Parent`, `p`.`Menu_Position`";
+
+        // Get list of pages
+        $query = "SELECT
+            `p`.`idPage` AS `idPage`,
+            `p`.`File_Name`,
+            `p`.`Title` AS `Title`,
+            `p`.`Type` AS `Type`,
+            `p`.`Menu_Parent`,
+            `p`.`Menu_Position`,
+            CASE
+                WHEN `p`.`Login_Page_Id` > 0 THEN `p1`.`File_Name`
+                ELSE ''
+            END AS `Login_Page`,
+            IFNULL(`s`.`Group_Code`, '') AS `Group_Code`
+        FROM
+            `page` `p`
+                LEFT JOIN
+            `page` `p1` ON `p`.`Login_Page_Id` = `p1`.`idPage`
+                LEFT JOIN
+            `page_securitygroup` `s` ON `p`.`idPage` = `s`.`idPage`";
+
+        try {
+            $stmt = $dbh->prepare($query . $where . $orderBy);
+            $stmt->execute([':wsCode' => $wsCode]);
+        } catch (\PDOException $pex) {
+            $where = " WHERE `p`.`Web_Site` = :wsCode ";
+            $stmt = $dbh->prepare($query . $where . $orderBy);
+            $stmt->execute([':wsCode' => $wsCode]);
+        }
+
+        if ($stmt->rowCount() == 0) {
+
+            if ($required) {
+                throw new RuntimeException("Web pages list not found.");
+            }
+
+            return array();
+        }
+
+        $wp = array();
+        $lastId = 0;
+
+        while ($r = $stmt->fetch(PDO::FETCH_ASSOC)) {
+
+            if ($lastId == $r['idPage']) {
+
+                $wp[$r['File_Name']]['Codes'][] = $r['Group_Code'];
+
+            } else {
+
+                $wp[$r['File_Name']] = array(
+                    'idPage' => $r['idPage'],
+                    'Title' => $r['Title'],
+                    'Type' => $r['Type'],
+                    'Parent' => $r['Menu_Parent'],
+                    'Position' => $r['Menu_Position'],
+                    'Login' => $r['Login_Page'],
+                    'Codes' => array($r['Group_Code'])
+                );
+            }
+
+            $lastId = $r['idPage'];
+        }
+
+        return $wp;
+    }
+
 
     /**
      * Summary of Authorize_Or_Die
      * @return void
      */
-    public function Authorize_Or_Die() {
+    public function Authorize_Or_Die(): void {
 
         $this->die_if_not_Logged_In($this->get_Page_Type(), $this->get_Login_Page());
 
@@ -318,7 +387,7 @@ class ScriptAuthClass extends SecurityComponent {
      * @param PDO|bool $dbh
      * @return string
      */
-    public function generateMenu(string $pageHeader, PDO|bool $dbh = false) {
+    public function generateMenu(string $pageHeader, PDO|bool $dbh = false): string {
         // only generate menu for pages, not services or components
         if ($this->get_Page_Type() != WebPageCode::Page) {
             return '';
@@ -328,7 +397,7 @@ class ScriptAuthClass extends SecurityComponent {
         $uS = Session::getInstance();
         $pageAnchors = [];
 
-        foreach ($uS->webPages as $fn => $r) {
+        foreach (($uS->webPages[strtolower($this->siteCode)] ?? []) as $fn => $r) {
 
             if ($r['Type'] != WebPageCode::Page) {
                 continue;
@@ -409,7 +478,7 @@ class ScriptAuthClass extends SecurityComponent {
         //add user settings modal
         if($dbh instanceof PDO){
             $markup .= UserClass::createUserSettingsMarkup($dbh);
-            $markup .= '<input  type="hidden" id="showUserSettings" value="' . (UserClass::isPassExpired($dbh, $uS) || (UserClass::hasTOTP($dbh, $uS->username) == false && $uS->Enforce2fa && UserClass::isLocalUser($dbh, $uS))) . '" />';
+            $markup .= '<input  type="hidden" id="showUserSettings" value="' . (UserClass::isPassExpired($dbh, $uS) || (UserClass::hasTOTP($dbh, $uS->username) == false && $uS->Enforce2fa && UserClass::isLocalUser($dbh, $uS, $uS->username))) . '" />';
         }
 
         return $markup;
@@ -420,7 +489,7 @@ class ScriptAuthClass extends SecurityComponent {
      * @param array $siteList
      * @return string
      */
-    protected function getSiteIcons($siteList) {
+    protected function getSiteIcons($siteList): string {
 
         $mu = "<ul id='ulIcons' class='ui-widget hhk-ui-icons'>";
         $siteCount = 0;

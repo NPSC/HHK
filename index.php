@@ -1,13 +1,16 @@
 <?php
 
-use HHK\sec\{Login, Labels, SecurityComponent, ScriptAuthClass, SysConfig, Session};
-use HHK\Exception\RuntimeException;
+use HHK\sec\{Login, SecurityComponent, SitePage, Session};
+use HHK\sec\SAML;
+use HHK\Exception\InvalidArgumentException;
 use HHK\SysConst\CodeVersion;
 use HHK\HTMLControls\HTMLContainer;
 use HHK\SysConst\Mode;
 
 /**
  * index.php
+ *
+ * The login page for every site (house/ and admin/ index.php redirect here).
  *
  * @category  Site
  * @package   Hospitality HouseKeeper
@@ -16,32 +19,10 @@ use HHK\SysConst\Mode;
  * @license   GPL and MIT
  * @link      https://github.com/ecrane57/Hospitality-HouseKeeper
  */
-define('DS', DIRECTORY_SEPARATOR);
-define('P_ROOT', dirname(__FILE__) . DS);
-define('CONF_PATH', P_ROOT . 'conf' . DS);
-define('ciCFG_FILE', 'site.cfg');
-date_default_timezone_set('America/Chicago');
+require('functions/commonDefines.php');
 
-if (file_exists('vendor/autoload.php')) {
-    require('vendor/autoload.php');
-} else {
-    exit("Unable to laod dependancies, be sure to run 'composer install'");
-}
-
-
-try {
-    $dbh = Login::initHhkSession(CONF_PATH, ciCFG_FILE);
-    $uS = Session::getInstance();
-}catch (\Exception $e){
-    exit($e->getMessage());
-}
-
-try {
-    $page = new ScriptAuthClass($dbh);
-} catch (Exception $ex) {
-    $uS->destroy(true);
-    exit('<h2>The HHK Guest Tracking Site is not enabled.</h2>');
-}
+// get session instance
+$uS = Session::getInstance();
 
 // Logout command?
 $log = filter_input(INPUT_GET, 'log', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
@@ -51,32 +32,72 @@ if ($log == "lo") {
     exit();
 }
 
-// Get labels
-$labels = Labels::getLabels();
+// Access the login object, set session vars,
+try {
+
+    $login = new Login();
+    $dbh = $login->initHhkSession(CONF_PATH, ciCFG_FILE);
+
+} catch (InvalidArgumentException $pex) {
+    exit ("<h3>Database Access Error.   <a href='index.php'>Continue</a></h3>");
+
+} catch (Exception $ex) {
+    exit ("<h3>" . $ex->getMessage());
+}
+
+
+// Load the page information
+try {
+    $page = new SitePage($dbh);
+} catch (Exception $ex) {
+    $uS->destroy(true);
+    exit('<h2>The HHK Guest Tracking Site is not enabled.</h2>');
+}
+
+// Login hook
+if (filter_has_var(INPUT_POST, 'txtUname')) {
+    // User loged in. 'index.php' is always authorized (root site is public), so this
+    // only carries a real redirect target if the login form had an explicit 'xf' page
+    // or the user has a per-user default page configured.
+    $events = $login->checkPost($dbh, $_POST, 'index.php');
+
+    // Login succeeded but the resolved target either fell through to the
+    // 'index.php' stand-in, or was rejected - e.g. a per-user default page the user
+    // is no longer authorized for. Either way, fall back to the best site the
+    // user is authorized for, house taking priority over the others.
+    $pageRejected = isset($events['mess']) && str_starts_with($events['mess'], 'Unauthorized for page:');
+
+    if ($pageRejected || ($events['page'] ?? '') === 'index.php') {
+        $defaultPage = SecurityComponent::getAuthorizedDefaultPage($dbh);
+
+        if ($defaultPage != '') {
+            $events = ['page' => $defaultPage];
+        }
+    }
+
+    echo json_encode($events);
+    exit();
+}
 
 // disclamer
 $disclaimer = '';
 if ($uS->mode != Mode::Live) {
     $disclaimer = HTMLContainer::generateMarkup("div", HTMLContainer::generateMarkup("div", 'Welcome to this demonstration version of Hospitality HouseKeeper! Do NOT use real guest or patient names.  This demonstration web site is not HIPAA compliant and not intended to be used for storing Protected Health Information.', array("class"=>"col-xl-10")), array("class"=>"row justify-content-center mb-3"));
 }
-$icons = array();
-foreach ($uS->siteList as $r) {
 
-    if ($r["Site_Code"] != "r") {
-        $icons[$r["Site_Code"]] = "<span class='" . $r["Class"] . " mr-1'></span>";
-    }
-}
-
-$pageTitle = SysConfig::getKeyValue($dbh, 'sys_config', 'siteName');
-$siteName = '<h2 class="center">Hospitality Housekeeper</h2>';
 $build = 'Build:' . CodeVersion::VERSION . '.' . CodeVersion::BUILD;
 
-$announcementWidget = Login::welcomeWidget("Tip of the Week", '.');
-$linkMkup = Login::getLinksMarkup($uS, $dbh);
-$newsletterMkup = Login::getNewsletterMarkup();
+$siteName = HTMLContainer::generateMarkup('h2', "Hospitality Housekeeper", array("class"=>"center"));
+
+$loginMkup = $login->loginForm();
+$samlMkup = SAML::getIdpMarkup($dbh);
+
+$announcementWidget = $login->welcomeWidget("Tip of the Week");
+$linkMkup = $login->getLinksMarkup($dbh);
+$newsletterMkup = $login->getNewsletterMarkup();
 $row2 = HTMLContainer::generateMarkup("div", HTMLContainer::generateMarkup('div', $linkMkup, array("class"=>"col-lg-7 mb-3")) . HTMLContainer::generateMarkup("div", $newsletterMkup, array("class"=>"col-lg-5")),array("class"=>"row justify-content-center mb-3"));
-$footerMkup = Login::getFooterMarkup();
-$secureComp = new SecurityComponent();
+
+$footerMkup = $login->getFooterMarkup();
 
 $cspURL = $page->getHostName() . " manage.hospitalityhousekeeper.net nonprofitsoftwarecorp.org";
 
@@ -89,62 +110,50 @@ if (SecurityComponent::isHTTPS()) {
 }
 ?>
 <!DOCTYPE html>
-<html>
+<html lang="en">
     <head>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-		<meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title><?php echo $pageTitle; ?></title>
-        <link rel="icon" type="image/svg+xml" href="favicon.svg" />
-        <link href="house/css/jqui/jquery-ui.min.css" rel="stylesheet" type="text/css" />
-        <link href='css/bootstrap-grid.min.css' rel='stylesheet' type='text/css' />
-        <link href='css/root.css' rel='stylesheet' type='text/css' />
-        <script type="text/javascript" src="js/jquery-min.js"></script>
-        <script type="text/javascript" src="js/jquery-ui.min.js"></script>
-        <script type="text/javascript" src="js/login.js?eG=94"></script>
-
+        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+        <title><?php echo $uS->siteName; ?></title>
+        <link href="house/css/jqui/jquery-ui.min.css<?php echo JSV; ?>" rel="stylesheet" type="text/css" />
+        <link href="css/root.css<?php echo JSV; ?>" rel="stylesheet" type="text/css" />
+        <link href="house/css/house.css<?php echo JSV; ?>" rel="stylesheet" type="text/css" />
+        <link href="css/bootstrap-grid.min.css<?php echo JSV; ?>" rel="stylesheet" type="text/css" />
+        <link href="css/bootstrap-icons.min.css<?php echo JSV; ?>" rel="stylesheet" type="text/css" />
+        <link rel="icon" type="image/svg+xml" href="favicon.svg<?php echo JSV; ?>" />
+        <script type="text/javascript" src="js/jquery-min.js<?php echo JSV; ?>"></script>
+        <script type="text/javascript" src="js/jquery-ui.min.js<?php echo JSV; ?>"></script>
+        <script type="text/javascript" src="js/login.js<?php echo JSV; ?>"></script>
     </head>
-    <body <?php if ($uS->testVersion) {echo "class='testbody'";} ?> >
+    <body <?php if ($uS->testVersion) { echo "class='testbody'"; } ?>>
         <div id="page">
             <div class='pageHeader'>
-                <h2 class="px-3 py-2">
-                    <?php echo $pageTitle; ?>
-                </h2>
+                <h2 class="px-3 py-2"><?php echo $uS->siteName; ?></h2>
             </div>
             <div class="build"><?php echo $build; ?></div>
             <div id="contentDiv" class="container mx-auto">
             	<div class="row justify-content-center mb-3">
-                	<div class="col-xl-4 col-md-6 my-auto">
+                    <div class="col-xl-4 col-md-6 my-auto">
                         <a href="https://nonprofitsoftwarecorp.org/products-services/hospitality-housekeeper-software/" target="_blank"><img width="250" alt='Hospitality HouseKeeper Logo' src="images/hhkLogo.png"></a>
                     </div>
                     <div class="col-md-6 my-auto">
                     	<div>
-                        	<?php echo $siteName; ?>
+                            <?php echo $siteName; ?>
                         </div>
                     </div>
                 </div>
                	<?php echo $disclaimer; ?>
                 <?php echo Login::trainingMsg(); ?>
                 <div class="row justify-content-center">
-					<div class="col-xl-4 col-md-6">
-						<div class="ui-widget center">
-							<div class="ui-widget-header ui-corner-top p-1">Sites</div>
-							<div class="ui-widget-content ui-corner-bottom p-3 smaller">
-								<ul class="list-style-none">
-									<li><a href="<?php echo $secureComp->getSiteURL() . 'admin'; ?>" class="ui-button ui-corner-all"><?php echo $icons['a']; ?>Administration Site</a></li>
-                                	<li class="mt-3"><a href="<?php echo $secureComp->getSiteURL() . 'house'; ?>" class="ui-button ui-corner-all"><?php echo $icons['h']; ?>Guest Tracking</a></li>
-                                	<?php if(SysConfig::getKeyValue($dbh, 'sys_config', 'volunteers')){ ?>
-        	                        	<li class="mt-3"><a href="<?php echo $secureComp->getSiteURL() . 'volunteer'; ?>" class="ui-button ui-corner-all"><?php echo $icons['v']; ?>Volunteers' Site</a></li>
-                                	<?php } ?>
-								</ul>
-							</div>
-						</div>
+                    <div class="col-xl-4 col-md-6">
+                        <?php echo $samlMkup . $loginMkup; ?>
                     </div>
                     <div class="d-none d-md-block col-md-6">
-						<?php echo $announcementWidget . $row2; ?>
-					</div>
+                        <?php echo $announcementWidget . $row2; ?>
+                    </div>
                 </div>
                 <?php echo $footerMkup; ?>
-        	</div>
+            </div>
         </div>
     </body>
 </html>
