@@ -59,6 +59,22 @@ $(document).ready(function () {
         }
     });
     $('#accordion').show();
+
+    $('input[name=btnDoBackup]').on('click', function () {
+        var $container = $('#backupBtnContainer');
+        var token = String(Date.now());
+
+        $container.addClass('hhk-loading');
+        $('#downloadToken').val(token);
+
+        var pollTimer = setInterval(function () {
+            if (document.cookie.indexOf('fileDownloadToken=' + token) !== -1) {
+                clearInterval(pollTimer);
+                $container.removeClass('hhk-loading');
+                document.cookie = 'fileDownloadToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+            }
+        }, 500);
+    });
     
     function handleResponse(dataTxt, statusTxt, xhrObject) {
     if (statusTxt !== "success")

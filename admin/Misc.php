@@ -10,6 +10,7 @@ use HHK\Tables\EditRS;
 use HHK\Tables\GenLookupsRS;
 use HHK\Tables\Name\{NamePhoneRS, NameRS};
 use HHK\Admin\SiteDbBackup;
+use HHK\HTMLControls\HTMLContainer;
 use HHK\Member\AbstractMember;
 use HHK\SysConst\CodeVersion;
 
@@ -46,20 +47,33 @@ function getChangeLog(\PDO $dbh, $naIndex, $stDate = "", $endDate = "") {
     $logDates = "";
     $whDates = "";
     $whereName = "";
+    $logParams = [];
+    $actParams = [];
 
     if ($stDate != "") {
-        $logDates = " and Date_Time >= '$stDate' ";
-        $whDates = " and a.Effective_Date >= '$stDate' ";
+        $logDates = " AND `Date_Time` >= :logStart ";
+        $whDates = " AND `a`.`Effective_Date` >= :actStart ";
+        $logParams[':logStart'] = $stDate;
+        $actParams[':actStart'] = $stDate;
     }
 
     if ($endDate != "") {
-        $logDates .= " and Date_Time <= '$endDate' ";
-        $whDates .= " and a.Effective_Date <= '$endDate' ";
+        $logDates .= " AND `Date_Time` <= :logEnd ";
+        $whDates .= " AND `a`.`Effective_Date` <= :actEnd ";
+        $logParams[':logEnd'] = $endDate;
+        $actParams[':actEnd'] = $endDate;
     }
 
-    $whereName = ($naIndex == 0) ? "" : " and idName = " . $naIndex;
+    if ($naIndex != 0) {
+        $whereName = " AND `idName` = :naIndex1 ";
+        $logParams[':naIndex1'] = $naIndex;
+        $actParams[':naIndex1'] = $naIndex;
+    }
 
-    $result2 = $dbh->query("SELECT * FROM name_log WHERE 1=1 " . $whereName . $logDates . " order by Date_Time desc limit 200;");
+    $query = "SELECT * FROM `name_log` WHERE 1=1 " . $whereName . $logDates . " ORDER BY `Date_Time` DESC LIMIT 200;";
+
+    $result2 = $dbh->prepare($query);
+    $result2->execute($logParams);
 
     $data = "<table id='dataTbl' class='display'><thead><tr>
             <th>Date</th>
@@ -82,13 +96,14 @@ function getChangeLog(\PDO $dbh, $naIndex, $stDate = "", $endDate = "") {
 
 
     // activity table has volunteer data
-    $query = "select a.idName, a.Effective_Date, a.Action_Codes, a.Other_Code, a.Source_Code, g.Description as Code, g2.Description as Category, ifnull(g3.Description, '') as Rank
-from activity a left join gen_lookups g on substring_index(Product_Code, '|', 1) = g.Table_Name and  substring_index(Product_Code, '|', -1) = g.Code
-left join gen_lookups g2 on g2.Table_Name = 'Vol_Category' and substring_index(Product_Code, '|', 1) = g2.Code
-left join gen_lookups g3 on g3.Table_Name = 'Vol_Rank' and g3.Code = a.Other_Code
-        where a.Type = 'vol' $whereName $whDates order by a.Effective_Date desc limit 100;";
+    $query = "SELECT `a`.`idName`, `a`.`Effective_Date`, `a`.`Action_Codes`, `a`.`Other_Code`, `a`.`Source_Code`, `g`.`Description` AS `Code`, `g2`.`Description` AS `Category`, IFNULL(`g3`.`Description`, '') AS `Rank`
+FROM `activity` `a` LEFT JOIN `gen_lookups` `g` ON SUBSTRING_INDEX(`Product_Code`, '|', 1) = `g`.`Table_Name` AND  SUBSTRING_INDEX(`Product_Code`, '|', -1) = `g`.`Code`
+LEFT JOIN `gen_lookups` `g2` ON `g2`.`Table_Name` = 'Vol_Category' AND SUBSTRING_INDEX(`Product_Code`, '|', 1) = `g2`.`Code`
+LEFT JOIN `gen_lookups` `g3` ON `g3`.`Table_Name` = 'Vol_Rank' AND `g3`.`Code` = `a`.`Other_Code`
+        WHERE `a`.`Type` = 'vol' $whereName $whDates ORDER BY `a`.`Effective_Date` DESC LIMIT 100;";
 
-    $result3 = $dbh->query($query);
+    $result3 = $dbh->prepare($query);
+    $result3->execute($actParams);
 
     while ($row2 = $result3->fetch(\PDO::FETCH_ASSOC)) {
 
@@ -247,10 +262,10 @@ if (isset($_POST['btnClnPhone'])) {
         $n += EditRS::updateFields($dbh, new NamePhoneRS(), ['idName' => $r['idName'], 'Phone_Code' => $r['Phone_Code']], ['Phone_Num' => $new, 'Phone_Search' => $srch]);
     }
 
-    $cleanMsg = $n . " phone records cleaned.";
+    $cleanMsg = $n . " phone records formatted.";
 }
 
-// CLean names
+// Clean names
 if (isset($_POST['btnClnNames'])) {
     // Clean up
     $accordIndex = 1;
@@ -311,7 +326,7 @@ if (isset($_POST['btnClnNames'])) {
         }
     }
 
-    $cleanMsg .= $c . " name records cleaned.";
+    $cleanMsg = $c . " name records formatted.";
 }
 
 
@@ -333,9 +348,9 @@ $igtables = array(
 $ignoreTableMarkup = '';
 foreach ($igtables as $t => $n) {
 
-    // Don;t show generated tables.
+    // Don't show generated tables.
     if ( ! stristr($t, 'Generated') && ! stristr($t, 'Zip')) {
-        $ignoreTableMarkup .= "<tr><td>`$n`</td><td>$t</td></tr>";
+        $ignoreTableMarkup .= "<div class='d-flex'><div class='w-25'>`$n`</div><div>$t</div></div>";
     }
 }
 
@@ -345,13 +360,17 @@ if (isset($_POST["btnDoBackup"])) {
     $bkupAlert = new alertMessage("bkupAlert");
     $bkupAlert->set_Context(alertMessage::Notice);
 
-    $dbBack = new SiteDbBackup(sys_get_temp_dir() . DS, CONF_PATH.ciCFG_FILE);
+    $dbBack = new SiteDbBackup(sys_get_temp_dir() . DS);
 
     if ($dbBack->backupSchema($igtables)) {
         // success
         $logText = "Database Download.";
 
         SiteLog::logDbDownload($dbh, $logText, CodeVersion::GIT_Id);
+
+        if (isset($_POST['downloadToken']) && $_POST['downloadToken'] !== '') {
+            setcookie('fileDownloadToken', $_POST['downloadToken'], time() + 60, '/');
+        }
 
         $dbBack->downloadFile();  // exits here.
     } else {
@@ -360,7 +379,7 @@ if (isset($_POST["btnDoBackup"])) {
         SiteLog::logDbDownload($dbh, $logText, CodeVersion::GIT_Id);
     }
 
-    $bkupMsg = $bkupAlert->createMarkup($dbBack->getErrors());
+    $bkupMsg = HTMLContainer::generateMarkup('div', $bkupAlert->createMarkup($dbBack->getErrors()), ['class' => 'mt-3']);
 }
 
 /*
@@ -368,10 +387,11 @@ if (isset($_POST["btnDoBackup"])) {
  */
 $delIdListing = "";
 
-$res3 = $dbh->query("select idName from name where name.Member_Status in ('u','TBD');");
+$res3 = $dbh->prepare("SELECT `idName`, CONCAT(`Name_Full`, ' ', `Company`) AS `Name_Full` FROM `name` WHERE `name`.`Member_Status` IN ('u','TBD');");
+$res3->execute();
 
 while ($r = $res3->fetch(\PDO::FETCH_NUM)) {
-    $delIdListing .= "<a href='NameEdit.php?id=" . $r[0] . "'>" . $r[0] . "</a> ";
+    $delIdListing .= "<a href='NameEdit.php?id=" . $r[0] . "'>" . $r[0] . " - " . $r[1] . "</a> <br>";
 }
 
 if ($delIdListing == "") {
@@ -485,7 +505,7 @@ if (($stmt = $dbh->query("select distinct `Table_Name` from `gen_lookups`;")) !=
 
     </head>
     <body <?php if ($wInit->testVersion) echo "class='testbody'"; ?>>
-<?php echo $wInit->generatePageMenu(); ?>
+        <?php echo $wInit->generatePageMenu(); ?>
         <div id="contentDiv">
             <h1><?php echo $wInit->pageHeading; ?></h1>
             <form action="Misc.php" method="post" id="frmLookups" name="frmLookups">
@@ -493,7 +513,7 @@ if (($stmt = $dbh->query("select distinct `Table_Name` from `gen_lookups`;")) !=
                     <ul>
                         <li><a href="#lookups">Lookups</a></li>
                         <li><a href="#clean">Clean Data</a></li>
-                        <li><a href="#backup">Dump Database</a></li>
+                        <li><a href="#backup">Download Database</a></li>
                         <li><a href="#changlog">Member Change Log</a></li>
                         <li><a href="#delid">Delete Member Records</a></li>
                     </ul>
@@ -535,78 +555,46 @@ if (($stmt = $dbh->query("select distinct `Table_Name` from `gen_lookups`;")) !=
                         </table>
                     </div>
                     <div id="backup" class="ui-tabs-hide" >
-                        <table>
-                            <tr>
-                                <td colspan="2"><h3>Dump Database</h3></td>
-                            </tr>
-                            <tr>
-                                <td colspan="2"><span style="font-weight:bold;">The following tables are not included in the dump:</span></td>
-                            </tr>
-<?php echo $ignoreTableMarkup; ?>
-                            <tr>
-                            <tr><td>&nbsp;</td></tr>
-                            <tr>
-                                <td colspan="2" style="text-align:right;"><input type="submit" name="btnDoBackup" value="Run Database Dump"/></td>
-
-                            </tr>
-                            <tr>
-                                <td colspan="2"><?php echo $bkupMsg; ?></td>
-                            </tr>
-                        </table>
+                        <h3>Download Database</h3>
+                        <p class="mb-3">This tool will download a copy of the database in .sql format for backup or exporting purposes.</p>
+                        <p style="font-weight:bold;">The following tables are not included in the database download:</p>
+                        <?php echo $ignoreTableMarkup; ?>
+                        <div id="backupBtnContainer" class="mt-3 text-center">
+                            <input type="hidden" name="downloadToken" id="downloadToken" value=""/>
+                            <input type="submit" name="btnDoBackup" value="Download Database"/>
+                            <?php echo $bkupMsg; ?>
+                        </div>
                     </div>
                     <div id="changlog" class="ui-tabs-hide" >
-                        <table>
-                            <tr><td colspan="2" style="background-color: transparent;"><h3>View the All Member Change Log</h3>
-                                </td></tr>
-                            <tr>
-                                <td>Starting:
-                                    <input type="text" id ="sdate" class="autoCal" name="sdate" VALUE='' />
-                                </td>
-                                <td>Ending:
-                                    <INPUT TYPE='text' NAME='edate' id="edate" class="autoCal"  VALUE='' />
-                                </td>
-                                <td style="text-align:right;"><input type="submit" name="btnGenLog" value="Run"/></td>
-                            </tr>
-                        </table>
+                        <h3>View the All Member Change Log</h3>
+                        <div class="d-flex align-items-center">
+                            <span class="mr-1">Starting: </span><input type="text" id ="sdate" class="autoCal" name="sdate" value='' />
+                            <span class="ml-3 mr-1">Ending: </span><input type='text' name='edate' id="edate" class="autoCal"  value='' />
+                            <input type="submit" name="btnGenLog" value="Run" class="ml-3"/>
+                        </div>
                         <div id="divMkup" style="margin-top: 10px;">
                             <?php echo $chgLogMkup; ?>
                         </div>
                     </div>
                     <div id="delid" class="ui-tabs-hide" >
-                        <table>
-                            <tr><td style="background-color: transparent;"><h3>Delete Member Records</h3></td></tr>
-                            <tr>
-                                <td>
-                                    <p>Deletes Name Records and all connected records including phone, address and email.  Before you do this, reassign all donations to appropriate surviving members.</p>
-                                    <p>Deletes only those records marked as 'Duplicate' and 'To Be Deleted' for member-status.  There is no way to undo this without retrieving a backup copy of the database.</p>
-                                </td></tr>
-                            <tr>
-                                <td>
-                                    These are the records marked for deletion:
-                                </td>
-                            </tr>
-                            <tr>
-                                <td><?php echo $delIdListing ?></td>
-                            </tr>
-                            <tr>
-                                <td ><input type="submit" name="btnDelIds"  value="Delete Name Records"/></td>
-                            </tr>
-                            <tr>
-                                <td><?php echo $delNamesMsg; ?></td>
-                            </tr>
-                        </table>
+                        <h3>Delete Member Records</h3>
+                        <p class="mb-3">Deletes Name Records and all connected records including phone, address and email.  Before you do this, reassign all donations to appropriate surviving members.</p>
+                        <p class="mb-3">Deletes only those records marked as <strong>Duplicate</strong> and <strong>To Be Deleted</strong> for member-status.  There is no way to undo this without retrieving a backup copy of the database.</p>
+                        <p>These are the records marked for deletion:</p>
+                        <p class="mb-3"><?php echo $delIdListing ?></p>
+                        <input type="submit" name="btnDelIds"  value="Delete Member Records"/>
+                        <div class="mt-3"><?php echo $delNamesMsg; ?></div>
                     </div>
                     <div id="clean" class="ui-tabs-hide" >
                         <table>
                             <tr><td colspan="2" style="background-color: transparent;"><h3>Clean Data</h3></td></tr>
                             <tr>
                                 <td style="text-align:right;">
-                                    <input type="submit" name="btnClnPhone" value="Clean up Phone Numbers"/>
-                                    <input type="submit" name="btnAddrs" value="Verify Addresses" style="margin-left:10px;"/>
+                                    <input type="submit" name="btnClnPhone" value="Clean up Phone Number Formatting"/>
                                 </td>
                             </tr>
                         </table>
-<?php echo $cleanMsg; ?>
+                        <?php echo $cleanMsg; ?>
                     </div>
                 </div>
                 <input id="accordIndex" type="hidden" value="<?php echo $accordIndex; ?>"/>
