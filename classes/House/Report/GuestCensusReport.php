@@ -54,9 +54,6 @@ class GuestCensusReport extends AbstractReport implements ReportInterface {
     /** @var int sum of Standard_Occupants over the rooms in service at the start of the report period */
     private int $standardOccupants = 0;
 
-    /** @var int nights over the report period that each room had a resource that wasn't retired yet */
-    private int $roomNights = 0;
-
     /** @var string[] visits whose paid nights couldn't be calculated, shown in the summary */
     private array $warnings = [];
 
@@ -147,6 +144,7 @@ class GuestCensusReport extends AbstractReport implements ReportInterface {
         $t = $this->totals;
         $nights = count($this->resultSet);
         $unpaid = $t['RoomsUnpaid'] ?? 0;
+        $occupied = $t['RoomsOccupied'] ?? 0;
         $people = $t['PeopleInHouse'] ?? 0;
         $checkedIn = $t['CheckedIn'] ?? 0;
         $bednightLabel = Labels::getString('visit', 'bednight', 'Bednight') . 's';
@@ -160,7 +158,7 @@ class GuestCensusReport extends AbstractReport implements ReportInterface {
 
         $stats = [
             'Number of ' . Labels::getString('memberType', 'guest', 'Guest') . 's Canceled' => (string) $guestsCanceled,
-            'Percentage of Room-nights Unpaid' => ($this->roomNights > 0 ? round(100 * $unpaid / $this->roomNights) . "% ($unpaid unpaid / {$this->roomNights} room nights)" : 'n/a'),
+            'Percentage of Room-nights Unpaid' => ($occupied > 0 ? round(100 * $unpaid / $occupied) . "% ($unpaid unpaid / $occupied occupied room nights)" : 'n/a'),
             "Percentage of $bednightLabel" => ($bedNights > 0 ? round(100 * $people / $bedNights) . "% ($people people in house / $bedNights available " . strtolower($bednightLabel) . ")" : 'n/a - set Standard Occupancy in Resource Builder'),
             "Available $bednightLabel" => ($fullBedNights > 0 ? "$bedNights ({$this->standardOccupants} standard occupancy x $nights nights ($fullBedNights) - "
                 . ($fullBedNights - $bedNights) . " unavailable " . strtolower($bednightLabel) . ')' : 'n/a'),
@@ -181,9 +179,7 @@ class GuestCensusReport extends AbstractReport implements ReportInterface {
      * (resource_use) that night. Rooms whose resources were all retired before the
      * period starts, and rooms with no resource, aren't counted at all.
      *
-     * Also sets $this->standardOccupants, the nightly total before anything is taken out,
-     * and $this->roomNights, the nights each room had a resource that wasn't retired yet
-     * (Out of Service and Unavailable nights still count).
+     * Also sets $this->standardOccupants, the nightly total before anything is taken out.
      *
      * @return array<string,int> date (Y-m-d) => available bednights
      */
@@ -224,7 +220,6 @@ where `Status` in ('" . ResourceStatus::OutOfService . "', '" . ResourceStatus::
         }
 
         $avail = [];
-        $this->roomNights = 0;
         $curDate = new \DateTime($start);
         $endDt = new \DateTime($queryEnd);
 
@@ -234,22 +229,11 @@ where `Status` in ('" . ResourceStatus::OutOfService . "', '" . ResourceStatus::
             $avail[$d] = 0;
 
             foreach ($rooms as [$occupants, $resources]) {
-
-                $inService = false;
-
                 foreach ($resources as $idResource => $retired) {
-                    if ($retired == '' || $d < $retired) {
-                        $inService = true;
-
-                        if (!isset($blocked[$idResource][$d])) {
-                            $avail[$d] += $occupants;
-                            break;
-                        }
+                    if (($retired == '' || $d < $retired) && !isset($blocked[$idResource][$d])) {
+                        $avail[$d] += $occupants;
+                        break;
                     }
-                }
-
-                if ($inService) {
-                    $this->roomNights++;
                 }
             }
         }
