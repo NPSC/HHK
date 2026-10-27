@@ -139,8 +139,9 @@ function createAutoComplete(txtCtrl, minChars, inputParms, selectFunction, shoNe
         position: { my: "left top", at: "left bottom", collision: "flip" },
         minLength: minChars, 
         select: function(event, ui) {
-            if (ui.item) {
-                selectFunction(ui.item);
+            // a select function returning false keeps the item text out of the input
+            if (ui.item && selectFunction(ui.item) === false) {
+                event.preventDefault();
             }
         },
         delay: 120
@@ -241,8 +242,9 @@ function createRoleAutoComplete(txtCtrl, minChars, inputParms, selectFunction, s
         position: { my: "left top", at: "left bottom", collision: "flip" },
         minLength: minChars, 
         select: function(event, ui) {
-            if (ui.item) {
-                selectFunction(ui.item);
+            // a select function returning false keeps the item text out of the input
+            if (ui.item && selectFunction(ui.item) === false) {
+                event.preventDefault();
             }
         },
         delay: 120
