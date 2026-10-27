@@ -386,6 +386,13 @@ class WebUser {
 
         } else if ($wUserName != '' && $wUserPw != '' && $id > 0 && $maintFlag) {
 
+            // Username must not already belong to someone else
+            $takenRS = new W_usersRS();
+            $takenRS->User_Name->setStoredVal($wUserName);
+            if (count(EditRS::select($dbh, $takenRS, array($takenRS->User_Name))) > 0) {
+                return array("error"=>"User name '$wUserName' is already taken.");
+            }
+
             $uS = Session::getInstance();
             if(isset($uS->sitePepper)){
                 $pwHash = password_hash($wUserPw . $uS->sitePepper, PASSWORD_ARGON2ID);
