@@ -25,8 +25,11 @@ use HHK\sec\MFA\Email;
 
 class ReauthGuard
 {
-    /** Web Account dialog on NameEdit: user name, role, security groups, password resets */
+    /** Web Account dialog on NameEdit: web status, user name, role, security groups, password resets */
     const PURPOSE_WEB_USER = 'webuser';
+
+    /** Page whose users can open the Web Account dialog */
+    const WEB_USER_PAGE = 'NameEdit.php';
 
     /** Changing your own two step verification, once it is set up.  Otherwise whoever finds an
      *  unattended session could swap in their own authenticator and pass re-authentication with it. */
@@ -44,18 +47,34 @@ class ReauthGuard
 
     /**
      * Is the current session allowed to use (and so re-authenticate for) this purpose?
+     * @param \PDO $dbh
      * @param string $purpose
      * @return bool
      */
-    public static function isAuthorizedFor(string $purpose): bool
+    public static function isAuthorizedFor(\PDO $dbh, string $purpose): bool
     {
         $uS = Session::getInstance();
 
         return match ($purpose) {
-            self::PURPOSE_WEB_USER => SecurityComponent::is_Admin() || SecurityComponent::is_Authorized("ws_gen_Maint"),
+            self::PURPOSE_WEB_USER => SecurityComponent::is_Admin() || self::isPageAuthorized($dbh, self::WEB_USER_PAGE),
             self::PURPOSE_MFA => $uS->logged === true && !empty($uS->username),
             default => false,
         };
+    }
+
+    /**
+     * Do the user's security groups allow this page?  Reads the page table rather than
+     * SecurityComponent::is_Authorized(), whose page list only holds the site last loaded.
+     * @param \PDO $dbh
+     * @param string $fileName
+     * @return bool
+     */
+    protected static function isPageAuthorized(\PDO $dbh, string $fileName): bool
+    {
+        $stmt = $dbh->prepare("select ps.`Group_Code` from `page` p join `page_securitygroup` ps on p.`idPage` = ps.`idPage` where p.`File_Name` = :fileName");
+        $stmt->execute([':fileName' => $fileName]);
+
+        return SecurityComponent::does_User_Code_Match($stmt->fetchAll(\PDO::FETCH_COLUMN));
     }
 
     /**
@@ -71,7 +90,7 @@ class ReauthGuard
      */
     public static function status(\PDO $dbh, string $purpose): array
     {
-        if (!self::isAuthorizedFor($purpose)) {
+        if (!self::isAuthorizedFor($dbh, $purpose)) {
             throw new AuthException('You are not authorized to perform this action.');
         }
 
@@ -99,7 +118,7 @@ class ReauthGuard
     {
         $uS = Session::getInstance();
 
-        if (!self::isAuthorizedFor($purpose)) {
+        if (!self::isAuthorizedFor($dbh, $purpose)) {
             throw new AuthException('You are not authorized to perform this action.');
         }
 
@@ -127,7 +146,7 @@ class ReauthGuard
     {
         $uS = Session::getInstance();
 
-        if (!self::isAuthorizedFor($purpose)) {
+        if (!self::isAuthorizedFor($dbh, $purpose)) {
             throw new AuthException('You are not authorized to perform this action.');
         }
 

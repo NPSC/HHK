@@ -357,13 +357,19 @@ $(document).ready(function () {
                 }
                 
                 parms['role'] = $("#selwRole").val();
-                parms['defaultPage'] = $('#txtwDefaultPage').val();
                 parms['uid'] = memData.id;
                 parms['status'] = $('#selwStatus').val();
                 parms['admin'] = userData.userName;
                 parms['vaddr'] = $('#selwVerify').val();
-                parms['resetNext'] = $('#resetNew').prop('checked');
-                parms['resetMfa'] = $('#resetMfa').prop('checked');
+
+                // Only send the controls this user was shown; missing ones would be saved as blank
+                if ($('#txtwDefaultPage').length > 0) {
+                    parms['defaultPage'] = $('#txtwDefaultPage').val();
+                }
+                if ($('#resetNew').length > 0) {
+                    parms['resetNext'] = $('#resetNew').prop('checked');
+                    parms['resetMfa'] = $('#resetMfa').prop('checked');
+                }
 
                 //$('div.ui-dialog-buttonset').css("display", "none");
                 $.post("ws_gen.php", {cmd: 'save', parms : parms}, function (rdata) {
