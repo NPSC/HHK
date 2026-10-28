@@ -11,7 +11,6 @@ use HHK\HTMLControls\HTMLContainer;
 use HHK\HTMLControls\HTMLInput;
 use HHK\HTMLControls\HTMLTable;
 use HHK\House\Registration;
-use HHK\House\PSG;
 use HHK\House\Reservation\Reservation_1;
 use HHK\House\Resource\AbstractResource;
 use HHK\House\Room\RoomChooser;
@@ -46,7 +45,6 @@ use HHK\SysConst\VisitStatus;
 use HHK\TableLog\VisitLog;
 use HHK\Tables\EditRS;
 use HHK\Tables\Payment\InvoiceRS;
-use HHK\Tables\Visit\StaysRS;
 use HHK\Tables\Visit\VisitRS;
 use HHK\Tables\Visit\Visit_LogRS;
 use HHK\sec\Labels;
@@ -817,7 +815,7 @@ class HouseServices {
     /**
      * Summary of processPayments
      * @param \PDO $dbh
-     * @param \HHK\Payment\PaymentManager\PaymentManager $paymentManager
+     * @param PaymentManager $paymentManager
      * @param mixed $visit
      * @param mixed $postbackPage
      * @param mixed $idPayor
@@ -1027,7 +1025,7 @@ class HouseServices {
     }
 
 
-    public static function changeRooms(\PDO $dbh, $idVisit, $span, $newRescId, $replaceRoom, $useDefaultRate, $changeDate, $expectedDeparture = '') {
+    public static function changeRooms(\PDO $dbh, int $idVisit, int $span, int $newRescId, $replaceRoom, bool $useDefaultRate, $changeDate, $expectedDeparture = '') {
 
         $uS = Session::getInstance();
         $dataArray = array();

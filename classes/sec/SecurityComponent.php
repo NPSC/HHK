@@ -16,19 +16,19 @@ use HHK\SysConst\WebPageCode;
  */
 class SecurityComponent {
 
-    private $fileName = '';
+    private string $fileName = '';
 
-    private $path = '';
+    private string $path = '';
 
-    private $hostName = '';
+    private string $hostName = '';
 
-    private $siteURL = '';
+    private string $siteURL = '';
 
-    private $rootURL = '';
+    private string $rootURL = '';
 
-    private $hhkSiteDir = '';
+    private string $hhkSiteDir = '';
 
-    private $rootPath = '';
+    private string $rootPath = '';
 
 
     /**
@@ -45,7 +45,7 @@ class SecurityComponent {
      * @return bool
      * @throws AuthException
      */
-    public static function is_Authorized($name, $isLogin = false) {
+    public static function is_Authorized($name, $isLogin = false): bool {
 
         if (self::is_Admin()) {
             return TRUE;
@@ -104,10 +104,10 @@ class SecurityComponent {
     /**
      * Summary of rerouteIfNotLoggedIn
      * @param mixed $pageType
-     * @param mixed $loginPage
+     * @param string $loginPage
      * @return void
      */
-    public function rerouteIfNotLoggedIn($pageType, $loginPage) {
+    public function rerouteIfNotLoggedIn($pageType, string $loginPage): void {
 
         $ssn = Session::getInstance();
 
@@ -216,7 +216,7 @@ class SecurityComponent {
      * Summary of isHTTPS
      * @return bool
      */
-    public static function isHTTPS() {
+    public static function isHTTPS(): bool {
 
         $serverHTTPS = (isset($_SERVER["HTTPS"]) ? $_SERVER["HTTPS"] : '');
 
@@ -229,10 +229,10 @@ class SecurityComponent {
 
     /**
      * Summary of defineThisURL
-     * @throws \HHK\Exception\RuntimeException
+     * @throws RuntimeException
      * @return void
      */
-    private function defineThisURL() {
+    private function defineThisURL(): void {
 
         $scriptName = filter_var((isset($_SERVER["SCRIPT_NAME"]) ? $_SERVER["SCRIPT_NAME"]: false), FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         $serverName = filter_var((isset($_SERVER["SERVER_NAME"]) ? $_SERVER["SERVER_NAME"]: false), FILTER_SANITIZE_URL);
@@ -306,23 +306,16 @@ class SecurityComponent {
      * Does the user have the Admin role or is the THE Admin user.
      * @return bool
      */
-    public static function is_Admin() {
+    public static function is_Admin(): bool {
         $tokn = false;
-        $ssn = Session::getInstance();
-        $roleCode = $ssn->rolecode;
-        $userName = $ssn->username;
+        $uS = Session::getInstance();
+        $roleCode = intval($uS->rolecode);
+        $userName = $uS->username;
 
-        // try to int-ify the roleCode if it is not an int
-        if (!is_int($roleCode)) {
-            $intRole = intval($roleCode);
-        } else {
-            $intRole = $roleCode;
-        }
-
-        if ($intRole > 0 && is_string($userName)) {
+        if ($roleCode > 0 && is_string($userName)) {
 
             // Authorization Bypass
-            if ($intRole <= 10 || self::is_TheAdmin()) {
+            if ($roleCode <= 10 || self::is_TheAdmin()) {
                 $tokn = TRUE;
             }
         }
@@ -334,7 +327,7 @@ class SecurityComponent {
      * Summary of is_TheAdmin
      * @return bool
      */
-    public static function is_TheAdmin() {
+    public static function is_TheAdmin(): bool {
         $tokn = false;
         $ssn = Session::getInstance();
         $userName = $ssn->username;
@@ -351,30 +344,30 @@ class SecurityComponent {
     }
 
 
-    public function getFileName() {
+    public function getFileName(): string {
         return $this->fileName;
     }
 
-    public function getPath() {
+    public function getPath(): string {
         return $this->path;
     }
 
-    public function getRootPath() {
+    public function getRootPath(): string {
         return $this->rootPath;
     }
 
-    public function getHostName() {
+    public function getHostName(): string {
         return $this->hostName;
     }
 
-    public function getHhkSiteDir() {
+    public function getHhkSiteDir(): string {
         return $this->hhkSiteDir;
     }
 
-    public function getSiteURL() {
+    public function getSiteURL(): string {
         return $this->siteURL;
     }
-    public function getRootURL() {
+    public function getRootURL(): string {
         return $this->rootURL;
     }
 

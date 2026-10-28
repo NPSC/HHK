@@ -371,7 +371,7 @@ class PaymentSvcs {
 
         $dataArray = $gateway->voidSale($dbh, $invoice, $payRs, $$pAuths, $bid);
 
-        if(isset($dataArray['receipt'], $dataArray['success']) && $invoice instanceof Invoice){
+        if(isset($dataArray['receipt'], $dataArray['success'])){
             $autoEmailAr = PaymentResult::isAutoEmailEligible($dbh, $invoice->getIdGroup(), $invoice->getSoldToId());
 
             if ($autoEmailAr['autoEmail'] == true) {
@@ -443,7 +443,7 @@ class PaymentSvcs {
 
         $dataArray = $gateway->reverseSale($dbh, $invoice, $payRs, $pAuthRs, $bid);
 
-        if(isset($dataArray['receipt'], $dataArray['success']) && $invoice instanceof Invoice){
+        if(isset($dataArray['receipt'], $dataArray['success'])){
             $autoEmailAr = PaymentResult::isAutoEmailEligible($dbh, $invoice->getIdGroup(), $invoice->getSoldToId());
 
             if ($autoEmailAr['autoEmail'] == true) {
@@ -625,7 +625,7 @@ class PaymentSvcs {
                 throw new PaymentException('Unknown pay type.  ');
         }
 
-        if(isset($dataArray['receipt'], $dataArray['success']) && $invoice instanceof Invoice){
+        if(isset($dataArray['receipt'], $dataArray['success'])){
             $autoEmailAr = PaymentResult::isAutoEmailEligible($dbh, $invoice->getIdGroup(), $invoice->getSoldToId());
 
             if ($autoEmailAr['autoEmail'] == true) {

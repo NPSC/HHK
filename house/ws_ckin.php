@@ -143,7 +143,7 @@ try {
 
             $useDefaultRate = FALSE;
             if (isset($_POST['useDefault'])) {
-                $useDefaultRate = filter_var($_POST['useDefault'], FILTER_VALIDATE_BOOLEAN);
+                $useDefaultRate = boolval(filter_var($_POST['useDefault'], FILTER_VALIDATE_BOOLEAN));
             }
 
             $changeDate = '';
