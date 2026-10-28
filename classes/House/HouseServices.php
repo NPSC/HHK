@@ -591,7 +591,7 @@ class HouseServices {
      * @param array $post
      * @return array
      */
-    public static function payInvoice(\PDO $dbh, $idPayor, array $post) {
+    public static function payInvoice(\PDO $dbh, int $idPayor, array $post) {
 
         $reply = 'Uh-oh, Payment NOT made.';
         $postbackPage = '';
@@ -658,7 +658,7 @@ class HouseServices {
         }
 
         $dataArray['success'] = $reply;
-        $dataArray['error'] = $payResult->getErrorMessage();
+        $dataArray['error'] = $payResult?->getErrorMessage() ?? ($paymentManager->result ?: 'No unpaid invoice was selected, or it has already been paid.');
 
         return $dataArray;
     }
