@@ -514,7 +514,7 @@ class Reservation_1 {
     }
 
     /**
-     * Use the new room's default rate category, the same as changing rooms on the reservation page.
+     * Use the new room's default rate category and static rate, the same as changing rooms on the reservation page.
      * @param \PDO $dbh
      * @param AbstractResource $resc
      * @return void
@@ -522,9 +522,8 @@ class Reservation_1 {
     protected function applyRoomDefaultRate(\PDO $dbh, AbstractResource $resc) {
 
         $uS = Session::getInstance();
-        $rateCategory = $resc->getDefaultRoomCategory();
 
-        if ($rateCategory == '' || $uS->RoomPriceModel == ItemPriceCode::Basic) {
+        if ($uS->RoomPriceModel == ItemPriceCode::Basic) {
             return;
         }
 
@@ -532,15 +531,20 @@ class Reservation_1 {
             return;
         }
 
+        $rateCategory = $resc->getDefaultRoomCategory();
         $rateChooser = new RateChooser($dbh);
 
-        if ($rateChooser->validateCategory($rateCategory) === FALSE || $this->getRoomRateCategory() == $rateCategory) {
-            return;
+        if ($rateCategory != '' && $rateChooser->validateCategory($rateCategory) && $this->getRoomRateCategory() != $rateCategory) {
+            $rateRs = $rateChooser->getPriceModel()->getCategoryRateRs(0, $rateCategory);
+            $this->setIdRoomRate($rateRs->idRoom_rate->getStoredVal());
+            $this->setRoomRateCategory($rateCategory);
         }
 
-        $rateRs = $rateChooser->getPriceModel()->getCategoryRateRs(0, $rateCategory);
-        $this->setIdRoomRate($rateRs->idRoom_rate->getStoredVal());
-        $this->setRoomRateCategory($rateCategory);
+        // A fixed rate follows the room's static rate.
+        if ($this->getRoomRateCategory() == RoomRateCategories::Fixed_Rate_Category) {
+            $this->setFixedRoomRate($resc->getRate($uS->guestLookups['Static_Room_Rate']));
+            $this->setRateAdjust(0);
+        }
     }
 
     /**
