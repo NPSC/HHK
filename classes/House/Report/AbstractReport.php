@@ -108,13 +108,15 @@ abstract class AbstractReport {
             $descriptionMkup = HTMLContainer::generateMarkup("p", $this->description, array("class"=>"ui-widget ui-widget-content ui-corner-all mb-3 p-2", "style"=>"font-weight:500"));
         }
 
-        $this->filterMkup = $descriptionMkup . HTMLContainer::generateMarkup("div", $this->filterMkup, array("id"=>"filterSelectors", "class"=>"hhk-flex"));
+        $this->filterMkup = $descriptionMkup . HTMLContainer::generateMarkup("div", $this->filterMkup, array("id"=>"filterSelectors", "class"=>"hhk-flex hhk-flex-wrap"));
         $btnMkup = HTMLContainer::generateMarkup("div",
             $filterOptsMkup .
+            HTMLContainer::generateMarkup("div",
             $this->makeExtraButtonsMkup() .
             HTMLInput::generateMarkup("Run Here", array("type"=>"submit", "name"=>"btnHere-" . $this->getInputSetReportName(), "class"=>"ui-button ui-corner-all ui-widget")) .
             ($excelDownload ? HTMLInput::generateMarkup("Download to Excel", array("type"=>"submit", "name"=>"btnExcel-" . $this->getInputSetReportName(), "class"=>"ui-button ui-corner-all ui-widget")) : '')
-        , array("id"=>"filterBtns", "class"=>"mt-3"));
+            , [])
+        , array("id"=>"filterBtns", "class"=>"mt-3 hhk-flex-wrap"));
 
         $emDialog = $this->generateEmailDialog();
 

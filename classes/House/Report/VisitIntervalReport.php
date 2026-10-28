@@ -1197,7 +1197,7 @@ ORDER BY s.idVisit , s.Visit_Span");
             $changeRateIcon = HTMLContainer::generateMarkup('span', '', array('class' => 'ui-icon ui-icon-info mr-2', 'title' => 'Room Rate Changed'));
             $insInfoIcon = HTMLContainer::generateMarkup('span', '', array('class' => 'ui-icon ui-icon-comment insAction', 'style' => 'cursor:pointer;', 'data-idName' => $r['idPatient'], 'id' => 'insAction' . $r['idPatient'], 'title' => 'View Insurance'));
 
-            $r['idVisit'] = HTMLContainer::generateMarkup('div', $r['idVisit'], ['class' => 'hhk-viewVisit', 'data-gid' => $r['idPrimaryGuest'], 'data-vid' => $r['idVisit'], 'data-span' => $r['Span'], 'style' => 'display:inline-table;']);
+            $r['idVisit'] = HTMLContainer::generateMarkup('div', $r['idVisit'], ['class' => 'hhk-viewVisit hhk-btn-small', 'data-gid' => $r['idPrimaryGuest'], 'data-vid' => $r['idVisit'], 'data-span' => $r['Span']]);
             $r['idPrimaryGuest'] = HTMLContainer::generateMarkup('a', $r['Name_Last'] . ', ' . $r['Name_First'], ['href' => 'GuestEdit.php?id=' . $r['idPrimaryGuest'] . '&psg=' . $r['idPsg']]);
             $r['idPatient'] = HTMLContainer::generateMarkup('a', $r['Patient_Last'] . ', ' . $r['Patient_First'], ['href' => 'GuestEdit.php?id=' . $r['idPatient'] . '&psg=' . $r['idPsg']]);
             $r['Arrival'] = $arrivalDT->format('c');
