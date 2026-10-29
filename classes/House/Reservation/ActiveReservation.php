@@ -10,7 +10,7 @@ use HHK\House\Vehicle;
 use HHK\House\ReserveData\ReserveData;
 use HHK\Note\{LinkNote, Note};
 use HHK\sec\Labels;
-use HHK\SysConst\{ReservationStatus};
+use HHK\SysConst\{ReservationStatus, VisitStatus};
 use HHK\sec\Session;
 use HHK\Document\FormDocument;
 use HHK\Purchase\PaymentChooser;
@@ -53,7 +53,15 @@ class ActiveReservation extends Reservation {
 
         // Checking In?
         if ($this->getGotoCheckingIn() === 'yes' && $this->reserveData->getIdResv() > 0) {
-            return array('gotopage'=>'CheckingIn.php?rid=' . $this->reserveData->getIdResv());
+
+            $occupiedMsg = $this->roomOccupiedMessage($dbh, intval($this->reservRs->idResource->getStoredVal(), 10));
+
+            if ($occupiedMsg == '') {
+                return array('gotopage'=>'CheckingIn.php?rid=' . $this->reserveData->getIdResv());
+            }
+
+            // Stay on the reservation page and show why.
+            $this->reserveData->addError($occupiedMsg);
         }
 
         // Verify reserve status.
@@ -87,6 +95,34 @@ class ActiveReservation extends Reservation {
 
         return $this->reserveData->toArray();
 
+    }
+
+    /**
+     * Returns an error message if another visit is still in the room, otherwise an empty string.
+     * @param \PDO $dbh
+     * @param int $idResource
+     * @return string
+     */
+    protected function roomOccupiedMessage(\PDO $dbh, $idResource) {
+
+        if ($idResource < 1) {
+            return '';
+        }
+
+        $stmt = $dbh->prepare("SELECT v.idVisit, rc.Title, ifnull(n.Name_Full, '') AS `Name_Full`
+            FROM visit v
+                JOIN resource rc ON rc.idResource = v.idResource
+                LEFT JOIN `name` n ON n.idName = v.idPrimaryGuest
+            WHERE v.idResource = :idResc AND v.`Status` IN (:active, :onLeave)
+            LIMIT 1");
+        $stmt->execute([':idResc' => $idResource, ':active' => VisitStatus::Active, ':onLeave' => VisitStatus::OnLeave]);
+        $occupied = $stmt->fetch(\PDO::FETCH_ASSOC);
+
+        if ($occupied === FALSE) {
+            return '';
+        }
+
+        return 'Room ' . $occupied['Title'] . ' is occupied' . ($occupied['Name_Full'] != '' ? ' by ' . $occupied['Name_Full'] : '') . ' (visit ' . $occupied['idVisit'] . ').  Check out that visit before checking in this reservation.  ';
     }
 
     /**

@@ -309,6 +309,9 @@ $(document).ready(function() {
 
                         if (responseData.gotopage) {
                             window.open(responseData.gotopage, '_self');
+                        } else {
+                            // Check-in Now was refused (e.g. room occupied); a later Save should not try again.
+                            $('#resvCkinNow').val('no');
                         }
 
                         if (responseData.error) {

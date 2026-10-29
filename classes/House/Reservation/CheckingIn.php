@@ -349,6 +349,14 @@ FROM reservation r
             return;
         }
 
+        // Is another visit still in the room?
+        $occupiedMsg = $this->roomOccupiedMessage($dbh, $resv->getIdResource());
+
+        if ($occupiedMsg != '') {
+            $this->reserveData->addError($occupiedMsg);
+            return;
+        }
+
         $resources = $resv->findGradedResources($dbh, $this->reserveData->getArrivalDT()->format('Y-m-d'), $this->reserveData->getDepartureDT()->format('Y-m-d'), 1, array('room', 'rmtroom', 'part'), TRUE);
 
         // Does the resource still fit the requirements?
