@@ -591,7 +591,7 @@ class HouseServices {
      */
     public static function payInvoice(\PDO $dbh, int $idPayor, array $post) {
 
-        $reply = 'Uh-oh, Payment NOT made.';
+        $reply = '';
         $postbackPage = '';
         $dataArray = array();
         $creditCheckOut = array();
