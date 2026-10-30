@@ -199,7 +199,6 @@ $(document).ready(function () {
 
 	$(document).on('submit', "#hhkLogin", function(e){
 		e.preventDefault();
-		console.log("submit triggered");
 		sendHhkLogin();
 	});
 	

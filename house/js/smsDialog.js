@@ -237,7 +237,6 @@
                             infoMkup.show();
                             delete data.info;
                             infoMkup.find(".btnBatchWait").data("batchInfo", data);
-                            console.log(infoMkup.find(".btnBatchWait").data("batchInfo"));
                         }
                     }
                 });

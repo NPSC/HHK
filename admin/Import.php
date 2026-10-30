@@ -215,7 +215,6 @@ if(filter_has_var(INPUT_POST, "cmd") && $cmd = filter_input(INPUT_POST, "cmd", F
 					},
 					dataType:"json",
 					success: function(data){
-						console.log(data);
     					if(data.success && data.progress.progress){
 							batchesComplete++
 							flagAlertMessage("Worker "+data.workerId+" completed successfully")
@@ -237,7 +236,6 @@ if(filter_has_var(INPUT_POST, "cmd") && $cmd = filter_input(INPUT_POST, "cmd", F
 						    $("#progressBar .progressValue").css("width", "0%");
     						$("#progressBar .progressValueText").text("0%");
     						$("#startImport").show();
-    						console.log(data.error);
 							flagAlertMessage(data.error, "error");
     					}
     				}
@@ -271,7 +269,6 @@ if(filter_has_var(INPUT_POST, "cmd") && $cmd = filter_input(INPUT_POST, "cmd", F
 					},
 					dataType:"json",
 					success: function(data){
-						console.log(data);
 						$("#workerProgress").html(generateWorkerTable(data));
     				}
 				});

@@ -158,8 +158,6 @@ $(document).on('click', "#btnLoadUncalcAddrTbl", function(){
 $(document).on('change', "#numAddrCalc", function(){
     var ApiCost = $("#googleApiCostPerCall").val();
     var numCalls = $("#numAddrCalc").val();
-    console.log(ApiCost);
-    console.log(numCalls);
     if(ApiCost > 0 && numCalls > 0){
         $("#googleApiCost").text("$" + ApiCost*numCalls);
     }

@@ -203,7 +203,6 @@ $resultMessage = $alertMsg->createMarkup();
 
                     $.post("ws_gen.php", {cmd: 'edsite',parms: parms},
                         function (data) {
-                            console.log(data);
                             if(data.success){
                                 flagAlertMessage(data.success, false);
                                 dialog.dialog('close');

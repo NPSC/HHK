@@ -371,7 +371,7 @@ function doReports(PDO $dbh, chkBoxCtrl $cbMemStatus, chkBoxCtrl $cbRptType, $is
                             "Dom": '<"top"ilfp>rt<"bottom"p>'
                         });
                     }
-                    catch (err) { console.log(err)}
+                    catch (err) {}
                 }
             });
         </script>

@@ -273,7 +273,6 @@ $(document).ready(function() {
 
                     userData = userData.filter(element=>!(element.group == 'guest' && element.guestIndex == guestIndex));
 
-                    //console.log(userData);
 
                     $renderedForm.formRender('render', userData);
 

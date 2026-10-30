@@ -27,7 +27,6 @@
                 type: 'GET',
                 success: function( xml ){
                 	var content = '';
-                	console.log($(xml).find('item'));
                 	if($(xml).find('item').length == 0){
                 		var content = '<div class="p-3 center">No posts found</div>';
                     
