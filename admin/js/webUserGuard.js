@@ -17,7 +17,7 @@ $(function () {
     var purpose = $guard.data('purpose'),
         idName = $guard.data('id'),
         memName = $guard.data('name'),
-        minPwLength = $guard.data('minpw');
+        minPwLength = $guard.data('min-length');
 
     // However the dialog gets opened, don't show it until the user has verified
     $('#vwebUser').on('dialogopen', function () {
