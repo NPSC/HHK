@@ -320,7 +320,6 @@ $bkupMsg = "";
 $igtables = array(
     'Member photos' => 'photo',
     'Documents' => 'document',
-    'Generated table1' => 'mail_listing',
     'Generated table2' => 'member_history',
     'Zip code data' => 'postal_codes',
     'Street name suffixes and common misspellings' => 'street_suffix',

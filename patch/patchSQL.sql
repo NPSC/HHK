@@ -264,3 +264,8 @@ INSERT IGNORE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitu
 -- Retire DiagnosisBuilder.php: Diagnosis/Location lookups are edited on Resource Builder (the file is now a redirect)
 delete from `page_securitygroup` where `idPage` in (select idPage from `page` where `File_Name` = "DiagnosisBuilder.php");
 delete from `page` where `File_Name` = "DiagnosisBuilder.php";
+
+-- Directory mailing list is built by a single query now (MailList::queryMailList); drop its staging table
+DROP VIEW IF EXISTS `vmailing_list`;
+DROP TABLE IF EXISTS `mail_listing`;
+delete from `gen_lookups` where `Table_Name` = 'Mail_List' and `Code` = 'Refresh_Date';

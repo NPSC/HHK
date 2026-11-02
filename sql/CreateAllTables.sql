@@ -897,24 +897,6 @@ CREATE TABLE
     ) ENGINE = InnoDB;
 
 -- -----------------------------------------------------
--- Table `mail_listing`
--- -----------------------------------------------------
-CREATE TABLE
-    IF NOT EXISTS `mail_listing` (
-        `id` INT (11) NOT NULL,
-        `mr` VARCHAR(5) NOT NULL DEFAULT '',
-        `adr_frag` VARCHAR(200) NOT NULL DEFAULT '',
-        `street` VARCHAR(200) NOT NULL DEFAULT '',
-        `city` VARCHAR(45) NOT NULL DEFAULT '',
-        `state` VARCHAR(45) NOT NULL DEFAULT '',
-        `zip` VARCHAR(15) NOT NULL DEFAULT '',
-        `sp` INT (11) NOT NULL DEFAULT '0',
-        `fm` INT (11) NOT NULL DEFAULT '0',
-        `rel` VARCHAR(5) NOT NULL DEFAULT '',
-        `cde` VARCHAR(5) NOT NULL DEFAULT ''
-    ) ENGINE = MyISAM;
-
--- -----------------------------------------------------
 -- Table `map_relations`
 -- -----------------------------------------------------
 CREATE TABLE
@@ -2498,6 +2480,12 @@ CREATE UNIQUE INDEX IF NOT EXISTS `unq_link` ON `link_note` (`idNote` ASC, `link
 ALTER TABLE `name` ADD INDEX IF NOT EXISTS `Index_Name` (`Name_Last` ASC, `Name_First` ASC);
 
 ALTER TABLE `name` ADD INDEX IF NOT EXISTS `iNameLastFirst` (`Name_Last_First`);
+
+ALTER TABLE `name` ADD INDEX IF NOT EXISTS `iCompany_Id` (`Company_Id`);
+
+ALTER TABLE `relationship` ADD INDEX IF NOT EXISTS `iRel_idName` (`idName`);
+
+ALTER TABLE `relationship` ADD INDEX IF NOT EXISTS `iRel_Target_Id` (`Target_Id`);
 
 ALTER TABLE `name_address` ADD INDEX IF NOT EXISTS `iNA_ID` (`idName`);
 
