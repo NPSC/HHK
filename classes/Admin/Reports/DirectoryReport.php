@@ -235,40 +235,7 @@ class DirectoryReport
 
             if ($dlFlag) {
 
-                $wClause = '';
-                if ($mTypeList != "") {
-                    $wClause .= " AND `vm`.`Member_Type` IN ($mTypeList) ";
-                }
-
-                $stmt = $dbh->prepare("SELECT `a`.`mr` AS `isCompany`, `a`.`id`, `a`.`street`, `a`.`city`, `a`.`state`, `a`.`zip`, `a`.`sp`, `a`.`fm`, `a`.`rel`, COUNT(`a`.`adr_frag`) AS `adr_count`,
-    `vm`.`Name_Last` AS `Donor_Last`,
-    `vm`.`Name_First` AS `Donor_First`,
-    `vm`.`Name_Nickname` AS `Donor_Nickname`,
-    `vm`.`Name_Prefix` AS `Donor_Prefix`,
-    `vm`.`Name_Suffix` AS `Donor_Suffix`,
-    `vm`.`Name_Middle` AS `Donor_Middle`,
-    `vm`.`Title` AS `Donor_Title`,
-    `vm`.`Gender` AS `Donor_Gender`,
-    `vm`.`Company` AS `Donor_Company`,
-    `vm`.`Address_Code` AS `Donor_Preferred_Addr_Code`,
-    CASE WHEN `vm`.`MemberRecord` THEN IFNULL(`vp`.`Name_First`, '') ELSE IFNULL(`ve`.`Name_First`, '') END AS `Assoc_First`,
-    CASE WHEN `vm`.`MemberRecord` THEN IFNULL(`vp`.`Name_Last`, '') ELSE IFNULL(`ve`.`Name_Last`, '') END AS `Assoc_Last`,
-    CASE WHEN `vm`.`MemberRecord` THEN IFNULL(`vp`.`Name_Nickname`, '') ELSE IFNULL(`ve`.`Name_Nickname`, '') END AS `Assoc_Nickname`,
-    CASE WHEN `vm`.`MemberRecord` THEN IFNULL(`vp`.`Name_Prefix`, '') ELSE IFNULL(`ve`.`Name_Prefix`, '') END AS `Assoc_Prefix`,
-    CASE WHEN `vm`.`MemberRecord` THEN IFNULL(`vp`.`Name_Suffix`, '') ELSE IFNULL(`ve`.`Name_Suffix`, '') END AS `Assoc_Suffix`,
-    CASE WHEN `vm`.`MemberRecord` THEN IFNULL(`vp`.`Name_Middle`, '') ELSE IFNULL(`ve`.`Name_Middle`,'') END AS `Assoc_Middle`,
-    CASE WHEN `vm`.`MemberRecord` THEN '' ELSE IFNULL(`ve`.`Title`, '') END AS `Assoc_Title`,
-    CASE WHEN `vm`.`MemberRecord` THEN '' ELSE IFNULL(`ve`.`Company`, '') END AS `Assoc_Company`,
-    CASE WHEN `vm`.`MemberRecord` THEN IFNULL(`vp`.`Gender`, '') ELSE IFNULL(`ve`.`Gender`, '') END AS `Assoc_Gender`,
-    CASE WHEN `vm`.`MemberRecord` THEN IFNULL(`vp`.`Address_Code`,'') ELSE IFNULL(`ve`.`Address_Code`,'') END AS `Assoc_Preferred_Addr_Code`
-    FROM `mail_listing` `a` LEFT JOIN `vmember_listing_noex` `vm` ON `a`.`id` = `vm`.`Id`
-    LEFT JOIN `vmember_listing_noex` `vp` ON `vp`.`Id` = `a`.`sp`
-    LEFT JOIN `vmember_listing_noex` `ve` ON `ve`.`Id` = `a`.`fm` AND `a`.`mr` = 0
-    LEFT JOIN `name_volunteer2` `nv` ON `vm`.`Id` = `nv`.`idName` AND `nv`.`Vol_Status` = 'a' AND `nv`.`Vol_Category` = 'Vol_Type'
-    WHERE IFNULL(`nv`.`Vol_Code`, '') NOT IN ('p', 'g') $wClause
-    GROUP BY `a`.`adr_frag`, `a`.`rel`, `a`.`fm`"
-                    . " ORDER BY `a`.`zip`, `vm`.`Name_Last`, `vm`.`Name_First`");
-                $stmt->execute();
+                $stmt = MailList::queryMailList($dbh, intval($guestBlackOutDays, 10), $mTypeList);
 
                 MailList::createList($stmt, MailList::FORMAT_EXCEL, SalutationCodes::Formal, FALSE, FALSE, TRUE);
             }

@@ -418,7 +418,6 @@ BEGIN
 	delete wp from w_user_passwords wp join tids n on wp.idUser = n.idName;
 	delete id from id_securitygroup id join tids n on id.idName = n.idName;
 	delete m from mcalendar m join tids n on m.idName = n.idName;
-	delete ml from mail_listing ml join tids n on ml.id = n.idName;
 	delete mh from member_history mh join tids n on mh.idName = n.idName;
 	-- delete fa from fin_application fa join tids n on fa.idGuest = n.idName;
 	delete gt from guest_token gt join tids n on gt.idGuest = n.idName;

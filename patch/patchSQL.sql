@@ -271,3 +271,8 @@ UPDATE `page` SET `File_Name` = '_../index.php?log=lo' WHERE `File_Name` = '_ind
 -- Identity providers can be hidden from the login page and from non-Admin users
 ALTER TABLE `w_idp`
   ADD COLUMN IF NOT EXISTS `Show` BOOL DEFAULT TRUE AFTER `IdP_ManageRoles`;
+
+-- Directory mailing list is built by a single query now (MailList::queryMailList); drop its staging table
+DROP VIEW IF EXISTS `vmailing_list`;
+DROP TABLE IF EXISTS `mail_listing`;
+delete from `gen_lookups` where `Table_Name` = 'Mail_List' and `Code` = 'Refresh_Date';

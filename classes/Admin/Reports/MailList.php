@@ -110,64 +110,93 @@ class MailList {
         $writer->download();
     }
 
-    public static function fillMailistTable(\PDO $dbh, $guestBlackOutDays): int {
+    /**
+     * Runs the mailing list query: one row per household address, ready for createList().
+     *
+     * Mailable members are active, not excluded from mail, and have a good preferred address. Guests are
+     * left out until $guestBlackOutDays have passed since their last stay ended.
+     * Spouses at the same address share a row (grouped on the relationship id); organizations get one row
+     * per active care-of contact.
+     *
+     * @param \PDO $dbh
+     * @param int $guestBlackOutDays
+     * @param string $mTypeList quoted Member_Type codes from chkBoxCtrl::setSqlString(), or '' for all
+     * @return \PDOStatement
+     */
+    public static function queryMailList(\PDO $dbh, int $guestBlackOutDays, string $mTypeList = ''): \PDOStatement {
 
-        $dbh->exec("DELETE FROM `mail_listing`;");
+        $memberTypeClause = ($mTypeList != '' ? " AND `n`.`Member_Type` IN ($mTypeList) " : '');
 
-        // generare the address table
-        $insStmt = $dbh->prepare("INSERT INTO `mail_listing`
-select v.Id,
-    v.MemberRecord as mr,
-    concat(v.Address_1, v.Address_2, v.City) as frag,
-concat(v.Address_1, ' ', v.Address_2) as Street,
-v.City,
-v.StateProvince,
-v.PostalCode,
-    ifnull(vp.Id,0),
-case
-    when v.MemberRecord = 1 then
-          -- Individual members
-          case
-            when r.Relation_Type is null then v.Id
-            when r.Relation_Type = 'sp' and vp.Id is not null then r.idRelationship
-            else 0
-          end
-    else
-          -- Organizations
-          case
-            when ifnull(ve.Company_CareOf, 0) = 'y' then ve.Id
-            else 0
-          end
-end as Family_Member,
-ifnull(r.Relation_Type, '') as Relationship,
-v.Address_Code
-from
-    vmember_listing_noex v
-        left join
-    vmember_listing_noex ve on v.Id = ve.Company_Id and ve.Company_CareOf = 'y'  and ve.MemberStatus = 'a'
-        left join
-    vmember_listing_noex vp on v.SpouseId = vp.Id and vp.MemberStatus = 'a'
-left join
-relationship r ON (v.Id = r.idName or v.Id = r.Target_Id)
-    and r.Relation_Type = 'sp'
-    and r.Status = 'a'
-    left join
-name_guest ng on v.Id = ng.idName
-where
-    v.MemberStatus = 'a'
-    and v.Exclude_Mail = 0
-    and LOWER(v.Bad_Address) <> 'true'
-    and v.Address_1 <> ''
-    and v.PostalCode <> ''
-    and v.PostalCode <> '0'
-    and case when ng.idName is not null
-        then ifnull(DATEDIFF(now(), (select max(ifnull(Checkout_Date, now())) from stays where idName = v.Id)), (:guestBlackOutDays1 + 2)) > :guestBlackOutDays2
-        else 1=1 end");
-        $insStmt->execute([':guestBlackOutDays1' => $guestBlackOutDays, ':guestBlackOutDays2' => $guestBlackOutDays]);
-        $affectedRows = $insStmt->rowCount();
+        $stmt = $dbh->prepare("SELECT
+    CASE WHEN `n`.`Record_Member` = 1 THEN '1' ELSE '0' END AS `isCompany`,
+    `n`.`idName` AS `id`,
+    CONCAT(IFNULL(`na`.`Address_1`, ''), IFNULL(`na`.`Address_2`, ''), IFNULL(`na`.`City`, '')) AS `adr_frag`,
+    CONCAT(IFNULL(`na`.`Address_1`, ''), ' ', IFNULL(`na`.`Address_2`, '')) AS `street`,
+    IFNULL(`na`.`City`, '') AS `city`,
+    IFNULL(`na`.`State_Province`, '') AS `state`,
+    IFNULL(`na`.`Postal_Code`, '') AS `zip`,
+    IFNULL(`sp`.`idName`, 0) AS `sp`,
+    CASE WHEN `n`.`Record_Member` = 1 THEN
+            CASE
+                WHEN COALESCE(`r1`.`idRelationship`, `r2`.`idRelationship`) IS NULL THEN `n`.`idName`
+                WHEN `sp`.`idName` IS NOT NULL THEN COALESCE(`r1`.`idRelationship`, `r2`.`idRelationship`)
+                ELSE 0
+            END
+        ELSE IFNULL(`co`.`idName`, 0)
+    END AS `fm`,
+    CASE WHEN COALESCE(`r1`.`idRelationship`, `r2`.`idRelationship`) IS NULL THEN '' ELSE 'sp' END AS `rel`,
+    COUNT(*) AS `adr_count`,
+    CASE WHEN `n`.`Record_Company` = 0 THEN `n`.`Name_Last` ELSE `n`.`Company` END AS `Donor_Last`,
+    `n`.`Name_First` AS `Donor_First`,
+    `n`.`Name_Nickname` AS `Donor_Nickname`,
+    IFNULL(`g1`.`Description`, '') AS `Donor_Prefix`,
+    IFNULL(`g2`.`Description`, '') AS `Donor_Suffix`,
+    `n`.`Name_Middle` AS `Donor_Middle`,
+    `n`.`Gender` AS `Donor_Gender`,
+    `n`.`Company` AS `Donor_Company`,
+    CASE WHEN `n`.`Record_Member` = 1 THEN IFNULL(`sp`.`Name_First`, '') ELSE IFNULL(`co`.`Name_First`, '') END AS `Assoc_First`,
+    CASE WHEN `n`.`Record_Member` = 1 THEN IFNULL(`sp`.`Name_Last`, '') ELSE IFNULL(`co`.`Name_Last`, '') END AS `Assoc_Last`,
+    CASE WHEN `n`.`Record_Member` = 1 THEN IFNULL(`sp`.`Name_Nickname`, '') ELSE IFNULL(`co`.`Name_Nickname`, '') END AS `Assoc_Nickname`,
+    CASE WHEN `n`.`Record_Member` = 1 THEN IFNULL(`g3`.`Description`, '') ELSE IFNULL(`g5`.`Description`, '') END AS `Assoc_Prefix`,
+    CASE WHEN `n`.`Record_Member` = 1 THEN IFNULL(`g4`.`Description`, '') ELSE IFNULL(`g6`.`Description`, '') END AS `Assoc_Suffix`,
+    CASE WHEN `n`.`Record_Member` = 1 THEN IFNULL(`sp`.`Name_Middle`, '') ELSE IFNULL(`co`.`Name_Middle`, '') END AS `Assoc_Middle`,
+    CASE WHEN `n`.`Record_Member` = 1 THEN IFNULL(`sp`.`Gender`, '') ELSE IFNULL(`co`.`Gender`, '') END AS `Assoc_Gender`
+FROM `name` `n`
+    JOIN `name_address` `na` ON `na`.`idName` = `n`.`idName` AND `na`.`Purpose` = `n`.`Preferred_Mail_Address`
+    LEFT JOIN `relationship` `r1` ON `r1`.`idName` = `n`.`idName`
+        AND `r1`.`Relation_Type` = 'sp' AND `r1`.`Status` = 'a'
+    LEFT JOIN `relationship` `r2` ON `r1`.`idRelationship` IS NULL AND `r2`.`Target_Id` = `n`.`idName`
+        AND `r2`.`Relation_Type` = 'sp' AND `r2`.`Status` = 'a'
+    LEFT JOIN `name` `sp` ON `sp`.`idName` = COALESCE(`r1`.`Target_Id`, `r2`.`idName`)
+        AND `sp`.`idName` > 0 AND `sp`.`Member_Status` = 'a'
+    LEFT JOIN `name` `co` ON `n`.`Record_Member` <> 1 AND `co`.`Company_Id` = `n`.`idName`
+        AND `co`.`idName` > 0 AND `co`.`Company_CareOf` = 'y' AND `co`.`Member_Status` = 'a'
+    LEFT JOIN `gen_lookups` `g1` ON `g1`.`Table_Name` = 'Name_Prefix' AND `g1`.`Code` = `n`.`Name_Prefix`
+    LEFT JOIN `gen_lookups` `g2` ON `g2`.`Table_Name` = 'Name_Suffix' AND `g2`.`Code` = `n`.`Name_Suffix`
+    LEFT JOIN `gen_lookups` `g3` ON `g3`.`Table_Name` = 'Name_Prefix' AND `g3`.`Code` = `sp`.`Name_Prefix`
+    LEFT JOIN `gen_lookups` `g4` ON `g4`.`Table_Name` = 'Name_Suffix' AND `g4`.`Code` = `sp`.`Name_Suffix`
+    LEFT JOIN `gen_lookups` `g5` ON `g5`.`Table_Name` = 'Name_Prefix' AND `g5`.`Code` = `co`.`Name_Prefix`
+    LEFT JOIN `gen_lookups` `g6` ON `g6`.`Table_Name` = 'Name_Suffix' AND `g6`.`Code` = `co`.`Name_Suffix`
+WHERE `n`.`idName` > 0
+    AND `n`.`Member_Status` = 'a'
+    AND `n`.`Exclude_Mail` <> 1
+    AND LOWER(IFNULL(`na`.`Bad_Address`, '')) <> 'true'
+    AND IFNULL(`na`.`Address_1`, '') <> ''
+    AND IFNULL(`na`.`Postal_Code`, '') NOT IN ('', '0')
+    $memberTypeClause
+    -- leave out patient/guest volunteer types, unless they also have another active type
+    AND (NOT EXISTS (SELECT 1 FROM `name_volunteer2` `nv` WHERE `nv`.`idName` = `n`.`idName` AND `nv`.`Vol_Status` = 'a' AND `nv`.`Vol_Category` = 'Vol_Type')
+        OR EXISTS (SELECT 1 FROM `name_volunteer2` `nv` WHERE `nv`.`idName` = `n`.`idName` AND `nv`.`Vol_Status` = 'a' AND `nv`.`Vol_Category` = 'Vol_Type' AND `nv`.`Vol_Code` NOT IN ('p', 'g')))
+    -- guests only after the solicitation blackout since their last stay
+    AND (NOT EXISTS (SELECT 1 FROM `name_guest` `ng` WHERE `ng`.`idName` = `n`.`idName`)
+        OR NOT EXISTS (SELECT 1 FROM `stays` `s` WHERE `s`.`idName` = `n`.`idName`
+            AND (`s`.`Checkout_Date` IS NULL OR DATE(`s`.`Checkout_Date`) >= DATE_SUB(CURDATE(), INTERVAL :blackOutDays DAY))))
+GROUP BY `adr_frag`, `rel`, `fm`
+ORDER BY `zip`, `Donor_Last`, `Donor_First`");
 
-        return $affectedRows;
+        $stmt->execute([':blackOutDays' => $guestBlackOutDays]);
 
+        return $stmt;
     }
 
 }
