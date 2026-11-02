@@ -548,18 +548,6 @@ try {
             $events = changeCareOfFlag($dbh, $post['id'], $post['rId'], $post['rc'], FALSE);
             break;
 
-        case "adchgpw":
-
-            $post = filter_input_array(INPUT_POST, [
-                "adpw" => FILTER_UNSAFE_RAW,
-                "uid" => FILTER_SANITIZE_NUMBER_INT,
-                "uname" => FILTER_SANITIZE_FULL_SPECIAL_CHARS
-            ]);
-
-            $events = adminChangePW($dbh, $post['adpw'], $post['uid'], $post['uname']);
-
-            break;
-
         case "accesslog":
             $events = AccessLog($dbh, $_GET);
 
@@ -567,7 +555,13 @@ try {
 
         case "adresetpw":
 
-            $events = adminResetPW($dbh, filter_input(INPUT_POST, "uid", FILTER_SANITIZE_NUMBER_INT));
+            $post = filter_input_array(INPUT_POST, [
+                "uid" => FILTER_SANITIZE_NUMBER_INT,
+                "newpw" => FILTER_UNSAFE_RAW,
+                "confirmpw" => FILTER_UNSAFE_RAW
+            ]);
+
+            $events = adminResetPW($dbh, $post['uid'], $post['newpw'] ?? '', $post['confirmpw'] ?? '');
 
             break;
 
@@ -752,30 +746,6 @@ function searchZip(PDO $dbh, $zip) {
     }
 
     return $events;
-}
-
-function adminChangePW(PDO $dbh, $adminPw, $wUserId, $uname) {
-
-    $event = array();
-
-    if (SecurityComponent::is_Admin()) {
-
-        $u = new UserClass();
-        $uS = Session::getInstance();
-
-        $minPassLength = ($uS->minPassLength > 8 ? $uS->minPassLength : 8);
-        $newPw = $u->generateStrongPassword($minPassLength);
-
-        if ($u->updateDbPassword($dbh, $wUserId, $adminPw, $newPw, $uname, true) === TRUE) {
-            $event = array('success' => 'Password updated.', 'tempPW'=>$newPw);
-        } else {
-            $event = array('error' => $u->logMessage .  '.  Password is unchanged.');
-        }
-    } else {
-        $event = array('error' => 'Insufficient authorization.  Password is unchanged.');
-    }
-
-    return $event;
 }
 
 function changeCareOfFlag(PDO $dbh, $id, $rId, $relCode, $flag) {
@@ -1175,11 +1145,14 @@ function updateCronJob(\PDO $dbh, $idJob, $title, $type, array $params, $interva
 
 /**
  * Admin password reset from the Web Account dialog.  The admin re-authenticated when opening it (see ReauthGuard).
+ * A password the admin types must meet the password rules; with none, a random one is generated.
  * @param PDO $dbh
  * @param int $wUserId
+ * @param string $newPw
+ * @param string $confirmPw
  * @return array
  */
-function adminResetPW(PDO $dbh, $wUserId) {
+function adminResetPW(PDO $dbh, $wUserId, $newPw = '', $confirmPw = '') {
 
     if (!SecurityComponent::is_Admin()) {
         return array('error' => 'Insufficient authorization.  Password is unchanged.');
@@ -1192,11 +1165,20 @@ function adminResetPW(PDO $dbh, $wUserId) {
     $u = new UserClass();
     $uS = Session::getInstance();
 
-    $minPassLength = ($uS->minPassLength > 8 ? $uS->minPassLength : 8);
-    $newPw = $u->generateStrongPassword($minPassLength);
+    $isCustomPw = ($newPw !== '');
 
-    if ($u->adminResetPassword($dbh, intval($wUserId), $newPw) === TRUE) {
-        return array('success' => 'Password updated.', 'tempPW' => $newPw);
+    if (!$isCustomPw) {
+        $minPassLength = ($uS->minPassLength > 8 ? $uS->minPassLength : 8);
+        $newPw = $u->generateStrongPassword($minPassLength);
+    }
+
+    if ($u->adminResetPassword($dbh, intval($wUserId), $newPw, $isCustomPw ? $confirmPw : null) === TRUE) {
+        return ($isCustomPw ? array('success' => 'Password updated.') : array('success' => 'Password updated.', 'tempPW' => $newPw));
+    }
+
+    // validation problems are shown on their fields
+    if (count($u->passwordErrors) > 0) {
+        return array('error' => 'Password is unchanged.', 'fieldErrors' => $u->passwordErrors);
     }
 
     return array('error' => $u->logMessage . '.  Password is unchanged.');

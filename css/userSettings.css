@@ -1,0 +1,38 @@
+/* Password forms: User Settings dialog, and the admin password reset on NameEdit */
+
+#chgPasswordForm input,
+.hhk-pwForm input {
+	width: 100%;
+}
+
+#chgPasswordForm input:disabled {
+	border: none;
+	background: transparent;
+}
+
+#chgPasswordForm input:disabled::placeholder {
+	color: #000;
+	opacity: 1 !important;
+}
+
+.pwLabel {
+	text-align: right;
+	white-space: nowrap;
+}
+
+.fieldErrMsg {
+	color: red;
+	font-size: smaller;
+}
+
+#chgPasswordForm .showPw,
+.hhk-pwForm .showPw {
+	width: 1.75em;
+	height: 1.75em;
+	padding: 0;
+	margin-left: 0.5em;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	flex-shrink: 0;
+}

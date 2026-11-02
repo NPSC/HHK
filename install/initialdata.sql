@@ -5820,7 +5820,7 @@ VALUES
 	),
 	(
 		69,
-		'_index.php?log=lo',
+		'_../index.php?log=lo',
 		0,
 		'Log Out',
 		'',
@@ -5832,7 +5832,7 @@ VALUES
 	),
 	(
 		70,
-		'_index.php?log=lo',
+		'_../index.php?log=lo',
 		0,
 		'Log Out',
 		'',
@@ -5844,7 +5844,7 @@ VALUES
 	),
 	(
 		71,
-		'_index.php?log=lo',
+		'_../index.php?log=lo',
 		0,
 		'Log Out',
 		'',

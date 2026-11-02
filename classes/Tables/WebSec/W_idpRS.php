@@ -29,6 +29,7 @@ class W_idpRS extends AbstractTableRS {
     public DB_Field $expectIdPSigning; // BOOL DEFAULT 1,
     public DB_Field $expectIdPEncryption; // BOOL DEFAULT 1,
     public DB_Field $IdP_ManageRoles; // BOOL DEFAULT 1,
+    public DB_Field $Show; // BOOL DEFAULT 1,
     public DB_Field $Status; // varchar(2),
 
     function __construct($TableName = "w_idp") {
@@ -44,6 +45,7 @@ class W_idpRS extends AbstractTableRS {
         $this->expectIdPSigning = new DB_Field("expectIdPSigning", "1", new DbBitSanitizer());
         $this->expectIdPEncryption = new DB_Field("expectIdPEncryption", "1", new DbBitSanitizer());
         $this->IdP_ManageRoles = new DB_Field("IdP_ManageRoles", "1", new DbBitSanitizer());
+        $this->Show = new DB_Field("Show", "1", new DbBitSanitizer());
         $this->Status = new DB_Field("Status", 'a', new DbStrSanitizer(1));
 
         parent::__construct($TableName);

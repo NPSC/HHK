@@ -33,6 +33,13 @@ class UserClass
     public $logMessage = '';
 
     /**
+     * Validation errors from updateDbPassword() and adminResetPassword(), keyed by form
+     * field name ('old', 'confirm', 'newer'), each an array of message strings.
+     * @var array<string, string[]>
+     */
+    public $passwordErrors = [];
+
+    /**
      * Summary of defaultPage
      * @var string
      */
@@ -300,12 +307,14 @@ class UserClass
     public static function checkPCAccess(\PDO $dbh, $gc = false)
     {
         $remoteIp = self::getRemoteIp();
-        $query = "SELECT * from w_auth_ip waip";
+        $params = [];
+        $query = "SELECT * FROM `w_auth_ip` `waip`";
         if ($gc) {
-            $query .= " join w_group_ip wgip on waip.IP_addr = wgip.IP_addr where wgip.Group_Code = '$gc'";
+            $query .= " JOIN `w_group_ip` `wgip` ON `waip`.`IP_addr` = `wgip`.`IP_addr` WHERE `wgip`.`Group_Code` = :gc";
+            $params[':gc'] = $gc;
         }
         $stmt = $dbh->prepare($query);
-        $stmt->execute();
+        $stmt->execute($params);
         $rows = $stmt->fetchAll();
 
         foreach ($rows as $row) {
@@ -349,45 +358,30 @@ class UserClass
      * @param string $newPw
      * @param string $uname
      * @param mixed $resetNextLogin
+     * @param string|null $confirmPw Retyped new password to confirm against $newPw, or null to skip that check.
      * @return bool
      */
-    public function updateDbPassword(\PDO $dbh, $id, $oldPw, $newPw, $uname, $resetNextLogin = 0): bool
+    public function updateDbPassword(\PDO $dbh, $id, $oldPw, $newPw, $uname, $resetNextLogin = 0, $confirmPw = null): bool
     {
         $ssn = Session::getInstance();
-        $priorPasswords = SysConfig::getKeyValue($dbh, 'sys_config', 'PriorPasswords');
 
-        $success = true;
+        $this->passwordErrors = [];
 
         // check old password
-        if(!$this->_checkLogin($dbh, $ssn->username, $oldPw, false, false)){
-            $this->logMessage = "Your old password is incorrect<br>";
-            $success = false;
+        $oldPwMatches = $this->_checkLogin($dbh, $ssn->username, $oldPw, false, false);
+        $this->logMessage = '';
+
+        if(!$oldPwMatches){
+            $this->addPasswordError('old', "Current Password is incorrect");
         }
 
         if ($oldPw == $newPw) {
-            $this->logMessage .= "The new password must be different from the old one<br>";
-            $success = false;
+            $this->addPasswordError('newer', "New Password must be different from Current Password");
         }
 
-        // check if password has already been used
-        if ($this->isPasswordUsed($dbh, $newPw)) {
-            $this->logMessage .= "You cannot use any of the prior " . $priorPasswords . " passwords<br>";
-            $success = false;
-        }
+        $this->validateNewPassword($dbh, $id, $newPw, $confirmPw);
 
-        //check length
-        $minPassLength = ($ssn->minPassLength > 8 ? $ssn->minPassLength : 8);
-        if (strlen($newPw) < $minPassLength){
-            $this->logMessage .= "The new password must be at least " . $minPassLength . " characters<br>";
-            $success = false;
-        }
-
-        //check strength
-        $strongRegex = '/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*\W).{'.$minPassLength.',}$/';
-        if (!preg_match($strongRegex, $newPw)) {
-            $this->logMessage .= "The new password does not meet the password complexity requirements.<br>";
-            $success = false;
-        }
+        $success = (count($this->passwordErrors) == 0);
 
         if(isset($ssn->sitePepper) && $ssn->sitePepper != ''){
             $newPwHash = password_hash($newPw . $ssn->sitePepper, PASSWORD_ARGON2ID);
@@ -427,18 +421,74 @@ class UserClass
     }
 
     /**
+     * Checks a new password against the site's password rules, recording any problems in
+     * passwordErrors and logMessage.
+     * @param \PDO $dbh
+     * @param int $id idName of the user the password is for (their history is checked)
+     * @param string $newPw
+     * @param string|null $confirmPw Retyped new password, or null to skip that check.
+     * @return bool
+     */
+    protected function validateNewPassword(\PDO $dbh, $id, string $newPw, ?string $confirmPw = null): bool
+    {
+        $ssn = Session::getInstance();
+        $errorCount = count($this->passwordErrors, COUNT_RECURSIVE);
+
+        if ($confirmPw !== null && $newPw !== $confirmPw) {
+            $this->addPasswordError('confirm', "Confirmed Password does not match");
+        }
+
+        // check if password has already been used
+        if ($this->isPasswordUsed($dbh, $newPw, $id)) {
+            $priorPasswords = SysConfig::getKeyValue($dbh, 'sys_config', 'PriorPasswords');
+            $this->addPasswordError('newer', "You cannot use any of the prior " . $priorPasswords . " passwords");
+        }
+
+        //check length
+        $minPassLength = ($ssn->minPassLength > 8 ? $ssn->minPassLength : 8);
+        if (strlen($newPw) < $minPassLength){
+            $this->addPasswordError('newer', "New Password must be at least " . $minPassLength . " characters");
+        }
+
+        //check strength
+        $strongRegex = '/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*\W).{'.$minPassLength.',}$/';
+        if (!preg_match($strongRegex, $newPw)) {
+            $this->addPasswordError('newer', "New Password does not meet the password complexity requirements.");
+        }
+
+        return count($this->passwordErrors, COUNT_RECURSIVE) == $errorCount;
+    }
+
+    /**
+     * Records a password validation error for a form field.
+     * @param string $field 'old', 'newer' or 'confirm'
+     * @param string $message
+     * @return void
+     */
+    protected function addPasswordError(string $field, string $message): void
+    {
+        $this->passwordErrors[$field][] = $message;
+        $this->logMessage .= $message . "<br>";
+    }
+
+    /**
      * Summary of isPasswordUsed
      * @param \PDO $dbh
      * @param string $newPw
+     * @param int|null $id The user whose password history to check. Defaults to the current session user.
      * @return bool
      */
-    public function isPasswordUsed(\PDO $dbh, $newPw): bool
+    public function isPasswordUsed(\PDO $dbh, $newPw, $id = null): bool
     {
         $uS = Session::getInstance();
 
+        if ($id === null) {
+            $id = $uS->uid;
+        }
+
         // get prior password hashes
-        $query = "select Enc_PW from w_user_passwords where idUser = " . $uS->uid . " order by Timestamp desc limit " . $uS->PriorPasswords . ";";
-        $stmt = $dbh->query($query);
+        $stmt = $dbh->prepare("select Enc_PW from w_user_passwords where idUser = :idUser order by Timestamp desc limit " . intval($uS->PriorPasswords) . ";");
+        $stmt->execute([':idUser' => $id]);
         $hashes = $stmt->fetchAll(\PDO::FETCH_COLUMN);
 
         foreach($hashes as $hash){
@@ -487,8 +537,9 @@ class UserClass
      */
     public static function isUserNew(\PDO $dbh, Session $uS): bool
     {
-        $query = "select idAnswer, idQuestion from w_user_answers A join w_users U on A.idUser = U.idName where U.User_Name='" . $uS->username . "' limit 3;";
-        $stmt = $dbh->query($query);
+        $query = "SELECT `idAnswer`, `idQuestion` FROM `w_user_answers` `A` JOIN `w_users` `U` ON `A`.`idUser` = `U`.`idName` WHERE `U`.`User_Name` = :username LIMIT 3;";
+        $stmt = $dbh->prepare($query);
+        $stmt->execute([':username' => $uS->username]);
         if ($stmt->rowCount() != 3 && $uS->AllowPasswordRecovery) {
             return true;
         }
@@ -683,6 +734,9 @@ class UserClass
 
         // re-authentication dialog, for two step verification changes here and guarded pages
         $mkup = '<script type="text/javascript" src="../js/reauth.js' . JSV . '"></script>';
+        // not every page loads these, and the dialog is on every page
+        $mkup .= '<link href="../css/bootstrap-icons.min.css' . JSV . '" rel="stylesheet" type="text/css" />';
+        $mkup .= '<link href="../css/userSettings.css' . JSV . '" rel="stylesheet" type="text/css" />';
         $mkup .= '<div id="dchgPw" class="hhk-tdbox hhk-visitdialog" style="font-size: .9em; display:none;">';
         $passwordTitle = 'Change your Password';
 
@@ -794,18 +848,45 @@ class UserClass
         		<div class="ui-widget-header ui-state-default ui-corner-top" style="padding: 5px;">' . $passwordTitle . '</div>
         		<div class="ui-corner-bottom hhk-tdbox ui-widget-content" style="padding: 5px;">
 
-                    <table style="width: 100%"><tr>
-                            <td class="tdlabel">User Name:</td><td style="background-color: white;"><span id="utxtUserName">' . $uS->username . '</span></td>
-                        </tr><tr>
-                            <td class="tdlabel">Enter Old Password:</td><td class="hhk-flex"><input style="width: 100%" id="utxtOldPw" type="password" value=""  /><button class="showPw" style="font-size: .75em; margin-left: 1em;" tabindex="-1">Show</button></td>
-                        </tr><tr>
-                            <td class="tdlabel">Enter New Password:</td><td class="hhk-flex"><input style="width: 100%" id="utxtNewPw1" type="password" value=""  /><button class="showPw" style="font-size: .75em; margin-left: 1em;" tabindex="-1">Show</button></td>
-                        </tr><tr>
-                            <td class="tdlabel">New Password Again:</td><td class="hhk-flex"><input style="width: 100%" id="utxtNewPw2" type="password" value=""  /><button class="showPw" style="font-size: .75em; margin-left: 1em;" tabindex="-1">Show</button></td>
-                        </tr><tr>
-                            <td colspan ="2"><span style="font-size: smaller;">Passwords must have at least ' . $minPassLength . ' characters with at least 1 uppercase letter, 1 lowercase letter, a number and a symbol. It cannot include &lt; or &gt;. Do not use names or dictionary words</span></td>
-                        </tr>
-                    </table>
+                    <form id="chgPasswordForm">
+                        <div class="row mx-0 align-items-center">
+                            <label class="col-5 pwLabel" for="utxtUserName">Username:</label>
+                            <div class="col-7"><input type="text" disabled id="utxtUserName" name="username" placeholder="' . $uS->username . '" autocomplete="username" /></div>
+                        </div>
+                        <div class="row mx-0 mt-2">
+                            <label class="col-5 pwLabel" for="utxtOldPw">Current Password:</label>
+                            <div class="col-7">
+                                <div class="hhk-flex">
+                                    <input id="utxtOldPw" name="old" type="password" value="" autocomplete="current-password" />
+                                    <button type="button" class="showPw" tabindex="-1" title="Show password"><i class="bi bi-eye-fill"></i></button>
+                                </div>
+                                <div id="oldPwErrMsg" class="fieldErrMsg"></div>
+                            </div>
+                        </div>
+                        <div class="row mx-0 mt-2">
+                            <label class="col-5 pwLabel" for="utxtNewPw1">New Password:</label>
+                            <div class="col-7">
+                                <div class="hhk-flex">
+                                    <input id="utxtNewPw1" name="newer" type="password" value="" autocomplete="new-password" />
+                                    <button type="button" class="showPw" tabindex="-1" title="Show password"><i class="bi bi-eye-fill"></i></button>
+                                </div>
+                                <div id="newPwErrMsg" class="fieldErrMsg"></div>
+                            </div>
+                        </div>
+                        <div class="row mx-0 mt-2">
+                            <label class="col-5 pwLabel" for="utxtNewPw2">Confirm New Password:</label>
+                            <div class="col-7">
+                                <div class="hhk-flex">
+                                    <input id="utxtNewPw2" name="confirm" type="password" value="" autocomplete="new-password" />
+                                    <button type="button" class="showPw" tabindex="-1" title="Show password"><i class="bi bi-eye-fill"></i></button>
+                                </div>
+                                <div id="confirmPwErrMsg" class="fieldErrMsg"></div>
+                            </div>
+                        </div>
+                        <div class="row mx-0 mt-2">
+                            <div class="col-12"><span style="font-size: smaller;">Passwords must have at least ' . $minPassLength . ' characters with at least 1 uppercase letter, 1 lowercase letter, a number and a symbol. It cannot include &lt; or &gt;. Do not use names or dictionary words</span></div>
+                        </div>
+                    </form>
                     <div id="pwChangeErrMsg" style="color:red; text-align:center;" class="mt-1"></div>
                 </div>
             </div>
@@ -895,11 +976,16 @@ class UserClass
      * @param \PDO $dbh
      * @param int $id idName of the user to reset
      * @param string $newPw
+     * @param string|null $confirmPw For a password the admin typed: the retyped password, and the
+     *  password must meet the site's password rules.  Null for a generated password.
      * @return bool
      */
-    public function adminResetPassword(\PDO $dbh, int $id, string $newPw): bool
+    public function adminResetPassword(\PDO $dbh, int $id, string $newPw, ?string $confirmPw = null): bool
     {
         $ssn = Session::getInstance();
+
+        $this->logMessage = '';
+        $this->passwordErrors = [];
 
         $usersRS = new \HHK\Tables\WebSec\W_usersRS();
         $usersRS->idName->setStoredVal($id);
@@ -914,6 +1000,10 @@ class UserClass
 
         if ($usersRS->idIdp->getStoredVal() > 0) {
             $this->logMessage = "This user signs in with SSO and has no HHK password";
+            return FALSE;
+        }
+
+        if ($confirmPw !== null && !$this->validateNewPassword($dbh, $id, $newPw, $confirmPw)) {
             return FALSE;
         }
 
@@ -1156,8 +1246,9 @@ WHERE n.idName is not null and u.Status IN ('a', 'd') and n.`Member_Status` = 'a
         $id = intval($idName, 10);
 
         $grpArray = array("authorized"=>array(), "ip_restricted"=>array());
-        $query = "SELECT s.Group_Code, case when w.IP_Restricted = 1 then '1' else '0' end as `IP_Restricted` FROM id_securitygroup s join w_groups w on s.Group_Code = w.Group_Code WHERE s.idName = $id";
-        $stmt = $dbh->query($query);
+        $query = "SELECT `s`.`Group_Code`, CASE WHEN `w`.`IP_Restricted` = 1 THEN '1' ELSE '0' END AS `IP_Restricted` FROM `id_securitygroup` `s` JOIN `w_groups` `w` ON `s`.`Group_Code` = `w`.`Group_Code` WHERE `s`.`idName` = :id";
+        $stmt = $dbh->prepare($query);
+        $stmt->execute([':id' => $id]);
 
         while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
 
@@ -1204,8 +1295,9 @@ WHERE n.idName is not null and u.Status IN ('a', 'd') and n.`Member_Status` = 'a
 
             $remoteIp = self::getRemoteIp();
 
-            $query = "UPDATE w_users SET Session = '$sessionId', Ip = '$remoteIp', Last_Login=now() WHERE User_Name = '" . $ssn->username . "'";
-            $dbh->exec($query);
+            // login tracking stays out of the audit log; w_user_log records the login
+            $query = "UPDATE `w_users` SET `Session` = :sessionId, `Ip` = :remoteIp, `Last_Login` = NOW() WHERE `User_Name` = :username";
+            $dbh->prepare($query)->execute([':sessionId' => $sessionId, ':remoteIp' => $remoteIp, ':username' => $ssn->username]);
 
             // Log access
             $this->insertUserLog($dbh, UserClass::Login);

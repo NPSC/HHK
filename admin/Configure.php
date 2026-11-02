@@ -341,6 +341,9 @@ $localAuthMkup = SiteConfig::createMarkup($dbh, 'pr');
 $labels = SiteConfig::createLabelsMarkup($dbh)->generateMarkup();
 
 $authIdpList = SAML::getIdpList($dbh, false);
+if (!SecurityComponent::is_TheAdmin()) {
+    $authIdpList = array_filter($authIdpList, fn($idp) => $idp['Show'] ?? 1);
+}
 
 ?>
 <!DOCTYPE html>
