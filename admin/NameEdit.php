@@ -538,12 +538,9 @@ $alertMessage = $alertMsg->createMarkup();
                 <input type="hidden" name="squirm" id="squirm" value="<?php echo $squirm; ?>" />
             </form>
             <div id="submit" class="hhk-member-detail" style="display:none;" >
-                <table>
-                    <tr>
-                        <td>Search: </td><td><input type="text" id="txtRelSch" size="15" value="" title="Type at least 3 letters to invoke the search."/></td>
-                    </tr>
-                    <tr><td><input type="hidden" id="hdnRelCode" value=""/></td><td></td></tr>
-                </table>
+                Search:
+                <input type="text" id="txtRelSch" size="15" value="" title="Type at least 3 letters to invoke the search."/>
+                <input type="hidden" id="hdnRelCode" value=""/>
             </div>
             <div id="achgPw" class="hhk-member-detail" style="display:none;font-size:0.95em;">
             	<div style="margin: 0.5em 0 0.5em 0;">The user's password will be reset to a random temporary password. <br>They will be required to change their password when they log in.</div>

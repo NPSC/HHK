@@ -101,15 +101,10 @@ $(document).ready(function () {
     // relationship dialog
     $("#submit").dialog({
         autoOpen: false,
-        resizable: true,
-        width: 400,
-        height: 500,
-        modal: true,
-        buttons: {
-            "Exit": function () {
-                $(this).dialog("close");
-            }
-        }
+        resizable: false,
+        width: "auto",
+        height: "auto",
+        modal: true
     });
     // Relationship events
     $('div.hhk-relations').each(function () {
@@ -488,14 +483,20 @@ $(document).ready(function () {
             if (item.id === 'i') {
                 // New Individual
                 window.location = "NameEdit.php?cmd=newind";
+                return;
             } else if (item.id === 'o') {
                 window.location = "NameEdit.php?cmd=neworg";
+                return;
             }
 
             var cid = parseInt(item.id, 10);
             if (isNumber(cid)) {
                 window.location = "NameEdit.php?id=" + cid;
+                return;
             }
+
+            // e.g. "No one found"
+            return false;
         }, 
         false, 
         "liveNameSearch.php"
@@ -503,8 +504,14 @@ $(document).ready(function () {
 
     createAutoComplete($('#txtRelSch'), 3, {cmd: 'srrel', id: memData.id, nonly: '1'}, 
         function (item) {
+            var rId = parseInt(item.id, 10);
+            if (!isNumber(rId)) {
+                // e.g. "No one found"
+                return false;
+            }
             $('#submit').dialog('close');
-            $.post('ws_gen.php', {'rId':item.id, 'id':memData.id, 'rc':$('#hdnRelCode').val(), 'cmd':'newRel'}, relationReturn);
+            $.post('ws_gen.php', {'rId':rId, 'id':memData.id, 'rc':$('#hdnRelCode').val(), 'cmd':'newRel'}, relationReturn);
+            return false;
         },
         false,
         "liveNameSearch.php",
@@ -545,15 +552,28 @@ $(document).ready(function () {
     // Flag member status if not active
     $("#selStatus").change(function () {
         changeMemberStatus($(this), memData, savePressed);
+        // Keep the Deceased checkbox in sync; on save it overrides the status selection.
+        if ($(this).val() === 'd') {
+            $('#cbdeceased').prop('checked', true);
+            $('#disp_deceased').show('blind');
+        } else {
+            $('#cbdeceased').prop('checked', false);
+            $('#disp_deceased').hide('blind');
+        }
     });
         
     // Date of death
     $('#cbdeceased').change(function () {
         if ($(this).prop('checked')) {
             $('#disp_deceased').show('blind');
+            $('#selStatus').val('d');
         } else {
             $('#disp_deceased').hide('blind');
+            if ($('#selStatus').val() === 'd') {
+                $('#selStatus').val('a');
+            }
         }
+        changeMemberStatus($('#selStatus'), memData, savePressed);
     });
     
     // Date of background check
