@@ -1025,33 +1025,6 @@ class PaymentSvcs {
     }
 
     /**
-     * Summary of processWebhook
-     * @param \PDO $dbh
-     * @param mixed $data
-     * @return bool
-     */
-    public static function processWebhook(\PDO $dbh, $data) {
-
-        $uS = Session::getInstance();
-
-        $stmt = $dbh->query("Select cc_name from cc_hosted_gateway where Gateway_Name = 'instamed'");
-        $rows = $stmt->fetchAll(\PDO::FETCH_NUM);
-
-        if (count($rows) == 1) {
-
-	        // Payment Gateway
-	        $gateway = AbstractPaymentGateway::factory($dbh, $uS->PaymentGateway, $rows[0][0]);
-
-	        $payNotes = '';
-
-	        return $gateway->processWebhook($dbh, $data, $payNotes, $uS->username);
-        }
-
-        return FALSE;
-
-    }
-
-    /**
      * Summary of processSiteReturn
      * @param \PDO $dbh
      * @param mixed $post
