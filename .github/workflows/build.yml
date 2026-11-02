@@ -1,0 +1,68 @@
+name: Build and Package Release
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  build-and-zip:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. Checkout the source code at the release tag
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      # 2. Set up PHP environment for Composer
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.4"
+          tools: composer
+
+      # 3. Install production PHP dependencies
+      - name: Install Composer dependencies
+        run: composer install --no-dev --optimize-autoloader
+
+      # 4. Package production files into a ZIP archive
+      # This excludes development files and tests. conf/site.cfg ships as
+      # conf/site.cfg.example so unzipping over a site can't overwrite its config.
+      - name: Create Zip Archive
+        run: |
+          FOLDER_NAME="hhk"
+          ZIP_NAME="release-${{ github.event.release.tag_name }}.zip"
+
+          rsync -ar . "$FOLDER_NAME" \
+            --exclude=".claude/" \
+            --exclude=".codex" \
+            --exclude=".git*" \
+            --exclude=".vscode/" \
+            --exclude="tests/" \
+            --exclude=".github/" \
+            --exclude="composer.json" \
+            --exclude="composer.lock" \
+            --exclude="phpstan*" \
+            --exclude="phpunit.xml" \
+            --exclude="GuestCensusReportNotes.md" \
+            --exclude="/conf/site.cfg"
+
+          cp conf/site.cfg "$FOLDER_NAME/conf/site.cfg.example"
+
+          zip -r "$ZIP_NAME" "$FOLDER_NAME"
+
+          rm -rf "$FOLDER_NAME"
+
+      # 5. Upload the ZIP archive as an action artifact (optional)
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: production-build
+          path: release-${{ github.event.release.tag_name }}.zip
+
+      # 6. Automatically attach the ZIP file directly to the GitHub Release page
+      - name: Upload Asset to GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: release-${{ github.event.release.tag_name }}.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
