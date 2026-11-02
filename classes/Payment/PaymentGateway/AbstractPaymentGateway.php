@@ -130,19 +130,6 @@ abstract class AbstractPaymentGateway {
     	return array();
     }
 
-    /**
-     * Summary of processWebhook
-     * @param \PDO $dbh
-     * @param mixed $post
-     * @param mixed $payNotes
-     * @param mixed $userName
-     * @throws \HHK\Exception\PaymentException when the gateway does not support webhooks
-     * @return bool
-     */
-    public function processWebhook(\PDO $dbh, $post, $payNotes, $userName) {
-        throw new PaymentException('Webhook not implemeneted');
-    }
-
     public static function createEditMarkup(\PDO $dbh, $gatewayName, $resultMsg = '') {
 
         switch (strtolower($gatewayName)) {
