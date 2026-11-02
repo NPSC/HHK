@@ -79,7 +79,7 @@ class SiteDbBackup {
             'skip-definer' => true,
             'skip-comments' => true,
         ];
-Mysqldump::
+
         $this->return_var = 0;
 
         try {
