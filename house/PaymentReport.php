@@ -722,7 +722,7 @@ $columSelector = $colSelector->makeSelectorTable(TRUE)->generateMarkup(array('cl
                     </div>
                 </form>
                 </div>
-            <div id="hhk-reportWrapper" class="ui-widget ui-widget-content ui-corner-all hhk-tdbox" style="display:none; font-size: 0.9em;">
+            <div id="hhk-reportWrapper" class="ui-widget ui-widget-content ui-corner-all hhk-tdbox" style="display:none;">
                 <div><input id="printButton" value="Print" type="button"/></div>
                 <div class="my-3" style="min-width: 350px;">
                     <?php echo $hdrTbl; ?>

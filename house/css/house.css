@@ -748,8 +748,11 @@ div.dt-buttons .dt-button:hover>span {
 	margin-left: 0.25em;
 }
 
-.filterWrapper {
-	font-size: 0.9em;
+/* Report sizes use rem so filters and report tables look the same on every page, whether or not they sit inside
+   tabs or other jQuery UI widgets (jQuery UI resizes nested .ui-widget elements). The .ui-widget selector outranks
+   jQuery UI's ".ui-widget .ui-widget" rule. */
+.filterWrapper, .filterWrapper.ui-widget {
+	font-size: 0.9rem;
 	display: inline-block;
 	padding:10px;
 	min-width: 400px;
@@ -778,7 +781,7 @@ div.dt-buttons .dt-button:hover>span {
 
 /* report data wrapper */
 #hhk-reportWrapper{
-	font-size: .8em;
+	font-size: .8rem;
 	padding: 5px;
 	margin: 10px 0 25px 0;
 }

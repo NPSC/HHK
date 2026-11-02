@@ -821,7 +821,7 @@ dateFormat: "M d, yy" ';
      * @param int $id
      * @param int $invoiceId
      * @param int $prefTokenId
-     * @return string
+     * @return string Empty string if the invoice is not found or not unpaid.
      */
     public static function createPayInvMarkup(\PDO $dbh, $id, $invoiceId, $prefTokenId = 0) {
 
@@ -913,7 +913,7 @@ ORDER BY v.idVisit , v.Span;");
             }
         }
 
-        return HTMLContainer::generateMarkup('h3', "No unpaid invoices found.");
+        return '';
     }
 
     /**

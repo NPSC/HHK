@@ -573,9 +573,15 @@ class HouseServices {
      */
     public static function showPayInvoice(\PDO $dbh, $id, $iid) {
 
+        $payMkup = PaymentChooser::createPayInvMarkup($dbh, $id, $iid);
+
+        if ($payMkup == '') {
+            return array('info'=>'No unpaid invoices found.');
+        }
+
         $mkup = HTMLContainer::generateMarkup(
             'div',
-            PaymentChooser::createPayInvMarkup($dbh, $id, $iid),
+            $payMkup,
             array('class'=>'hhk-payInvoice', 'style' => 'min-width:600px;clear:left;')
         );
 

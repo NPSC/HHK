@@ -102,6 +102,10 @@ function invLoadPc(nme, id, iid) {
                 }
                 flagAlertMessage(data.error, 'error');
 
+            } else if (data.info) {
+                flagAlertMessage(data.info, 'info');
+                $('#btnInvGo').click();  // repaint unpaid invoices to drop the paid one
+
             } else if (data.mkup) {
 
                 $('div#keysfees').children().remove();
