@@ -272,8 +272,9 @@ class UserClass
             $ipRS->IP_addr->setStoredVal($ipAddr);
 
             // check if IP is assigned to a group
-            $stmt = $dbh->prepare("select * from w_group_ip where IP_addr = :ip");
-            $stmt->execute([':ip' => $ipAddr]);
+            $query = "SELECT * FROM `w_group_ip` WHERE `IP_addr` = :ipAddr";
+            $stmt = $dbh->prepare($query);
+            $stmt->execute([':ipAddr' => $ipAddr]);
             if ($stmt->rowCount() == 0) { // only revoke if no groups are assigned
                 if (count(EditRS::select($dbh, $ipRS, array(
                     $ipRS->IP_addr
@@ -401,7 +402,7 @@ class UserClass
             if ($count == 1) {
                 $this->insertUserLog($dbh, UserClass::PW_Changed, $uname);
 
-                $query = "insert into w_user_passwords (idUser, Enc_PW) values(:idUser, :newPw);";
+                $query = "INSERT INTO `w_user_passwords` (`idUser`, `Enc_PW`) VALUES(:idUser, :newPw);";
                 $stmt = $dbh->prepare($query);
                 $stmt->execute(array(
                     ':idUser' => $id,
@@ -487,7 +488,7 @@ class UserClass
         }
 
         // get prior password hashes
-        $stmt = $dbh->prepare("select Enc_PW from w_user_passwords where idUser = :idUser order by Timestamp desc limit " . intval($uS->PriorPasswords) . ";");
+        $stmt = $dbh->prepare("SELECT `Enc_PW` FROM `w_user_passwords` WHERE `idUser` = :idUser ORDER BY `Timestamp` DESC LIMIT " . intval($uS->PriorPasswords) . ";");
         $stmt->execute([':idUser' => $id]);
         $hashes = $stmt->fetchAll(\PDO::FETCH_COLUMN);
 
@@ -959,11 +960,11 @@ class UserClass
         }
 
         try{
-            $stmt = $dbh->prepare("insert into w_user_log (`Username`, `Access_Date`, `IP`, `Action`, `Browser`, `OS`) values (:username, :timestamp , :remoteIp, :action, :browserName, :osName)");
+            $stmt = $dbh->prepare("INSERT INTO `w_user_log` (`Username`, `Access_Date`, `IP`, `Action`, `Browser`, `OS`) VALUES (:username, :timestamp , :remoteIp, :action, :browserName, :osName)");
             $stmt->execute(array(':username'=>$username, ':timestamp'=>$timestamp, ':remoteIp'=>$remoteIp, ':action'=>$action, ':browserName'=>$browserName, ':osName'=>$osName));
         }catch (\Exception $e){
             //Browser/OS fields not in DB - skip user agent
-            $stmt = $dbh->prepare("insert into w_user_log (`Username`, `Access_Date`, `IP`, `Action`) values (:username, :timestamp , :remoteIp, :action)");
+            $stmt = $dbh->prepare("INSERT INTO `w_user_log` (`Username`, `Access_Date`, `IP`, `Action`) VALUES (:username, :timestamp , :remoteIp, :action)");
             $stmt->execute(array(':username'=>$username, ':timestamp'=>$timestamp, ':remoteIp'=>$remoteIp, ':action'=>$action));
         }
     }
@@ -1175,11 +1176,11 @@ class UserClass
             return $uS->userCredentials;
         }
 
-        $stmt = $dbh->prepare("SELECT u.*, a.Role_Id as Role_Id, ifnull(idp.Name, 'Unknown Provider') as 'authProvider'
-FROM w_users u join w_auth a on u.idName = a.idName
-join `name` n on n.idName = u.idName
-left join `w_idp` idp on u.`idIdp` = idp.`idIdp`
-WHERE n.idName is not null and u.Status IN ('a', 'd') and n.`Member_Status` = 'a' and u.User_Name = :uname");
+        $stmt = $dbh->prepare("SELECT `u`.*, `a`.`Role_Id` AS `Role_Id`, IFNULL(`idp`.`Name`, 'Unknown Provider') AS 'authProvider'
+FROM `w_users` `u` JOIN `w_auth` `a` ON `u`.`idName` = `a`.`idName`
+JOIN `name` `n` ON `n`.`idName` = `u`.`idName`
+LEFT JOIN `w_idp` `idp` ON `u`.`idIdp` = `idp`.`idIdp`
+WHERE `n`.`idName` IS NOT NULL AND `u`.`Status` IN ('a', 'd') AND `n`.`Member_Status` = 'a' AND `u`.`User_Name` = :uname");
 
         $stmt->execute(array(':uname'=>$uname));
         $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);

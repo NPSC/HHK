@@ -45,10 +45,11 @@ $labels = Labels::getLabels();
 
 function getBaMarkup(\PDO $dbh, $prefix = 'bagl') {
 
-	$stmt = $dbh->query("SELECT n.idName, n.Name_First, n.Name_Last, n.Company, nd.Gl_Code_Debit, nd.Gl_Code_Credit " .
-			" FROM name n join name_volunteer2 nv on n.idName = nv.idName and nv.Vol_Category = 'Vol_Type'  and nv.Vol_Code = '" . VolMemberType::BillingAgent . "' " .
-			" JOIN name_demog nd on n.idName = nd.idName  ".
-			" where n.Member_Status='a' and n.Record_Member = 1 order by n.Company");
+	$stmt = $dbh->prepare("SELECT `n`.`idName`, `n`.`Name_First`, `n`.`Name_Last`, `n`.`Company`, `nd`.`Gl_Code_Debit`, `nd`.`Gl_Code_Credit` " .
+			" FROM `name` `n` JOIN `name_volunteer2` `nv` ON `n`.`idName` = `nv`.`idName` AND `nv`.`Vol_Category` = 'Vol_Type' AND `nv`.`Vol_Code` = :volCode " .
+			" JOIN `name_demog` `nd` ON `n`.`idName` = `nd`.`idName`  ".
+			" WHERE `n`.`Member_Status` = 'a' AND `n`.`Record_Member` = 1 ORDER BY `n`.`Company`");
+	$stmt->execute([':volCode' => VolMemberType::BillingAgent]);
 
 	// Billing agent markup
 	$glTbl = new HTMLTable();
@@ -81,7 +82,7 @@ function getBaMarkup(\PDO $dbh, $prefix = 'bagl') {
 
 }
 
-function saveBa(\PDO $dbh, $post) {
+function saveBa(\PDO $dbh, array $post): void {
 
 	foreach ($post as $k => $v) {
 
@@ -97,19 +98,6 @@ function saveBa(\PDO $dbh, $post) {
 				EditRS::updateFields($dbh, new NameDemogRS(), ['idName' => $id], ['Gl_Code_Debit' => $gl]);
 			}
 		}
-
-// 		if (stristr($k, 'baglc')) {
-
-// 			$parts = explode('_', $k);
-
-// 			if (isset($parts[1]) && $parts[1] > 0) {
-
-// 				$id = intval($parts[1]);
-// 				$gl = filter_var($v, FILTER_SANITIZE_FULL_SPECIAL_CHARS);
-
-// 				$dbh->exec("Update name_demog set Gl_Code_Credit = '$gl' where idName = $id");
-// 			}
-// 		}
 	}
 
 }
@@ -324,7 +312,8 @@ if (isset($_POST['btnGlGo'])) {
 		$tbl->addBodyTr($lineHdr);
 
 		// Get payment methods (types) labels.
-		$pmstmt = $dbh->query("Select idPayment_method, Method_Name from payment_method;");
+		$pmstmt = $dbh->prepare("SELECT `idPayment_method`, `Method_Name` FROM `payment_method`;");
+		$pmstmt->execute();
 		$pmRows = $pmstmt->fetchAll(\PDO::FETCH_NUM);
 		$pmtMethods = array();
 		foreach ($pmRows as $r) {

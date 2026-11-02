@@ -182,7 +182,8 @@ class StayingReservation extends CheckingIn {
         }
 
         // Does visit exist
-        $stmt = $dbh->query("Select * from visit where Status = '" . VisitStatus::CheckedIn . "' and idReservation = " . $this->reserveData->getIdResv() . ";");
+        $stmt = $dbh->prepare("SELECT * FROM `visit` WHERE `Status` = :status AND `idReservation` = :idResv;");
+        $stmt->execute([':status' => VisitStatus::CheckedIn, ':idResv' => $this->reserveData->getIdResv()]);
 
         if ($stmt->rowCount() == 0) {
             throw new RuntimeException('Visit not found for reservation Id ' . $this->reserveData->getIdResv());
@@ -257,42 +258,51 @@ class StayingReservation extends CheckingIn {
      */
     protected function findCheckedInStays(\PDO $dbh, array &$psgMembers, $idPsg, $idVisit = 0, $idSpan = -1) {
 
-        $whStays = '';
+        $stayIds = [];
         $rooms = [];
 
         // Collect member ids
         foreach ($psgMembers as $m) {
             if ($m->getId() != 0 && $m->isBlocked() === FALSE) {
-                $whStays .= ',' . $m->getId();
+                $stayIds[] = $m->getId();
             }
         }
 
         // Find any visits.
-        if ($whStays != '') {
+        if (count($stayIds) > 0) {
+
+            $stayPh = [];
+            $stayParams = [];
+            foreach ($stayIds as $i => $sid) {
+                $ph = ':sid' . $i;
+                $stayPh[] = $ph;
+                $stayParams[$ph] = $sid;
+            }
 
             // Check ongoing visits
-            $vstmt = $dbh->query("SELECT
-    s.`idName`,
-    s.`idVisit`,
-    s.`Visit_Span`,
-    s.`idRoom`,
-    s.`Status` as `Status`,
-    r.`idPsg`,
-    rm.`Title`,
-    v.`idPrimaryGuest`
+            $vstmt = $dbh->prepare("SELECT
+    `s`.`idName`,
+    `s`.`idVisit`,
+    `s`.`Visit_Span`,
+    `s`.`idRoom`,
+    `s`.`Status` AS `Status`,
+    `r`.`idPsg`,
+    `rm`.`Title`,
+    `v`.`idPrimaryGuest`
 FROM
-    stays s
+    `stays` `s`
         JOIN
-    visit v ON s.idVisit = v.idVisit
-        AND s.Visit_Span = v.Span
+    `visit` `v` ON `s`.`idVisit` = `v`.`idVisit`
+        AND `s`.`Visit_Span` = `v`.`Span`
         JOIN
-    room rm ON s.idRoom = rm.idRoom
+    `room` `rm` ON `s`.`idRoom` = `rm`.`idRoom`
         JOIN
-    registration r ON v.idRegistration = r.idRegistration
+    `registration` `r` ON `v`.`idRegistration` = `r`.`idRegistration`
 WHERE
-    s.Status = 'a'
-    and s.idName in (" . substr($whStays, 1) . ") "
-                . " order by s.idVisit, s.Visit_Span");
+    `s`.`Status` = 'a'
+    AND `s`.`idName` IN (" . implode(', ', $stayPh) . ") "
+                . " ORDER BY `s`.`idVisit`, `s`.`Visit_Span`");
+            $vstmt->execute($stayParams);
 
             while ($s = $vstmt->fetch(\PDO::FETCH_ASSOC)) {
                 // These guests are already staying somewhere

@@ -48,7 +48,7 @@ class SysConfig {
 
         $rows = [];
         try {
-            $stmt = $dbh->prepare("select `Key`,`Value`,`Type` from `" . $tableName . "` where Category in (" . implode(', ', $catPh) . ") order by `Key`");
+            $stmt = $dbh->prepare("SELECT `Key`, `Value`, `Type` FROM `" . $tableName . "` WHERE `Category` IN (" . implode(', ', $catPh) . ") ORDER BY `Key`");
             $stmt->execute($catParams);
             $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
         
@@ -83,7 +83,7 @@ class SysConfig {
         }
 
         try{
-            $stmt = $dbh->prepare("select `Value`,`Type` from `" . $tableName . "` where `Key` = :key ");
+            $stmt = $dbh->prepare("SELECT `Value`, `Type` FROM `" . $tableName . "` WHERE `Key` = :key ");
             $stmt->execute([':key' => $key]);
             $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
         }catch(\Exception $e){
@@ -115,7 +115,7 @@ class SysConfig {
         }
 
         try{
-            $stmt = $dbh->prepare("select * from `" . $tableName . "` where `Key` = :key ");
+            $stmt = $dbh->prepare("SELECT * FROM `" . $tableName . "` WHERE `Key` = :key ");
             $stmt->execute([':key' => $key]);
             $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
         }catch(\Exception $e){
@@ -179,10 +179,10 @@ class SysConfig {
                 // Update table
                 $parms = array(':val'=>$value, ':key'=>$key);
                 if($category){
-                    $query = "update `" . $tableName . "` set `Value` = :val where `Key` = :key and `Category` = :category";
+                    $query = "UPDATE `" . $tableName . "` SET `Value` = :val WHERE `Key` = :key AND `Category` = :category";
                     $parms[':category'] = $category;
                 }else{
-                    $query = "update `" . $tableName . "` set `Value` = :val where `Key` = :key";
+                    $query = "UPDATE `" . $tableName . "` SET `Value` = :val WHERE `Key` = :key";
                 }
 
                 $stmt = $dbh->prepare($query);
@@ -198,7 +198,7 @@ class SysConfig {
 
         }else {
             if($category){
-                $query = "insert into `" . $tableName . "` (`Key`, `Value`, `Type`, `Category`) values (:key, :val, 's', :category)";
+                $query = "INSERT INTO `" . $tableName . "` (`Key`, `Value`, `Type`, `Category`) VALUES (:key, :val, 's', :category)";
                 $stmt = $dbh->prepare($query);
                 $stmt->execute([':key'=>$key, ':val'=>$value, ':category'=>$category]);
             }else{

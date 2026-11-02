@@ -681,7 +681,8 @@ class PaymentSvcs {
         }
 
         // Find hte detail record.
-        $stmt = $dbh->query("Select * from payment_auth where idPayment = " . $payRs->idPayment->getStoredVal() . " order by idPayment_auth");
+        $stmt = $dbh->prepare("SELECT * FROM `payment_auth` WHERE `idPayment` = :idPayment ORDER BY `idPayment_auth`");
+            $stmt->execute([':idPayment' => $payRs->idPayment->getStoredVal()]);
         $arows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
         if (count($arows) < 1) {
@@ -832,7 +833,8 @@ class PaymentSvcs {
             case PaymentMethod::Charge:
 
             	// Find the detail record.
-            	$stmt = $dbh->query("Select * from payment_auth where idPayment = " . $payRs->idPayment->getStoredVal() . " order by idPayment_auth");
+            	$stmt = $dbh->prepare("SELECT * FROM `payment_auth` WHERE `idPayment` = :idPayment ORDER BY `idPayment_auth`");
+            $stmt->execute([':idPayment' => $payRs->idPayment->getStoredVal()]);
             	$arows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
             	if (count($arows) < 1) {
@@ -976,7 +978,8 @@ class PaymentSvcs {
             	}
 
             	// Find the detail record.
-            	$stmt = $dbh->query("Select * from payment_auth where idPayment = $idPayment order by idPayment_auth");
+            	$stmt = $dbh->prepare("SELECT * FROM `payment_auth` WHERE `idPayment` = :idPayment ORDER BY `idPayment_auth`");
+            	$stmt->execute([':idPayment' => $idPayment]);
             	$arows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
             	if (count($arows) < 1) {
@@ -1160,7 +1163,8 @@ class PaymentSvcs {
 
             case PaymentMethod::Charge:
 
-                $stmt = $dbh->query("SELECT * FROM payment_auth where idPayment = $idPayment order by `Timestamp`");
+                $stmt = $dbh->prepare("SELECT * FROM `payment_auth` WHERE `idPayment` = :idPayment ORDER BY `Timestamp`");
+                $stmt->execute([':idPayment' => $idPayment]);
                 $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
                 if (count($rows) < 1) {

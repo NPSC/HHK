@@ -455,7 +455,8 @@ class ReferralForm
 	protected function LoadMemberData(\PDO $dbh, int $id, SearchNameDataInterface $snd, SearchNameDataInterface $formData): SearchNameDataInterface
 	{
 
-		$stmt = $dbh->query(ProgressiveSearch::getMemberQuery($id));
+		$stmt = $dbh->prepare(ProgressiveSearch::getMemberQuery($id));
+		$stmt->execute(ProgressiveSearch::getMemberParams($id));
 
 		while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
 			$snd->loadMeFrom($r, $formData);

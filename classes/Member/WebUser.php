@@ -95,7 +95,7 @@ class WebUser {
         }
 
         // Values for default page - build select from page table with per-option security group codes
-        $pageStmt = $dbh->prepare("select p.`File_Name`, p.`Title`, p.`Web_Site`, COALESCE(par.`Title`, '') as `Parent_Title`, GROUP_CONCAT(DISTINCT ps.`Group_Code` ORDER BY ps.`Group_Code` SEPARATOR ',') as `Group_Codes` from page p join page_securitygroup ps on p.`idPage` = ps.`idPage` left join page par on p.`Menu_Parent` = par.`idPage` where p.`Web_Site` in ('a','h') and p.Hide = 0 and p.Type = 'p' and p.Title != '' and p.`Login_Page_Id` > 0 and p.`File_Name` NOT REGEXP '^_' and p.`Menu_Parent` != '' group by p.`idPage` order by p.`Web_Site`, p.`Menu_Parent`, p.`Menu_Position`");
+        $pageStmt = $dbh->prepare("SELECT `p`.`File_Name`, `p`.`Title`, `p`.`Web_Site`, COALESCE(`par`.`Title`, '') AS `Parent_Title`, GROUP_CONCAT(DISTINCT `ps`.`Group_Code` ORDER BY `ps`.`Group_Code` SEPARATOR ',') AS `Group_Codes` FROM `page` `p` JOIN `page_securitygroup` `ps` ON `p`.`idPage` = `ps`.`idPage` LEFT JOIN `page` `par` ON `p`.`Menu_Parent` = `par`.`idPage` WHERE `p`.`Web_Site` IN ('a','h') AND `p`.`Hide` = 0 AND `p`.`Type` = 'p' AND `p`.`Title` != '' AND `p`.`Login_Page_Id` > 0 AND `p`.`File_Name` NOT REGEXP '^_' AND `p`.`Menu_Parent` != '' GROUP BY `p`.`idPage` ORDER BY `p`.`Web_Site`, `p`.`Menu_Parent`, `p`.`Menu_Position`");
         $pageStmt->execute();
         $pageRows = $pageStmt->fetchAll(\PDO::FETCH_ASSOC);
 
@@ -211,7 +211,7 @@ class WebUser {
     public static function getSecurityGroupMarkup(\PDO $dbh, $id, $allowFlag) {
 
         $sArray = array();
-        $stmt = $dbh->prepare("select `Group_Code` as `Code`, `Title` as `Description` from w_groups");
+        $stmt = $dbh->prepare("SELECT `Group_Code` AS `Code`, `Title` AS `Description` FROM `w_groups`");
         $stmt->execute();
         $grps = $stmt->fetchAll();
         foreach ($grps as $g) {
@@ -220,7 +220,7 @@ class WebUser {
 
         $aArray = array();
 
-        $query = "select Group_Code, Timestamp from id_securitygroup where idName = :id;";
+        $query = "SELECT `Group_Code`, `Timestamp` FROM `id_securitygroup` WHERE `idName` = :id;";
         $stmt = $dbh->prepare($query);
         $stmt->execute([':id' => $id]);
 
@@ -423,9 +423,16 @@ class WebUser {
             }
 
             // Register the user
+            $query = "CALL `register_web_user`(:id, '', :wUserName, :admin, 'p', :role, :pwHash, '', 1, 0);";
+
             try{
-                $stmt = $dbh->prepare("call register_web_user(:id, '', :uname, :admin, 'p', :role, :pw, '', 1, 0);");
-                $stmt->execute([':id' => $id, ':uname' => $wUserName, ':admin' => $admin, ':role' => $role, ':pw' => $pwHash]);
+                $dbh->prepare($query)->execute([
+                    ':id' => $id,
+                    ':wUserName' => $wUserName,
+                    ':admin' => $admin,
+                    ':role' => $role,
+                    ':pwHash' => $pwHash,
+                ]);
             }catch(\PDOException $e){
                 $err = $dbh->errorInfo();
                 return array("error"=>$err[2]);
@@ -496,7 +503,7 @@ class WebUser {
     public static function updateSecurityGroups(\PDO $dbh, int $id, array $parms, $updatedBy){
         // Group Code security table
         $sArray = array();
-        $stmt = $dbh->prepare("select `Group_Code` as 'Code', `Description` from `w_groups`;");
+        $stmt = $dbh->prepare("SELECT `Group_Code` AS 'Code', `Description` FROM `w_groups`;");
         $stmt->execute();
         $groups = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 

@@ -29,9 +29,10 @@ class ActivityReport {
     public static function staysLog(\PDO $dbh, $startDate, $endDate, $idPsg = 0) {
 
         if ($idPsg > 0) {
-            $stmt = $dbh->query("select * from vstays_log sl where sl.idName in (select idName from name_guest where idPsg = $idPsg);");
+            $stmt = $dbh->prepare("SELECT * FROM `vstays_log` `sl` WHERE `sl`.`idName` IN (SELECT `idName` FROM `name_guest` WHERE `idPsg` = :idPsg);");
+            $stmt->execute([':idPsg' => $idPsg]);
         } else {
-            $query = "select * from vstays_log where (DATE(Timestamp) >= :start and DATE(Timestamp) <= :end);";
+            $query = "SELECT * FROM `vstays_log` WHERE (DATE(`Timestamp`) >= :start AND DATE(`Timestamp`) <= :end);";
 
             $stmt = $dbh->prepare($query);
             $stmt->execute(array(':start' => $startDate, ':end' => $endDate));
@@ -156,15 +157,17 @@ class ActivityReport {
         if ($resvId > 0) {
 
             $idResv = intval($resvId, 10);
-            $stmt = $dbh->query("select * from vreservation_log where idReservation = $idResv;");
+            $stmt = $dbh->prepare("SELECT * FROM `vreservation_log` WHERE `idReservation` = :idResv;");
+            $stmt->execute([':idResv' => $idResv]);
 
         } else if ($idPsg > 0) {
 
-            $stmt = $dbh->query("select * from vreservation_log sl where sl.idName in (select idName from name_guest where idPsg = $idPsg);");
+            $stmt = $dbh->prepare("SELECT * FROM `vreservation_log` `sl` WHERE `sl`.`idName` IN (SELECT `idName` FROM `name_guest` WHERE `idPsg` = :idPsg);");
+            $stmt->execute([':idPsg' => $idPsg]);
 
         } else {
 
-            $query = "select * from vreservation_log where (DATE(Timestamp) >= :start and DATE(Timestamp) <= :end);";
+            $query = "SELECT * FROM `vreservation_log` WHERE (DATE(`Timestamp`) >= :start AND DATE(`Timestamp`) <= :end);";
             $stmt = $dbh->prepare($query);
             $stmt->execute(array(':start' => $startDate, ':end' => $endDate));
         }
@@ -260,11 +263,12 @@ class ActivityReport {
 
         if ($idP > 0) {
 
-            $stmt = $dbh->query("select * from vhospitalstay_log where idPsg = $idP;");
+            $stmt = $dbh->prepare("SELECT * FROM `vhospitalstay_log` WHERE `idPsg` = :idP;");
+            $stmt->execute([':idP' => $idP]);
 
         } else if ($startDate != '' && $endDate != '') {
 
-            $query = "select * from vhospitalstay_log where (DATE(Timestamp) >= :start and DATE(Timestamp) <= :end) order by idPsg, Timestamp;";
+            $query = "SELECT * FROM `vhospitalstay_log` WHERE (DATE(`Timestamp`) >= :start AND DATE(`Timestamp`) <= :end) ORDER BY `idPsg`, `Timestamp`;";
             $stmt = $dbh->prepare($query);
             $stmt->execute(array(':start' => $startDate, ':end' => $endDate));
 
@@ -277,13 +281,15 @@ class ActivityReport {
         $locations = Common::readGenLookupsPDO($dbh, 'Location');
         $psgId = 0;
 
-        $stmtd = $dbh->query("select n.idName, n.Name_Full from `name` n join name_volunteer2 nv on n.idName = nv.idName where nv.Vol_Category = 'Vol_Type' and nv.Vol_Code = 'doc'");
+        $stmtd = $dbh->prepare("SELECT `n`.`idName`, `n`.`Name_Full` FROM `name` `n` JOIN `name_volunteer2` `nv` ON `n`.`idName` = `nv`.`idName` WHERE `nv`.`Vol_Category` = 'Vol_Type' AND `nv`.`Vol_Code` = 'doc'");
+        $stmtd->execute();
         $doctors = array();
         while ($d = $stmtd->fetch(\PDO::FETCH_ASSOC)) {
             $doctors[$d['idName']] = $d['Name_Full'];
         }
 
-        $stmtra = $dbh->query("select n.idName, n.Name_Full from `name` n join name_volunteer2 nv on n.idName = nv.idName where nv.Vol_Category = 'Vol_Type' and nv.Vol_Code = 'ra'");
+        $stmtra = $dbh->prepare("SELECT `n`.`idName`, `n`.`Name_Full` FROM `name` `n` JOIN `name_volunteer2` `nv` ON `n`.`idName` = `nv`.`idName` WHERE `nv`.`Vol_Category` = 'Vol_Type' AND `nv`.`Vol_Code` = 'ra'");
+        $stmtra->execute();
         $referralAgents = array();
         while ($ra = $stmtra->fetch(\PDO::FETCH_ASSOC)) {
             $referralAgents[$ra['idName']] = $ra['Name_Full'];
@@ -481,6 +487,7 @@ class ActivityReport {
         $payTypeTotals = [];
         $payTypeText = '';
         $showExternlId = FALSE;
+        $queryParams = [];
 
         $labels = Labels::getLabels();
 
@@ -488,11 +495,13 @@ class ActivityReport {
 
         // Dates
         if ($startDT != NULL) {
-            $whDates .= " and (CASE WHEN lp.Payment_Last_Updated = '' THEN DATE(lp.Payment_Date) ELSE DATE(lp.Payment_Last_Updated) END) >= DATE('" . $startDT->format('Y-m-d') . "') ";
+            $whDates .= " AND (CASE WHEN `lp`.`Payment_Last_Updated` = '' THEN DATE(`lp`.`Payment_Date`) ELSE DATE(`lp`.`Payment_Last_Updated`) END) >= DATE(:whDateStart) ";
+            $queryParams[':whDateStart'] = $startDT->format('Y-m-d');
         }
 
         if ($endDT != NULL) {
-            $whDates .= " and (CASE WHEN lp.Payment_Last_Updated = '' THEN DATE(lp.Payment_Date) ELSE DATE(lp.Payment_Last_Updated) END) <= DATE('" . $endDT->format('Y-m-d') . "') ";
+            $whDates .= " AND (CASE WHEN `lp`.`Payment_Last_Updated` = '' THEN DATE(`lp`.`Payment_Date`) ELSE DATE(`lp`.`Payment_Last_Updated`) END) <= DATE(:whDateEnd) ";
+            $queryParams[':whDateEnd'] = $endDT->format('Y-m-d');
         }
 
         // Set up status totals array
@@ -507,17 +516,16 @@ class ActivityReport {
         }
 
         $rtnIncluded = FALSE;
+        $statusPlaceholders = [];
 
         foreach ($feeStatuses as $s) {
 
             if ($s != '') {
 
                 // Set up query where part.
-                if ($whStatus == '') {
-                    $whStatus = "'" . $s . "'";
-                } else {
-                    $whStatus .= ",'" . $s . "'";
-                }
+                $ph = ':whStatus' . count($statusPlaceholders);
+                $statusPlaceholders[] = $ph;
+                $queryParams[$ph] = $s;
 
                 if ($s == PaymentStatusCode::Retrn) {
                     $rtnIncluded = TRUE;
@@ -533,12 +541,13 @@ class ActivityReport {
             }
         }
 
-        if ($whStatus != '') {
+        if (count($statusPlaceholders) > 0) {
 
             if ($rtnIncluded) {
-                $whStatus = " and (`lp`.`Payment_Status` in (" . $whStatus . ") or (`lp`.`Is_Refund` = 1 && `lp`.`Payment_Status` = '" . PaymentStatusCode::Paid . "')) ";
+                $whStatus = " AND (`lp`.`Payment_Status` IN (" . implode(',', $statusPlaceholders) . ") OR (`lp`.`Is_Refund` = 1 && `lp`.`Payment_Status` = :whStatusPaid)) ";
+                $queryParams[':whStatusPaid'] = PaymentStatusCode::Paid;
             } else {
-                $whStatus = " and `lp`.`Payment_Status` in (" . $whStatus . ") ";
+                $whStatus = " AND `lp`.`Payment_Status` IN (" . implode(',', $statusPlaceholders) . ") ";
             }
         }
 
@@ -548,7 +557,8 @@ class ActivityReport {
         $active = $allSelected ? 'y' : 'n';
 
         // get payment methods
-        $stmtp = $dbh->query("select * from payment_method");
+        $stmtp = $dbh->prepare("SELECT * FROM `payment_method`");
+        $stmtp->execute();
         while ($t = $stmtp->fetch(\PDO::FETCH_NUM)) {
             if ($t[0] > 0 && strtolower($t[1]) != 'chgascash') {
                 $payTypeTotals[$t[0]] = ['amount' => 0.00, 'count' => 0, 'title' => $t[1], 'active' => $active];
@@ -584,7 +594,7 @@ class ActivityReport {
                 if ($entry !== null) {
                     $methodId = (int)$entry[2];
                     if ($methodId === PaymentMethod::External) {
-                        $externalTypeCodes[] = "'" . $s . "'";
+                        $externalTypeCodes[] = $s;
                     } else {
                         $standardMethodIds[] = $methodId;
                     }
@@ -601,10 +611,23 @@ class ActivityReport {
 
         $typeConditions = [];
         if (!empty($standardMethodIds)) {
-            $typeConditions[] = "`lp`.`idPayment_Method` IN (" . implode(',', array_unique($standardMethodIds)) . ")";
+            $methodPlaceholders = [];
+            foreach (array_unique($standardMethodIds) as $idx => $methodId) {
+                $ph = ':whMethod' . $idx;
+                $methodPlaceholders[] = $ph;
+                $queryParams[$ph] = $methodId;
+            }
+            $typeConditions[] = "`lp`.`idPayment_Method` IN (" . implode(',', $methodPlaceholders) . ")";
         }
         if (!empty($externalTypeCodes)) {
-            $typeConditions[] = "(`lp`.`idPayment_Method` = " . PaymentMethod::External . " AND `tx`.`Payment_Type` IN (" . implode(',', $externalTypeCodes) . "))";
+            $extPlaceholders = [];
+            foreach ($externalTypeCodes as $idx => $code) {
+                $ph = ':whExtType' . $idx;
+                $extPlaceholders[] = $ph;
+                $queryParams[$ph] = $code;
+            }
+            $typeConditions[] = "(`lp`.`idPayment_Method` = :whExternalMethod AND `tx`.`Payment_Type` IN (" . implode(',', $extPlaceholders) . "))";
+            $queryParams[':whExternalMethod'] = PaymentMethod::External;
         }
         if (!empty($typeConditions)) {
             $whType = " AND (" . implode(' OR ', $typeConditions) . ") ";
@@ -612,39 +635,41 @@ class ActivityReport {
 
         // Guest id selector
         if ($idReg > 0) {
-            $whId = " and `lp`.`idGroup` = $idReg ";
+            $whId = " AND `lp`.`idGroup` = :whIdReg ";
+            $queryParams[':whIdReg'] = $idReg;
         }
 
         if ($showDeletedInv === FALSE) {
-            $whId .= " and `lp`.`Deleted` = 0 ";
+            $whId .= " AND `lp`.`Deleted` = 0 ";
         }
 
-        $query = "Select
-    lp.*,
+        $query = "SELECT
+    `lp`.*,
     " . Statement::externalPaymentTitleSelectSql('lp') . ",
-    `tx`.`Payment_Type` as `Pay_Type_Code`,
-    ifnull(`n`.`Name_First`, '') as `First`,
-    ifnull(`n`.`Name_Last`, '') as `Last`,
-    ifnull(`n`.`Company`, '') as `Company`,
-    ifnull(`r`.`Title`, '') as `Room`,
-    ifnull(`re`.`idPsg`, 0) as `idPsg`,
+    `tx`.`Payment_Type` AS `Pay_Type_Code`,
+    IFNULL(`n`.`Name_First`, '') AS `First`,
+    IFNULL(`n`.`Name_Last`, '') AS `Last`,
+    IFNULL(`n`.`Company`, '') AS `Company`,
+    IFNULL(`r`.`Title`, '') AS `Room`,
+    IFNULL(`re`.`idPsg`, 0) AS `idPsg`,
     `v`.`idVisit`,
     `v`.`Span`
-from
+FROM
     `vlist_inv_pments` `lp`
-        left join
+        LEFT JOIN
     `name` `n` ON `lp`.`Sold_To_Id` = `n`.`idName`
-        left join
-    `visit` `v` on `lp`.`Order_Number` = `v`.`idVisit` and `lp`.`Suborder_Number` = `v`.`Span`
-	left join
+        LEFT JOIN
+    `visit` `v` ON `lp`.`Order_Number` = `v`.`idVisit` AND `lp`.`Suborder_Number` = `v`.`Span`
+	LEFT JOIN
     `resource` `r` ON `v`.`idResource` = `r`.`idResource`
-        left join
-    `registration` `re` on `v`.`idRegistration` = `re`.`idRegistration`
+        LEFT JOIN
+    `registration` `re` ON `v`.`idRegistration` = `re`.`idRegistration`
         " . Statement::externalPaymentTitleJoinSql('lp') . "
-where `lp`.`idPayment` > 0
- $whDates $whStatus $whType $whId Order By lp.idInvoice;";
+WHERE `lp`.`idPayment` > 0
+ $whDates $whStatus $whType $whId ORDER BY `lp`.`idInvoice`;";
 
-        $stmt = $dbh->query($query);
+        $stmt = $dbh->prepare($query);
+        $stmt->execute($queryParams);
         $invoices = Statement::processPayments($stmt, ['First', 'Last', 'Company', 'Room', 'idPsg', 'idVisit', 'Span', 'Invoice_Created_At']);
 
         $rowCount = $stmt->rowCount();
@@ -916,29 +941,29 @@ where `lp`.`idPayment` > 0
 `i`.`Order_Number`,
 `i`.`Suborder_Number`,
 `i`.`Sold_To_Id`,
-n.Name_Full as Sold_To_Name,
-n.Company,
-ifnull(np.Name_Full, '') as Patient_Name,
-ifnull(re.Title, '') as `Title`,
-ifnull(hs.idHospital, 0) as `idHospital`,
-ifnull(hs.idAssociation, 0) as `idAssociation`,
-ifnull(hs.idPatient, 0) as `idPatient`,
+`n`.`Name_Full` AS `Sold_To_Name`,
+`n`.`Company`,
+IFNULL(`np`.`Name_Full`, '') AS `Patient_Name`,
+IFNULL(`re`.`Title`, '') AS `Title`,
+IFNULL(`hs`.`idHospital`, 0) AS `idHospital`,
+IFNULL(`hs`.`idAssociation`, 0) AS `idAssociation`,
+IFNULL(`hs`.`idPatient`, 0) AS `idPatient`,
 `i`.`idGroup`,
 `i`.`Invoice_Date`,
 `i`.`Payment_Attempts`,
-i.BillStatus,
-i.BillDate,
-i.EmailDate,
-i.Notes,
+`i`.`BillStatus`,
+`i`.`BillDate`,
+`i`.`EmailDate`,
+`i`.`Notes`,
 `i`.`Status`,
 `i`.`Updated_By`,
 `i`.`Last_Updated`
-FROM `invoice` `i` left join `name` n on i.Sold_To_Id = n.idName
-    left join visit v on i.Order_Number = v.idVisit and i.Suborder_Number = v.Span
-    left join hospital_stay hs on hs.idHospital_stay = v.idHospital_stay
-    left join name np on hs.idPatient = np.idName
-    left join resource re on v.idResource = re.idResource
-where i.Deleted = 0 and i.`Status` = '" . InvoiceStatus::Unpaid . "';";
+FROM `invoice` `i` LEFT JOIN `name` `n` ON `i`.`Sold_To_Id` = `n`.`idName`
+    LEFT JOIN `visit` `v` ON `i`.`Order_Number` = `v`.`idVisit` AND `i`.`Suborder_Number` = `v`.`Span`
+    LEFT JOIN `hospital_stay` `hs` ON `hs`.`idHospital_stay` = `v`.`idHospital_stay`
+    LEFT JOIN `name` `np` ON `hs`.`idPatient` = `np`.`idName`
+    LEFT JOIN `resource` `re` ON `v`.`idResource` = `re`.`idResource`
+WHERE `i`.`Deleted` = 0 AND `i`.`Status` = :status;";
 
         $tbl = new HTMLTable();
         $tbl->addHeaderTr(
@@ -960,7 +985,8 @@ where i.Deleted = 0 and i.`Status` = '" . InvoiceStatus::Unpaid . "';";
 
         $invStatuses = Common::readGenLookupsPDO($dbh, 'Invoice_Status');
 
-        $stmt = $dbh->query($query);
+        $stmt = $dbh->prepare($query);
+        $stmt->execute([':status' => InvoiceStatus::Unpaid]);
 
         while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
 

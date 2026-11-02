@@ -649,7 +649,9 @@ try {
                 throw new RuntimeException("Payment ID must be a valid UUID.");
             }
 
-            $gwRow = $dbh->query("SELECT `cc_name` FROM `cc_hosted_gateway` WHERE `Gateway_Name` = '" . AbstractPaymentGateway::DELUXE . "' LIMIT 1")->fetch(\PDO::FETCH_ASSOC);
+            $gwStmt = $dbh->prepare("SELECT `cc_name` FROM `cc_hosted_gateway` WHERE `Gateway_Name` = :gatewayName LIMIT 1");
+            $gwStmt->execute([':gatewayName' => AbstractPaymentGateway::DELUXE]);
+            $gwRow = $gwStmt->fetch(\PDO::FETCH_ASSOC);
             if ($gwRow === false) {
                 throw new RuntimeException("No Deluxe payment gateway merchant found.");
             }
@@ -683,7 +685,9 @@ try {
                 throw new RuntimeException("Payment ID must be a valid UUID.");
             }
 
-            $gwRow = $dbh->query("SELECT `cc_name` FROM `cc_hosted_gateway` WHERE `Gateway_Name` = '" . AbstractPaymentGateway::DELUXE . "' LIMIT 1")->fetch(\PDO::FETCH_ASSOC);
+            $gwStmt = $dbh->prepare("SELECT `cc_name` FROM `cc_hosted_gateway` WHERE `Gateway_Name` = :gatewayName LIMIT 1");
+            $gwStmt->execute([':gatewayName' => AbstractPaymentGateway::DELUXE]);
+            $gwRow = $gwStmt->fetch(\PDO::FETCH_ASSOC);
             if ($gwRow === false) {
                 throw new RuntimeException("No Deluxe payment gateway merchant found.");
             }

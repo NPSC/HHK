@@ -70,9 +70,7 @@ function getChangeLog(\PDO $dbh, $naIndex, $stDate = "", $endDate = "") {
         $actParams[':naIndex1'] = $naIndex;
     }
 
-    $query = "SELECT * FROM `name_log` WHERE 1=1 " . $whereName . $logDates . " ORDER BY `Date_Time` DESC LIMIT 200;";
-
-    $result2 = $dbh->prepare($query);
+    $result2 = $dbh->prepare("SELECT * FROM `name_log` WHERE 1=1 " . $whereName . $logDates . " ORDER BY `Date_Time` DESC LIMIT 200;");
     $result2->execute($logParams);
 
     $data = "<table id='dataTbl' class='display'><thead><tr>
@@ -126,8 +124,8 @@ if (filter_has_var(INPUT_POST, "table")) {
 
     $tableName = substr(filter_var($_POST["table"], FILTER_SANITIZE_FULL_SPECIAL_CHARS), 0, 45);
 
-    $res = $dbh->prepare("Select Code, Description, Substitute from gen_lookups where Table_Name = :tbl;");
-    $res->execute([':tbl' => $tableName]);
+    $res = $dbh->prepare("SELECT `Code`, `Description`, `Substitute` FROM `gen_lookups` WHERE `Table_Name`=:tableName;");
+    $res->execute([':tableName' => $tableName]);
 
     $code = array(
         "Code" => "",
@@ -186,7 +184,7 @@ if (isset($_POST["btnGenLookups"])) {
 
             // Is the table_name there?
 
-            $stmt = $dbh->prepare("select count(*) from gen_lookups where Table_Name = ?");
+            $stmt = $dbh->prepare("SELECT COUNT(*) FROM `gen_lookups` WHERE `Table_Name` = ?");
             $stmt->execute(array($selTbl));
             $rows = $stmt->fetchAll(PDO::FETCH_NUM);
 
@@ -195,7 +193,7 @@ if (isset($_POST["btnGenLookups"])) {
             } else {
 
                 // Is the Code there?
-                $stmt1 = $dbh->prepare("select count(*) from gen_lookups where Table_Name = ? and Code = ?");
+                $stmt1 = $dbh->prepare("SELECT COUNT(*) FROM `gen_lookups` WHERE `Table_Name` = ? AND `Code` = ?");
                 $stmt1->execute(array($selTbl, $code));
                 $row = $stmt1->fetchAll(PDO::FETCH_NUM);
 
@@ -250,8 +248,10 @@ $cleanMsg = '';
 if (isset($_POST['btnClnPhone'])) {
     // Clean up phone numbers
     $accordIndex = 1;
-    $stmt = $dbh->query("select idName, Phone_Code, Phone_Num from name_phone where Phone_Num <> '';");
+    $stmt = $dbh->prepare("SELECT `idName`, `Phone_Code`, `Phone_Num` FROM `name_phone` WHERE `Phone_Num` <> '';");
+    $stmt->execute();
     $n = 0;
+
 
     while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
 
@@ -269,7 +269,8 @@ if (isset($_POST['btnClnPhone'])) {
 if (isset($_POST['btnClnNames'])) {
     // Clean up
     $accordIndex = 1;
-    $stmt = $dbh->query("select * from `name` where idName > 0 and Record_Member = 1 and Name_Last <> '';");
+    $stmt = $dbh->prepare("SELECT * FROM `name` WHERE `idName` > 0 AND `Record_Member` = 1 AND `Name_Last` <> '';");
+    $stmt->execute();
     $c = 0;
 
     while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
@@ -408,8 +409,9 @@ if (filter_has_var(INPUT_POST, "btnDelIds")) {
     $stayIds = '';
 
     // Check for existing donation records
-    $query = "select d.Donor_Id, sum(d.Amount), n.Name_Last_First from donations d left join name n on d.Donor_Id = n.idName where d.Status='a' and n.Member_Status in ('u','TBD') group by d.Donor_Id;";
-    $res = $dbh->query($query);
+    $query = "SELECT `d`.`Donor_Id`, SUM(`d`.`Amount`), `n`.`Name_Last_First` FROM `donations` `d` LEFT JOIN `name` `n` ON `d`.`Donor_Id` = `n`.`idName` WHERE `d`.`Status`='a' AND `n`.`Member_Status` IN ('u','TBD') GROUP BY `d`.`Donor_Id`;";
+    $res = $dbh->prepare($query);
+    $res->execute();
 
     while ($r = $res->fetch(\PDO::FETCH_NUM)) {
         $ids .= $r[0] . ",  ";
@@ -417,7 +419,8 @@ if (filter_has_var(INPUT_POST, "btnDelIds")) {
     }
 
     // Check for existing stays
-    $staysStmt = $dbh->query("select n.idName, n.Name_Last_First from stays s left join name n on n.idName = s.idName where n.Member_Status in ('u','TBD') and (s.Status = '" . VisitStatus::CheckedIn . "' or DATEDIFF(ifnull(s.Span_End_Date, now()), s.Span_Start_Date) > 0) group by s.idName");
+    $staysStmt = $dbh->prepare("SELECT `n`.`idName`, `n`.`Name_Last_First` FROM `stays` `s` LEFT JOIN `name` `n` ON `n`.`idName` = `s`.`idName` WHERE `n`.`Member_Status` IN ('u','TBD') AND (`s`.`Status` = :status OR DATEDIFF(IFNULL(`s`.`Span_End_Date`, NOW()), `s`.`Span_Start_Date`) > 0) GROUP BY `s`.`idName`");
+    $staysStmt->execute([':status' => VisitStatus::CheckedIn]);
     while ($r = $staysStmt->fetch(\PDO::FETCH_ASSOC)) {
         $stayIds .= $r['idName'] . ', ';
         $numStays++;
@@ -439,7 +442,8 @@ if (filter_has_var(INPUT_POST, "btnDelIds")) {
         $tbdIds = $dbh->query("select idName from name where Member_Status = 'u' or Member_Status = 'TBD'")->fetchAll(\PDO::FETCH_COLUMN);
 
         // delete the name and associated records.
-        $delStmt = $dbh->query("call delete_names_u_tbd;");
+        $delStmt = $dbh->prepare("CALL `delete_names_u_tbd`;");
+        $delStmt->execute();
         $response = $delStmt->fetchAll(\PDO::FETCH_ASSOC);
         $delStmt->nextRowset();
 
@@ -466,7 +470,9 @@ if (filter_has_var(INPUT_POST, "btnDelIds")) {
 
 $selLookups = "<option value=''>No records</option>";
 
-if (($stmt = $dbh->query("select distinct `Table_Name` from `gen_lookups`;")) !== FALSE) {
+$stmt = $dbh->prepare("SELECT DISTINCT `Table_Name` FROM `gen_lookups`;");
+
+if ($stmt->execute() !== FALSE) {
 
     $selLookups = "<option value=''>Select</option>";
 

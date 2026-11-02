@@ -107,17 +107,16 @@ class LinkNote {
 
                 // We actually need the reservation ID
                 $stmt = $dbh->prepare("SELECT
-                    `v`.`idReservation`, IFNULL(`r`.`Title`, '(?)')
-                    FROM
-                    `visit` `v`
-                    LEFT JOIN
-                        `reservation` `rv` on `v`.`idReservation` = `rv`.`idReservation`
-	                LEFT JOIN
-                        `resource` `r` ON `rv`.`idResource` = `r`.`idResource`
-                    WHERE
-                        `v`.`Span` = 0 AND `v`.`idVisit` = :idLink");
-                $stmt->execute([':idLink'=>$linkId]);
-                
+    `v`.`idReservation`, IFNULL(`r`.`Title`, '(?)')
+FROM
+    `visit` `v`
+        LEFT JOIN
+    `reservation` `rv` ON `v`.`idReservation` = `rv`.`idReservation`
+	LEFT JOIN
+    `resource` `r` ON `rv`.`idResource` = `r`.`idResource`
+WHERE
+    `v`.`Span` = 0 AND `v`.`idVisit` = :linkId");
+                $stmt->execute([':linkId' => $linkId]);
                 $rows = $stmt->fetchAll(\PDO::FETCH_NUM);
 
                 if (count($rows) > 0) {

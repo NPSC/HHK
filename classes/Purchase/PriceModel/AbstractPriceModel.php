@@ -100,7 +100,8 @@ abstract class AbstractPriceModel {
     public function loadVisitNights(\PDO $dbh, $idVisit, $depDT = null) {
 
         // Get current nights .
-        $stmt1 = $dbh->query("select * from `vvisit_stmt` where `idVisit` = $idVisit and `Status` != 'p' order by `Span`");
+        $stmt1 = $dbh->prepare("SELECT * FROM `vvisit_stmt` WHERE `idVisit` = :idVisit AND `Status` != 'p' ORDER BY `Span`");
+        $stmt1->execute([':idVisit' => $idVisit]);
 
         return $stmt1->fetchAll(\PDO::FETCH_ASSOC);
     }
@@ -114,7 +115,8 @@ abstract class AbstractPriceModel {
     public function loadRegistrationNights(\PDO $dbh, $idRegistration) {
 
         // Get current nights .
-        $stmt1 = $dbh->query("select * from `vvisit_stmt` where `idRegistration` = $idRegistration and `Status` != 'p' order by `idVisit`, `Span`");
+        $stmt1 = $dbh->prepare("SELECT * FROM `vvisit_stmt` WHERE `idRegistration` = :idRegistration AND `Status` != 'p' ORDER BY `idVisit`, `Span`");
+        $stmt1->execute([':idRegistration' => $idRegistration]);
 
         return $stmt1->fetchAll(\PDO::FETCH_ASSOC);
     }
@@ -270,13 +272,13 @@ abstract class AbstractPriceModel {
      * @param mixed $r
      * @param float|int $totalAmt
      * @param HTMLTable $tbl
-     * @param mixed $tiers
+     * @param array $tiers
      * @param \DateTime $startDT
      * @param string $separator
      * @param int|float $totalGuestNites
      * @return float|int
      */
-    public function tiersMarkup($r, &$totalAmt, &$tbl, $tiers, &$startDT, $separator, &$totalGuestNites) {
+    public function tiersMarkup($r, &$totalAmt, HTMLTable &$tbl, array $tiers, &$startDT, $separator, &$totalGuestNites) {
 
         $roomCharge = 0;
 
@@ -521,9 +523,10 @@ abstract class AbstractPriceModel {
     protected static function getModelRoomRates(\PDO $dbh, $priceModelCode) {
 
         // Room rates
-        $stmt = $dbh->query("SELECT `idRoom_rate`,`Title`, `Description`, `FA_Category`, `Rate_Breakpoint_Category`, `Reduced_Rate_1`, `Reduced_Rate_2`, `Reduced_Rate_3`, `Min_Rate`, `Status`, IF(`Rate_Breakpoint_Category` != '', 1,0) as 'breakpointOrder'
+        $stmt = $dbh->prepare("SELECT `idRoom_rate`,`Title`, `Description`, `FA_Category`, `Rate_Breakpoint_Category`, `Reduced_Rate_1`, `Reduced_Rate_2`, `Reduced_Rate_3`, `Min_Rate`, `Status`, IF(`Rate_Breakpoint_Category` != '', 1,0) AS 'breakpointOrder'
 FROM `room_rate`
-where PriceModel = '$priceModelCode' order by `breakpointOrder` desc, FA_Category asc;");
+WHERE `PriceModel` = :priceModelCode ORDER BY `breakpointOrder` DESC, `FA_Category` ASC;");
+        $stmt->execute([':priceModelCode' => $priceModelCode]);
 
         $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
         $rrates = array();
@@ -824,7 +827,7 @@ where PriceModel = '$priceModelCode' order by `breakpointOrder` desc, FA_Categor
 
     /**
      * Summary of getNewRateCategory
-     * @throws \HHK\Exception\RuntimeException
+     * @throws RuntimeException
      * @return mixed
      */
     public function getNewRateCategory() {
@@ -939,7 +942,7 @@ where PriceModel = '$priceModelCode' order by `breakpointOrder` desc, FA_Categor
      * @param \PDO $dbh
      * @param mixed $modelCode
      * @param mixed $incomeRated
-     * @throws \HHK\Exception\RuntimeException
+     * @throws RuntimeException
      * @return void
      */
     public static function installRates(\PDO $dbh, $modelCode, $incomeRated) {

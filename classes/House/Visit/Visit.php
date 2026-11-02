@@ -1002,7 +1002,8 @@ class Visit {
         EditRS::updateStoredVals($stayRS);
 
         // Get guest names
-        $stmt = $dbh->query("Select Name_Full from `name` where idName = $idGuest;");
+        $stmt = $dbh->prepare("SELECT `Name_Full` FROM `name` WHERE `idName` = :idGuest;");
+        $stmt->execute([':idGuest' => $idGuest]);
         $gsts = $stmt->fetchAll(\PDO::FETCH_NUM);
         $guestName = '';
 

@@ -709,7 +709,8 @@ class RoomChooser {
 
             if ($idResv > 0) {
 
-                $stmt = $dbh->query("Select idRoom_rate, Room_Rate_Category from reservation where idReservation = $idResv");
+                $stmt = $dbh->prepare("SELECT `idRoom_rate`, `Room_Rate_Category` FROM `reservation` WHERE `idReservation` = :idResv");
+                $stmt->execute([':idResv' => $idResv]);
                 $rows = $stmt->fetchAll(\PDO::FETCH_NUM);
 
                 if (is_array($rows)) {

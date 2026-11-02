@@ -330,7 +330,8 @@ class FinAssistance {
         $maxHhSize = 1;
         $ratCats = [];
 
-        $stmt = $dbh->query("Select max(Household_Size) from rate_breakpoint;");
+        $stmt = $dbh->prepare("SELECT MAX(`Household_Size`) FROM `rate_breakpoint`;");
+        $stmt->execute();
         $rows = $stmt->fetchAll(\PDO::FETCH_NUM);
 
         if (count($rows) > 0) {
@@ -342,7 +343,8 @@ class FinAssistance {
         }
 
         // preload all rate categories
-        $stmt = $dbh->query("select distinct Rate_Category from rate_breakpoint ORDER BY `Rate_Category`");
+        $stmt = $dbh->prepare("SELECT DISTINCT `Rate_Category` FROM `rate_breakpoint` ORDER BY `Rate_Category`");
+        $stmt->execute();
 
         while ($r = $stmt->fetch(\PDO::FETCH_NUM)) {
             $ratCats[] = $r[0];
@@ -376,7 +378,8 @@ class FinAssistance {
 
         if ($bpCat != '') {
 
-            $stmt = $dbh->query("SELECT `FA_Category` FROM `room_rate` WHERE `Status` = 'a' AND Rate_Breakpoint_Category = '$bpCat'");
+            $stmt = $dbh->prepare("SELECT `FA_Category` FROM `room_rate` WHERE `Status` = 'a' AND `Rate_Breakpoint_Category` = :bpCat");
+            $stmt->execute([':bpCat' => $bpCat]);
             $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
             if (count($rows) > 0) {

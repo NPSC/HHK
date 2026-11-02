@@ -236,11 +236,12 @@ class ResourceBldr
 
         } else if($tableName == "insurance_type") {
 
-            $stmt = $dbh->query("SELECT
-    `t`.`idInsurance_type` as 'Table_Name', `t`.`Title` as 'Description',if(`t`.`Status` = 'a','y',''),'', `t`.`List_Order` as 'Order'
+            $stmt = $dbh->prepare("SELECT
+    `t`.`idInsurance_type` AS 'Table_Name', `t`.`Title` AS 'Description', IF(`t`.`Status` = 'a','y',''),'', `t`.`List_Order` AS 'Order'
 FROM
     `insurance_type` `t`
-Order by `t`.`List_Order`;");
+ORDER BY `t`.`List_Order`;");
+            $stmt->execute();
 
             $diags = $stmt->fetchAll(\PDO::FETCH_NUM);
 
@@ -571,7 +572,8 @@ Order by `t`.`List_Order`;");
                 }
 
                 // Check for an entry with the same description
-                $stmt = $dbh->query("Select count(*) from gen_lookups where `Table_Name` = '$tableName' and LOWER(`Description`) = '" . strtolower($dText) . "';");
+                $stmt = $dbh->prepare("SELECT COUNT(*) FROM `gen_lookups` WHERE `Table_Name` = :tableName AND LOWER(`Description`) = :description;");
+                $stmt->execute([':tableName' => $tableName, ':description' => strtolower($dText)]);
                 $rows = $stmt->fetchAll(\PDO::FETCH_NUM);
 
                 if ($rows[0][0] == 0) {
@@ -627,7 +629,7 @@ Order by `t`.`List_Order`;");
                             return EditRS::replaceValue($dbh, new Name_GuestRS(), 'Relationship_Code', $oldId, $newId);
                         };
 
-                        $verify = "Select n.Relationship_Code from name_guest n left join gen_lookups g on n.Relationship_Code = g.Code Where g.Table_Name = 'Patient_Rel_Type' and g.Code is null;";
+                        $verify = "SELECT `n`.`Relationship_Code` FROM `name_guest` `n` LEFT JOIN `gen_lookups` `g` ON `n`.`Relationship_Code` = `g`.`Code` WHERE `g`.`Table_Name` = 'Patient_Rel_Type' AND `g`.`Code` IS NULL;";
                         break;
 
                     case 'Diagnosis':
@@ -636,7 +638,7 @@ Order by `t`.`List_Order`;");
                             return EditRS::replaceValue($dbh, new Hospital_StayRS(), 'Diagnosis', $oldId, $newId);
                         };
 
-                        $verify = "select hs.Diagnosis from hospital_stay hs left join gen_lookups g on hs.Diagnosis = g.Code where g.Table_Name = 'Diagnosis' and g.Code is null;";
+                        $verify = "SELECT `hs`.`Diagnosis` FROM `hospital_stay` `hs` LEFT JOIN `gen_lookups` `g` ON `hs`.`Diagnosis` = `g`.`Code` WHERE `g`.`Table_Name` = 'Diagnosis' AND `g`.`Code` IS NULL;";
                         break;
 
                     case 'Diagnosis_Category':
@@ -664,7 +666,7 @@ Order by `t`.`List_Order`;");
                             return $count;
                         };
 
-                        $verify = "select n.Category from note n left join gen_lookups g on n.Category = g.Code where g.Table_Name = 'Staff_Note_Category' and g.Code is null;";
+                        $verify = "SELECT `n`.`Category` FROM `note` `n` LEFT JOIN `gen_lookups` `g` ON `n`.`Category` = `g`.`Code` WHERE `g`.`Table_Name` = 'Staff_Note_Category' AND `g`.`Code` IS NULL;";
                         break;
 
                     case 'Location':

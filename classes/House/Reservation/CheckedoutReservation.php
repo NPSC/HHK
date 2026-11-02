@@ -208,7 +208,8 @@ class CheckedoutReservation extends CheckingIn {
         }
 
         // GEt visit record
-        $stmt = $dbh->query("Select * from visit where idVisit = " . $this->reserveData->getIdVisit() . " and Span = " . $this->reserveData->getSpan());
+        $stmt = $dbh->prepare("SELECT * FROM `visit` WHERE `idVisit` = :idVisit AND `Span` = :span");
+        $stmt->execute([':idVisit' => $this->reserveData->getIdVisit(), ':span' => $this->reserveData->getSpan()]);
 
         if ($stmt->rowCount() == 0) {
             throw new RuntimeException('Visit not found for reservation Id ' . $this->reserveData->getIdResv());
@@ -238,7 +239,8 @@ class CheckedoutReservation extends CheckingIn {
 
 
         // get the stays
-        $stmts = $dbh->query("Select idName, idRoom, Span_Start_Date, Span_End_Date from stays where idVisit = " . $this->reserveData->getIdVisit() . " and Visit_Span = " . $this->reserveData->getSpan());
+        $stmts = $dbh->prepare("SELECT `idName`, `idRoom`, `Span_Start_Date`, `Span_End_Date` FROM `stays` WHERE `idVisit` = :idVisit AND `Visit_Span` = :span");
+        $stmts->execute([':idVisit' => $this->reserveData->getIdVisit(), ':span' => $this->reserveData->getSpan()]);
 
         // Count people staying during the new guest's time.
         $stays = array();

@@ -45,7 +45,8 @@ class RepeatReservations {
 
         $markup = '';
 
-        $stmt = $dbh->query("call multiple_reservations(" . $idResv . ");");
+        $stmt = $dbh->prepare("CALL multiple_reservations(:idResv);");
+        $stmt->execute([':idResv' => $idResv]);
 
         if ($stmt->rowCount() > 0) {
             // This is already a repeated reservation

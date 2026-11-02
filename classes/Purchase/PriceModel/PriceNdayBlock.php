@@ -239,13 +239,13 @@ class PriceNdayBlock extends AbstractPriceModel {
      * @param mixed $r
      * @param float|int $totalAmt
      * @param HTMLTable $tbl
-     * @param mixed $tiers
+     * @param array $tiers
      * @param mixed $startDT
      * @param string $separator
      * @param int|float $totalGuestNites
      * @return float|int
      */
-    public function tiersMarkup($r, &$totalAmt, &$tbl, $tiers, &$startDT, $separator, &$totalGuestNites) {
+    public function tiersMarkup($r, &$totalAmt, HTMLTable &$tbl, array $tiers, &$startDT, $separator, &$totalGuestNites) {
 
         $roomCharge = 0;
 

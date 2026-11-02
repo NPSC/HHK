@@ -55,10 +55,17 @@ class CalendarController
         $returnData["startDate"] = $startDate->format("Y-m-d");
         $returnData["endDate"] = $endDate->format("Y-m-d");
                 
-        $query = "select * from vapi_register_resv where ReservationStatusId in ('" . ReservationStatus::Committed . "','" . ReservationStatus::UnCommitted . "','" . ReservationStatus::Waitlist . "') "
-            . " and DATE(ExpectedArrival) <= DATE('" . $endDate->format('Y-m-d') . "') and DATE(ExpectedDeparture) > DATE('" . $startDate->format('Y-m-d') . "') order by ExpectedArrival asc, ReservationId asc";
+        $query = "SELECT * FROM `vapi_register_resv` WHERE `ReservationStatusId` IN (:stCommitted, :stUncommitted, :stWaitlist) "
+            . " AND DATE(`ExpectedArrival`) <= DATE(:endDate1) AND DATE(`ExpectedDeparture`) > DATE(:startDate1) ORDER BY `ExpectedArrival` ASC, `ReservationId` ASC";
 
-        $stmt = $dbh->query($query);
+        $stmt = $dbh->prepare($query);
+        $stmt->execute([
+            ':stCommitted' => ReservationStatus::Committed,
+            ':stUncommitted' => ReservationStatus::UnCommitted,
+            ':stWaitlist' => ReservationStatus::Waitlist,
+            ':endDate1' => $endDate->format('Y-m-d'),
+            ':startDate1' => $startDate->format('Y-m-d'),
+        ]);
         $resvRows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
         foreach ($resvRows as &$row) {
             $row["PrimaryGuest"] = [
@@ -75,9 +82,15 @@ class CalendarController
 
         $returnData["reservations"] = $resvRows;
 
-        $query = "select * from vapi_register vr  where vr.VisitStatusId not in ('" . VisitStatus::Pending . "' , '" . VisitStatus::Cancelled . "') and
-            DATE(vr.SpanStart) <= DATE('" . $endDate->format('Y-m-d') . "') and ifnull(DATE(vr.SpanEnd), case when DATE(now()) > DATE(vr.ExpectedDeparture) then DATE(now()) else DATE(vr.ExpectedDeparture) end) >= DATE('" .$startDate->format('Y-m-d') . "');";
-        $stmtv = $dbh->query($query);
+        $query = "SELECT * FROM `vapi_register` `vr`  WHERE `vr`.`VisitStatusId` NOT IN (:vsPending, :vsCancelled) AND
+            DATE(`vr`.`SpanStart`) <= DATE(:endDate2) AND IFNULL(DATE(`vr`.`SpanEnd`), CASE WHEN DATE(NOW()) > DATE(`vr`.`ExpectedDeparture`) THEN DATE(NOW()) ELSE DATE(`vr`.`ExpectedDeparture`) END) >= DATE(:startDate2);";
+        $stmtv = $dbh->prepare($query);
+        $stmtv->execute([
+            ':vsPending' => VisitStatus::Pending,
+            ':vsCancelled' => VisitStatus::Cancelled,
+            ':endDate2' => $endDate->format('Y-m-d'),
+            ':startDate2' => $startDate->format('Y-m-d'),
+        ]);
         $visitRows = $stmtv->fetchAll(\PDO::FETCH_ASSOC);
                 
         foreach ($visitRows as &$row) {

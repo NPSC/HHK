@@ -180,13 +180,14 @@ function getPeopleReport(\PDO $dbh, bool $local, bool $showRelationship, string 
     room_rate rr on v.idRoom_rate = rr.idRoom_rate
     	JOIN
     room r on s.idRoom = r.idRoom
-where  DATE(ifnull(s.Span_End_Date, now())) >= DATE('$start') and DATE(s.Span_Start_Date) < DATE('$end') and DATEDIFF(DATE(ifnull(s.Span_End_Date, now())), DATE(s.Span_Start_Date)) > 0 $whClause";
+WHERE DATE(IFNULL(s.Span_End_Date, NOW())) >= DATE(:start) AND DATE(s.Span_Start_Date) < DATE(:end) AND DATEDIFF(DATE(IFNULL(s.Span_End_Date, NOW())), DATE(s.Span_Start_Date)) > 0 $whClause";
 
     if ($showUnique) {
         $query .= " GROUP BY hs.idPsg, s.idName";
     }
 
-    $stmt = $dbh->query($query);
+    $stmt = $dbh->prepare($query);
+    $stmt->execute([':start' => $start, ':end' => $end]);
 
     $reportRows = 1;
     $file = 'PeopleReport';
@@ -458,9 +459,9 @@ from
         left join
     gen_lookups g1 on g1.`Table_Name` = 'Location' and g1.`Code` = hs.Location
 
-where n.Member_Status != 'TBD' and DATE(ifnull(v.Span_End, now())) >= DATE('$start') and DATE(v.Span_Start) < DATE('$end') and DATEDIFF(DATE(ifnull(v.Span_End, now())), DATE(v.Span_Start)) > 0
+WHERE n.Member_Status != 'TBD' AND DATE(IFNULL(v.Span_End, NOW())) >= DATE(:start) AND DATE(v.Span_Start) < DATE(:end) AND DATEDIFF(DATE(IFNULL(v.Span_End, NOW())), DATE(v.Span_Start)) > 0
  $whFields
-order by ng.idPsg, `ispat`, `Id`";
+ORDER BY ng.idPsg, `ispat`, `Id`";
 
 	$reportRows = 1;
 	$file = $psgLabel . 'Report';
@@ -477,7 +478,8 @@ order by ng.idPsg, `ispat`, `Id`";
 	$numberPSGs = 0;
 	$guestId = 0;
 
-	$stmt = $dbh->query($query);
+	$stmt = $dbh->prepare($query);
+	$stmt->execute([':start' => $start, ':end' => $end]);
 	$rowCount = $stmt->rowCount();
 
 	while ($r = $stmt->fetch(PDO::FETCH_ASSOC)) {
@@ -649,7 +651,8 @@ function getNoReturn(\PDO $dbh, bool $local){
     LEFT JOIN `gen_lookups` NRT on ND.`No_Return` = NRT.`Code` AND NRT.`Table_Name` = 'NoReturnReason'
     WHERE ND.`No_Return` != '';";
 
-    $stmt = $dbh->query($query);
+    $stmt = $dbh->prepare($query);
+    $stmt->execute();
     $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
     if($local){
@@ -721,7 +724,8 @@ function getIncidentsReport(\PDO $dbh, bool $local, array $irSelection) {
 		$ctr++;
 	}
 
-	$stmt = $dbh->query("CALL incidents_report('" . $whStatus[0] . "','" . $whStatus[1] . "','" . $whStatus[2]. "','" . $whStatus[3]. "')");
+	$stmt = $dbh->prepare("CALL incidents_report(:s0, :s1, :s2, :s3)");
+	$stmt->execute([':s0' => $whStatus[0], ':s1' => $whStatus[1], ':s2' => $whStatus[2], ':s3' => $whStatus[3]]);
 	$nested = $stmt->fetchAll(PDO::FETCH_ASSOC);
 	$stmt->nextRowset();
 

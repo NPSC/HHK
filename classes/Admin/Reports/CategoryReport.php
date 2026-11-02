@@ -92,6 +92,8 @@ class CategoryReport
         $codeMarkup = array();
         //$volCodes = array();
         $totalCategories = 0;
+        $wParams = array();
+        $whIdx = 0;
 
         foreach ($selCtrls as $k => $ctrl) {
             $ctrl->setReturnValues($_POST[$ctrl->get_htmlNameBase()]);
@@ -103,7 +105,12 @@ class CategoryReport
 
                 foreach ($codes as $cde) {
                     if ($cde != "") {
-                        $wClause .= " or (c.Vol_Category='" . $k . "' and c.Vol_Code = '$cde') ";
+                        $catPh = ':wcat' . $whIdx;
+                        $codePh = ':wcode' . $whIdx;
+                        $wClause .= " OR (`c`.`Vol_Category` = $catPh AND `c`.`Vol_Code` = $codePh) ";
+                        $wParams[$catPh] = $k;
+                        $wParams[$codePh] = $cde;
+                        $whIdx++;
                         $label = $ctrl->get_label($cde);
                         $codeMarkup[$ctrl->get_title()] .= $label . ", ";
                         $totalCategories++;
@@ -117,7 +124,7 @@ class CategoryReport
 
             // remove first "or"
             $wClause = substr($wClause, 3);
-            $wClause = " and (" . $wClause . ") ";
+            $wClause = " AND (" . $wClause . ") ";
 
             // Exclude dormant members?
             // Mode 'ad' means no where clause.
@@ -127,24 +134,25 @@ class CategoryReport
     //            $wClause .= " and (date_format(curdate(), '%j') < ifnull(date_format(d.Begin_Active, '%j'), 0) or date_format(curdate(), '%j') > ifnull(date_format(d.End_Active, '%j'), 366)) ";
             // Filter for roles
             if ($rankSel != "") {
-                $wClause .= " and c.Vol_Rank in ($rankSel) ";
+                $wClause .= " AND `c`.`Vol_Rank` IN ($rankSel) ";
             }
 
             // Filter for current and retired members?
             if ($curRetire != "") {
-                $wClause .= " and c.Vol_Status in ($curRetire) ";
+                $wClause .= " AND `c`.`Vol_Status` IN ($curRetire) ";
             }
 
+            $wParams[':guestBlackOutDays'] = $guestBlackOutDays;
 
             /*
             *  The query
             */
             if (isset($_POST["btnMlCat"]) || isset($_POST["btnMlCatDL"])) {
-                $query = "Select c2.Id from (" . self::makeSQL($wClause, $groupBy, $totalId, $guestBlackOutDays) . ") as c2 ";
+                $query = "SELECT `c2`.`Id` FROM (" . self::makeSQL($wClause, $groupBy, $totalId) . ") AS `c2` ";
             } else if ($csvFlag == true) {
-                $query = "Select distinct c2.PreferredEmail from (" . self::makeSQL($wClause, $groupBy, $totalId, $guestBlackOutDays) . ") as c2 ";
+                $query = "SELECT DISTINCT `c2`.`PreferredEmail` FROM (" . self::makeSQL($wClause, $groupBy, $totalId) . ") AS `c2` ";
             } else {
-                $query = "Select * from (" . self::makeSQL($wClause, $groupBy, $totalId, $guestBlackOutDays) . ") as c2 ";
+                $query = "SELECT * FROM (" . self::makeSQL($wClause, $groupBy, $totalId) . ") AS `c2` ";
             }
 
             if ($totalCategories == 1) {
@@ -152,7 +160,8 @@ class CategoryReport
             }
 
             if ($andOr == "and") {
-                $query .= " where c2.total = $totalCategories ";
+                $query .= " WHERE `c2`.`total` = :totalCategories ";
+                $wParams[':totalCategories'] = $totalCategories;
             } else if ($andOr == "union") {
                 $showDetails = true;
             }
@@ -193,7 +202,7 @@ class CategoryReport
 
 
             // Ordering
-            $query .= "order by c2.Name_Last, c2.Name_First";
+            $query .= "ORDER BY `c2`.`Name_Last`, `c2`.`Name_First`";
 
 
 
@@ -276,7 +285,8 @@ class CategoryReport
             }
 
             // get the data set.
-            $stmt = $dbh->query($query);
+            $stmt = $dbh->prepare($query);
+            $stmt->execute($wParams);
             //$rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
             //foreach ($rows as $rw) {
 
@@ -373,46 +383,46 @@ class CategoryReport
         return $volCat;
     }
 
-    private static function makeSQL($whereClause, $groupBy, $totalId, $guestBlackOutDays) {
+    private static function makeSQL($whereClause, $groupBy, $totalId) {
         $query = "
-    select
-    vm.Id AS Id,
-        vm.Name_Last as Name_Last,
-        vm.Name_First as Name_First,
-        c.Vol_Status AS Vol_Status,
-        vm.Preferred_Phone AS PreferredPhone,
-        vm.Preferred_Email AS PreferredEmail,
-        case
-            when vm.Bad_Address = LOWER('true') then '*(Bad Address)'
-            else (case
-                when vm.Address_2 <> '' then concat(vm.Address_1, ', ', vm.Address_2)
-                else vm.Address_1
-            end)
-        end AS Address,
-        case
-            when (vm.Bad_Address = LOWER('true')) then ''
-            else vm.City
-        end as City,
-        case
-            when (vm.Bad_Address = LOWER('true')) then ''
-            else vm.StateProvince
-        end as StateProvince,
-        case
-            when (vm.Bad_Address = LOWER('true')) then ''
-            else vm.PostalCode
-        end as PostalCode,
+    SELECT
+    `vm`.`Id` AS `Id`,
+        `vm`.`Name_Last` AS `Name_Last`,
+        `vm`.`Name_First` AS `Name_First`,
+        `c`.`Vol_Status` AS `Vol_Status`,
+        `vm`.`Preferred_Phone` AS `PreferredPhone`,
+        `vm`.`Preferred_Email` AS `PreferredEmail`,
+        CASE
+            WHEN `vm`.`Bad_Address` = LOWER('true') THEN '*(Bad Address)'
+            ELSE (CASE
+                WHEN `vm`.`Address_2` <> '' THEN CONCAT(`vm`.`Address_1`, ', ', `vm`.`Address_2`)
+                ELSE `vm`.`Address_1`
+            END)
+        END AS `Address`,
+        CASE
+            WHEN (`vm`.`Bad_Address` = LOWER('true')) THEN ''
+            ELSE `vm`.`City`
+        END AS `City`,
+        CASE
+            WHEN (`vm`.`Bad_Address` = LOWER('true')) THEN ''
+            ELSE `vm`.`StateProvince`
+        END AS `StateProvince`,
+        CASE
+            WHEN (`vm`.`Bad_Address` = LOWER('true')) THEN ''
+            ELSE `vm`.`PostalCode`
+        END AS `PostalCode`,
 
-        c.Vol_Status_Title,
-        c.Vol_Code_Title as Description,
-        c.Vol_Notes AS Vol_Notes,
-        vm.Member_Type AS Member_Type,
-        c.Vol_Begin AS Vol_Begin,
-        c.Vol_End AS Vol_End,
-        c.VOl_Rank_Title AS Vol_Rank_Title $totalId
-    from vmember_listing_blackout vm
-        join vmember_categories c ON vm.Id = c.idName
-        where vm.MemberStatus = 'a'
-        and case when vm.idVisit > 0 then ABS(DATEDIFF(now(), vm.spanEnd)) >= $guestBlackOutDays else 1=1 end $whereClause $groupBy";
+        `c`.`Vol_Status_Title`,
+        `c`.`Vol_Code_Title` AS `Description`,
+        `c`.`Vol_Notes` AS `Vol_Notes`,
+        `vm`.`Member_Type` AS `Member_Type`,
+        `c`.`Vol_Begin` AS `Vol_Begin`,
+        `c`.`Vol_End` AS `Vol_End`,
+        `c`.`VOl_Rank_Title` AS `Vol_Rank_Title` $totalId
+    FROM `vmember_listing_blackout` `vm`
+        JOIN `vmember_categories` `c` ON `vm`.`Id` = `c`.`idName`
+        WHERE `vm`.`MemberStatus` = 'a'
+        AND CASE WHEN `vm`.`idVisit` > 0 THEN ABS(DATEDIFF(NOW(), `vm`.`spanEnd`)) >= :guestBlackOutDays ELSE 1=1 END $whereClause $groupBy";
 
         return $query;
     }
