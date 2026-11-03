@@ -34,16 +34,16 @@ class SiteDbBackup {
     protected bool $dbBkUpFlag = false;
     
     /**
-     * @param string $filePath
+     * @param string $filePath Directory for backupSchema() files; not used when streaming.
      */
-    public function __construct(protected string $filePath) {
+    public function __construct(protected string $filePath = '') {
         $uS = Session::getInstance();
         date_default_timezone_set($uS->tz);
     }
 
     /**
      * Generate a database schema backup file.
-     * 
+     *
      * @param array $ignoreTables
      * @param bool $zipIt
      * @return bool
@@ -53,37 +53,15 @@ class SiteDbBackup {
         $this->dbBkUpFlag = FALSE;
         $this->bkupMessage = '';
 
-        $uS = Session::getInstance();
+        $dumper = $this->createDumper($ignoreTables, ($zipIt ? Mysqldump::GZIP : Mysqldump::NONE));
 
-        $dbUrl = $uS->databaseURL;
-        $dbname = $uS->databaseName;
-        $dbuser = $uS->databaseUName;
-        $dbpwd = $uS->databasePWord;
-
-        if ($dbuser == '' || $dbpwd == '' || $dbname == '' || $dbUrl == '') {
-            $this->bkupMessage = 'Database parameters are not set.  ';
+        if ($dumper === NULL) {
             return FALSE;
         }
 
-        if (strtolower($dbUrl) == 'localhost') {
-            $dbUrl = '127.0.0.1';
-        }
-
-        $this->fileName = $this->filePath . $dbname . '_' . date('Y-m-d_His') . '.sql' . ($zipIt ? '.gz' : '');
-
-        $dumpSettings = [
-            'compress' => ($zipIt ? Mysqldump::GZIP : Mysqldump::NONE),
-            'exclude-tables' => $ignoreTables,
-            'single-transaction' => true,
-            'lock-tables' => false,
-            'skip-definer' => true,
-            'skip-comments' => true,
-        ];
-
-        $this->return_var = 0;
+        $this->fileName = $this->filePath . $this->fileName . ($zipIt ? '.gz' : '');
 
         try {
-            $dumper = new Mysqldump("mysql:host=$dbUrl;dbname=$dbname", $dbuser, $dbpwd, $dumpSettings);
             $dumper->start($this->fileName);
         } catch (\Exception $e) {
             $this->bkupMessage = 'mysqldump error: ' . $e->getMessage();
@@ -111,6 +89,106 @@ class SiteDbBackup {
         }
 
         return $this->dbBkUpFlag;
+    }
+
+    /**
+     * Dump the database as gzip directly to the browser, without a temp file.
+     *
+     * Returns FALSE before sending anything if the database parameters are missing.  Once headers
+     * are sent, a failure mid-dump leaves the browser with a truncated file; check headers_sent()
+     * and exit rather than rendering the page.
+     *
+     * @param array $ignoreTables
+     * @return bool
+     */
+    public function streamSchema(array $ignoreTables = array()): bool {
+
+        $this->dbBkUpFlag = FALSE;
+        $this->bkupMessage = '';
+
+        $dumper = $this->createDumper($ignoreTables, Mysqldump::GZIPSTREAM);
+
+        if ($dumper === NULL) {
+            return FALSE;
+        }
+
+        // Release the session lock so other requests from this user aren't blocked during a long dump.
+        session_write_close();
+
+        set_time_limit(0);
+        ini_set('zlib.output_compression', '0');
+
+        while (ob_get_level() > 0) {
+            ob_end_clean();
+        }
+
+        header('Content-Description: File Transfer');
+        header('Content-Type: application/gzip');
+        header('Content-Disposition: attachment; filename="' . $this->fileName . '.gz"');
+        header('Expires: 0');
+        header('Cache-Control: no-store, must-revalidate');
+        header('Pragma: public');
+        header('X-Accel-Buffering: no');
+
+        try {
+            $dumper->start('php://output');
+        } catch (\Exception $e) {
+            $this->bkupMessage = 'mysqldump error: ' . $e->getMessage();
+            $this->return_var = 1;
+            return FALSE;
+        }
+
+        $this->bkupMessage = 'Database Dump streamed.  ';
+        $this->dbBkUpFlag = TRUE;
+
+        return TRUE;
+    }
+
+    /**
+     * Build a Mysqldump from the session database parameters and set $this->fileName to the bare dump name (no directory or .gz).
+     *
+     * @param array $ignoreTables
+     * @param string $compress Mysqldump compression constant
+     * @return Mysqldump|null NULL if the parameters are missing or the connection fails
+     */
+    protected function createDumper(array $ignoreTables, string $compress): ?Mysqldump {
+
+        $uS = Session::getInstance();
+
+        $dbUrl = $uS->databaseURL;
+        $dbname = $uS->databaseName;
+        $dbuser = $uS->databaseUName;
+        $dbpwd = $uS->databasePWord;
+
+        if ($dbuser == '' || $dbpwd == '' || $dbname == '' || $dbUrl == '') {
+            $this->bkupMessage = 'Database parameters are not set.  ';
+            return NULL;
+        }
+
+        if (strtolower($dbUrl) == 'localhost') {
+            $dbUrl = '127.0.0.1';
+        }
+
+        $this->fileName = $dbname . '_' . date('Y-m-d_His') . '.sql';
+
+        $dumpSettings = [
+            'compress' => $compress,
+            'exclude-tables' => $ignoreTables,
+            'single-transaction' => true,
+            'lock-tables' => false,
+            'skip-definer' => true,
+            'skip-comments' => true,
+        ];
+
+        $this->return_var = 0;
+
+        try {
+            return new Mysqldump("mysql:host=$dbUrl;dbname=$dbname", $dbuser, $dbpwd, $dumpSettings);
+        } catch (\Exception $e) {
+            $this->bkupMessage = 'mysqldump error: ' . $e->getMessage();
+            $this->return_var = 1;
+            return NULL;
+        }
     }
 
     /**

@@ -360,23 +360,22 @@ if (isset($_POST["btnDoBackup"])) {
     $bkupAlert = new alertMessage("bkupAlert");
     $bkupAlert->set_Context(alertMessage::Notice);
 
-    $dbBack = new SiteDbBackup(sys_get_temp_dir() . DS);
+    $dbBack = new SiteDbBackup();
 
-    if ($dbBack->backupSchema($igtables)) {
-        // success
-        $logText = "Database Download.";
+    // Cookie must go out with the download headers.
+    if (isset($_POST['downloadToken']) && $_POST['downloadToken'] !== '') {
+        setcookie('fileDownloadToken', $_POST['downloadToken'], time() + 60, '/');
+    }
 
-        SiteLog::logDbDownload($dbh, $logText, CodeVersion::GIT_Id);
-
-        if (isset($_POST['downloadToken']) && $_POST['downloadToken'] !== '') {
-            setcookie('fileDownloadToken', $_POST['downloadToken'], time() + 60, '/');
-        }
-
-        $dbBack->downloadFile();  // exits here.
+    if ($dbBack->streamSchema($igtables)) {
+        SiteLog::logDbDownload($dbh, "Database Download.", CodeVersion::GIT_Id);
     } else {
+        SiteLog::logDbDownload($dbh, "Failed Database Download:  " . $dbBack->getErrors(), CodeVersion::GIT_Id);
+    }
 
-        $logText = "Failed Database Download:  " . $dbBack->getErrors();
-        SiteLog::logDbDownload($dbh, $logText, CodeVersion::GIT_Id);
+    // Once the stream has started the response is the file, so a mid-dump failure can only be logged.
+    if (headers_sent()) {
+        exit();
     }
 
     $bkupMsg = HTMLContainer::generateMarkup('div', $bkupAlert->createMarkup($dbBack->getErrors()), ['class' => 'mt-3']);
