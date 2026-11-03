@@ -1133,6 +1133,8 @@ ORDER BY `rs`.`Util_Priority`;";
                 $this->daysInMonths[$thisMonth] = 1;
             }
 
+            $isHouseClosed = $operatingHours->isHouseClosed($countgDT);
+
             foreach ($this->rescs as $idResc => $r) {
 
                 $this->days[$idResc][$thisDay]['n'] = 0;
@@ -1141,7 +1143,7 @@ ORDER BY `rs`.`Util_Priority`;";
                 $this->days[$idResc][$thisDay]['u'] = 0;
                 $this->days[$idResc][$thisDay]['b'] = 0;
                 
-                if($operatingHours->isHouseClosed($countgDT)){
+                if($isHouseClosed){
                     $this->days[$idResc][$thisDay]['c'] = 1;
                     $daysClosed++;
                 }else{
