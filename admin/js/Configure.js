@@ -192,6 +192,52 @@ $(document).on('change', "#numAddrCalc", function(){
                 });
             }
 
+            // General Ledger
+            if (ui.newTab.prop('id') === 'liGl') {
+
+                $.post('ws_gen.php', {'cmd': 'shoGlConf'}, function (data) {
+
+                    // The dialog lives on body, so drop the one from the last time the tab loaded.
+                    if ($('#glSftpDialog').length && $('#glSftpDialog').dialog('instance')) {
+                        $('#glSftpDialog').dialog('destroy').remove();
+                    }
+
+                    $('#glContent').empty();
+                    $('#glContent').prepend(data);
+
+                    // Appended to body so the tab doesn't clip it; its inputs have form="formgl" so they still post with the GL settings.
+                    $('#glSftpDialog').dialog({
+                        autoOpen: false,
+                        modal: true,
+                        title: 'SFTP Settings',
+                        width: 'auto',
+                        open: function () {
+                            $(this).find('input').each(function () {
+                                $(this).data('glWas', $(this).val());
+                            });
+                        },
+                        // Cancel, X or Esc puts the values back; Save submits the page before any close.
+                        close: function () {
+                            $(this).find('input').each(function () {
+                                $(this).val($(this).data('glWas'));
+                            });
+                        },
+                        buttons: {
+                            'Save': function () {
+                                $('#btnGlCnf').click();
+                            },
+                            'Cancel': function () {
+                                $(this).dialog('close');
+                            }
+                        }
+                    });
+
+                    $('#btnGlSftp').click(function () {
+                        $('#glSftpDialog').dialog('open');
+                    });
+                });
+            }
+
             if (ui.newTab.prop('id') === 'liLogs' && !logTable[pid]) {
                 logTable[pid] = 1;
 
@@ -1290,6 +1336,11 @@ $(document).on('change', "#numAddrCalc", function(){
             alert('Subsidy Id must be different than the Return Payor Id');
         }
     });
+
+    // tabIndex is a tab position, or the id of the tab's li when its position depends on which tabs are shown.
+    if (isNaN(tabIndex)) {
+        tabIndex = $('#tabs > ul > li').index($('#' + tabIndex));
+    }
 
     tbs.tabs("option", "active", tabIndex);
     $('#tabs').show();

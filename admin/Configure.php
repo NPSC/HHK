@@ -9,6 +9,7 @@ use HHK\Update\{SiteConfig, UpdateSite, SiteLog, Patch};
 use HHK\CreateMarkupFromDB;
 use HHK\HTMLControls\{HTMLContainer, HTMLSelector};
 use HHK\CrmExport\AbstractExportManager;
+use HHK\House\GLCodes\GLParameters;
 use HHK\AuditLog\AuditLogViewer;
 
 /**
@@ -86,6 +87,20 @@ if (filter_has_var(INPUT_POST, "btnExtCnf") && $CmsManager !== NULL) {
 
     if ($externalErrMsg != '') {
         $externalErrMsg = HTMLContainer::generateMarkup('p', $externalErrMsg, array('class'=>'ui-corner-all ui-state-error p-2 mb-3'));
+    }
+}
+
+// Save General Ledger configuration
+if (filter_has_var(INPUT_POST, "btnGlCnf") && $uS->useGLCodes) {
+
+    $tabIndex = 'liGl';
+
+    try {
+        $glParm = new GLParameters($dbh, 'Gl_Code');
+        $glParm->saveParameters($dbh, $_POST, 'gl_');
+        $notymsg = ['type'=>'success', 'text'=>'General Ledger settings saved.'];
+    } catch (Exception $ex) {
+        $notymsg = ['type'=>'error', 'text'=>'Save General Ledger Error: ' . $ex->getMessage()];
     }
 }
 
@@ -396,6 +411,9 @@ if (!SecurityComponent::is_TheAdmin()) {
 <?php if ($uS->ContactManager != '') {
     echo '<li id="liService"><a href="#external">' . $CmsManager->getServiceTitle() . '</a></li>';
 } ?>
+<?php if ($uS->useGLCodes) {
+    echo '<li id="liGl"><a href="#glConfig">General Ledger</a></li>';
+} ?>
                 </ul>
                 <div id="config" class="ui-tabs-hide" >
                     <div style="color:#347201;font-size:1.3em;"><?php echo $confError; ?></div>
@@ -478,6 +496,16 @@ echo $newsaml->getEditMarkup();
                             <div id="serviceContent" class="hhk-tdbox"><span style="margin-left:300px;">Loading...</span></div>
                             <div class="divSubmitButtons ui-corner-all">
                                 <input type="submit" id="btnExtCnf" name="btnExtCnf" value="Save"/>
+                            </div>
+                        </form>
+                    </div>
+<?php } ?>
+<?php if ($uS->useGLCodes) { ?>
+                    <div id="glConfig" class="ui-tabs-hide" >
+                        <form method="post" id="formgl" name="formgl" action="">
+                            <div id="glContent" class="hhk-tdbox hhk-visitdialog"><span style="margin-left:300px;">Loading...</span></div>
+                            <div class="divSubmitButtons ui-corner-all" style="clear:both;">
+                                <input type="submit" id="btnGlCnf" name="btnGlCnf" value="Save"/>
                             </div>
                         </form>
                     </div>

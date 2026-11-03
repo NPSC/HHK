@@ -18,6 +18,7 @@ use HHK\Tables\CronRS;
 use HHK\Cron\AbstractJob;
 use HHK\Cron\EmailReportJob;
 use HHK\CrmExport\AbstractExportManager;
+use HHK\House\GLCodes\GLParameters;
 use HHK\CrmExport\Salesforce\SalesforceManager;
 use HHK\House\Distance\ZipDistance;
 use HHK\TableLog\ExternalAPILog;
@@ -572,6 +573,14 @@ try {
             if ($exportManager !== NULL) {
 
                 $events = $exportManager->showConfig($dbh);
+            }
+
+            break;
+
+        case 'shoGlConf':
+
+            if ($uS->useGLCodes) {
+                $events = (new GLParameters($dbh, 'Gl_Code'))->getChooserMarkup($dbh, 'gl_', FALSE, 'formgl');
             }
 
             break;

@@ -6,7 +6,7 @@ use HHK\House\GLCodes\GLTemplateRecord;
 use HHK\House\Report\InvoiceReport;
 use HHK\House\Report\ReportFilter;
 use HHK\HTMLControls\HTMLContainer;
-use HHK\HTMLControls\HTMLSelector;
+use HHK\HTMLControls\HTMLInput;
 use HHK\HTMLControls\HTMLTable;
 use HHK\Payment\PaymentGateway\AbstractPaymentGateway;
 use HHK\Payment\PaymentGateway\Deluxe\DeluxeGateway;
@@ -107,43 +107,44 @@ if (isset($_POST['btnExcel-' . $report->getInputSetReportName()])) {
 }
 
 // Gl REport
-$glChooser = '';
+$glSftp = FALSE;
 $glInvoices = '';
-$glMonthSelr = '';
-$glYearSelr = '';
-$glMonth = 0;
-$glyear = 0;
+$glFilterMkup = '';
 $bytesWritten = '';
 
 if ($useGlReport) {
 
+	// Settings are on Admin > Configure > General Ledger
 	$glParm = new GLParameters($dbh, 'Gl_Code');
-	$glPrefix = 'gl_';
 
-	// Check for new parameters
-	if (isset($_POST['btnSaveGlParms'])) {
-		$glParm->saveParameters($dbh, $_POST, $glPrefix);
-		$tabReturn = 2;
-	}
-
-	$glMonth = date('m');
+	$glFilter = new ReportFilter();
+	$glFilter->createTimePeriod(date('Y'), ReportFilter::MONTHS, $uS->fy_diff_Months, [ReportFilter::DATES, ReportFilter::FISCAL_YEAR, ReportFilter::CAL_YEAR, ReportFilter::YEAR_2_DATE]);
 
 	// Output report
 	if (filter_has_var(INPUT_POST, 'btnGlGo') || filter_has_var(INPUT_POST, 'btnGlTx') || filter_has_var(INPUT_POST, 'btnGlcsv')) {
 
 		$tabReturn = 2;
 
-		if (isset($_POST['selGlMonth'])) {
-			$glMonth = filter_var($_POST['selGlMonth'], FILTER_SANITIZE_NUMBER_INT);
+		$glFilter->loadSelectedTimePeriod();
+
+		$glStart = new DateTimeImmutable($glFilter->getReportStart());
+		$glEnd = new DateTimeImmutable($glFilter->getQueryEnd());
+
+		// Months run from the fiscal Start Day
+		try {
+			$glShift = new DateInterval('P' . (intval($glParm->getStartDay()) - 1) . 'D');
+		} catch (RuntimeException $ex) {
+			// Invalid Start Day setting: use calendar months.
+			$glShift = new DateInterval('P0D');
+			$glInvoices = HTMLContainer::generateMarkup('p', $ex->getMessage() . '. Using calendar months.', array('class'=>'ui-state-error ui-corner-all p-2 mb-2'));
 		}
 
-		if (isset($_POST['selGlYear'])) {
-			$glyear = intval(filter_var($_POST['selGlYear'], FILTER_SANITIZE_NUMBER_INT), 10);
-		}
+		$glStart = $glStart->add($glShift);
+		$glEnd = $glEnd->add($glShift);
 
-		$glCodes = new GLCodes($dbh, $glMonth, $glyear, $glParm, new GLTemplateRecord());
+		$glCodes = new GLCodes($dbh, 0, 0, $glParm, new GLTemplateRecord(), $glStart, $glEnd);
 
-		if (isset($_POST['btnGlTx'])) {
+		if (isset($_POST['btnGlTx']) && $glParm->isSftpConfigured()) {
 
 			$bytesWritten = $glCodes->mapRecords(FALSE)
 					->transferRecords();
@@ -259,7 +260,7 @@ if ($useGlReport) {
 				}
 			}
 
-			$glInvoices = $tbl->generateMarkup();
+			$glInvoices .= $tbl->generateMarkup();
 
 			// Comma delemeted file.
 			$glCodes->mapRecords(TRUE);
@@ -289,12 +290,28 @@ if ($useGlReport) {
 		}
 	}
 
-	// GL Parms chooser markup
-	$glChooser = $glParm->getChooserMarkup($dbh, $glPrefix);
+	$glSftp = $glParm->isSftpConfigured();
 
-	//Month and Year chooser
-	$glMonthSelr = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($report->filter->getMonths(), $glMonth, FALSE), array('name' => 'selGlMonth', 'size'=>12));
-	$glYearSelr = HTMLSelector::generateMarkup(ReportFilter::getYearOptionsMarkup($year, ($uS->StartYear ? $uS->StartYear : "2013"), 0, FALSE), array('name' => 'selGlYear', 'size'=>'12'));
+	// Same wrapper as AbstractReport::generateFilterMarkup()
+	$glBtnAttrs = array('type'=>'submit', 'class'=>'ui-button ui-corner-all ui-widget');
+
+	$glFilterMkup = HTMLContainer::generateMarkup("div",
+		HTMLContainer::generateMarkup("form",
+			HTMLContainer::generateMarkup("p", 'GL settings and billing agent GL codes are on Admin &gt; Configure &gt; General Ledger.', array("class"=>"ui-widget ui-widget-content ui-corner-all mb-3 p-2", "style"=>"font-weight:500"))
+			. HTMLContainer::generateMarkup("div", $glFilter->timePeriodMarkup('', 'gl')->generateMarkup(), array("id"=>"filterSelectors", "class"=>"hhk-flex hhk-flex-wrap"))
+			. HTMLContainer::generateMarkup("div",
+				HTMLContainer::generateMarkup("div",
+					HTMLInput::generateMarkup("Show", $glBtnAttrs + array('name'=>'btnGlGo'))
+					. HTMLInput::generateMarkup("Download CSV", $glBtnAttrs + array('name'=>'btnGlcsv'))
+					. ($glSftp ? HTMLInput::generateMarkup("Transfer via SFTP", $glBtnAttrs + array('name'=>'btnGlTx')) : '')
+				)
+			, array("id"=>"filterBtns", "class"=>"mt-3 hhk-flex-wrap"))
+		, array("method"=>"POST", "action"=>"InvoiceReport.php", "id"=>"glRptFilterForm"))
+	, array("class"=>"ui-widget ui-widget-content ui-corner-all hhk-tdbox hhk-visitdialog filterWrapper"));
+
+	if ($glInvoices != '') {
+		$glInvoices = HTMLContainer::generateMarkup("div", $glInvoices, array("id"=>"rptGl", "class"=>"ui-widget ui-widget-content ui-corner-all hhk-tdbox hhk-visitdialog mt-3", "style"=>"font-size:0.9em;"));
+	}
 
 }
 
@@ -347,13 +364,7 @@ $(document).ready(function() {
     var receiptBilledToEmail = '<?php echo $receiptBilledToEmail; ?>';
     var tabReturn = '<?php echo $tabReturn; ?>';
 
-    $('#btnInvGo, #btnSaveGlParms, #btnGlGo, #btnGlTx, #btnGlcsv').button();
-
-    $( "form[name=glParmsForm] input[type=checkbox]" ).checkboxradio({
-      icon: true
-    });
-
-    $("form[name=glParmsForm] .ui-checkboxradio-icon").removeClass('ui-state-hover');
+    $('#btnInvGo').button();
 
     <?php echo $report->generateReportScript(); ?>
 
@@ -531,27 +542,8 @@ $(document).ready(function() {
                   <div id="rptInvdiv" class="hhk-visitdialog"></div>
 
             </div>
-            <div id="vGl" class="hhk-tdbox hhk-visitdialog" style="display:none; font-size:0.8em;">
-                <form name="glParmsForm" method="post" action="InvoiceReport.php">
-                	<?php echo $glChooser;?>
-                </form>
-                <form name="glReportForm" method="post" action="InvoiceReport.php">
-                	<table style="float:left;">
-                	<tr><th>Month</th><th>Year</th>
-                	<tr>
-                	<td><?php echo $glMonthSelr; ?></td>
-                    <td style="vertical-align: top;"><?php echo $glYearSelr; ?></td>
-                	</tr><tr>
-                    <td colspan=2>
-                    <input type="submit" id="btnGlcsv" name="btnGlcsv" value="csv" style="margin-right:.5em;"/>
-                    <input type="submit" id="btnGlGo" name="btnGlGo" value="Show" style="margin-right:.5em;"/>
-                    <input type="submit" id="btnGlTx" name="btnGlTx" value="Transfer to CentraCare"/></td>
-                    </tr>
-                    </table>
-                </form>
-                 <div id="rptGl" class="hhk-visitdialog" style="font-size:0.9em; clear:both;">
-                     <?php echo $glInvoices; ?>
-                 </div>
+            <div id="vGl" style="display:none;">
+                <?php echo $glFilterMkup . $glInvoices; ?>
             </div>
         </div>
         <div id="pmtRcpt" style="font-size: .9em; display:none;"></div>

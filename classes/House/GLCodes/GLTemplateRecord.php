@@ -2,8 +2,10 @@
 
 namespace HHK\House\GLCodes;
 
+/**
+ * CentraCare (Oracle) journal record, 94 columns. Used by Gorecki House.
+ */
 class GLTemplateRecord {
-    // CentraCare journal record (Gorecki)
 
     const STATUS = 0;
     const EFFECTIVE_DATE = 2;
@@ -29,16 +31,8 @@ class GLTemplateRecord {
     const FILE_ID = 66;
     const LEDGER_NAME = 91;
 
-    protected $totalDebit;
-    protected $totalCredit;
     protected $fieldArray;
     protected $periodEndDate;
-
-    public function __construct() {
-
-        $this->totalCredit = 0.0;
-        $this->totalDebit = 0.0;
-    }
 
     public function makeLine($fileId, $glCode, $debitAmount, $creditAmount, $purchaseDate, $journalCategory) {
 
@@ -104,12 +98,10 @@ class GLTemplateRecord {
 
     protected function setCreditAmount($v) {
         $this->fieldArray[self::CREDIT_AMOUNT] = number_format($v, 2, '.', '');
-        $this->totalCredit += $v;
     }
 
     protected function setDebitAmount($v) {
         $this->fieldArray[self::DEBIT_AMOUNT] = number_format($v, 2, '.', '');
-        $this->totalDebit += $v;
     }
 
     protected function setPurchaseDate($v) {
@@ -118,14 +110,6 @@ class GLTemplateRecord {
 
     protected function setJournalCategory($v) {
         $this->fieldArray[self::JOURNAL_CATEGORY] = $v;
-    }
-
-    public function getTotalCredit() {
-        return $this->totalCredit;
-    }
-
-    public function getTotalDebit() {
-        return $this->totalDebit;
     }
 
     public function setPeriodEndDate($d) {

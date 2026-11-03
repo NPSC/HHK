@@ -53,7 +53,17 @@ try {
 
 
 try {
+	// GL export is off, or there's nowhere to send it.
+	if (!SysConfig::getKeyValue($dbh, 'sys_config', 'useGLCodes', false)) {
+		exit();
+	}
+
 	$glParm = new GLParameters($dbh, 'Gl_Code');
+
+	if ($glParm->isSftpConfigured() === FALSE) {
+		exit();
+	}
+
 	$today = new DateTime();
 
 	// Exit if not start day.

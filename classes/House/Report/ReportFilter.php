@@ -169,15 +169,16 @@ class ReportFilter {
     /**
      * Summary of timePeriodMarkup
      * @param string $prefix
+     * @param string $idPrefix  prefixes the control ids (not names), for a second time period on the same page
      * @return HTMLTable
      */
-    public function timePeriodMarkup($prefix = ''): HTMLTable {
+    public function timePeriodMarkup($prefix = '', string $idPrefix = ''): HTMLTable {
 
         $uS = Session::getInstance();
 
-        $monthSelector = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($this->months, $this->selectedMonths, FALSE), array('name' => 'selIntMonth[]', 'size'=>'12', 'multiple'=>'multiple'));
-        $yearSelector = HTMLSelector::generateMarkup(static::getYearOptionsMarkup($this->selectedYear, ($uS->StartYear ? $uS->StartYear : "2013"), $this->fyDiffMonths, FALSE), array('name' => 'selIntYear', 'size'=>'12'));
-        $calSelector = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($this->calendarOptions, (string) $this->selectedCalendar, FALSE), array('name' => 'selCalendar', 'size'=>'5'));
+        $monthSelector = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($this->months, $this->selectedMonths, FALSE), array('name' => 'selIntMonth[]', 'id' => $idPrefix . 'selIntMonth', 'size'=>'12', 'multiple'=>'multiple'));
+        $yearSelector = HTMLSelector::generateMarkup(static::getYearOptionsMarkup($this->selectedYear, ($uS->StartYear ? $uS->StartYear : "2013"), $this->fyDiffMonths, FALSE), array('name' => 'selIntYear', 'id' => $idPrefix . 'selIntYear', 'size'=>'12'));
+        $calSelector = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($this->calendarOptions, (string) $this->selectedCalendar, FALSE), array('name' => 'selCalendar', 'id' => $idPrefix . 'selCalendar', 'size'=>'5'));
 
         $tbl = new HTMLTable();
 
@@ -197,9 +198,9 @@ class ReportFilter {
         if (isset($this->calendarOptions[self::DATES])) {
             $tbl->addBodyTr(HTMLTable::makeTd(
                 HTMLContainer::generateMarkup('span', 'Start:', array('class'=>'dates', 'style'=>'margin-right:.3em;display:none;'))
-                . HTMLInput::generateMarkup($this->reportStart, array('type'=>'date', 'name'=>"stDate", 'class'=>"ckdate dates", 'style'=>"margin-right:.3em;display:none;"))
+                . HTMLInput::generateMarkup($this->reportStart, array('type'=>'date', 'name'=>"stDate", 'id'=>$idPrefix . "stDate", 'class'=>"ckdate dates", 'style'=>"margin-right:.3em;display:none;"))
                 . HTMLContainer::generateMarkup('span', 'End:', array('class'=>'dates', 'style'=>'margin-right:.3em;display:none;'))
-                . HTMLInput::generateMarkup($this->reportEnd, array('type'=>'date', 'name'=>"enDate", 'class'=>"ckdate dates", 'style'=>"margin-right:.3em;display:none;"))
+                . HTMLInput::generateMarkup($this->reportEnd, array('type'=>'date', 'name'=>"enDate", 'id'=>$idPrefix . "enDate", 'class'=>"ckdate dates", 'style'=>"margin-right:.3em;display:none;"))
                 , array('colspan'=>'3')
                 ), array('class'=>'dates'));
         }
@@ -226,21 +227,23 @@ dateFormat: 'yy-mm-dd'
 });";
         }
 
-        return "$('#selCalendar').change(function () {
-    $('#selIntYear').show();
+        // By name, within each time period table, so it covers every time period on the page.
+        return "$('select[name=selCalendar]').change(function () {
+    var tp = $(this).closest('table');
+    tp.find('select[name=selIntYear]').show();
     if ($(this).val() && $(this).val() != '19') {
-        $('#selIntMonth').hide();
+        tp.find('select[name=\"selIntMonth[]\"]').hide();
     } else {
-        $('#selIntMonth').show();
+        tp.find('select[name=\"selIntMonth[]\"]').show();
     }
     if ($(this).val() && $(this).val() != '18') {
-        $('.dates').hide();
+        tp.find('.dates').hide();
     } else {
-        $('.dates').show();
-        $('#selIntYear').hide();
+        tp.find('.dates').show();
+        tp.find('select[name=selIntYear]').hide();
     }
 });
-$('#selCalendar').change();
+$('select[name=selCalendar]').change();
 $ckdate";
 
     }
