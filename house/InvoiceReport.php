@@ -54,8 +54,7 @@ $tabReturn = 0;
 
 $year = date('Y');
 
-//$useGlReport = stristr(strtolower($uS->siteName), 'gorecki');
-$useGlReport = $uS->useGLCodes;
+$useGlReport = stristr(strtolower($uS->siteName), 'gorecki');
 
 // Hosted payment return
 try {

@@ -248,7 +248,7 @@ class InvoiceReport extends AbstractReport implements ReportInterface
 
     protected function makeExtraButtonsMkup(): string {
         return  HTMLContainer::generateMarkup('label', 'Search Invoice #: ', array('for' => 'invNum', 'class' => 'mr-0'))
-            . HTMLInput::generateMarkup($this->invNum, array('type' => 'text', 'id' => 'invNum', 'name' => 'invNum', 'size' => '5', 'class' => 'mr-3 ml-1'));
+            . HTMLInput::generateMarkup($this->invNum, array('type' => 'text', 'id' => 'invNum', 'name' => 'invNum', 'size' => '8', 'class' => 'mr-3 ml-1 p-1'));
     }
 
     protected function getCellAttrs(array $field): array {
