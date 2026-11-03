@@ -20,9 +20,6 @@ define('REL_BASE_SITE', P_ROOT.".." . DS);
 define('CONF_PATH', REL_BASE_DIR . 'conf' . DS);
 define('ciCFG_FILE', 'site.cfg' );
 
-define('JQ_UI_JS', 'js/jquery-ui.min.js');
-define('JQ_JS', 'js/jquery-min.js');
-
 date_default_timezone_set('America/Chicago');
 
 /*
