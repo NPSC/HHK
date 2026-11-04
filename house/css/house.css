@@ -748,6 +748,10 @@ div.dt-buttons .dt-button:hover>span {
 	margin-left: 0.25em;
 }
 
+#filterBtns>#filterOpts>.divider {
+	background: #a6c9e2; width:1px; margin: 0 0.5em;
+}
+
 /* Report sizes use rem so filters and report tables look the same on every page, whether or not they sit inside
    tabs or other jQuery UI widgets (jQuery UI resizes nested .ui-widget elements). The .ui-widget selector outranks
    jQuery UI's ".ui-widget .ui-widget" rule. */
