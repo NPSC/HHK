@@ -85,8 +85,8 @@ $showDeleted = FALSE;
 $useVisitDates = FALSE;
 $cFields = array();
 
-//$useGlReport = stristr(strtolower($uS->siteName), 'gorecki');
-$useGlReport = $uS->useGLCodes;
+$useGlReport = stristr(strtolower($uS->siteName), 'gorecki');
+//$useGlReport = $uS->useGLCodes;
 
 
 // Hosted payment return
