@@ -102,7 +102,7 @@ abstract class AbstractReport {
         $descriptionMkup = "";
 
         if($this->filterOptsMkup != ""){
-            $filterOptsMkup = HTMLContainer::generateMarkup("div","<strong>Filter Options:</strong>". $this->filterOptsMkup, array("class"=>"ui-widget-content ui-corner-all hhk-flex mr-5", "id"=>"filterOpts"));
+            $filterOptsMkup = HTMLContainer::generateMarkup("div","<strong>Filter Options:</strong>". $this->filterOptsMkup, array("class"=>"ui-widget-content ui-corner-all d-flex mr-5", "id"=>"filterOpts"));
         }
 
         if($this->description != ""){
@@ -608,17 +608,56 @@ abstract class AbstractReport {
         return $this->defaultFields;
     }
 
+    /**
+     * Filter option inputs. A checkbox is ["title"=>..., "type"=>"checkbox"]; a radio group is
+     * ["type"=>"radio", "options"=>[value=>label, ...], "default"=>value] and posts the chosen value under its key.
+     * A radio option can be ["label"=>..., "title"=>...] to give it a hover tip.
+     */
     public function makeFilterOptsMkup(): string{
         foreach($this->filterOpts as $key=>$opt) {
-            $attrs = array("type"=>$opt["type"], "id"=>$key, "name"=>$key);
-            if(isset($this->request[$key])){
-                $attrs['checked'] = 'checked';
-            }
 
-            $this->filterOptsMkup .= HTMLContainer::generateMarkup("div",
-                HTMLInput::generateMarkup("", $attrs) .
-                HTMLContainer::generateMarkup("label", $opt['title'], array("for"=>$key))
-            );
+            switch ($opt["type"]) {
+                case "radio":
+                    $selected = $this->request[$key] ?? ($opt["default"] ?? '');
+                    $radios = '';
+
+                    foreach ($opt["options"] as $value => $option) {
+                        $label = (is_array($option) ? $option["label"] : $option);
+                        $attrs = array("type"=>"radio", "id"=>$key . '-' . $value, "name"=>$key, "class"=>"ml-2");
+                        $labelAttrs = array("for"=>$key . '-' . $value);
+
+                        if (is_array($option) && isset($option["title"])) {
+                            $attrs['title'] = $option["title"];
+                            $labelAttrs['title'] = $option["title"];
+                        }
+
+                        if ($selected == $value) {
+                            $attrs['checked'] = 'checked';
+                        }
+
+                        $radios .= HTMLInput::generateMarkup($value, $attrs)
+                            . HTMLContainer::generateMarkup("label", $label, $labelAttrs);
+                    }
+
+                    $this->filterOptsMkup .= HTMLContainer::generateMarkup("div", $radios);
+                    break;
+            
+                case "divider":
+                    $this->filterOptsMkup .= HTMLContainer::generateMarkup("div", "", array("class"=>"divider"));
+                    break;
+
+                default:
+
+                    $attrs = array("type"=>$opt["type"], "id"=>$key, "name"=>$key);
+                    if(isset($this->request[$key])){
+                        $attrs['checked'] = 'checked';
+                    }
+
+                    $this->filterOptsMkup .= HTMLContainer::generateMarkup("div",
+                        HTMLInput::generateMarkup("", $attrs) .
+                        HTMLContainer::generateMarkup("label", $opt['title'], array("for"=>$key))
+                    );
+            }
         }
         return $this->filterOptsMkup;
     }

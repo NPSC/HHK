@@ -41,9 +41,19 @@ class InvoiceReport extends AbstractReport implements ReportInterface
         $this->inputSetReportName = "invoice";
 
         $this->filterOpts = [
-            "cbUseVisitDates" => [
-                "title" => "Use Visit Dates",
-                "type" => "checkbox"
+            "divider1" => [
+                "type" => "divider"
+            ],
+            "rbDateType" => [
+                "type" => "radio",
+                "options" => [
+                    "invoice" => "Invoice Dates",
+                    "visit" => ["label" => "Visit Dates", "title" => "Show all invoices for any Visit having days within this date range."]
+                ],
+                "default" => "invoice"
+            ],
+            "divider2" => [
+                "type" => "divider"
             ],
             "cbShoDel" => [
                 "title" => "Show Deleted Invoices",
@@ -275,7 +285,7 @@ class InvoiceReport extends AbstractReport implements ReportInterface
 
         } else {
 
-            if (isset($this->request['cbUseVisitDates'])) {
+            if ($this->useVisitDates()) {
                 $whDates = " AND DATE(`v`.`Arrival_Date`) < DATE(:queryEnd) AND IFNULL(DATE(`v`.`Actual_Departure`), DATE(`v`.`Expected_Departure`)) >= DATE(:reportStart) ";
             } else {
                 $whDates = " AND DATE(`i`.`Invoice_Date`) < DATE(:queryEnd) AND DATE(`i`.`Invoice_Date`) >= DATE(:reportStart) ";
@@ -334,6 +344,13 @@ class InvoiceReport extends AbstractReport implements ReportInterface
                 LEFT JOIN `resource` `re` ON `v`.`idResource` = `re`.`idResource`
                 LEFT JOIN `invoice` `di` ON `i`.`Delegated_Invoice_Id` = `di`.`idInvoice`
             WHERE $whDeleted $whDates $whHosp $whAssoc $whStatus $whBillAgent ";
+    }
+
+    /**
+     * Visit dates: every invoice for a visit with days in the period. Otherwise invoices dated in the period.
+     */
+    protected function useVisitDates(): bool {
+        return ($this->request['rbDateType'] ?? '') == 'visit';
     }
 
     /**
@@ -525,7 +542,7 @@ class InvoiceReport extends AbstractReport implements ReportInterface
 
         } else {
 
-            $mkup .= HTMLContainer::generateMarkup('p', 'Reporting Period: ' . date('M j, Y', strtotime($this->filter->getReportStart())) . ' thru ' . date('M j, Y', strtotime($this->filter->getReportEnd())));
+            $mkup .= HTMLContainer::generateMarkup('p', 'Reporting Period: ' . date('M j, Y', strtotime($this->filter->getReportStart())) . ' thru ' . date('M j, Y', strtotime($this->filter->getReportEnd())) . ($this->useVisitDates() ? ' (Visit Dates)' : ' (Invoice Dates)'));
             $mkup .= HTMLContainer::generateMarkup('p', $labels->getString('hospital', 'hospitals', 'Hospitals') . ': ' . $this->filter->getSelectedHospitalsString());
 
             if (count($this->filter->getAList()) > 0) {
