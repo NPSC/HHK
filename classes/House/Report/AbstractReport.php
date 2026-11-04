@@ -57,13 +57,12 @@ abstract class AbstractReport {
      * @param array $request
      */
     public function __construct(\PDO $dbh, string $report = "", array $request = []){
-        $uS= Session::getInstance();
 
         $this->dbh = $dbh;
         $this->request = $request;
         // subclasses may build their filter before calling parent::__construct()
         $this->filter ??= new ReportFilter();
-        $this->filter->createTimePeriod(date('Y'), '19', $uS->fy_diff_Months);
+        $this->makeTimePeriod();
         $this->filter->createHospitals();
 
         $this->fields = $this->makeFields();
@@ -88,6 +87,14 @@ abstract class AbstractReport {
 
         //register actions
         $this->actions($dbh, $request);
+    }
+
+    /**
+     * Set up the filter's time period choices. Subclasses can override this to change the default interval or the options.
+     */
+    protected function makeTimePeriod(): void {
+        $uS = Session::getInstance();
+        $this->filter->createTimePeriod(date('Y'), ReportFilter::MONTHS, $uS->fy_diff_Months);
     }
 
     /**

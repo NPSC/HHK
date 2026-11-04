@@ -1,13 +1,8 @@
 <?php
 use HHK\Exception\RuntimeException;
-use HHK\House\GLCodes\GLCodes;
-use HHK\House\GLCodes\GLParameters;
-use HHK\House\GLCodes\GLTemplateRecord;
+use HHK\House\Report\GLReport;
 use HHK\House\Report\InvoiceReport;
-use HHK\House\Report\ReportFilter;
 use HHK\HTMLControls\HTMLContainer;
-use HHK\HTMLControls\HTMLInput;
-use HHK\HTMLControls\HTMLTable;
 use HHK\Payment\PaymentGateway\AbstractPaymentGateway;
 use HHK\Payment\PaymentGateway\Deluxe\DeluxeGateway;
 use HHK\Payment\PaymentSvcs;
@@ -106,213 +101,26 @@ if (isset($_POST['btnExcel-' . $report->getInputSetReportName()])) {
     $report->downloadExcel("InvoiceReport");
 }
 
-// Gl REport
-$glSftp = FALSE;
-$glInvoices = '';
-$glFilterMkup = '';
-$bytesWritten = '';
+// GL Report
+$glReport = NULL;
+$glMkup = '';
 
 if ($useGlReport) {
 
-	// Settings are on Admin > Configure > General Ledger
-	$glParm = new GLParameters($dbh, 'Gl_Code');
+	$glReport = new GLReport($dbh, $_REQUEST);
 
-	$glFilter = new ReportFilter();
-	$glFilter->createTimePeriod(date('Y'), ReportFilter::MONTHS, $uS->fy_diff_Months, [ReportFilter::DATES, ReportFilter::FISCAL_YEAR, ReportFilter::CAL_YEAR, ReportFilter::YEAR_2_DATE]);
-
-	// Output report
-	if (filter_has_var(INPUT_POST, 'btnGlGo') || filter_has_var(INPUT_POST, 'btnGlTx') || filter_has_var(INPUT_POST, 'btnGlcsv')) {
-
+	if (filter_has_var(INPUT_POST, 'btnGlcsv')) {
 		$tabReturn = 2;
+		$glMkup = $glReport->downloadGlFile();  // exits when there's a file to send
 
-		$glFilter->loadSelectedTimePeriod();
+	} else if (filter_has_var(INPUT_POST, 'btnGlTx')) {
+		$tabReturn = 2;
+		$glMkup = $glReport->transferGlFile();
 
-		$glStart = new DateTimeImmutable($glFilter->getReportStart());
-		$glEnd = new DateTimeImmutable($glFilter->getQueryEnd());
-
-		// Months run from the fiscal Start Day
-		try {
-			$glShift = new DateInterval('P' . (intval($glParm->getStartDay()) - 1) . 'D');
-		} catch (RuntimeException $ex) {
-			// Invalid Start Day setting: use calendar months.
-			$glShift = new DateInterval('P0D');
-			$glInvoices = HTMLContainer::generateMarkup('p', $ex->getMessage() . '. Using calendar months.', array('class'=>'ui-state-error ui-corner-all p-2 mb-2'));
-		}
-
-		$glStart = $glStart->add($glShift);
-		$glEnd = $glEnd->add($glShift);
-
-		$glCodes = new GLCodes($dbh, 0, 0, $glParm, new GLTemplateRecord(), $glStart, $glEnd);
-
-		if (isset($_POST['btnGlTx']) && $glParm->isSftpConfigured()) {
-
-			$bytesWritten = $glCodes->mapRecords(FALSE)
-					->transferRecords();
-
-			$etbl = new HTMLTable();
-
-			foreach ($glCodes->getErrors() as $e) {
-				$etbl->addBodyTr(HTMLTable::makeTd($e));
-			}
-
-			if ($bytesWritten != '') {
-				$etbl->addBodyTr(HTMLTable::makeTd("Bytes Written: ".$bytesWritten));
-			}
-
-			$glInvoices = $etbl->generateMarkup() . $glInvoices;
-
-		} else if (isset($_POST['btnGlcsv'])) {
-            $glCodes->mapRecords()->downloadCSV();
-
-		} else {
-
-			$tbl = new HTMLTable();
-
-			$invHdr = '';
-			foreach ($glCodes->invoiceHeader() as $h) {
-				$invHdr .= "<td>" . ($h == '' ? ' ' : $h) . "</td>";
-			}
-			$tbl->addBodyTr($invHdr);
-
-			$pmtHdr = '';
-			foreach ($glCodes->paymentHeader() as $h) {
-				$pmtHdr .= "<td style='color:blue;'>" . ($h == '' ? ' ' : $h) . "</td>";
-			}
-			$tbl->addBodyTr($pmtHdr);
-
-			$lineHdr = '';
-			foreach ($glCodes->lineHeader() as $h) {
-				$lineHdr .= "<td style='color:green;'>" . ($h == '' ? ' ' : $h) . "</td>";
-			}
-			$tbl->addBodyTr($lineHdr);
-
-			// Get payment methods (types) labels.
-			$pmstmt = $dbh->prepare("SELECT `idPayment_method`, `Method_Name` FROM `payment_method`;");
-			$pmstmt->execute();
-			$pmRows = $pmstmt->fetchAll(\PDO::FETCH_NUM);
-			$pmtMethods = array();
-			foreach ($pmRows as $r) {
-				$pmtMethods[$r[0]] = $r[1];
-			}
-
-			$recordCtr = 0;
-
-			foreach ($glCodes->getInvoices() as $r) {
-
-				if ($recordCtr++ > 16) {
-					$tbl->addBodyTr($invHdr);
-					$tbl->addBodyTr($pmtHdr);
-					$tbl->addBodyTr($lineHdr);
-					$recordCtr = 0;
-				}
-
-				$mkupRow = '';
-
-				foreach ($r['i'] as $k=> $col) {
-
-					if ($k == 'iStatus' && $col == 'p') {
-						$col = 'paid';
-					}
-
-					$mkupRow .= "<td>" . ($col == '' ? ' ' : $col) . "</td>";
-				}
-				$tbl->addBodyTr($mkupRow);
-
-				if (isset($r['p'])) {
-
-					foreach ($r['p'] as $p) {
-						$mkupRow = '<td> </td>';
-						foreach ($p as $k => $col) {
-
-							if ($k == 'pTimestamp') {
-								$col = date('Y/m/d', strtotime($col));
-							} else if ($k == 'pMethod') {
-								$col = $pmtMethods[$col];
-							} else if ($k == 'pStatus' && $col == 's') {
-								$col = "sale";
-							} else if ($k == 'pStatus' && $col == 'r') {
-								$col = "return";
-							}
-
-							$mkupRow .= "<td style='color:blue;'>" . ($col == '' ? ' ' : $col) . "</td>";
-
-						}
-						$tbl->addBodyTr($mkupRow);
-
-					}
-				}
-
-				if (isset($r['l'])) {
-					foreach ($r['l'] as $h) {
-						$mkupRow = '<td> </td><td> </td>';
-						foreach ($h as $k => $col) {
-
-							if ($k == 'il_Amount') {
-								$col = number_format($col, 2);
-							}
-
-							$mkupRow .= "<td style='color:green;'>" . ($col == '' ? ' ' : $col) . "</td>";
-
-						}
-						$tbl->addBodyTr($mkupRow);
-
-					}
-				}
-			}
-
-			$glInvoices .= $tbl->generateMarkup();
-
-			// Comma delemeted file.
-			$glCodes->mapRecords(TRUE);
-
-			$tbl = new HTMLTable();
-
-			foreach ($glCodes->getLines() as $l) {
-
-				$tbl->addBodyTr(HTMLTable::makeTd($l['in'], array('style' => 'font-size:0.8em')) . HTMLTable::makeTd(implode(',', $l['l']), array('style'=>'font-size:0.8em')));
-
-			}
-
-			if ($glCodes->getStopoAtInvoice() != '') {
-				$tbl->addBodyTr(HTMLTable::makeTd('Stop at Invoice number ' . $glCodes->getStopoAtInvoice(), array()));
-			}
-
-
-			$glInvoices .= "<p style='margin-top:20px;'>Total Credits = " . number_format($glCodes->getTotalCredit(), 2) . " Total Debits = " . number_format($glCodes->getTotalDebit(), 2) . "</p>" .$tbl->generateMarkup();
-
-			if (count($glCodes->getErrors()) > 0) {
-				$etbl = new HTMLTable();
-				foreach ($glCodes->getErrors() as $e) {
-					$etbl->addBodyTr(HTMLTable::makeTd($e));
-				}
-				$glInvoices = $etbl->generateMarkup() . $glInvoices;
-			}
-		}
+	} else if (isset($_POST['btnHere-' . $glReport->getInputSetReportName()])) {
+		$tabReturn = 2;
+		$glMkup = $glReport->generateMarkup();
 	}
-
-	$glSftp = $glParm->isSftpConfigured();
-
-	// Same wrapper as AbstractReport::generateFilterMarkup()
-	$glBtnAttrs = array('type'=>'submit', 'class'=>'ui-button ui-corner-all ui-widget');
-
-	$glFilterMkup = HTMLContainer::generateMarkup("div",
-		HTMLContainer::generateMarkup("form",
-			HTMLContainer::generateMarkup("p", 'GL settings and billing agent GL codes are on Admin &gt; Configure &gt; General Ledger.', array("class"=>"ui-widget ui-widget-content ui-corner-all mb-3 p-2", "style"=>"font-weight:500"))
-			. HTMLContainer::generateMarkup("div", $glFilter->timePeriodMarkup('', 'gl')->generateMarkup(), array("id"=>"filterSelectors", "class"=>"hhk-flex hhk-flex-wrap"))
-			. HTMLContainer::generateMarkup("div",
-				HTMLContainer::generateMarkup("div",
-					HTMLInput::generateMarkup("Run Here", $glBtnAttrs + array('name'=>'btnGlGo'))
-					. HTMLInput::generateMarkup("Download CSV", $glBtnAttrs + array('name'=>'btnGlcsv'))
-					. ($glSftp ? HTMLInput::generateMarkup("Transfer via SFTP", $glBtnAttrs + array('name'=>'btnGlTx')) : '')
-				)
-			, array("id"=>"filterBtns", "class"=>"mt-3 hhk-flex-wrap"))
-		, array("method"=>"POST", "action"=>"InvoiceReport.php", "id"=>"glRptFilterForm"))
-	, array("class"=>"ui-widget ui-widget-content ui-corner-all hhk-tdbox hhk-visitdialog filterWrapper"));
-
-	if ($glInvoices != '') {
-		$glInvoices = HTMLContainer::generateMarkup("div", $glInvoices, array("id"=>"rptGl", "class"=>"ui-widget ui-widget-content ui-corner-all hhk-tdbox hhk-visitdialog mt-3", "style"=>"font-size:0.9em;"));
-	}
-
 }
 
 ?>
@@ -367,6 +175,7 @@ $(document).ready(function() {
     $('#btnInvGo').button();
 
     <?php echo $report->generateReportScript(); ?>
+    <?php if ($glReport) { echo $glReport->generateReportScript(); } ?>
 
     $("#setBillDate").dialog({
         autoOpen: false,
@@ -543,7 +352,7 @@ $(document).ready(function() {
 
                 </div>
                 <div id="vGl" style="display:none;">
-                    <?php echo $glFilterMkup . $glInvoices; ?>
+                    <?php if ($glReport) { echo $glReport->generateFilterMarkup(false) . $glMkup; } ?>
                 </div>
             </div>
             <div id="pmtRcpt" style="font-size: .9em; display:none;"></div>

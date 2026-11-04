@@ -13,6 +13,7 @@ use HHK\Tables\EditRS;
 use HHK\Tables\GenLookupsRS;
 use HHK\Tables\Name\NameDemogRS;
 use HHK\sec\Session;
+use HHK\sec\SysConfig;
 
 class GLParameters {
 
@@ -37,7 +38,6 @@ class GLParameters {
      * Code => [Label, Default]
      */
     const PARAMETERS = [
-        'StartDay' => ['Fiscal Month Start Day', '01'],
         'JournalCategory' => ['Journal Category', ''],
         'LedgerName' => ['Ledger Name', ''],
         'Foundation' => ['Foundation (Waive) GL Code', ''],
@@ -70,7 +70,8 @@ class GLParameters {
         $this->setHost($this->getParm('Host'));
         $this->setJournalCat($this->getParm('JournalCategory'));
         $this->setLedgerName($this->getParm('LedgerName'));
-        $this->setStartDay($this->getParm('StartDay'));
+        // Fiscal month start day is a site setting (sys_config fm_Start_Day), like the fiscal year (fy_diff_Months).
+        $this->setStartDay(SysConfig::getKeyValue($dbh, 'sys_config', 'fm_Start_Day', 1));
         $this->setRemoteFilePath($this->getParm('RemoteFilePath'));
         $this->setPort($this->getParm('Port'));
         $this->setUsername($this->getParm('Username'));
@@ -265,7 +266,7 @@ class GLParameters {
 
         // One titled box per section, like the Cloudbeds import tables.
         $mkup = HTMLContainer::generateMarkup('div',
-                $this->makeSection('GL Parameters', 'Journal settings used when building the GL file.', $glTbl->generateMarkup() . $sftpBtnMkup)
+                $this->makeSection('GL Parameters', 'Journal settings used when building the GL file. The fiscal month start day is the site setting fm_Start_Day.',$glTbl->generateMarkup() . $sftpBtnMkup)
                 . $this->makeSection('Item GL Codes', 'Set in Resource Builder.', $itemTbl->generateMarkup())
                 . $this->makeSection('Pay Type GL Codes', 'Set in Resource Builder.', $payTbl->generateMarkup())
                 . $this->makeSection('Billing Agent GL Codes', 'Third-party payors: the GL debit replaces the pay type GL code on their payments.', $this->getBaMarkup($dbh))

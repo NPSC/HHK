@@ -7,6 +7,7 @@ use HHK\SysConst\{InvoiceStatus, ItemId, PaymentStatusCode};
 use HHK\SFTPConnection;
 use HHK\SysConst\ItemType;
 use HHK\SysConst\PayType;
+use HHK\SysConst\VolMemberType;
 
 /**
  * Builds the monthly GL journal file from the period's payments.
@@ -15,31 +16,48 @@ use HHK\SysConst\PayType;
 class GLCodes {
 
 
-	protected $fileId;
-	protected $startDate;
-	protected $endDate;
-	protected $glParm;
-	protected $records;
-	protected $lines;
-	protected $errors;
-	protected $paymentDate;
-	protected $glLineMapper;
-	protected $stopAtInvoice;
-	protected $payTypeGlCodes;
-	protected $totalDebit = 0.0;
-	protected $totalCredit = 0.0;
+	protected string $fileId = '';
+	protected \DateTimeImmutable $startDate;
+	protected \DateTimeImmutable $endDate;   // day after the period (exclusive)
+	protected GLParameters $glParm;
+	protected GLTemplateRecord $glLineMapper;
+
+	/** @var array<int, array{i: array, p: array, l: array}> invoices keyed by idInvoice: invoice ('i'), payments ('p') and invoice lines ('l') */
+	protected array $records = [];
+
+	/** @var array<int, array> journal lines; see addLine() */
+	protected array $lines = [];
+
+	/** @var string[] */
+	protected array $errors = [];
+
+	protected ?\DateTime $paymentDate = null;  // date of the payment being mapped
+	protected string $stopAtInvoice = '';
+
+	/** @var array<string, string> pay type code => GL code */
+	protected array $payTypeGlCodes = [];
+
+	protected float $totalDebit = 0.0;
+	protected float $totalCredit = 0.0;
+	protected int $currentPaymentId = 0;
+
+	/** @var array<int, string> item id => description */
+	protected array $itemNames = [];
+
+	/** @var array<int, string> billing agent idName => name */
+	protected array $billingAgentNames = [];
 
 
 	/**
 	 * @param \PDO $dbh
-	 * @param mixed $month  with $year, the fiscal month ending on StartDay of this month; ignored when $startDate and $endDate are given
-	 * @param mixed $year
+	 * @param string|int $month  with $year, the fiscal month ending on StartDay of this month; ignored when $startDate and $endDate are given
+	 * @param string|int $year
 	 * @param GLParameters $glParm
 	 * @param GLTemplateRecord $mapperTemplate
 	 * @param \DateTimeInterface|null $startDate  first day of the period
 	 * @param \DateTimeInterface|null $endDate  day after the period (exclusive)
 	 */
-	public function __construct(\PDO $dbh, $month, $year, GLParameters $glParm, GLTemplateRecord $mapperTemplate, ?\DateTimeInterface $startDate = null, ?\DateTimeInterface $endDate = null) {
+	public function __construct(\PDO $dbh, string|int $month, string|int $year, GLParameters $glParm, GLTemplateRecord $mapperTemplate, ?\DateTimeInterface $startDate = null, ?\DateTimeInterface $endDate = null) {
 
 		$this->errors = array();
 		$this->glParm = $glParm;
@@ -87,13 +105,55 @@ class GLCodes {
 		$this->glLineMapper = $mapperTemplate;
 
 		$this->payTypeGlCodes = $this->getPayTypeGlCodes($dbh);
+
+		$this->loadSourceNames($dbh);
 	}
 
 	/**
-	 * @param boolean $stopAtUnbalance
+	 * Item and billing agent names, for the journal line source labels.
+	 */
+	protected function loadSourceNames(\PDO $dbh) {
+
+		$this->itemNames = array();
+		$stmt = $dbh->prepare("SELECT `idItem`, `Description` FROM `item`");
+		$stmt->execute();
+		while ($r = $stmt->fetch(\PDO::FETCH_NUM)) {
+			$this->itemNames[$r[0]] = $r[1];
+		}
+
+		$this->billingAgentNames = array();
+		$stmt = $dbh->prepare("SELECT `n`.`idName`, IF(TRIM(`n`.`Name_Full`) != '', `n`.`Name_Full`, `n`.`Company`) FROM `name` `n` " .
+			" JOIN `name_volunteer2` `nv` ON `n`.`idName` = `nv`.`idName` AND `nv`.`Vol_Category` = 'Vol_Type' AND `nv`.`Vol_Code` = :volCode");
+		$stmt->execute([':volCode' => VolMemberType::BillingAgent]);
+		while ($r = $stmt->fetch(\PDO::FETCH_NUM)) {
+			$this->billingAgentNames[$r[0]] = $r[1];
+		}
+	}
+
+	/**
+	 * Source label for a payment's own line: "Payment", or "Payment by <billing agent>" for a third party payment.
+	 */
+	protected function payLabel(array $p): string {
+
+		if ($p['ba_Gl_Debit'] != '') {
+			return 'Payment by ' . ($this->billingAgentNames[$p['idPayor']] ?? 'billing agent ' . $p['idPayor']);
+		}
+
+		return 'Payment';
+	}
+
+	/**
+	 * Source label for an invoice item's line: the item description.
+	 */
+	protected function itemLabel(array $l): string {
+		return $this->itemNames[$l['il_Item_Id']] ?? 'Item ' . $l['il_Item_Id'];
+	}
+
+	/**
+	 * @param bool $stopAtUnbalance
 	 * @return GLCodes
 	 */
-	public function mapRecords($stopAtUnbalance = FALSE) {
+	public function mapRecords(bool $stopAtUnbalance = FALSE) {
 
 		if (count($this->records) < 1) {
 			$this->recordError('No Records to Map. ');
@@ -143,18 +203,19 @@ class GLCodes {
 		$d = round($this->getTotalDebit(), 2);
 		$c = round($this->getTotalCredit(), 2);
 		if ($c != $d) {
-			$this->recordError('Credits not equal debits. ' . ($c - $d));
+			$this->recordError('Credits do not equal debits. ' . number_format($c - $d, 2));
 		}
 
 		return $this;
 	}
 
-	protected function mapPayment($r, $p) {
+	protected function mapPayment(array $r, array $p) {
 
 		$invLines = array();
 		$hasWaive = FALSE;
 		$hasMOA = FALSE;
 		$invNumber = $r['i']['iNumber'];
+		$this->currentPaymentId = $p['idPayment'];
 
 		// Check dates
 		if ($p['pTimestamp'] != '') {
@@ -164,11 +225,7 @@ class GLCodes {
 			return;
 		}
 
-		if ($p['pUpdated'] != '') {
-			$pUpDate = new \DateTime($p['pUpdated']);
-		} else {
-			$pUpDate = NULL;
-		}
+		$pUpDate = ($p['pUpdated'] != '') ? new \DateTime($p['pUpdated']) : NULL;
 
 		// Copy invoice lines and Look for waived payments.
 		foreach ($r['l'] as $l) {
@@ -195,16 +252,7 @@ class GLCodes {
 		}
 
 		// payment type sets glCode.
-		if ($p['ba_Gl_Debit'] != '') {
-			// 3rd party payment
-
-			$glCode = $p['ba_Gl_Debit'];
-
-		} else {
-
-			$glCode = $p['pm_Gl_Code'];
-
-		}
+		$glCode = ($p['ba_Gl_Debit'] != '') ? $p['ba_Gl_Debit'] : $p['pm_Gl_Code'];
 
 
 		// Payment Status
@@ -224,7 +272,7 @@ class GLCodes {
 				$this->mapCountyPayments($glCode, TRUE, $invLines, $p, ($r['i']['Pledged'] == 0 ? $r['i']['Rate'] : $r['i']['Pledged']), $pUpDate, $invNumber);
 
 				if ($p['pAmount'] != 0) {
-				    $this->addLine($invNumber, $glCode, (0 - abs($p['pAmount'])), 0, $pUpDate);
+				    $this->addLine($invNumber, $glCode, (0 - abs($p['pAmount'])), 0, $pUpDate, $this->payLabel($p) . ' (returned)');
 				}
 
 				foreach($invLines as $l) {
@@ -234,7 +282,7 @@ class GLCodes {
 					}
 
 					// map gl code
-					$this->addLine($invNumber, $l['Item_Gl_Code'], 0, (0 - abs($l['il_Amount'])), $pUpDate);
+					$this->addLine($invNumber, $l['Item_Gl_Code'], 0, (0 - abs($l['il_Amount'])), $pUpDate, $this->itemLabel($l) . ' (returned)');
 				}
 
 			}
@@ -248,7 +296,7 @@ class GLCodes {
 				$this->mapCountyPayments($glCode, FALSE, $invLines, $p, ($r['i']['Pledged'] == 0 ? $r['i']['Rate'] : $r['i']['Pledged']), $this->paymentDate, $invNumber);
 
 				if ($p['pAmount'] != 0) {
-				    $this->addLine($invNumber, $glCode, $p['pAmount'], 0, $this->paymentDate);
+				    $this->addLine($invNumber, $glCode, $p['pAmount'], 0, $this->paymentDate, $this->payLabel($p));
 				}
 
 				foreach($invLines as $l) {
@@ -257,7 +305,7 @@ class GLCodes {
 						continue;
 					}
 
-					$this->addLine($invNumber, $l['Item_Gl_Code'], 0, $l['il_Amount'], $this->paymentDate);
+					$this->addLine($invNumber, $l['Item_Gl_Code'], 0, $l['il_Amount'], $this->paymentDate, $this->itemLabel($l));
 				}
 			}
 
@@ -283,7 +331,7 @@ class GLCodes {
 				$this->mapCountyPayments($glCode, FALSE, $invLines, $p, ($r['i']['Pledged'] == 0 ? $r['i']['Rate'] : $r['i']['Pledged']), $this->paymentDate, $invNumber);
 
 				if ($p['pAmount'] != 0) {
-				    $this->addLine($invNumber, $glCode, $p['pAmount'], 0, $this->paymentDate);
+				    $this->addLine($invNumber, $glCode, $p['pAmount'], 0, $this->paymentDate, $this->payLabel($p));
 				}
 
 				foreach($invLines as $l) {
@@ -292,7 +340,7 @@ class GLCodes {
 						continue;
 					}
 
-					$this->addLine($invNumber, $l['Item_Gl_Code'], 0, $l['il_Amount'], $this->paymentDate);
+					$this->addLine($invNumber, $l['Item_Gl_Code'], 0, $l['il_Amount'], $this->paymentDate, $this->itemLabel($l));
 				}
 			}
 
@@ -303,7 +351,7 @@ class GLCodes {
 			$this->mapCountyPayments($glCode, FALSE, $invLines, $p, ($r['i']['Pledged'] == 0 ? $r['i']['Rate'] : $r['i']['Pledged']), $this->paymentDate, $invNumber);
 
 			if ($p['pAmount'] != 0) {
-			    $this->addLine($invNumber, $glCode, (0 - abs($p['pAmount'])), 0, $this->paymentDate);
+			    $this->addLine($invNumber, $glCode, (0 - abs($p['pAmount'])), 0, $this->paymentDate, $this->payLabel($p) . ' (refund)');
 			}
 
 			foreach($invLines as $l) {
@@ -313,7 +361,7 @@ class GLCodes {
 				}
 
 				// map gl code
-				$this->addLine($invNumber, $l['Item_Gl_Code'], 0, (0 - abs($l['il_Amount'])), $this->paymentDate);
+				$this->addLine($invNumber, $l['Item_Gl_Code'], 0, (0 - abs($l['il_Amount'])), $this->paymentDate, $this->itemLabel($l) . ' (refund)');
 			}
 
 		} else {
@@ -321,7 +369,7 @@ class GLCodes {
 		}
 	}
 
-	protected function mapCountyPayments($glCode, $isReturn, array $invLines, array &$p, $rate, $pDate, $invNumber) {
+	protected function mapCountyPayments(string $glCode, bool $isReturn, array $invLines, array &$p, ?float $rate, \DateTimeInterface $pDate, string|int $invNumber) {
 
 		if ($this->glParm->isCountyEnabled() === FALSE || $glCode != $this->glParm->getCountyLiability()) {
 			return;
@@ -351,16 +399,16 @@ class GLCodes {
 				if ($isReturn) {
 
 					// make a debit line for hte difference
-				    $this->addLine($invNumber, $this->glParm->getGrossSales(), (0 - $lodgingCharge), 0, $pDate);
+				    $this->addLine($invNumber, $this->glParm->getGrossSales(), (0 - $lodgingCharge), 0, $pDate, 'County split: gross sales (returned)');
 
 				} else {
 
 				    // Intermediate transaction for counties
-				    $this->addLine($invNumber, $glCode, 0, $lodgingCharge, $pDate);
-				    $this->addLine($invNumber, $this->payTypeGlCodes[PayType::Cash], $lodgingCharge, 0, $pDate);
+				    $this->addLine($invNumber, $glCode, 0, $lodgingCharge, $pDate, 'County split: county liability');
+				    $this->addLine($invNumber, ($this->payTypeGlCodes[PayType::Cash] ?? ''), $lodgingCharge, 0, $pDate, 'County split: cash');
 
 					// make a debit line for hte difference
-				    $this->addLine($invNumber, $this->glParm->getGrossSales(), $lodgingCharge, 0, $pDate);
+				    $this->addLine($invNumber, $this->glParm->getGrossSales(), $lodgingCharge, 0, $pDate, 'County split: gross sales');
 
 				}
 			}
@@ -369,10 +417,21 @@ class GLCodes {
 
 	/**
 	 * Lay out one journal line and add it to the debit and credit totals.
+	 * Each line keeps its invoice number ('in'), file record ('l') and, for the GL report, the payment, date, GL code, amounts
+	 * and what made the line ('source'; not in the file).
 	 */
-	protected function addLine($invNumber, $glCode, $debitAmount, $creditAmount, $pDate) {
+	protected function addLine(string|int $invNumber, string $glCode, float $debitAmount, float $creditAmount, \DateTimeInterface $pDate, string $source = '') {
 
-		$this->lines[] = ['in'=>$invNumber, 'l'=>$this->glLineMapper->makeLine($this->fileId, $glCode, $debitAmount, $creditAmount, $pDate, $this->glParm->getJournalCat(), $this->glParm->getLedgerName())];
+		$this->lines[] = [
+			'in'=>$invNumber,
+			'l'=>$this->glLineMapper->makeLine($this->fileId, $glCode, $debitAmount, $creditAmount, $pDate, $this->glParm->getJournalCat(), $this->glParm->getLedgerName()),
+			'source'=>$source,
+			'idPayment'=>$this->currentPaymentId,
+			'date'=>$pDate->format('Y-m-d'),
+			'glCode'=>$glCode,
+			'debit'=>$debitAmount,
+			'credit'=>$creditAmount,
+		];
 
 		$this->totalDebit += $debitAmount;
 		$this->totalCredit += $creditAmount;
@@ -392,7 +451,7 @@ class GLCodes {
 		return $data;
 	}
 
-	protected function mapMoaPayments(array $invLines, $invNumber) {
+	protected function mapMoaPayments(array $invLines, string|int $invNumber) {
 
 		$remainingItems = array();
 
@@ -402,11 +461,11 @@ class GLCodes {
 
 				if ($l['il_Amount'] > 0) {
 
-					$this->addLine($invNumber, $l['Item_Gl_Code'], 0, $l['il_Amount'], $this->paymentDate);
+					$this->addLine($invNumber, $l['Item_Gl_Code'], 0, $l['il_Amount'], $this->paymentDate, $this->itemLabel($l));
 
 				} else {
 
-					$this->addLine($invNumber, $l['Item_Gl_Code'], abs($l['il_Amount']), 0, $this->paymentDate);
+					$this->addLine($invNumber, $l['Item_Gl_Code'], abs($l['il_Amount']), 0, $this->paymentDate, $this->itemLabel($l));
 
 				}
 
@@ -418,7 +477,7 @@ class GLCodes {
 		return $remainingItems;
 	}
 
-	protected function mapWaivePayments(array $invLines, $invNumber) {
+	protected function mapWaivePayments(array $invLines, string|int $invNumber) {
 
 		// add up waiveable items
 		$waiveAmt = 0;
@@ -436,10 +495,10 @@ class GLCodes {
 		if ($waiveAmt > 0) {
 
 			// credit the waive gl code
-			$this->addLine($invNumber, $waiveGlCode, 0, $waiveAmt, $this->paymentDate);
+			$this->addLine($invNumber, $waiveGlCode, 0, $waiveAmt, $this->paymentDate, 'Waive: ' . ($this->itemNames[ItemId::Waive] ?? 'Waive'));
 
 			// debit the foundation donation
-			$this->addLine($invNumber, $this->glParm->getFoundation(), $waiveAmt, 0, $this->paymentDate);
+			$this->addLine($invNumber, $this->glParm->getFoundation(), $waiveAmt, 0, $this->paymentDate, 'Waive: Foundation');
 
 		}
 
@@ -647,7 +706,7 @@ class GLCodes {
 		exit();
 	}
 
-	protected function getPayTypeGlCodes(\PDO $dbh) {
+	protected function getPayTypeGlCodes(\PDO $dbh): array {
 
 	    // Pay Types
 	    $payMethods = array();
@@ -670,41 +729,45 @@ class GLCodes {
 	    return $payCodes;
 
 	}
-	public static function invoiceHeader() {
+	public static function invoiceHeader(): array {
 
 		return array('Inv #', 'Delegated', 'Status', 'Amt', 'Deleted', 'Pledged', 'Rate');
 	}
-	public static function lineHeader() {
+	public static function lineHeader(): array {
 
 		return array(' ', ' ', 'id', 'Amt', 'Item', 'Type', 'Gl Code');
 	}
-	public static function paymentHeader() {
+	public static function paymentHeader(): array {
 
 		return array(' ', 'id', 'Status', 'Amt', 'Method', 'Updated', 'Timestamp', 'Refund', 'Payor', 'Pm Gl', 'Ba Debit', 'Ba Cred');
 	}
 
-	protected function recordError($error) {
+	protected function recordError(string $error) {
 		$this->errors[] = $error;
 	}
 
-	public function getInvoices() {
+	public function getInvoices(): array {
 		return $this->records;
 	}
 
-	public function getLines() {
+	public function getLines(): array {
 		return $this->lines;
 	}
 
-	public function getErrors() {
+	public function getErrors(): array {
 		return $this->errors;
 	}
 
-	public function getTotalCredit() {
+	public function getTotalCredit(): float {
 		return $this->totalCredit;
 	}
-	public function getTotalDebit() {
+	public function getTotalDebit(): float {
 		return $this->totalDebit;
 	}
+	public function getFileId(): string {
+		return $this->fileId;
+	}
+
 	public function getStopoAtInvoice() {
 		return $this->stopAtInvoice;
 	}

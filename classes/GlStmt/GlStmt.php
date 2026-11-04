@@ -149,7 +149,7 @@ class GlStmt {
 
 
 		if ($this->glLineMapper->getTotalCredit() != $this->glLineMapper->getTotalDebit()) {
-			$this->recordError('Credits not equal debits: ' .$this->glLineMapper->getTotalCredit() .'  '.$this->glLineMapper->getTotalDebit());
+			$this->recordError('Credits do not equal debits: ' .$this->glLineMapper->getTotalCredit() .'  '.$this->glLineMapper->getTotalDebit());
 		}
 
 		return $this;
