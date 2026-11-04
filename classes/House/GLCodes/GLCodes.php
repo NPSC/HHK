@@ -372,7 +372,7 @@ class GLCodes {
 	 */
 	protected function addLine($invNumber, $glCode, $debitAmount, $creditAmount, $pDate) {
 
-		$this->lines[] = ['in'=>$invNumber, 'l'=>$this->glLineMapper->makeLine($this->fileId, $glCode, $debitAmount, $creditAmount, $pDate, $this->glParm->getJournalCat())];
+		$this->lines[] = ['in'=>$invNumber, 'l'=>$this->glLineMapper->makeLine($this->fileId, $glCode, $debitAmount, $creditAmount, $pDate, $this->glParm->getJournalCat(), $this->glParm->getLedgerName())];
 
 		$this->totalDebit += $debitAmount;
 		$this->totalCredit += $creditAmount;

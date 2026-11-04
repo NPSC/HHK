@@ -278,19 +278,23 @@ DROP TABLE IF EXISTS `mail_listing`;
 delete from `gen_lookups` where `Table_Name` = 'Mail_List' and `Code` = 'Refresh_Date';
 
 -- GL report settings (Admin > Configure > General Ledger). A site that already has a County Liability code
--- (Gorecki) gets its gross sales GL code, which used to be hardcoded.
+-- (Gorecki) gets its gross sales GL code and ledger name, which used to be hardcoded.
 INSERT IGNORE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `Type`, `Order`)
-	SELECT 'Gl_Code', 'GrossSales', '200-1007582-500014', '', '', 4 FROM `gen_lookups`
+	SELECT 'Gl_Code', 'GrossSales', '200-1007582-500014', '', '', 5 FROM `gen_lookups`
+	WHERE `Table_Name` = 'Gl_Code' AND `Code` = 'CountyLiability' AND `Description` <> '';
+INSERT IGNORE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `Type`, `Order`)
+	SELECT 'Gl_Code', 'LedgerName', 'CentraCare US', '', '', 3 FROM `gen_lookups`
 	WHERE `Table_Name` = 'Gl_Code' AND `Code` = 'CountyLiability' AND `Description` <> '';
 INSERT IGNORE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `Type`, `Order`) VALUES
 	('Gl_Code', 'StartDay', '01', '', '', 1),
 	('Gl_Code', 'JournalCategory', '', '', '', 2),
-	('Gl_Code', 'Foundation', '', '', '', 3),
-	('Gl_Code', 'GrossSales', '', '', '', 4),
-	('Gl_Code', 'CountyLiability', '', '', '', 5),
-	('Gl_Code', 'CountyPayment', '50', '', '', 6),
-	('Gl_Code', 'Host', '', '', '', 7),
-	('Gl_Code', 'Port', '22', '', '', 8),
-	('Gl_Code', 'Username', '', '', '', 9),
-	('Gl_Code', 'Password', '', '', '', 10),
-	('Gl_Code', 'RemoteFilePath', '', '', '', 11);
+	('Gl_Code', 'LedgerName', '', '', '', 3),
+	('Gl_Code', 'Foundation', '', '', '', 4),
+	('Gl_Code', 'GrossSales', '', '', '', 5),
+	('Gl_Code', 'CountyLiability', '', '', '', 6),
+	('Gl_Code', 'CountyPayment', '50', '', '', 7),
+	('Gl_Code', 'Host', '', '', '', 8),
+	('Gl_Code', 'Port', '22', '', '', 9),
+	('Gl_Code', 'Username', '', '', '', 10),
+	('Gl_Code', 'Password', '', '', '', 11),
+	('Gl_Code', 'RemoteFilePath', '', '', '', 12);

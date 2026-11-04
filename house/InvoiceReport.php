@@ -301,7 +301,7 @@ if ($useGlReport) {
 			. HTMLContainer::generateMarkup("div", $glFilter->timePeriodMarkup('', 'gl')->generateMarkup(), array("id"=>"filterSelectors", "class"=>"hhk-flex hhk-flex-wrap"))
 			. HTMLContainer::generateMarkup("div",
 				HTMLContainer::generateMarkup("div",
-					HTMLInput::generateMarkup("Show", $glBtnAttrs + array('name'=>'btnGlGo'))
+					HTMLInput::generateMarkup("Run Here", $glBtnAttrs + array('name'=>'btnGlGo'))
 					. HTMLInput::generateMarkup("Download CSV", $glBtnAttrs + array('name'=>'btnGlcsv'))
 					. ($glSftp ? HTMLInput::generateMarkup("Transfer via SFTP", $glBtnAttrs + array('name'=>'btnGlTx')) : '')
 				)
@@ -522,51 +522,51 @@ $(document).ready(function() {
     <body <?php if ($wInit->testVersion) echo "class='testbody'"; ?>>
         <?php echo $menuMarkup; ?>
         <div id="contentDiv">
-        <h2><?php echo $wInit->pageHeading; ?></h2>
-        <div id="paymentMessage" style="display:none;" class="ui-widget ui-widget-content ui-corner-all ui-state-highlight hhk-panel hhk-tdbox my-2"></div>
+            <h2><?php echo $wInit->pageHeading; ?></h2>
+            <div id="paymentMessage" style="display:none;" class="ui-widget ui-widget-content ui-corner-all ui-state-highlight hhk-panel hhk-tdbox my-2"></div>
 
-        <div id="mainTabs" style="font-size:.9em;" class="ui-widget ui-widget-content ui-corner-all hhk-tdbox hhk-visitdialog">
-            <ul>
-                <li><a href="#invr">All Invoices</a></li>
-                <li id="liInvoice"><a href="#vInv">Unpaid Invoices</a></li>
-                <?php if ($useGlReport) {?>
-                <li id="gl"><a href="#vGl">GL Report</a></li>
-                <?php }?>
-            </ul>
-            <div id="invr" >
-                <?php echo $report->generateFilterMarkup() . $dataTableWrapper; ?>
+            <div id="mainTabs" style="font-size:.9em;" class="ui-widget ui-widget-content ui-corner-all hhk-tdbox hhk-visitdialog">
+                <ul>
+                    <li><a href="#invr">All Invoices</a></li>
+                    <li id="liInvoice"><a href="#vInv">Unpaid Invoices</a></li>
+                    <?php if ($useGlReport) {?>
+                    <li id="gl"><a href="#vGl">GL Report</a></li>
+                    <?php }?>
+                </ul>
+                <div id="invr" >
+                    <?php echo $report->generateFilterMarkup() . $dataTableWrapper; ?>
+                </div>
+                <div id="vInv" style="display:none;">
+                    <input type="button" id="btnInvGo" value="Refresh"/>
+
+                    <div id="rptInvdiv" class="hhk-visitdialog"></div>
+
+                </div>
+                <div id="vGl" style="display:none;">
+                    <?php echo $glFilterMkup . $glInvoices; ?>
+                </div>
             </div>
-            <div id="vInv" style="display:none;">
-                <input type="button" id="btnInvGo" value="Refresh"/>
+            <div id="pmtRcpt" style="font-size: .9em; display:none;"></div>
+            <form name="xform" id="xform" method="post"></form>
+            <div id="keysfees" style="font-size: .9em;"></div>
 
-                  <div id="rptInvdiv" class="hhk-visitdialog"></div>
-
+            <div id="cardonfile" style="font-size: .9em; display:none;"></div>
+            <div id="setBillDate" class="hhk-tdbox hhk-visitdialog" style="font-size: .9em; display:none;">
+                <span class="ui-helper-hidden-accessible"><input type="text"/></span>
+                <table style="width: 100%"><tr>
+                        <td class="tdlabel">Invoice Number:</td>
+                        <td><span id="spnInvNumber"></span></td>
+                    </tr><tr>
+                        <td class="tdlabel">Payor:</td>
+                        <td><span id="spnBillPayor"></span></td>
+                    </tr><tr>
+                        <td class="tdlabel">Bill Date:</td>
+                        <td><input id="txtBillDate" readonly="readonly" class="ckdate" /></td>
+                    </tr><tr>
+                        <td colspan="2"><textarea rows="2" id="taBillNotes" style="width: 100%"></textarea></td>
+                    </tr>
+                </table>
             </div>
-            <div id="vGl" style="display:none;">
-                <?php echo $glFilterMkup . $glInvoices; ?>
-            </div>
-        </div>
-        <div id="pmtRcpt" style="font-size: .9em; display:none;"></div>
-        <form name="xform" id="xform" method="post"></form>
-        <div id="keysfees" style="font-size: .9em;"></div>
-
-        <div id="cardonfile" style="font-size: .9em; display:none;"></div>
-        <div id="setBillDate" class="hhk-tdbox hhk-visitdialog" style="font-size: .9em; display:none;">
-            <span class="ui-helper-hidden-accessible"><input type="text"/></span>
-            <table style="width: 100%"><tr>
-                    <td class="tdlabel">Invoice Number:</td>
-                    <td><span id="spnInvNumber"></span></td>
-                </tr><tr>
-                    <td class="tdlabel">Payor:</td>
-                    <td><span id="spnBillPayor"></span></td>
-                </tr><tr>
-                    <td class="tdlabel">Bill Date:</td>
-                    <td><input id="txtBillDate" readonly="readonly" class="ckdate" /></td>
-                </tr><tr>
-                    <td colspan="2"><textarea rows="2" id="taBillNotes" style="width: 100%"></textarea></td>
-                </tr>
-            </table>
-        </div>
         </div>
         <?php if ($uS->PaymentGateway == AbstractPaymentGateway::DELUXE) { echo DeluxeGateway::getIframeMkup(); } ?>
     </body>

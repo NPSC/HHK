@@ -23,6 +23,7 @@ class GLParameters {
     protected $Port;
     protected $startDay;
     protected $journalCat;
+    protected $ledgerName;
     protected $countyPayment;
     protected $countyLiability;
     protected $foundation;
@@ -38,6 +39,7 @@ class GLParameters {
     const PARAMETERS = [
         'StartDay' => ['Fiscal Month Start Day', '01'],
         'JournalCategory' => ['Journal Category', ''],
+        'LedgerName' => ['Ledger Name', ''],
         'Foundation' => ['Foundation (Waive) GL Code', ''],
         'GrossSales' => ['Gross Sales GL Code', ''],
         'CountyLiability' => ['County Liability GL Code', ''],
@@ -67,6 +69,7 @@ class GLParameters {
 
         $this->setHost($this->getParm('Host'));
         $this->setJournalCat($this->getParm('JournalCategory'));
+        $this->setLedgerName($this->getParm('LedgerName'));
         $this->setStartDay($this->getParm('StartDay'));
         $this->setRemoteFilePath($this->getParm('RemoteFilePath'));
         $this->setPort($this->getParm('Port'));
@@ -413,6 +416,14 @@ class GLParameters {
      */
     public function getJournalCat() {
         return $this->journalCat;
+    }
+
+    public function getLedgerName() {
+        return $this->ledgerName;
+    }
+
+    public function setLedgerName($v) {
+        $this->ledgerName = $v;
     }
 
     public function getCountyPayment() {

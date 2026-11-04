@@ -34,7 +34,7 @@ class GLTemplateRecord {
     protected $fieldArray;
     protected $periodEndDate;
 
-    public function makeLine($fileId, $glCode, $debitAmount, $creditAmount, $purchaseDate, $journalCategory) {
+    public function makeLine($fileId, $glCode, $debitAmount, $creditAmount, $purchaseDate, $journalCategory, $ledgerName = '') {
 
         $this->fieldArray = $this->setStaticFields($fileId);
 
@@ -42,6 +42,7 @@ class GLTemplateRecord {
         $this->setDebitAmount($debitAmount);
         $this->setGlCode($glCode);
         $this->setJournalCategory($journalCategory);
+        $this->fieldArray[self::LEDGER_NAME] = $ledgerName;
         $this->setPurchaseDate($purchaseDate);
 
         return $this->fieldArray;
@@ -65,7 +66,6 @@ class GLTemplateRecord {
         $fa[self::BATCH_ID] = 'HHK_Oracle_Category_Code_' . $fileId;
         $fa[self::BATCH_NAME] = 'HHKJournal' . $fileId;
         $fa[self::FILE_ID] = $fileId;
-        $fa[self::LEDGER_NAME] = 'CentraCare US';
 
         return $fa;
 
