@@ -582,6 +582,7 @@ $btnGetRecords = HTMLInput::generateMarkup('Get HHK ' . Labels::getString('membe
         <script type="text/javascript" src="<?php echo NOTY_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo NOTY_SETTINGS_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo API_LOG_VIEWER_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo GUESTTRANSFER_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo BOOTSTRAP_JS; ?>"></script>
 

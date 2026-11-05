@@ -10,7 +10,7 @@ use HHK\Payment\GatewayResponse\{GatewayResponseInterface, StandInGwResponse};
 use HHK\Payment\Invoice\Invoice;
 use HHK\Payment\PaymentGateway\AbstractPaymentGateway;
 use HHK\Payment\PaymentGateway\CreditPayments\{AbstractCreditPayments, ReturnReply, SaleReply, VoidReply};
-use HHK\Payment\PaymentGateway\Instamed\Connect\{HeaderResponse, ImCurlRequest, VerifyCurlResponse, VerifyCurlVoidResponse, VerifyCurlReturnResponse, VerifyCurlCofResponse, WebhookResponse};
+use HHK\Payment\PaymentGateway\Instamed\Connect\{ImCurlRequest, VerifyCurlResponse, VerifyCurlVoidResponse, VerifyCurlReturnResponse, VerifyCurlCofResponse, VerifyCurlSsoResponse, WebhookResponse};
 use HHK\SysConst\{MpStatusValues, MpTranType, PaymentMethod, PaymentStatusCode, PayType, TransMethod, TransType, WebHookStatus, InvoiceStatus};
 use HHK\Tables\EditRS;
 use HHK\Tables\Payment\{PaymentInvoiceRS, PaymentRS, Payment_AuthRS};
@@ -287,7 +287,10 @@ class InstamedGateway extends AbstractPaymentGateway {
         }
 
         $req = array_merge($data, $this->getCredentials()->toSSO());
-        $headerResponse = $this->doHeaderRequest(http_build_query($req));
+        $curlRequest = new ImCurlRequest($dbh);
+
+        $headerResponse = new VerifyCurlSsoResponse($curlRequest->submitSso(http_build_query($req), $this->ssoUrl));
+        $headerResponse->setMerchant($this->getMerchant());
 
         unset($req[InstamedCredentials::SEC_KEY]);
 
@@ -332,11 +335,12 @@ class InstamedGateway extends AbstractPaymentGateway {
         $dataArray = array();
 
         $patInfo = $this->getPatientInfo($dbh, $idGroup);
+        $cardHolderName = self::cleanPaymentName($cardHolderName);
 
         $data = array(
             'patientID' => $patInfo['idName'],
-            'patientFirstName' => html_entity_decode($patInfo['Name_First'], ENT_QUOTES),
-            'patientLastName' => html_entity_decode($patInfo['Name_Last'], ENT_QUOTES),
+            'patientFirstName' => self::cleanPaymentName($patInfo['Name_First']),
+            'patientLastName' => self::cleanPaymentName($patInfo['Name_Last']),
             InstamedCredentials::U_ID => $uS->uid,
             InstamedCredentials::U_NAME => $uS->username,
             'lightWeight' => 'true',
@@ -350,13 +354,15 @@ class InstamedGateway extends AbstractPaymentGateway {
         );
 
         if ($manualKey && $cardHolderName != '') {
-        	$data['cardHolderName'] = html_entity_decode($cardHolderName, ENT_QUOTES);
+        	$data['cardHolderName'] = $cardHolderName;
         }
 
         $allData = array_merge($data, $this->getCredentials()->toSSO());
 
-        $headerResponse = $this->doHeaderRequest(http_build_query($allData));
+        $curlRequest = new ImCurlRequest($dbh);
 
+        $headerResponse = new VerifyCurlSsoResponse($curlRequest->submitSso(http_build_query($allData), $this->ssoUrl));
+        $headerResponse->setMerchant($this->getMerchant());
 
         // remove password.
         unset($allData[InstamedCredentials::SEC_KEY]);
@@ -1075,25 +1081,6 @@ group by pa.Approved_Amount having `Total` >= $amount;");
 
     }
 
-    protected function doHeaderRequest($data) {
-
-        //Create HTTP stream context
-        $context = stream_context_create(array(
-            'http' => array(
-                'method' => 'POST',
-                'header' => 'Content-Type: application/x-www-form-urlencoded,' . '\r\n' .
-                'Content-Length:' . strlen($data) . '\r\n' .
-                'Expect: 100-continue,' . '\r\n' .
-                'Connection: Keep-Alive,' . '\r\n',
-                'content' => $data
-            )
-        ));
-
-        $headers = get_headers($this->ssoUrl, 1, $context);
-
-        return new HeaderResponse($headers);
-    }
-
     protected function buildPostbackUrl($postbackPageUrl, $transVar, $resultVar) {
 
         $parms = array();
@@ -1120,6 +1107,28 @@ group by pa.Approved_Amount having `Total` >= $amount;");
         $queryStr = \HHK\Crypto::encryptMessage(http_build_query($parms));
 
         return $houseUrl . InstamedGateway::TRANSFER_URL . '?' . InstamedGateway::TRANSFER_VAR . '=' . $queryStr;
+    }
+
+    /**
+     * Instamed stores the patient and cardholder names with the card on file and
+     * rejects every later token sale on that card if they contain characters it
+     * doesn't allow (e.g. a double quote). Decode HTML entities, normalize curly
+     * apostrophes, and keep only letters, digits, spaces, apostrophes, hyphens,
+     * periods and commas.
+     */
+    protected static function cleanPaymentName($name): string {
+
+        $name = html_entity_decode((string) $name, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+        $name = str_replace(["\u{2018}", "\u{2019}"], "'", $name);
+
+        $clean = preg_replace("/[^\p{L}\p{M}\p{N} '.,-]/u", '', $name);
+
+        if ($clean === null) {
+            // not valid UTF-8; fall back to ASCII
+            $clean = preg_replace("/[^A-Za-z0-9 '.,-]/", '', $name) ?? '';
+        }
+
+        return trim(preg_replace('/\s+/', ' ', $clean) ?? '');
     }
 
     protected function getPatientInfo(\PDO $dbh, $idRegistration) {
