@@ -99,7 +99,9 @@ class GLReport extends AbstractReport implements ReportInterface {
         $attrs = ['type' => 'submit', 'class' => 'ui-button ui-corner-all ui-widget'];
 
         return HTMLInput::generateMarkup('Download CSV', $attrs + ['name' => 'btnGlcsv'])
-            . ($this->glParm->isSftpConfigured() ? HTMLInput::generateMarkup('Transfer via SFTP', $attrs + ['name' => 'btnGlTx']) : '');
+            . ($this->glParm->isSftpConfigured()
+                ? HTMLInput::generateMarkup(($this->glParm->getSftpTitle() != '' ? 'Transfer to ' . $this->glParm->getSftpTitle() : 'Transfer via SFTP'), $attrs + ['name' => 'btnGlTx'])
+                : '');
     }
 
     public function makeFields(): array {

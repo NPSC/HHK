@@ -735,7 +735,7 @@ class GLCodes {
 	}
 	public static function lineHeader(): array {
 
-		return array(' ', ' ', 'id', 'Amt', 'Item', 'Type', 'Gl Code');
+		return array(' ', ' ', 'id', 'Amt', 'Item', 'Type', 'GL Code');
 	}
 	public static function paymentHeader(): array {
 

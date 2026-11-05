@@ -292,11 +292,12 @@ INSERT IGNORE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitu
 	('Gl_Code', 'GrossSales', '', '', '', 4),
 	('Gl_Code', 'CountyLiability', '', '', '', 5),
 	('Gl_Code', 'CountyPayment', '50', '', '', 6),
-	('Gl_Code', 'Host', '', '', '', 7),
-	('Gl_Code', 'Port', '22', '', '', 8),
-	('Gl_Code', 'Username', '', '', '', 9),
-	('Gl_Code', 'Password', '', '', '', 10),
-	('Gl_Code', 'RemoteFilePath', '', '', '', 11);
+	('Gl_Code', 'SftpTitle', '', '', '', 7),
+	('Gl_Code', 'Host', '', '', '', 8),
+	('Gl_Code', 'Port', '22', '', '', 9),
+	('Gl_Code', 'Username', '', '', '', 10),
+	('Gl_Code', 'Password', '', '', '', 11),
+	('Gl_Code', 'RemoteFilePath', '', '', '', 12);
 
 -- Fiscal month start day moves from the GL settings to sys_config, like fy_diff_Months. Keeps a site's GL StartDay.
 INSERT IGNORE INTO `sys_config`(`Key`,`Value`,`Type`,`Category`,`Description`,`Show`)

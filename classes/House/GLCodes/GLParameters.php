@@ -30,6 +30,7 @@ class GLParameters {
     protected $foundation;
     protected $grossSales;
 
+    protected string $sftpTitle = '';
     protected $glParms;
     protected $tableName;
 
@@ -44,6 +45,7 @@ class GLParameters {
         'GrossSales' => ['Gross Sales GL Code', ''],
         'CountyLiability' => ['County Liability GL Code', ''],
         'CountyPayment' => ['County Payment', '50'],
+        'SftpTitle' => ['SFTP Connection Title', ''],
         'Host' => ['SFTP Host', ''],
         'Port' => ['SFTP Port', '22'],
         'Username' => ['SFTP Username', ''],
@@ -54,7 +56,7 @@ class GLParameters {
     /**
      * Parameters shown in the SFTP settings dialog.
      */
-    const SFTP_PARAMETERS = ['Host', 'Port', 'Username', 'Password', 'RemoteFilePath'];
+    const SFTP_PARAMETERS = ['SftpTitle', 'Host','Port', 'Username', 'Password', 'RemoteFilePath'];
 
     public function __construct(\PDO $dbh, $tableName = 'Gl_Code') {
 
@@ -67,6 +69,7 @@ class GLParameters {
 
         $this->glParms = Common::readGenLookupsPDO($dbh, $this->tableName, 'Order');
 
+        $this->sftpTitle = $this->getParm('SftpTitle');
         $this->setHost($this->getParm('Host'));
         $this->setJournalCat($this->getParm('JournalCategory'));
         $this->setLedgerName($this->getParm('LedgerName'));
@@ -107,13 +110,15 @@ class GLParameters {
                 continue;
             }
 
-            $desc = filter_var($post[$prefix . $code], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
             $keys = ['Table_Name' => $this->tableName, 'Code' => $code];
 
             if ($code == 'Password') {
-                // Process password
-                if ($desc != '' && $desc != $this->getParm($code) && $desc != '********') {
-                    $desc = Crypto::encryptMessage($desc);
+                // Process password: blank keeps the saved one. Not sanitized - it's encrypted, never displayed, and
+                // has to reach the SFTP server exactly as typed.
+                $password = (is_string($post[$prefix . $code]) ? $post[$prefix . $code] : '');
+
+                if ($password != '') {
+                    $desc = Crypto::encryptMessage($password);
 
                     // keep the (encrypted) password out of the activity log - just note that it changed
                     $auditWas = EditRS::$auditEnabled;
@@ -125,6 +130,12 @@ class GLParameters {
                 }
 
             } else {
+                $desc = filter_var($post[$prefix . $code], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+
+                if ($code == 'RemoteFilePath') {
+                    $desc = self::withTrailingSlash((string)$desc);
+                }
+
                 EditRS::upsert($dbh, new GenLookupsRS(), $keys, ['Description' => $desc, 'Order' => $order]);
             }
         }
@@ -200,7 +211,15 @@ class GLParameters {
                 $attrs['form'] = $sftpDialogForm;
             }
 
-            $input = HTMLInput::generateMarkup(($code == 'Password' ? ($this->getParm($code) == '' ? '' : '********') : $this->getParm($code)), $attrs);
+            if ($code == 'Password') {
+                // Never sent back to the browser; blank on save keeps the saved password.
+                $attrs['type'] = 'password';
+                $attrs['autocomplete'] = 'new-password';
+                $attrs['placeholder'] = ($this->getParm($code) == '' ? '' : 'Saved - leave blank to keep');
+                $input = HTMLInput::generateMarkup('', $attrs);
+            } else {
+                $input = HTMLInput::generateMarkup($this->getParm($code), $attrs);
+            }
 
             $tr = HTMLTable::makeTh($p[0], array('class'=>'tdlabel')) . HTMLTable::makeTd($input);
 
@@ -217,7 +236,7 @@ class GLParameters {
         if ($sftpDialog) {
             $sftpBtnMkup = HTMLContainer::generateMarkup('div',
                 HTMLInput::generateMarkup('SFTP Settings', array('type'=>'button', 'id'=>'btnGlSftp', 'class'=>'ui-button ui-corner-all ui-widget'))
-                . HTMLContainer::generateMarkup('span', ($this->isSftpConfigured() ? 'Transfer to ' . $this->getHost() : 'Not set up'), array('class'=>'ml-2'))
+                . HTMLContainer::generateMarkup('span', ($this->isSftpConfigured() ? ($this->sftpTitle != '' ? $this->sftpTitle . ' (' . $this->getHost() . ')' : $this->getHost()) : 'Not set up'), array('class'=>'ml-2'))
                 , array('class'=>'mt-2'));
 
             $sftpMkup = HTMLContainer::generateMarkup('div', $sftpTbl->generateMarkup(), array('id'=>'glSftpDialog', 'class'=>'hhk-tdbox', 'style'=>'display:none;'));
@@ -230,7 +249,7 @@ class GLParameters {
         $items = $sitems->fetchAll(\PDO::FETCH_ASSOC);
 
         $itemTbl = new HTMLTable();
-        $itemTbl->addHeaderTr(HTMLTable::makeTh('Item') . HTMLTable::makeTh('Gl Code'));
+        $itemTbl->addHeaderTr(HTMLTable::makeTh('Item') . HTMLTable::makeTh('GL Code'));
 
         foreach ($items as $d) {
 
@@ -254,7 +273,7 @@ class GLParameters {
 
         $payTypes = Common::readGenLookupsPDO($dbh, 'Pay_Type');
         $payTbl = new HTMLTable();
-        $payTbl->addHeaderTr(HTMLTable::makeTh('Pay Type') . HTMLTable::makeTh('Gl Code'));
+        $payTbl->addHeaderTr(HTMLTable::makeTh('Pay Type') . HTMLTable::makeTh('GL Code'));
 
         foreach ($payTypes as $r) {
 
@@ -266,7 +285,7 @@ class GLParameters {
 
         // One titled box per section, like the Cloudbeds import tables.
         $mkup = HTMLContainer::generateMarkup('div',
-                $this->makeSection('GL Parameters', 'Journal settings used when building the GL file. The fiscal month start day is the site setting fm_Start_Day.',$glTbl->generateMarkup() . $sftpBtnMkup)
+                $this->makeSection('GL Parameters', 'Journal settings used when building the GL file.',$glTbl->generateMarkup() . $sftpBtnMkup)
                 . $this->makeSection('Item GL Codes', 'Set in Resource Builder.', $itemTbl->generateMarkup())
                 . $this->makeSection('Pay Type GL Codes', 'Set in Resource Builder.', $payTbl->generateMarkup())
                 . $this->makeSection('Billing Agent GL Codes', 'Third-party payors: the GL debit replaces the pay type GL code on their payments.', $this->getBaMarkup($dbh))
@@ -342,6 +361,13 @@ class GLParameters {
     /**
      * SFTP transfer needs at least a host and username.
      */
+    /**
+     * Name for the SFTP connection, eg. the accounting system it delivers to. Stored HTML-escaped.
+     */
+    public function getSftpTitle(): string {
+        return $this->sftpTitle;
+    }
+
     public function isSftpConfigured(): bool {
         return trim((string)$this->host) != '' && trim((string)$this->username) != '';
     }
@@ -484,7 +510,21 @@ class GLParameters {
      * @param mixed $remoteFilePath
      */
     public function setRemoteFilePath($remoteFilePath) {
-        $this->remoteFilePath = $remoteFilePath;
+        $this->remoteFilePath = self::withTrailingSlash((string)$remoteFilePath);
+    }
+
+    /**
+     * The file name is appended to the remote path, so a non-empty path must end with '/'.
+     */
+    public static function withTrailingSlash(string $path): string {
+
+        $path = trim($path);
+
+        if ($path != '' && !str_ends_with($path, '/')) {
+            $path .= '/';
+        }
+
+        return $path;
     }
 
     /**
