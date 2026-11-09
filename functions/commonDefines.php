@@ -70,6 +70,7 @@ define('MULTISELECT_JS', '../js/jquery.multiselect.min.js' . JSV);
 define('DR_PICKER_JS', '../js/daterangepicker.hhk.min.js' . JSV);
 define('FULLC_JS', 'js/fullcalendarold.min.js' . JSV);
 define('NOTES_VIEWER_JS', '../js/notesViewer.js' . JSV);
+define('API_LOG_VIEWER_JS', '../js/apiLogViewer.js' . JSV);
 define('SELECT2_JS', '../js/select2.min.js' . JSV);
 define('UPPLOAD_JS', '../js/uppload/uppload-3.2.1.min.js' . JSV);
 define('BUFFER_JS', '../js/buffer.min.js' . JSV);

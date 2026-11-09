@@ -20,6 +20,13 @@ use Psr\Http\Message\ResponseInterface;
  */
 class GuzzleAPILogger {
 
+    /**
+     * Guzzle request option that overrides the Sub_Type written to the log
+     * (defaults to the request path). Useful when one endpoint serves several
+     * transaction types, e.g. ['hhk_log_subtype' => 'Void'].
+     */
+    public const SUBTYPE_OPTION = 'hhk_log_subtype';
+
     private const REDACTED = '**********';
 
     private const SENSITIVE_HEADERS = [
@@ -48,6 +55,7 @@ class GuzzleAPILogger {
         'api_key',
         'apikey',
         'private_key',
+        'securitykey',
     ];
 
     /**
@@ -73,14 +81,16 @@ class GuzzleAPILogger {
     public static function middleware(PDO $dbh, string $serviceName): callable {
         return function (callable $handler) use ($dbh, $serviceName): callable {
             return function (RequestInterface $request, array $options) use ($handler, $dbh, $serviceName) {
+                $subType = isset($options[self::SUBTYPE_OPTION]) ? (string) $options[self::SUBTYPE_OPTION] : null;
+
                 return $handler($request, $options)->then(
-                    function (ResponseInterface $response) use ($request, $dbh, $serviceName): ResponseInterface {
-                        self::writeLog($dbh, $serviceName, $request, $response);
+                    function (ResponseInterface $response) use ($request, $dbh, $serviceName, $subType): ResponseInterface {
+                        self::writeLog($dbh, $serviceName, $request, $response, $subType);
                         return $response;
                     },
-                    function ($reason) use ($request, $dbh, $serviceName) {
+                    function ($reason) use ($request, $dbh, $serviceName, $subType) {
                         if ($reason instanceof BadResponseException) {
-                            self::writeLog($dbh, $serviceName, $request, $reason->getResponse());
+                            self::writeLog($dbh, $serviceName, $request, $reason->getResponse(), $subType);
                         }
                         return \GuzzleHttp\Promise\Create::rejectionFor($reason);
                     }
@@ -93,7 +103,7 @@ class GuzzleAPILogger {
      * Write a single log entry, rewinding stream bodies before and after so
      * the caller can still read the response after logging.
      */
-    private static function writeLog(PDO $dbh, string $serviceName, RequestInterface $request, ResponseInterface $response): void {
+    private static function writeLog(PDO $dbh, string $serviceName, RequestInterface $request, ResponseInterface $response, ?string $subType = null): void {
         try {
             $requestBody  = $request->getBody();
             $responseBody = $response->getBody();
@@ -102,7 +112,7 @@ class GuzzleAPILogger {
             if ($responseBody->isSeekable()) { $responseBody->rewind(); }
 
             $uS   = Session::getInstance();
-            $type = ltrim($request->getUri()->getPath(), '/');
+            $type = ($subType !== null && $subType !== '') ? $subType : ltrim($request->getUri()->getPath(), '/');
             ExternalAPILog::log($dbh, $serviceName, $type, self::redactRequest($request), self::redactResponse($response), $uS->username ?? '');
 
             // Rewind again so the caller's body reads are unaffected
