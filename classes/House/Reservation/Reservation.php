@@ -241,11 +241,16 @@ WHERE `r`.`idReservation` = :idResv");
         // Edit checkin date for later hour of checkin if posting the check in late.
         $tCkinDT = new \DateTime($this->reserveData->getArrivalDT()->format('Y-m-d 00:00:00'));
 
+        // arrival may be a DateTimeImmutable (span start), so set the time on a mutable copy and store it back
+        $arrivalDT = \DateTime::createFromInterface($this->reserveData->getArrivalDT());
+
         if ($today > $tCkinDT) {
-            $this->reserveData->getArrivalDT()->setTime(intval($checkinHour),0,0);
+            $arrivalDT->setTime(intval($checkinHour),0,0);
         } else {
-            $this->reserveData->getArrivalDT()->setTime($hourNow, $minuteNow, 0);
+            $arrivalDT->setTime($hourNow, $minuteNow, 0);
         }
+
+        $this->reserveData->setArrivalDT($arrivalDT);
 
         // Date Order
         if ($this->reserveData->getArrivalDT() > $this->reserveData->getDepartureDT()) {
@@ -1250,6 +1255,8 @@ WHERE
 
     /**
      * Summary of getStayingMembers
+     * Reads members' current stay state, which findConflictingReservations() and others change.
+     * @phpstan-impure
      * @return array
      */
     protected function getStayingMembers() {

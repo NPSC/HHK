@@ -471,7 +471,7 @@ class ActiveReservation extends Reservation {
             } else if ($result == ''){
                 $dataArray[ReserveData::SUCCESS] = 'Reservation Changed Rooms.';
             } else {
-                $dataArray['msg'] = 'Reservation Changed Rooms. ' . ($result == '' ? '' : ' WARNING: ' . $result);
+                $dataArray['msg'] = 'Reservation Changed Rooms.  WARNING: ' . $result;
             }
 
             // New resservation lists

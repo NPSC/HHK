@@ -25,10 +25,7 @@ use HHK\Tables\Name\Name_InsuranceRS;
  */
 
 class Insurance {
-
-    private $InsuranceRS;
-
-    private $Insurances;
+    private array $insurances = [];
 
     private $insuranceType;
 
@@ -36,14 +33,14 @@ class Insurance {
         if($idInsuranceType > 0){
             $stmt = $dbh->prepare("SELECT * FROM `insurance` WHERE `idInsuranceType` = :idInsuranceType ORDER BY `Order`, `Title`;");
             $stmt->execute([':idInsuranceType' => $idInsuranceType]);
-            $this->Insurances = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+            $this->insurances = $stmt->fetchAll(\PDO::FETCH_ASSOC);
             $this->insuranceType = $idInsuranceType;
         }else if($idInsuranceType == "all"){
             $stmt = $dbh->prepare("SELECT * FROM `insurance` ORDER BY `Order`, `Title`;");
             $stmt->execute();
-            $this->Insurances = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+            $this->insurances = $stmt->fetchAll(\PDO::FETCH_ASSOC);
         }else{
-            $this->Insurances = array();
+            $this->insurances = array();
         }
     }
 
@@ -54,11 +51,11 @@ class Insurance {
 
         $tbl = new HTMLTable();
 
-        $hdrTr = HTMLTable::makeTh("") . HTMLTable::makeTh(count($this->Insurances) . ' Entries') . HTMLTable::makeTh('Delete') . HTMLTable::makeTh('Replace with');
+        $hdrTr = HTMLTable::makeTh("") . HTMLTable::makeTh(count($this->insurances) . ' Entries') . HTMLTable::makeTh('Delete') . HTMLTable::makeTh('Replace with');
 
         $tbl->addHeaderTr($hdrTr);
 
-        foreach($this->Insurances as $insurance){
+        foreach($this->insurances as $insurance){
             $tbl->addBodyTr(
                 $tbl->makeTd(HTMLContainer::generateMarkup("span", "", array("class"=>"ui-icon ui-icon-arrowthick-2-n-s")) . HTMLInput::generateMarkup($insurance['Order'], array("name"=>'insurances['  . $insurance['idInsurance'] . '][Order]', "type"=>"hidden")), array("class"=>"sort-handle", "title"=>"Drag to sort")) .
                 $tbl->makeTd(HTMLInput::generateMarkup($insurance['Title'], array("name"=>'insurances['  . $insurance['idInsurance'] . '][Title]'))) .
@@ -80,7 +77,7 @@ class Insurance {
 
     public function generateReplaceSelector($id){
         $options = array();
-        foreach($this->Insurances as $insurance){
+        foreach($this->insurances as $insurance){
             if($insurance['Status'] == 'a' && $insurance["idInsurance"] != $id){
                 $options[] = [$insurance['idInsurance'], $insurance['Title']];
             }
@@ -142,11 +139,10 @@ class Insurance {
                     }
                 }
             }
-            return array("success"=> $successMsg);
+            return ["success" => $successMsg];
         }catch(\Exception $e){
-            return array("error"=>"An Error occurred: " . $e->getMessage());
+            return ["error" => "An Error occurred: " . $e->getMessage()];
         }
     }
 
 }
-?>

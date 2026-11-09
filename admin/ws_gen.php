@@ -2,7 +2,6 @@
 
 use HHK\API\OAuth\CRUD\Client;
 use HHK\Cron\SendConfirmationEmailJob;
-use HHK\House\Report\AbstractReport;
 use HHK\Payment\PaymentGateway\AbstractPaymentGateway;
 use HHK\sec\Pages;
 use HHK\sec\{Session, SecurityComponent, UserClass, WebInit};
@@ -424,10 +423,7 @@ try {
                 try{
                     $class = '\HHK\House\\Report\\' . $className;
                     $reportObj = new $class($dbh);
-
-                    if($reportObj instanceof AbstractReport){
-                        $events['filterOpts'][$className] = ["data"=>$reportObj->filterOpts, "mkup"=>$reportObj->makeFilterOptsMkup()];
-                    }
+                    $events['filterOpts'][$className] = ["data"=>$reportObj->filterOpts, "mkup"=>$reportObj->makeFilterOptsMkup()];
                 }catch(Exception $e){
                 }
             }
@@ -800,10 +796,12 @@ function newRelationLink(PDO $dbh, $id, $rId, $relCode) {
 
 function changeLog(PDO $dbh, $id, $get) {
 
+    // vw becomes the table name in SSP's SQL, so only the known audit views are allowed
+    $allowedViews = ['vaudit_log', 'vguest_audit_log'];
     $view = 'vaudit_log';
 
-    if (isset($get['vw'])) {
-        $view = filter_var($get['vw'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+    if (isset($get['vw']) && in_array($get['vw'], $allowedViews, true)) {
+        $view = $get['vw'];
     }
 
     $columns = array(
@@ -816,7 +814,7 @@ function changeLog(PDO $dbh, $id, $get) {
         array( 'db' => 'LogText', 'dt' => 'Log Text')
     );
 
-    return SSP::complex ( $get, $dbh, $view, 'idName', $columns, null, "idName=$id" );
+    return SSP::complex ( $get, $dbh, $view, 'idName', $columns, null, ["condition" => "`idName` = :idName", "bindings" => [":idName" => intval($id)]] );
 
 }
 
@@ -827,10 +825,19 @@ function recentReport(PDO $dbh, $parms, $donationsFlag) {
         return array("error" => "Fill in Start Date");
     }
 
-    $dStart = date("Y-m-d", strtotime(filter_var($parms["sdate"], FILTER_SANITIZE_FULL_SPECIAL_CHARS)));
+    // strtotime() returns false for an unparseable date, which date() would turn into 1970-01-01
+    $startTs = strtotime(filter_var($parms["sdate"], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
+    if ($startTs === FALSE) {
+        return array("error" => "Start Date is not a valid date");
+    }
+    $dStart = date("Y-m-d", $startTs);
 
     if (isset($parms["edate"]) && $parms["edate"] != '') {
-        $dEnd = date("Y-m-d 23:59:59", strtotime(filter_var($parms["edate"], FILTER_SANITIZE_FULL_SPECIAL_CHARS)));
+        $endTs = strtotime(filter_var($parms["edate"], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
+        if ($endTs === FALSE) {
+            return array("error" => "End Date is not a valid date");
+        }
+        $dEnd = date("Y-m-d 23:59:59", $endTs);
     } else {
         $dEnd = date("Y-m-d 23:59:59");
     }
@@ -852,31 +859,17 @@ function recentReport(PDO $dbh, $parms, $donationsFlag) {
     $newWClause = "";
     $uptWClause = "";
 
-    // set up where clauses
+    // set up where clauses ($dStart and $dEnd always come from date(), so are never empty)
     if ($incNew) {
-        if ($dStart != "") {
-            $newWClause = " (`Created On` >= :dstart ";
-            $sParms[':dstart'] = $dStart;
-            if ($dEnd != "") {
-                $newWClause .= " and `Created On` <= :dEnd) ";
-                $sParms[':dEnd'] = $dEnd;
-            } else {
-                $newWClause .= ") ";
-            }
-        }
+        $newWClause = " (`Created On` >= :dstart and `Created On` <= :dEnd) ";
+        $sParms[':dstart'] = $dStart;
+        $sParms[':dEnd'] = $dEnd;
     }
 
     if ($incUpd) {
-        if ($dStart != "") {
-            $uptWClause = " (Last_Updated >= :upstart ";
-            $sParms[':upstart'] = $dStart;
-            if ($dEnd != "") {
-                $uptWClause .= " and Last_Updated <= :upEnd) ";
-                $sParms[':upEnd'] = $dEnd;
-            } else {
-                $uptWClause .= ") ";
-            }
-        }
+        $uptWClause = " (Last_Updated >= :upstart and Last_Updated <= :upEnd) ";
+        $sParms[':upstart'] = $dStart;
+        $sParms[':upEnd'] = $dEnd;
     }
 
     // Combine the where clauses

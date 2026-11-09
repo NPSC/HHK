@@ -539,27 +539,31 @@ abstract class AbstractImport {
         $email = ($email !='' ? trim($email) : null);
 
 
+        $params = [':last' => $newLast, ':first' => $newFirst];
+
         if(in_array($memberType, ["guest", "patient"])){
-            $query = "Select n.idName, ng.idPsg, ng.Relationship_Code, n.External_Id from name n join name_guest ng on n.idName = ng.idName where n.Name_Last = '" . $newLast . "' and n.Name_First = '" . $newFirst . "'";
+            $query = "SELECT `n`.`idName`, `ng`.`idPsg`, `ng`.`Relationship_Code`, `n`.`External_Id` FROM `name` `n` JOIN `name_guest` `ng` ON `n`.`idName` = `ng`.`idName` WHERE `n`.`Name_Last` = :last AND `n`.`Name_First` = :first";
             if($memberType == "guest"){
-                $query .= " and ng.Relationship_Code != 'slf'";
+                $query .= " AND `ng`.`Relationship_Code` != 'slf'";
             }else if($memberType == "patient"){
-                $query .= " and ng.Relationship_Code = 'slf'";
+                $query .= " AND `ng`.`Relationship_Code` = 'slf'";
             }
         }else if(in_array($memberType, [VolMemberType::Doctor, VolMemberType::Donor])){
-            $query = "SELECT distinct n.idName, n.Name_Last, n.Name_First
-FROM name n join name_volunteer2 nv on n.idName = nv.idName and nv.Vol_Category = 'Vol_Type'  and nv.Vol_Code = '" . $memberType . "'
-WHERE n.Name_First = '" . $newFirst . "' AND n.Name_Last = '" . $newLast . "'";
+            $query = "SELECT DISTINCT `n`.`idName`, `n`.`Name_Last`, `n`.`Name_First`
+FROM `name` `n` JOIN `name_volunteer2` `nv` ON `n`.`idName` = `nv`.`idName` AND `nv`.`Vol_Category` = 'Vol_Type' AND `nv`.`Vol_Code` = :volCode
+WHERE `n`.`Name_First` = :first AND `n`.`Name_Last` = :last";
+            $params[':volCode'] = $memberType;
         }else{
-            $query = "Select n.idName from name n where n.Name_Last = '" . $newLast . "' and n.Name_First = '" . $newFirst . "'";
+            $query = "SELECT `n`.`idName` FROM `name` `n` WHERE `n`.`Name_Last` = :last AND `n`.`Name_First` = :first";
         }
 
 
         if($limit){
-            $query .= " limit 1";
+            $query .= " LIMIT 1";
         }
 
-        $stmtg = $this->dbh->query($query);
+        $stmtg = $this->dbh->prepare($query);
+        $stmtg->execute($params);
         $rowCount = $stmtg->rowCount();
         $rowgs = $stmtg->fetchAll(\PDO::FETCH_NUM);
 

@@ -289,13 +289,13 @@ class Statement {
      * Summary of makeOrdersRatesTable
      * @param mixed $rates
      * @param mixed $totalAmt
-     * @param \HHK\Purchase\PriceModel\AbstractPriceModel $priceModel
+     * @param AbstractPriceModel $priceModel
      * @param mixed $labels
      * @param array $invLines
-     * @param \HHK\Purchase\ValueAddedTax $vat
+     * @param ValueAddedTax $vat
      * @param mixed $numberNites
-     * @param \HHK\Purchase\Item $moaItem
-     * @param \HHK\Purchase\Item $donateItem
+     * @param Item $moaItem
+     * @param Item $donateItem
      * @param mixed $showDetails
      * @return array
      */

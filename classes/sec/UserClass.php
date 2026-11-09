@@ -102,7 +102,7 @@ class UserClass
                 //if OTP is required
                 if($OTPRequired == false || $checkOTP == false){
                     $success = true;
-                }else if($OTPRequired && $otp == ''){
+                }else if($otp == ''){
                     $this->logMessage = "OTPRequired";
                     if($otpMethod == 'email' || $this->getDefaultOtpMethod($dbh, $username) == 'email'){
                         try{
@@ -113,7 +113,7 @@ class UserClass
                         }
                     }
                     return FALSE;
-                }else if($OTPRequired && $otp != '' && $otpMethod){
+                }else if($otpMethod){
                     $mfaObj = null;
                     switch($otpMethod) {
                         case "authenticator":
@@ -131,7 +131,7 @@ class UserClass
 
                     if($mfaObj instanceof AbstractMultiFactorAuth && $mfaObj->verifyCode($dbh, $otp) == true){
                         if($rememberMe){
-                            $rememberObj?->rememberMe($dbh);
+                            $rememberObj->rememberMe($dbh);
                         }
 
                         $success = true;
@@ -668,7 +668,6 @@ class UserClass
     public static function setPassExpired(\PDO $dbh, array $user){
 
         if(isset($user['pass_rules']) && $user['pass_rules'] && $user['idIdp'] == '0'){ //if password rules apply
-            $date = false;
             //use creation date if never logged in
             if($user['PW_Change_Date'] != ''){
                 $date = new \DateTimeImmutable($user['PW_Change_Date']);
@@ -678,7 +677,7 @@ class UserClass
 
             $passResetDays = SysConfig::getKeyValue($dbh, 'sys_config', 'passResetDays');
 
-            if ($date && ($user['idName'] > 0) && $user['Status'] == 'a' && $passResetDays) {
+            if (($user['idName'] > 0) && $user['Status'] == 'a' && $passResetDays) {
 
                 $date = $date->setTime(0, 0);
                 $deactivateDate = $date->add(new \DateInterval('P' . $passResetDays . 'D')); // add resetdays
@@ -1154,7 +1153,7 @@ class UserClass
     /**
      * Summary of getUserCredentials
      * @param \PDO $dbh
-     * @param string $username
+     * @param string|null $username null from SAML getNameId() without a NameID, or $uS->username with no one logged in
      * @return mixed
      */
     public static function getUserCredentials(\PDO $dbh, $username)
@@ -1204,7 +1203,6 @@ WHERE `n`.`idName` IS NOT NULL AND `u`.`Status` IN ('a', 'd') AND `n`.`Member_St
     {
         if(isset($user['pass_rules']) && $user['pass_rules'] && $user['idIdp'] == '0'){ //if password rules apply
 
-            $date = false;
             //use creation date if never logged in
             if($user['Last_Login'] != ''){
                 $date = new \DateTimeImmutable($user['Last_Login']);
@@ -1214,7 +1212,7 @@ WHERE `n`.`idName` IS NOT NULL AND `u`.`Status` IN ('a', 'd') AND `n`.`Member_St
 
             $userInactiveDays = SysConfig::getKeyValue($dbh, 'sys_config', 'userInactiveDays');
 
-            if ($date && $user['idName'] > 0 && $user['Status'] == 'a' && $userInactiveDays) {
+            if ($user['idName'] > 0 && $user['Status'] == 'a' && $userInactiveDays) {
 
                 $lastUpdated = new \DateTimeImmutable($user['Last_Updated']);
                 $lastUpdated = $lastUpdated->setTime(0, 0);

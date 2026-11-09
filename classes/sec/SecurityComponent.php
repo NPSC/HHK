@@ -76,7 +76,7 @@ class SecurityComponent {
         // $webSite-given cross-site case. Only fall back to a direct query when it's genuinely
         // not cached (e.g. this session never went through an ordinary site page, such as
         // SAML::acs() landing straight on a fresh session).
-        if (isset($uS->webPages[$wsCode][$name]) && !is_null($uS->webPages[$wsCode][$name])) {
+        if (isset($uS->webPages[$wsCode][$name])) {
 
             $r = $uS->webPages[$wsCode][$name];
             $pageCode = $r["Codes"];
@@ -214,7 +214,7 @@ class SecurityComponent {
 
         foreach (($uS->webPages ?? []) as $sitePages) {
 
-            if (isset($sitePages[$fileName]) && !is_null($sitePages[$fileName]) && $sitePages[$fileName]['Title'] != '') {
+            if (isset($sitePages[$fileName]) && $sitePages[$fileName]['Title'] != '') {
                 return $sitePages[$fileName]['Title'];
             }
         }
@@ -404,15 +404,18 @@ class SecurityComponent {
      */
     private function defineThisURL(): void {
 
-        $scriptName = filter_var((isset($_SERVER["SCRIPT_NAME"]) ? $_SERVER["SCRIPT_NAME"]: false), FILTER_SANITIZE_FULL_SPECIAL_CHARS);
-        $serverName = filter_var((isset($_SERVER["SERVER_NAME"]) ? $_SERVER["SERVER_NAME"]: false), FILTER_SANITIZE_URL);
+        $scriptName = filter_var($_SERVER["SCRIPT_NAME"] ?? '', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
-        if (is_null($scriptName) || $scriptName === FALSE) {
+        // No SERVER_NAME under the CLI (ws_cron.php reaches here via Login), so a missing one
+        // leaves the host name blank rather than throwing.
+        $serverName = filter_var($_SERVER["SERVER_NAME"] ?? '', FILTER_SANITIZE_URL);
+
+        if ($scriptName === FALSE || $scriptName === '') {
             throw new RuntimeException('Script name not set.');
         }
 
-        if (is_null($serverName) || $serverName === FALSE) {
-            throw new RuntimeException('Server name not set.');
+        if ($serverName === FALSE) {
+            $serverName = '';
         }
 
         // scriptName = /rootDirs.../hhkSiteDir/filename

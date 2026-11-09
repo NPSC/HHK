@@ -26,9 +26,7 @@ use HHK\Tables\EditRS;
 class InsuranceType
 {
 
-    private $InsuranceTypeRS;
-
-    public $InsuranceTypes;
+    public array $InsuranceTypes = [];
 
     public function loadInsuranceTypes(\PDO $dbh)
     {
@@ -37,7 +35,7 @@ class InsuranceType
         $this->InsuranceTypes = $stmt->fetchAll(\PDO::FETCH_ASSOC);
     }
 
-    public function generateEditMarkup()
+    public function generateEditMarkup(): string
     {
         $tbl = new HTMLTable();
 

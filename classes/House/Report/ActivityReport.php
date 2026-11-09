@@ -486,7 +486,6 @@ class ActivityReport {
         $payStatusText = '';
         $payTypeTotals = [];
         $payTypeText = '';
-        $showExternlId = FALSE;
         $queryParams = [];
 
         $labels = Labels::getLabels();
@@ -565,7 +564,7 @@ class ActivityReport {
             }
         }
 
-        $payTypeLookup = Common::readGenLookupsPDO($dbh, GLTableNames::PayType, 'Order') ?? [];
+        $payTypeLookup = Common::readGenLookupsPDO($dbh, GLTableNames::PayType, 'Order');
         unset($payTypeLookup['in']); // remove "invoice" type since it is not a real payment type and only used for internal processing of invoices in PostPayment
 
         // Reverse map: idPayment_Method integer → Pay_Type code and title (standard/non-external types only)
@@ -704,7 +703,6 @@ WHERE `lp`.`idPayment` > 0
                 . HTMLTable::makeTh("Updated")
                 . HTMLTable::makeTh("By")
                 . HTMLTable::makeTh("Created")
-                . ($showExternlId ? HTMLTable::makeTh("Ext. Id") : '')
                 . HTMLTable::makeTh('Notes'));
 
 
@@ -825,10 +823,6 @@ WHERE `lp`.`idPayment` > 0
                 $trow .= HTMLTable::makeTd($updatedDateString);
                 $trow .= HTMLTable::makeTd($p['Payment_Updated_By'] == '' ? $p['Payment_Created_By'] : $p['Payment_Updated_By']);
                 $trow .= HTMLTable::makeTd($r['Invoice_Created_At']);
-
-                if ($showExternlId) {
-                    $trow .= HTMLTable::makeTd($p['Payment_External_Id']);
-                }
                 $trow .= HTMLTable::makeTd($p['Payment_Note'], ['style'=>'white-space: normal;']);
 
                 $tbl->addBodyTr($trow);
@@ -865,7 +859,6 @@ WHERE `lp`.`idPayment` > 0
                     . HTMLTable::makeTd('')
                     . HTMLTable::makeTd($r['Invoice_Updated_By'])
                     . HTMLTable::makeTd($r['Invoice_Created_At'])
-                    . ($showExternlId ? HTMLTable::makeTd('') : '')
                     . HTMLTable::makeTd('')
                 );
             }

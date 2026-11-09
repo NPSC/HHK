@@ -508,7 +508,7 @@ class ReserveData {
 
     /**
      * Summary of getArrivalDT
-     * @return \DateTime
+     * @return \DateTimeInterface|null null until setArrivalDT() is called
      */
     public function getArrivalDT() {
         return $this->arrivalDT;
@@ -525,7 +525,7 @@ class ReserveData {
 
     /**
      * Summary of getDepartureDT
-     * @return \DateTime
+     * @return \DateTimeInterface|null null until setDepartureDT() is called
      */
     public function getDepartureDT() {
         return $this->departureDT;

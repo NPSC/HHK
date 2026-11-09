@@ -48,10 +48,6 @@ class GuestDemogReport {
         $endDT = new \DateTime($endDate);
         $endDT->setTime(0, 0, 0);
 
-        if ($stDT === FALSE || $endDT === FALSE) {
-            return;
-        }
-
         $indxDT = new \DateTime($startDate);
         $indxDT->setTime(0, 0, 0);
 
@@ -339,10 +335,6 @@ class GuestDemogReport {
                     if($countyKey == ''){
                         $accum['Total']['County'][$countyKey]['idNames'][] = $r['idName'];
                     }
-                }
-
-                if($countyKey = ''){
-
                 }
             }
             //$totalPSGs[$r['idPsg']] = 'y';

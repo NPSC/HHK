@@ -230,7 +230,7 @@ class Common {
      * @return string
      */
     public static function getRandomString(int $length=40): string{
-        if(!is_int($length)||$length<1){
+        if($length<1){
             $length = 40;
         }
         $chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";

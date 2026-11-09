@@ -30,12 +30,13 @@ class ReportFieldSet {
         $admin = SecurityComponent::is_Admin();
         if($idFieldSet > 0){
             //check if current user is authorized
-            $query = "SELECT COUNT(`idFieldSet`) as `count` FROM `report_field_sets` where `idFieldSet` = '" . $idFieldSet . "' and (`Created_by` = '" . $uname ."'";
+            $query = "SELECT COUNT(`idFieldSet`) as `count` FROM `report_field_sets` where `idFieldSet` = :idFieldSet and (`Created_by` = :createdBy";
             if($admin){
                 $query .= " or `global` = TRUE";
             }
             $query .= ")";
-            $stmt = $dbh->query($query);
+            $stmt = $dbh->prepare($query);
+            $stmt->execute([':idFieldSet' => $idFieldSet, ':createdBy' => $uname]);
             $row = $stmt->fetch(\PDO::FETCH_ASSOC);
 
             if($row['count'] > 0){
@@ -79,7 +80,7 @@ class ReportFieldSet {
         $uS = Session::getInstance();
         $uname = $uS->username;
 
-        if ($idFieldSet == '') {
+        if ($idFieldSet < 1) {
             return array('error' => 'Empty idFieldSet.');
         }
 
@@ -165,13 +166,8 @@ class ReportFieldSet {
 
             // isAuthorized() found the set, so no change is still a success
             EditRS::updateFields($dbh, new ReportFieldSetRS(), ['idFieldSet' => $idFieldSet], ['Title' => $title, 'Fields' => $fieldsJSON, 'Updated_by' => $uname]);
-            $success = TRUE;
 
-            if($success){
-                return ['success'=>"Field set updated successfully", 'fieldSet'=>['idFieldSet'=>$idFieldSet, 'title'=>$title]];
-            }else{
-                return ['error'=>"Could not update field set"];
-            }
+            return ['success'=>"Field set updated successfully", 'fieldSet'=>['idFieldSet'=>$idFieldSet, 'title'=>$title]];
         }else{
             return ['error'=>"Not authorized to update field set"];
         }

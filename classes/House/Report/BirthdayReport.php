@@ -65,14 +65,8 @@ class BirthdayReport extends AbstractReport implements ReportInterface
             $whPatient = "and ng.Relationship_Code = 'slf' ";
         }
 
-        $whResvStatus = '';
-        $whStayStatus = implode(",", $stayStatus);
-        if (count($resvStatus) > 0) {
-            $whResvStatus = "and r.Status in (" . implode(",", $resvStatus) . ") ";
-        }
-        if (count($stayStatus) > 0) {
-            $whStayStatus = "and (s.Status in (" . implode(",", $stayStatus) . ") or s.Status IS NULL) ";
-        }
+        $whResvStatus = "and r.Status in (" . implode(",", $resvStatus) . ") ";
+        $whStayStatus = "and (s.Status in (" . implode(",", $stayStatus) . ") or s.Status IS NULL) ";
 
         $arrivalCase = "CASE WHEN s.Span_Start_Date IS NOT NULL THEN s.Span_Start_Date
         WHEN r.Actual_Arrival IS NOT NULL THEN r.Actual_Arrival
@@ -90,21 +84,28 @@ class BirthdayReport extends AbstractReport implements ReportInterface
          WHEN s.Status IS NOT NULL THEN NOW()
          WHEN r.Expected_Departure IS NOT NULL THEN r.Expected_Departure ELSE NOW() END";
 
-        $whDates = $arrivalCase . " <= '" . $this->filter->getReportEnd() . "' and " . $whDepartureCase . " >= '" . $this->filter->getReportStart() . "' ";
+        $whDates = $arrivalCase . " <= :rptEnd1 and " . $whDepartureCase . " >= :rptStart1 ";
 
         //birthday in timeframe
-        //$whDates .= "and 1 = (FLOOR(DATEDIFF('" . $this->filter->getReportEnd() . "', n.BirthDate) / 365.25)) - (FLOOR(DATEDIFF('" . $this->filter->getReportStart() . "', n.BirthDate) / 365.25)) ";
+        // native prepares (no emulation) don't allow a placeholder name to repeat, so each use is numbered
         $whDates .= "and (
     CASE
-        WHEN MAKEDATE(YEAR('" . $this->filter->getReportStart() . "'),1) + INTERVAL BirthDayOfYear-1 DAY
-                BETWEEN '" . $this->filter->getReportStart() . "' AND '" . $this->filter->getReportEnd() . "'
+        WHEN MAKEDATE(YEAR(:rptStart2),1) + INTERVAL BirthDayOfYear-1 DAY
+                BETWEEN :rptStart3 AND :rptEnd2
         THEN 1
-        WHEN MAKEDATE(YEAR('" . $this->filter->getReportEnd() . "'),1) + INTERVAL BirthDayOfYear-1 DAY
-                BETWEEN '" . $this->filter->getReportStart() . "' AND '" . $this->filter->getReportEnd() . "'
+        WHEN MAKEDATE(YEAR(:rptEnd3),1) + INTERVAL BirthDayOfYear-1 DAY
+                BETWEEN :rptStart4 AND :rptEnd4
         THEN 1
         ELSE 0
     END
 ) = 1 ";
+
+        $rptStart = $this->filter->getReportStart();
+        $rptEnd = $this->filter->getReportEnd();
+        $this->queryParams = [
+            ':rptStart1' => $rptStart, ':rptStart2' => $rptStart, ':rptStart3' => $rptStart, ':rptStart4' => $rptStart,
+            ':rptEnd1' => $rptEnd, ':rptEnd2' => $rptEnd, ':rptEnd3' => $rptEnd, ':rptEnd4' => $rptEnd,
+        ];
 
         $groupBy = " Group By r.idReservation, ifnull(s.idStays, n.idName)";
 

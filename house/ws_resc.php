@@ -5,6 +5,7 @@ use HHK\Document\Document;
 use HHK\Document\FormDocument;
 use HHK\Document\FormTemplate;
 use HHK\Document\ListDocuments;
+use HHK\Exception\ValidationException;
 use HHK\History;
 use HHK\House\Constraint\Constraints;
 use HHK\House\Report\ActivityReport;
@@ -136,10 +137,10 @@ try {
                 $mimeType = filter_input(INPUT_POST, 'mimetype', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
                 $doc = $_FILES['file'];
 
-                if ($guestId === null || $guestId === FALSE) {
-                    throw new \Exception('GuestId missing');
-                } else if ($doc === null || $doc === FALSE) {
-                    throw new \Exception('Document is missing');
+                if ($guestId < 1 && $psgId < 1) {
+                    throw new ValidationException('GuestId or PsgId missing');
+                } else if (!is_array($doc)) {
+                    throw new ValidationException('Document is missing');
                 }
 
                 $docContents = file_get_contents($doc['tmp_name']);
@@ -187,8 +188,8 @@ try {
             $docTitle = filter_input(INPUT_POST, 'docTitle', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
             $docGuestId = intval(filter_input(INPUT_POST, 'docGuestId', FILTER_SANITIZE_NUMBER_INT), 10);
 
-            if ($docId === null || $docId === FALSE) {
-                throw new Exception('DocId missing');
+            if ($docId < 1) {
+                throw new ValidationException('DocId missing');
             }
 
             $document = new Document($docId);
@@ -204,8 +205,8 @@ try {
 
                 $docId = intval(filter_input(INPUT_POST, 'docId', FILTER_SANITIZE_NUMBER_INT), 10);
 
-            if ($docId === null || $docId === FALSE || $docId < 1) {
-            throw new Exception('DocId missing');
+            if ($docId < 1) {
+            throw new ValidationException('DocId missing');
             }
 
             $document = new Document($docId);
@@ -222,8 +223,8 @@ try {
 
             $docId = intval(filter_input(INPUT_POST, 'docId', FILTER_SANITIZE_NUMBER_INT), 10);
 
-            if ($docId === null || $docId === FALSE || $docId < 1) {
-                throw new Exception('DocId missing');
+            if ($docId < 1) {
+                throw new ValidationException('DocId missing');
             }
 
             $document = new Document($docId);
@@ -817,6 +818,9 @@ try {
         default:
             $events = ["error" => "Bad Command: \"" . $c . "\""];
     }
+
+} catch (ValidationException $ex) {
+    $events = ["error" => $ex->getMessage()];
 
 } catch (PDOException $ex) {
     $events = ["error" => "Database Error: " . $ex->getMessage()];

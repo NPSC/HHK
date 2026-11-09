@@ -13,15 +13,15 @@ namespace HHK\Member\Address;
 class CleanAddress {
 
 
-    protected $stSuffixes;
+    protected array $stSuffixes;
 
-    protected $secAbvrs;
+    protected array $secAbvrs;
 
     /**
      * Summary of __construct
      * @param \PDO $dbh
      */
-    function __construct(\PDO $dbh) {
+    public function __construct(\PDO $dbh) {
         $this->stSuffixes = $this->getStreetSuffix($dbh);
         $this->secAbvrs = $this->getSecondary($dbh);
 
@@ -29,10 +29,10 @@ class CleanAddress {
 
     /**
      * Summary of cleanAddr
-     * @param mixed $adr
+     * @param string $adr
      * @return array
      */
-    public function cleanAddr($adr) {
+    public function cleanAddr(string $adr): array {
         $secondary = "";
         $priAdr = "";
 
@@ -59,10 +59,10 @@ class CleanAddress {
 
     /**
      * Summary of checkSecondary
-     * @param mixed $aptAdr
+     * @param string $aptAdr
      * @return mixed
      */
-    public function checkSecondary($aptAdr) {
+    public function checkSecondary(string $aptAdr) {
 
         $secAdr = explode(" ", $aptAdr);
 
@@ -262,7 +262,7 @@ class CleanAddress {
      * @param \PDO $dbh
      * @return array
      */
-    public static function getStreetSuffix(\PDO $dbh) {
+    public static function getStreetSuffix(\PDO $dbh): array {
         $lst = array();
         $stmt = $dbh->query("select Common, TitleCaps from street_suffix order by Common");
 
@@ -277,7 +277,7 @@ class CleanAddress {
      * @param \PDO $dbh
      * @return array
      */
-    public static function getSecondary(\PDO $dbh) {
+    public static function getSecondary(\PDO $dbh): array {
         $lst = array();
         $stmt = $dbh->query("select Common, TitleCaps from secondary_unit_desig order by Common");
 

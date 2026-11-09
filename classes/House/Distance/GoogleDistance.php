@@ -146,7 +146,7 @@ class GoogleDistance extends AbstractDistance {
         foreach($UncalculatedAddresses as $originaddress){
             $distanceArr = $this->calcDistance($dbh, $originaddress, $destAddress);
 
-            if($distanceArr["units"] = "meters" && $distanceArr["value"] > 0 && isset($originaddress['idName_Address'])){
+            if($distanceArr["units"] == "meters" && $distanceArr["value"] > 0 && isset($originaddress['idName_Address'])){
                 $nameAddressRS = new NameAddressRS();
                 $nameAddressRS->idName_Address->setStoredVal($originaddress['idName_Address']);
                 $rows = EditRS::select($dbh, $nameAddressRS, array($nameAddressRS->idName_Address));
