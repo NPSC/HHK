@@ -1777,8 +1777,6 @@ House Staff`,
 		$wrapper.on('blur', '[contenteditable]', function () {
 			var val = $(this).html().replaceAll('"', "'");
 			$(this).html(val);
-			//			//console.log(val);
-			//			//console.log($(this).html());
 		});
 
 		settingsDialog.on('blur', 'input[name=initialGuests], input[name=maxGuests]', function () {
@@ -1798,10 +1796,8 @@ House Staff`,
 			var initial = parseInt($("input[name=initialGuests]").val());
 			var max = parseInt($("input[name=maxGuests]").val());
 			if (initial > max) {
-				//console.log("initial>max true");
 				settingsDialog.find("#guestErrorMsg").text("Initial guests cannot be greater than max guests").show();
 			} else {
-				//console.log("initial>max false");
 				settingsDialog.find("#guestErrorMsg").text("").hide();
 			}
 		});

@@ -329,7 +329,7 @@ function doReports(PDO $dbh, chkBoxCtrl $cbMemStatus, chkBoxCtrl $cbRptType, boo
                             "Dom": '<"top"ilfp>rt<"bottom"p>'
                         });
                     }
-                    catch (err) { console.log(err)}
+                    catch (err) {}
                 }
             });
         </script>

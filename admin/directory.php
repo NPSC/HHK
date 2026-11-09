@@ -135,7 +135,7 @@ if (filter_has_var(INPUT_POST, "btnExcel") || filter_has_var(INPUT_POST, "btnHer
                         "order": [[1,'asc'], [2,'asc']]
                     });
                 }
-                catch (err) {console.log(err)}
+                catch (err) {}
 
             });
         </script>

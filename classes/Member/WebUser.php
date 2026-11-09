@@ -416,7 +416,7 @@ class WebUser {
             }
 
             $uS = Session::getInstance();
-            if(isset($uS->sitePepper)){
+            if(isset($uS->sitePepper) && $uS->sitePepper != ''){
                 $pwHash = password_hash($wUserPw . $uS->sitePepper, PASSWORD_ARGON2ID);
             }else{
                 $pwHash = password_hash($wUserPw, PASSWORD_ARGON2ID);

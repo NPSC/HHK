@@ -207,7 +207,6 @@
                     if(settings.linkType == "staff"){
                         var noteCategory = $wrapper.find("#noteCategory").val();
                         var guestId = $("#noteGuest").data("guestId");
-                        console.log(guestId);
                     }else{
                         var noteCategory = '';
                         var guestId = '';
@@ -616,7 +615,6 @@
         	$(this).addClass('catActive');
         	searchVal = $(this).data('id');
         	if(searchVal != ''){
-                console.log(searchVal);
         		$table.column(".noteCategory").search("^" + searchVal + "$" , true).draw();
         	}else{
         		$table.column(".noteCategory").search('').draw();

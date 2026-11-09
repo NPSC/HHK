@@ -1732,8 +1732,8 @@ function paymentRedirect(data, $xferForm, initialParams) {
                                 });
 
                         },
-                        onFailure: (data) => { console.log(JSON.stringify(data)); },
-                        onInvalid: (data) => { console.log(JSON.stringify(data)); }
+                        onFailure: () => {},
+                        onInvalid: () => {}
                     }).then((instance) => { instance.renderHpf(); });
                 },
                 close: function (event, ui) {
