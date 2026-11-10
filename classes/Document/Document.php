@@ -191,12 +191,12 @@ class Document {
     /**
      *
      * @param \PDO $dbh
-     * @param string $guestId
-     * @param string $psgId
+     * @param int $guestId
+     * @param int $psgId
      * @return int number of rows updated.
      */
-    public function linkNew(\PDO $dbh, $guestId = null, $psgId = null, $idReservation = 0) {
-        if ($this->idDocument && ($psgId || $guestId || $idReservation)) {
+    public function linkNew(\PDO $dbh, int $guestId = 0, int $psgId = 0, int $idReservation = 0) {
+        if ($this->idDocument && ($psgId > 0 || $guestId > 0 || $idReservation > 0)) {
             $uS = Session::getInstance();
             $linkDocRS = new LinkDocRS();
             $linkDocRS->idDocument->setNewVal($this->idDocument);

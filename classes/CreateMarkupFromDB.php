@@ -19,6 +19,14 @@ namespace HHK;
 class CreateMarkupFromDB {
 
 
+    /**
+     * Build an HTML table from rows; the first row's keys become the column headers.
+     * Keys and cell values are output as-is (callers pass markup), so they are not escaped.
+     * @param array<array<scalar|null>> $rows
+     * @param string $tableId
+     * @param string $tdClassIndicator row key whose value is used as the td class, not shown as a column
+     * @return string
+     */
     public static function generateHTML_Table(array $rows, string $tableId, string $tdClassIndicator = ''): string {
 
         $thead = "";
@@ -32,7 +40,7 @@ class CreateMarkupFromDB {
 
         $keys = array_keys($rows[$firstKey]);
 
-        if (is_array($keys) === FALSE || count($keys) == 0) {
+        if (count($keys) == 0) {
             return '';
         }
 
@@ -78,6 +86,11 @@ class CreateMarkupFromDB {
 
     }
 
+    /**
+     * @param array<string, string|int> $sumaryRows label => value; rows with an empty label or value are skipped
+     * @param string $reportTitle
+     * @return string
+     */
     public static function generateHTMLSummary(array $sumaryRows, string $reportTitle): string {
         $summaryRowsTxt = "";
         $txtHeader = "<tr><th colspan='2'>" . $reportTitle . " <input id='Print_Button' type='button' value='Print'/></th></tr>";

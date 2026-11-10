@@ -419,12 +419,10 @@ try {
             $events["resvStatus"] = SendConfirmationEmailJob::getResvStatusList($dbh);
 
             //filterOpts
-            foreach(EmailReportJob::AVAILABLE_REPORTS as $className=>$classTitle){
-                try{
-                    $class = '\HHK\House\\Report\\' . $className;
-                    $reportObj = new $class($dbh);
-                    $events['filterOpts'][$className] = ["data"=>$reportObj->filterOpts, "mkup"=>$reportObj->makeFilterOptsMkup()];
-                }catch(Exception $e){
+            foreach(array_keys(EmailReportJob::availableReports()) as $reportName){
+                $reportObj = EmailReportJob::makeReport($reportName, $dbh);
+                if ($reportObj !== null) {
+                    $events['filterOpts'][$reportName] = ["data"=>$reportObj->getFilterOpts(), "mkup"=>$reportObj->makeFilterOptsMkup()];
                 }
             }
 

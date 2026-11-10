@@ -23,6 +23,10 @@ use HHK\sec\Labels;
 
 class VehiclesReport extends AbstractReport implements ReportInterface {
 
+    public static function getEmailReportTitle(): ?string {
+        return 'Vehicles';
+    }
+
     public function __construct(\PDO $dbh, array $request = []){
         $uS = Session::getInstance();
         $this->reportTitle = $uS->siteName . " Vehicles for " . date('D M j, Y');

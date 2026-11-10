@@ -609,11 +609,32 @@ abstract class AbstractReport {
     }
 
     /**
+     * Reports are left out of the Email Report cron job unless they override this with a title
+     * (see ReportInterface::getEmailReportTitle())
+     *
+     * @return string|null
+     */
+    public static function getEmailReportTitle(): ?string {
+        return null;
+    }
+
+    /**
+     * Filter option definitions, keyed by option name (see makeFilterOptsMkup() for the formats)
+     *
+     * @return array
+     */
+    public function getFilterOpts(): array {
+        return $this->filterOpts;
+    }
+
+    /**
      * Filter option inputs. A checkbox is ["title"=>..., "type"=>"checkbox"]; a radio group is
      * ["type"=>"radio", "options"=>[value=>label, ...], "default"=>value] and posts the chosen value under its key.
      * A radio option can be ["label"=>..., "title"=>...] to give it a hover tip.
      */
     public function makeFilterOptsMkup(): string{
+        $this->filterOptsMkup = '';  // rebuild rather than append if called twice
+
         foreach($this->filterOpts as $key=>$opt) {
 
             switch ($opt["type"]) {

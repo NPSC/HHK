@@ -37,5 +37,22 @@ interface ReportInterface {
 
     public function sendEmail(\PDO $dbh, string $emailAddress, string $subject, bool $dryRun): array;
 
+    /**
+     * Label for this report in the Email Report cron job's report list, or null to leave it out.
+     * Only opt in (override AbstractReport's null default) if the report produces useful output from
+     * its stored filter options alone, with no interactive filter form.  EmailReportJob finds reports
+     * through the Composer classmap, so run `composer dump-autoload -o` after adding a report class.
+     *
+     * @return string|null
+     */
+    public static function getEmailReportTitle(): ?string;
+
+    /**
+     * Filter option definitions, keyed by option name
+     *
+     * @return array
+     */
+    public function getFilterOpts(): array;
+
 }
 ?>

@@ -73,20 +73,16 @@ try {
                 $filterOpts = $_REQUEST["filterOpts"];
             }
 
-            if(isset(EmailReportJob::AVAILABLE_REPORTS[$report])){
-                $class = '\HHK\House\\Report\\' . $report;
-                $reportObj = new $class($dbh, $filterOpts);
+            $reportObj = EmailReportJob::makeReport($report, $dbh, (is_array($filterOpts) ? $filterOpts : []));
 
-                if($reportObj instanceof ReportInterface) {
-                    $report = $reportObj->getInputSetReportName();
-                    $reportObj->makeFilterOptsMkup();
-                }
-
-            }else{
+            if ($reportObj === null) {
                 throw new ErrorException($report . " is not a valid report option");
             }
+
+            $report = $reportObj->getInputSetReportName();
+            $filterOptMkup = $reportObj->makeFilterOptsMkup();
             $fieldSets = ReportFieldSet::listFieldSets($dbh, $report, true);
-            $events = ["status"=>"success", "report"=>$report, "fieldSetOptMkup"=>HTMLSelector::doOptionsMkup($fieldSets, $selection, TRUE), 'filterOptMkup'=>$reportObj->filterOptsMkup];
+            $events = ["status"=>"success", "report"=>$report, "fieldSetOptMkup"=>HTMLSelector::doOptionsMkup($fieldSets, $selection, TRUE), 'filterOptMkup'=>$filterOptMkup];
 
             break;
 

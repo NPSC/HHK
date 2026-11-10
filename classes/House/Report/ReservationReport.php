@@ -31,6 +31,10 @@ use HHK\SysConst\InvoiceStatus;
 
 class ReservationReport extends AbstractReport implements ReportInterface {
 
+    public static function getEmailReportTitle(): ?string {
+        return 'Reservations';
+    }
+
     public array $locations;
     public array $diags;
     public array $resvStatuses;

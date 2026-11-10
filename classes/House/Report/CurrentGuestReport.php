@@ -24,6 +24,10 @@ use HHK\sec\Labels;
 
 class CurrentGuestReport extends AbstractReport implements ReportInterface {
 
+    public static function getEmailReportTitle(): ?string {
+        return 'Current Guests';
+    }
+
     /**
      * Summary of uniqueGuests
      * @var array

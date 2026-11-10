@@ -27,7 +27,6 @@ use HHK\SysConst\HospitalType;
 use HHK\SysConst\ItemId;
 use HHK\SysConst\ItemPriceCode;
 use HHK\SysConst\ItemType;
-use HHK\SysConst\Mode;
 use HHK\SysConst\PayType;
 use HHK\SysConst\PaymentMethod;
 use HHK\SysConst\RateStatus;
@@ -137,7 +136,8 @@ if (isset($_POST['btnkfSave'])) {
 
         // new entry
         $dText = filter_var($_POST['srrDesc'][0], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
-        $dAmt = filter_var($_POST['srrAmt'][0], FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION);
+        $srrAmts = filter_input(INPUT_POST, 'srrAmt', FILTER_SANITIZE_NUMBER_FLOAT, ['flags' => FILTER_FLAG_ALLOW_FRACTION | FILTER_REQUIRE_ARRAY]);
+        $dAmt = floatval($srrAmts[0] ?? 0);
 
         // Check for an entry with the same description
         $stmt = $dbh->prepare("SELECT count(*) FROM `gen_lookups` WHERE `Table_Name` = 'Static_Room_Rate' AND LOWER(`Description`) = :description;");
@@ -762,8 +762,8 @@ if (isset($_POST['btnAttrSave'])) {
             $cat = '';
         }
 
-        // New Attr?
-        if ($title == '' || $type == '') {
+        // New Attr?  A blank Type option posts '' which intval() turns into 0
+        if ($title == '' || $type < 1) {
             // No new hospitals this time
             continue;
         }

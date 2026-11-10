@@ -228,21 +228,25 @@ try {
 
             $filtered = filter_input_array(INPUT_POST, $arguments);
 
+            // FILTER_SANITIZE_NUMBER_INT returns a numeric string; null when nothing was posted
+            $idName = intval($filtered['id'] ?? 0, 10);
+            $accountId = $filtered['accountId'] ?? '';
+
             try {
 
-                if ($filtered['id'] > 0 && $filtered['accountId'] != '') {
+                if ($idName > 0 && $accountId != '') {
 
-                    $result = $transfer->retrieveRemoteAccount($filtered['accountId']);
+                    $result = $transfer->retrieveRemoteAccount($accountId);
 
                     try {
-                        $updateResult = $transfer->updateRemoteMember($dbh, $result, $filtered['id'], [], TRUE);
+                        $updateResult = $transfer->updateRemoteMember($dbh, $result, $idName, [], TRUE);
                     } catch (RuntimeException $e) {
                         $updateResult = $e->getMessage();
                     }
 
                     $events = ['result' => $updateResult];
                 } else {
-                    $events = ['warning' => 'Both the account id and the HHK id must be present.  Remote Account Id=' . $filtered['accountId'] . ', HHK Id =' . $filtered['id']];
+                    $events = ['warning' => 'Both the account id and the HHK id must be present.  Remote Account Id=' . $accountId . ', HHK Id =' . $idName];
                 }
             } catch (RuntimeException $hex) {
                 $events = ['warning' => $hex->getMessage()];

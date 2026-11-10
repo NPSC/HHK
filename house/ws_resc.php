@@ -83,13 +83,13 @@ try {
 
             SiteConfig::checkUploadFile('guestPhoto');
 
-            $guestId = filter_input(INPUT_POST, 'guestId', FILTER_SANITIZE_NUMBER_INT);
+            $guestId = intval(filter_input(INPUT_POST, 'guestId', FILTER_SANITIZE_NUMBER_INT));
             $guestPhoto = $_FILES['guestPhoto'];
 
-            if (is_null($guestId) || $guestId === FALSE) {
-                throw new \Exception('GuestId missing');
+            if ($guestId < 1) {
+                throw new ValidationException('GuestId missing');
             } else if (!is_array($guestPhoto)) {
-                throw new \Exception('guest Photo missing');
+                throw new ValidationException('Guest Photo missing');
             }
 
             $photo = new Photo();
@@ -103,7 +103,7 @@ try {
             $guestId = intval(filter_input(INPUT_POST, 'guestId', FILTER_SANITIZE_NUMBER_INT), 10);
 
             if ($guestId < 1) {
-                throw new \Exception("GuestId missing");
+                throw new ValidationException("GuestId missing");
             } else {
                 // Delete it.
                 $dbh->prepare("CALL delete_guest_photo(:id)")->execute([':id' => $guestId]);

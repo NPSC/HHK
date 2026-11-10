@@ -26,6 +26,11 @@ use HHK\sec\Labels;
 class BirthdayReport extends AbstractReport implements ReportInterface
 {
 
+    public static function getEmailReportTitle(): ?string
+    {
+        return 'Birthday Report';
+    }
+
     public function __construct(\PDO $dbh, array $request = [])
     {
         $uS = Session::getInstance();
