@@ -377,8 +377,10 @@ class Login {
         return HTMLContainer::generateMarkup("div",
             HTMLContainer::generateMarkup("div",
                 "<hr>" .
-                HTMLContainer::generateMarkup("div", HTMLContainer::generateMarkup("a", "", array("href"=>"https://nonprofitsoftwarecorp.org", "target"=>"_blank", "class"=>"nplogo"))) .
-                HTMLContainer::generateMarkup("div", "&copy; " . $copyYear . " Non Profit Software Corporation", array("class"=>"copyright"))
+                HTMLContainer::generateMarkup("div",
+                    HTMLContainer::generateMarkup("div", HTMLContainer::generateMarkup("a", "", array("href"=>"https://nonprofitsoftwarecorp.org", "target"=>"_blank", "class"=>"nplogo")), array("class"=>"col-md-6 d-flex justify-content-center justify-content-md-start")) .
+                    HTMLContainer::generateMarkup("div", HTMLContainer::generateMarkup("span", "&copy; " . $copyYear . " Non Profit Software Corporation", array("class"=>"copyright")), array("class"=>"col-md-6 d-flex justify-content-center justify-content-md-end"))
+                ,array("class"=>"row"))
             , array("class"=>"col-xl-10"))
         , array("class"=>"row justify-content-md-center mt-5 mb-3"));
     }

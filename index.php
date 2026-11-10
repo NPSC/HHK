@@ -128,19 +128,15 @@ if (SecurityComponent::isHTTPS()) {
     <body <?php if ($uS->testVersion) { echo "class='testbody'"; } ?>>
         <div id="page">
             <div class='pageHeader'>
-                <h2 class="px-3 py-2"><?php echo $uS->siteName; ?></h2>
+                <h2 class="px-3 py-2">
+                    <span class="hhkLogoIcon mr-1"></span>
+                    <?php echo $uS->siteName; ?>
+                </h2>
             </div>
             <div class="build"><?php echo $build; ?></div>
             <div id="contentDiv" class="container mx-auto">
-            	<div class="row justify-content-center mb-3">
-                    <div class="col-xl-4 col-md-6 my-auto">
-                        <a href="https://nonprofitsoftwarecorp.org/products-services/hospitality-housekeeper-software/" target="_blank"><img width="250" alt='Hospitality HouseKeeper Logo' src="images/hhkLogo.png"></a>
-                    </div>
-                    <div class="col-md-6 my-auto">
-                    	<div>
-                            <?php echo $siteName; ?>
-                        </div>
-                    </div>
+            	<div class="d-flex justify-content-center mb-3">
+                    <a href="https://nonprofitsoftwarecorp.org/products-services/hospitality-housekeeper-software/" target="_blank" class="hhkLogo" title="Hospitality HouseKeeper"></a>
                 </div>
                	<?php echo $disclaimer; ?>
                 <?php echo Login::trainingMsg(); ?>

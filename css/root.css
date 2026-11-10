@@ -21,8 +21,25 @@ body {
       margin-top:5px;
       display:inline-block;
 }
+.hhkLogo {
+	  background-image: url("../images/hhkLogoHorizontal.svg");
+	  background-repeat: no-repeat;
+	  width: 300px;
+	  height: 69px;
+	  display:inline-block;
+}
+.hhkLogoIcon {
+	  background: url("../images/faviconOutlineWhite.svg") no-repeat center / contain;
+	  height: 1em;
+	  aspect-ratio: 372.39 / 286.66;
+	  display:inline-block;
+	  vertical-align: -0.125em;
+}
+
 .copyright {
-	text-align:right;font-size: smaller; margin-top:5px;margin-right:.3em;
+	font-size: smaller;
+	margin-top:5px;
+	width: fit-content;
 }
 .pageHeader {
     width: 100%;
