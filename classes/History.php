@@ -32,25 +32,15 @@ use HHK\House\Reservation\Reservation_1;
 class History {
 
     /**
-     * Summary of resvEvents
+     * Reservation rows for the status being rendered by getReservedGuestsMarkup()
      * @var array
      */
-    protected $resvEvents;
+    protected array $resvEvents = [];
     /**
-     * Summary of roomRates
-     * @var array
+     * Room rate descriptions, loaded on first use
+     * @var array|null
      */
-    protected $roomRates;
-    /**
-     * Summary of locations
-     * @var array
-     */
-    protected $locations;
-    /**
-     * Summary of diags
-     * @var array
-     */
-    protected $diags;
+    protected ?array $roomRates = null;
 
     /**
      * Summary of addToGuestHistoryList
@@ -59,7 +49,7 @@ class History {
      * @param int $role
      * @return void
      */
-    public static function addToGuestHistoryList(\PDO $dbh, $id, $role) {
+    public static function addToGuestHistoryList(\PDO $dbh, int $id, int $role): void {
         if ($id > 0 && $role < WebRole::Guest) {
             $query = "INSERT INTO `member_history` (`idName`, `Guest_Access_Date`) VALUES (:id, NOW())
         ON DUPLICATE KEY UPDATE `Guest_Access_Date` = NOW();";
@@ -76,7 +66,7 @@ class History {
      * @param int $role
      * @return void
      */
-    public static function addToMemberHistoryList(\PDO $dbh, $id, $role) {
+    public static function addToMemberHistoryList(\PDO $dbh, int $id, int $role): void {
         if ($id > 0 && $role < WebRole::Guest) {
             $query = "INSERT INTO `member_history` (`idName`, `Admin_Access_Date`) VALUES (:id, NOW())
         ON DUPLICATE KEY UPDATE `Admin_Access_Date` = NOW();";
@@ -93,7 +83,7 @@ class History {
      * @throws InvalidArgumentException
      * @return string
      */
-    public static function getHistoryMarkup(\PDO $dbh, $view, $page) {
+    public static function getHistoryMarkup(\PDO $dbh, string $view, string $page): string {
 
         if ($view == "") {
             throw new InvalidArgumentException("Database view name must be defined.");
@@ -164,7 +154,7 @@ class History {
      * @param string $page
      * @return string
      */
-    public static function getGuestHistoryMarkup(\PDO $dbh, $page = "GuestEdit.php") {
+    public static function getGuestHistoryMarkup(\PDO $dbh, string $page = "GuestEdit.php"): string {
         return self::getHistoryMarkup($dbh, "vguest_history_records", $page);
     }
 
@@ -174,7 +164,7 @@ class History {
      * @param string $page
      * @return string
      */
-    public static function getMemberHistoryMarkup(\PDO $dbh, $page = "NameEdit.php") {
+    public static function getMemberHistoryMarkup(\PDO $dbh, string $page = "NameEdit.php"): string {
         return self::getHistoryMarkup($dbh, "vadmin_history_records", $page);
     }
 
@@ -233,14 +223,12 @@ class History {
      * @param string $start
      * @param int $days
      * @param bool $static
-     * @param string $orderBy
+     * @param string $orderBy column name to sort ascending by; only allow-listed columns are used
      * @return array<array>
      */
-    public function getReservedGuestsMarkup(\PDO $dbh, $status = ReservationStatus::Committed, $includeAction = TRUE, $start = '', $days = 1, $static = FALSE, $orderBy = '') {
+    public function getReservedGuestsMarkup(\PDO $dbh, string $status = ReservationStatus::Committed, bool $includeAction = TRUE, string $start = '', int $days = 1, bool $static = FALSE, string $orderBy = ''): array {
 
-        if (is_null($this->roomRates)) {
-            $this->roomRates = RoomRate::makeDescriptions($dbh);
-        }
+        $this->roomRates ??= RoomRate::makeDescriptions($dbh);
 
         // Reservation page name
         $page = 'Reserve.php';
@@ -251,7 +239,6 @@ class History {
         if ($start != '') {
             try {
                 $startDT = new \DateTime(filter_var($start, FILTER_SANITIZE_FULL_SPECIAL_CHARS));
-                $days = intval($days);
 
                 $endDT = new \DateTime(filter_var($start, FILTER_SANITIZE_FULL_SPECIAL_CHARS));
                 $endDT->add(new \DateInterval('P' . $days . 'D'));
@@ -265,13 +252,14 @@ class History {
             }
         }
 
-        if (is_null($this->resvEvents)) {
+        // $orderBy goes into the SQL, so only accept known column names
+        $orderClause = (in_array($orderBy, ['Expected_Arrival'], TRUE) ? "ORDER BY `$orderBy` ASC" : '');
 
-            $query = "SELECT * FROM `vreservation_events` WHERE `Status` = :status $whDate $orderBy";
-            $stmt = $dbh->prepare($query);
-            $stmt->execute([':status' => $status] + $whDateParams);
-            $this->resvEvents = $stmt->fetchAll(\PDO::FETCH_ASSOC);
-        }
+        // Always query: the rows depend on $status, so caching them would return the wrong list on a second call
+        $query = "SELECT * FROM `vreservation_events` WHERE `Status` = :status $whDate $orderClause";
+        $stmt = $dbh->prepare($query);
+        $stmt->execute([':status' => $status] + $whDateParams);
+        $this->resvEvents = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
         $reservStatuses = Common::readLookups($dbh, "reservStatus", "Code");
         $colGates = self::buildColGates($dbh);
@@ -279,11 +267,21 @@ class History {
         return $this->createMarkup($status, $page, $includeAction, $reservStatuses, $static, $colGates);
     }
 
-    public function getReservedGuestsDataTable(\PDO $dbh, $status = ReservationStatus::Committed, $includeAction = TRUE, $start = '', $days = 1, $static = FALSE, $orderBy = '')
+    /**
+     * Server-side DataTables response for the reservation register tabs.
+     * Sorting comes from the DataTables request, so $orderBy is not used.
+     * @param \PDO $dbh
+     * @param string $status
+     * @param bool $includeAction
+     * @param string $start
+     * @param int $days
+     * @param bool $static
+     * @param string $orderBy
+     * @return array
+     */
+    public function getReservedGuestsDataTable(\PDO $dbh, string $status = ReservationStatus::Committed, bool $includeAction = TRUE, string $start = '', int $days = 1, bool $static = FALSE, string $orderBy = ''): array
     {
-        if (is_null($this->roomRates)) {
-            $this->roomRates = RoomRate::makeDescriptions($dbh);
-        }
+        $this->roomRates ??= RoomRate::makeDescriptions($dbh);
 
         // Reservation page name
         $page = 'Reserve.php';
@@ -294,7 +292,6 @@ class History {
         if ($start != '') {
             try {
                 $startDT = new \DateTime(filter_var($start, FILTER_SANITIZE_FULL_SPECIAL_CHARS));
-                $days = intval($days);
 
                 $endDT = new \DateTime(filter_var($start, FILTER_SANITIZE_FULL_SPECIAL_CHARS));
                 $endDT->add(new \DateInterval('P' . $days . 'D'));
@@ -391,7 +388,7 @@ class History {
      * @param int $idResv
      * @return string
      */
-    protected function makeResvCanceledStatuses($resvStatuses, $idResv) {
+    protected function makeResvCanceledStatuses(array $resvStatuses, int $idResv): string {
 
         $markup = HTMLContainer::generateMarkup('li', '-------');
 
@@ -416,7 +413,7 @@ class History {
      * @param array $colGates
      * @return array<array>
      */
-    protected function createMarkup($status, $page, $includeAction, $reservStatuses, $static = FALSE, array $colGates = []) {
+    protected function createMarkup(string $status, string $page, bool $includeAction, array $reservStatuses, bool $static = FALSE, array $colGates = []): array {
 
         $uS = Session::getInstance();
         // Get labels
@@ -449,7 +446,7 @@ class History {
 
     }
 
-    protected function buildReservedGuestRow(array $r, $status, $page, $includeAction, $reservStatuses, $static, Session $uS, Labels $labels, $patientTitle, $addr_icon, $patientStayingIcon, array $colGates = []) {
+    protected function buildReservedGuestRow(array $r, string $status, string $page, bool $includeAction, array $reservStatuses, bool $static, Session $uS, Labels $labels, string $patientTitle, string $addr_icon, string $patientStayingIcon, array $colGates = []): array {
 
         $fixedRows = array();
 
@@ -462,9 +459,9 @@ class History {
                        HTMLContainer::generateMarkup('li', HTMLContainer::generateMarkup('a', 'View ' . $labels->getString('guestEdit', 'reservationTitle', 'Reservation'), array('href'=>'Reserve.php' . '?rid='.$r['idReservation'], 'style'=>'text-decoration:none; display:block;')))
                         . ($uS->smsProvider ? HTMLContainer::generateMarkup('li', HTMLContainer::generateMarkup('div', 'Text Guests', array("class"=>"btnShowResvMsgs", 'data-rid'=>$r['idReservation']))) : "")
                         . ($r['PrePaymt'] > 0 ? '' : $this->makeResvCanceledStatuses($reservStatuses, $r['idReservation']))
-                        . ($includeAction && ($status == ReservationStatus::Committed || $status == ReservationStatus::UnCommitted) ? HTMLContainer::generateMarkup('li', '-------') . HTMLContainer::generateMarkup('li', HTMLContainer::generateMarkup('div', $reservStatuses[ReservationStatus::Waitlist][1], array('class'=>'resvStat', 'data-stat'=>  ReservationStatus::Waitlist, 'data-rid'=>$r['idReservation']))) : '')
-                        . ($includeAction && $uS->ShowUncfrmdStatusTab && $status == ReservationStatus::Committed ? HTMLContainer::generateMarkup('li', HTMLContainer::generateMarkup('div', $reservStatuses[ReservationStatus::UnCommitted][1], array('class'=>'resvStat', 'data-stat'=>  ReservationStatus::UnCommitted, 'data-rid'=>$r['idReservation']))) : '')
-                        . ($includeAction && $status == ReservationStatus::UnCommitted ? HTMLContainer::generateMarkup('li', HTMLContainer::generateMarkup('div', $reservStatuses[ReservationStatus::Committed][1], array('class'=>'resvStat', 'data-stat'=>  ReservationStatus::Committed, 'data-rid'=>$r['idReservation']))) : '')
+                        . (($status == ReservationStatus::Committed || $status == ReservationStatus::UnCommitted) ? HTMLContainer::generateMarkup('li', '-------') . HTMLContainer::generateMarkup('li', HTMLContainer::generateMarkup('div', $reservStatuses[ReservationStatus::Waitlist][1], array('class'=>'resvStat', 'data-stat'=>  ReservationStatus::Waitlist, 'data-rid'=>$r['idReservation']))) : '')
+                        . ($uS->ShowUncfrmdStatusTab && $status == ReservationStatus::Committed ? HTMLContainer::generateMarkup('li', HTMLContainer::generateMarkup('div', $reservStatuses[ReservationStatus::UnCommitted][1], array('class'=>'resvStat', 'data-stat'=>  ReservationStatus::UnCommitted, 'data-rid'=>$r['idReservation']))) : '')
+                        . ($status == ReservationStatus::UnCommitted ?HTMLContainer::generateMarkup('li', HTMLContainer::generateMarkup('div', $reservStatuses[ReservationStatus::Committed][1], array('class'=>'resvStat', 'data-stat'=>  ReservationStatus::Committed, 'data-rid'=>$r['idReservation']))) : '')
                 ), ['class'=>'px-1']), array('class' => 'gmenu'));
         }
 
@@ -488,11 +485,7 @@ class History {
 
             $bDay = new \DateTime($r['Timestamp']);
 
-            if ($static) {
-                $fixedRows['Timestamp'] = $bDay->format('Y-m-d H:i:s');
-            } else {
-                $fixedRows['Timestamp'] = $bDay->format('c');
-            }
+            $fixedRows['Timestamp'] = ($static ? $bDay->format('Y-m-d H:i:s') : $bDay->format('c'));
 
             $fixedRows['Updated_By'] = (isset($r['Updated_By']) ? $r['Updated_By'] : '');
         }
@@ -616,7 +609,7 @@ class History {
      * @param string $hospColName
      * @return array
      */
-    public static function getCheckedInGuestMarkup(\PDO $dbh, $page = "GuestEdit.php", $includeAction = TRUE, $static = FALSE, $patientColName = 'Patient', $hospColName = 'Hospital') {
+    public static function getCheckedInGuestMarkup(\PDO $dbh, string $page = "GuestEdit.php", bool $includeAction = TRUE, bool $static = FALSE, string $patientColName = 'Patient', string $hospColName = 'Hospital'): array {
 
         $uS = Session::getInstance();
 
@@ -639,7 +632,7 @@ class History {
      * @param string $hospColName
      * @return array
      */
-    public static function getCheckedInMarkup(\PDO $dbh, $hospitals, $page, $includeAction = TRUE, $static = FALSE, $patientColName = 'Patient', $hospColName = 'Hospital') {
+    public static function getCheckedInMarkup(\PDO $dbh, array $hospitals, string $page, bool $includeAction = TRUE, bool $static = FALSE, string $patientColName = 'Patient', string $hospColName = 'Hospital'): array {
 
         $uS = Session::getInstance();
 
@@ -689,20 +682,6 @@ class History {
         $roomStatuses = Common::readGenLookupsPDO($dbh, 'Room_Status');
         $showHospital = self::activeHospitalCount($dbh) > 1;
 
-        $immobilityIcon = HTMLContainer::generateMarkup('ul'
-            , HTMLContainer::generateMarkup('li',
-                HTMLContainer::generateMarkup('span', '', array('class'=>'ui-icon', 'style'=>"background-image: url('../images/whlchr.jpg');"))
-                , array('class'=>'ui-state-default ui-corner-all m-0', 'style'=>'padding:1px;', 'title'=>"Immobile"))
-            , array('class'=>'ui-widget hhk-ui-icons ml-2'));
-
-        $blindIcon = HTMLContainer::generateMarkup('ul'
-            , HTMLContainer::generateMarkup('li',
-                HTMLContainer::generateMarkup('span', '', array('class'=>'ui-icon', 'style'=>"background-image: url('../images/whtcne.jpg');"))
-                , array('class'=>'ui-state-default ui-corner-all m-0', 'style'=>'padding:1px;', 'title'=>"Vision Impaired"))
-            , array('class'=>'ui-widget hhk-ui-icons ml-2'));
-
-
-
         while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
 
             $fixedRows = array();
@@ -727,15 +706,6 @@ class History {
 
             // Guest first name
             $fixedRows[Labels::getString('memberType', 'visitor', 'Guest') . ' First'] = ((isset($r['demogIcon']) && $r['demogIcon'] != "") ? HTMLContainer::generateMarkup("div", $r['Guest First'] . HTMLContainer::generateMarkup("i", "", ["class"=>"ml-3 " . $r["demogIcon"],"title"=>$r["demogTitle"], "style"=>"font-size: 1.3em"]), array("class"=>"hhk-flex", "style"=>"justify-content: space-between")) : $r['Guest First']);
-
-            /*
-            if (isset($r['ADA']) && $r['ADA'] == 'im') {
-                $fixedRows[Labels::getString('memberType', 'visitor', 'Guest') . ' First'] = HTMLContainer::generateMarkup("div", $r['Guest First'] . $immobilityIcon, array("class"=>"hhk-flex", "style"=>"justify-content: space-between"));
-            } else if (isset($r['ADA']) && $r['ADA'] == 'b') {
-                $fixedRows[Labels::getString('memberType', 'visitor', 'Guest') . ' First'] = HTMLContainer::generateMarkup("div", $r['Guest First'] . $blindIcon, array("class"=>"hhk-flex", "style"=>"justify-content: space-between"));
-            } else {
-                $fixedRows[Labels::getString('memberType', 'visitor', 'Guest') . ' First'] = $r['Guest First'];
-            }*/
 
 
             // Guest last name
@@ -874,10 +844,10 @@ class History {
     /**
      * Summary of getVolEventsMarkup
      * @param \PDO $dbh
-     * @param \DateTime $startDate
+     * @param \DateTimeInterface $startDate
      * @return array
      */
-    public static function getVolEventsMarkup(\PDO $dbh, \DateTimeInterface $startDate) {
+    public static function getVolEventsMarkup(\PDO $dbh, \DateTimeInterface $startDate): array {
 
         $query = "SELECT * FROM `vrecent_calevents` WHERE `Last Updated` > :startDate ORDER BY `Category`, `Last Updated`;";
         $stmt = $dbh->prepare($query);

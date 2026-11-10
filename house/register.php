@@ -142,7 +142,7 @@ if (isset($_POST['btnDlUcRes'])) {
 if (isset($_POST['btnDlWlist'])) {
     // Waitlist
     $history = new History();
-    $rows = $history->getReservedGuestsMarkup($dbh, ReservationStatus::Waitlist, FALSE, '', 1, TRUE, 'order by Expected_Arrival asc');
+    $rows = $history->getReservedGuestsMarkup($dbh, ReservationStatus::Waitlist, FALSE, '', 1, TRUE, 'Expected_Arrival');
     ExcelHelper::doExcelDownLoad(History::relabelExportKeys($rows, $exportLabels), 'Waitlist');
 }
 if (isset($_POST['btnFeesDl'])) {
