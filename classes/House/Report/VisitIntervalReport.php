@@ -300,7 +300,7 @@ class VisitIntervalReport extends AbstractReport implements ReportInterface {
         return HTMLInput::generateMarkup("Stats Only", ["type" => "submit", "name" => "btnStatsOnly-" . $this->inputSetReportName, "class" => "ui-button ui-corner-all ui-widget"]);
     }
 
-    protected function getCellAttrs(array $field): array {
+    protected function getCellAttrs(array $field, array $row = [], string $outputType = ""): array {
         return (isset($field[6]) && is_array($field[6])) ? $field[6] : [];
     }
 

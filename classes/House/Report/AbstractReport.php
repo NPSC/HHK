@@ -170,11 +170,7 @@ abstract class AbstractReport {
         foreach($this->resultSet as $r){
             $tr = '';
             foreach ($this->filteredFields as $f) {
-                if($outputType == "email" && isset($f[7]) && $f[7] == "date" && $r[$f[1]] != ''){
-                    $fieldDT = new \DateTime($r[$f[1]]);
-                    $r[$f[1]] = $fieldDT->format("M j, Y");
-                }
-                $tr .= HTMLTable::makeTd($r[$f[1]], $this->getCellAttrs($f));
+                $tr .= HTMLTable::makeTd($this->getCellValue($f, $r, $outputType), $this->getCellAttrs($f, $r, $outputType));
             }
 
             $tbl->addBodyTr($tr);
@@ -195,10 +191,35 @@ abstract class AbstractReport {
     }
 
     /**
+     * The value written to a field's cell. Dates are formatted for email, since the email
+     * has no client-side date renderer; otherwise the row value is used as is.
+     * Subclasses can override to change a cell's value per output.
+     *
+     * @param array $field the field definition
+     * @param array $row the result row the cell belongs to
+     * @param string $outputType "" (page), "email", or "excel"
+     * @return mixed
+     */
+    protected function getCellValue(array $field, array $row, string $outputType = "") {
+
+        $value = $row[$field[1]];
+
+        if ($outputType == "email" && isset($field[7]) && $field[7] == "date" && $value != '') {
+            $value = (new \DateTime($value))->format("M j, Y");
+        }
+
+        return $value;
+    }
+
+    /**
      * Optional hook for subclasses to set attributes (eg. alignment) on a field's body cells.
      * None by default.
+     *
+     * @param array $field the field definition
+     * @param array $row the result row the cell belongs to
+     * @param string $outputType "" (page) or "email"
      */
-    protected function getCellAttrs(array $field): array {
+    protected function getCellAttrs(array $field, array $row = [], string $outputType = ""): array {
         return [];
     }
 
@@ -485,7 +506,7 @@ abstract class AbstractReport {
             $flds = array();
 
             foreach ($this->filteredFields as $f) {
-                $flds[] = $r[$f[1]];
+                $flds[] = $this->getCellValue($f, $r, 'excel');
             }
 
             $row = $writer->convertStrings($hdr, $flds);

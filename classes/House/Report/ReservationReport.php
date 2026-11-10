@@ -42,6 +42,9 @@ class ReservationReport extends AbstractReport implements ReportInterface {
     public array $checklistItems;
     public array $checklistTypes;
 
+    /** @var array<string, string> checklist date column => its completed-flag column */
+    protected array $checklistDoneCols = [];
+
 
     public function __construct(\PDO $dbh, array $request = []){
         $uS = Session::getInstance();
@@ -116,11 +119,17 @@ class ReservationReport extends AbstractReport implements ReportInterface {
         //checklist items
         $checklistJoin = "";
         $checklistFields = "";
+        $this->checklistDoneCols = [];
         if ($uS->useChecklists) {
-            foreach ($this->checklistItems as $item) {
+            foreach (array_values($this->checklistItems) as $i => $item) {
                 $checklistJoin .= " left join gen_lookups g" . $item[0] . " on g" . $item[0] . ".Code = '" . $item[0] . "' and g" . $item[0] . ".Table_Name = '" . ChecklistType::PSG . "'" .
                     " left join checklist_item ci" . $item[0] . " on hs.idPsg = ci" . $item[0] . ".Entity_Id and ci" . $item[0] . ".GL_TableName = '" . ChecklistType::PSG . "' and ci" . $item[0] . ".GL_Code = '" . $item[0] . "'";
                 $checklistFields .= " ifnull(ci" . $item[0] . ".Value_Date, '') as `" . $item[1] . "`,";
+
+                // Completed flag, since an item can be checked off without a date
+                $doneCol = 'ciDone' . $i;
+                $checklistFields .= " ifnull(ci" . $item[0] . ".`Value`, 0) as `" . $doneCol . "`,";
+                $this->checklistDoneCols[$item[1]] = $doneCol;
             }
         }
 
@@ -331,7 +340,8 @@ where s.Key = 'AcceptResvPaymt' AND " . $whDates . $whHosp . $whAssoc . $whStatu
                 $ciTitles[] = $item[1];
             }
 
-            $fields[] = array($ciTitles, $ciFields, '', '', 'MM/DD/YYYY', '15', array(), 'date', 'selOptionTitle' => (isset($this->checklistTypes[ChecklistType::PSG]["Description"]) ? $this->checklistTypes[ChecklistType::PSG]["Description"] . " Checklist" : "PSG Checklist"));
+            // Excel type 'string', not a date format: a date-formatted column can't hold "Completed" (see getCellValue)
+            $fields[] = array($ciTitles, $ciFields, '', '', 'string', '15', array(), 'date','selOptionTitle' => (isset($this->checklistTypes[ChecklistType::PSG]["Description"]) ? $this->checklistTypes[ChecklistType::PSG]["Description"] . " Checklist" : "PSG Checklist"));
         }
         
         $fields[] = array("Status", 'Status_Title', 'checked', '', 'string', '15');
@@ -392,6 +402,43 @@ where s.Key = 'AcceptResvPaymt' AND " . $whDates . $whHosp . $whAssoc . $whStatu
 
         return $mkup;
 
+    }
+
+    /**
+     * Checklist items completed without a date show "Completed" in email and Excel (the page shows an icon
+     * instead, see getCellAttrs). Excel checklist dates are written as text, since the column is a text column.
+     */
+    protected function getCellValue(array $field, array $row, string $outputType = "") {
+
+        $doneCol = (is_string($field[1]) ? ($this->checklistDoneCols[$field[1]] ?? null) : null);
+
+        if ($doneCol === null || ($outputType != 'email' && $outputType != 'excel')) {
+            return parent::getCellValue($field, $row, $outputType);
+        }
+
+        $date = $row[$field[1]];
+
+        if ($date == '') {
+            return (($row[$doneCol] ?? 0) == 1 ? 'Completed' : '');
+        }
+
+        return ($outputType == 'excel' ? (new \DateTime($date))->format('m/d/Y') : parent::getCellValue($field, $row, $outputType));
+    }
+
+    /**
+     * Mark completed checklist items with a check icon. It goes on the cell (not in its content) so the
+     * column stays a plain date for the date renderer and sorting, and still shows when there's no date.
+     * Skipped for email, which doesn't load the icon font.
+     */
+    protected function getCellAttrs(array $field, array $row = [], string $outputType = ""): array {
+
+        $doneCol = (is_string($field[1]) ? ($this->checklistDoneCols[$field[1]] ?? null) : null);
+
+        if ($outputType != 'email' && $doneCol !== null && ($row[$doneCol] ?? 0) == 1) {
+            return ['class' => 'bi bi-check-square-fill', 'title' => 'Completed'];
+        }
+
+        return [];
     }
 
     public function generateMarkup(string $outputType = ""){

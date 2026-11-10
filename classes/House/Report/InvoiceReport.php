@@ -261,7 +261,7 @@ class InvoiceReport extends AbstractReport implements ReportInterface
             . HTMLInput::generateMarkup($this->invNum, array('type' => 'text', 'id' => 'invNum', 'name' => 'invNum', 'size' => '8', 'class' => 'mr-3 ml-1 p-1'));
     }
 
-    protected function getCellAttrs(array $field): array {
+    protected function getCellAttrs(array $field, array $row = [], string $outputType = ""): array {
         return (isset($field[6]) && is_array($field[6])) ? $field[6] : [];
     }
 
