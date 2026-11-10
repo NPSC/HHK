@@ -31,7 +31,7 @@ class Transaction {
     /**
      * Summary of recordTransaction
      * @param \PDO $dbh
-     * @param \HHK\Payment\PaymentResponse\AbstractPaymentResponse $vr
+     * @param AbstractPaymentResponse $vr
      * @param mixed $gwName
      * @param mixed $transType
      * @param mixed $transMethod

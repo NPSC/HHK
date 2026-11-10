@@ -45,7 +45,7 @@ class IncidentReportRS extends AbstractTableRS {
         $this->Resolution = new DB_Field("Resolution", '', new DbStrSanitizer(5000), TRUE, TRUE);
         $this->Signature = new DB_Field("Signature", NULL, new DbBlobSanitizer(), TRUE, TRUE);
         $this->Signature_Date = new DB_Field("Signature_Date", NULL, new DbDateSanitizer("Y-m-d H:i:s"), TRUE, TRUE);
-        $this->Author = new DB_Field("Author", '', new DbStrSanitizer('45'), TRUE, TRUE);
+        $this->Author = new DB_Field("Author", '', new DbStrSanitizer(45), TRUE, TRUE);
         $this->Guest_Id = new DB_Field("Guest_Id", 0, new DbIntSanitizer(), TRUE, TRUE);
         $this->Psg_Id = new DB_Field("Psg_Id", 0, new DbIntSanitizer(), TRUE, TRUE);
         $this->Last_Updated = new DB_Field('Last_Updated', '', new DbDateSanitizer("Y-m-d H:i:s"), TRUE, TRUE);

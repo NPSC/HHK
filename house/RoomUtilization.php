@@ -60,8 +60,9 @@ if (isset($_POST['btnByGuest']) || isset($_POST['btnByRoom'])) {
     $filter->loadSelectedHospitals();
 
     // Room Grouping
-    if (isset($_POST['selGroup'])) {
-        $groupingSelection = filter_var($_POST['selGroup'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+    // Must be a Room_Group code: its value names the room column roomNOR() selects
+    if (isset($_POST['selGroup']) && is_string($_POST['selGroup']) && isset($roomGroups[$_POST['selGroup']])) {
+        $groupingSelection = $_POST['selGroup'];
     }
 
 

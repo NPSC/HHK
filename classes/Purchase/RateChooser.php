@@ -209,8 +209,8 @@ class RateChooser {
         $today = new \DateTime();
         $today->setTime(0, 0, 0);
         $now = new \DateTime();
-        $hr = $now->format('H');
-        $min = $now->format('i');
+        $hr = intval($now->format('H'));
+        $min = intval($now->format('i'));
 
         if (isset($post['rbReplaceRate'])) {
             $replaceMode = filter_var($post['rbReplaceRate'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);

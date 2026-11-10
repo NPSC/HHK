@@ -227,7 +227,7 @@ if(SecurityComponent::is_TheAdmin()){
         try{
             $distanceCalculator = DistanceFactory::make();
             if($distanceCalculator instanceof GoogleDistance){
-                $numCalls = filter_input(INPUT_POST, 'numCalls', FILTER_SANITIZE_NUMBER_INT);
+                $numCalls = intval(filter_input(INPUT_POST, 'numCalls', FILTER_SANITIZE_NUMBER_INT));
                 $events = $distanceCalculator->calcDistanceArray($dbh, $distanceCalculator->getUncalculatedAddresses($dbh), $numCalls);
             }else{
                 $events = ["error"=>"Google Distance Calculator is not enabled"];
@@ -241,7 +241,7 @@ if(SecurityComponent::is_TheAdmin()){
         try{
             $distanceCalculator = DistanceFactory::make();
             if($distanceCalculator instanceof GoogleDistance){
-                $numCalls = filter_input(INPUT_POST, 'numCalls', FILTER_SANITIZE_NUMBER_INT);
+                $numCalls = intval(filter_input(INPUT_POST, 'numCalls', FILTER_SANITIZE_NUMBER_INT));
                 $events = ["cost"=>$distanceCalculator->calculateApiCost($numCalls)];
             }else{
                 $events = ["error"=>"Google Distance Calculator is not enabled"];

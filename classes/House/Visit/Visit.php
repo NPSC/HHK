@@ -82,8 +82,8 @@ class Visit {
      * @param \PDO $dbh
      * @param int $idReg
      * @param int $idVisit
-     * @param \DateTime|null $arrivalDT
-     * @param \DateTime|null $departureDT
+     * @param \DateTimeInterface|null $arrivalDT
+     * @param \DateTimeInterface|null $departureDT
      * @param AbstractResource|null $resource
      * @param string $userName
      * @param int $span

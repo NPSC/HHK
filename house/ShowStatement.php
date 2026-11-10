@@ -175,7 +175,7 @@ $emSubject = $wInit->siteName .' '. $labels->getString('MemberType', 'visitor', 
 
 $emBody = $uS->StatementEmailBody;
 
-if (is_null($guest) === FALSE && $emAddr == '') {
+if ($guest instanceof Guest && $emAddr == '') {
     $email = $guest->getEmailsObj()->get_data($guest->getEmailsObj()->get_preferredCode());
     $emAddr = $email["Email"];
 }

@@ -409,14 +409,14 @@ try {
 
         $noteId = 0;
         $flagCount = 0;
-        $flag = 0;
+        $flag = false;
 
         if (isset($_POST['idNote'])) {
             $noteId = intval(filter_input(INPUT_POST, 'idNote', FILTER_SANITIZE_NUMBER_INT), 10);
         }
 
         if (isset($_POST['flag'])) {
-            $flag = intval(filter_input(INPUT_POST, 'flag', FILTER_SANITIZE_NUMBER_INT), 10);
+            $flag = boolval(filter_input(INPUT_POST, 'flag', FILTER_VALIDATE_BOOL));
         }
 
         if ($noteId > 0) {

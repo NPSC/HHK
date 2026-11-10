@@ -163,7 +163,7 @@ class Note {
 
             $note->setText($noteText);
             $note->setType($noteType);
-            $note->setFlag(0);
+            $note->setFlag(false);
             $note->setCategory($noteCategory);
             $note->setTitle($noteTitle);
             $note->setUserName($userName);

@@ -614,7 +614,7 @@ where
 
     /**
      * Summary of getItemInvPayments
-     * @param mixed $idItem
+     * @param int|string $idItem item id, or self::TAX_PAID for tax paid across all items
      * @return mixed
      */
     public function getItemInvPayments($idItem) {
@@ -626,7 +626,7 @@ where
 
     /**
      * Summary of getItemInvPending
-     * @param int $idItem
+     * @param int|string $idItem item id, or self::TAX_PAID for tax pending across all items
      * @return mixed
      */
     public function getItemInvPending($idItem) {
@@ -638,7 +638,7 @@ where
 
     /**
      * Summary of get3rdPartyPending
-     * @param int $idItem
+     * @param int|string $idItem item id, or self::TAX_PAID for third-party tax pending across all items
      * @return mixed
      */
     public function get3rdPartyPending($idItem) {

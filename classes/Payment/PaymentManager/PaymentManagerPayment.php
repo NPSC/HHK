@@ -752,7 +752,7 @@ class PaymentManagerPayment {
             	$payDT = new \DateTime($this->payDate);  //setTimeZone(NULL, $this->payDate);
 
             	$now = new \DateTime();
-            	$payDT->setTime($now->format('H'), $now->format('i'));
+            	$payDT->setTime(intval($now->format('H')), intval($now->format('i')));
 
                 $paymentDate = $payDT->format('Y-m-d H:i:s');
 

@@ -265,6 +265,10 @@ INSERT IGNORE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitu
 delete from `page_securitygroup` where `idPage` in (select idPage from `page` where `File_Name` = "DiagnosisBuilder.php");
 delete from `page` where `File_Name` = "DiagnosisBuilder.php";
 
+-- Retire EventShells.php (volunteer "Repeat Events"): hidden since the volunteer removal in 2023, and new installs have no shell_events table
+delete from `page_securitygroup` where `idPage` in (select idPage from `page` where `File_Name` = "EventShells.php");
+delete from `page` where `File_Name` = "EventShells.php";
+
 -- Login is shared at the site root (house/ and admin/ index.php redirect there)
 UPDATE `page` SET `File_Name` = '_../index.php?log=lo' WHERE `File_Name` = '_index.php?log=lo';
 

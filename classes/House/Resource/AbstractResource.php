@@ -125,7 +125,7 @@ order by r.Util_Priority;", array(\PDO::ATTR_CURSOR => \PDO::CURSOR_FWDONLY));
      * @param int $roomId
      * @return void
      */
-    public function saveRooms(\PDO $dbh, $roomId) {
+    public function saveRooms(\PDO $dbh, int $roomId) {
 
         $id = intval($roomId);
 

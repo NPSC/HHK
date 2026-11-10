@@ -593,11 +593,6 @@ ORDER BY `rn`.`idLink`, `n`.`Timestamp` DESC;");
         $stDT = new \DateTime($startDate);
         $endDT = new \DateTime($endDate);
 
-
-        if ($stDT === FALSE || $endDT === FALSE) {
-            return '';
-        }
-
         $query = "SELECT
     `r`.`idRoom`,
     `r`.`Title`,
@@ -1053,11 +1048,6 @@ ORDER BY `rs`.`Util_Priority`;";
         $stDT->setTime(0,0,0);
         $endDT = new \DateTime($endDate);
 
-
-        if ($stDT === FALSE || $endDT === FALSE) {
-            return '';
-        }
-
         // Counting start date
         $countgDT = new \DateTime($startDate);
         $countgDT->setTime(0, 0, 0);
@@ -1334,8 +1324,8 @@ AND DATE(`v`.`Span_Start`) < DATE(:endDate) AND DATE(IFNULL(`v`.`Span_End`, date
                     // Walk forward from checkout marking any consecutive holiday or non-cleaning weekday
                     $limit = 10;
                     while ($limit-- > 0) {
-                        $dateInfo = getDate($clDate->format('U'));
-                        $isHoliday = $myHolidays->is_holiday($clDate->format('U'));
+                        $dateInfo = getdate($clDate->getTimestamp());
+                        $isHoliday = $myHolidays->is_holiday($clDate->getTimestamp());
                         $isNonClean = \array_search($dateInfo['wday'], $nonClean) !== FALSE;
 
                         if (!$isHoliday && !$isNonClean) {

@@ -209,7 +209,7 @@ abstract class AbstractPriceModel {
      * Summary of getCategoryRateRs
      * @param int $idRoomRate
      * @param string $category
-     * @throws \HHK\Exception\RuntimeException
+     * @throws RuntimeException
      * @return mixed
      */
     public function getCategoryRateRs($idRoomRate = 0, $category = '') {
@@ -648,21 +648,11 @@ WHERE `PriceModel` = :priceModelCode ORDER BY `breakpointOrder` DESC, `FA_Catego
 
         if (isset($post['ratetitle'])) {
 
-            $rr1s = filter_var_array($post['rr1'], FILTER_VALIDATE_FLOAT, FILTER_FLAG_ALLOW_FRACTION | FILTER_FLAG_ALLOW_THOUSAND);
             $titles = filter_var_array($post['ratetitle'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
-            $rr2s = array();
-            $rr3s = array();
-            $mins = array();
-
-            if (isset($post['rr2'])) {
-                $rr2s = filter_var_array($post['rr2'], FILTER_VALIDATE_FLOAT, FILTER_FLAG_ALLOW_FRACTION | FILTER_FLAG_ALLOW_THOUSAND);
-            }
-            if (isset($post['rr3'])) {
-                $rr3s = filter_var_array($post['rr3'], FILTER_VALIDATE_FLOAT, FILTER_FLAG_ALLOW_FRACTION | FILTER_FLAG_ALLOW_THOUSAND);
-            }
-            if (isset($post['minrt'])) {
-                $mins = filter_var_array($post['minrt'], FILTER_VALIDATE_FLOAT, FILTER_FLAG_ALLOW_FRACTION | FILTER_FLAG_ALLOW_THOUSAND);
-            }
+            $rr1s = self::parseRateInputs($post['rr1'] ?? []);
+            $rr2s = self::parseRateInputs($post['rr2'] ?? []);
+            $rr3s = self::parseRateInputs($post['rr3'] ?? []);
+            $mins = self::parseRateInputs($post['minrt'] ?? []);
 
             if (isset($post['rrdefault'])) {
                 $defaultRate = filter_var($post['rrdefault'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
@@ -711,42 +701,39 @@ WHERE `PriceModel` = :priceModelCode ORDER BY `breakpointOrder` DESC, `FA_Catego
                     // Clean and check values.
                     $changed = FALSE;
 
+                    // Blank or non-numeric inputs are absent from these arrays, so they leave the stored value alone.
                     if (isset($rr1s[$idRoomRate])) {
 
-                        $rate1 = str_replace(',', '', str_replace('$', '', $rr1s[$idRoomRate]));
-                        $rpRs->Reduced_Rate_1->setNewVal($rate1);
+                        $rpRs->Reduced_Rate_1->setNewVal($rr1s[$idRoomRate]);
 
-                        if ($rate1 != $oldRs->Reduced_Rate_1->getStoredVal()) {
+                        if ($rr1s[$idRoomRate] != $oldRs->Reduced_Rate_1->getStoredVal()) {
                             $changed = TRUE;
                         }
                     }
 
                     if (isset($rr2s[$idRoomRate])) {
 
-                        $rate1 = str_replace(',', '', str_replace('$', '', $rr2s[$idRoomRate]));
-                        $rpRs->Reduced_Rate_2->setNewVal($rate1);
+                        $rpRs->Reduced_Rate_2->setNewVal($rr2s[$idRoomRate]);
 
-                        if ($rate1 != $oldRs->Reduced_Rate_2->getStoredVal()) {
+                        if ($rr2s[$idRoomRate] != $oldRs->Reduced_Rate_2->getStoredVal()) {
                             $changed = TRUE;
                         }
                     }
 
                     if (isset($rr3s[$idRoomRate])) {
 
-                        $rate1 = str_replace(',', '', str_replace('$', '', $rr3s[$idRoomRate]));
-                        $rpRs->Reduced_Rate_3->setNewVal($rate1);
+                        $rpRs->Reduced_Rate_3->setNewVal($rr3s[$idRoomRate]);
 
-                        if ($rate1 != $oldRs->Reduced_Rate_3->getStoredVal()) {
+                        if ($rr3s[$idRoomRate] != $oldRs->Reduced_Rate_3->getStoredVal()) {
                             $changed = TRUE;
                         }
                     }
 
                     if (isset($mins[$idRoomRate])) {
 
-                        $rate1 = str_replace(',', '', str_replace('$', '', $mins[$idRoomRate]));
-                        $rpRs->Min_Rate->setNewVal($rate1);
+                        $rpRs->Min_Rate->setNewVal($mins[$idRoomRate]);
 
-                        if ($rate1 != $oldRs->Min_Rate->getStoredVal()) {
+                        if ($mins[$idRoomRate] != $oldRs->Min_Rate->getStoredVal()) {
                             $changed = TRUE;
                         }
                     }
@@ -793,18 +780,18 @@ WHERE `PriceModel` = :priceModelCode ORDER BY `breakpointOrder` DESC, `FA_Catego
 
                 $rpRs = new Room_RateRS();
 
-                $rpRs->Reduced_Rate_1->setNewVal(str_replace(',', '', str_replace('$', '', $rr1s['0'])));
+                $rpRs->Reduced_Rate_1->setNewVal($rr1s[0] ?? 0);
 
                 if (isset($rr2s[0])) {
-                    $rpRs->Reduced_Rate_2->setNewVal(str_replace(',', '', str_replace('$', '', $rr2s['0'])));
+                    $rpRs->Reduced_Rate_2->setNewVal($rr2s[0]);
                 }
 
                 if (isset($rr3s[0])) {
-                    $rpRs->Reduced_Rate_3->setNewVal(str_replace(',', '', str_replace('$', '', $rr3s['0'])));
+                    $rpRs->Reduced_Rate_3->setNewVal($rr3s[0]);
                 }
 
                 if (isset($mins[0])) {
-                    $rpRs->Min_Rate->setNewVal(str_replace(',', '', str_replace('$', '', $mins['0'])));
+                    $rpRs->Min_Rate->setNewVal($mins[0]);
                 }
 
                 $rpRs->FA_Category->setNewVal($this->getNewRateCategory());
@@ -823,6 +810,38 @@ WHERE `PriceModel` = :priceModelCode ORDER BY `breakpointOrder` DESC, `FA_Catego
         }
 
         return $defaultRate;
+    }
+
+    /**
+     * Parse posted rate amounts such as "$1,250.00".  "$" and "," are stripped before validating
+     * (the edit form shows rates with number_format(), so amounts of 1000+ come back with commas).
+     *
+     * @param mixed $inputs posted array, keyed by idRoom_rate (0 = new rate)
+     * @return array<int|string, float> blank or non-numeric entries are left out
+     */
+    protected static function parseRateInputs($inputs): array {
+
+        $rates = [];
+
+        if (is_array($inputs) === FALSE) {
+            return $rates;
+        }
+
+        foreach ($inputs as $key => $raw) {
+
+            if (is_string($raw) === FALSE) {
+                continue;
+            }
+
+            $clean = trim(str_replace(['$', ','], '', $raw));
+            $rate = filter_var($clean, FILTER_VALIDATE_FLOAT);
+
+            if ($clean !== '' && $rate !== FALSE) {
+                $rates[$key] = $rate;
+            }
+        }
+
+        return $rates;
     }
 
     /**

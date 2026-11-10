@@ -460,7 +460,7 @@ $ckdate";
                     $k = array_search("", $reqs);
                     unset($reqs[$k]);
                 }
-                $this->selectedAssocs = filter_var_array($reqs, FILTER_SANITIZE_FULL_SPECIAL_CHARS) ?: [];
+                $this->selectedAssocs = self::cleanIdList($reqs);
             }
         }
 
@@ -471,11 +471,33 @@ $ckdate";
                     $k = array_search("", $reqs);
                     unset($reqs[$k]);
                 }
-                $this->selectedHosptials = filter_var_array($reqs, FILTER_SANITIZE_FULL_SPECIAL_CHARS) ?: [];
+                $this->selectedHosptials = self::cleanIdList($reqs);
             }
         }
 
         return $this;
+    }
+
+    /**
+     * Keep only the blank "all" option and positive integer ids from a posted id list.
+     * Many reports join these values straight into SQL "IN (...)" clauses, so nothing else may pass.
+     *
+     * @param array $reqs posted values
+     * @return array<string> same keys; each value is '' or a digit string
+     */
+    protected static function cleanIdList(array $reqs): array {
+
+        $ids = [];
+
+        foreach ($reqs as $k => $v) {
+            if ($v === '') {
+                $ids[$k] = '';
+            } else if (is_string($v) && ctype_digit($v)) {
+                $ids[$k] = $v;
+            }
+        }
+
+        return $ids;
     }
 
     /**

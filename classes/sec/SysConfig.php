@@ -234,7 +234,7 @@ class SysConfig {
 
     /**
      * Summary of setValueByType
-     * @param int $value
+     * @param mixed $value
      * @param string $type
      * @return mixed
      */

@@ -98,7 +98,7 @@ if ($stmt->rowCount() > 0) {
     $stmtp = $dbh->prepare("SELECT `Group_Code` AS `Code`, `Title` AS `Description` FROM `w_groups`");
     $stmtp->execute();
     $grps = $stmtp->fetchAll(\PDO::FETCH_NUM);
-    $securityCodes = HTMLSelector::doOptionsMkup($grps, false, false);
+    $securityCodes = HTMLSelector::doOptionsMkup($grps, '', false);
 
 
 } else {

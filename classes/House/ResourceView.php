@@ -782,7 +782,7 @@ WHERE
         // Linked rooms
         if (isset($post['selRooms'])) {
 
-            $roomId = filter_var($post['selRooms'], FILTER_SANITIZE_NUMBER_INT);
+            $roomId = intval(filter_var($post['selRooms'], FILTER_SANITIZE_NUMBER_INT));
 
             $resc->saveRooms($dbh, $roomId);
 

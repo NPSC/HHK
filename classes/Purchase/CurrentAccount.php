@@ -240,7 +240,7 @@ class CurrentAccount {
                 + $visitCharge->getVisitFeesPaid()
                 + $visitCharge->getItemInvPayments(ItemId::AddnlCharge)
                 + $visitCharge->getItemInvPayments(ItemId::Waive)
-                + $visitCharge->getItemInvPayments('tax'));
+                + $visitCharge->getItemInvPayments(VisitCharges::TAX_PAID));
 
         // Pending amounts
         $this->setAmtPending3P($visitCharge->get3pRoomFeesPending()
@@ -248,7 +248,7 @@ class CurrentAccount {
                 + $visitCharge->get3rdPartyPending(ItemId::AddnlCharge)
                 + $visitCharge->get3rdPartyPending(ItemId::LodgingMOA)
                 + $visitCharge->get3rdPartyPending(ItemId::Waive)
-                + $visitCharge->get3rdPartyPending('tax'));
+                + $visitCharge->get3rdPartyPending(VisitCharges::TAX_PAID));
 
     }
 
