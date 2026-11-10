@@ -10,7 +10,7 @@ use HHK\Exception\RuntimeException;
 use HHK\Exception\UnexpectedValueException;
 use HHK\sec\Session;
 use HHK\SysConst\{WebRole};
-use HHK\sec\{SecurityComponent, SysConfig};
+use HHK\sec\SysConfig;
 use PDO;
 
 
@@ -93,15 +93,7 @@ class Common {
         } catch (\PDOException $e) {
 
             $ssn->destroy(TRUE);
-
-            if ($roleCode >= WebRole::DefaultRole && $override === FALSE) {
-                throw new RuntimeException("<br/>Database Error: " . $e->getMessage());
-            }
-
-            $sec = new SecurityComponent();
-
-            header('location:' . $sec->getRootURL(). 'reset.php?r=' . $e->getMessage());
-            die();
+            throw new RuntimeException("<br/>Database Error: " . $e->getMessage());
         }
 
         return $dbh;

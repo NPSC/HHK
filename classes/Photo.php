@@ -102,7 +102,7 @@ class Photo {
             ,array("class"=>"ui-widget ui-widget-content ui-corner-all", "style"=>"width:" . $widthPx . "px; height:" . $widthPx . "px; min-width:" . $widthPx . "px; background-image: url(../house/ws_resc.php?cmd=getguestphoto&guestId=$idGuest);", 'id'=>'hhk-guest-photo'));
     }
 
-    public function loadGuestPhoto(\PDO $dbh, $idGuest, $defaultPhotoFilePath = '../images/defaultGuestPhoto.png') {
+    public function loadGuestPhoto(\PDO $dbh, $idGuest) {
 
         $id = intval($idGuest, 10);
 

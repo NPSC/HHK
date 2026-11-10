@@ -539,37 +539,6 @@ class SiteConfig {
         return $sctbl->generateMarkup() . $tblMkup;
     }
 
-//     public static function saveConfig($dbh, array $post, $userName = '') {
-
-//         foreach ($post as $secName => $secArray) {
-
-//             if ($config->hasSection($secName)) {
-
-//                 foreach ($secArray as $itemName => $val) {
-
-//                     $val = filter_var($val, FILTER_SANITIZE_FULL_SPECIAL_CHARS);
-
-//                     if ($config->has($secName, $itemName)) {
-
-//                         // password cutout
-//                         if ($val != '' && (strstr($itemName, 'Password') !== FALSE) && $config->getString($secName, $itemName, '') != $val) {
-//                             $val = encryptMessage($val);
-//                         }
-
-//                         // log changes
-//                         if ($config->getString($secName, $itemName, '') != $val && is_null($dbh) === FALSE) {
-//                             HouseLog::logSiteConfig($dbh, $secName . ':' . $itemName, $val, $userName);
-//                             $config->set($secName, $itemName, $val);
-//                         }
-//                     }
-//                 }
-//             }
-//         }
-
-//         $config->save();
-
-//     }
-
     public static function saveSysConfig(\PDO $dbh, array $post) {
 
         $mess = ['type'=>'', 'text'=>''];
