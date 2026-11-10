@@ -52,6 +52,7 @@ class ReportFilter {
     const int FISCAL_YEAR = 20;
     const int CAL_YEAR = 21;
     const int YEAR_2_DATE = 22;
+    const int FISCAL_MONTH = 23;
 
     /**
      * Summary of months
@@ -75,6 +76,11 @@ class ReportFilter {
     protected string $selectedEnd = '';
 
     protected int $fyDiffMonths = 0;
+
+    /**
+     * Day of the month each fiscal month starts on (1-28); 0 when the Fiscal Month option is off.
+     */
+    protected int $fiscalMonthStartDay = 0;
 
 
     protected array $hospitals = [];
@@ -133,9 +139,10 @@ class ReportFilter {
      * @param mixed $defaultCalendarOption
      * @param mixed $fiscalYearDiffMonths
      * @param mixed $omits
+     * @param int $fiscalMonthStartDay  1-28 adds the Fiscal Month option: the selected month(s) run from this day to the day before it in the following month
      * @return static
      */
-    public function createTimePeriod($defaultYear, $defaultCalendarOption, $fiscalYearDiffMonths = 0, $omits = array()): static {
+    public function createTimePeriod($defaultYear, $defaultCalendarOption, $fiscalYearDiffMonths = 0, $omits = array(), int $fiscalMonthStartDay = 0): static {
         $this->months = array(
             0 => array(1, 'January'), 1 => array(2, 'February'),
             2 => array(3, 'March'), 3 => array(4, 'April'), 4 => array(5, 'May'), 5 => array(6, 'June'),
@@ -145,6 +152,7 @@ class ReportFilter {
         $this->calendarOptions = array(
             self::DATES => array(self::DATES, 'Dates'),
             self::MONTHS => array(self::MONTHS, 'Month'),
+            self::FISCAL_MONTH => array(self::FISCAL_MONTH, 'Fiscal Month'),
             self::FISCAL_YEAR => array(self::FISCAL_YEAR, 'Fiscal Year'),
             self::CAL_YEAR => array(self::CAL_YEAR, 'Calendar Year'),
             self::YEAR_2_DATE => array(self::YEAR_2_DATE, 'Year to Date')
@@ -159,25 +167,32 @@ class ReportFilter {
             unset($this->calendarOptions[self::FISCAL_YEAR]);
         }
 
+        if ($fiscalMonthStartDay < 1 || $fiscalMonthStartDay > 28) {
+            $fiscalMonthStartDay = 0;
+            unset($this->calendarOptions[self::FISCAL_MONTH]);
+        }
+
         $this->selectedYear = intval($defaultYear);
         $this->selectedCalendar = intval($defaultCalendarOption);
         $this->selectedMonths = array(date('m'));
         $this->fyDiffMonths = intval($fiscalYearDiffMonths);
+        $this->fiscalMonthStartDay = $fiscalMonthStartDay;
         return $this;
     }
 
     /**
      * Summary of timePeriodMarkup
      * @param string $prefix
+     * @param string $idPrefix  prefixes the control ids (not names), for a second time period on the same page
      * @return HTMLTable
      */
-    public function timePeriodMarkup($prefix = ''): HTMLTable {
+    public function timePeriodMarkup($prefix = '', string $idPrefix = ''): HTMLTable {
 
         $uS = Session::getInstance();
 
-        $monthSelector = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($this->months, $this->selectedMonths, FALSE), array('name' => 'selIntMonth[]', 'size'=>'12', 'multiple'=>'multiple'));
-        $yearSelector = HTMLSelector::generateMarkup(static::getYearOptionsMarkup($this->selectedYear, ($uS->StartYear ? $uS->StartYear : "2013"), $this->fyDiffMonths, FALSE), array('name' => 'selIntYear', 'size'=>'12'));
-        $calSelector = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($this->calendarOptions, (string) $this->selectedCalendar, FALSE), array('name' => 'selCalendar', 'size'=>'5'));
+        $monthSelector = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($this->months, $this->selectedMonths, FALSE), array('name' => 'selIntMonth[]', 'id' => $idPrefix . 'selIntMonth', 'size'=>'12', 'multiple'=>'multiple'));
+        $yearSelector = HTMLSelector::generateMarkup(static::getYearOptionsMarkup($this->selectedYear, ($uS->StartYear ? $uS->StartYear : "2013"), $this->fyDiffMonths, FALSE), array('name' => 'selIntYear', 'id' => $idPrefix . 'selIntYear', 'size'=>'12'));
+        $calSelector = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($this->calendarOptions, (string) $this->selectedCalendar, FALSE), array('name' => 'selCalendar', 'id' => $idPrefix . 'selCalendar', 'size'=>(string) max(count($this->calendarOptions), 2)));
 
         $tbl = new HTMLTable();
 
@@ -197,9 +212,9 @@ class ReportFilter {
         if (isset($this->calendarOptions[self::DATES])) {
             $tbl->addBodyTr(HTMLTable::makeTd(
                 HTMLContainer::generateMarkup('span', 'Start:', array('class'=>'dates', 'style'=>'margin-right:.3em;display:none;'))
-                . HTMLInput::generateMarkup($this->reportStart, array('type'=>'date', 'name'=>"stDate", 'class'=>"ckdate dates", 'style'=>"margin-right:.3em;display:none;"))
+                . HTMLInput::generateMarkup($this->reportStart, array('type'=>'date', 'name'=>"stDate", 'id'=>$idPrefix . "stDate", 'class'=>"ckdate dates", 'style'=>"margin-right:.3em;display:none;"))
                 . HTMLContainer::generateMarkup('span', 'End:', array('class'=>'dates', 'style'=>'margin-right:.3em;display:none;'))
-                . HTMLInput::generateMarkup($this->reportEnd, array('type'=>'date', 'name'=>"enDate", 'class'=>"ckdate dates", 'style'=>"margin-right:.3em;display:none;"))
+                . HTMLInput::generateMarkup($this->reportEnd, array('type'=>'date', 'name'=>"enDate", 'id'=>$idPrefix . "enDate", 'class'=>"ckdate dates", 'style'=>"margin-right:.3em;display:none;"))
                 , array('colspan'=>'3')
                 ), array('class'=>'dates'));
         }
@@ -226,21 +241,23 @@ dateFormat: 'yy-mm-dd'
 });";
         }
 
-        return "$('#selCalendar').change(function () {
-    $('#selIntYear').show();
-    if ($(this).val() && $(this).val() != '19') {
-        $('#selIntMonth').hide();
+        // By name, within each time period table, so it covers every time period on the page.
+        return "$('select[name=selCalendar]').change(function () {
+    var tp = $(this).closest('table');
+    tp.find('select[name=selIntYear]').show();
+    if ($(this).val() && $(this).val() != '" . self::MONTHS . "' && $(this).val() != '" . self::FISCAL_MONTH . "') {
+        tp.find('select[name=\"selIntMonth[]\"]').hide();
     } else {
-        $('#selIntMonth').show();
+        tp.find('select[name=\"selIntMonth[]\"]').show();
     }
     if ($(this).val() && $(this).val() != '18') {
-        $('.dates').hide();
+        tp.find('.dates').hide();
     } else {
-        $('.dates').show();
-        $('#selIntYear').hide();
+        tp.find('.dates').show();
+        tp.find('select[name=selIntYear]').hide();
     }
 });
-$('#selCalendar').change();
+$('select[name=selCalendar]').change();
 $ckdate";
 
     }
@@ -253,7 +270,12 @@ $ckdate";
 
         // gather input
         if (filter_has_var(INPUT_POST, 'selCalendar')) {
-            $this->selectedCalendar = intval(filter_input(INPUT_POST, 'selCalendar', FILTER_SANITIZE_NUMBER_INT), 10);
+            $calendar = intval(filter_input(INPUT_POST, 'selCalendar', FILTER_SANITIZE_NUMBER_INT), 10);
+
+            // Ignore an option this filter doesn't offer, eg. from another report's form on the same page.
+            if (count($this->calendarOptions) == 0 || isset($this->calendarOptions[$calendar])) {
+                $this->selectedCalendar = $calendar;
+            }
         }
 
         if (filter_has_var(INPUT_POST, 'selIntMonth')) {
@@ -329,8 +351,8 @@ $ckdate";
             $this->selectedStart = $startDT->format("M d, Y");
             $this->selectedEnd = $endDT->format("M d, Y");
 
-        } else if ($this->selectedCalendar == self::MONTHS){
-            // Months
+        } else if ($this->selectedCalendar == self::MONTHS || $this->selectedCalendar == self::FISCAL_MONTH){
+            // Months; fiscal months start on the fiscal month start day.
             $interval = 'P' . count($this->selectedMonths) . 'M';
             $month = $this->selectedMonths[0];
 
@@ -346,6 +368,12 @@ $ckdate";
 
             $startDT = new \DateTimeImmutable($this->reportStart);
             $endDT = $startDT->add(new \DateInterval($interval));
+
+            if ($this->selectedCalendar == self::FISCAL_MONTH && $this->fiscalMonthStartDay > 1) {
+                $shift = new \DateInterval('P' . ($this->fiscalMonthStartDay - 1) . 'D');
+                $startDT = $startDT->add($shift);
+                $endDT = $endDT->add($shift);
+            }
 
             $this->reportStart = $startDT->format('Y-m-d');
             $this->queryEnd = $endDT->format('Y-m-d');
@@ -1166,6 +1194,14 @@ $ckdate";
      */
     public function getSelectedCalendar(): int {
         return $this->selectedCalendar;
+    }
+
+    /**
+     * Day of the month each fiscal month starts on; 0 when the Fiscal Month option is off.
+     * @return int
+     */
+    public function getFiscalMonthStartDay(): int {
+        return $this->fiscalMonthStartDay;
     }
 
     /**

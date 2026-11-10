@@ -239,7 +239,7 @@ if (isset($_POST['btnInv'])) {
 	$glStmt->mapRecords($dbh);
 
 	$tbl = new HTMLTable();
-	$tbl->addBodyTr(HTMLTable::makeTh('Gl Code') . HTMLTable::makeTh('Debit') . HTMLTable::makeTh('Credit') . HTMLTable::makeTh('Date') . HTMLTable::makeTh('Inv'));
+	$tbl->addBodyTr(HTMLTable::makeTh('GL Code') . HTMLTable::makeTh('Debit') . HTMLTable::makeTh('Credit') . HTMLTable::makeTh('Date') . HTMLTable::makeTh('Inv'));
 
 	$credits = 0;
 	$debits = 0;

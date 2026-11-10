@@ -1,13 +1,8 @@
 <?php
 use HHK\Exception\RuntimeException;
-use HHK\House\GLCodes\GLCodes;
-use HHK\House\GLCodes\GLParameters;
-use HHK\House\GLCodes\GLTemplateRecord;
+use HHK\House\Report\GLReport;
 use HHK\House\Report\InvoiceReport;
-use HHK\House\Report\ReportFilter;
 use HHK\HTMLControls\HTMLContainer;
-use HHK\HTMLControls\HTMLSelector;
-use HHK\HTMLControls\HTMLTable;
 use HHK\Payment\PaymentGateway\AbstractPaymentGateway;
 use HHK\Payment\PaymentGateway\Deluxe\DeluxeGateway;
 use HHK\Payment\PaymentSvcs;
@@ -54,7 +49,8 @@ $tabReturn = 0;
 
 $year = date('Y');
 
-$useGlReport = stristr(strtolower($uS->siteName), 'gorecki');
+//$useGlReport = stristr(strtolower($uS->siteName), 'gorecki');
+$useGlReport = $uS->useGLCodes;
 
 // Hosted payment return
 try {
@@ -105,196 +101,26 @@ if (isset($_POST['btnExcel-' . $report->getInputSetReportName()])) {
     $report->downloadExcel("InvoiceReport");
 }
 
-// Gl REport
-$glChooser = '';
-$glInvoices = '';
-$glMonthSelr = '';
-$glYearSelr = '';
-$glMonth = 0;
-$glyear = 0;
-$bytesWritten = '';
+// GL Report
+$glReport = NULL;
+$glMkup = '';
 
 if ($useGlReport) {
 
-	$glParm = new GLParameters($dbh, 'Gl_Code');
-	$glPrefix = 'gl_';
+	$glReport = new GLReport($dbh, $_REQUEST);
 
-	// Check for new parameters
-	if (isset($_POST['btnSaveGlParms'])) {
-		$glParm->saveParameters($dbh, $_POST, $glPrefix);
+	if (filter_has_var(INPUT_POST, 'btnGlcsv')) {
 		$tabReturn = 2;
-	}
+		$glMkup = $glReport->downloadGlFile();  // exits when there's a file to send
 
-	$glMonth = date('m');
-
-	// Output report
-	if (filter_has_var(INPUT_POST, 'btnGlGo') || filter_has_var(INPUT_POST, 'btnGlTx') || filter_has_var(INPUT_POST, 'btnGlcsv')) {
-
+	} else if (filter_has_var(INPUT_POST, 'btnGlTx')) {
 		$tabReturn = 2;
+		$glMkup = $glReport->transferGlFile();
 
-		if (isset($_POST['selGlMonth'])) {
-			$glMonth = filter_var($_POST['selGlMonth'], FILTER_SANITIZE_NUMBER_INT);
-		}
-
-		if (isset($_POST['selGlYear'])) {
-			$glyear = intval(filter_var($_POST['selGlYear'], FILTER_SANITIZE_NUMBER_INT), 10);
-		}
-
-		$glCodes = new GLCodes($dbh, $glMonth, $glyear, $glParm, new GLTemplateRecord());
-
-		if (isset($_POST['btnGlTx'])) {
-
-			$bytesWritten = $glCodes->mapRecords(FALSE)
-					->transferRecords();
-
-			$etbl = new HTMLTable();
-
-			foreach ($glCodes->getErrors() as $e) {
-				$etbl->addBodyTr(HTMLTable::makeTd($e));
-			}
-
-			if ($bytesWritten != '') {
-				$etbl->addBodyTr(HTMLTable::makeTd("Bytes Written: ".$bytesWritten));
-			}
-
-			$glInvoices = $etbl->generateMarkup() . $glInvoices;
-
-		} else if (isset($_POST['btnGlcsv'])) {
-            $glCodes->mapRecords()->downloadCSV();
-
-		} else {
-
-			$tbl = new HTMLTable();
-
-			$invHdr = '';
-			foreach ($glCodes->invoiceHeader() as $h) {
-				$invHdr .= "<td>" . ($h == '' ? ' ' : $h) . "</td>";
-			}
-			$tbl->addBodyTr($invHdr);
-
-			$pmtHdr = '';
-			foreach ($glCodes->paymentHeader() as $h) {
-				$pmtHdr .= "<td style='color:blue;'>" . ($h == '' ? ' ' : $h) . "</td>";
-			}
-			$tbl->addBodyTr($pmtHdr);
-
-			$lineHdr = '';
-			foreach ($glCodes->lineHeader() as $h) {
-				$lineHdr .= "<td style='color:green;'>" . ($h == '' ? ' ' : $h) . "</td>";
-			}
-			$tbl->addBodyTr($lineHdr);
-
-			// Get payment methods (types) labels.
-			$pmstmt = $dbh->prepare("SELECT `idPayment_method`, `Method_Name` FROM `payment_method`;");
-			$pmstmt->execute();
-			$pmRows = $pmstmt->fetchAll(\PDO::FETCH_NUM);
-			$pmtMethods = array();
-			foreach ($pmRows as $r) {
-				$pmtMethods[$r[0]] = $r[1];
-			}
-
-			$recordCtr = 0;
-
-			foreach ($glCodes->getInvoices() as $r) {
-
-				if ($recordCtr++ > 16) {
-					$tbl->addBodyTr($invHdr);
-					$tbl->addBodyTr($pmtHdr);
-					$tbl->addBodyTr($lineHdr);
-					$recordCtr = 0;
-				}
-
-				$mkupRow = '';
-
-				foreach ($r['i'] as $k=> $col) {
-
-					if ($k == 'iStatus' && $col == 'p') {
-						$col = 'paid';
-					}
-
-					$mkupRow .= "<td>" . ($col == '' ? ' ' : $col) . "</td>";
-				}
-				$tbl->addBodyTr($mkupRow);
-
-				if (isset($r['p'])) {
-
-					foreach ($r['p'] as $p) {
-						$mkupRow = '<td> </td>';
-						foreach ($p as $k => $col) {
-
-							if ($k == 'pTimestamp') {
-								$col = date('Y/m/d', strtotime($col));
-							} else if ($k == 'pMethod') {
-								$col = $pmtMethods[$col];
-							} else if ($k == 'pStatus' && $col == 's') {
-								$col = "sale";
-							} else if ($k == 'pStatus' && $col == 'r') {
-								$col = "return";
-							}
-
-							$mkupRow .= "<td style='color:blue;'>" . ($col == '' ? ' ' : $col) . "</td>";
-
-						}
-						$tbl->addBodyTr($mkupRow);
-
-					}
-				}
-
-				if (isset($r['l'])) {
-					foreach ($r['l'] as $h) {
-						$mkupRow = '<td> </td><td> </td>';
-						foreach ($h as $k => $col) {
-
-							if ($k == 'il_Amount') {
-								$col = number_format($col, 2);
-							}
-
-							$mkupRow .= "<td style='color:green;'>" . ($col == '' ? ' ' : $col) . "</td>";
-
-						}
-						$tbl->addBodyTr($mkupRow);
-
-					}
-				}
-			}
-
-			$glInvoices = $tbl->generateMarkup();
-
-			// Comma delemeted file.
-			$glCodes->mapRecords(TRUE);
-
-			$tbl = new HTMLTable();
-
-			foreach ($glCodes->getLines() as $l) {
-
-				$tbl->addBodyTr(HTMLTable::makeTd($l['in'], array('style' => 'font-size:0.8em')) . HTMLTable::makeTd(implode(',', $l['l']), array('style'=>'font-size:0.8em')));
-
-			}
-
-			if ($glCodes->getStopoAtInvoice() != '') {
-				$tbl->addBodyTr(HTMLTable::makeTd('Stop at Invoice number ' . $glCodes->getStopoAtInvoice(), array()));
-			}
-
-
-			$glInvoices .= "<p style='margin-top:20px;'>Total Credits = " . number_format($glCodes->getTotalCredit(), 2) . " Total Debits = " . number_format($glCodes->getTotalDebit(), 2) . "</p>" .$tbl->generateMarkup();
-
-			if (count($glCodes->getErrors()) > 0) {
-				$etbl = new HTMLTable();
-				foreach ($glCodes->getErrors() as $e) {
-					$etbl->addBodyTr(HTMLTable::makeTd($e));
-				}
-				$glInvoices = $etbl->generateMarkup() . $glInvoices;
-			}
-		}
+	} else if (isset($_POST['btnHere-' . $glReport->getInputSetReportName()])) {
+		$tabReturn = 2;
+		$glMkup = $glReport->generateMarkup();
 	}
-
-	// GL Parms chooser markup
-	$glChooser = $glParm->getChooserMarkup($dbh, $glPrefix);
-
-	//Month and Year chooser
-	$glMonthSelr = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($report->filter->getMonths(), $glMonth, FALSE), array('name' => 'selGlMonth', 'size'=>12));
-	$glYearSelr = HTMLSelector::generateMarkup(ReportFilter::getYearOptionsMarkup($year, ($uS->StartYear ? $uS->StartYear : "2013"), 0, FALSE), array('name' => 'selGlYear', 'size'=>'12'));
-
 }
 
 ?>
@@ -346,15 +172,10 @@ $(document).ready(function() {
     var receiptBilledToEmail = '<?php echo $receiptBilledToEmail; ?>';
     var tabReturn = '<?php echo $tabReturn; ?>';
 
-    $('#btnInvGo, #btnSaveGlParms, #btnGlGo, #btnGlTx, #btnGlcsv').button();
-
-    $( "form[name=glParmsForm] input[type=checkbox]" ).checkboxradio({
-      icon: true
-    });
-
-    $("form[name=glParmsForm] .ui-checkboxradio-icon").removeClass('ui-state-hover');
+    $('#btnInvGo').button();
 
     <?php echo $report->generateReportScript(); ?>
+    <?php if ($glReport) { echo $glReport->generateReportScript(); } ?>
 
     $("#setBillDate").dialog({
         autoOpen: false,
@@ -510,70 +331,51 @@ $(document).ready(function() {
     <body <?php if ($wInit->testVersion) echo "class='testbody'"; ?>>
         <?php echo $menuMarkup; ?>
         <div id="contentDiv">
-        <h2><?php echo $wInit->pageHeading; ?></h2>
-        <div id="paymentMessage" style="display:none;" class="ui-widget ui-widget-content ui-corner-all ui-state-highlight hhk-panel hhk-tdbox my-2"></div>
+            <h2><?php echo $wInit->pageHeading; ?></h2>
+            <div id="paymentMessage" style="display:none;" class="ui-widget ui-widget-content ui-corner-all ui-state-highlight hhk-panel hhk-tdbox my-2"></div>
 
-        <div id="mainTabs" style="font-size:.9em;" class="ui-widget ui-widget-content ui-corner-all hhk-tdbox hhk-visitdialog">
-            <ul>
-                <li><a href="#invr">All Invoices</a></li>
-                <li id="liInvoice"><a href="#vInv">Unpaid Invoices</a></li>
-                <?php if ($useGlReport) {?>
-                <li id="gl"><a href="#vGl">GL Report</a></li>
-                <?php }?>
-            </ul>
-            <div id="invr" >
-                <?php echo $report->generateFilterMarkup() . $dataTableWrapper; ?>
+            <div id="mainTabs" style="font-size:.9em;" class="ui-widget ui-widget-content ui-corner-all hhk-tdbox hhk-visitdialog">
+                <ul>
+                    <li><a href="#invr">All Invoices</a></li>
+                    <li id="liInvoice"><a href="#vInv">Unpaid Invoices</a></li>
+                    <?php if ($useGlReport) {?>
+                    <li id="gl"><a href="#vGl">GL Report</a></li>
+                    <?php }?>
+                </ul>
+                <div id="invr" >
+                    <?php echo $report->generateFilterMarkup() . $dataTableWrapper; ?>
+                </div>
+                <div id="vInv" style="display:none;">
+                    <input type="button" id="btnInvGo" value="Refresh"/>
+
+                    <div id="rptInvdiv" class="hhk-visitdialog"></div>
+
+                </div>
+                <div id="vGl" style="display:none;">
+                    <?php if ($glReport) { echo $glReport->generateFilterMarkup(false) . $glMkup; } ?>
+                </div>
             </div>
-            <div id="vInv" style="display:none;">
-                <input type="button" id="btnInvGo" value="Refresh"/>
+            <div id="pmtRcpt" style="font-size: .9em; display:none;"></div>
+            <form name="xform" id="xform" method="post"></form>
+            <div id="keysfees" style="font-size: .9em;"></div>
 
-                  <div id="rptInvdiv" class="hhk-visitdialog"></div>
-
-            </div>
-            <div id="vGl" class="hhk-tdbox hhk-visitdialog" style="display:none; font-size:0.8em;">
-                <form name="glParmsForm" method="post" action="InvoiceReport.php">
-                	<?php echo $glChooser;?>
-                </form>
-                <form name="glReportForm" method="post" action="InvoiceReport.php">
-                	<table style="float:left;">
-                	<tr><th>Month</th><th>Year</th>
-                	<tr>
-                	<td><?php echo $glMonthSelr; ?></td>
-                    <td style="vertical-align: top;"><?php echo $glYearSelr; ?></td>
-                	</tr><tr>
-                    <td colspan=2>
-                    <input type="submit" id="btnGlcsv" name="btnGlcsv" value="csv" style="margin-right:.5em;"/>
-                    <input type="submit" id="btnGlGo" name="btnGlGo" value="Show" style="margin-right:.5em;"/>
-                    <input type="submit" id="btnGlTx" name="btnGlTx" value="Transfer to CentraCare"/></td>
+            <div id="cardonfile" style="font-size: .9em; display:none;"></div>
+            <div id="setBillDate" class="hhk-tdbox hhk-visitdialog" style="font-size: .9em; display:none;">
+                <span class="ui-helper-hidden-accessible"><input type="text"/></span>
+                <table style="width: 100%"><tr>
+                        <td class="tdlabel">Invoice Number:</td>
+                        <td><span id="spnInvNumber"></span></td>
+                    </tr><tr>
+                        <td class="tdlabel">Payor:</td>
+                        <td><span id="spnBillPayor"></span></td>
+                    </tr><tr>
+                        <td class="tdlabel">Bill Date:</td>
+                        <td><input id="txtBillDate" readonly="readonly" class="ckdate" /></td>
+                    </tr><tr>
+                        <td colspan="2"><textarea rows="2" id="taBillNotes" style="width: 100%"></textarea></td>
                     </tr>
-                    </table>
-                </form>
-                 <div id="rptGl" class="hhk-visitdialog" style="font-size:0.9em; clear:both;">
-                     <?php echo $glInvoices; ?>
-                 </div>
+                </table>
             </div>
-        </div>
-        <div id="pmtRcpt" style="font-size: .9em; display:none;"></div>
-        <form name="xform" id="xform" method="post"></form>
-        <div id="keysfees" style="font-size: .9em;"></div>
-
-        <div id="cardonfile" style="font-size: .9em; display:none;"></div>
-        <div id="setBillDate" class="hhk-tdbox hhk-visitdialog" style="font-size: .9em; display:none;">
-            <span class="ui-helper-hidden-accessible"><input type="text"/></span>
-            <table style="width: 100%"><tr>
-                    <td class="tdlabel">Invoice Number:</td>
-                    <td><span id="spnInvNumber"></span></td>
-                </tr><tr>
-                    <td class="tdlabel">Payor:</td>
-                    <td><span id="spnBillPayor"></span></td>
-                </tr><tr>
-                    <td class="tdlabel">Bill Date:</td>
-                    <td><input id="txtBillDate" readonly="readonly" class="ckdate" /></td>
-                </tr><tr>
-                    <td colspan="2"><textarea rows="2" id="taBillNotes" style="width: 100%"></textarea></td>
-                </tr>
-            </table>
-        </div>
         </div>
         <?php if ($uS->PaymentGateway == AbstractPaymentGateway::DELUXE) { echo DeluxeGateway::getIframeMkup(); } ?>
     </body>

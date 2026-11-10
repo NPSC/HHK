@@ -149,7 +149,7 @@ class GlStmt {
 
 
 		if ($this->glLineMapper->getTotalCredit() != $this->glLineMapper->getTotalDebit()) {
-			$this->recordError('Credits not equal debits: ' .$this->glLineMapper->getTotalCredit() .'  '.$this->glLineMapper->getTotalDebit());
+			$this->recordError('Credits do not equal debits: ' .$this->glLineMapper->getTotalCredit() .'  '.$this->glLineMapper->getTotalDebit());
 		}
 
 		return $this;
@@ -688,7 +688,7 @@ order by r.idResource;";
 	}
 	public static function lineHeader() {
 
-		return array(' ', ' ', 'id', 'Amt', 'Item', 'Type', 'Gl Code');
+		return array(' ', ' ', 'id', 'Amt', 'Item', 'Type', 'GL Code');
 	}
 	public static function paymentHeader() {
 

@@ -13,7 +13,7 @@ use HHK\Tables\EditRS;
 use HHK\Tables\GenLookupsRS;
 use HHK\Tables\Name\NameDemogRS;
 use HHK\sec\Session;
-use HHK\SysConst\ItemId;
+use HHK\sec\SysConfig;
 
 class GLParameters {
 
@@ -24,25 +24,39 @@ class GLParameters {
     protected $Port;
     protected $startDay;
     protected $journalCat;
+    protected $ledgerName;
     protected $countyPayment;
     protected $countyLiability;
     protected $foundation;
+    protected $grossSales;
 
+    protected string $sftpTitle = '';
     protected $glParms;
     protected $tableName;
 
-    /*  Add this to gen_lookups:
-     INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`) VALUES ('Gl_Code', 'Host', '');
-     INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`) VALUES ('Gl_Code', 'Username', '');
-     INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`) VALUES ('Gl_Code', 'Password', '');
-     INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`) VALUES ('Gl_Code', 'Port', '22');
-     INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`) VALUES ('Gl_Code', 'JournalCategory', '');
-     INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`) VALUES ('Gl_Code', 'RemoteFilePath', '');
-     INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`) VALUES ('Gl_Code', 'StartDay', '01');
-     INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`) VALUES ('Gl_Code', 'CountyPayment', '50');
-     INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`) VALUES ('Gl_Code', 'CountyLiability', '');
-     INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`) VALUES ('Gl_Code', 'Foundation', '');
+    /**
+     * The parameters kept in gen_lookups (Table_Name = $tableName), in display order.
+     * Code => [Label, Default]
      */
+    const PARAMETERS = [
+        'JournalCategory' => ['Journal Category', ''],
+        'LedgerName' => ['Ledger Name', ''],
+        'Foundation' => ['Foundation (Waive) GL Code', ''],
+        'GrossSales' => ['Gross Sales GL Code', ''],
+        'CountyLiability' => ['County Liability GL Code', ''],
+        'CountyPayment' => ['County Payment', '50'],
+        'SftpTitle' => ['SFTP Connection Title', ''],
+        'Host' => ['SFTP Host', ''],
+        'Port' => ['SFTP Port', '22'],
+        'Username' => ['SFTP Username', ''],
+        'Password' => ['SFTP Password', ''],
+        'RemoteFilePath' => ['SFTP Remote File Path', ''],
+    ];
+
+    /**
+     * Parameters shown in the SFTP settings dialog.
+     */
+    const SFTP_PARAMETERS = ['SftpTitle', 'Host','Port', 'Username', 'Password', 'RemoteFilePath'];
 
     public function __construct(\PDO $dbh, $tableName = 'Gl_Code') {
 
@@ -55,104 +69,177 @@ class GLParameters {
 
         $this->glParms = Common::readGenLookupsPDO($dbh, $this->tableName, 'Order');
 
-        if (count($this->glParms) > 0) {
-            $this->setHost($this->glParms['Host'][1]);
-            $this->setJournalCat($this->glParms['JournalCategory'][1]);
-            $this->setStartDay($this->glParms['StartDay'][1]);
-            $this->setRemoteFilePath($this->glParms['RemoteFilePath'][1]);
-            $this->setPort($this->glParms['Port'][1]);
-            $this->setUsername($this->glParms['Username'][1]);
-            $this->setPassword($this->glParms['Password'][1]);
-            $this->setCountyPayment($this->glParms['CountyPayment'][1]);
-            $this->setCountyLiability($this->glParms['CountyLiability'][1]);
-            $this->setFoundation($this->glParms['Foundation'][1]);
+        $this->sftpTitle = $this->getParm('SftpTitle');
+        $this->setHost($this->getParm('Host'));
+        $this->setJournalCat($this->getParm('JournalCategory'));
+        $this->setLedgerName($this->getParm('LedgerName'));
+        // Fiscal month start day is a site setting (sys_config fm_Start_Day), like the fiscal year (fy_diff_Months).
+        $this->setStartDay(SysConfig::getKeyValue($dbh, 'sys_config', 'fm_Start_Day', 1));
+        $this->setRemoteFilePath($this->getParm('RemoteFilePath'));
+        $this->setPort($this->getParm('Port'));
+        $this->setUsername($this->getParm('Username'));
+        $this->setPassword($this->getParm('Password'));
+        $this->setCountyPayment($this->getParm('CountyPayment'));
+        $this->setCountyLiability($this->getParm('CountyLiability'));
+        $this->setFoundation($this->getParm('Foundation'));
+        $this->setGrossSales($this->getParm('GrossSales'));
+    }
+
+    /**
+     * Stored value of a parameter, or its default when the gen_lookups row is missing.
+     */
+    protected function getParm(string $code): string {
+
+        if (isset($this->glParms[$code])) {
+            return (string)$this->glParms[$code][1];
         }
 
+        return self::PARAMETERS[$code][1] ?? '';
     }
 
     public function saveParameters(\PDO $dbh, $post, $prefix = 'gl_') {
 
         $uS = Session::getInstance();
+        $order = 0;
 
-        foreach ($this->glParms as $g) {
+        foreach (self::PARAMETERS as $code => $p) {
 
-            if (isset($post[$prefix . $g[0]])) {
+            $order++;
 
-                $desc = filter_var($post[$prefix . $g[0]], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+            if (isset($post[$prefix . $code]) === FALSE) {
+                continue;
+            }
 
-                if (strtolower($g[0]) == 'password') {
-                    // Process password
-                    if ($desc != '' && $desc != $g[1] && $desc != '********') {
-                        $desc = Crypto::encryptMessage($desc);
+            $keys = ['Table_Name' => $this->tableName, 'Code' => $code];
 
-                        // keep the (encrypted) password out of the activity log - just note that it changed
-                        $auditWas = EditRS::$auditEnabled;
-                        EditRS::$auditEnabled = false;
-                        EditRS::updateFields($dbh, new GenLookupsRS(), ['Table_Name' => $this->tableName, 'Code' => $g[0]], ['Description' => $desc]);
-                        EditRS::$auditEnabled = $auditWas;
+            if ($code == 'Password') {
+                // Process password: blank keeps the saved one. Not sanitized - it's encrypted, never displayed, and
+                // has to reach the SFTP server exactly as typed.
+                $password = (is_string($post[$prefix . $code]) ? $post[$prefix . $code] : '');
 
-                        EditRS::logActivity($dbh, $this->tableName . ' password changed', [], 'default', 'gen_lookups');
-                    }
+                if ($password != '') {
+                    $desc = Crypto::encryptMessage($password);
 
-                } else {
-                    EditRS::updateFields($dbh, new GenLookupsRS(), ['Table_Name' => $this->tableName, 'Code' => $g[0]], ['Description' => $desc]);
+                    // keep the (encrypted) password out of the activity log - just note that it changed
+                    $auditWas = EditRS::$auditEnabled;
+                    EditRS::$auditEnabled = false;
+                    EditRS::upsert($dbh, new GenLookupsRS(), $keys, ['Description' => $desc, 'Order' => $order]);
+                    EditRS::$auditEnabled = $auditWas;
+
+                    EditRS::logActivity($dbh, $this->tableName . ' password changed', [], 'default', 'gen_lookups');
                 }
+
+            } else {
+                $desc = filter_var($post[$prefix . $code], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+
+                if ($code == 'RemoteFilePath') {
+                    $desc = self::withTrailingSlash((string)$desc);
+                }
+
+                EditRS::upsert($dbh, new GenLookupsRS(), $keys, ['Description' => $desc, 'Order' => $order]);
             }
         }
 
-        foreach ($post['bagl'] as $idName => $baAr) {
+        if (isset($post['bagl']) && is_array($post['bagl'])) {
 
-            $idName = intval($idName);
+            foreach ($post['bagl'] as $idName => $baAr) {
 
-            $nameDemogRS = new NameDemogRS();
-            $nameDemogRS->idName->setStoredVal($idName);
-            $rows = EditRS::select($dbh, $nameDemogRS, array($nameDemogRS->idName));
+                $idName = intval($idName);
 
-            if(count($rows) == 1){
-                EditRS::loadRow($rows[0], $nameDemogRS);
+                $nameDemogRS = new NameDemogRS();
+                $nameDemogRS->idName->setStoredVal($idName);
+                $rows = EditRS::select($dbh, $nameDemogRS, array($nameDemogRS->idName));
 
-                if (isset($baAr['debit'])) {
-                    $gl = filter_var($baAr['debit'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+                if(count($rows) == 1){
+                    EditRS::loadRow($rows[0], $nameDemogRS);
 
-                    $nameDemogRS->Gl_Code_Debit->setNewVal($gl);
+                    if (isset($baAr['debit'])) {
+                        $gl = filter_var($baAr['debit'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+
+                        $nameDemogRS->Gl_Code_Debit->setNewVal($gl);
+                    }
+
+                    if (isset($baAr['credit'])) {
+                        $gl = filter_var($baAr['credit'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+
+                        $nameDemogRS->Gl_Code_Credit->setNewVal($gl);
+                    }
+
+                    if (isset($baAr['taxExempt'])) {
+                        $nameDemogRS->Tax_Exempt->setNewVal(1);
+                    }else{
+                        $nameDemogRS->Tax_Exempt->setNewVal(0);
+                    }
+
+                    $affectedRows = EditRS::update($dbh, $nameDemogRS, [$nameDemogRS->idName]);
+
+                    if ($affectedRows > 0) {
+                        NameLog::writeUpdate($dbh, $nameDemogRS, $nameDemogRS->idName->getStoredVal(), $uS->username);
+                    }
                 }
 
-                if (isset($baAr['credit'])) {
-                    $gl = filter_var($baAr['credit'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
-
-                    $nameDemogRS->Gl_Code_Credit->setNewVal($gl);
-                }
-
-                if (isset($baAr['taxExempt'])) {
-                    $nameDemogRS->Tax_Exempt->setNewVal(1);
-                }else{
-                    $nameDemogRS->Tax_Exempt->setNewVal(0);
-                }
-
-                $affectedRows = EditRS::update($dbh, $nameDemogRS, [$nameDemogRS->idName]);
-
-                if ($affectedRows > 0) {
-                    NameLog::writeUpdate($dbh, $nameDemogRS, $nameDemogRS->idName->getStoredVal(), $uS->username);
-                }
             }
-
         }
 
         $this->loadParameters($dbh);
     }
 
-    public function getChooserMarkup(\PDO $dbh, $prefix) {
+    /**
+     * Parameter, item, pay type and billing agent GL code tables.
+     *
+     * @param \PDO $dbh
+     * @param string $prefix  parameter input name prefix
+     * @param bool $saveButton  include a 'btnSaveGlParms' submit button
+     * @param string $sftpDialogForm  when set, the SFTP parameters go in a hidden #glSftpDialog div, opened by #btnGlSftp, for the page
+     *  to make a dialog. Its inputs belong to this form id, so the dialog can live outside the form (eg. appended to body).
+     * @return string
+     */
+    public function getChooserMarkup(\PDO $dbh, $prefix, bool $saveButton = TRUE, string $sftpDialogForm = '') {
+
+        $sftpDialog = ($sftpDialogForm != '');
 
         // GL Parms chooser markup
         $glTbl = new HTMLTable();
-        $glTbl->addBodyTr(HTMLTable::makeTh('Parameter') . HTMLTable::makeTh('Gl Code'));
+        $glTbl->addHeaderTr(HTMLTable::makeTh('Parameter') . HTMLTable::makeTh('Value'));
+        $sftpTbl = new HTMLTable();
 
-        foreach ($this->getParmsArray() as $g) {
+        foreach (self::PARAMETERS as $code => $p) {
 
-            $glTbl->addBodyTr(
-                HTMLTable::makeTh($g[0], array('class'=>'tdlabel'))
-                . HTMLTable::makeTd(HTMLInput::generateMarkup((strtolower($g[0]) == 'password' ? '********' : $g[1]), array('name'=>$prefix.$g[0], 'size'=>'23')))
-                );
+            $attrs = array('name'=>$prefix.$code, 'size'=>'23');
+
+            if ($sftpDialog && in_array($code, self::SFTP_PARAMETERS)) {
+                $attrs['form'] = $sftpDialogForm;
+            }
+
+            if ($code == 'Password') {
+                // Never sent back to the browser; blank on save keeps the saved password.
+                $attrs['type'] = 'password';
+                $attrs['autocomplete'] = 'new-password';
+                $attrs['placeholder'] = ($this->getParm($code) == '' ? '' : 'Saved - leave blank to keep');
+                $input = HTMLInput::generateMarkup('', $attrs);
+            } else {
+                $input = HTMLInput::generateMarkup($this->getParm($code), $attrs);
+            }
+
+            $tr = HTMLTable::makeTh($p[0], array('class'=>'tdlabel')) . HTMLTable::makeTd($input);
+
+            if ($sftpDialog && in_array($code, self::SFTP_PARAMETERS)) {
+                $sftpTbl->addBodyTr($tr);
+            } else {
+                $glTbl->addBodyTr($tr);
+            }
+        }
+
+        $sftpMkup = '';
+        $sftpBtnMkup = '';
+
+        if ($sftpDialog) {
+            $sftpBtnMkup = HTMLContainer::generateMarkup('div',
+                HTMLInput::generateMarkup('SFTP Settings', array('type'=>'button', 'id'=>'btnGlSftp', 'class'=>'ui-button ui-corner-all ui-widget'))
+                . HTMLContainer::generateMarkup('span', ($this->isSftpConfigured() ? ($this->sftpTitle != '' ? $this->sftpTitle . ' (' . $this->getHost() . ')' : $this->getHost()) : 'Not set up'), array('class'=>'ml-2'))
+                , array('class'=>'mt-2'));
+
+            $sftpMkup = HTMLContainer::generateMarkup('div', $sftpTbl->generateMarkup(), array('id'=>'glSftpDialog', 'class'=>'hhk-tdbox', 'style'=>'display:none;'));
         }
 
         // Items
@@ -161,14 +248,14 @@ class GLParameters {
         $sitems->execute();
         $items = $sitems->fetchAll(\PDO::FETCH_ASSOC);
 
-        $glTbl->addBodyTr(HTMLTable::makeTd('', array('colspan'=>'2')));
-        $glTbl->addBodyTr(HTMLTable::makeTh('Item') . HTMLTable::makeTh('Gl Code'));
+        $itemTbl = new HTMLTable();
+        $itemTbl->addHeaderTr(HTMLTable::makeTh('Item') . HTMLTable::makeTh('GL Code'));
 
         foreach ($items as $d) {
 
             $des = $d['Description'];
 
-            $glTbl->addBodyTr(
+            $itemTbl->addBodyTr(
                 HTMLTable::makeTh($des, array('class'=>'tdlabel'))
                 . HTMLTable::makeTd($d['Gl_Code'])
                 );
@@ -185,31 +272,41 @@ class GLParameters {
 
 
         $payTypes = Common::readGenLookupsPDO($dbh, 'Pay_Type');
-        $glTbl->addBodyTr(HTMLTable::makeTd('', array('colspan'=>'2')));
-        $glTbl->addBodyTr(HTMLTable::makeTh('Pay Type') . HTMLTable::makeTh('Gl Code'));
+        $payTbl = new HTMLTable();
+        $payTbl->addHeaderTr(HTMLTable::makeTh('Pay Type') . HTMLTable::makeTh('GL Code'));
 
         foreach ($payTypes as $r) {
 
-
-            $glTbl->addBodyTr(
-                HTMLTable::makeTh($r[1])
-                . HTMLTable::makeTd($payMethods[$r[2]])
+            $payTbl->addBodyTr(
+                HTMLTable::makeTh($r[1], array('class'=>'tdlabel'))
+                . HTMLTable::makeTd($payMethods[$r[2]] ?? '')
                 );
         }
 
-
-        // The rest
-        $tbl = new HTMLTable();
-        $tbl->addBodyTr(
-            HTMLTable::makeTd($glTbl->generateMarkup(), array('style'=>'vertical-align:top;'))
-            .HTMLTable::makeTd($this->getBaMarkup($dbh), array('style'=>'vertical-align:top;'))
-            );
+        // One titled box per section, like the Cloudbeds import tables.
+        $mkup = HTMLContainer::generateMarkup('div',
+                $this->makeSection('GL Parameters', 'Journal settings used when building the GL file.',$glTbl->generateMarkup() . $sftpBtnMkup)
+                . $this->makeSection('Item GL Codes', 'Set in Resource Builder.', $itemTbl->generateMarkup())
+                . $this->makeSection('Pay Type GL Codes', 'Set in Resource Builder.', $payTbl->generateMarkup())
+                . $this->makeSection('Billing Agent GL Codes', 'Third-party payors: the GL debit replaces the pay type GL code on their payments.', $this->getBaMarkup($dbh))
+                , array('class'=>'hhk-flex hhk-flex-wrap', 'style'=>'align-items:flex-start;'));
 
         // Add save button
-        $tbl->addBodyTr(HTMLTable::makeTd(HTMLInput::generateMarkup('Save', array('name'=>'btnSaveGlParms', 'type'=>'submit')), array('colspan'=>'2', 'style'=>'text-align:right;')));
+        if ($saveButton) {
+            $mkup .= HTMLContainer::generateMarkup('div', HTMLInput::generateMarkup('Save', array('name'=>'btnSaveGlParms', 'type'=>'submit')), array('style'=>'text-align:right;'));
+        }
 
-        return $tbl->generateMarkup(array('style'=>'float:left;margin-right:1.5em;'));
+        return $mkup . $sftpMkup;
 
+    }
+
+    protected function makeSection(string $title, string $help, string $body): string {
+
+        return HTMLContainer::generateMarkup('div',
+            HTMLContainer::generateMarkup('h4', $title)
+            . HTMLContainer::generateMarkup('p', $help, array('class'=>'mb-1'))
+            . $body,
+            array('class'=>'ui-widget ui-widget-content ui-corner-all p-2 mb-3 mr-2'));
     }
 
     protected function getBaMarkup(\PDO $dbh, $prefix = 'bagl') {
@@ -259,6 +356,27 @@ class GLParameters {
 
     public function getParmsArray() {
         return $this->glParms;
+    }
+
+    /**
+     * SFTP transfer needs at least a host and username.
+     */
+    /**
+     * Name for the SFTP connection, eg. the accounting system it delivers to. Stored HTML-escaped.
+     */
+    public function getSftpTitle(): string {
+        return $this->sftpTitle;
+    }
+
+    public function isSftpConfigured(): bool {
+        return trim((string)$this->host) != '' && trim((string)$this->username) != '';
+    }
+
+    /**
+     * County payment splitting only runs when a county liability GL code is set.
+     */
+    public function isCountyEnabled(): bool {
+        return trim((string)$this->countyLiability) != '';
     }
 
     /**
@@ -327,6 +445,14 @@ class GLParameters {
         return $this->journalCat;
     }
 
+    public function getLedgerName() {
+        return $this->ledgerName;
+    }
+
+    public function setLedgerName($v) {
+        $this->ledgerName = $v;
+    }
+
     public function getCountyPayment() {
         return $this->countyPayment;
     }
@@ -349,6 +475,14 @@ class GLParameters {
 
     public function setFoundation($v) {
     	$this->foundation = $v;
+    }
+
+    public function getGrossSales() {
+        return $this->grossSales;
+    }
+
+    public function setGrossSales($v) {
+        $this->grossSales = $v;
     }
 
     /**
@@ -376,7 +510,21 @@ class GLParameters {
      * @param mixed $remoteFilePath
      */
     public function setRemoteFilePath($remoteFilePath) {
-        $this->remoteFilePath = $remoteFilePath;
+        $this->remoteFilePath = self::withTrailingSlash((string)$remoteFilePath);
+    }
+
+    /**
+     * The file name is appended to the remote path, so a non-empty path must end with '/'.
+     */
+    public static function withTrailingSlash(string $path): string {
+
+        $path = trim($path);
+
+        if ($path != '' && !str_ends_with($path, '/')) {
+            $path .= '/';
+        }
+
+        return $path;
     }
 
     /**
