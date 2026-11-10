@@ -2572,7 +2572,7 @@ Thank you
 		'Pay_Gateway_Name',
 		0
 	),
-	('useGLCodes', 'false', 'b', 'f', '', '', '', '0'),
+	('useGLCodes', 'false', 'b', 'f', '', 'Use General Ledger codes and enable the GL report', '', '1'),
 	(
 		'PayVFeeFirst',
 		'true',

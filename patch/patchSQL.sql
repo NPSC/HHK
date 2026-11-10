@@ -308,3 +308,6 @@ INSERT IGNORE INTO `sys_config`(`Key`,`Value`,`Type`,`Category`,`Description`,`S
 	SELECT 'fm_Start_Day', IFNULL((SELECT CAST(`Description` AS UNSIGNED) FROM `gen_lookups` WHERE `Table_Name` = 'Gl_Code' AND `Code` = 'StartDay' AND `Description` <> '' LIMIT 1), 1),
 		'i', 'f', 'Fiscal month start day (1-28), used by the GL report', 1;
 DELETE FROM `gen_lookups` WHERE `Table_Name` = 'Gl_Code' AND `Code` = 'StartDay';
+
+-- Make the useGLCodes toggle visible to all sites; leave each site's current value alone.
+UPDATE `sys_config` SET `Show` = '1', `Description` = 'Use General Ledger codes and enable the GL report' WHERE `Key` = 'useGLCodes';
