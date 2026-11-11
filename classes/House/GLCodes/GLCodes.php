@@ -241,6 +241,9 @@ class GLCodes {
 			}
 		}
 
+		// A partial payment only covers its share of each invoice line.
+		$invLines = $this->prorateLines($invLines, (float)$p['pAmount']);
+
 		// Special handling for waived payments.
 		if ($hasWaive) {
 			$invLines = $this->mapWaivePayments($invLines, $invNumber);
@@ -367,6 +370,57 @@ class GLCodes {
 		} else {
 			$this->recordError("Unanticipated Payment Status: ". $p['pStatus'] . '  Payment Id = '.$p['idPayment']);
 		}
+	}
+
+	/**
+	 * Scale the invoice lines to the payment's share of the invoice (pro rata), so an invoice paid by
+	 * several payments credits each line once in total instead of once per payment.
+	 *
+	 * Lines are left alone when the payment covers the whole invoice, so single-payment invoices map as before.
+	 * Each scaled line is rounded to cents and the rounding remainder goes on the largest line, so the lines
+	 * add up to exactly the payment amount.
+	 *
+	 * @param array $invLines the invoice's lines
+	 * @param float $payAmount the payment amount (sign is ignored)
+	 * @return array the lines with il_Amount scaled
+	 */
+	protected function prorateLines(array $invLines, float $payAmount): array {
+
+		$invTotal = 0.0;
+		foreach ($invLines as $l) {
+			$invTotal += $l['il_Amount'];
+		}
+
+		$invTotal = round($invTotal, 2);
+		$payAmount = round(abs($payAmount), 2);
+
+		// Nothing to share, or the payment covers the whole invoice.
+		if ($invTotal == 0 || $payAmount == 0 || $payAmount >= abs($invTotal)) {
+			return $invLines;
+		}
+
+		$share = $payAmount / abs($invTotal);
+		$target = ($invTotal < 0 ? -$payAmount : $payAmount);
+		$scaledTotal = 0.0;
+		$largest = null;
+
+		foreach ($invLines as $k => $l) {
+
+			$invLines[$k]['il_Amount'] = round($l['il_Amount'] * $share, 2);
+			$scaledTotal += $invLines[$k]['il_Amount'];
+
+			if (is_null($largest) || abs($invLines[$k]['il_Amount']) > abs($invLines[$largest]['il_Amount'])) {
+				$largest = $k;
+			}
+		}
+
+		// Put any rounding remainder on the largest line.
+		$remainder = round($target - $scaledTotal, 2);
+		if ($remainder != 0 && !is_null($largest)) {
+			$invLines[$largest]['il_Amount'] = round($invLines[$largest]['il_Amount'] + $remainder, 2);
+		}
+
+		return $invLines;
 	}
 
 	protected function mapCountyPayments(string $glCode, bool $isReturn, array $invLines, array &$p, ?float $rate, \DateTimeInterface $pDate, string|int $invNumber) {
