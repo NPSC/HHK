@@ -143,7 +143,7 @@ if (filter_has_var(INPUT_POST, "btnExcel") || filter_has_var(INPUT_POST, "btnHer
     <body <?php if ($testVersion) echo "class='testbody'"; ?>>
             <?php echo $menuMarkup; ?>
         <div id="contentDiv">
-            <h2><?php echo $wInit->pageHeading; ?> - Excludes Guests and Patients.</h2>
+            <h1><?php echo $wInit->pageHeading; ?> - Excludes Guests and Patients.</h1>
             <div id="vdirectory"  class="ui-widget ui-widget-content ui-corner-all hhk-widget-content mb-3">
                 <form id="fDirectory" action="directory.php" method="post">
                     <table>

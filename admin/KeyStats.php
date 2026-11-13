@@ -308,17 +308,9 @@ function getPieChartMarkup($title, $chartId, $width = "335", $height = "120") {
         <script type="text/javascript">
             // Init j-query.
             $(document).ready(function() {
-//                var gdData = [$.gchart.series([<?php echo $guestDonors; ?>, <?php echo($guest); ?>])];
-//                var vdData = [$.gchart.series([<?php echo $DonorVolunteers; ?>, <?php echo($volunteer); ?>])];
-//                var notVolData = [$.gchart.series([<?php echo $notVolunteers; ?>, <?php echo($totalMembers); ?>])];
-//
-//                gdData[0].color = ['327E04'];
-//                notVolData[0].color = ['002EE6'];
 
                 $( "#tabs" ).tabs();
-//                $("#gdChart").gchart({series: gdData, backgroundColor: 'f5f3e5', dataLabels: ['Guest Donors', 'Guests']});
-//                $("#vdChart").gchart({series: vdData, backgroundColor: 'f5f3e5', dataLabels: ['Vol. Donors', 'Volunteers']});
-//                $("#nvChart").gchart({series: notVolData, backgroundColor: 'f5f3e5', dataLabels: ['Unregistered', 'Registered']});
+
                 detailsDT = $('#dataTbl').dataTable({
                     "aoColumnDefs": [{
                             "sType": 'numeric',
@@ -334,7 +326,8 @@ function getPieChartMarkup($title, $chartId, $width = "335", $height = "120") {
     <body <?php if ($testVersion) echo "class='testbody'"; ?>>
             <?php echo $menuMarkup; ?>
         <div id="contentDiv">
-            <div id="tabs">
+            <h1><?php echo $wInit->pageHeading; ?></h1>
+            <div id="tabs" style="font-size:.9em;">
                 <ul>
                     <li><a href="#tabs-1">Member Statistics</a></li>
                     <li><a href="#tabs-2">Detailed Spreadsheet</a></li>

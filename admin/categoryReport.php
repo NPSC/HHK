@@ -178,7 +178,7 @@ foreach ($catSelCtrls as $sel) {
     <body <?php if ($testVersion){ echo "class='testbody'";} ?> >
             <?php echo $menuMarkup; ?>
         <div id="contentDiv">
-        	<h2><?php echo $wInit->pageHeading; ?></h2>
+        	<h1><?php echo $wInit->pageHeading; ?></h1>
             <div id="vcategory" class="ui-widget ui-widget-content ui-corner-all hhk-widget-content mb-3">
                 <form id="fcat" action="categoryReport.php" method="post">
                     <table>

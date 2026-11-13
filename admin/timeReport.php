@@ -165,7 +165,7 @@ $reportTypeSelMarkup = $typeCtrl->createMarkup(3);
     <body <?php if ($testVersion){ echo "class='testbody'";} ?> >
 <?php echo $menuMarkup; ?>
         <div id="contentDiv">
-        	<h2>Time Reports</h2>
+        	<h1>Time Reports</h1>
             <div id="vcategory" class="ui-widget ui-widget-content ui-corner-all hhk-widget-content mb-3">
                 <form id="fcat" action="timeReport.php" method="post">
                     <table>

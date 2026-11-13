@@ -207,7 +207,7 @@ $CampOpt = Campaign::CampaignSelOptionMarkup($dbh, '', FALSE);
     <body <?php if ($testVersion) echo "class='testbody'"; ?> >
             <?php echo $menuMarkup; ?>
         <div id="contentDiv">
-        	<h2><?php echo $wInit->pageHeading; ?> With Amounts</h2>
+        	<h1><?php echo $wInit->pageHeading; ?> With Amounts</h1>
             <div id="vdonor" class="ui-widget ui-widget-content ui-corner-all hhk-widget-content mb-3">
                 <form id="fDonor" action="donationReport.php" method="post">
                     <table>

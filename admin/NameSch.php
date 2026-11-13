@@ -149,7 +149,7 @@ try {
     <body <?php if ($testVersion) echo "class='testbody'"; ?> >
 <?php echo $menuMarkup; ?>
         <div id="contentDiv">
-            <h2><?php echo $wInit->pageHeading; ?></h2>
+            <h1><?php echo $wInit->pageHeading; ?></h1>
             <div class="ui-widget ui-widget-content ui-corner-all hhk-widget-content mb-3"  style="background:#EFDBC2;">
                 <div style="border-width: 1px; border-color: gray; border-style: ridge; padding: 2px;">
                     <form autocomplete="off">
