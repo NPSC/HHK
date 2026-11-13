@@ -185,7 +185,7 @@ function recordDonation(PDO $dbh, $maxDonationAmt, $id, $parms)
     }
     $addr = AddressPurpose::Home;
     if (isset($data["dselAddress"])) {
-        $addr = intval(filter_var($data["dselAddress"]), FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+        $addr = filter_var($data["dselAddress"], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
     }
     $includedId = 0;
     if (isset($data["selAssoc"])) {
@@ -318,7 +318,7 @@ function recordDonation(PDO $dbh, $maxDonationAmt, $id, $parms)
 
         $emailRS = new NameEmailRS();
         $emailRS->idName->setStoredVal($id);
-        $emailRS->Purpose->setStoredVal($addr);
+        $emailRS->Purpose->setStoredVal($name->get_preferredEmail());
         $rows = EditRS::select($dbh, $emailRS, array(
             $emailRS->idName,
             $emailRS->Purpose
