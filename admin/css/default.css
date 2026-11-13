@@ -260,6 +260,40 @@ outline: none;
 	margin-bottom: 0.5em;
 }
 
+/* NameEdit "Record Donation" dialog form */
+table.hhk-donate-form {
+	width: 100%;
+	border-collapse: separate;
+	border-spacing: 0 4px;
+}
+table.hhk-donate-form td {
+	border: none;
+	padding: 2px 4px;
+	vertical-align: middle;
+}
+table.hhk-donate-form td.tdlabel {
+	width: 1%;
+	white-space: nowrap;
+	padding-right: 10px;
+}
+table.hhk-donate-form td.tdlabel label {
+	font-weight: bold;
+}
+table.hhk-donate-form select,
+table.hhk-donate-form input,
+table.hhk-donate-form textarea {
+	width: 100%;
+	box-sizing: border-box;
+}
+table.hhk-donate-form textarea {
+	resize: vertical;
+}
+.hhk-donate-hint {
+	font-size: 0.85em;
+	opacity: 0.8;
+	margin-top: 2px;
+}
+
 /* Datatables fixes */
 
 div.dt-container .dt-length select,

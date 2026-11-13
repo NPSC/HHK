@@ -163,11 +163,19 @@ $(document).ready(function () {
     $("#vdon").dialog({
         autoOpen: false,
         height: 'auto',
-        width: 900,
+        width: 460,
         resizable: true,
         modal: true,
-        buttons: {
-            "Record": function () {
+        create: function () {
+            // jQuery UI's button icon option only takes ui-icon sprites, so add the bootstrap icons here.
+            var $pane = $(this).closest('.ui-dialog').find('.ui-dialog-buttonpane');
+            $pane.find('.hhk-don-save').prepend('<i class="bi bi-check-lg mr-1"></i>');
+            $pane.find('.hhk-don-cancel').prepend('<i class="bi bi-x-lg mr-1"></i>');
+        },
+        buttons: [{
+            text: "Save",
+            "class": "hhk-don-save",
+            click: function () {
                 var amt = parseFloat($('#damount').val());
                 if (isNaN(amt) || amt <= 0) {
                     return;
@@ -188,11 +196,14 @@ $(document).ready(function () {
                     function (data) {
                         donateResponse(data, memData.id);
                     });
-            },
-            "Cancel": function () {
+            }
+        }, {
+            text: "Cancel",
+            "class": "hhk-don-cancel",
+            click: function () {
                 $(this).dialog("close");
             }
-        },
+        }],
         close: function () {
             $('#damount').val('');
             $('#donateResponseContainer').attr("style", "display:none;");

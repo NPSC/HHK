@@ -403,8 +403,8 @@ function listDonations(PDO $dbh, $id)
         if ($r["Donor_Id"] == $id) {
             // This member is the donor
             if ($r["Assoc_Id"] != 0 && $isIndividual) {
-                $src = "jt";
-                $srcTitle = "Joint with my partner/spouse";
+                $src = "Joint";
+                $srcTitle = "Joint gift with this member's spouse/partner";
             } else if ($r["Care_Of_Id"] != 0 && ! $isIndividual) {
                 // Organization with a sponsor employee
                 $careOfId = intval($r["Care_Of_Id"]);
@@ -412,16 +412,16 @@ function listDonations(PDO $dbh, $id)
                 $src = $careOfName;
                 $srcTitle = "Sponsor employee";
             } else if (! $isIndividual) {
-                $src = "org";
-                $srcTitle = "Organization without a sponsor assigned";
+                $src = "Organization";
+                $srcTitle = "Organization gift with no sponsor employee assigned";
             } else {
-                $src = "ind";
-                $srcTitle = "Individual Donation";
+                $src = "Individual";
+                $srcTitle = "Individual donation";
             }
         } else {
             // This member is the associate (partner/spouse of the donor)
-            $src = "jt";
-            $srcTitle = "Partner/spouse of the donor";
+            $src = "Joint (spouse gave)";
+            $srcTitle = "Joint gift made by this member's spouse/partner";
         }
 
         $inKind = ($r['Campaign_Type'] == CampaignType::InKind);

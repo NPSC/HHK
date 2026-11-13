@@ -124,8 +124,8 @@ function getDonationMarkup(id, onNewDonation) {
                 if (type !== 'display') {
                     return '';
                 }
-                return '<button type="button" class="ui-button ui-corner-all ui-widget ui-button-icon-only hhk-undonate" data-did="' + parseInt(data, 10) + '" title="Delete Donation" style="padding:0;width:1.5em;">'
-                    + '<span class="ui-button-icon ui-icon ui-icon-trash"></span>Delete</button>';
+                return '<button type="button" class="ui-button ui-corner-all ui-widget hhk-undonate" data-did="' + parseInt(data, 10) + '" title="Delete Donation" aria-label="Delete Donation" style="padding:0.1em 0.4em;">'
+                    + '<i class="bi bi-trash3"></i></button>';
             }}
         ],
         order: [[3, 'desc']],
@@ -137,7 +137,7 @@ function getDonationMarkup(id, onNewDonation) {
             top2Start: 'buttons'
         },
         buttons: [{
-            text: 'New Donation',
+            text: '<i class="bi bi-plus-lg mr-1"></i>New Donation',
             action: function () {
                 if (typeof onNewDonation === 'function') {
                     onNewDonation();
@@ -145,7 +145,7 @@ function getDonationMarkup(id, onNewDonation) {
             }
         }, {
             extend: 'print',
-            text: 'Print',
+            text: '<i class="bi bi-printer mr-1"></i>Print',
             title: function () {
                 return 'Donations for ' + donationDonorName;
             },
