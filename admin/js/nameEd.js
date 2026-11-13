@@ -46,21 +46,6 @@ $(document).ready(function () {
                     }
                     });
                 }
-                // Donation dialog setup
-                if (ui.newTab.prop('id') === 'donblank' && userData.donFlag) {
-                    donName = memData.memName;
-                    if (memData.memDesig == 'i' && memData.coId > 0) {
-                        donName = donName + '  (' + memData.coName + ')';
-                    }
-                    // create the markup for the new donations list.
-                    getDonationMarkup(memData.id);
-                    // Write the selected campaign amount range info into the donor tab.
-                    $('#dselCamp').change();
-                    $('#vdon').dialog("option", "title", 'Record Donations for ' + donName);
-                    $('#vdon').dialog('open');
-                    event.preventDefault();
-                }
-
                 if (ui.newTab.prop('id') === 'wbuser') {
                     $('#vwebUser').dialog("option", "title", 'Web Access Info for ' + memData.memName);
                     $('#vwebUser').dialog('open');
@@ -78,6 +63,12 @@ $(document).ready(function () {
                         }
                     });
                 }
+            }
+        },
+        activate: function (event, ui) {
+            // Load the donations table once its panel is visible, so DataTables sizes it correctly.
+            if (ui.newTab.prop('id') === 'donations' && userData.donFlag && memData.id > 0) {
+                getDonationMarkup(memData.id, openNewDonationDialog);
             }
         }
     });
@@ -134,26 +125,19 @@ $(document).ready(function () {
             }
         });
     });
-    $('#divListDonation').on('click', 'input.hhk-undonate', function () {
-        var parts = $(this).attr('id').split('_');
-        if (parts.length > 1) {
-            var did = parseInt(parts[1]);
-            if (!isNaN(did)) {
-                if (confirm('Delete this Donation?')) {
-                    $.post("donate.php",
-                        {
-                            did: did,
-                            sq: $("#squirm").val(),
-                            cmd: 'delete'
-                        },
-                        function (data) {
-                            donateDeleteMarkup(data, memData.id);
-                        }
-                    );
-                } else {
-                    $(this).prop('checked', false);
+    $('#divListDonation').on('click', 'button.hhk-undonate', function () {
+        var did = parseInt($(this).data('did'), 10);
+        if (!isNaN(did) && confirm('Delete this Donation?')) {
+            $.post("donate.php",
+                {
+                    did: did,
+                    sq: $("#squirm").val(),
+                    cmd: 'delete'
+                },
+                function (data) {
+                    donateDeleteMarkup(data, memData.id);
                 }
-            }
+            );
         }
     });
     $('#btnSubmit, #btnReset, #btnCopy').button();
@@ -163,11 +147,23 @@ $(document).ready(function () {
     $('#dselCamp').change(function () {
         getCampaign($(this).val());
     });
-    
-    // Donation panel dialog box.
+
+    // Donations tab buttons
+    function openNewDonationDialog() {
+        donName = memData.memName;
+        if (memData.memDesig == 'i' && memData.coId > 0) {
+            donName = donName + '  (' + memData.coName + ')';
+        }
+        // Write the selected campaign amount range info into the dialog.
+        $('#dselCamp').change();
+        $('#vdon').dialog("option", "title", 'Record Donation for ' + donName);
+        $('#vdon').dialog('open');
+    }
+
+    // New donation dialog box.
     $("#vdon").dialog({
         autoOpen: false,
-        height: 480,
+        height: 'auto',
         width: 900,
         resizable: true,
         modal: true,
@@ -194,10 +190,7 @@ $(document).ready(function () {
                         donateResponse(data, memData.id);
                     });
             },
-            "Print": function () {
-                $("#divListDonation").printArea();
-            },
-            "Exit": function () {
+            "Cancel": function () {
                 $(this).dialog("close");
             }
         },

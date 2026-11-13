@@ -7,7 +7,6 @@ use HHK\Tables\ActivityRS;
 use HHK\Tables\Donate\DonationsRS;
 use HHK\Tables\Name\{NameAddressRS,NamePhoneRS,NameEmailRS};
 use HHK\Exception\RuntimeException;
-use HHK\HTMLControls\{HTMLContainer, HTMLInput, HTMLTable};
 use HHK\Member\AbstractMember;
 use HHK\Donation\Campaign;
 use HHK\Donation\Donation;
@@ -80,14 +79,14 @@ try {
 
             break;
 
-        case "markup":
+        case "list":
 
             $id = 0;
             if (filter_has_var(INPUT_POST, "id")) {
                 $id = intval(filter_input(INPUT_POST, "id", FILTER_SANITIZE_NUMBER_INT), 10);
             }
 
-            $resp = genDonationMarkup($dbh, $id);
+            $resp = listDonations($dbh, $id);
 
             break;
 
@@ -369,149 +368,92 @@ function deleteDonation(PDO $dbh, $donId, $uname)
     return $reply;
 }
 
-function genDonationMarkup(PDO $dbh, $id)
+/**
+ * Donation list for the NameEdit donations DataTable.  Includes donations where the member
+ * is the donor or the associate (joint gifts show on both partners).
+ *
+ * @param PDO $dbh
+ * @param int $id
+ * @return array{data?: array, donorName?: string, total?: string, error?: string}
+ */
+function listDonations(PDO $dbh, $id)
 {
     if ($id == 0) {
         return array(
-            'error' => "<p>Bad Member Id</p>"
+            'error' => "Bad Member Id"
         );
     }
 
-    $tbl = new HTMLTable();
-    // Table header row
-    $tbl->addHeaderTr(HTMLTable::makeTh('Source', array(
-        'style' => 'width:70px;'
-    )) . HTMLTable::makeTh('Campaign') . HTMLTable::makeTh('Amount') . HTMLTable::makeTh('Date') . HTMLTable::makeTh('X'));
-
-    $query = "SELECT iddonations, Donor_Id, Amount, Campaign_Code, Date_Entered, Record_Member, Care_Of_Id, Assoc_Id, Name_Last, Name_First, Donor_Name, Campaign_Type, Fund_Code, Note
-        FROM vdonation_view   WHERE Donor_Id = :id or Assoc_id = :id2 order by Date_Entered desc;";
-    $stmt = $dbh->prepare($query, array(
-        PDO::ATTR_CURSOR => PDO::CURSOR_FWDONLY
-    ));
+    $stmt = $dbh->prepare("SELECT iddonations, Donor_Id, Amount, Campaign_Code, Date_Entered, Record_Member, Care_Of_Id, Assoc_Id, Name_Last, Name_First, Campaign_Type, Note
+        FROM vdonation_view WHERE Donor_Id = :id or Assoc_Id = :id2 order by Date_Entered desc;");
     $stmt->execute(array(
         ":id" => $id,
         ":id2" => $id
     ));
 
-    $totInd = 0;
-    $donorName = "";
+    $rows = array();
+    $total = 0;
 
-    foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $row2) {
+    foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $r) {
 
-        $donId = $row2["Donor_Id"];
-        $assocId = $row2["Assoc_Id"];
-        $careId = $row2["Care_Of_Id"];
-        $recordMember = $row2["Record_Member"];
-        $donationsId = $row2['iddonations'];
+        $isIndividual = ($r["Record_Member"] != 0);
+        $careOfId = 0;
+        $careOfName = '';
 
-        if ($recordMember == 0) {
-            $isIndividual = FALSE;
-        } else {
-            $isIndividual = TRUE;
-        }
-
-        // What if this is the donor
-        if ($donId == $id) {
-            if ($assocId != 0 && $isIndividual === TRUE) {
+        if ($r["Donor_Id"] == $id) {
+            // This member is the donor
+            if ($r["Assoc_Id"] != 0 && $isIndividual) {
                 $src = "jt";
                 $srcTitle = "Joint with my partner/spouse";
-            } else if ($careId != 0 && $isIndividual === FALSE) {
-                $src = "<a href='NameEdit.php?id=" . $row2["Care_Of_Id"] . "' title='Sponser Employee'>" . $row2["Name_Last"] . ", " . $row2["Name_First"] . "</a>"; // I'm a company (or individual) with an employee ID listed in the donation
-                $srcTitle = "Sponser employee";
-            } else if ($isIndividual === FALSE) {
+            } else if ($r["Care_Of_Id"] != 0 && ! $isIndividual) {
+                // Organization with a sponsor employee
+                $careOfId = intval($r["Care_Of_Id"]);
+                $careOfName = $r["Name_Last"] . ", " . $r["Name_First"];
+                $src = $careOfName;
+                $srcTitle = "Sponsor employee";
+            } else if (! $isIndividual) {
                 $src = "org";
-                $srcTitle = "Organization without a sponser assigned";
+                $srcTitle = "Organization without a sponsor assigned";
             } else {
-                $src = "ind"; // I'm an individual donor
+                $src = "ind";
                 $srcTitle = "Individual Donation";
             }
-
-            $donorName = $row2["Donor_Name"];
-            if ($row2['Campaign_Type'] != CampaignType::InKind) {
-                $totInd = $totInd + $row2['Amount'];
-            }
-        } else if ($assocId == $id) {
-            // what if this is the associate?
-            if ($row2['Campaign_Type'] != CampaignType::InKind) {
-                $totInd = $totInd + $row2['Amount'];
-            }
-
-            // if ($donId == $partnerId) { // If i am the assoc_ID and the donor is my spouse
+        } else {
+            // This member is the associate (partner/spouse of the donor)
             $src = "jt";
             $srcTitle = "Partner/spouse of the donor";
-            // } else { // Here we can check other relatives as we define them
-            // $src = "asoc"; // I'm an associate.
-            // $srcTitle = "Associated with the donor";
-            // }
-        } else {
-            // Dont know what this is.
-            $src = "?";
-            $srcTitle = "Unknown";
         }
 
-        $styl = '';
-        if ($row2['Campaign_Type'] == CampaignType::InKind) {
-            $styl = 'font-style: italic;';
+        $inKind = ($r['Campaign_Type'] == CampaignType::InKind);
+        if (! $inKind) {
+            $total += $r['Amount'];
         }
 
-        // Did we catch the donor's name?
-        if ($donorName == "") {
-            $query = "select case when Record_Member = 1 then concat( Name_First, ' ', Name_Last) else Company end as `name` from name where idName = :id;";
-            $stmt = $dbh->prepare($query);
-            $stmt->execute(array(
-                ":id" => $id
-            ));
-            $r = $stmt->fetchall();
-            $donorName = $r[0][0];
-        }
-
-        $editIcon = HTMLContainer::generateMarkup('button', HTMLContainer::generateMarkup('span', '', array(
-            'class' => 'ui-button-icon ui-icon ui-icon-pencil'
-        )) . 'Close', array(
-            'type' => 'button',
-            'title' => 'Edit Donation',
-            'data-idDonation' => $donationsId,
-            'style' => 'padding: 0 0;width: 1.5em;',
-            'class' => 'ui-button ui-corner-all ui-widget ui-button-icon-only hhk-edit-donation'
-        ));
-
-        $tbl->addBodyTr(HTMLTable::makeTd(HTMLContainer::generateMarkup('span', $src, array(
-            'class' => 'donlisting',
-            'title' => $srcTitle
-        ))) . HTMLTable::makeTd(HTMLContainer::generateMarkup('span', $row2['Campaign_Code'], array(
-            'class' => 'donlisting'
-        ))) . HTMLTable::makeTd(HTMLContainer::generateMarkup('span', $row2['Amount'], array(
-            'class' => 'donlisting',
-            'style' => $styl
-        ))) . HTMLTable::makeTd(HTMLContainer::generateMarkup('span', date("M j, Y", strtotime($row2["Date_Entered"])), array(
-            'class' => 'donlisting'
-        ))) . HTMLTable::makeTd(HTMLInput::generateMarkup('', array(
-            'type' => 'checkbox',
-            'id' => 'undonate_' . $row2["iddonations"],
-            'class' => 'donlisting hhk-undonate'
-        ))));
-
-        if ($row2['Note'] != '') {
-            $tbl->addBodyTr(HTMLTable::makeTd('Note:', array(
-                'class' => 'tdlabel',
-                'colspan' => '1',
-                'style' => 'font-size:small;'
-            )) . HTMLTable::makeTd($row2['Note'], array(
-                'colspan' => '4',
-                'style' => 'font-size:small;'
-            )));
-        }
+        $rows[] = array(
+            'id' => intval($r['iddonations']),
+            'src' => $src,
+            'srcTitle' => $srcTitle,
+            'careOfId' => $careOfId,
+            'careOfName' => $careOfName,
+            'campaign' => $r['Campaign_Code'],
+            'amount' => floatval($r['Amount']),
+            'inKind' => $inKind,
+            'date' => $r['Date_Entered'],
+            'dateDisplay' => date("M j, Y", strtotime($r["Date_Entered"])),
+            // Notes are stored HTML-encoded; the client escapes on display.
+            'note' => html_entity_decode($r['Note'] ?? '', ENT_QUOTES | ENT_HTML5),
+        );
     }
 
-    $totalMarkup = number_format($totInd, 2, '.', ',');
-    $tbl->prependBodyTr(HTMLTable::makeTd('Donor: ' . $donorName . ";  Total: $" . $totalMarkup, array(
-        'colspan' => '6',
-        'style' => 'font-size:smaller;'
-    )));
+    $nStmt = $dbh->prepare("select case when Record_Member = 1 then Name_Full else Company end from name where idName = :id;");
+    $nStmt->execute(array(
+        ":id" => $id
+    ));
+    $donorName = $nStmt->fetchColumn();
 
     return array(
-        'success' => $tbl->generateMarkup(array(
-            'style' => 'width:100%'
-        ))
+        'data' => $rows,
+        'donorName' => ($donorName === false ? '' : $donorName),
+        'total' => number_format($total, 2, '.', ',')
     );
 }

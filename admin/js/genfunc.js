@@ -59,106 +59,147 @@ function changeMemberStatus(sc, memData, savePressed) {
     }
 
 }
-function getDonationMarkup(id) {
-    "use strict";
-    $.post(
-        "donate.php",
-        {
-            id: id,
-            sq: $("#squirm").val(),
-            cmd: 'markup'
-        },
-        function (data) {
-            var msg;
-            data = $.parseJSON(data);
+var donationTable = null;
 
-	        if (data.error) {
-	            if (data.gotopage) {
-	                window.open(data.gotopage, '_self');
-	            }
-	            msg = data.error;
-	
-	        } else {
-	            msg = data.success;
-	        }
-	        
-	        $('#divListDonation').children().remove();
-	        $("#divListDonation").append($(msg));
-	        
-	        $('.hhk-edit-donation').on('click', function () {
-	        	var idDonation = $(this).data('idDonation');
-	        	alert('Not implemented yet.');
-	        });
-
-        });
+function donEscape(s) {
+    return $('<div/>').text(s == null ? '' : String(s)).html();
 }
+
+/**
+ * Load (first call) or reload the donations DataTable on the NameEdit Donations tab.
+ *
+ * @param {number} id member id
+ * @param {function} onNewDonation opens the record-donation dialog (used on first call only)
+ */
+function getDonationMarkup(id, onNewDonation) {
+    "use strict";
+
+    if (donationTable) {
+        donationTable.ajax.reload();
+        return;
+    }
+
+    donationTable = $('#tblDonations').DataTable({
+        ajax: {
+            url: 'donate.php',
+            type: 'POST',
+            data: function () {
+                return {cmd: 'list', id: id, sq: $('#squirm').val()};
+            },
+            dataSrc: function (json) {
+                if (json.error) {
+                    if (json.gotopage) {
+                        window.open(json.gotopage, '_self');
+                    }
+                    $('#donSummary').text('Error: ' + json.error);
+                    return [];
+                }
+                $('#donSummary').text('Donor: ' + json.donorName + ';  Total: $' + json.total);
+                return json.data;
+            }
+        },
+        columns: [
+            {title: 'Source', data: 'src', width: '120px', render: function (data, type, row) {
+                if (type !== 'display') {
+                    return data;
+                }
+                if (row.careOfId > 0) {
+                    return '<a href="NameEdit.php?id=' + row.careOfId + '" title="' + donEscape(row.srcTitle) + '">' + donEscape(row.careOfName) + '</a>';
+                }
+                return '<span title="' + donEscape(row.srcTitle) + '">' + donEscape(data) + '</span>';
+            }},
+            {title: 'Campaign', data: 'campaign', render: $.fn.dataTable.render.text()},
+            {title: 'Amount', data: 'amount', className: 'dt-right', render: function (data, type, row) {
+                if (type !== 'display') {
+                    return data;
+                }
+                var amt = '$' + Number(data).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+                return row.inKind ? '<span style="font-style:italic;" title="In-kind; not included in the total">' + amt + '</span>' : amt;
+            }},
+            {title: 'Date', data: {_: 'dateDisplay', sort: 'date'}},
+            {title: 'Note', data: 'note', render: $.fn.dataTable.render.text()},
+            {title: '', data: 'id', orderable: false, searchable: false, width: '30px', className: 'dt-center', render: function (data, type) {
+                if (type !== 'display') {
+                    return '';
+                }
+                return '<button type="button" class="ui-button ui-corner-all ui-widget ui-button-icon-only hhk-undonate" data-did="' + parseInt(data, 10) + '" title="Delete Donation" style="padding:0;width:1.5em;">'
+                    + '<span class="ui-button-icon ui-icon ui-icon-trash"></span>Delete</button>';
+            }}
+        ],
+        order: [[3, 'desc']],
+        autoWidth: false,
+        pageLength: 10,
+        lengthMenu: [[10, 25, 50, -1], [10, 25, 50, "All"]],
+        language: {emptyTable: 'No donations recorded.'},
+        dom: '<"mb-2"B><"top"lf><"hhk-overflow-x"rt><"bottom"ip>',
+        buttons: [{
+            text: 'New Donation',
+            action: function () {
+                if (typeof onNewDonation === 'function') {
+                    onNewDonation();
+                }
+            }
+        }, {
+            extend: 'print',
+            text: 'Print',
+            title: function () {
+                return $('#vdon').dialog('option', 'title');
+            },
+            messageTop: function () {
+                return $('#donSummary').text();
+            },
+            exportOptions: {columns: [0, 1, 2, 3, 4]}
+        }]
+    });
+}
+
 function donateDeleteMarkup(dataTxt, id) {
     "use strict";
-    var spn, data;
+    var data = $.parseJSON(dataTxt);
 
-    data = $.parseJSON(dataTxt);
     if (data.gotopage) {
         window.open(data.gotopage, '_self');
     }
 
-    spn = document.getElementById('donResultMessage');
-    document.getElementById('damount').value = "";
-
     if (data.error) {
-        // define the error message markup
-        $('#donateResponse').removeClass("ui-state-highlight").addClass("ui-state-error");
-        $('#donateResponseContainer').attr("style", "display:block;");
-        $('#donateResponseIcon').removeClass("ui-icon-info").addClass("ui-icon-alert");
-        spn.innerHTML = "<strong>Error: </strong>" + data.error;
-
+        flagAlertMessage(data.error, true);
     } else {
-        // define the success message markup
-        $('#donateResponse').removeClass("ui-state-error").addClass("ui-state-highlight");
-        $('#donateResponseContainer').attr("style", "display:block;");
-        $('#donateResponseIcon').removeClass("ui-icon-alert").addClass("ui-icon-info");
-        spn.innerHTML = "Donation Deleted";
-
-        // create the markup for the new donations list.
+        flagAlertMessage("Donation Deleted", false);
         getDonationMarkup(id);
     }
 }
 
 function donateResponse(dataTxt, id) {
     "use strict";
-    var spn, cbox, data;
+    var cbox, data;
 
-        data = $.parseJSON(dataTxt);
-        if (data.gotopage) {
-            window.open(data.gotopage, '_self');
-        }
+    data = $.parseJSON(dataTxt);
+    if (data.gotopage) {
+        window.open(data.gotopage, '_self');
+    }
 
-        spn = document.getElementById('donResultMessage');
+    if (data.error) {
+        // Keep the dialog open so the user can correct the entry.
+        $('#donateResponse').removeClass("ui-state-highlight").addClass("ui-state-error");
+        $('#donateResponseContainer').attr("style", "display:block;");
+        $('#donateResponseIcon').removeClass("ui-icon-info").addClass("ui-icon-alert");
+        $('#donResultMessage').html("<strong>Error: </strong>").append(document.createTextNode(data.error));
+
+    } else {
         $('#damount').val('');
         $('#dnote').val('');
+        $('#vdon').dialog('close');
+        flagAlertMessage("Donation recorded", false);
 
-        if (data.error) {
-            // define the error message markup
-            $('#donateResponse').removeClass("ui-state-highlight").addClass("ui-state-error");
-            $('#donateResponseContainer').attr("style", "display:block;");
-            $('#donateResponseIcon').removeClass("ui-icon-info").addClass("ui-icon-alert");
-            spn.innerHTML = "<strong>Error: </strong>" + data.error;
+        // refresh the donations list.
+        getDonationMarkup(id);
 
-        } else {
-            // define the success message markup
-            $('#donateResponse').removeClass("ui-state-error").addClass("ui-state-highlight");
-            $('#donateResponseContainer').attr("style", "display:block;");
-            $('#donateResponseIcon').removeClass("ui-icon-alert").addClass("ui-icon-info");
-            spn.innerHTML = "Okay";
-
-            // create the markup for the new donations list.
-            getDonationMarkup(id);
-
-            // update the Member_Type.Donor record on the page if needed
-            cbox = document.getElementById("Vol_Type_cb_d");
-            if (cbox && !cbox.checked) {
-                cbox.checked = 'checked';
-            }
+        // update the Member_Type.Donor record on the page if needed
+        cbox = document.getElementById("Vol_Type_cb_d");
+        if (cbox && !cbox.checked) {
+            cbox.checked = 'checked';
         }
+    }
 }
 
 function getCampaign(code) {

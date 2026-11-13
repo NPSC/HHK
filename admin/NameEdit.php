@@ -506,7 +506,7 @@ $alertMessage = $alertMsg->createMarkup();
                     <ul>
                         <li><a href="#vhistory">History</a></li>
                         <?php echo $volTabNames; ?>
-                        <?php if ($donationsFlag) { echo "<li id='donblank'><a href='#vdonblank'>Donations...</a></li>\n"; } ?>
+                        <?php if ($donationsFlag) { echo "<li id='donations'><a href='#vdonations'>Donations</a></li>\n"; } ?>
                         <li id="notes"><a href="#vnotes">Notes</a></li>
                         <?php echo ($name->getMemberDesignation() == MemDesignation::Individual ? "<li id='wbuser'><a href='#vwuser'>Web Account...</a></li>": ''); ?>
                         <li id="changelog"><a href="#vchangelog">Change Log</a></li>
@@ -524,7 +524,16 @@ $alertMessage = $alertMsg->createMarkup();
                     <div id="vchangelog" class="ignrSave">
                       <table style="width:100%;" class="display ignrSave" id="dataTbl"></table>
                     </div>
-                    <div id="vdonblank"> </div>
+                    <?php if ($donationsFlag) { ?>
+                    <div id="vdonations" class="ignrSave">
+                        <?php if ($id != 0) { ?>
+                        <div id="divListDonation">
+                            <div id="donSummary" style="font-size:smaller; margin:0.5em 0;"></div>
+                            <table id="tblDonations" class="display" style="width:100%;"></table>
+                        </div>
+                        <?php } ?>
+                    </div>
+                    <?php } ?>
                     <div id="vwuser"> </div>
                </div>
                 <!-- End of Tabs Control -->
@@ -542,9 +551,6 @@ $alertMessage = $alertMsg->createMarkup();
             </div>
             <div id="vdon" style="display:none;font-size:0.9em;">
                 <?php echo $donateMkup; ?>
-                <div id="divListDonation">
-                    <input type="checkbox" class="hhk-undonate" />
-                </div>
             </div>
             <?php if (\HHK\sec\ReauthGuard::isAuthorizedFor($dbh, \HHK\sec\ReauthGuard::PURPOSE_WEB_USER)) { ?>
             <div id="webUserGuard" style="display:none;" data-purpose="<?php echo \HHK\sec\ReauthGuard::PURPOSE_WEB_USER; ?>" data-id="<?php echo intval($id); ?>" data-name="<?php echo htmlspecialchars($memberData['memName']); ?>" data-min-length="<?php echo max(8, intval($uS->minPassLength)); ?>"></div>
