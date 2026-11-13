@@ -28,7 +28,7 @@
                     "targets": [0],
                     title: "Actions",
                     data: "Action",
-                    sortable: false,
+                    orderable: false,
                     searchable: false,
                     width: "50px",
                     render: function (data, type, row) {
@@ -48,7 +48,7 @@
                     "targets": [2],
                     title: settings.visitorLabel,
                     searchable: true,
-                    sortable: true,
+                    orderable: true,
                     className: 'docGuest',
                     data: "Guest",
                     width: "150px"
@@ -57,14 +57,14 @@
                     "targets": [3],
                     title: "Title",
                     searchable: true,
-                    sortable: false,
+                    orderable: false,
                     className: 'docTitle',
                     data: "Title",
                 },
                 {
                     "targets": [4],
                     title: "User",
-                    sortable: false,
+                    orderable: false,
                     searchable: false,
                     visible: true,
                     data: "User",
@@ -74,7 +74,7 @@
                     "targets": [5],
                     title: "View Doc",
                     data: "View Doc",
-                    sortable: false,
+                    orderable: false,
                     searchable: false,
                     width: "50px",
                     render: function (data, type, row) {
@@ -308,11 +308,10 @@
                         "serverSide": true,
                         "processing": true,
                         "deferRender": true,
-                        "language": {"sSearch": "Search Docs:"},
-                        "sorting": [[1, 'desc']],
+                        "language": {"search": "Search Docs:"},
+                        "order": [[1, 'desc']],
                         "paging": false,
                         "lengthMenu": [[5, 10, 25, -1], [5, 10, 25, "All"]],
-                        "dom": '<"dtTop"if>rt<"dtBottom"lp><"clear">',
                         ajax: {
                             url: settings.serviceURL,
                             data: {
@@ -328,8 +327,7 @@
             actions($wrapper, settings, dtTable);
 
             //add ignrSave class to Dt controls
-            $(".dataTables_filter").addClass('ignrSave');
-            $(".dtBottom").addClass('ignrSave');
+            $(".dt-search, .dt-length").addClass('ignrSave');
 
             var filename = '';
             var docTitle = '';

@@ -48,7 +48,7 @@ $(document).ready(function () {
             'data': 'Status',
             'title': 'Status',
             'searchable': false,
-            'sortable': true,
+            'orderable': true,
             'createdCell': function(td, cellData, rowData, col){
                 if(rowData.StatusColor){
                     $(td).css("background-color", rowData.StatusColor);
@@ -60,20 +60,20 @@ $(document).ready(function () {
             'data': 'Action',
             'title': 'Action',
             'searchable': false,
-            'sortable': false,
+            'orderable': false,
             className: "noPrint"
         },
         {
             'data': 'Occupant',
             'title': 'Occupant',
             'searchable': true,
-            'sortable': true
+            'orderable': true
         },
         {
             'data': 'numGuests',
             'title': 'Guests',
             'searchable': false,
-            'sortable': true
+            'orderable': true
         },
         {
             'data': 'Checked_In',
@@ -83,7 +83,7 @@ $(document).ready(function () {
                 return dateRender(data, type, dateFormat);
             },
             'searchable': true,
-            'sortable': true
+            'orderable': true
         },
         {
             'data': 'Expected_Checkout',
@@ -93,7 +93,7 @@ $(document).ready(function () {
                 return dateRender(data, type, dateFormat);
             },
             'searchable': true,
-            'sortable': true
+            'orderable': true
         },
         {
             'data': 'Next_Expected_Arrival',
@@ -103,7 +103,7 @@ $(document).ready(function () {
                 return dateRender(data, type, dateFormat);
             },
             'searchable': true,
-            'sortable': true
+            'orderable': true
         },
         {
             'data': 'Last_Cleaned',
@@ -113,7 +113,7 @@ $(document).ready(function () {
                 return dateRender(data, type, dateFormat);
             },
             'searchable': true,
-            'sortable': true
+            'orderable': true
         },
         {
             'data': 'Last_Deep_Clean',
@@ -127,13 +127,13 @@ $(document).ready(function () {
                 }
             },
             'searchable': true,
-            'sortable': true
+            'orderable': true
         },
         {
             'data': 'Notes',
             'title': 'Latest Note',
             'searchable': true,
-            'sortable': false,
+            'orderable': false,
             render: function(data, type, row){
                 if(type == 'print'){
                     data = $(data);
@@ -151,13 +151,13 @@ $(document).ready(function () {
             'data': 'Primary Guest',
             'title': window.labels.primaryGuest,
             'searchable': true,
-            'sortable': true
+            'orderable': true
         },
         {
             'data': 'Guests',
             'title': window.labels.visitor + 's',
             'searchable': true,
-            'sortable': true
+            'orderable': true
         },
         {
             'data': 'Arrival Date',
@@ -167,7 +167,7 @@ $(document).ready(function () {
                 return dateRender(data, type, dateFormat);
             },
             'searchable': true,
-            'sortable': true
+            'orderable': true
         },
         {
             'data': 'Expected Departure',
@@ -177,19 +177,19 @@ $(document).ready(function () {
                 return dateRender(data, type, dateFormat);
             },
             'searchable': true,
-            'sortable': true
+            'orderable': true
         },
         {
             'data': 'Room',
             'title': 'Room',
             'searchable': true,
-            'sortable': true
+            'orderable': true
         },
         {
             'data': 'Nights',
             'title': 'Nights',
             'searchable': true,
-            'sortable': false
+            'orderable': false
         }
     ];
 
@@ -198,19 +198,19 @@ $(document).ready(function () {
             'data': 'Room',
             'title': 'Room',
             'searchable': true,
-            'sortable': true
+            'orderable': true
         },
         {
             'data': 'Visit Status',
             'title': 'Status',
             'searchable': false,
-            'sortable': true
+            'orderable': true
         },
         {
             'data': 'Primary Guest',
             'title': 'Occupant',
             'searchable': true,
-            'sortable': true
+            'orderable': true
         },
         {
             'data': 'Arrival Date',
@@ -220,7 +220,7 @@ $(document).ready(function () {
                 return dateRender(data, type, dateFormat);
             },
             'searchable': true,
-            'sortable': true
+            'orderable': true
         },
         {
             'data': 'Expected Checkout',
@@ -230,13 +230,13 @@ $(document).ready(function () {
                 return dateRender(data, type, dateFormat);
             },
             'searchable': true,
-            'sortable': true
+            'orderable': true
         },
         {
             'data': 'Notes',
             'title': 'Latest Note',
             'searchable': true,
-            'sortable': false
+            'orderable': false
         }
     ];
 
@@ -246,7 +246,7 @@ $(document).ready(function () {
             'data': 'Room',
             'title': 'Room',
             'searchable': true,
-            'sortable': true
+            'orderable': true
         },
         {
             'targets': [1],
@@ -258,7 +258,7 @@ $(document).ready(function () {
             'data': 'Status',
             'title': 'Status',
             'searchable': false,
-            'sortable': true
+            'orderable': true
         },
         {
             "targets": [3],
@@ -281,13 +281,13 @@ $(document).ready(function () {
             'data': 'Notes',
             'title': 'Latest Note',
             'searchable': true,
-            'sortable': false
+            'orderable': false
         },
         {
             'targets': [6],
             'data': 'User',
             'title': 'User',
-            'sortable': true,
+            'orderable': true,
             'searchable': true
         },
         {
@@ -304,8 +304,7 @@ $(document).ready(function () {
     var coDate = new Date();
 
     $.extend($.fn.dataTable.defaults, {
-        "dom": '<"top"if>rt<"bottom"lp><"clear">',
-        "displayLength": 50,
+        "pageLength": 50,
         "lengthMenu": [[25, 50, -1], [25, 50, "All"]]
     });
 
@@ -411,7 +410,7 @@ $(document).ready(function () {
                         "order": [[7, 'desc']],
                         "pageLength": 50,
                         "lengthMenu": [25, 50, 100],
-                        "dom": '<"top"Bif><\"hhk-overflow-x\"rt><"bottom"lp>',
+                        "layout": { topStart: ['buttons', 'info'] },
                         "buttons": housekeeping.getDtBtns("Housekeeping - Cleaning Log"),
                     });
                 }else if(ui.newPanel.find("table#roomTable.dataTable").length > 0 || ui.newPanel.find("table#dirtyTable.dataTable").length > 0){
@@ -505,7 +504,7 @@ $(document).ready(function () {
         "deferRender": true,
         "columns": housekeeping.cgCols,
         rowGroup: {dataSrc: 'Group_Title'},
-        "dom": '<"top"Bif><\"hhk-overflow-x\"rt><"bottom"lp>',
+        "layout": { topStart: ['buttons', 'info'] },
         "buttons": housekeeping.getDtBtns("Housekeeping - All Rooms"),
         "drawCallback": function(settings, json){
             $('.ckdate').datepicker({
@@ -529,7 +528,7 @@ $(document).ready(function () {
         "deferRender": true,
         "columns": housekeeping.cgCols,
         rowGroup: {dataSrc: 'Group_Title'},
-        "dom": '<"top"Bif><\"hhk-overflow-x\"rt><"bottom"lp>',
+        "layout": { topStart: ['buttons', 'info'] },
         "buttons": housekeeping.getDtBtns("Housekeeping - Rooms Not Ready"),
         "drawCallback": function(settings, json){
             $('.ckdate').datepicker({
@@ -551,7 +550,7 @@ $(document).ready(function () {
         },
         "deferRender": true,
         "columns": housekeeping.outCols,
-        "dom": '<"top"Bif><\"hhk-overflow-x\"rt><"bottom"lp>',
+        "layout": { topStart: ['buttons', 'info'] },
         "buttons": housekeeping.getDtBtns("Housekeeping - " + labels.visitor + "s Checking Out - " + $.datepicker.formatDate("M d, yy", coDate)),
     });
     outTbl.buttons().container().appendTo("#ckout .tbl-btns");
@@ -563,7 +562,7 @@ $(document).ready(function () {
         },
         "deferRender": true,
         "columns": housekeeping.inCols,
-        "dom": '<"top"Bif><\"hhk-overflow-x\"rt><"bottom"lp>',
+        "layout": { topStart: ['buttons', 'info'] },
         "buttons": housekeeping.getDtBtns("Housekeeping - " + labels.visitor + "s Checking In - " + $.datepicker.formatDate("M d, yy", coDate)),
     });
 
@@ -579,7 +578,6 @@ $(document).ready(function () {
                 }
             }
         ],
-        "dom": '<"top"if><\"hhk-overflow-x\"rt><"bottom"lp>',
     });
 
     $('#outButtonSet').controlgroup();

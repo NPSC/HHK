@@ -65,12 +65,12 @@ $dailyLog = HTMLContainer::generateMarkup('h3', $uS->siteName . ' Daily Log'
         var patientLabel = '<?php echo $labels->getString('MemberType', 'patient', 'Patient'); ?>';
         var dailyCols = [
             {data: 'titleSort', 'visible': false },
-            {data: 'Title', title: 'Room', 'orderData': [0, 1], sortable: true, searchable:true},
+            {data: 'Title', title: 'Room', 'orderData': [0, 1], orderable: true, searchable:true},
             {
             'data': 'Status',
             'title': 'Status',
             'searchable': false,
-            'sortable': true,
+            'orderable': true,
             'createdCell': function(td, cellData, rowData, col){
                 if(rowData.StatusColor){
                     $(td).css("background-color", rowData.StatusColor);
@@ -88,8 +88,7 @@ $dailyLog = HTMLContainer::generateMarkup('h3', $uS->siteName . ' Daily Log'
         $('#btnHere').button();
 
         $('#daily').DataTable({
-            "dom": '<"top"if><\"hhk-overflow-x hhk-tbl-wrap\"rt><"bottom ui-toolbar ui-helper-clearfix"lp>',
-            "displayLength": 50,
+            "pageLength": 50,
             "lengthMenu": [[25, 50, -1], [25, 50, "All"]],
             "order": [[ 0, 'asc' ]],
             "processing": true,

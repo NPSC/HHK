@@ -122,9 +122,6 @@ div.hhk-pWarningMsg {
     display:inline-block;
 }
 
-.dataTables_info {
-    padding-right: 1em;
-}
  .ui-autocomplete {
     max-height: 500px;
     overflow-y: auto;
@@ -407,10 +404,6 @@ table {
 .hhk-table tbody tr:hover.selected {
   background-color: #aab7d1;
 }
-.dtTop, .dtBottom {
-    margin:4px;
-    vertical-align: middle;
-}
 
 .hhk-panel .hhk-panel {
     margin: 0;
@@ -573,38 +566,34 @@ div#global-title {
 	background-color:initial;
 }
 
-.dataTables_wrapper .dataTables_length select {
+div.dt-container .dt-length select,
+div.dt-container .dt-search input {
 	background-color: white !important;
 }
 
-.dataTables_wrapper .dataTables_filter input {
-	background-color: white !important;
+/* control rows (info/search, length/paging, buttons) */
+div.dt-container div.dt-layout-row:not(.dt-layout-table) {
+	padding: 0 8px;
+	box-sizing: border-box;
 }
 
-.dataTables_wrapper .top, .dataTables_wrapper .bottom,.dataTables_wrapper .dtTop, .dataTables_wrapper .dtBottom {
-	padding: 8px;
-	
+div.dt-container .dt-info {
+	padding-right: 1em;
 }
 
-.dataTables_wrapper .top:before,
-.dataTables_wrapper .bottom:before,
-.dataTables_wrapper .top:after,
-.dataTables_wrapper .bottom:after,
-.dataTables_wrapper .dtTop:before,
-.dataTables_wrapper .dtBottom:before,
-.dataTables_wrapper .dtTop:after,
-.dataTables_wrapper .dtBottom:after  {
-	content: "";
-    display: table;
-    border-collapse: collapse;
+/* let wide tables scroll horizontally (replaces the old hhk-overflow-x dom wrapper) */
+div.dt-container div.dt-layout-table > div.dt-layout-cell {
+	overflow-x: auto;
+	min-width: 0;
 }
 
-.dataTables_wrapper .top:after,
-.dataTables_wrapper .bottom:after,
-.dataTables_wrapper .dtTop:after,
-.dataTables_wrapper .dtBottom:after {
-	clear: both;
- }
+/* DataTables 3 jQuery UI styling forces a grey header background (#f6f6f6);
+   restore the theme's ui-state-default header. */
+table.dataTable thead > tr > th.ui-state-default,
+table.dataTable thead > tr > td.ui-state-default {
+	background: #dfeffc url("jqui/images/ui-bg_glass_85_dfeffc_1x400.png") 50% 50% repeat-x;
+	font-weight: bold;
+}
 #referralTabs { display: flex;}
 .ui-tabs-vertical .ui-tabs-nav { padding: .2em .1em .2em .2em; float: left; width: 12em; }
 .ui-tabs-vertical .ui-tabs-nav li { clear: left; width: 100%; border-bottom-width: 1px !important; border-right-width: 0 !important; margin: 0 -1px .2em 0; }

@@ -25,7 +25,7 @@
                 "targets": [ 0 ],
                         title: "Actions",
                         data: "Actions",
-                        sortable: false,
+                        orderable: false,
                         searchable: false,
                         className:'actionBtns',
                         render: function (data, type, row) {
@@ -36,13 +36,13 @@
                 "targets": [ 1 ],
                         title: (options.labels.patient || 'Patient') + " First Name",
                         data: 'Patient First Name',
-                        sortable: true
+                        orderable: true
                 },
                 {
                 "targets": [ 2 ],
                         title: (options.labels.patient || 'Patient') + " Last Name",
                         data: 'Patient Last Name',
-                        sortable: true,
+                        orderable: true,
                         render: function (data, type, row){
                         	return '<a href="#" class="formDetails" data-docid="' + row.idDocument + '" data-status="' + row.idStatus + '" data-resvid="' + row.idResv + '" data-enablereservation="' + row.enableReservation + '">' + data + '</a>';
                         }
@@ -51,7 +51,7 @@
                 "targets": [ 3 ],
                         title: "Expected Checkin",
                         data: 'Expected Checkin',
-                        sortable: true,
+                        orderable: true,
                         render: function (data, type) {
                             return dateRender(data, type, dateFormat);
                         }
@@ -60,7 +60,7 @@
                 "targets": [ 4 ],
                         title: "Expected Checkout",
                         data: 'Expected Checkout',
-                        sortable: true,
+                        orderable: true,
                         render: function (data, type) {
                             return dateRender(data, type, dateFormat);
                         }
@@ -69,25 +69,25 @@
                 "targets": [ 5 ],
                         title: (options.labels.hospital || 'Hospital'),
                         data: 'Hospital',
-                        sortable: true
+                        orderable: true
                 },
                 {
                 "targets": [ 6 ],
                         title: "Status",
                         data: 'Status',
-                        sortable: true
+                        orderable: true
                 },
                 {
                 "targets": [ 7 ],
                         title: (options.labels.reservation || 'Reservation') + " Status",
                         data: 'resvStatusName',
-                        sortable: true
+                        orderable: true
                 },
                 {
                 "targets": [ 8 ],
                         title: "Submit Date",
                         data: 'Date',
-                        sortable: true,
+                        orderable: true,
                         render: function (data, type) {
                             return dateRender(data, type, "MMM D, YYYY h:mm a");
                         }
@@ -96,7 +96,7 @@
                 "targets": [ 9 ],
                         title: "Form Name",
                         data: 'FormTitle',
-                        sortable: true
+                        orderable: true
                 },
             ],
             formDetailsDialogBtns: 
@@ -199,11 +199,10 @@
 			"serverSide": true,
 			"processing": true,
 			"deferRender": true,
-			"language": {"sSearch": "Search Referrals:"},
-			"sorting": [[6,'desc'], [8,'desc']],
-			"displayLength": 10,
+			"language": {"search": "Search Referrals:"},
+			"order": [[6,'desc'], [8,'desc']],
+			"pageLength": 10,
 			"lengthMenu": [[5, 10, 25, -1], [5, 10, 25, "All"]],
-			"dom": '<"dtTop"if><"hhk-overflow-x"rt><"dtBottom"lp>',
 			ajax: {
 			    url: settings.serviceURL,
 			    data: function(d){

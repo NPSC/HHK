@@ -214,16 +214,14 @@ function saveResource(idresc, type, clas) {
             } else if (data.roomList) {
                 $('#roomTable').children().remove().end().append($(data.roomList));
                 $('#tblroom').dataTable({
-                    "dom": '<"top"if>rt<"bottom"lp><"clear">',
-                    "displayLength": 50,
+                    "pageLength": 50,
                     "order": [[1, 'asc']],
                     "lengthMenu": [[20, 50, -1], [20, 50, "All"]]
                 });
             } else if (data.rescList) {
                 $('#rescTable').children().remove().end().append($(data.rescList));
                 $('#tblresc').dataTable({
-                    "dom": '<"top"if>rt<"bottom"lp><"clear">',
-                    "displayLength": 50,
+                    "pageLength": 50,
                     "order": [[6, 'asc'], [1, 'asc']],
                     "lengthMenu": [[20, 50, -1], [20, 50, "All"]]
                 });
@@ -437,15 +435,13 @@ $(document).ready(function () {
 	});
 
     $('#tblresc').dataTable({
-        "dom": '<"top"if>rt<"bottom"lp><"clear">',
-        "displayLength": 50,
+        "pageLength": 50,
         "order": [[6, 'asc'], [1, 'asc']],
         "lengthMenu": [[20, 50, -1], [20, 50, "All"]]
     });
 
     $('#tblroom').dataTable({
-        "dom": '<"top"if>rt<"bottom"lp><"clear">',
-        "displayLength": 50,
+        "pageLength": 50,
         "order": [[1, 'asc']],
         "lengthMenu": [[20, 50, -1], [20, 50, "All"]]
     });

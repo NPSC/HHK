@@ -143,9 +143,8 @@ $(document).ready(function () {
                     'render': function (data, type, row) { return dateRender(data, type, dateFormat); }
                 }
             ],
-            "displayLength": 50,
+            "pageLength": 50,
             "lengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]],
-            "dom": '<"top ui-toolbar ui-helper-clearfix"if><"hhk-overflow-x"rt><"bottom ui-toolbar ui-helper-clearfix"lp>',
         });
         $('#printButton').button().click(function () {
             $("div#printArea").printArea();
