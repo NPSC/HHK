@@ -167,7 +167,8 @@ $resultMessage = $alertMsg->createMarkup();
                 // (grouped by Menu Parent) stays intact for drag-and-drop reordering below.
                 $('#tblPages').dataTable({
                     ordering: false,
-                    paging: false
+                    paging: false,
+                    dom: '<"top"lf><"hhk-overflow-x"rt><"bottom"ip>'
                 });
 
                 $('#tblPages tbody').sortable({

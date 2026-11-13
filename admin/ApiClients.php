@@ -141,12 +141,6 @@ $availableScopes = Common::readGenLookupsPDO($dbh, "Oauth_Scopes");
             order: false,
             "lengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]],
             columns: dtAPIUsersCols,
-            layout: {
-                topStart: 'info',
-                bottom: 'paging',
-                bottomStart: null,
-                bottomEnd: null
-            },
             "serverSide": true,
             "processing": true,
             ajax: {
@@ -238,12 +232,6 @@ $availableScopes = Common::readGenLookupsPDO($dbh, "Oauth_Scopes");
                         "sorting": [[8, 'desc']],
                         "displayLength": 25,
                         "lengthMenu": [[25, 50, 100], [25, 50, 100]],
-                        layout: {
-                            topStart: 'info',
-                            bottom: 'paging',
-                            bottomStart: null,
-                            bottomEnd: null
-                        },
                         ajax: {
                             url: 'ws_gen.php',
                             data: function(d){

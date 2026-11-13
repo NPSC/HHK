@@ -24,7 +24,7 @@ $(document).ready(function () {
         $('#dataTbl').dataTable({
             "displayLength": 50,
             "lengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]],
-            "dom": '<"top"ilfp>rt<"bottom"p>'
+            "dom": '<"top"lf><"hhk-overflow-x"rt><"bottom"ip>'
         });
     }
     $("input.autoCal").datepicker({

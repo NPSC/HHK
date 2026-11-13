@@ -318,7 +318,7 @@ function getPieChartMarkup($title, $chartId, $width = "335", $height = "120") {
                         }],
                     "iDisplayLength": 25,
                     "aLengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]],
-                    "sDom": '<"top"ilfp>rt<"bottom"p>'
+                    "dom": '<"top"lf><"hhk-overflow-x"rt><"bottom"ip>'
                 });
             });
         </script>

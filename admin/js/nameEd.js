@@ -40,7 +40,7 @@ $(document).ready(function () {
                     "sorting": [[0,'desc']],
                     "displayLength": 25,
                     "lengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]],
-                    "Dom": '<"top"ilf>rt<"bottom"ip>',
+                    "dom": '<"top"lf><"hhk-overflow-x"rt><"bottom"ip>',
                     ajax: {
                         url: listJSON
                     }

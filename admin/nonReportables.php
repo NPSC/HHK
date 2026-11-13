@@ -97,7 +97,7 @@ if (count($rows) > 0) {
                 listTable = $('#tblCategory').dataTable({
                     "displayLength": 50,
                     "lengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]],
-                    "dom": '<"top"ilf>rt<"bottom"ip>'
+                    "dom": '<"top"lf><"hhk-overflow-x"rt><"bottom"ip>'
                 });
             });
         </script>

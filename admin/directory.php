@@ -131,7 +131,7 @@ if (filter_has_var(INPUT_POST, "btnExcel") || filter_has_var(INPUT_POST, "btnHer
                     $('#tblDirectory').dataTable({
                         "displayLength": 50,
                         "lengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]],
-                        "dom": '<"top"ilf><"hhk-overflow-x"rt><"bottom"p>',
+                        "dom": '<"top"lf><"hhk-overflow-x"rt><"bottom"ip>',
                         "order": [[1,'asc'], [2,'asc']]
                     });
                 }

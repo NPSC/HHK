@@ -2,7 +2,7 @@
 
 use HHK\CreateMarkupFromDB;
 use HHK\History;
-use HHK\sec\{SecurityComponent, Session, WebInit};
+use HHK\sec\{Session, WebInit};
 use HHK\SysConst\{WebSiteCode};
 
 /**
@@ -28,12 +28,6 @@ $menuMarkup = $wInit->generatePageMenu();
 $uS = Session::getInstance();
 
 try {
-    $guestHistory = 'f';
-    if (isset($uS->siteList[WebSiteCode::House]) && SecurityComponent::is_Authorized('GuestEdit.php', false, WebSiteCode::House, $dbh)) {
-        // Guest History tab markup
-        $guestHistory = CreateMarkupFromDB::generateHTML_Table(History::getCheckedInGuestMarkup($dbh, '../house/GuestEdit.php', FALSE, TRUE), 'curres');
-    }
-
     $recHistory = History::getMemberHistoryMarkup($dbh);
 
 } catch (Exception $ex) {
@@ -165,19 +159,11 @@ try {
             <div id="historyTabs" class="hhk-widget-content mb-3" style="display:none;">
                 <ul>
                     <li><a href="#memHistory">Member History</a></li>
-                    <?php
-                        if ($guestHistory != 'f'){echo "<li><a href='" . "#resHistory" . "'>Current Guests</a></li>";}
-                    ?>
                 </ul>
                 <div id="memHistory" class="hhk-tdbox">
                     <h3>Member History</h3>
                     <?php echo $recHistory ?>
                 </div>
-                <?php if ($guestHistory != 'f') { ?>
-                <div id="resHistory" class="hhk-tdbox">
-                    <h3>Current Guests</h3>
-                    <?php echo $guestHistory; ?>
-                </div> <?php } ?>
             </div>
         </div> <!-- div id="page"-->
     </body>

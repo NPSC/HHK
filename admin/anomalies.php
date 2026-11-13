@@ -326,7 +326,7 @@ function doReports(PDO $dbh, chkBoxCtrl $cbMemStatus, chkBoxCtrl $cbRptType, boo
                         listTable = $('#tblCategory').dataTable({
                             "displayLength": 50,
                             "lengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]],
-                            "Dom": '<"top"ilfp>rt<"bottom"p>'
+                            "dom": '<"top"lf><"hhk-overflow-x"rt><"bottom"ip>'
                         });
                     }
                     catch (err) {}

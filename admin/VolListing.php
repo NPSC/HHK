@@ -186,13 +186,7 @@ if (count($rows) > 0) {
             "displayLength": 25,
             order: false,
             "lengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]],
-            columns: wUserCols,
-            layout: {
-                topStart: 'info',
-                bottom: 'paging',
-                bottomStart: null,
-                bottomEnd: null
-            }
+            columns: wUserCols
         });
 
         $('div#vollisting').on('change', 'input.delCkBox', function() {
