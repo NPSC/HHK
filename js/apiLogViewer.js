@@ -291,7 +291,8 @@
         injectStyle();
 
         const $table = $(selector);
-        // DataTables 2+ (admin pages) uses layout; 1.x (house pages) uses the legacy dom string.
+        // DataTables 2+ (admin pages) uses the default layout (js/datatablesSettings.js);
+        // 1.x (house pages) uses the legacy dom string.
         const dtLayout = !!($.fn.dataTable.versionCheck && $.fn.dataTable.versionCheck('2'));
         const logTable = $table.dataTable({
             columnDefs: columns(),
@@ -303,12 +304,6 @@
             lengthMenu: [[25, 50, 100], [25, 50, 100]],
             dom: dtLayout ? null : '<"top"if><"hhk-overflow-x hhk-tbl-wrap"rt><"bottom"lp><"clear">',
             autoWidth: false,
-            layout: {
-                topStart: 'info',
-                topEnd: 'search',
-                bottomStart: 'pageLength',
-                bottomEnd: 'paging'
-            },
             ajax: {
                 url: opts.url,
                 data: function (d) {

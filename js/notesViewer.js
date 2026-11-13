@@ -704,15 +704,10 @@
 	            }
             };
 
-            // DataTables 2+ (admin pages): use layout instead of the legacy dom string.
+            // DataTables 2+ (admin pages): drop the legacy dom string; the default layout
+            // (js/datatablesSettings.js) gives the same info/search top, length/paging bottom.
             if ($.fn.dataTable.versionCheck && $.fn.dataTable.versionCheck('2')) {
                 delete dtSettings.dom;
-                dtSettings.layout = {
-                    topStart: 'info',
-                    topEnd: 'search',
-                    bottomStart: 'pageLength',
-                    bottomEnd: 'paging'
-                };
             }
 
             //only show grouping when showing notes from multiple linkIds
