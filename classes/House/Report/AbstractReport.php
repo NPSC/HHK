@@ -294,7 +294,7 @@ abstract class AbstractReport {
             "pageLength": 50,
             "lengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]],
             "order": [[' . $this->defaultSortCol . ', "asc"]],
-            "layout": {"topStart": ["buttons", "info"]},
+            "layout": {"top2Start": ["buttons"]},
             "buttons": [
             {
                 extend: "print",
