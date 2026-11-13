@@ -262,37 +262,34 @@ outline: none;
 
 /* Datatables fixes */
 
-.dataTables_wrapper .dataTables_length select {
+div.dt-container .dt-length select,
+div.dt-container .dt-search input {
 	background-color: white !important;
 }
 
-.dataTables_wrapper .dataTables_filter input {
-	background-color: white !important;
+/* control rows (length/search, info/paging, buttons) */
+div.dt-container div.dt-layout-row:not(.dt-layout-table) {
+	padding: 0 8px;
+	box-sizing: border-box;
 }
 
-.dataTables_wrapper .top, .dataTables_wrapper .bottom,.dataTables_wrapper .dtTop, .dataTables_wrapper .dtBottom {
-	padding: 8px;
-	
+/* DataTables 3 jQuery UI styling forces a light header background (#f6f6f6), which hides
+   the theme's white header text.  Restore the theme's ui-state-default header and use
+   light sort arrows. */
+table.dataTable thead > tr > th.ui-state-default,
+table.dataTable thead > tr > td.ui-state-default {
+	background: #459e00 url("jqui/images/ui-bg_highlight-hard_15_459e00_1x100.png") 50% 50% repeat-x;
+	font-weight: bold;
+}
+table.dataTable thead {
+	--dt-order-arrow_color: rgb(255, 255, 255);
+	--dt-order-arrow_color-current: rgb(255, 255, 255);
 }
 
-.dataTables_wrapper .top:before,
-.dataTables_wrapper .bottom:before,
-.dataTables_wrapper .top:after,
-.dataTables_wrapper .bottom:after,
-.dataTables_wrapper .dtTop:before,
-.dataTables_wrapper .dtBottom:before,
-.dataTables_wrapper .dtTop:after,
-.dataTables_wrapper .dtBottom:after  {
-	content: "";
-    display: table;
-    border-collapse: collapse;
-}
-
-.dataTables_wrapper .top:after,
-.dataTables_wrapper .bottom:after,
-.dataTables_wrapper .dtTop:after,
-.dataTables_wrapper .dtBottom:after {
-	clear: both;
+/* let wide tables scroll horizontally (replaces the old hhk-overflow-x dom wrapper) */
+div.dt-container div.dt-layout-table > div.dt-layout-cell {
+	overflow-x: auto;
+	min-width: 0;
 }
 
 /* use white ui-icons on tabs */

@@ -119,7 +119,7 @@ $resultMessage = $alertMsg->createMarkup();
         <title><?php echo $pageTitle; ?></title>
         <?php echo JQ_UI_CSS; ?>
         <?php echo DEFAULT_CSS; ?>
-        <?php echo JQ_DT_CSS ?>
+        <?php echo DT3_CSS ?>
         <?php echo MULTISELECT_CSS; ?>
         <?php echo NOTY_CSS; ?>
         <?php echo FAVICON; ?>
@@ -129,7 +129,7 @@ $resultMessage = $alertMsg->createMarkup();
         <script type="text/javascript" src="<?php echo JQ_JS ?>"></script>
         <script type="text/javascript" src="<?php echo JQ_UI_JS ?>"></script>
         <script type="text/javascript" src="<?php echo BOOTSTRAP_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo JQ_DT_JS ?>"></script>
+        <script type="text/javascript" src="<?php echo DT3_JS ?>"></script>
         <script type="text/javascript" src="<?php echo MULTISELECT_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo NOTY_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo NOTY_SETTINGS_JS; ?>"></script>
@@ -168,7 +168,6 @@ $resultMessage = $alertMsg->createMarkup();
                 $('#tblPages').dataTable({
                     ordering: false,
                     paging: false,
-                    dom: '<"top"lf><"hhk-overflow-x"rt><"bottom"ip>'
                 });
 
                 $('#tblPages tbody').sortable({

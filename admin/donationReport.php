@@ -111,7 +111,7 @@ $CampOpt = Campaign::CampaignSelOptionMarkup($dbh, '', FALSE);
         <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
         <title><?php echo $pageTitle; ?></title>
         <?php echo JQ_UI_CSS; ?>
-        <?php echo JQ_DT_CSS; ?>
+        <?php echo DT3_CSS; ?>
         <?php echo DEFAULT_CSS; ?>
         <?php echo FAVICON; ?>
         <?php echo NOTY_CSS; ?>
@@ -121,7 +121,7 @@ $CampOpt = Campaign::CampaignSelOptionMarkup($dbh, '', FALSE);
         <script type="text/javascript" src="<?php echo JQ_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo JQ_UI_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo BOOTSTRAP_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo JQ_DT_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo DT3_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo PRINT_AREA_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
 
@@ -154,9 +154,8 @@ $CampOpt = Campaign::CampaignSelOptionMarkup($dbh, '', FALSE);
                     $('div#printArea').css('display', 'block');
 
                 $('#tblDonor').dataTable({
-                    "displayLength": 50,
+                    "pageLength": 50,
                     "lengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]],
-                    "dom": '<"top"lf><"hhk-overflow-x"rt><"bottom"ip>'
                 });
 
                 }

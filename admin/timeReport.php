@@ -99,7 +99,7 @@ $reportTypeSelMarkup = $typeCtrl->createMarkup(3);
         <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
         <title><?php echo $pageTitle; ?></title>
         <?php echo JQ_UI_CSS; ?>
-        <?php echo JQ_DT_CSS; ?>
+        <?php echo DT3_CSS; ?>
         <?php echo DEFAULT_CSS; ?>
         <?php echo FAVICON; ?>
         <?php echo NOTY_CSS; ?>
@@ -109,7 +109,7 @@ $reportTypeSelMarkup = $typeCtrl->createMarkup(3);
         <script type="text/javascript" src="<?php echo JQ_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo JQ_UI_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo BOOTSTRAP_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo JQ_DT_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo DT3_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo PRINT_AREA_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
 
@@ -141,15 +141,14 @@ $reportTypeSelMarkup = $typeCtrl->createMarkup(3);
                 $('.hhk-showHours').css('display', 'table-cell');
 
                 if (listTable) {
-                    listTable.fnDestroy();
+                    listTable.DataTable().destroy();
                 }
                 if (makeTable === 1) {
                     $('div#printArea').css('display', 'block');
                     try {
                         listTable = $('#tblCategory').dataTable({
-                            "iDisplayLength": 50,
-                            "aLengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]],
-                            "dom": '<"top"lf><"hhk-overflow-x"rt><"bottom"ip>'
+                            "pageLength": 50,
+                            "lengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]],
                         });
                     }
                     catch (err) {

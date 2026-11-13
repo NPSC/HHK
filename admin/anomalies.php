@@ -300,14 +300,14 @@ function doReports(PDO $dbh, chkBoxCtrl $cbMemStatus, chkBoxCtrl $cbRptType, boo
         <?php echo JQ_UI_CSS; ?>
         <?php echo DEFAULT_CSS; ?>
         <?php echo NOTY_CSS; ?>
-        <?php echo JQ_DT_CSS; ?>
+        <?php echo DT3_CSS; ?>
         <?php echo GRID_CSS; ?>
         <?php echo NAVBAR_CSS; ?>
 
         <script type="text/javascript" src="<?php echo JQ_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo JQ_UI_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo BOOTSTRAP_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo JQ_DT_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo DT3_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo PRINT_AREA_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
 
@@ -324,9 +324,8 @@ function doReports(PDO $dbh, chkBoxCtrl $cbMemStatus, chkBoxCtrl $cbRptType, boo
                 if (useTable === 'block') {
                     try {
                         listTable = $('#tblCategory').dataTable({
-                            "displayLength": 50,
+                            "pageLength": 50,
                             "lengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]],
-                            "dom": '<"top"lf><"hhk-overflow-x"rt><"bottom"ip>'
                         });
                     }
                     catch (err) {}

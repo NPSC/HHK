@@ -21,48 +21,48 @@ $(document).ready(function () {
             "targets": [0],
             "title": "Type",
             "searchable": false,
-            "sortable": false,
+            "orderable": false,
             "data": "Log_Type"
         },
         {
             "targets": [1],
             "title": "Sub-Type",
             "searchable": false,
-            "sortable": true,
+            "orderable": true,
             "data": "Sub_Type"
         },
         {
             "targets": [2],
             "title": "User",
             "searchable": true,
-            "sortable": true,
+            "orderable": true,
             "data": "User_Name"
         },
         {
             "targets": [3],
             "title": "Id",
             "searchable": true,
-            "sortable": true,
+            "orderable": true,
             "data": "Id1"
         },
         {
             "targets": [4],
             "title": "Item",
             "searchable": true,
-            "sortable": false,
+            "orderable": false,
             "data": "Str1"
         },
         {
             "targets": [5],
             "title": "Detail",
             "searchable": false,
-            "sortable": false,
+            "orderable": false,
             "data": "Str2"
         },
         {
             "targets": [6],
             "title": "Log Text",
-            "sortable": false,
+            "orderable": false,
             "data": "Log_Text"
         },
         {
@@ -244,11 +244,10 @@ $(document).on('change', "#numAddrCalc", function(){
                     "serverSide": true,
                     "processing": true,
                     //"deferRender": true,
-                    "language": {"sSearch": "Search Log:"},
-                    "sorting": [[7, 'desc']],
-                    "displayLength": 25,
+                    "language": {"search": "Search Log:"},
+                    "order": [[7, 'desc']],
+                    "pageLength": 25,
                     "lengthMenu": [[25, 50, 100], [25, 50, 100]],
-                    "dom": '<"top"lf><"hhk-overflow-x"rt><"bottom"ip>',
                     ajax: {
                         url: 'ws_gen.php',
                         data: {
@@ -276,11 +275,10 @@ $(document).on('change', "#numAddrCalc", function(){
                         "columnDefs": dtCronCols,
                         "serverSide": false,
                         "processing": true,
-                        "language": {"sSearch": "Search Jobs:"},
-                        "sorting": [[0, 'asc']],
-                        "displayLength": 25,
+                        "language": {"search": "Search Jobs:"},
+                        "order": [[0, 'asc']],
+                        "pageLength": 25,
                         "lengthMenu": [[25, 50, 100], [25, 50, 100]],
-                        "dom": '<"top"lf><"hhk-overflow-x"rt><"bottom"ip>',
                         ajax: {
                             url: 'ws_gen.php',
                             data: {
@@ -308,11 +306,10 @@ $(document).on('change', "#numAddrCalc", function(){
                         "columnDefs": dtCronLogCols,
                         "serverSide": true,
                         "processing": true,
-                        "language": {"sSearch": "Search Jobs:"},
-                        "sorting": [[4, 'desc']],
-                        "displayLength": 25,
+                        "language": {"search": "Search Jobs:"},
+                        "order": [[4, 'desc']],
+                        "pageLength": 25,
                         "lengthMenu": [[25, 50, 100], [25, 50, 100]],
-                        "dom": '<"top"lf><"hhk-overflow-x"rt><"bottom"ip>',
                         ajax: {
                             url: 'ws_gen.php',
                             data: {
@@ -334,7 +331,7 @@ $(document).on('change', "#numAddrCalc", function(){
             "targets": [0],
             "title": "ID",
             "searchable": false,
-            "sortable": false,
+            "orderable": false,
             "data": "ID",
             "width": 10
         },
@@ -342,7 +339,7 @@ $(document).on('change', "#numAddrCalc", function(){
             "targets": [1],
             "title": "Title",
             "searchable": false,
-            "sortable": true,
+            "orderable": true,
             "data": "Title",
             "width": 200,
             "className": "jobTitle"
@@ -351,7 +348,7 @@ $(document).on('change', "#numAddrCalc", function(){
             "targets": [2],
             "title": "Type",
             "searchable": false,
-            "sortable": true,
+            "orderable": true,
             "data": "Type",
             "className": "jobType"
         },
@@ -359,7 +356,7 @@ $(document).on('change', "#numAddrCalc", function(){
             "targets": [3],
             "title": "Parameters",
             "searchable": false,
-            "sortable": true,
+            "orderable": true,
             "data": "Params",
             "width": 200,
             "className": "jobParams",
@@ -393,7 +390,7 @@ $(document).on('change', "#numAddrCalc", function(){
             "targets": [4],
             "title": "Interval",
             "searchable": true,
-            "sortable": true,
+            "orderable": true,
             "data": "Interval",
             render: function (data, type) {
                 return data.charAt(0).toUpperCase() + data.slice(1)
@@ -405,7 +402,7 @@ $(document).on('change', "#numAddrCalc", function(){
             "targets": [5],
             "title": "Day",
             "searchable": false,
-            "sortable": true,
+            "orderable": true,
             "data": "Day",
             "width": 50,
             "className": "jobDay",
@@ -421,7 +418,7 @@ $(document).on('change', "#numAddrCalc", function(){
             "targets": [6],
             "title": "Hour",
             "searchable": false,
-            "sortable": true,
+            "orderable": true,
             "data": "Hour",
             "width": 50,
             "className": "jobHour"
@@ -430,7 +427,7 @@ $(document).on('change', "#numAddrCalc", function(){
             "targets": [7],
             "title": "Minute",
             "searchable": false,
-            "sortable": true,
+            "orderable": true,
             "data": "Minute",
             "width": 50,
             "className": "jobMinute"
@@ -439,7 +436,7 @@ $(document).on('change', "#numAddrCalc", function(){
             "targets": [8],
             "title": "Status",
             "searchable": true,
-            "sortable": true,
+            "orderable": true,
             "data": "Status",
             render: function (data, type) {
                 switch (data) {
@@ -829,28 +826,28 @@ $(document).on('change', "#numAddrCalc", function(){
             "targets": [0],
             "title": "Job ID",
             "searchable": false,
-            "sortable": false,
+            "orderable": false,
             "data": "Job ID",
         },
         {
             "targets": [1],
             "title": "Job",
             "searchable": false,
-            "sortable": true,
+            "orderable": true,
             "data": "Job",
         },
         {
             "targets": [2],
             "title": "Log Text",
             "searchable": true,
-            "sortable": true,
+            "orderable": true,
             "data": "Log Text",
         },
         {
             "targets": [3],
             "title": "Status",
             "searchable": true,
-            "sortable": true,
+            "orderable": true,
             "data": "Status",
             render: function (data, type) {
                 switch (data) {
@@ -880,42 +877,42 @@ $(document).on('change', "#numAddrCalc", function(){
             "targets": [0],
             "title": "Type",
             "searchable": false,
-            "sortable": false,
+            "orderable": false,
             "data": "Log_Type",
         },
         {
             "targets": [1],
             "title": "Sub Type",
             "searchable": false,
-            "sortable": true,
+            "orderable": true,
             "data": "Sub_Type",
         },
         {
             "targets": [2],
             "title": "User",
             "searchable": true,
-            "sortable": true,
+            "orderable": true,
             "data": "username",
         },
         {
             "targets": [3],
             "title": "To",
             "searchable": true,
-            "sortable": true,
+            "orderable": true,
             "data": "To",
         },
         {
             "targets": [4],
             "title": "From",
             "searchable": true,
-            "sortable": true,
+            "orderable": true,
             "data": "From",
         },
         {
             "targets": [5],
             "title": "Log Text",
             "searchable": true,
-            "sortable": true,
+            "orderable": true,
             "data": "Log_Text"
         },
         {
@@ -957,28 +954,28 @@ $(document).on('change', "#numAddrCalc", function(){
             "targets": [1],
             "title": "Request Endpoint",
             "searchable": false,
-            "sortable": false,
+            "orderable": false,
             "data": "requestPath",
         },
         {
             "targets": [2],
             "title": "Response Code",
             "searchable": false,
-            "sortable": true,
+            "orderable": true,
             "data": "responseCode",
         },
         {
             "targets": [3],
             "title": "OAuth Client ID",
             "searchable": false,
-            "sortable": true,
+            "orderable": true,
             "data": "oauth_client_id",
         },
         {
             "targets": [4],
             "title": "oauth_access_token_id",
             "searchable": true,
-            "sortable": true,
+            "orderable": true,
             "data": "oauth_access_token_id",
             "visible": false,
         },
@@ -986,7 +983,7 @@ $(document).on('change', "#numAddrCalc", function(){
             "targets": [5],
             "title": "Request",
             "searchable": true,
-            "sortable": true,
+            "orderable": true,
             "data": "request",
             "visible": false,
         },
@@ -994,7 +991,7 @@ $(document).on('change', "#numAddrCalc", function(){
             "targets": [6],
             "title": "Response",
             "searchable": true,
-            "sortable": true,
+            "orderable": true,
             "data": "response",
             "visible": false,
         },
@@ -1002,7 +999,7 @@ $(document).on('change', "#numAddrCalc", function(){
             "targets": [7],
             "title": "IP Address",
             "searchable": true,
-            "sortable": true,
+            "orderable": true,
             "data": "ip_address",
         },
         {
@@ -1031,11 +1028,10 @@ $(document).on('change', "#numAddrCalc", function(){
                         "serverSide": true,
                         "processing": true,
                         //"deferRender": true,
-                        "language": { "sSearch": "Search Log:" },
-                        "sorting": [[7, 'desc']],
-                        "displayLength": 25,
+                        "language": { "search": "Search Log:" },
+                        "order": [[7, 'desc']],
+                        "pageLength": 25,
                         "lengthMenu": [[25, 50, 100], [25, 50, 100]],
-                        "dom": '<"top"lf><"hhk-overflow-x"rt><"bottom"ip>',
                         ajax: {
                             url: 'ws_gen.php',
                             data: {
@@ -1050,11 +1046,10 @@ $(document).on('change', "#numAddrCalc", function(){
                         "serverSide": true,
                         "processing": true,
                         //"deferRender": true,
-                        "language": { "sSearch": "Search Log:" },
-                        "sorting": [[8, 'desc']],
-                        "displayLength": 25,
+                        "language": { "search": "Search Log:" },
+                        "order": [[8, 'desc']],
+                        "pageLength": 25,
                         "lengthMenu": [[25, 50, 100], [25, 50, 100]],
-                        "dom": '<"top"lf><"hhk-overflow-x"rt><"bottom"ip>',
                         ajax: {
                             url: 'ws_gen.php',
                             data: {
@@ -1085,11 +1080,10 @@ $(document).on('change', "#numAddrCalc", function(){
                         "serverSide": true,
                         "processing": true,
                         //"deferRender": true,
-                        "language": { "sSearch": "Search Log:" },
-                        "sorting": [[7, 'desc']],
-                        "displayLength": 25,
+                        "language": { "search": "Search Log:" },
+                        "order": [[7, 'desc']],
+                        "pageLength": 25,
                         "lengthMenu": [[25, 50, 100], [25, 50, 100]],
-                        "dom": '<"top"lf><"hhk-overflow-x"rt><"bottom"ip>',
                         ajax: {
                             url: 'ws_gen.php',
                             data: {
@@ -1214,11 +1208,10 @@ $(document).on('change', "#numAddrCalc", function(){
             "serverSide": true,
             "processing": true,
             "autoWidth": false,
-            "language": {"sSearch": "Search Log:"},
+            "language": {"search": "Search Log:"},
             "order": [[1, 'desc']],
             "pageLength": 25,
             "lengthMenu": [[25, 50, 100], [25, 50, 100]],
-            "dom": '<"top"lf><"hhk-overflow-x"rt><"bottom"ip>',
             ajax: {
                 url: 'ws_gen.php',
                 data: filterData

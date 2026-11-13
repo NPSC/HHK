@@ -138,12 +138,12 @@ if (count($rows) > 0) {
         <?php echo NOTY_CSS; ?>
         <?php echo GRID_CSS; ?>
         <?php echo NAVBAR_CSS; ?>
-        <link href="../css/datatables.min.css" rel="stylesheet">
+        <?php echo DT3_CSS; ?>
 
         <script type="text/javascript" src="<?php echo JQ_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo JQ_UI_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo BOOTSTRAP_JS; ?>"></script>
-        <script src="../js/datatables2.min.js"></script>
+        <script src="<?php echo DT3_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo MOMENT_JS; ?>"></script>
 
@@ -160,14 +160,14 @@ if (count($rows) > 0) {
             wUserCols;
 
         wUserCols = [
-            {data: 'Id', title: 'id', sortable: false},
+            {data: 'Id', title: 'id', orderable: false},
             {data: 'Name', title: 'Name'},
             {data: 'Username', title: 'Username'},
             {data: 'Type', title: 'Type'},
             {data: 'Status', title: 'Status'},
             {data: 'Role', title: 'Role'},
             {data: 'Default Page', title: 'Default Page'},
-            {data: 'Authorization Code', title: 'Authorization Code', sortable: false},
+            {data: 'Authorization Code', title: 'Authorization Code', orderable: false},
             {data: 'Last Login', title: 'Last Login', render: function (data, type) {return dateRender(data, type, dateTimeFormat);}},
             {data: 'Password Changed', title: 'Password Changed', render: function (data, type) {return dateRender(data, type, dateTimeFormat);}},
             {data: 'Password Expires', title: 'Password Expires', render: function (data, type) {return dateRender(data, type, dateTimeFormat);}},
@@ -178,12 +178,12 @@ if (count($rows) > 0) {
 
         if (isAdmin) {
             // Add to beginning of the array
-            wUserCols.unshift( {data: 'x',  title: 'x', sortable:false} );
+            wUserCols.unshift( {data: 'x',  title: 'x', orderable:false} );
         }
 
 
         $('#dataTbl').dataTable({
-            "displayLength": 25,
+            "pageLength": 25,
             order: false,
             "lengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]],
             columns: wUserCols

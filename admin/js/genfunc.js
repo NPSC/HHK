@@ -60,6 +60,7 @@ function changeMemberStatus(sc, memData, savePressed) {
 
 }
 var donationTable = null;
+var donationDonorName = '';
 
 function donEscape(s) {
     return $('<div/>').text(s == null ? '' : String(s)).html();
@@ -94,6 +95,7 @@ function getDonationMarkup(id, onNewDonation) {
                     $('#donSummary').text('Error: ' + json.error);
                     return [];
                 }
+                donationDonorName = json.donorName;
                 $('#donSummary').text('Donor: ' + json.donorName + ';  Total: $' + json.total);
                 return json.data;
             }
@@ -131,7 +133,9 @@ function getDonationMarkup(id, onNewDonation) {
         pageLength: 10,
         lengthMenu: [[10, 25, 50, -1], [10, 25, 50, "All"]],
         language: {emptyTable: 'No donations recorded.'},
-        dom: '<"mb-2"B><"top"lf><"hhk-overflow-x"rt><"bottom"ip>',
+        layout: {
+            top2Start: 'buttons'
+        },
         buttons: [{
             text: 'New Donation',
             action: function () {
@@ -143,7 +147,7 @@ function getDonationMarkup(id, onNewDonation) {
             extend: 'print',
             text: 'Print',
             title: function () {
-                return $('#vdon').dialog('option', 'title');
+                return 'Donations for ' + donationDonorName;
             },
             messageTop: function () {
                 return $('#donSummary').text();
@@ -278,21 +282,21 @@ var dtCols = [
         "targets": [ 1 ],
         "title": "Type",
         "searchable": false,
-        "sortable": false,
+        "orderable": false,
         "data": "Type"
     },
     {
         "targets": [ 2 ],
         "title": "Sub-Type",
         "searchable": false,
-        "sortable": false,
+        "orderable": false,
         "data": "Sub-Type"
     },
      {
         "targets": [ 3 ],
         "title": "User",
         "searchable": false,
-        "sortable": false,
+        "orderable": false,
         "data": "User"
     },
     {
@@ -303,7 +307,7 @@ var dtCols = [
     {
         "targets": [ 5 ],
         "title": "Log Text",
-        "sortable": false,
+        "orderable": false,
         "data": "Log Text"
     }
 

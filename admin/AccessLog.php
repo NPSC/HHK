@@ -46,7 +46,7 @@ if ($stmt->rowCount() > 0) {
         <?php echo DEFAULT_CSS; ?>
         <?php echo NOTY_CSS; ?>
         <?php echo GRID_CSS; ?>
-        <?php echo JQ_DT_CSS; ?>
+        <?php echo DT3_CSS; ?>
         <?php echo MULTISELECT_CSS; ?>
         <?php echo FAVICON; ?>
         <?php echo NAVBAR_CSS; ?>
@@ -59,7 +59,7 @@ if ($stmt->rowCount() > 0) {
         <script type="text/javascript" src="<?php echo NOTY_SETTINGS_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
 
-        <script type="text/javascript" src="<?php echo JQ_DT_JS ?>"></script>
+        <script type="text/javascript" src="<?php echo DT3_JS ?>"></script>
         <script type="text/javascript" src="<?php echo MULTISELECT_JS; ?>"></script>
         <script type="text/javascript" src="js/accessLog.js"></script>
     </head>

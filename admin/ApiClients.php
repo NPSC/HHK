@@ -50,12 +50,12 @@ $availableScopes = Common::readGenLookupsPDO($dbh, "Oauth_Scopes");
         <?php echo NOTY_CSS; ?>
         <?php echo GRID_CSS; ?>
         <?php echo NAVBAR_CSS; ?>
-        <link href="../css/datatables.min.css" rel="stylesheet">
+        <?php echo DT3_CSS; ?>
 
         <script type="text/javascript" src="<?php echo JQ_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo JQ_UI_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo BOOTSTRAP_JS; ?>"></script>
-        <script src="../js/datatables2.min.js"></script>
+        <script src="<?php echo DT3_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo MOMENT_JS; ?>"></script>
 
@@ -76,14 +76,14 @@ $availableScopes = Common::readGenLookupsPDO($dbh, "Oauth_Scopes");
                 "targets": [1],
                 "title": "Client Name",
                 "searchable": false,
-                "sortable": true,
+                "orderable": true,
                 "data": "name",
             },
             {
                 "targets": [2],
                 "title": "Scopes",
                 "searchable": false,
-                "sortable": true,
+                "orderable": true,
                 "data": "scopes",
                 render: function (data, type) {
                     return data.split(',').join('<br/>');
@@ -93,7 +93,7 @@ $availableScopes = Common::readGenLookupsPDO($dbh, "Oauth_Scopes");
                 "targets": [3],
                 "title": "Lased Used",
                 "searchable": true,
-                "sortable": true,
+                "orderable": true,
                 "data": "LastUsed",
                 render: function (data, type) {
                     return dateRender(data, type, 'MMM D YYYY h:mm:ss a');
@@ -103,7 +103,7 @@ $availableScopes = Common::readGenLookupsPDO($dbh, "Oauth_Scopes");
                 "targets": [4],
                 "title": "Created At",
                 "searchable": true,
-                "sortable": true,
+                "orderable": true,
                 "data": "Timestamp",
                 render: function (data, type) {
                     return dateRender(data, type, 'MMM D YYYY h:mm:ss a');
@@ -113,7 +113,7 @@ $availableScopes = Common::readGenLookupsPDO($dbh, "Oauth_Scopes");
                 "targets": [5],
                 "title": "Status",
                 "searchable": true,
-                "sortable": true,
+                "orderable": true,
                 "data": "revoked",
                 render: function (data, type) {
                     return data ? "<strong style='color:red'>Revoked</strong>":"Active";
@@ -127,7 +127,7 @@ $availableScopes = Common::readGenLookupsPDO($dbh, "Oauth_Scopes");
                 {
                     data: 'client_id',  
                     title: '', 
-                    sortable:false,
+                    orderable:false,
                     render(data, type){
                         return '<div class="hhk-flex"><button type="button" class="view-client ui-button ui-corner-all mr-2" data-client-id="' + data + '">View</button><button type="button" class="edit-client ui-button ui-corner-all" data-client-id="' + data + '">Edit</button></div>';
                     }
@@ -137,7 +137,7 @@ $availableScopes = Common::readGenLookupsPDO($dbh, "Oauth_Scopes");
 
 
         $('#dataTbl').dataTable({
-            "displayLength": 25,
+            "pageLength": 25,
             order: false,
             "lengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]],
             columns: dtAPIUsersCols,
@@ -163,28 +163,28 @@ $availableScopes = Common::readGenLookupsPDO($dbh, "Oauth_Scopes");
             "targets": [1],
             "title": "Request Endpoint",
             "searchable": false,
-            "sortable": false,
+            "orderable": false,
             "data": "requestPath",
         },
         {
             "targets": [2],
             "title": "Response Code",
             "searchable": false,
-            "sortable": true,
+            "orderable": true,
             "data": "responseCode",
         },
         {
             "targets": [3],
             "title": "OAuth Client ID",
             "searchable": false,
-            "sortable": true,
+            "orderable": true,
             "data": "oauth_client_id",
         },
         {
             "targets": [4],
             "title": "oauth_access_token_id",
             "searchable": true,
-            "sortable": true,
+            "orderable": true,
             "data": "oauth_access_token_id",
             "visible": false,
         },
@@ -192,7 +192,7 @@ $availableScopes = Common::readGenLookupsPDO($dbh, "Oauth_Scopes");
             "targets": [5],
             "title": "Request",
             "searchable": true,
-            "sortable": true,
+            "orderable": true,
             "data": "request",
             "visible": false,
         },
@@ -200,7 +200,7 @@ $availableScopes = Common::readGenLookupsPDO($dbh, "Oauth_Scopes");
             "targets": [6],
             "title": "Response",
             "searchable": true,
-            "sortable": true,
+            "orderable": true,
             "data": "response",
             "visible": false,
         },
@@ -208,7 +208,7 @@ $availableScopes = Common::readGenLookupsPDO($dbh, "Oauth_Scopes");
             "targets": [7],
             "title": "IP Address",
             "searchable": true,
-            "sortable": true,
+            "orderable": true,
             "data": "ip_address",
         },
         {
@@ -228,9 +228,9 @@ $availableScopes = Common::readGenLookupsPDO($dbh, "Oauth_Scopes");
                         "serverSide": true,
                         "processing": true,
                         //"deferRender": true,
-                        "language": { "sSearch": "Search Log:" },
-                        "sorting": [[8, 'desc']],
-                        "displayLength": 25,
+                        "language": { "search": "Search Log:" },
+                        "order": [[8, 'desc']],
+                        "pageLength": 25,
                         "lengthMenu": [[25, 50, 100], [25, 50, 100]],
                         ajax: {
                             url: 'ws_gen.php',

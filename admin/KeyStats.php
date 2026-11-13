@@ -290,7 +290,7 @@ function getPieChartMarkup($title, $chartId, $width = "335", $height = "120") {
         <title><?php echo $pageTitle; ?></title>
         <?php echo DEFAULT_CSS; ?>
         <?php echo JQ_UI_CSS; ?>
-        <?php echo JQ_DT_CSS; ?>
+        <?php echo DT3_CSS; ?>
         <?php echo FAVICON; ?>
         <?php echo NOTY_CSS; ?>
         <?php echo GRID_CSS; ?>
@@ -299,7 +299,7 @@ function getPieChartMarkup($title, $chartId, $width = "335", $height = "120") {
         <script type="text/javascript" src="<?php echo JQ_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo JQ_UI_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo BOOTSTRAP_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo JQ_DT_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo DT3_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
 
         <script type="text/javascript" src="<?php echo NOTY_JS; ?>"></script>
@@ -312,13 +312,12 @@ function getPieChartMarkup($title, $chartId, $width = "335", $height = "120") {
                 $( "#tabs" ).tabs();
 
                 detailsDT = $('#dataTbl').dataTable({
-                    "aoColumnDefs": [{
-                            "sType": 'numeric',
-                            "aTargets": [ 2,3,4,6,7,8 ]
+                    "columnDefs": [{
+                            "type": 'num',
+                            "targets": [ 2,3,4,6,7,8 ]
                         }],
-                    "iDisplayLength": 25,
-                    "aLengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]],
-                    "dom": '<"top"lf><"hhk-overflow-x"rt><"bottom"ip>'
+                    "pageLength": 25,
+                    "lengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]],
                 });
             });
         </script>

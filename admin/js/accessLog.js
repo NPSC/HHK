@@ -22,21 +22,21 @@ $(document).ready(function() {
             "targets": [0],
             title: "Username",
             data: "Username",
-            sortable: true,
+            orderable: true,
             searchable: true
         },
         {
             "targets": [1],
             title: "IP",
             data: 'IP',
-            sortable: true,
+            orderable: true,
             searchable: true
         },
         {
             "targets": [2],
             title: "Action",
             searchable: true,
-            sortable: true,
+            orderable: true,
             data: "Action",
             render: function (data, type) {
                 return getActionName(data);
@@ -46,7 +46,7 @@ $(document).ready(function() {
             "targets": [3],
             title: "Date",
             searchable: true,
-            sortable: true,
+            orderable: true,
             data: "Date",
             render: function (data, type) {
                 return dateRender(data, type, 'MMM D, YYYY h:mm a');
@@ -56,14 +56,14 @@ $(document).ready(function() {
             "targets": [4],
             title: "Browser",
             data: "Browser",
-            sortable: true,
+            orderable: true,
             searchable: true
         },
         {
             "targets": [5],
             title: "OS",
             data: "OS",
-            sortable: true,
+            orderable: true,
             searchable: true
         }
         
@@ -80,12 +80,11 @@ $(document).ready(function() {
                 "serverSide": true,
                 "processing": true,
                 "deferRender": true,
-                "language": {"sSearch": "Search Access Log :"},
-                "sorting": [[3, 'desc']],
+                "language": {"search": "Search Access Log :"},
+                "order": [[3, 'desc']],
                 "paging": true,
                 "lengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]],
                 //"dom": '<"dtTop"if>rt<"dtBottom"lp><"clear">',
-                "dom": '<"top"lf><"hhk-overflow-x"rt><"bottom"ip>',
                 ajax: {
                     url: "ws_gen.php",
                     data: {

@@ -267,13 +267,13 @@
     function columns() {
         return [
             { targets: [0], className: 'dt-control', orderable: false, data: null, defaultContent: '' },
-            { targets: [1], title: 'Method', searchable: false, sortable: true, data: 'requestMethod', render: $.fn.dataTable.render.text() },
-            { targets: [2], title: 'Type', searchable: false, sortable: true, data: 'Type', render: $.fn.dataTable.render.text() },
-            { targets: [3], title: 'Request Endpoint', searchable: false, sortable: false, data: 'endpoint', render: renderEndpoint },
-            { targets: [4], title: 'Response Code', searchable: false, sortable: true, data: 'responseCode', render: (d, t) => t === 'display' ? statusBadge(d) : d },
-            { targets: [5], title: 'Request', searchable: true, sortable: true, data: 'request', visible: false },
-            { targets: [6], title: 'Response', searchable: true, sortable: true, data: 'response', visible: false },
-            { targets: [7], title: 'User', searchable: true, sortable: true, data: 'username', render: $.fn.dataTable.render.text() },
+            { targets: [1], title: 'Method', searchable: false, orderable: true, data: 'requestMethod', render: $.fn.dataTable.render.text() },
+            { targets: [2], title: 'Type', searchable: false, orderable: true, data: 'Type', render: $.fn.dataTable.render.text() },
+            { targets: [3], title: 'Request Endpoint', searchable: false, orderable: false, data: 'endpoint', render: renderEndpoint },
+            { targets: [4], title: 'Response Code', searchable: false, orderable: true, data: 'responseCode', render: (d, t) => t === 'display' ? statusBadge(d) : d },
+            { targets: [5], title: 'Request', searchable: true, orderable: true, data: 'request', visible: false },
+            { targets: [6], title: 'Response', searchable: true, orderable: true, data: 'response', visible: false },
+            { targets: [7], title: 'User', searchable: true, orderable: true, data: 'username', render: $.fn.dataTable.render.text() },
             {
                 targets: [8], title: 'Timestamp', data: 'Timestamp',
                 render: (data, type) => dateRender(data, type, 'MMM D YYYY h:mm:ss a')
@@ -291,21 +291,23 @@
         injectStyle();
 
         const $table = $(selector);
+        // DataTables 2+ (admin pages) uses layout; 1.x (house pages) uses the legacy dom string.
+        const dtLayout = !!($.fn.dataTable.versionCheck && $.fn.dataTable.versionCheck('2'));
         const logTable = $table.dataTable({
             columnDefs: columns(),
             serverSide: true,
             processing: true,
-            language: { sSearch: 'Search Log:' },
-            sorting: [[8, 'desc']],
-            displayLength: 25,
+            language: { search: 'Search Log:' },
+            order: [[8, 'desc']],
+            pageLength: 25,
             lengthMenu: [[25, 50, 100], [25, 50, 100]],
-            dom: '<"top"if><"hhk-overflow-x hhk-tbl-wrap"rt><"bottom"lp><"clear">',
+            dom: dtLayout ? null : '<"top"if><"hhk-overflow-x hhk-tbl-wrap"rt><"bottom"lp><"clear">',
             autoWidth: false,
             layout: {
                 topStart: 'info',
-                bottom: 'paging',
-                bottomStart: null,
-                bottomEnd: null
+                topEnd: 'search',
+                bottomStart: 'pageLength',
+                bottomEnd: 'paging'
             },
             ajax: {
                 url: opts.url,

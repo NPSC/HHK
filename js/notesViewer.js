@@ -32,7 +32,7 @@
                 "targets":0,
                         title: "Flag",
                         data: "Flag",
-                        sortable: true,
+                        orderable: true,
                         searchable: false,
                         className:'actionBtns',
                         width: "40px",
@@ -44,7 +44,7 @@
                 "targets":1,
                         title: "Actions",
                         data: "Action",
-                        sortable: false,
+                        orderable: false,
                         searchable: false,
                         className:'actionBtns',
                         width: "50px",
@@ -56,7 +56,7 @@
                 "targets":2,
                         title: "Date",
                         data: 'Date',
-                        sortable: true,
+                        orderable: true,
                         width: "110px",
                         render: function (data, type) {
                             return dateRender(data, type, 'MMM D, YYYY h:mm a');
@@ -66,7 +66,7 @@
                 "targets":3,
                         title: "User",
                         searchable: true,
-                        sortable: true,
+                        orderable: true,
                         data: "User",
                         width: "100px"
                 },
@@ -74,7 +74,7 @@
                 "targets":4,
                         title: "Note",
                         searchable: true,
-                        sortable: false,
+                        orderable: false,
                         className:'noteText',
                         data: "Note",
                         render: function (data, type, row) {
@@ -87,7 +87,7 @@
                 },
                 {
                 "targets":5,
-                        sortable: false,
+                        orderable: false,
                         searchable: false,
                         visible: false,
                         data: "Title"
@@ -111,7 +111,7 @@
                 case "staff":
         	    settings.dtCols.push({
                 	"targets": 4,
-                        sortable: true,
+                        orderable: true,
                         searchable: true,
                         data: "Category",
                         title: "Category",
@@ -131,7 +131,7 @@
                     default:
                         settings.dtCols.push({
                             "targets": 4,
-                                sortable: true,
+                                orderable: true,
                                 searchable: true,
                                 data: "group",
                                 title: "group",
@@ -143,7 +143,7 @@
            /* 
             settings.dtCols.push({
                 "targets": 6,
-                    sortable: true,
+                    orderable: true,
                     searchable: true,
                     data: "Guest",
                     title: "Guest",
@@ -163,7 +163,7 @@
 
             settings.dtCols.push({
                 "targets": 7,
-                    sortable: true,
+                    orderable: true,
                     searchable: true,
                     data: "room",
                     title: "Room",
@@ -666,9 +666,9 @@
 		        "serverSide": true,
 		        "processing": true,
 		        "deferRender": true,
-		        "language": {"sSearch": "Search Notes:"},
-		        "sorting": [[0,'desc'], [2,'desc']],
-		        "displayLength": settings.defaultLength,
+		        "language": {"search": "Search Notes:"},
+		        "order": [[0,'desc'], [2,'desc']],
+		        "pageLength": settings.defaultLength,
 		        "lengthMenu": settings.defaultLengthMenu,
 	                "dom": '<"dtTop"if><"hhk-overflow-x"rt><"dtBottom"lp><"clear">',
 		        ajax: {
@@ -704,6 +704,17 @@
 	            }
             };
 
+            // DataTables 2+ (admin pages): use layout instead of the legacy dom string.
+            if ($.fn.dataTable.versionCheck && $.fn.dataTable.versionCheck('2')) {
+                delete dtSettings.dom;
+                dtSettings.layout = {
+                    topStart: 'info',
+                    topEnd: 'search',
+                    bottomStart: 'pageLength',
+                    bottomEnd: 'paging'
+                };
+            }
+
             //only show grouping when showing notes from multiple linkIds
             if(settings.linkId === 0 && settings.linkType !== "staff"){
                 dtSettings.orderFixed = [4, "asc"];
@@ -722,6 +733,7 @@
             //add ignrSave class to Dt controls
             $(".dataTables_filter").addClass('ignrSave');
             $(".dtBottom").addClass('ignrSave');
+            $wrapper.find(".dt-search, .dt-length").addClass('ignrSave');
             
         }
         

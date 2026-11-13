@@ -36,11 +36,10 @@ $(document).ready(function () {
                     "serverSide": true,
                     "processing": true,
                     "deferRender": true,
-                    "language": {"sSearch": "Search Log Text:"},
-                    "sorting": [[0,'desc']],
-                    "displayLength": 25,
+                    "language": {"search": "Search Log Text:"},
+                    "order": [[0,'desc']],
+                    "pageLength": 25,
                     "lengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]],
-                    "dom": '<"top"lf><"hhk-overflow-x"rt><"bottom"ip>',
                     ajax: {
                         url: listJSON
                     }
