@@ -1286,7 +1286,7 @@ if ($uS->UseIncidentReports) {
         <?php echo FAVICON; ?>
         <?php echo JQ_UI_CSS; ?>
         <?php echo HOUSE_CSS; ?>
-        <?php echo JQ_DT_CSS ?>
+        <?php echo DT3_CSS ?>
         <?php echo GRID_CSS; ?>
         <?php echo NOTY_CSS; ?>
         <?php echo NAVBAR_CSS; ?>
@@ -1294,7 +1294,8 @@ if ($uS->UseIncidentReports) {
 
         <script type="text/javascript" src="<?php echo JQ_JS ?>"></script>
         <script type="text/javascript" src="<?php echo JQ_UI_JS ?>"></script>
-        <script type="text/javascript" src="<?php echo JQ_DT_JS ?>"></script>
+        <script type="text/javascript" src="<?php echo DT3_JS ?>"></script>
+        <script type="text/javascript" src="<?php echo JQ_DT_SETTINGS; ?>"></script>
         <script type="text/javascript" src="<?php echo PRINT_AREA_JS ?>"></script>
         <script type="text/javascript" src="<?php echo STATE_COUNTRY_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo MOMENT_JS ?>"></script>
