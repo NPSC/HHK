@@ -160,8 +160,14 @@ $(document).ready(function () {
             $(this).val($(this).data('dflt'));
         });
         $('#vdon').removeData('did');
-        $('#donateResponseContainer').attr("style", "display:none;");
+        $('#vdon .hhk-ajx-dondata').removeClass('ui-state-error');
+        showDonationFormErrors([]);
     }
+
+    // Clear a field's error highlight once it's changed.
+    $('#vdon').on('change input', '.hhk-ajx-dondata.ui-state-error', function () {
+        $(this).removeClass('ui-state-error');
+    });
 
     function donationDialogName() {
         var donName = memData.memName;
@@ -234,8 +240,7 @@ $(document).ready(function () {
             text: "Save",
             "class": "hhk-don-save",
             click: function () {
-                var amt = parseFloat($('#damount').val());
-                if (isNaN(amt) || amt <= 0) {
+                if (!validateDonationForm({maxDonate: parseFloat(userData.maxDonate) || 0, isOrganization: memData.memDesig === 'o'})) {
                     return;
                 }
                 // collect the donation data
@@ -414,12 +419,32 @@ $(document).ready(function () {
         }
     });
 
-    $('.ckdate').datepicker({
+    // The donations filter's date inputs are set up by the report filter script below (yy-mm-dd).
+    $('.ckdate').not('#donFilter .ckdate').datepicker({
         yearRange: '-03:+05',
         changeMonth: true,
         changeYear: true,
         autoSize: true,
         dateFormat: 'M d, yy'
+    });
+
+    // Donations list filter: time period show/hide and its date pickers (ReportFilter::getTimePeriodScript).
+    <?php echo $donFilterScript; ?>
+
+    $('#btnDonFilterApply').click(function () {
+        setDonationFilter($('#donFilter'));
+    });
+    $('#btnDonFilterClear').click(function () {
+        // Back to the page-load selections, and show every donation.
+        $('#donFilter').find('select').each(function () {
+            $(this).find('option').each(function () {
+                this.selected = this.defaultSelected;
+            });
+        }).filter('[name=selCalendar]').change();
+        $('#donFilter').find('input').each(function () {
+            this.value = this.defaultValue;
+        });
+        setDonationFilter(null);
     });
     $('.ckbdate').datepicker({
         yearRange: '-99:+01',

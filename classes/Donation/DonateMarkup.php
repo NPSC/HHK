@@ -5,6 +5,8 @@ namespace HHK\Donation;
 use HHK\HTMLControls\{HTMLTable, HTMLSelector, HTMLInput};
 use HHK\AlertControl\AlertMessage;
 use HHK\HTMLControls\HTMLContainer;
+use HHK\House\Report\ReportFilter;
+use HHK\sec\Session;
 
 /**
  * Donate.php
@@ -98,6 +100,51 @@ class DonateMarkup {
         $donAlert->set_Text("oh-oh");
 
         return $tbl->generateMarkup(array('class'=>'hhk-donate-form')) . $donAlert->createMarkup();
+    }
+
+    /**
+     * The NameEdit donations list filter: a time period and campaigns (the house report filter).
+     * Used to build the filter markup on the page and to read the posted filter in donate.php.
+     *
+     * @param \PDO $dbh
+     * @return ReportFilter
+     */
+    public static function createListFilter(\PDO $dbh): ReportFilter {
+
+        $uS = Session::getInstance();
+
+        $filter = new ReportFilter();
+        $filter->createTimePeriod(date('Y'), ReportFilter::CAL_YEAR, intval($uS->fy_diff_Months))
+            ->createCampaigns($dbh);
+
+        return $filter;
+    }
+
+    /**
+     * Collapsed filter section for the top of the NameEdit Donations tab.
+     *
+     * The controls are not in a form of their own (the tab is inside NameEdit's main form);
+     * nameEd.js posts them with the list request when Apply is pressed.
+     *
+     * @param ReportFilter $filter
+     * @return string
+     */
+    public static function listFilterMarkup(ReportFilter $filter): string {
+
+        $selectors = HTMLContainer::generateMarkup('div',
+            $filter->timePeriodMarkup('', 'don')->generateMarkup(array('class'=>'mr-2 mb-2'))
+            . $filter->campaignMarkup('don')->generateMarkup(array('class'=>'mr-2 mb-2'))
+            , array('class'=>'hhk-flex hhk-flex-wrap'));
+
+        $buttons = HTMLContainer::generateMarkup('div',
+            HTMLContainer::generateMarkup('button', '<i class="bi bi-funnel mr-1"></i>Apply', array('type'=>'button', 'id'=>'btnDonFilterApply', 'class'=>'ui-button ui-corner-all ui-widget mr-2'))
+            . HTMLContainer::generateMarkup('button', '<i class="bi bi-x-lg mr-1"></i>Clear', array('type'=>'button', 'id'=>'btnDonFilterClear', 'class'=>'ui-button ui-corner-all ui-widget'))
+            , array('class'=>'mb-2'));
+
+        return HTMLContainer::generateMarkup('details',
+            HTMLContainer::generateMarkup('summary', 'Filter' . HTMLContainer::generateMarkup('span', '', array('id'=>'donFilterState', 'class'=>'ml-2', 'style'=>'font-weight:normal;')), array('style'=>'cursor:pointer; font-weight:bold; padding:0.3em 0;'))
+            . HTMLContainer::generateMarkup('div', $selectors . $buttons, array('class'=>'pt-2'))
+            , array('id'=>'donFilter', 'class'=>'ui-widget ui-widget-content ui-corner-all hhk-tdbox mb-2', 'style'=>'padding:0.3em 0.7em;'));
     }
 
     /**

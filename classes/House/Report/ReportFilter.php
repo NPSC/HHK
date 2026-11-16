@@ -127,6 +127,16 @@ class ReportFilter {
 
     protected array $items = [];
 
+    /**
+     * Donation campaigns, keyed by Campaign_Code: [code, title]
+     */
+    protected array $campaigns = [];
+
+    /**
+     * Selected campaign codes; empty means all campaigns.
+     */
+    protected array $selectedCampaigns = [];
+
     protected string $reportStart = '';
 
     protected string $reportEnd = '';
@@ -920,6 +930,85 @@ $ckdate";
         $tbl->addBodyTr(HTMLTable::makeTd($itemSelector, array('style'=>'vertical-align: top;')));
 
         return $tbl;
+    }
+
+    /**
+     * Load the donation campaigns, including disabled ones so older donations can still be selected.
+     * @param \PDO $dbh
+     * @return static
+     */
+    public function createCampaigns(\PDO $dbh): static {
+
+        $this->campaigns = [];
+
+        $stmt = $dbh->query("SELECT `Campaign_Code`, `Title` FROM `campaign` ORDER BY `Title`");
+
+        while ($r = $stmt->fetch(\PDO::FETCH_NUM)) {
+            $this->campaigns[$r[0]] = array(0=>$r[0], 1=>$r[1]);
+        }
+
+        return $this;
+    }
+
+    /**
+     * Read the posted campaign codes. Only codes from createCampaigns() are kept; "(All)" or nothing means all campaigns.
+     * @return static
+     */
+    public function loadSelectedCampaigns(): static {
+
+        $this->selectedCampaigns = [];
+
+        if (filter_has_var(INPUT_POST, 'selCampaign')) {
+            $reqs = $_POST['selCampaign'];
+            if (is_array($reqs)) {
+                foreach ($reqs as $code) {
+                    if (is_string($code) && $code !== '' && isset($this->campaigns[$code])) {
+                        $this->selectedCampaigns[] = $code;
+                    }
+                }
+            }
+        }
+
+        return $this;
+    }
+
+    /**
+     * Summary of campaignMarkup
+     * @param string $idPrefix  prefixes the control id (not name)
+     * @return HTMLTable
+     */
+    public function campaignMarkup(string $idPrefix = ''): HTMLTable {
+
+        $list = array_merge(array(array(0=>'', 1=>'(All)')), array_values($this->campaigns));
+
+        $campSelector = HTMLSelector::generateMarkup(
+            HTMLSelector::doOptionsMkup($list, (count($this->selectedCampaigns) > 0 ? $this->selectedCampaigns : array('')), FALSE),
+            array('name' => 'selCampaign[]', 'id' => $idPrefix . 'selCampaign', 'size' => (string) min(count($list), 12), 'multiple' => 'multiple', 'style'=>'min-width:60px; width: 100%;'));
+
+        $tbl = new HTMLTable();
+
+        $tbl->addHeaderTr(HTMLTable::makeTh("Campaigns"));
+        $tbl->addBodyTr(HTMLTable::makeTd($campSelector, array('style'=>'vertical-align: top;')));
+
+        return $tbl;
+    }
+
+    public function getCampaigns(): array {
+        return $this->campaigns;
+    }
+
+    public function getSelectedCampaigns(): array {
+        return $this->selectedCampaigns;
+    }
+
+    public function getSelectedCampaignsString(): string {
+        $titles = [];
+        foreach ($this->selectedCampaigns as $c) {
+            if (isset($this->campaigns[$c])) {
+                $titles[] = $this->campaigns[$c][1];
+            }
+        }
+        return (count($titles) > 0 ? implode(', ', $titles) : "All");
     }
 
     /**

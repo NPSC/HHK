@@ -65,6 +65,8 @@ $uname = $uS->username;
 $userData = array();
 $userData["userName"] = $uname;
 $userData["donFlag"] = $donationsFlag;
+// Largest allowed donation; the donation dialog checks amounts against it before saving.
+$userData["maxDonate"] = floatval($uS->MaxDonate);
 
 
 
@@ -331,9 +333,16 @@ $recHistory = History::getMemberHistoryMarkup($dbh);
  */
 
 $donateMkup = '';
+$donFilterMkup = '';
+$donFilterScript = '';
 
 // but if $id = 0, disable the donation tab
 if ($id != 0 && $donationsFlag) {
+
+    // Donations list filter (time period + campaigns)
+    $donFilter = DonateMarkup::createListFilter($dbh);
+    $donFilterMkup = DonateMarkup::listFilterMarkup($donFilter);
+    $donFilterScript = $donFilter->getTimePeriodScript();
 
     $CampOpt = Campaign::CampaignSelOptionMarkup($dbh, '', false, false);
 
@@ -527,9 +536,10 @@ $alertMessage = $alertMsg->createMarkup();
                     <?php if ($donationsFlag) { ?>
                     <div id="vdonations" class="ignrSave">
                         <?php if ($id != 0) { ?>
+                        <?php echo $donFilterMkup; ?>
                         <div id="divListDonation">
                             <div id="donSummary" style="font-size:smaller; margin:0.5em 0;"></div>
-                            <table id="tblDonations" class="display" style="width:100%;"></table>
+                            <table id="tblDonations" class="display compact" style="width:100%;"></table>
                         </div>
                         <?php } ?>
                     </div>

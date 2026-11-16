@@ -61,6 +61,37 @@ function changeMemberStatus(sc, memData, savePressed) {
 }
 var donationTable = null;
 var donationDonorName = '';
+var donationFilter = null;
+
+/**
+ * Apply (or clear, with null) the donations list filter and reload the table.
+ *
+ * @param {jQuery|null} $filter the filter section (#donFilter); its controls are posted with the list request
+ */
+function setDonationFilter($filter) {
+    "use strict";
+
+    donationFilter = null;
+
+    if ($filter) {
+        donationFilter = {donFilter: 1};
+
+        // Collect into an object; "name[]" controls become arrays (posted as name[]=...).
+        $.each($filter.find('select, input').serializeArray(), function (i, p) {
+            if (p.name.slice(-2) === '[]') {
+                var n = p.name.slice(0, -2);
+                donationFilter[n] = donationFilter[n] || [];
+                donationFilter[n].push(p.value);
+            } else {
+                donationFilter[p.name] = p.value;
+            }
+        });
+    }
+
+    if (donationTable) {
+        donationTable.ajax.reload();
+    }
+}
 
 function donEscape(s) {
     return $('<div/>').text(s == null ? '' : String(s)).html();
@@ -85,7 +116,7 @@ function getDonationMarkup(id, onNewDonation) {
             url: 'donate.php',
             type: 'POST',
             data: function () {
-                return {cmd: 'list', id: id, sq: $('#squirm').val()};
+                return $.extend({}, donationFilter, {cmd: 'list', id: id, sq: $('#squirm').val()});
             },
             dataSrc: function (json) {
                 if (json.error) {
@@ -96,30 +127,19 @@ function getDonationMarkup(id, onNewDonation) {
                     return [];
                 }
                 donationDonorName = json.donorName;
-                $('#donSummary').text('Donor: ' + json.donorName + ';  Total: $' + json.total);
+                // One summary item per line, with the label in bold.
+                var filterItems = json.filterItems || [];
+                var items = [{label: 'Donor', value: json.donorName}, {label: 'Total', value: '$' + json.total}].concat(filterItems);
+                $('#donSummary').empty().append($.map(items, function (item) {
+                    return $('<div/>').append($('<strong/>').text(item.label + ':'), document.createTextNode(' ' + item.value));
+                }));
+                $('#donFilterState').text(filterItems.length ? '(' + $.map(filterItems, function (item) {
+                    return item.label + ': ' + item.value;
+                }).join('; ') + ')' : '');
                 return json.data;
             }
         },
         columns: [
-            {title: 'Source', data: 'src', width: '120px', render: function (data, type, row) {
-                if (type !== 'display') {
-                    return data;
-                }
-                if (row.careOfId > 0) {
-                    return '<a href="NameEdit.php?id=' + row.careOfId + '" title="' + donEscape(row.srcTitle) + '">' + donEscape(row.careOfName) + '</a>';
-                }
-                return '<span title="' + donEscape(row.srcTitle) + '">' + donEscape(data) + '</span>';
-            }},
-            {title: 'Campaign', data: 'campaign', render: $.fn.dataTable.render.text()},
-            {title: 'Amount', data: 'amount', className: 'dt-right', render: function (data, type, row) {
-                if (type !== 'display') {
-                    return data;
-                }
-                var amt = '$' + Number(data).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
-                return row.inKind ? '<span style="font-style:italic;" title="In-kind; not included in the total">' + amt + '</span>' : amt;
-            }},
-            {title: 'Date', data: {_: 'dateDisplay', sort: 'date'}},
-            {title: 'Note', data: 'note', render: $.fn.dataTable.render.text()},
             {title: 'Actions', data: 'id', orderable: false, searchable: false, width: '60px', className: 'actionBtns', render: function (data, type, row) {
                 if (type !== 'display') {
                     return '';
@@ -139,9 +159,28 @@ function getDonationMarkup(id, onNewDonation) {
                 return '<ul class="ui-widget ui-helper-clearfix hhk-ui-icons hhk-flex">' + edit
                     + '<li title="Delete Donation" data-did="' + did + '" class="hhk-donation-button donation-delete ui-corner-all ui-state-default">'
                     + '<span class="ui-icon ui-icon-trash"></span></li></ul>';
+            }},
+            {title: 'Date', data: {_: 'dateDisplay', sort: 'date'}},
+            {title: 'Source', data: 'src', width: '120px', render: function (data, type, row) {
+                if (type !== 'display') {
+                    return data;
+                }
+                if (row.careOfId > 0) {
+                    return '<a href="NameEdit.php?id=' + row.careOfId + '" title="' + donEscape(row.srcTitle) + '">' + donEscape(row.careOfName) + '</a>';
+                }
+                return '<span title="' + donEscape(row.srcTitle) + '">' + donEscape(data) + '</span>';
+            }},
+            {title: 'Campaign', data: 'campaign', render: $.fn.dataTable.render.text()},
+            {title: 'Note', data: 'note', render: $.fn.dataTable.render.text()},
+            {title: 'Amount', data: 'amount', className: 'dt-right', render: function (data, type, row) {
+                if (type !== 'display') {
+                    return data;
+                }
+                var amt = '$' + Number(data).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+                return row.inKind ? '<span style="font-style:italic;" title="In-kind; not included in the total">' + amt + '</span>' : amt;
             }}
         ],
-        order: [[3, 'desc']],
+        order: [[1, 'desc']],
         autoWidth: false,
         pageLength: 10,
         lengthMenu: [[10, 25, 50, -1], [10, 25, 50, "All"]],
@@ -166,9 +205,11 @@ function getDonationMarkup(id, onNewDonation) {
                 return 'Donations for ' + donationDonorName;
             },
             messageTop: function () {
-                return $('#donSummary').text();
+                // Keep the summary's lines (its items are text-escaped divs).
+                return $('#donSummary').html();
             },
-            exportOptions: {columns: [0, 1, 2, 3, 4]}
+            // Everything but the Actions column.
+            exportOptions: {columns: [1, 2, 3, 4, 5]}
         }]
     });
 }
@@ -189,6 +230,105 @@ function donateDeleteMarkup(dataTxt, id) {
     }
 }
 
+/**
+ * Show error messages in the donation dialog's message box (one per line), or hide it when there are none.
+ *
+ * @param {string[]} errors
+ */
+function showDonationFormErrors(errors) {
+    "use strict";
+
+    if (!errors || errors.length === 0) {
+        $('#donateResponseContainer').attr("style", "display:none;");
+        return;
+    }
+
+    $('#donateResponse').removeClass("ui-state-highlight").addClass("ui-state-error");
+    $('#donateResponseContainer').attr("style", "display:block;");
+    $('#donateResponseIcon').removeClass("ui-icon-info").addClass("ui-icon-alert");
+
+    var $msg = $('#donResultMessage').html("<strong>Error: </strong>");
+    if (errors.length === 1) {
+        $msg.append(document.createTextNode(errors[0]));
+    } else {
+        $msg.append($('<ul class="mb-0 pl-3"/>').append($.map(errors, function (e) {
+            return $('<li/>').text(e);
+        })));
+    }
+}
+
+/**
+ * Check the donation dialog before saving.  Mirrors the server's checks (Donation.php) so most
+ * mistakes are caught without a round trip; the server still validates everything.
+ *
+ * @param {object} opts {maxDonate: number, isOrganization: boolean}
+ * @returns {boolean} true when the form can be saved
+ */
+function validateDonationForm(opts) {
+    "use strict";
+    var errors = [],
+        money = function (n) {
+            return '$' + Number(n).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+        },
+        flag = function ($fld, msg) {
+            $fld.addClass('ui-state-error');
+            errors.push(msg);
+        };
+
+    $('#vdon .hhk-ajx-dondata').removeClass('ui-state-error');
+
+    var $camp = $('#dselCamp');
+    if (!$camp.val()) {
+        flag($camp, 'Choose a campaign.');
+    }
+
+    var $payType = $('#dselPaytype');
+    if (!$payType.val()) {
+        flag($payType, 'Choose how the donation was paid.');
+    }
+
+    var $date = $('#ddate'), dateVal = $.trim($date.val());
+    if (dateVal === '') {
+        flag($date, 'Enter the donation date.');
+    } else {
+        try {
+            $.datepicker.parseDate('M d, yy', dateVal);
+        } catch (err) {
+            flag($date, 'The date "' + dateVal + '" is not valid; use a date like ' + $.datepicker.formatDate('M d, yy', new Date()) + '.');
+        }
+    }
+
+    var $amt = $('#damount'), amtVal = $.trim($amt.val()), amt = parseFloat(amtVal.replace(/[^0-9.]/g, ''));
+    if (amtVal === '' || isNaN(amt) || amt <= 0) {
+        flag($amt, 'Enter an amount greater than $0.');
+    } else if (opts.maxDonate > 0 && amt > opts.maxDonate) {
+        flag($amt, 'The amount can be at most ' + money(opts.maxDonate) + '.');
+    } else {
+        // Campaign range, loaded by getCampaign() when the campaign is chosen.  0 = no limit.
+        var camp = $('#cLimits').data('camp');
+        if (camp) {
+            var min = parseFloat(camp.mindonation) || 0, max = parseFloat(camp.maxdonation) || 0;
+            if ((min > 0 && amt < min) || (max > 0 && amt > max)) {
+                flag($amt, 'The amount is outside this campaign\'s range (' + $('#cLimits').text() + ').');
+            }
+        }
+    }
+
+    // Organizations need the employee who gave the gift.
+    var $assoc = $('#selAssoc');
+    if (opts.isOrganization && $assoc.length && !(parseInt($assoc.val(), 10) > 0)) {
+        flag($assoc, 'Choose the employee who gave this donation.  If none are listed, add one first.');
+    }
+
+    showDonationFormErrors(errors);
+
+    if (errors.length > 0) {
+        $('#vdon .ui-state-error').first().trigger('focus');
+    }
+
+    return errors.length === 0;
+}
+
 function donateResponse(dataTxt, id) {
     "use strict";
     var cbox, data;
@@ -200,10 +340,7 @@ function donateResponse(dataTxt, id) {
 
     if (data.error) {
         // Keep the dialog open so the user can correct the entry.
-        $('#donateResponse').removeClass("ui-state-highlight").addClass("ui-state-error");
-        $('#donateResponseContainer').attr("style", "display:block;");
-        $('#donateResponseIcon').removeClass("ui-icon-info").addClass("ui-icon-alert");
-        $('#donResultMessage').html("<strong>Error: </strong>").append(document.createTextNode(data.error));
+        showDonationFormErrors([data.error]);
 
     } else {
         $('#vdon').dialog('close');
@@ -231,12 +368,16 @@ function getCampaign(code) {
                 data = $.parseJSON(data);
                 var amtLimit = $('#cLimits');
 
+                // Keep the limits for validateDonationForm().
+                amtLimit.removeData('camp');
+
                 if (data.error) {
                     if (data.gotopage) {
                         window.open(data.gotopage, '_self');
                     }
-                    amtLimit.val('');
+                    amtLimit.text('');
                 } else if (data.camp) {
+                    amtLimit.data('camp', data.camp);
 
                     if (data.camp.mindonation == 0 && data.camp.maxdonation == 0) {
                         amtLimit.text("Any amount.");

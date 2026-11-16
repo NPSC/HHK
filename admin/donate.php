@@ -1,6 +1,7 @@
 <?php
 use HHK\Crypto;
-use HHK\Donation\Donation;
+use HHK\Donation\{Donation, DonateMarkup};
+use HHK\House\Report\ReportFilter;
 use HHK\sec\{Session,WebInit};
 use HHK\SysConst\{AddressPurpose, CampaignType, GLTableNames, SalutationCodes, WebPageCode};
 use HHK\Tables\Donate\DonationsRS;
@@ -86,7 +87,14 @@ try {
 
         case "list":
 
-            $resp = listDonations($dbh, $id);
+            // The Donations tab filter posts donFilter=1 with its controls; otherwise list everything.
+            $filter = null;
+            if (filter_has_var(INPUT_POST, 'donFilter')) {
+                $filter = DonateMarkup::createListFilter($dbh);
+                $filter->loadSelectedTimePeriod()->loadSelectedCampaigns();
+            }
+
+            $resp = listDonations($dbh, $id, $filter);
 
             break;
 
@@ -236,20 +244,49 @@ function deleteDonation(PDO $dbh, int $donId, $uname) {
  *
  * @param PDO $dbh
  * @param int $id
- * @return array{data?: array, donorName?: string, total?: string, error?: string}
+ * @param ReportFilter|null $filter time period and campaigns to limit the list to; null lists everything
+ * @return array{data?: array, donorName?: string, total?: string, filterItems?: list<array{label: string, value: string}>, error?: string}
  */
-function listDonations(PDO $dbh, $id) {
+function listDonations(PDO $dbh, $id, ?ReportFilter $filter = null) {
 
     if ($id == 0) {
         return array('error' => "Bad Member Id");
     }
 
-    $stmt = $dbh->prepare("SELECT iddonations, Donor_Id, Amount, Campaign_Code, Date_Entered, Record_Member, Care_Of_Id, Assoc_Id, Name_Last, Name_First, Campaign_Type, Note
-        FROM vdonation_view WHERE Donor_Id = :id or Assoc_Id = :id2 order by Date_Entered desc;");
-    $stmt->execute(array(
+    $where = "(Donor_Id = :id or Assoc_Id = :id2)";
+    $params = array(
         ":id" => $id,
         ":id2" => $id
-    ));
+    );
+    // Applied filter, one summary line each
+    $filterItems = array();
+
+    if ($filter !== null) {
+
+        // Time period: report start through the day before the query end.
+        $where .= " and Date_Entered >= :start and Date_Entered < :end";
+        $params[":start"] = $filter->getReportStart();
+        $params[":end"] = $filter->getQueryEnd();
+
+        $filterItems[] = array('label' => 'Showing', 'value' => date('M j, Y', strtotime($filter->getReportStart())) . ' - ' . date('M j, Y', strtotime($filter->getReportEnd())));
+
+        $campaigns = $filter->getSelectedCampaigns();
+        if (count($campaigns) > 0) {
+            $holders = array();
+            foreach (array_values($campaigns) as $i => $code) {
+                $holders[] = ":camp$i";
+                $params[":camp$i"] = $code;
+            }
+            // vdonation_view's Campaign_Code is the campaign title, so match the codes on the donations table
+            // (same case-insensitive comparison the view's campaign join uses).
+            $where .= " and iddonations in (select `iddonations` from `donations` where lcase(trim(`Campaign_Code`)) in (" . implode(',', array_map(fn($h) => "lcase(trim($h))", $holders)) . "))";
+            $filterItems[] = array('label' => 'Campaigns', 'value' => $filter->getSelectedCampaignsString());
+        }
+    }
+
+    $stmt = $dbh->prepare("SELECT iddonations, Donor_Id, Amount, Campaign_Code, Date_Entered, Record_Member, Care_Of_Id, Assoc_Id, Name_Last, Name_First, Campaign_Type, Note
+        FROM vdonation_view WHERE $where order by Date_Entered desc;");
+    $stmt->execute($params);
 
     $rows = array();
     $total = 0;
@@ -316,6 +353,7 @@ function listDonations(PDO $dbh, $id) {
     return array(
         'data' => $rows,
         'donorName' => ($donorName === false ? '' : $donorName),
-        'total' => number_format($total, 2, '.', ',')
+        'total' => number_format($total, 2, '.', ','),
+        'filterItems' => $filterItems
     );
 }
