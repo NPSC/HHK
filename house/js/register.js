@@ -753,7 +753,7 @@ $(document).ready(function () {
 
     // Current Guests
     let cgCols = [
-            {data: 'Action', title: 'Action', sortable: false, searchable:false, className: "noPrint"},
+            {data: 'Action', title: 'Action', orderable: false, searchable:false, className: "noPrint"},
             {data: visitorLabel+' First', title: visitorLabel+' First'},
             {data: visitorLabel+' Last', title: visitorLabel+' Last'},
             {data: 'Checked In', title: 'Checked In', render: function (data, type) {return dateRender(data, type, dateFormat);}},
@@ -774,7 +774,7 @@ $(document).ready(function () {
         cgCols.push({data: 'Patient', title: patientLabel});
 
 		if(showCurrentGuestPhotos){
-			cgCols.unshift({data: 'photo', title: 'Photo', sortable: false, searchable: false, className: "noPrint", width: "80px"});
+			cgCols.unshift({data: 'photo', title: 'Photo', orderable: false, searchable: false, className: "noPrint", width: "80px"});
     }
     
     $("#btnTextCurGuests").button().smsDialog({ "campaign": "checked_in"});
@@ -826,7 +826,7 @@ $(document).ready(function () {
 
     // Reservations
     let rvCols = [
-            {data: 'Action', title: 'Action', sortable: false, searchable:false, className: "noPrint"},
+            {data: 'Action', title: 'Action', orderable: false, searchable:false, className: "noPrint"},
             {data: 'Guest First', title: visitorLabel+' First'},
             {data: 'Guest Last', title: visitorLabel+' Last'},
             {data: 'Expected Arrival', title: 'Expected Arrival', render: function (data, type) {return dateRender(data, type, dateFormat);}},
@@ -865,7 +865,7 @@ $(document).ready(function () {
 
     //Waitlist
     let wlCols = [
-            {data: 'Action', title: 'Action', sortable: false, searchable:false, "className": "noPrint"},
+            {data: 'Action', title: 'Action', orderable: false, searchable:false, "className": "noPrint"},
             {data: 'Guest First', title: visitorLabel+' First'},
             {data: 'Guest Last', title: visitorLabel+' Last'}];
 
@@ -915,7 +915,7 @@ $(document).ready(function () {
             'data': 'Status',
             'title': 'Status',
             'searchable': false,
-            'sortable': true,
+            'orderable': true,
             'createdCell': function(td, cellData, rowData, col){
                 if(rowData.StatusColor){
                     $(td).css("background-color", rowData.StatusColor);
@@ -929,8 +929,8 @@ $(document).ready(function () {
             if (showCharges) {
                 dailyCols.push({data: 'Unpaid', title: 'Unpaid', className: 'hhk-justify-r'});
             }
-            dailyCols.push({data: 'Visit_Notes', title: 'Last Visit Note', sortable: false});
-            dailyCols.push({data: 'Notes', title: 'Room Notes', sortable: false});
+            dailyCols.push({data: 'Visit_Notes', title: 'Last Visit Note', orderable: false});
+            dailyCols.push({data: 'Notes', title: 'Room Notes', orderable: false});
 
     // Show payment message
     if (pmtMkup !== '' && pmtStatus !== '') {
@@ -949,8 +949,7 @@ $(document).ready(function () {
         dateFormat: 'M d, yy'
     });
     $.extend( $.fn.dataTable.defaults, {
-        "dom": '<"dtTop"if>rt<"dtBottom"lp><"clear">',
-        "displayLength": 50,
+        "pageLength": 50,
         "lengthMenu": [[25, 50, -1], [25, 50, "All"]],
         "order": [[ 3, 'asc' ]],
         "processing": true,
@@ -1697,8 +1696,7 @@ $(document).ready(function () {
                                  'render': function ( data, type, row ) {return dateRender(data, type);}
                                 }
                              ],
-                            "dom": '<"top"if><"hhk-overflow-x hhk-tbl-wrap"rt><"bottom"lp><"clear">',
-                            "displayLength": 50,
+                            "pageLength": 50,
                             "lengthMenu": [[20, 50, 100, -1], [20, 50, 100, "All"]],
                             "order": [[ 1, 'asc' ]]
                         });
@@ -1756,7 +1754,6 @@ $(document).ready(function () {
                    infoCallback: function( settings, start, end, max, total, pre ) {
                         return "Prepared: " + dateRender(new Date().toISOString(), 'display', 'ddd, MMM D YYYY, h:mm a');
                   },
-                  "dom": '<"top"if><\"hhk-overflow-x hhk-tbl-wrap\"rt><"bottom ui-toolbar ui-helper-clearfix"lp>',
                 });
             }
             if(ui.newTab.prop('id') === 'liStaffNotes'){
@@ -1839,7 +1836,7 @@ $(document).ready(function () {
        },
        columns: cgCols,
        "buttons": getDtBtns("Current " + visitorLabel + "s - " + moment().format("MMM D, YYYY"), false, "hhk-strip-links"),
-       "dom": '<"top"Bif><\"hhk-overflow-x\"rt><"bottom ui-toolbar ui-helper-clearfix"lp>',
+       "layout": { topStart: ['buttons', 'info'] },
        autoWidth:false,
     });
 
@@ -1865,7 +1862,7 @@ $(document).ready(function () {
        },
        columns: rvCols,
        "buttons": getDtBtns(reservationTabLabel + " - " + moment().format("MMM D, YYYY")),
-       "dom": '<"top"Bif><\"hhk-overflow-x\"rt><"bottom ui-toolbar ui-helper-clearfix"lp>',
+       "layout": { topStart: ['buttons', 'info'] },
     });
 
     if ($('#unreserv').length > 0) {
@@ -1890,7 +1887,7 @@ $(document).ready(function () {
            },
            columns: rvCols,
            "buttons": getDtBtns(unconfirmedResvTabLabel + " - " + moment().format("MMM D, YYYY")),
-       		"dom": '<"top"Bif><\"hhk-overflow-x\"rt><"bottom ui-toolbar ui-helper-clearfix"lp>',
+       		"layout": { topStart: ['buttons', 'info'] },
         });
     }
 
@@ -1916,7 +1913,7 @@ $(document).ready(function () {
        },
        columns: wlCols,
        "buttons": getDtBtns("Waitlist - " + moment().format("MMM D, YYYY")),
-       "dom": '<"top"Bif><\"hhk-overflow-x\"rt><"bottom ui-toolbar ui-helper-clearfix"lp>',
+       "layout": { topStart: ['buttons', 'info'] },
     });
 
     //move datatable buttons to title row

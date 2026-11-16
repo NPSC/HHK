@@ -440,7 +440,7 @@ if ($uS->CoTod) {
         <title><?php echo $wInit->pageTitle; ?></title>
         <?php echo JQ_UI_CSS; ?>
         <?php echo HOUSE_CSS; ?>
-        <?php echo JQ_DT_CSS ?>
+        <?php echo DT3_CSS ?>
         <?php echo NOTY_CSS; ?>
         <?php echo FAVICON; ?>
         <?php echo GRID_CSS; ?>
@@ -449,7 +449,8 @@ if ($uS->CoTod) {
         <?php echo BOOTSTRAP_ICONS_CSS; ?>
         <script type="text/javascript" src="<?php echo JQ_JS ?>"></script>
         <script type="text/javascript" src="<?php echo JQ_UI_JS ?>"></script>
-        <script type="text/javascript" src="<?php echo JQ_DT_JS ?>"></script>
+        <script type="text/javascript" src="<?php echo DT3_JS ?>"></script>
+        <script type="text/javascript" src="<?php echo JQ_DT_SETTINGS; ?>"></script>
         <script type="text/javascript" src="<?php echo PRINT_AREA_JS ?>"></script>
         <script type="text/javascript" src="<?php echo RESV_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo RESV_MANAGER_JS; ?>"></script>

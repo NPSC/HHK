@@ -96,7 +96,7 @@ function buildPage($error, $success = false) {
             <meta http-equiv="x-ua-compatible" content="IE=edge">
             <?php echo JQ_UI_CSS; ?>
             <?php echo MULTISELECT_CSS; ?>
-            <?php echo JQ_DT_CSS; ?>
+            <?php echo DT3_CSS; ?>
             <?php echo NOTY_CSS; ?>
             <?php echo FAVICON; ?>
 

@@ -67,7 +67,7 @@ $waitlist = HTMLContainer::generateMarkup('h3', $uS->siteName . ' Daily Waitlist
         <title><?php echo $wInit->pageTitle; ?></title>
         <?php echo JQ_UI_CSS; ?>
         <?php echo HOUSE_CSS; ?>
-        <?php echo JQ_DT_CSS ?>
+        <?php echo DT3_CSS ?>
         <?php echo FAVICON; ?>
         <?php echo GRID_CSS; ?>
         <?php echo NOTY_CSS; ?>
@@ -76,7 +76,8 @@ $waitlist = HTMLContainer::generateMarkup('h3', $uS->siteName . ' Daily Waitlist
 
         <script type="text/javascript" src="<?php echo JQ_JS ?>"></script>
         <script type="text/javascript" src="<?php echo JQ_UI_JS ?>"></script>
-        <script type="text/javascript" src="<?php echo JQ_DT_JS ?>"></script>
+        <script type="text/javascript" src="<?php echo DT3_JS ?>"></script>
+        <script type="text/javascript" src="<?php echo JQ_DT_SETTINGS; ?>"></script>
         <script type="text/javascript" src="<?php echo PRINT_AREA_JS ?>"></script>
         <script type="text/javascript" src="<?php echo MOMENT_JS ?>"></script>
         <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
@@ -122,8 +123,8 @@ $waitlist = HTMLContainer::generateMarkup('h3', $uS->siteName . ' Daily Waitlist
         ];
 
         var $table = $('#waitlist').DataTable({
-            "dom": '<"top"Bif><\"hhk-overflow-x\"rt><"bottom"lp>',
-            "displayLength": 50,
+            "layout": { topStart: ['buttons', 'info'] },
+            "pageLength": 50,
             "lengthMenu": [[5, 25, 50, -1], [5, 25, 50, "All"]],
             "order": [[ 3, 'asc' ]],
             "processing": true,

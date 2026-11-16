@@ -44,7 +44,7 @@ $(document).ready(function () {
     		"targets": [ target ],
     		"title": title,
     		"searchable": search,
-    		"sortable": search,
+    		"orderable": search,
     		"data": column.dt,
     		render: render
     	});
@@ -56,7 +56,7 @@ $(document).ready(function () {
 		"targets": [ target ],
 		"title": "Unknown",
 		"searchable": false,
-		"sortable": false,
+		"orderable": false,
 		"data": "idName",
 		className: "dt-body-center",
 		render: function ( data, type ){
@@ -72,10 +72,9 @@ $(document).ready(function () {
         "processing": true,
         "deferRender": true,
         "language": {"search": "Search missing demographics:"},
-        "sorting": [[0,'desc']],
-        "displayLength": 25,
+        "order": [[0,'desc']],
+        "pageLength": 25,
         "lengthMenu": [[10, 25, 50], [10, 25, 50]],
-        "dom": '<"top fg-toolbar ui-toolbar ui-widget-header ui-helper-clearfix ui-corner-tl ui-corner-tr"lf><"hhk-overflow-x"rt><"bottom fg-toolbar ui-toolbar ui-widget-header ui-helper-clearfix ui-corner-bl ui-corner-br"ip>',
         ajax: {
             url: "GuestDemog.php",
             type: "post",
@@ -90,8 +89,9 @@ $(document).ready(function () {
         	headerOffset: 38,
         }, */
         "initComplete": function(settings, json) {
-        	$('.bottom').append('<div class="savebtns" style="float:right; padding-top: 0.25em;"><button id="dt-cancel" style="padding:0.5em; margin-right: 2px;">Cancel</button><button id="dt-save" style="padding:0.5em; margin-left: 2px;">Save</button></div>');
-        	$('.bottom .savebtns').buttonset().hide();
+        	// Save/Cancel replace the pager while there are unsaved edits.
+        	$('#dataTbl_wrapper .dt-paging').after('<div class="savebtns" style="padding-top: 0.25em;"><button id="dt-cancel" style="padding:0.5em; margin-right: 2px;">Cancel</button><button id="dt-save" style="padding:0.5em; margin-left: 2px;">Save</button></div>');
+        	$('#dataTbl_wrapper .savebtns').buttonset().hide();
         	
         	this.api().columns().every( function () {
                 var column = this;
@@ -117,7 +117,7 @@ $(document).ready(function () {
                 if(filter){
                     filter.appendTo( $(column.header()))
                     .on( 'change', function () {
-                    	if($(".bottom .savebtns").is(':visible')){
+                    	if($("#dataTbl_wrapper .savebtns").is(':visible')){
                     		if(confirm("You have unsaved data, would you like to save first?")){
                     			$(".savebtns #dt-save").click();
                     		}else{
@@ -166,8 +166,8 @@ $(document).ready(function () {
         	});
         },
         "drawCallback": function(){
-        	$('.bottom .savebtns').hide();
-        	$('.bottom .dataTables_paginate').show();
+        	$('#dataTbl_wrapper .savebtns').hide();
+        	$('#dataTbl_wrapper .dt-paging').show();
         }
     });
     
@@ -192,8 +192,8 @@ $(document).ready(function () {
     });
     
     $('#dataTbl').on('change', 'select.demog', function(e){
-    	$(".bottom .dataTables_paginate").hide();
-    	$(".bottom .savebtns").show();
+    	$("#dataTbl_wrapper .dt-paging").hide();
+    	$("#dataTbl_wrapper .savebtns").show();
     });
     
     $(document).on("click", ".savebtns #dt-cancel", function(e){
@@ -236,7 +236,7 @@ $(document).ready(function () {
     });
     
     $(window).on('beforeunload', function(){
-		if($(".bottom .savebtns").is(':visible')){
+		if($("#dataTbl_wrapper .savebtns").is(':visible')){
 			return true; //prevent user from leaving
 		}
 	});

@@ -670,7 +670,6 @@
 		        "order": [[0,'desc'], [2,'desc']],
 		        "pageLength": settings.defaultLength,
 		        "lengthMenu": settings.defaultLengthMenu,
-	                "dom": '<"dtTop"if><"hhk-overflow-x"rt><"dtBottom"lp><"clear">',
 		        ajax: {
 		            url: settings.serviceURL,
 	                data: {
@@ -704,12 +703,6 @@
 	            }
             };
 
-            // DataTables 2+ (admin pages): drop the legacy dom string; the default layout
-            // (js/datatablesSettings.js) gives the same info/search top, length/paging bottom.
-            if ($.fn.dataTable.versionCheck && $.fn.dataTable.versionCheck('2')) {
-                delete dtSettings.dom;
-            }
-
             //only show grouping when showing notes from multiple linkIds
             if(settings.linkId === 0 && settings.linkType !== "staff"){
                 dtSettings.orderFixed = [4, "asc"];
@@ -726,8 +719,6 @@
             $wrapper.find('.flag').checkboxradio({icon: false});
             
             //add ignrSave class to Dt controls
-            $(".dataTables_filter").addClass('ignrSave');
-            $(".dtBottom").addClass('ignrSave');
             $wrapper.find(".dt-search, .dt-length").addClass('ignrSave');
             
         }

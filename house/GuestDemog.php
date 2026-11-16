@@ -206,7 +206,7 @@ if ($cmd){
         <?php echo NOTY_CSS; ?>
         <?php echo FAVICON; ?>
         <?php echo GRID_CSS; ?>
-        <?php echo JQ_DT_CSS; ?>
+        <?php echo DT3_CSS; ?>
 		<?php echo MULTISELECT_CSS; ?>
 		<?php echo NAVBAR_CSS; ?>
         <?php echo CSSVARS; ?>
@@ -227,7 +227,8 @@ if ($cmd){
         <script type="text/javascript" src="<?php echo NOTY_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo NOTY_SETTINGS_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo JQ_DT_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo DT3_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo JQ_DT_SETTINGS; ?>"></script>
         <script type="text/javascript" src="<?php echo MULTISELECT_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo MISSINGDEMOG_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo BOOTSTRAP_JS; ?>"></script>

@@ -38,7 +38,6 @@ define('JSV', '?v=' . HHK\SysConst\CodeVersion::BUILD);
 
 // Page header links and scripts
 define('JQ_UI_CSS', '<link href="css/jqui/jquery-ui.min.css' . JSV . '" rel="stylesheet" type="text/css" />');
-define('JQ_DT_CSS', '<link href="css/datatables.min.css' . JSV . '" rel="stylesheet" type="text/css" />');
 define('DT3_CSS', '<link href="../css/datatables3.min.css' . JSV . '" rel="stylesheet" type="text/css" />');
 define('MULTISELECT_CSS', '<link href="css/jquery.multiselect.css' . JSV . '" rel="stylesheet" type="text/css" />');
 define('FAVICON', '<link rel="icon" type="image/svg+xml" href="../favicon.svg' . JSV . '" />');
@@ -51,7 +50,6 @@ define('UPPLOAD_CSS', '<link rel="stylesheet" href="../js/uppload/uppload.css' .
 
 define('JQ_UI_JS', '../js/jquery-ui.min.js' . JSV);
 define('JQ_JS', '../js/jquery-min.js' . JSV);
-define('JQ_DT_JS', '../js/datatables.min.js' . JSV);
 define('DT3_JS', '../js/datatables3.min.js' . JSV);
 define('NOTY_JS', '../js/toastr.min.js' . JSV);
 define('NOTY_SETTINGS_JS', '../js/toastrSettings.js' . JSV);  //These are local

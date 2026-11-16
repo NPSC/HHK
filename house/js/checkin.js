@@ -16,8 +16,7 @@ $(document).ready(function() {
     var dateFormat = $('dateFormat').val();
     $('input[type="button"]').button();
     $.extend($.fn.dataTable.defaults, {
-        "dom": '<"top"if>rt<"bottom"lp><"clear">',
-        "displayLength": 25,
+        "pageLength": 25,
         "lengthMenu": [[25, 50, -1], [25, 50, "All"]],
         "order": [[ 4, 'asc' ]]
     });
@@ -28,7 +27,7 @@ $(document).ready(function() {
              'render': function ( data, type ) {return dateRender(data, type, dateFormat);}
             },
             {'targets':[0],
-            	sortable: false
+            	orderable: false
             }
          ]
      });

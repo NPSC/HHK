@@ -291,10 +291,10 @@ abstract class AbstractReport {
             "render": function ( data, type, row ) {return dayRender(data, type, "MMM Do");}
             }
             ],
-            "displayLength": 50,
+            "pageLength": 50,
             "lengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]],
             "order": [[' . $this->defaultSortCol . ', "asc"]],
-            "dom": "<\"top ui-toolbar ui-helper-clearfix\"Bif><\"hhk-overflow-x\"rt><\"bottom ui-toolbar ui-helper-clearfix\"lp>",
+            "layout": {"top2Start": ["buttons"]},
             "buttons": [
             {
                 extend: "print",

@@ -1878,8 +1878,7 @@ function paymentsTable(tableID, containerID, refreshPayments) {
                 }
             }
         ],
-        'dom': '<"top"if><"hhk-overflow-x"rt><"bottom"lp><"clear">',
-        'displayLength': 50,
+        'pageLength': 50,
         'order': [[8, 'asc']],
         'lengthMenu': [[25, 50, -1], [25, 50, "All"]],
         drawCallback: function () {
