@@ -137,7 +137,7 @@ if (isset($_POST['btnkfSave'])) {
 
         // new entry
         $dText = filter_var($_POST['srrDesc'][0], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
-        $dAmt = filter_var($_POST['srrAmt'][0], FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION);
+        $dAmt = floatval(filter_var($_POST['srrAmt'][0], FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION));
 
         // Check for an entry with the same description
         $stmt = $dbh->prepare("Select count(*) from gen_lookups where `Table_Name` = 'Static_Room_Rate' and LOWER(`Description`) = :desc;");
