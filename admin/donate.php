@@ -1,15 +1,11 @@
 <?php
 use HHK\Crypto;
-use HHK\sec\{Session,WebInit};
-use HHK\SysConst\{ActivityTypes, AddressPurpose, CampaignType, GLTableNames, MemBasis, MemDesignation, MemStatus, SalutationCodes, WebPageCode};
-use HHK\Tables\EditRS;
-use HHK\Tables\ActivityRS;
-use HHK\Tables\Donate\DonationsRS;
-use HHK\Tables\Name\{NameAddressRS,NamePhoneRS,NameEmailRS};
-use HHK\Exception\RuntimeException;
-use HHK\Member\AbstractMember;
-use HHK\Donation\Campaign;
 use HHK\Donation\Donation;
+use HHK\sec\{Session,WebInit};
+use HHK\SysConst\{AddressPurpose, CampaignType, GLTableNames, SalutationCodes, WebPageCode};
+use HHK\Tables\Donate\DonationsRS;
+use HHK\Tables\EditRS;
+
 
 /**
  * donate.php
@@ -55,36 +51,40 @@ if (filter_has_var(INPUT_POST, 'cmd')) {
     $cmd = filter_input(INPUT_POST, 'cmd', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 }
 
+$id = 0;
+if (filter_has_var(INPUT_POST, "id")) {
+    $id = intval(filter_input(INPUT_POST, "id", FILTER_SANITIZE_NUMBER_INT), 10);
+}
+
+$donId = 0;
+if (filter_has_var(INPUT_POST, 'did')) {
+    $donId = intval(filter_input(INPUT_POST, 'did', FILTER_SANITIZE_NUMBER_INT), 10);
+}
+
 try {
 
     switch ($cmd) {
         case "insert":
-            $maxDonationAmt = floatval($uS->MaxDonate);
+        case "update":
 
-            $id = 0;
-            if (filter_has_var(INPUT_POST, "id")) {
-                $id = intval(filter_input(INPUT_POST, "id", FILTER_SANITIZE_NUMBER_INT), 10);
-            }
+            $data = (isset($_POST["qd"]) && is_array($_POST["qd"])) ? $_POST["qd"] : array();
+            $resp = recordDonation($dbh, floatval($uS->MaxDonate), $id, $data, $uS->nameLookups[GLTableNames::PayType], ($cmd == "update" ? $donId : 0));
 
-            $resp = recordDonation($dbh, $maxDonationAmt, $id, $_POST);
+            break;
+
+        case "get":
+
+            $resp = getDonation($dbh, $donId, $id);
 
             break;
 
         case "delete":
-            $donId = 0;
-            if (filter_has_var(INPUT_POST, 'did')) {
-                $donId = intval(filter_input(INPUT_POST, 'did', FILTER_SANITIZE_NUMBER_INT), 10);
-            }
+
             $resp = deleteDonation($dbh, $donId, $uname);
 
             break;
 
         case "list":
-
-            $id = 0;
-            if (filter_has_var(INPUT_POST, "id")) {
-                $id = intval(filter_input(INPUT_POST, "id", FILTER_SANITIZE_NUMBER_INT), 10);
-            }
 
             $resp = listDonations($dbh, $id);
 
@@ -108,264 +108,126 @@ try {
 echo (json_encode($resp));
 exit();
 
-function recordDonation(PDO $dbh, $maxDonationAmt, $id, $parms)
-{
-    $reply = array();
-    // get session instance
-    $uS = Session::getInstance();
+
+/**
+ * Record a new donation, or update an existing one, from the NameEdit donation dialog.
+ *
+ * @param PDO $dbh
+ * @param float $maxDonationAmt
+ * @param int $id donor id
+ * @param array $data the dialog's field values, keyed by input id
+ * @param array $payCodes
+ * @param int $donId existing donation to update; 0 to insert a new one
+ * @return array{success?: string, error?: string}
+ */
+function recordDonation(PDO $dbh, float $maxDonationAmt, int $id, array $data, array $payCodes, int $donId = 0) {
 
     if ($id <= 0) {
-        return array(
-            "error" => "Bad Id: " . $id
-        );
+        return array("error" => "Bad Id: " . $id);
     }
 
-    // other values packed here
-    $data = array();
-    if (isset($parms["qd"])) {
-        $data = $parms["qd"];
-    } else {
-        return array(
-            "error" => "Missing data.  "
-        );
+    if (count($data) == 0) {
+        return array("error" => "Missing data.  ");
     }
 
-    // Amount
     $amt = 0;
     if (isset($data["damount"])) {
         $amt = floatval(filter_var($data["damount"], FILTER_VALIDATE_FLOAT, FILTER_FLAG_ALLOW_FRACTION | FILTER_FLAG_ALLOW_THOUSAND));
     }
 
-    // Filter donation amouont
-    if ($amt <= 0 || $amt > $maxDonationAmt) {
-        return array(
-            "error" => "Bad Amount: " . number_format($amt, 2, ".", ",") . ".  Amount must be greater than 0 and less than $" . number_format($maxDonationAmt, 2, ".", ",")
-        );
-    }
-
-    // Campaign code must me defined.
-    $campaignCode = '';
-    if (isset($data["dselCamp"])) {
-        $campaignCode = filter_var($data["dselCamp"], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
-    }
+    $campaignCode = isset($data["dselCamp"]) ? filter_var($data["dselCamp"], FILTER_SANITIZE_FULL_SPECIAL_CHARS) : '';
     if ($campaignCode == '') {
-        return array(
-            "error" => "The Campaign is not specified.  "
-        );
+        return array("error" => "The Campaign is not specified.  ");
     }
 
-    // Pay type
-    $payType = '';
-    if (isset($data["dselPaytype"])) {
-        $payType = filter_var($data["dselPaytype"], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
-    }
-    if (isset($uS->nameLookups[GLTableNames::PayType][$payType]) === FALSE) {
-        return array(
-            "error" => "Bad Pay type: " . $payType
-        );
-    }
+    $payType = isset($data["dselPaytype"]) ? filter_var($data["dselPaytype"], FILTER_SANITIZE_FULL_SPECIAL_CHARS) : '';
+    $dte = isset($data["ddate"]) ? filter_var($data["ddate"], FILTER_SANITIZE_FULL_SPECIAL_CHARS) : '';
+    $salut = isset($data["dselSalutation"]) ? filter_var($data["dselSalutation"], FILTER_SANITIZE_FULL_SPECIAL_CHARS) : SalutationCodes::FirstOnly;
+    $envel = isset($data["dselEnvelope"]) ? filter_var($data["dselEnvelope"], FILTER_SANITIZE_FULL_SPECIAL_CHARS) : SalutationCodes::Formal;
+    $addr = isset($data["dselAddress"]) ? filter_var($data["dselAddress"], FILTER_SANITIZE_FULL_SPECIAL_CHARS) : AddressPurpose::Home;
+    $includedId = isset($data["selAssoc"]) ? intval(filter_var($data["selAssoc"], FILTER_SANITIZE_NUMBER_INT), 10) : 0;
+    $notes = isset($data['dnote']) ? filter_var($data["dnote"], FILTER_SANITIZE_FULL_SPECIAL_CHARS) : '';
+    $fundCode = isset($data["dselStudent"]) ? filter_var($data["dselStudent"], FILTER_SANITIZE_NUMBER_INT) : '';
 
-    // Date
-    $dte = date('Y-m-d H:i:s');
-    if (isset($data["ddate"])) {
-        $dte = filter_var($data["ddate"], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
-    } else {
-        $dte = date('Y-m-d H:i:s');
-    }
-
-    // These three have valid defaults
-    $salut = SalutationCodes::FirstOnly;
-    if (isset($data["dselSalutation"])) {
-        $salut = filter_var($data["dselSalutation"], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
-    }
-    $envel = SalutationCodes::Formal;
-    if (isset($data["dselEnvelope"])) {
-        $envel = filter_var($data["dselEnvelope"], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
-    }
-    $addr = AddressPurpose::Home;
-    if (isset($data["dselAddress"])) {
-        $addr = filter_var($data["dselAddress"], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
-    }
-    $includedId = 0;
-    if (isset($data["selAssoc"])) {
-        $includedId = intval(filter_var($data["selAssoc"], FILTER_SANITIZE_NUMBER_INT), 10);
-    }
-
-    $notes = '';
-    if (isset($data['dnote'])) {
-        $notes = filter_var($data["dnote"], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
-    }
-
-    $campaign = new Campaign($dbh, $campaignCode);
-    if ($campaign->get_idcampaign() == 0) {
-        return array(
-            "error" => "Bad Campaign Code: " . $campaignCode
-        );
-    }
-
-    if ($campaign->isAmountValid($amt) === FALSE) {
-        return array(
-            "error" => "Amount outside campaign range limits: $" . number_format($amt, 2, ".", ",")
-        );
-    }
-
-    $fundCode = '';
-    if (isset($data["dselStudent"]) && $campaign->get_type() == CampaignType::Scholarship) {
-        $fundCode = filter_var($data["dselStudent"], FILTER_SANITIZE_NUMBER_INT);
-    }
-
-    $name = AbstractMember::GetDesignatedMember($dbh, $id, MemBasis::Indivual);
-    if ($name->isNew()) {
-        return array(
-            "error" => "Bad Member Id: " . $id
-        );
-    }
-
-    if ($name->getMemberDesignation() == MemDesignation::Individual) {
-        $assocId = $includedId;
-        $careOfId = 0;
-    } else {
-        $assocId = 0;
-        $careOfId = $includedId;
-    }
-
-    if ($name->getMemberDesignation() == MemDesignation::Organization and $careOfId < 1) {
-        // All organizations must have an employee assigned as care of
-        return array(
-            "error" => "Please select an employee.  If no employees are listed, then create one and try the donation again.  (Someone signed that check.)"
-        );
-    }
-
-    if ($name->get_status() != MemStatus::Active && $name->get_status() != MemStatus::Deceased) {
-        return array(
-            "error" => "The donor's Member Status must be set to Active in order to donate."
-        );
-    }
-
-    // do the drop
-
-    $activRS = new ActivityRS();
-    $activRS->idName->setNewVal($id);
-    $activRS->Trans_Date->setNewVal(date('Y-m-d H:i:s'));
-    $activRS->Type->setNewVal(ActivityTypes::Donation);
-    $activRS->Effective_Date->setNewVal($dte);
-    $activRS->Product_Code->setNewVal('gift');
-    $activRS->Source_System->setNewVal('manual');
-    $activRS->Quantity->setNewVal(1);
-    $activRS->Amount->setNewVal($amt);
-    $activRS->Pay_Method->setNewVal($payType);
-    $activRS->Campaign_Code->setNewVal($campaign->get_campaigncode());
-    $activRS->Member_Type->setNewVal($name->get_type());
-    $activRS->Status_Code->setNewVal('a');
-    $activRS->Note->setNewVal($notes);
-
-    $acId = EditRS::insert($dbh, $activRS);
-
-    if ($acId > 0) {
-        // Insert donation record
-        $donRS = new DonationsRS();
-        $donRS->Activity_Id->setNewVal($acId);
-        $donRS->Amount->setNewVal($amt);
-        $donRS->Donor_Id->setNewVal($id);
-        $donRS->Care_Of_Id->setNewVal($careOfId);
-        $donRS->Assoc_Id->setNewVal($assocId);
-        $donRS->Type->setNewVal('local');
-        $donRS->Date_Entered->setNewVal($dte);
-        $donRS->Pay_Type->setNewVal($payType);
-        $donRS->Member_type->setNewVal($name->get_type());
-        $donRS->Donation_Type->setNewVal('gift');
-        $donRS->Salutation_Code->setNewVal($salut);
-        $donRS->Envelope_Code->setNewVal($envel);
-        $donRS->Note->setNewVal($notes);
-
-        $donRS->Org_Code->setNewVal('PIFH');
-        $donRS->Fund_Code->setNewVal($fundCode);
-        $donRS->Campaign_Code->setNewVal($campaign->get_campaigncode());
-        $donRS->Status->setNewVal('a');
-        $donRS->Updated_By->setNewVal($uS->username);
-        $donRS->Last_Updated->setNewVal(date('Y-m-d H:i:s'));
-
-        $addrRS = new NameAddressRS();
-        $addrRS->idName->setStoredVal($id);
-        $addrRS->Purpose->setStoredVal($addr);
-        $rows = EditRS::select($dbh, $addrRS, array(
-            $addrRS->idName,
-            $addrRS->Purpose
-        ));
-        if (count($rows) > 0) {
-            EditRS::loadRow($rows[0], $addrRS);
-        }
-
-        $donRS->Address_1->setNewVal($addrRS->Address_1->getStoredVal());
-        $donRS->Address_2->setNewVal($addrRS->Address_2->getStoredVal());
-        $donRS->City->setNewVal($addrRS->City->getStoredVal());
-        $donRS->State->setNewVal($addrRS->State_Province->getStoredVal());
-        $donRS->Postal_Code->setNewVal($addrRS->Postal_Code->getStoredVal());
-        $donRS->Country->setNewVal($addrRS->Country->getStoredVal());
-        $donRS->Address_Purpose->setNewVal($addr);
-
-        $phoneRS = new NamePhoneRS();
-        $phoneRS->idName->setStoredVal($id);
-        $phoneRS->Phone_Code->setStoredVal($name->get_preferredPhone());
-        $rows = EditRS::select($dbh, $phoneRS, array(
-            $phoneRS->idName,
-            $phoneRS->Phone_Code
-        ));
-        if (count($rows) > 0) {
-            EditRS::loadRow($rows[0], $phoneRS);
-        }
-
-        $emailRS = new NameEmailRS();
-        $emailRS->idName->setStoredVal($id);
-        $emailRS->Purpose->setStoredVal($name->get_preferredEmail());
-        $rows = EditRS::select($dbh, $emailRS, array(
-            $emailRS->idName,
-            $emailRS->Purpose
-        ));
-        if (count($rows) > 0) {
-            EditRS::loadRow($rows[0], $emailRS);
-        }
-
-        $donRS->Phone->setNewVal($phoneRS->Phone_Num->getStoredVal());
-        $donRS->Email->setNewVal($emailRS->Email->getStoredVal());
-
-        $donId = EditRS::insert($dbh, $donRS);
+    try {
+        $donation = new Donation($dbh, $payCodes, $maxDonationAmt, $campaignCode);
+        $donation->newDonation($dbh, $amt, $id, $includedId, $payType, $dte, $addr, $salut, $envel, $notes, $fundCode);
 
         if ($donId > 0) {
-
-            Donation::markAsDonor($dbh, $id);
-
-            if ($assocId > 0) {
-                Donation::markAsDonor($dbh, $assocId);
-            }
-
-            $reply["success"] = "ok";
-        } else {
-            throw new RuntimeException("DB Error, table=donations - insert failure.");
+            $donation->updateDonation($dbh, $donId);
+            return array("success" => "Donation updated");
         }
-    } else {
-        throw new RuntimeException("DB Error, table=activiy, insert failure");
+
+        $donation->saveDonation($dbh);
+    } catch (RuntimeException $ex) {
+        // Validation failures; show the message as-is in the dialog.
+        return array("error" => $ex->getMessage());
     }
-    return $reply;
+
+    return array("success" => "Donation recorded");
 }
 
-function deleteDonation(PDO $dbh, $donId, $uname)
-{
-    $reply = array();
+/**
+ * One donation's values for the edit dialog, keyed by the dialog's input ids.
+ *
+ * @param PDO $dbh
+ * @param int $donId
+ * @param int $id the member whose page is asking; must be the donor
+ * @return array{donation?: array, error?: string}
+ */
+function getDonation(PDO $dbh, int $donId, int $id) {
 
-    if ($donId > 0) {
-        // mark donation record as deleted
-        $count = EditRS::updateFields($dbh, new DonationsRS(), ['iddonations' => $donId], ['Status' => 'd', 'Last_Updated' => date('Y-m-d H:i:s'), 'Updated_By' => $uname]);
-
-        if ($count == 1) {
-            $reply["success"] = "Donation Deleted.  ";
-        } else {
-            $reply["error"] = "Donation not found.  ";
-        }
-    } else {
-        $reply["error"] = "Bad donation record Id";
+    try {
+        $donRS = Donation::loadDonation($dbh, $donId);
+    } catch (RuntimeException $ex) {
+        return array("error" => $ex->getMessage());
     }
-    return $reply;
+
+    if ($donRS->Donor_Id->getStoredVal() != $id) {
+        return array("error" => "Edit this donation from the donor's page.  ");
+    }
+
+    // A donation has either a joint donor (individuals) or a care-of employee (organizations).
+    $includedId = intval($donRS->Assoc_Id->getStoredVal()) > 0 ? $donRS->Assoc_Id->getStoredVal() : $donRS->Care_Of_Id->getStoredVal();
+
+    return array(
+        "donation" => array(
+            "dselCamp" => $donRS->Campaign_Code->getStoredVal(),
+            "ddate" => date("M j, Y", strtotime($donRS->Date_Entered->getStoredVal())),
+            "dselPaytype" => $donRS->Pay_Type->getStoredVal(),
+            "damount" => number_format(floatval($donRS->Amount->getStoredVal()), 2, ".", ""),
+            "dselAddress" => $donRS->Address_Purpose->getStoredVal(),
+            "selAssoc" => (intval($includedId) > 0 ? (string)$includedId : ""),
+            "dselSalutation" => $donRS->Salutation_Code->getStoredVal(),
+            "dselEnvelope" => $donRS->Envelope_Code->getStoredVal(),
+            // Notes are stored HTML-encoded; the dialog's textarea needs plain text.
+            "dnote" => html_entity_decode($donRS->Note->getStoredVal() ?? '', ENT_QUOTES | ENT_HTML5),
+            "dselStudent" => $donRS->Fund_Code->getStoredVal(),
+        )
+    );
+}
+
+/**
+ * Mark a donation as deleted.
+ *
+ * @param PDO $dbh
+ * @param int $donId
+ * @param string $uname
+ * @return array{success?: string, error?: string}
+ */
+function deleteDonation(PDO $dbh, int $donId, $uname) {
+
+    if ($donId <= 0) {
+        return array("error" => "Bad donation record Id");
+    }
+
+    $count = EditRS::updateFields($dbh, new DonationsRS(), ['iddonations' => $donId], ['Status' => 'd', 'Last_Updated' => date('Y-m-d H:i:s'), 'Updated_By' => $uname]);
+
+    if ($count == 1) {
+        return array("success" => "Donation Deleted.  ");
+    }
+
+    return array("error" => "Donation not found.  ");
 }
 
 /**
@@ -376,12 +238,10 @@ function deleteDonation(PDO $dbh, $donId, $uname)
  * @param int $id
  * @return array{data?: array, donorName?: string, total?: string, error?: string}
  */
-function listDonations(PDO $dbh, $id)
-{
+function listDonations(PDO $dbh, $id) {
+
     if ($id == 0) {
-        return array(
-            'error' => "Bad Member Id"
-        );
+        return array('error' => "Bad Member Id");
     }
 
     $stmt = $dbh->prepare("SELECT iddonations, Donor_Id, Amount, Campaign_Code, Date_Entered, Record_Member, Care_Of_Id, Assoc_Id, Name_Last, Name_First, Campaign_Type, Note
@@ -433,6 +293,8 @@ function listDonations(PDO $dbh, $id)
             'id' => intval($r['iddonations']),
             'src' => $src,
             'srcTitle' => $srcTitle,
+            // Joint gifts are edited from the page of the partner who gave.
+            'editable' => ($r["Donor_Id"] == $id),
             'careOfId' => $careOfId,
             'careOfName' => $careOfName,
             'campaign' => $r['Campaign_Code'],

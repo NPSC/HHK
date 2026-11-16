@@ -581,3 +581,39 @@ $(document).ready(
 		});
 		$(document).find("textarea.hhk-autosize").trigger("input");
 });
+
+/**
+ * Restrict text inputs to numbers.  Non-numeric characters are stripped as the user types,
+ * and the value is formatted once the user leaves the field.
+ *
+ * @param {jQuery} $inputs
+ * @param {function} formatter value formatter run on blur; defaults to 2 decimal places (money)
+ * @returns {undefined}
+ */
+function setupNumericInputs($inputs, formatter) {
+    "use strict";
+
+    if (typeof formatter !== 'function') {
+        formatter = function (val) {
+            var amt = parseFloat(val);
+            return isNaN(amt) ? '' : amt.toFixed(2);
+        };
+    }
+
+    // Strip non-numeric, non-decimal characters as the user types.
+    $inputs.on('input', function () {
+        var val = this.value;
+        var stripped = val.replace(/[^0-9.]/g, '');
+
+        if (stripped !== val) {
+            var pos = Math.max(0, this.selectionStart - (val.length - stripped.length));
+            this.value = stripped;
+            this.setSelectionRange(pos, pos);
+        }
+    });
+
+    // Format once the user leaves the field.
+    $inputs.on('blur', function () {
+        this.value = formatter(this.value);
+    });
+}

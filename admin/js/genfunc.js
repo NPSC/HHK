@@ -120,12 +120,25 @@ function getDonationMarkup(id, onNewDonation) {
             }},
             {title: 'Date', data: {_: 'dateDisplay', sort: 'date'}},
             {title: 'Note', data: 'note', render: $.fn.dataTable.render.text()},
-            {title: '', data: 'id', orderable: false, searchable: false, width: '30px', className: 'dt-center', render: function (data, type) {
+            {title: 'Actions', data: 'id', orderable: false, searchable: false, width: '60px', className: 'actionBtns', render: function (data, type, row) {
                 if (type !== 'display') {
                     return '';
                 }
-                return '<button type="button" class="ui-button ui-corner-all ui-widget hhk-undonate" data-did="' + parseInt(data, 10) + '" title="Delete Donation" aria-label="Delete Donation" style="padding:0.1em 0.4em;">'
-                    + '<i class="bi bi-trash3"></i></button>';
+                // Same markup as the notes viewer's action icons (js/notesViewer.js createActions).
+                var did = parseInt(data, 10),
+                    edit;
+
+                if (row.editable) {
+                    edit = '<li title="Edit Donation" data-did="' + did + '" class="hhk-donation-button donation-edit ui-corner-all ui-state-default">'
+                        + '<span class="ui-icon ui-icon-pencil"></span></li>';
+                } else {
+                    edit = '<li title="Joint gift: edit it from the spouse\'s page" class="hhk-donation-button ui-corner-all ui-state-default ui-state-disabled">'
+                        + '<span class="ui-icon ui-icon-pencil"></span></li>';
+                }
+
+                return '<ul class="ui-widget ui-helper-clearfix hhk-ui-icons hhk-flex">' + edit
+                    + '<li title="Delete Donation" data-did="' + did + '" class="hhk-donation-button donation-delete ui-corner-all ui-state-default">'
+                    + '<span class="ui-icon ui-icon-trash"></span></li></ul>';
             }}
         ],
         order: [[3, 'desc']],
@@ -133,6 +146,9 @@ function getDonationMarkup(id, onNewDonation) {
         pageLength: 10,
         lengthMenu: [[10, 25, 50, -1], [10, 25, 50, "All"]],
         language: {emptyTable: 'No donations recorded.'},
+        drawCallback: function () {
+            $('#tblDonations .hhk-donation-button').not('.ui-state-disabled').button();
+        },
         layout: {
             top2Start: 'buttons'
         },
@@ -190,10 +206,8 @@ function donateResponse(dataTxt, id) {
         $('#donResultMessage').html("<strong>Error: </strong>").append(document.createTextNode(data.error));
 
     } else {
-        $('#damount').val('');
-        $('#dnote').val('');
         $('#vdon').dialog('close');
-        flagAlertMessage("Donation recorded", false);
+        flagAlertMessage(data.success || "Donation saved", false);
 
         // refresh the donations list.
         getDonationMarkup(id);

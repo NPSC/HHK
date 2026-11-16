@@ -51,7 +51,8 @@ class DonateMarkup {
         $tbl->addBodyTr(
             self::labelCell('damount', 'Amount')
             . HTMLTable::makeTd(
-                HTMLInput::generateMarkup('', array('id'=>'damount', 'class'=>'hhk-ajx-dondata', "type"=>"number", "min"=>"0", "step"=>"0.01", "inputmode"=>"decimal"))
+                // hhk-money: setupNumericInputs (js/pag.js) strips non-numbers and formats to 2 decimals.
+                HTMLInput::generateMarkup('', array('id'=>'damount', 'class'=>'hhk-ajx-dondata hhk-money', "type"=>"text", "inputmode"=>"decimal", "placeholder"=>"0.00"))
                 . HTMLContainer::generateMarkup('div',
                     'Allowed: ' . HTMLContainer::generateMarkup('span', '', array('id'=>'cLimits')),
                     array('class'=>'hhk-donate-hint'))

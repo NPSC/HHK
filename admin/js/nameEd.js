@@ -5,7 +5,6 @@ $(document).ready(function () {
     var memData = $.parseJSON('<?php echo $memDataJSON; ?>');
     var userData = $.parseJSON('<?php echo $usrDataJSON; ?>');
     var listJSON = 'ws_gen.php?cmd=chglog&uid=' + memData.id;
-    var donName;
     var savePressed = false;
     var forceNamePrefix = '<?php echo isset($uS->ForceNamePrefix) ? $uS->ForceNamePrefix : "false"; ?>';
 	var showGuestPhoto = '<?php echo $uS->ShowGuestPhoto; ?>';
@@ -124,7 +123,7 @@ $(document).ready(function () {
             }
         });
     });
-    $('#divListDonation').on('click', 'button.hhk-undonate', function () {
+    $('#divListDonation').on('click', 'li.donation-delete', function () {
         var did = parseInt($(this).data('did'), 10);
         if (!isNaN(did) && confirm('Delete this Donation?')) {
             $.post("donate.php",
@@ -147,17 +146,76 @@ $(document).ready(function () {
         getCampaign($(this).val());
     });
 
-    // Donations tab buttons
-    function openNewDonationDialog() {
-        donName = memData.memName;
+    // Numbers only in the amount; formatted to 2 decimals on blur.
+    setupNumericInputs($('#vdon .hhk-money'));
+
+    // Remember the donation form's starting values so it can be reset between new and edited donations.
+    $('.hhk-ajx-dondata').each(function () {
+        $(this).data('dflt', $(this).val());
+    });
+
+    function resetDonationForm() {
+        $('#vdon option.hhk-don-temp').remove();
+        $('.hhk-ajx-dondata').each(function () {
+            $(this).val($(this).data('dflt'));
+        });
+        $('#vdon').removeData('did');
+        $('#donateResponseContainer').attr("style", "display:none;");
+    }
+
+    function donationDialogName() {
+        var donName = memData.memName;
         if (memData.memDesig == 'i' && memData.coId > 0) {
             donName = donName + '  (' + memData.coName + ')';
         }
+        return donName;
+    }
+
+    // Donations tab buttons
+    function openNewDonationDialog() {
+        resetDonationForm();
         // Write the selected campaign amount range info into the dialog.
         $('#dselCamp').change();
-        $('#vdon').dialog("option", "title", 'Record Donation for ' + donName);
+        $('#vdon').dialog("option", "title", 'Record Donation for ' + donationDialogName());
         $('#vdon').dialog('open');
     }
+
+    // Load a donation into the dialog for editing.
+    $('#divListDonation').on('click', 'li.donation-edit', function () {
+        var did = parseInt($(this).data('did'), 10);
+        if (isNaN(did)) {
+            return;
+        }
+        $.post("donate.php", {cmd: 'get', id: memData.id, did: did, sq: $('#squirm').val()}, function (data) {
+            data = $.parseJSON(data);
+            if (data.gotopage) {
+                window.open(data.gotopage, '_self');
+            }
+            if (data.error) {
+                flagAlertMessage(data.error, true);
+                return;
+            }
+
+            resetDonationForm();
+
+            $.each(data.donation, function (fieldId, val) {
+                var $fld = $('#' + fieldId);
+                if ($fld.length === 0) {
+                    return;
+                }
+                // Keep values that are no longer offered (retired campaign, former spouse...) selectable.
+                if ($fld.is('select') && val !== '' && $fld.find('option').filter(function () { return this.value === String(val); }).length === 0) {
+                    $fld.append($('<option class="hhk-don-temp"/>').val(val).text(val));
+                }
+                $fld.val(val);
+            });
+
+            $('#vdon').data('did', did);
+            $('#dselCamp').change();
+            $('#vdon').dialog("option", "title", 'Edit Donation for ' + donationDialogName());
+            $('#vdon').dialog('open');
+        });
+    });
 
     // New donation dialog box.
     $("#vdon").dialog({
@@ -185,10 +243,12 @@ $(document).ready(function () {
                 $('.hhk-ajx-dondata').each(function() {
                     parms[$(this).attr("id")] = $(this).val();
                 });
+                var did = $('#vdon').data('did');
                 $.post(
                     "donate.php",
                     {
-                        cmd: "insert",
+                        cmd: (did ? "update" : "insert"),
+                        did: (did || 0),
                         id: memData.id,
                         sq: $('#squirm').val(),
                         qd: parms
@@ -205,8 +265,7 @@ $(document).ready(function () {
             }
         }],
         close: function () {
-            $('#damount').val('');
-            $('#donateResponseContainer').attr("style", "display:none;");
+            resetDonationForm();
         }
     });
     
