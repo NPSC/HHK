@@ -148,6 +148,40 @@ $(document).ready(function() {
                 var $renderedForm = $(document).find('#formContent');
                 $renderedForm.find('.rendered-form').addClass('row');
 
+                // bfhstates only links to a country select inside a <table> via data-country,
+                // so link each state select to its matching country select by field name here.
+                function getStateSelect($country){
+                    var stateName = ($country.attr('name') || '').replace(/adrcountry$/, 'adrstate');
+                    return $renderedForm.find('select.bfh-states').filter(function(){
+                        return $(this).attr('name') === stateName;
+                    });
+                }
+
+                function loadStatesForCountry($country, keepState){
+                    var $state = getStateSelect($country);
+                    var bfh = $state.data('bfhstates');
+                    if(!bfh){
+                        return;
+                    }
+                    var state = keepState ? ($state.val() || $state.attr('user-data') || '') : '';
+                    bfh.loadStates($country.val() || '');
+                    $state.val(state);
+                }
+
+                function syncStateLists(){
+                    $renderedForm.find('select.bfh-countries').each(function(){
+                        if($(this).val()){
+                            loadStatesForCountry($(this), true);
+                        }
+                    });
+                }
+
+                $renderedForm.on('change', 'select.bfh-countries', function(){
+                    loadStatesForCountry($(this), false);
+                });
+
+                syncStateLists();
+
                 $renderedForm.find('input.hhk-zipsearch').each(function(){
                         var hhkprefix = $(this).attr('id').replace("adrzip", "").replaceAll(".", '\\.');
                         $(this).data('hhkprefix', hhkprefix).data('hhkindex','');
@@ -238,6 +272,7 @@ $(document).ready(function() {
                     $renderedForm.formRender('render', userData);
 
                     $renderedForm.find('.rendered-form').addClass('row');
+                    syncStateLists();
 
                     $renderedForm.find('input.hhk-zipsearch').each(function(){
                         var hhkprefix = $(this).attr('id').replace("adrzip", "").replaceAll(".", '\\.');
@@ -278,6 +313,7 @@ $(document).ready(function() {
                     $renderedForm.formRender('render', userData);
 
                     $renderedForm.find('.rendered-form').addClass('row');
+                    syncStateLists();
 
                     //zip code search
                     $renderedForm.find('input.hhk-zipsearch').each(function() {
