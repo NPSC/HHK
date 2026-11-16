@@ -26,7 +26,7 @@ class Family
 
     const FAM_TABLE_ID = 'tblFamily';
 
-    protected $roleObjs;
+    protected $roleObjs = [];
     protected $patientId;
     protected $patientPrefix;
     protected $hospStay;
