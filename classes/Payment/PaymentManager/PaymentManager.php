@@ -68,7 +68,7 @@ class PaymentManager {
 
     /**
      * Data from paying today
-     * @var PaymentManagerPayment
+     * @var ?PaymentManagerPayment
      */
     public $pmp;
 
@@ -81,9 +81,9 @@ class PaymentManager {
 
     /**
      * Summary of __construct
-     * @param PaymentManagerPayment $pmp
+     * @param ?PaymentManagerPayment $pmp  Null when no payment was posted (e.g. price model "none").
      */
-    public function __construct(PaymentManagerPayment $pmp) {
+    public function __construct(?PaymentManagerPayment $pmp) {
         $this->pmp = $pmp;
     }
 

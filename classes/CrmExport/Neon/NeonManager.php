@@ -301,6 +301,8 @@ class NeonManager extends AbstractExportManager {
             throw new RuntimeException('HHK Member Id not specified: ' . $idName);
         }
 
+        // Callers like ws_tran.php 'update' come here directly, without exportMembers() loading these.
+        $this->customFields ??= $this->getMyCustomFields($dbh);
 
         // Get member data record
         $r = $this->loadSourceDB($dbh, $idName, 'vguest_data_neon', $extraSourceCols);

@@ -16,9 +16,9 @@ use HHK\Common;
  */
 class selCtrl {
 
-    protected array $labelArray;
-    protected array $codeArray;
-    protected array $valueArray;
+    protected array $labelArray = [];
+    protected array $codeArray = [];
+    protected array $valueArray = [];
     protected $htmlNameBase = "";
     protected $rows = 0;
     protected $class = "";
@@ -81,7 +81,7 @@ class selCtrl {
 
         $mkup = "<select id='".$this->htmlNameBase."' name='". $this->htmlNameBase . $multMarkup . $sizeMarkup . $classMkup.">";
 
-        if (is_null($this->labelArray)) {
+        if (empty($this->labelArray)) {
             $mkup .= "<option value=''>None</option>";
         } else {
             foreach ($this->labelArray as $code => $val) {
