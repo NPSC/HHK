@@ -18,3 +18,4 @@ define('NAVBAR_CSS', "<link href='../css/bootstrapNavbar.css" . JSV . "' rel='st
 
 define('CONFIGURE_JS', "js/Configure.js" . JSV);
 define('CAMPAIGN_EDIT_JS', "js/campaignEdit.js" . JSV);
+define('CATEGORY_EDIT_JS', "js/categoryEdit.js" . JSV);

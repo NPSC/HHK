@@ -563,8 +563,27 @@ ul.ui-tabs-nav .ui-state-active .ui-icon {
             
 }
             
-.cf-actions { 
-    display: flex; 
-    gap: .75rem; 
-    justify-content: flex-end; 
+.cf-actions {
+    display: flex;
+    gap: .75rem;
+    justify-content: flex-end;
+}
+
+/* CategoryEdit category list (borders and padding come from .hhk-tdbox, like Resource Builder) */
+.ce-table .ce-num {
+    text-align: right;
+}
+
+.ce-table .ce-center {
+    text-align: center;
+}
+
+.ce-table .ce-code, .ce-table .ce-builtin {
+    color: #555;
+    font-size: .9em;
+}
+
+.ce-table tr.ce-deleting input[type=text] {
+    text-decoration: line-through;
+    color: #888;
 }

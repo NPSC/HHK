@@ -1,19 +1,18 @@
 <?php
 
-use HHK\Common;
+use HHK\Admin\CategoryEditor;
 use HHK\HTMLControls\HTMLSelector;
-use HHK\sec\{WebInit};
-use HHK\Tables\EditRS;
-use HHK\Tables\GenLookupsRS;
-use HHK\Tables\Name\NameVolunteerRS;
-use HHK\AlertControl\AlertMessage;
-use HHK\Exception\RuntimeException;
+use HHK\sec\Session;
+use HHK\sec\WebInit;
 
 /**
  * CategoryEdit.php
  *
+ * Edit the categories in each member category group (Member Type, etc.).
+ * Loading and saving are done over AJAX against this same script (cmd=load / cmd=save).
+ *
  * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
- * @copyright 2010-2018 <nonprofitsoftwarecorp.org>
+ * @copyright 2010-2026 <nonprofitsoftwarecorp.org>
  * @license   MIT
  * @link      https://github.com/NPSC/HHK
  */
@@ -21,181 +20,83 @@ require ("AdminIncludes.php");
 
 $wInit = new WebInit();
 $dbh = $wInit->dbh;
+$uS = Session::getInstance();
 
-// catch service call
-$tableName = filter_input(INPUT_POST, 'ql', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
-if ($tableName != '') {
+$groups = CategoryEditor::groups($dbh);
 
-    $rows = array();
-    $volArray = $wInit->reloadSessionVolLkUps();
 
-    if (isset($volArray['Vol_Category'][$tableName])) {
-        $rows = Common::readGenLookupsPDO($dbh, $tableName);
-    }
+// AJAX commands
+$cmd = filter_input(INPUT_POST, 'cmd', FILTER_SANITIZE_FULL_SPECIAL_CHARS)
+    ?: filter_input(INPUT_GET, 'cmd', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
-    echo json_encode($rows);
-    exit;
-}
+if ($cmd) {
 
-function processAction(PDO $dbh, $tbl, $cde, $colr, $desc, $repl, $action, &$volAlert) {
+    $out = [];
 
-    $rptId = 0;
-    // Is the Code there?
-    $gl = new GenLookupsRS();
-    $gl->Table_Name->setStoredVal($tbl);
-    $gl->Code->setStoredVal($cde);
-    $rows = EditRS::select($dbh, $gl, array($gl->Table_Name, $gl->Code));
+    try {
+        $input = ($cmd === 'save') ? INPUT_POST : INPUT_GET;
+        $group = (string) filter_input($input, 'grp', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
-    if (count($rows) == 0 && $action == "add") {
-        // add a new code with desc.
-
-        $dbh->prepare("CALL IncrementCounter('codes', @num);")->execute();
-        $numStmt = $dbh->prepare("SELECT @num");
-        $numStmt->execute();
-        foreach ($numStmt as $row) {
-            $rptId = $row[0];
-        }
-        if ($rptId == 0) {
-            throw new RuntimeException("Event Repeater counter not set up.");
+        if (!isset($groups[$group])) {
+            throw new \RuntimeException('Choose a category group.');
         }
 
-        $gl = new GenLookupsRS();
-        $gl->Code->setNewVal('v' . $rptId);
-        $gl->Description->setNewVal($desc);
-        $gl->Substitute->setNewVal($colr);
-        $gl->Table_Name->setNewVal($tbl);
-        EditRS::insert($dbh, $gl);
+        switch ($cmd) {
 
-        $volAlert->set_Context(AlertMessage::Success);
-        $volAlert->set_Text("ok");
+            case 'load':
+                $out['categories'] = array_values(CategoryEditor::load($dbh, $group));
+                break;
 
-    } else if (count($rows) == 1) {
-
-        EditRS::loadRow($rows[0], $gl);
-
-        if ($action == "del") {
-            // Delete code
-
-            if ($repl == "vNone") {
-
-                // No replacement code so delete all instances and the gen_lookups record.
-                $nvRs = new NameVolunteerRS();
-                $nvRs->Vol_Category->setStoredVal($tbl);
-                $nvRs->Vol_Code->setStoredVal($cde);
-
-                EditRS::delete($dbh, $nvRs, array($nvRs->Vol_Category, $nvRs->Vol_Code));
-
-                // delete orig from gen_lookups
-                EditRS::delete($dbh, $gl, array($gl->Table_Name, $gl->Code));
-                $volAlert->set_Context(AlertMessage::Success);
-                $volAlert->set_Text("Category deleted from the database.");
-
-            } else {
-
-                // Is the replacement Code there?
-                $glReplace = new GenLookupsRS();
-                $glReplace->Table_Name->setStoredVal($tbl);
-                $glReplace->Code->setStoredVal($repl);
-                $rowsReplace = EditRS::select($dbh, $glReplace, array($glReplace->Table_Name, $glReplace->Code));
-
-                // Valid replacement code?
-                if (count($rowsReplace) == 1) {
-                    // Make any needed replacements in Name_Volunteer, one member at a time:
-                    // a member who already has the replacement code loses the old code, everyone else is moved to the replacement.
-                    $nvRs = new NameVolunteerRS();
-                    $nvRs->Vol_Category->setStoredVal($tbl);
-                    $nvRs->Vol_Code->setStoredVal($cde);
-
-                    foreach (EditRS::select($dbh, $nvRs, array($nvRs->Vol_Category, $nvRs->Vol_Code)) as $r) {
-
-                        $oldRs = new NameVolunteerRS();
-                        EditRS::loadRow($r, $oldRs);
-                        $oldKey = array($oldRs->idName, $oldRs->Vol_Category, $oldRs->Vol_Code);
-
-                        $replRs = new NameVolunteerRS();
-                        $replRs->idName->setStoredVal($oldRs->idName->getStoredVal());
-                        $replRs->Vol_Category->setStoredVal($tbl);
-                        $replRs->Vol_Code->setStoredVal($repl);
-
-                        if (count(EditRS::select($dbh, $replRs, array($replRs->idName, $replRs->Vol_Category, $replRs->Vol_Code))) > 0) {
-                            EditRS::delete($dbh, $oldRs, $oldKey);
-                        } else {
-                            $oldRs->Vol_Code->setNewVal($repl);
-                            $oldRs->Updated_By->setNewVal($_SESSION["username"]);
-                            $oldRs->Last_Updated->setNewVal(date('Y-m-d H:i:s'));
-                            EditRS::update($dbh, $oldRs, $oldKey);
-                        }
-                    }
-
-                    // delete orig from gen_lookups
-                    EditRS::delete($dbh, $gl, array($gl->Table_Name, $gl->Code));
-
-                    $volAlert->set_Context(AlertMessage::Success);
-                    $volAlert->set_Text("Category deleted from the database.");
-                } else {
-
-                    $volAlert->set_Context(AlertMessage::Alert);
-                    $volAlert->set_Text("Invalid replacement Category - couldn't find it: " . $tbl . "-" . $repl);
+            case 'save':
+                if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+                    $out['error'] = 'Saving requires a POST request.';
+                    break;
                 }
-            }
-        } else if ($action == 'add') {
 
-            // Update the description
-            $gl->Description->setNewVal($desc);
-            $x = EditRS::update($dbh, $gl, array($gl->Table_Name, $gl->Code));
+                [$vals, $errors] = CategoryEditor::validate(CategoryEditor::load($dbh, $group), $_POST);
 
-            if ($x > 0) {
-                $volAlert->set_Context(AlertMessage::Success);
-                $volAlert->set_Text("Category Updated.");
-            }
+                if (count($errors) > 0) {
+                    $out['errors'] = $errors;
+                    $out['error'] = 'Please correct the highlighted fields.';
+                    break;
+                }
+
+                $out['success'] = CategoryEditor::save($dbh, $group, $vals, $uS->username);
+                $out['categories'] = array_values(CategoryEditor::load($dbh, $group));
+
+                // NameEdit reads categories from the session cache.
+                $wInit->reloadSessionVolLkUps();
+                break;
+
+            default:
+                $out['error'] = 'Unknown command.';
         }
-    } else {
-        $volAlert->set_Context(AlertMessage::Alert);
-        $volAlert->set_Text("Couldn't find the TableName and Code: $tbl, $cde");
+
+        $out['group'] = $group;
+
+    } catch (\Exception $ex) {
+        $out['error'] = $ex->getMessage();
     }
+
+    header('Content-Type: application/json');
+    echo json_encode($out);
+    exit();
 }
 
-$resMessage = "";
 
-
-
-if (filter_has_var(INPUT_POST, "btnvType")) {
-
-    $volAlert = new AlertMessage("volAlert");
-    $volAlert->set_Context(AlertMessage::Alert);
-
-    $repl = '';
-    $action = 'add';
-    $del = filter_input(INPUT_POST, "vTypeDel", FILTER_VALIDATE_BOOLEAN);
-
-    if ($del === TRUE) {
-        $action = "del";
-        $repl = filter_input(INPUT_POST, "vTypeRepl", FILTER_SANITIZE_FULL_SPECIAL_CHARS);
-    }
-
-    $tbl = filter_input(INPUT_POST, "selVol", FILTER_SANITIZE_FULL_SPECIAL_CHARS);
-    $cde = filter_input(INPUT_POST, "vTypeCode", FILTER_SANITIZE_FULL_SPECIAL_CHARS);
-    $desc = filter_input(INPUT_POST, "vTypeDesc", FILTER_SANITIZE_FULL_SPECIAL_CHARS);
-    $fill = filter_input(INPUT_POST, "vTypeFill", FILTER_SANITIZE_FULL_SPECIAL_CHARS);
-    $text = filter_input(INPUT_POST, "vTypeText", FILTER_SANITIZE_FULL_SPECIAL_CHARS);
-    $colr = $fill . "," . $text;
-
-    if (is_null($tbl) || $tbl == "") {
-        $volAlert->set_Text("The Category is missing.");
-    } else if (($fill != "" && $text == "") || ($fill == "" && $text != "")) {
-        $volAlert->set_Text(" Need a color for both Fill and Text, or leave both blank.");
-    } else if (!empty($desc) && strlen($desc) < 255) {
-
-        processAction($dbh, $tbl, $cde, $colr, $desc, $repl, $action, $volAlert);
-    } else {
-        $volAlert->set_Text("The Category-(Text) must be filled in.");
-    }
-
-    $resMessage = $volAlert->createMarkup();
+// Page render
+$group = (string) filter_input(INPUT_GET, 'grp', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+if (!isset($groups[$group])) {
+    $group = (string) array_key_first($groups);
 }
 
-$volCategories = Common::readGenLookupsPDO($dbh, "Vol_Category");
-$vCatOptions = HTMLSelector::doOptionsMkup($volCategories, '', false);
+$initial = [
+    'group' => $group,
+    'categories' => ($group === '' ? [] : array_values(CategoryEditor::load($dbh, $group))),
+];
+
+$groupOpt = HTMLSelector::doOptionsMkup(array_map(fn($c, $d) => [$c, $d], array_keys($groups), $groups), $group, false);
+
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -214,133 +115,61 @@ $vCatOptions = HTMLSelector::doOptionsMkup($volCategories, '', false);
         <script type="text/javascript" src="<?php echo JQ_UI_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo BOOTSTRAP_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
-
         <script type="text/javascript" src="<?php echo NOTY_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo NOTY_SETTINGS_JS; ?>"></script>
-
-        <script type="text/javascript">
-$(document).ready(function() {
-    var colr = new Object();
-    $('#selVol').change(function() {
-        $.post('CategoryEdit.php',
-                {ql: $(this).val()},
-        function(data) {
-            var codes = $.parseJSON(data);
-            // remove any previous entries
-            $("#selCode")
-                    .find('option')
-                    .remove();
-            $("#selCode").append('<option value="vNew">New</option>');
-            $("#vTypeRepl")
-                    .find('option')
-                    .remove();
-            $("#vTypeRepl").append('<option value="vNone">-None-</option>');
-            for (var nme in codes) {
-                colr[codes[nme].Code] = codes[nme].Substitute;
-                $("#selCode").append('<option value="' + codes[nme].Code + '">' + codes[nme].Description + '</option>');
-                $("#vTypeRepl").append('<option value="' + codes[nme].Code + '">' + codes[nme].Description + '</option>');
-            }
-            $('input.hhk-vcat:text').val('');
-            $("#vTypeDel").prop('checked', false);
-            $('#vTypeRepl').prop('disabled', true);
-            $('#btnvType').val("Save");
-        });
-    });
-
-    $('#vTypeDel').change(function() {
-        if ($(this).prop('checked') && $('#selCode').val() !== "vNew" && $('#selCode').val() !== "") {
-            $('#vTypeRepl').prop('disabled', false);
-        } else {
-            $('#vTypeRepl').prop('disabled', true);
-        }
-    });
-    $('#selCode').change(function() {
-        //var selCtrl = this;
-
-        if (this.value === "vNew") {
-
-            $('input.hhk-vcat:text').val('');
-            $('#btnvType').val("Save");
-        } else {
-            $('#vTypeCode').val(this.value);
-
-            var tp = colr[this.value].split(',');
-            if (tp.length === 2) {
-                $('#vTypeFill').val(tp[0]);
-                $('#vTypeText').val(tp[1]);
-            } else {
-                $('#vTypeFill').val('');
-                $('#vTypeText').val('');
-                ;
-            }
-            for (i = 0; i < this.options.length; i++) {
-                if (this.options[i].selected) {
-                    $('#vTypeDesc').val(this.options[i].text);
-                }
-            }
-            $('#btnvType').val("Update");
-        }
-
-    });
-});
-        </script>
+        <script type="text/javascript" src="<?php echo CATEGORY_EDIT_JS; ?>"></script>
     </head>
-    <body <?php if ($wInit->testVersion) {
-            echo "class='testbody'";
-        } ?>>
-<?php echo $wInit->generatePageMenu(); ?>
+    <body <?php if ($wInit->testVersion) { echo "class='testbody'"; } ?>>
+        <?php echo $wInit->generatePageMenu(); ?>
         <div id="contentDiv">
             <h1><?php echo $wInit->pageHeading; ?></h1>
 
-            <div id="vcategory" class="ui-widget ui-widget-content ui-corner-all hhk-widget-content" style="font-size:1em;">
-                <form action="CategoryEdit.php" method="post" name="fCheckDates">
-                    <table>
-                        <tr>
-                            <th>Category Group</th>
-                        </tr><tr><td>
-                                <select id="selVol" name="selVol" size="3">
-<?php echo $vCatOptions; ?>
-                                </select></td>
-                        </tr>
-                        <tr>
-                            <td></td><td></td><th colspan="2">Calendar Colors</th>
-                        </tr>
-                        <tr>
-                            <th>Category</th>
-                            <th>Code</th>
-                            <th>Fill Color</th>
-                            <th>Text Color</th>
-                        </tr>
-                        <tr>
-                            <td>
-                                <select style="width:230px" id="selCode" name="selCode"></select>
-                            </td>
-                            <td><input id="vTypeCode" name="vTypeCode" class="hhk-vcat" type="text" value="" size="5" readonly="readonly" /></td>
-                            <td><input id="vTypeFill" name="vTypeFill" class="hhk-vcat" type="text" value="" size="13" /></td>
-                            <td><input id="vTypeText" name="vTypeText" class="hhk-vcat" type="text" value="" size="13" /></td>
-                        </tr>
-                        <tr>
-                            <th colspan="4">Category (Text)</th>
-                        </tr><tr>
-                            <td colspan="4"><input id="vTypeDesc" name="vTypeDesc" class="hhk-vcat" type="text" value="" size="80" /></td>
-                        </tr>
-                        <tr>
-                            <td><input type="checkbox" id="vTypeDel" name="vTypeDel" class="hhk-vcat" /><label for="vTypeDel"> Delete</label></td>
-                            <td class="tdlabel"> Replace with: </td>
-                            <td colspan="2"><select style="width:230px" id="vTypeRepl" name="vTypeRepl" class="hhk-vcat" disabled="disabled" ></select></td>
-                        </tr>
-                        <tr>
-                            <td colspan="4" class="tdlabel"></td>
-                        </tr>
-                        <tr><td colspan="4" class="tdReport"></td></tr>
-                    </table>
-                    <div class="hhk-flex mt-1" style="justify-content: space-evenly;">
-                    	<input id="btnvType" name="btnvType" class="hhk-vcat ui-button ui-widget ui-corner-all" type="submit" value="Save" />
+            <div class="ui-widget ui-widget-content ui-corner-all hhk-widget-content mb-3" style="width: 500px;">
+            <?php if (count($groups) === 0) { ?>
+                <p>No category groups are set up.</p>
+            <?php } else { ?>
+                <form id="catForm" class="cf-form" novalidate
+                      data-initial="<?php echo htmlspecialchars(json_encode($initial), ENT_QUOTES); ?>">
+                    <input type="hidden" name="cmd" value="save" />
+
+                    <div class="cf-field">
+                        <label for="selGroup">Category Group</label>
+                        <select id="selGroup" name="grp"><?php echo $groupOpt; ?></select>
                     </div>
-                    <?php echo $resMessage; ?>
+
+                    <table id="catTable" class="hhk-tdbox ce-table mb-2">
+                        <thead>
+                            <tr>
+                                <th scope="col">Code</th>
+                                <th scope="col" id="catCount">0 Entries</th>
+                                <th scope="col">Members</th>
+                                <th scope="col">Delete</th>
+                                <th scope="col" class="ce-replCol" style="display:none;">Replace With</th>
+                            </tr>
+                        </thead>
+                        <tbody id="catRows"></tbody>
+                        <tbody>
+                            <tr>
+                                <td></td>
+                                <td>
+                                    <input type="text" id="txtNewDesc" name="newDesc" size="30" maxlength="255" aria-label="New category name" />
+                                    <div class="cf-error" role="alert"></div>
+                                </td>
+                                <td colspan="2">New</td>
+                                <td class="ce-replCol" style="display:none;"></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <p class="cf-help mb-3">Built-in categories can be renamed but not deleted. Members of a deleted category
+                        move to its replacement, or are removed from it if none is chosen.</p>
+
+                    <div class="cf-actions">
+                        <input type="button" id="btnReset" value="Reset" class="ui-button ui-widget ui-corner-all" />
+                        <input type="submit" id="btnSave" value="Save" class="ui-button ui-widget ui-corner-all" />
+                    </div>
                 </form>
+            <?php } ?>
             </div>
         </div>
     </body>
 </html>
-
