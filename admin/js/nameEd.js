@@ -246,7 +246,7 @@ $(document).ready(function () {
             text: "Save",
             "class": "hhk-don-save",
             click: function () {
-                if (!validateDonationForm({maxDonate: parseFloat(userData.maxDonate) || 0, isOrganization: memData.memDesig === 'o'})) {
+                if (!validateDonationForm({maxDonate: parseFloat(userData.maxDonate) || 0})) {
                     return;
                 }
                 // collect the donation data

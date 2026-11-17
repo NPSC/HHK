@@ -284,7 +284,16 @@ function listDonations(PDO $dbh, $id, ?ReportFilter $filter = null) {
         }
     }
 
-    $stmt = $dbh->prepare("SELECT iddonations, Donor_Id, Amount, Campaign_Code, Date_Entered, Record_Member, Care_Of_Id, Assoc_Id, Name_Last, Name_First, Campaign_Type, Note
+    // This member's kind and name.  Use Record_Company: billing agent organizations also have Record_Member set (NameEdit kludge).
+    $nStmt = $dbh->prepare("select Record_Company, case when Record_Company = 1 then Company else Name_Full end from name where idName = :id;");
+    $nStmt->execute(array(
+        ":id" => $id
+    ));
+    $member = $nStmt->fetch(PDO::FETCH_NUM);
+    $isIndividual = ($member === false || $member[0] != 1);
+    $donorName = ($member === false ? '' : $member[1]);
+
+    $stmt = $dbh->prepare("SELECT iddonations, Donor_Id, Amount, Campaign_Code, Date_Entered, Care_Of_Id, Assoc_Id, Name_Last, Name_First, Campaign_Type, Note
         FROM vdonation_view WHERE $where order by Date_Entered desc;");
     $stmt->execute($params);
 
@@ -293,7 +302,7 @@ function listDonations(PDO $dbh, $id, ?ReportFilter $filter = null) {
 
     foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $r) {
 
-        $isIndividual = ($r["Record_Member"] != 0);
+        // $isIndividual describes this member, which is the donor whenever Donor_Id == $id
         $careOfId = 0;
         $careOfName = '';
 
@@ -344,15 +353,9 @@ function listDonations(PDO $dbh, $id, ?ReportFilter $filter = null) {
         );
     }
 
-    $nStmt = $dbh->prepare("select case when Record_Member = 1 then Name_Full else Company end from name where idName = :id;");
-    $nStmt->execute(array(
-        ":id" => $id
-    ));
-    $donorName = $nStmt->fetchColumn();
-
     return array(
         'data' => $rows,
-        'donorName' => ($donorName === false ? '' : $donorName),
+        'donorName' => $donorName,
         'total' => number_format($total, 2, '.', ','),
         'filterItems' => $filterItems
     );

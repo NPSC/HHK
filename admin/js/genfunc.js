@@ -261,7 +261,7 @@ function showDonationFormErrors(errors) {
  * Check the donation dialog before saving.  Mirrors the server's checks (Donation.php) so most
  * mistakes are caught without a round trip; the server still validates everything.
  *
- * @param {object} opts {maxDonate: number, isOrganization: boolean}
+ * @param {object} opts {maxDonate: number}
  * @returns {boolean} true when the form can be saved
  */
 function validateDonationForm(opts) {
@@ -312,12 +312,6 @@ function validateDonationForm(opts) {
                 flag($amt, 'The amount is outside this campaign\'s range (' + $('#cLimits').text() + ').');
             }
         }
-    }
-
-    // Organizations need the employee who gave the gift.
-    var $assoc = $('#selAssoc');
-    if (opts.isOrganization && $assoc.length && !(parseInt($assoc.val(), 10) > 0)) {
-        flag($assoc, 'Choose the employee who gave this donation.  If none are listed, add one first.');
     }
 
     showDonationFormErrors(errors);

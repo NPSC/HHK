@@ -70,7 +70,8 @@ class DonateMarkup {
         $tbl->addBodyTr(
             self::labelCell('selAssoc', $assocDonorLabel)
             . HTMLTable::makeTd(HTMLSelector::generateMarkup(
-                HTMLSelector::doOptionsMkup($assocDonorList, $defaultAssocDonor), array('id'=>'selAssoc', 'class'=>'hhk-ajx-dondata')))
+                // Joint donor / employee is optional; spell out the empty choice.
+                HTMLSelector::doOptionsMkup(array_merge([['', '(none)']], array_values($assocDonorList)), $defaultAssocDonor, FALSE), array('id'=>'selAssoc', 'class'=>'hhk-ajx-dondata')))
         );
 
         $tbl->addBodyTr(

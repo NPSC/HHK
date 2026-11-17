@@ -359,10 +359,7 @@ class Donation {
         if ($this->donor->getMemberDesignation() == MemDesignation::Individual) {
             $this->setAssocDonorId($includedId)->setCareofDonorId(0);
         } else {
-            // All organizations must have an employee assigned as care of
-            if ($includedId < 1) {
-                throw new RuntimeException("Please select an employee.  If no employees are listed, then create one and try the donation again.  (Someone signed that check.)");
-            }
+            // Organizations may name the employee the gift came through (care of); 0 = none.
             $this->setAssocDonorId(0)->setCareofDonorId($includedId);
         }
 
