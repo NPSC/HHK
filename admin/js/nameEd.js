@@ -123,6 +123,12 @@ $(document).ready(function () {
             }
         });
     });
+    // Job Title only shows while a company is linked.
+    $(document).on('hhk-relation-changed', function (e, rc) {
+        if (rc === 'co') {
+            $('#divJobTitle').toggle($('#acmco a').length > 0);
+        }
+    });
     $('#divListDonation').on('click', 'li.donation-delete', function () {
         var did = parseInt($(this).data('did'), 10);
         if (!isNaN(did) && confirm('Delete this Donation?')) {

@@ -693,11 +693,11 @@ ORDER BY `List_Order`");
     {
 
         $relTab = $this->createOrgMarkup($rel, $page)
-            . HTMLContainer::generateMarkup('div', $rel[RelLinkType::Spouse]->createMarkup($page), array('style' => 'float:left; margin-left:20px;'))
-            . HTMLContainer::generateMarkup('div', $rel[RelLinkType::Sibling]->createMarkup($page), array('style' => 'float:left; margin-left:20px;'))
-            . HTMLContainer::generateMarkup('div', $rel[RelLinkType::Parnt]->createMarkup($page), array('style' => 'float:left; margin-left:20px;'))
-            . HTMLContainer::generateMarkup('div', $rel[RelLinkType::Child]->createMarkup($page), array('style' => 'float:left; margin-left:20px;'))
-            . HTMLContainer::generateMarkup('div', $rel[RelLinkType::Relative]->createMarkup($page), array('style' => 'float:left; margin-left:20px;'));
+            . HTMLContainer::generateMarkup('div', $rel[RelLinkType::Spouse]->createMarkup($page), array('class' => 'mr-3'))
+            . HTMLContainer::generateMarkup('div', $rel[RelLinkType::Sibling]->createMarkup($page), array('class' => 'mr-3'))
+            . HTMLContainer::generateMarkup('div', $rel[RelLinkType::Parnt]->createMarkup($page), array('class' => 'mr-3'))
+            . HTMLContainer::generateMarkup('div', $rel[RelLinkType::Child]->createMarkup($page), array('class' => 'mr-3'))
+            . HTMLContainer::generateMarkup('div', $rel[RelLinkType::Relative]->createMarkup($page), array('class' => 'mr-3'));
 
         return $relTab;
     }
@@ -711,19 +711,24 @@ ORDER BY `List_Order`");
     public function createOrgMarkup(array $rel, $page = "NameEdit.php")
     {
 
+        $company = $rel[RelLinkType::Company];
+
         $table = new HTMLTable();
         $table->addHeaderTr(
-            HTMLTable::makeTh('Title')
+            HTMLTable::makeTh('Job Title')
         );
 
         $table->addBodyTr(
-            // title
             HTMLTable::makeTd(
                 HTMLInput::generateMarkup($this->get_title(), array('name' => 'txtTitle', 'size' => '10'))
             )
         );
 
-        $coTab = $table->generateMarkup(array('style' => 'float:left;')) . HTMLContainer::generateMarkup('div', $rel[RelLinkType::Company]->createMarkup($page), array('style' => 'float:left; margin-left:20px;'));
+        // Job Title only applies when linked to a company; nameEd.js toggles it as company links change.
+        $jobTitleStyle = '' . (count($company->getRelNames()) > 0 ? '' : ' display:none;');
+
+        $coTab = HTMLContainer::generateMarkup('div', $company->createMarkup($page), array('class' => 'mr-3'))
+            . HTMLContainer::generateMarkup('div', $table->generateMarkup(), array('class' => 'mr-3', 'id' => 'divJobTitle', 'style' => $jobTitleStyle));
 
         return $coTab;
     }

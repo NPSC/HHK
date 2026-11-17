@@ -414,6 +414,7 @@ function relationReturn(data) {
             div.children().remove();
             var newDiv = $(data.markup);
             div.append(newDiv.children());
+            $(document).trigger('hhk-relation-changed', [data.rc]);
         }
         flagAlertMessage(data.success, false);
     }

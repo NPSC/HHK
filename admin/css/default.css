@@ -441,3 +441,11 @@ ul.ui-tabs-nav .ui-state-active .ui-icon {
 .w-25 {
     width: 25%;
 }
+
+.hhk-newlink {
+    cursor: pointer;
+}
+
+.hhk-relations table {
+    min-width: 125px;
+}

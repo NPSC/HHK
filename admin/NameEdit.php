@@ -484,7 +484,7 @@ $alertMessage = $alertMsg->createMarkup();
                 <div class="ui-widget ui-widget-content ui-corner-all hhk-widget-content mb-2 hhk-flex" style="font-size:0.95em;padding: 0.7em 1.0em;">
                     <?php echo $nameMarkup; ?>
                 </div>
-                <div id="linkTabs" class="ui-widget ui-widget-content ui-corner-all hhk-widget-content mb-2" style="font-size:0.95em;padding: 0.7em 1.0em;">
+                <div id="linkTabs" class="ui-widget ui-widget-content ui-corner-all hhk-widget-content mb-2 hhk-flex hhk-flex-wrap" style="font-size:0.95em;padding: 0.7em 1.0em;">
                         <?php echo $relationsMarkup; ?>
                 </div>
                 <div id="divaddrTabs" class="hhk-showonload hhk-flex hhk-flex-wrap" style="display:none;">
