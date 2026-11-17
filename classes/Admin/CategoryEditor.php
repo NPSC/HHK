@@ -17,7 +17,7 @@ use HHK\Tables\Name\NameVolunteerRS;
  * (e.g. 'Vol_Type' = Member Type).  Members are assigned categories in
  * name_volunteer2.  The Vol_ names are legacy; these are general member categories.
  *
- * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
+ * @author    Will Ireland <wireland@nonprofitsoftwarecorp.org>
  * @copyright 2010-2026 <nonprofitsoftwarecorp.org>
  * @license   MIT
  * @link      https://github.com/NPSC/HHK

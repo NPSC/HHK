@@ -551,7 +551,7 @@ where n.idName>0 and n.Member_Status='a' and n.Record_Member = 1 "
                 $query2 = "SELECT n.idName as Id, n.Name_Last, n.Name_First, ifnull(n.Member_Status,'x'), ifnull(g.Description,'Undefined!')
             FROM name n left join relationship r on n.idName = r.Target_Id and :id = r.idName and r.Relation_Type = 'par'
             left join gen_lookups g on g.Table_Name='mem_status' and g.Code = n.Member_Status
-            WHERE MATCH(n.`Name_Search`) AGAINST (:search in boolean mode) and n.Record_Member = 1
+            WHERE MATCH(n.`Name_Search`) AGAINST (:search in boolean mode) and n.Record_Member = 1 and n.Record_Company = 0
                 and n.Member_Status in ('a','d','in') and n.idName <> :id2 and r.idRelationship is null order by n.Member_Status, n.Name_Last, n.Name_First;";
                 $stmt = $dbh->prepare($query2);
                 $stmt->execute(array(':id' => $id, ':id2' => $id, ':search' => $this->buildFulltextQuery($this->letters)));
@@ -573,7 +573,7 @@ where n.idName>0 and n.Member_Status='a' and n.Record_Member = 1 "
                 $query2 = "SELECT n.idName as Id, n.Name_Last, n.Name_First, ifnull(n.Member_Status,'x'), ifnull(g.Description,'Undefined!')
                 FROM name n left join relationship r on n.idName = r.idName and :id = r.Target_Id and r.Relation_Type = 'par'
                 left join gen_lookups g on g.Table_Name='mem_status' and g.Code = n.Member_Status
-                WHERE MATCH(n.`Name_Search`) AGAINST (:search in boolean mode) and n.Record_Member = 1
+                WHERE MATCH(n.`Name_Search`) AGAINST (:search in boolean mode) and n.Record_Member = 1 and n.Record_Company = 0
                 and n.Member_Status in ('a','d','in') and n.idName <> :id2 and r.idRelationship is null order by n.Member_Status, n.Name_Last, n.Name_First;";
                 $stmt = $dbh->prepare($query2);
                 $stmt->execute(array(':id' => $id, ':id2' => $id, ':search' => $this->buildFulltextQuery($this->letters)));
@@ -595,7 +595,7 @@ where n.idName>0 and n.Member_Status='a' and n.Record_Member = 1 "
                 $query2 = "SELECT n.idName as Id, n.Name_Last, n.Name_First, ifnull(n.Member_Status,'x'), ifnull(g.Description,'Undefined!')
             FROM name n left join relationship r on n.idName = r.idName and r.Relation_Type = 'sib'
             left join gen_lookups g on g.Table_Name='mem_status' and g.Code = n.Member_Status
-                WHERE MATCH(n.`Name_Search`) AGAINST (:search in boolean mode) and n.Record_Member = 1 and ifnull(r.Group_Code,'0') not in
+                WHERE MATCH(n.`Name_Search`) AGAINST (:search in boolean mode) and n.Record_Member = 1 and n.Record_Company = 0 and ifnull(r.Group_Code,'0') not in
                 (Select Group_Code from relationship where idname = :id)
                 and n.Member_Status in ('a','d','in') and n.idName <> :id2 order by n.Member_Status, n.Name_Last, n.Name_First;";
                 $stmt = $dbh->prepare($query2);
@@ -634,7 +634,7 @@ where n.idName>0 and n.Member_Status='a' and n.Record_Member = 1 "
                 $query2 = "SELECT n.idName as Id, n.Name_Last, n.Name_First, ifnull(n.Member_Status,'x'), ifnull(g.Description,'Undefined!')
                 FROM name n left join relationship r on (n.idName = r.idName or n.idName = r.Target_Id) and r.Relation_Type = 'sp'
                 left join gen_lookups g on g.Table_Name='mem_status' and g.Code = n.Member_Status
-                WHERE MATCH(n.`Name_Search`) AGAINST (:search in boolean mode) and n.Record_Member = 1
+                WHERE MATCH(n.`Name_Search`) AGAINST (:search in boolean mode) and n.Record_Member = 1 and n.Record_Company = 0
                 and n.Member_Status in ('a','d','in') and n.idName>0 and n.idName <> :id and r.idRelationship is null order by n.Member_Status, n.Name_Last, n.Name_First;";
                 $stmt = $dbh->prepare($query2);
                 $stmt->execute(array(':id' => $id, ':search' => $this->buildFulltextQuery($this->letters)));
@@ -675,7 +675,7 @@ where n.idName>0 and n.Member_Status='a' and n.Record_Member = 1 "
                 $query2 = "SELECT n.idName as Id, n.Name_Last, n.Name_First, ifnull(n.Member_Status,'x'), ifnull(g.Description,'Undefined!')
             FROM name n left join relationship r on n.idName = r.idName and r.Relation_Type = 'rltv'
             left join gen_lookups g on g.Table_Name='mem_status' and g.Code = n.Member_Status
-                WHERE MATCH(n.`Name_Search`) AGAINST (:search in boolean mode) and n.Record_Member = 1 and ifnull(r.Group_Code,'0') not in
+                WHERE MATCH(n.`Name_Search`) AGAINST (:search in boolean mode) and n.Record_Member = 1 and n.Record_Company = 0 and ifnull(r.Group_Code,'0') not in
                 (Select Group_Code from relationship where idname = :id)
                 and n.Member_Status in ('a','d','in') and n.idName <> :id2 order by n.Member_Status, n.Name_Last, n.Name_First;";
                 $stmt = $dbh->prepare($query2);
