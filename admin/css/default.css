@@ -449,3 +449,122 @@ ul.ui-tabs-nav .ui-state-active .ui-icon {
 .hhk-relations table {
     min-width: 125px;
 }
+
+
+
+
+.cf-form fieldset { 
+    border: 1px solid #d5d5d5; 
+    border-radius: 4px; 
+    padding: .75rem 1rem .25rem; 
+    margin: 0 0 1rem; 
+}
+
+.cf-form legend { 
+    font-weight: bold; 
+    padding: 0 .35rem; 
+    width: auto; 
+    font-size: 1em; 
+}
+
+.cf-field { 
+    display: flex; 
+    flex-direction: column; 
+    margin-bottom: .85rem;
+}
+
+/* display:flex above would otherwise override the hidden attribute */
+.cf-field[hidden] {
+    display: none;
+}
+
+.cf-field label {
+    font-weight: bold; 
+    margin-bottom: .25rem; 
+}
+
+.cf-field input[type=text], .cf-field input[type=date], .cf-field select, .cf-field textarea {
+    width: 100%; 
+    box-sizing: border-box; 
+    padding: .35rem .45rem; 
+    border: 1px solid #aaa; 
+    border-radius: 3px; 
+    font: inherit; 
+    background: #fff;
+}
+
+.cf-field textarea { 
+    min-height: 5rem; 
+    resize: vertical; 
+}
+
+.cf-req { 
+    color: #b30000; 
+    margin-left: .15rem; 
+}
+
+.cf-help { 
+    font-size: .85em; 
+    color: #555; 
+    margin: .2rem 0 0; 
+}
+
+.cf-prefix { 
+    display: flex; 
+    align-items: center; 
+}
+            
+.cf-prefix > span { 
+    padding: 0 .4rem; 
+}
+            
+.cf-error { 
+    color: #b30000; 
+    font-size: .85em; 
+    margin-top: .2rem; 
+    min-height: 0; 
+}
+            
+.cf-error:empty { 
+    display: none; 
+}
+            
+.cf-has-error input, .cf-has-error select, .cf-has-error textarea { 
+    border-color: #b30000; 
+    background-color: #fff6f6; 
+}
+            
+.cf-meta { 
+    font-size: .85em; 
+    color: #555; 
+    margin: 0 0 1rem; 
+}
+            
+.cf-groups { 
+    gap: 1rem; 
+    margin-bottom: 1rem; 
+}
+            
+.cf-groups fieldset { 
+    flex: 0 0 18rem; 
+    min-width: 0; 
+    margin: 0; 
+}
+            
+@media (max-width: 64rem) {
+                
+    .cf-groups { 
+        flex-wrap: wrap; 
+    }
+                
+    .cf-groups fieldset { 
+        flex: 1 1 18rem; 
+    }
+            
+}
+            
+.cf-actions { 
+    display: flex; 
+    gap: .75rem; 
+    justify-content: flex-end; 
+}

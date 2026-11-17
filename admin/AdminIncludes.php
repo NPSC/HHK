@@ -17,3 +17,4 @@ define('BOOTSTRAP_ICONS_CSS', "<link href='../css/bootstrap-icons.min.css" . JSV
 define('NAVBAR_CSS', "<link href='../css/bootstrapNavbar.css" . JSV . "' rel='stylesheet' type='text/css' />");
 
 define('CONFIGURE_JS', "js/Configure.js" . JSV);
+define('CAMPAIGN_EDIT_JS', "js/campaignEdit.js" . JSV);

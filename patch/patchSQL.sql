@@ -311,3 +311,6 @@ DELETE FROM `gen_lookups` WHERE `Table_Name` = 'Gl_Code' AND `Code` = 'StartDay'
 
 -- Make the useGLCodes toggle visible to all sites; leave each site's current value alone.
 UPDATE `sys_config` SET `Show` = '1', `Description` = 'Use General Ledger codes and enable the GL report' WHERE `Key` = 'useGLCodes';
+
+-- Campaign percentage cut allows 3 decimal places.
+ALTER TABLE `campaign` MODIFY COLUMN `Percent_Cut` DECIMAL(15, 3) NOT NULL DEFAULT '0.000';

@@ -157,7 +157,7 @@ CREATE TABLE
         `Campaign_Merge_Code` VARCHAR(15) NOT NULL DEFAULT '',
         `Description` TEXT,
         `Lump_Sum_Cost` DECIMAL(15, 2) NOT NULL DEFAULT '0.00',
-        `Percent_Cut` DECIMAL(15, 2) NOT NULL DEFAULT '0.00',
+        `Percent_Cut` DECIMAL(15, 3) NOT NULL DEFAULT '0.000',
         `Our_Cut_PerTx` DECIMAL(15, 2) NOT NULL DEFAULT '0.00',
         `Campaign_Type` VARCHAR(5) NOT NULL DEFAULT '',
         `Updated_By` VARCHAR(25) NOT NULL DEFAULT '',
