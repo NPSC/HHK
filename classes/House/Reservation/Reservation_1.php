@@ -21,7 +21,7 @@ use HHK\Tables\EditRS;
 use HHK\Tables\Registration\RegistrationRS;
 use HHK\Tables\Reservation\{ReservationInvoiceLineRS, ReservationRS, Reservation_GuestRS, Reservation_MultipleRS};
 use HHK\Tables\Attribute\ConstraintEntityRS;
-use HHK\Tables\{LinkDocRS, LinkNoteRS};
+use HHK\Tables\LinkNoteRS;
 use HHK\Tables\House\{ResourceRS, RoomRS};
 use HHK\sec\Labels;
 use HHK\sec\Session;
@@ -701,12 +701,8 @@ class Reservation_1 {
             throw new RuntimeException('Reservation cannot be deleted.  Delete the Visit instead.');
         }
 
-        // Set referal doc to archived
+        // Set referal doc to archived.  The link_doc row is kept so the referral inbox can show the reservation was deleted.
         $this->updateReferralFormDocStatus($dbh, ReferralFormStatus::Archived);
-        $ldRs = new LinkDocRS();
-        $ldRs->idReservation->setStoredVal($this->getIdReservation());
-        EditRS::delete($dbh, $ldRs, array($ldRs->idReservation));
-
 
 
         //move notes to PSG

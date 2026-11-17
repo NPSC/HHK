@@ -953,7 +953,7 @@ CREATE OR REPLACE VIEW `vform_listing` AS
         `g`.`Description` AS `status`,
         `r`.`idReservation` AS `idResv`,
         `r`.`Status` AS `resvStatus`,
-        `rs`.`Title` AS `resvStatusName`,
+        CASE WHEN `ld`.`idReservation` > 0 AND `r`.`idReservation` IS NULL THEN 'Deleted' ELSE `rs`.`Title` END AS `resvStatusName`,
         `d`.`Timestamp` AS `Timestamp`,
         `d`.`Title` AS `FormTitle`,
         IFNULL(JSON_VALUE(`d`.`abstract`, '$.enableReservation'), 'true') AS `enableReservation`
@@ -962,7 +962,7 @@ CREATE OR REPLACE VIEW `vform_listing` AS
         LEFT JOIN `gen_lookups` `g` ON (`d`.`Status` = `g`.`Code`
             AND `g`.`Table_Name` = 'Referral_Form_Status')
 		LEFT JOIN `hospital` `h` ON (JSON_VALUE(`d`.`userData`, '$.hospital.idHospital') = `h`.`idHospital`)
-        LEFT JOIN `link_doc` `ld` ON (`d`.`idDocument` = `ld`.`idDocument` AND `ld`.`idReservation` > 0)
+        LEFT JOIN (SELECT `idDocument`, MAX(`idReservation`) AS `idReservation` FROM `link_doc` WHERE `idReservation` > 0 GROUP BY `idDocument`) `ld` ON (`d`.`idDocument` = `ld`.`idDocument`)
         LEFT JOIN `reservation` `r` ON (`r`.`idReservation` = `ld`.`idReservation`)
         LEFT JOIN `lookups` `rs` ON (`r`.`Status` = `rs`.`Code` AND `rs`.`Category` = 'ReservStatus'))
     WHERE
