@@ -187,11 +187,10 @@ $printTitle = $wInit->pageHeading . ' With Amounts';
                     changeYear: true,
                     autoSize: true
                 });
-                $('.dollarsOnly').change(function () {
-                    var amt = this.value.indexOf('.');
-                    if (amt > 0) {
-                        this.value = this.value.substring(0, amt);
-                    }
+                // Whole dollars only: the server sanitizes these as integers, so "100.00" would become 10000.
+                setupNumericInputs($('#fDonor .hhk-money'), function (val) {
+                    var amt = parseInt(val, 10);
+                    return isNaN(amt) ? '' : String(amt);
                 });
                 $('#overRideSal').change(function () {
                     if (this.checked) {
@@ -241,7 +240,7 @@ $printTitle = $wInit->pageHeading . ' With Amounts';
                                 <input type="hidden" id="donCampSelection" value="<?php echo $SelectDonCamp ?>" />
                             </td>
                             <td>
-                                <label for="txtmin" title="Whole Dollars Only">Min Amount: $</label><input type="text" class="dollarsOnly" title="Whole Dollars Only" name="txtmin" id="txtmin" size="7" value="<?php echo $minMkup; ?>" />
+                                <label for="txtmin" title="Whole Dollars Only">Min Amount: $</label><input type="text" class="hhk-money" inputmode="numeric" title="Whole Dollars Only" name="txtmin" id="txtmin" size="7" value="<?php echo $minMkup; ?>" />
                             </td>
                             <td>
                                 <label for="sdate">Starting:</label>
@@ -252,7 +251,7 @@ $printTitle = $wInit->pageHeading . ' With Amounts';
                         </tr>
                         <tr>
                             <td>
-                                <label for="txtmax" title="Whole Dollars Only">Max Amount: $</label><input type="text" class="dollarsOnly" title="Whole Dollars Only" name="txtmax" id="txtmax" size="7" value="<?php echo $maxMkup; ?>"/>
+                                <label for="txtmax" title="Whole Dollars Only">Max Amount: $</label><input type="text" class="hhk-money" inputmode="numeric" title="Whole Dollars Only" name="txtmax" id="txtmax" size="7" value="<?php echo $maxMkup; ?>"/>
                             </td>
                             <td>
                                 <label for="edate">Ending:</label>

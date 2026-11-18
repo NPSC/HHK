@@ -245,7 +245,7 @@ function deleteDonation(PDO $dbh, int $donId, $uname) {
  * @param PDO $dbh
  * @param int $id
  * @param ReportFilter|null $filter time period and campaigns to limit the list to; null lists everything
- * @return array{data?: array, donorName?: string, total?: string, filterItems?: list<array{label: string, value: string}>, error?: string}
+ * @return array{data?: array, donorName?: string, monetaryTotal?: string, inKindTotal?: string, total?: string, filterItems?: list<array{label: string, value: string}>, error?: string}
  */
 function listDonations(PDO $dbh, $id, ?ReportFilter $filter = null) {
 
@@ -298,7 +298,8 @@ function listDonations(PDO $dbh, $id, ?ReportFilter $filter = null) {
     $stmt->execute($params);
 
     $rows = array();
-    $total = 0;
+    $monetaryTotal = 0;
+    $inKindTotal = 0;
 
     foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $r) {
 
@@ -331,8 +332,10 @@ function listDonations(PDO $dbh, $id, ?ReportFilter $filter = null) {
         }
 
         $inKind = ($r['Campaign_Type'] == CampaignType::InKind);
-        if (! $inKind) {
-            $total += $r['Amount'];
+        if ($inKind) {
+            $inKindTotal += $r['Amount'];
+        } else {
+            $monetaryTotal += $r['Amount'];
         }
 
         $rows[] = array(
@@ -356,7 +359,9 @@ function listDonations(PDO $dbh, $id, ?ReportFilter $filter = null) {
     return array(
         'data' => $rows,
         'donorName' => $donorName,
-        'total' => number_format($total, 2, '.', ','),
+        'monetaryTotal' => number_format($monetaryTotal, 2, '.', ','),
+        'inKindTotal' => number_format($inKindTotal, 2, '.', ','),
+        'total' => number_format($monetaryTotal + $inKindTotal, 2, '.', ','),
         'filterItems' => $filterItems
     );
 }

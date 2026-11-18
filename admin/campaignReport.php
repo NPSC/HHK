@@ -24,7 +24,7 @@ $menuMarkup = $wInit->generatePageMenu();
 $uS = Session::getInstance();
 
 $fyMonths = $uS->fy_diff_Months;
-$startYear = '2013';
+$startYear = $uS->StartYear;
 
 
 $rb_fyChecked = "checked='checked'";
@@ -157,14 +157,18 @@ $selYearOptions = ReportFilter::getYearOptionsMarkup($yearSelected, $startYear, 
                                 <?php echo $selYearOptions; ?>
                             </select><input type="hidden" id="hdnselCampOptions" value="" />
                         </td>
-                        <td>Fiscal Year<input type="radio" id="rb_Cal_fy" name="rb_CalSelect" value ="fy" <?php echo $rb_fyChecked; ?> />&nbsp;Calender Year<input type="radio" id="rb_Cal_cy" value="cy" name="rb_CalSelect" <?php echo $rb_cyChecked; ?> /></td>
-                        <td style="text-align:right;"><input type="button" id="btnCamp" value="Run Campaign Roll-ups" /></td>
-                    </tr>
-                    <tr>
-                        <td colspan="2">(Fiscal Year Begins <input type="text" id="fyMonth" value="<?php echo $fyMonths; ?>" size="1" readonly="readonly"/> Months Early)</td>
-                        <td style="text-align:right;"><input type="button" id="btnList" value="List Campaign Detail" /></td>
+                        <td>
+                            <input type="radio" id="rb_Cal_fy" name="rb_CalSelect" value ="fy" <?php echo $rb_fyChecked; ?> />
+                            <label for="rb_Cal_fy" class="mr-2">Fiscal Year</label>
+                            <input type="radio" id="rb_Cal_cy" value="cy" name="rb_CalSelect" <?php echo $rb_cyChecked; ?> />
+                            <label for="rb_Cal_cy">Calendar Year</label>
+                        </td>
                     </tr>
                 </table>
+                <div class="mt-3">
+                    <input type="button" id="btnCamp" value="Run Campaign Roll-ups" />
+                    <input type="button" id="btnList" value="List Campaign Detail" />
+                </div>
             </div>
             <div id="reportDiv" style="display:none;" class="ui-widget ui-widget-content hhk-widget-content ui-corner-all mb-3" >
                 <div class="mb-3"><input id="Print_Button" type="button" value="Print" title="Press to print out this listing."/></div>

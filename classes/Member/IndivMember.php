@@ -693,11 +693,11 @@ ORDER BY `List_Order`");
     {
 
         $relTab = $this->createOrgMarkup($rel, $page)
-            . HTMLContainer::generateMarkup('div', $rel[RelLinkType::Spouse]->createMarkup($page), array('class' => 'mr-3'))
-            . HTMLContainer::generateMarkup('div', $rel[RelLinkType::Sibling]->createMarkup($page), array('class' => 'mr-3'))
-            . HTMLContainer::generateMarkup('div', $rel[RelLinkType::Parnt]->createMarkup($page), array('class' => 'mr-3'))
-            . HTMLContainer::generateMarkup('div', $rel[RelLinkType::Child]->createMarkup($page), array('class' => 'mr-3'))
-            . HTMLContainer::generateMarkup('div', $rel[RelLinkType::Relative]->createMarkup($page), array('class' => 'mr-3'));
+            . HTMLContainer::generateMarkup('div', $rel[RelLinkType::Spouse]->createMarkup($page))
+            . HTMLContainer::generateMarkup('div', $rel[RelLinkType::Sibling]->createMarkup($page))
+            . HTMLContainer::generateMarkup('div', $rel[RelLinkType::Parnt]->createMarkup($page))
+            . HTMLContainer::generateMarkup('div', $rel[RelLinkType::Child]->createMarkup($page))
+            . HTMLContainer::generateMarkup('div', $rel[RelLinkType::Relative]->createMarkup($page));
 
         return $relTab;
     }
@@ -727,8 +727,8 @@ ORDER BY `List_Order`");
         // Job Title only applies when linked to a company; nameEd.js toggles it as company links change.
         $jobTitleStyle = '' . (count($company->getRelNames()) > 0 ? '' : ' display:none;');
 
-        $coTab = HTMLContainer::generateMarkup('div', $company->createMarkup($page), array('class' => 'mr-3'))
-            . HTMLContainer::generateMarkup('div', $table->generateMarkup(), array('class' => 'mr-3', 'id' => 'divJobTitle', 'style' => $jobTitleStyle));
+        $coTab = HTMLContainer::generateMarkup('div', $company->createMarkup($page))
+            . HTMLContainer::generateMarkup('div', $table->generateMarkup(), array('id' => 'divJobTitle', 'style' => $jobTitleStyle));
 
         return $coTab;
     }

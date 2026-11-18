@@ -129,7 +129,12 @@ function getDonationMarkup(id, onNewDonation) {
                 donationDonorName = json.donorName;
                 // One summary item per line, with the label in bold.
                 var filterItems = json.filterItems || [];
-                var items = [{label: 'Donor', value: json.donorName}, {label: 'Total', value: '$' + json.total}].concat(filterItems);
+                var items = [
+                    {label: 'Donor', value: json.donorName},
+                    {label: 'Monetary Total', value: '$' + json.monetaryTotal},
+                    {label: 'In-Kind Total', value: '$' + json.inKindTotal},
+                    {label: 'Total', value: '$' + json.total}
+                ].concat(filterItems);
                 $('#donSummary').empty().append($.map(items, function (item) {
                     return $('<div/>').append($('<strong/>').text(item.label + ':'), document.createTextNode(' ' + item.value));
                 }));
@@ -177,7 +182,7 @@ function getDonationMarkup(id, onNewDonation) {
                     return data;
                 }
                 var amt = '$' + Number(data).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
-                return row.inKind ? '<span style="font-style:italic;" title="In-kind; not included in the total">' + amt + '</span>' : amt;
+                return row.inKind ? '<span style="font-style:italic;" title="In-kind; not included in the monetary total">' + amt + '</span>' : amt;
             }}
         ],
         order: [[1, 'desc']],

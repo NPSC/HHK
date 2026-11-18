@@ -463,9 +463,9 @@ $alertMessage = $alertMsg->createMarkup();
             <?php echo $menuMarkup; ?>
         <div id="contentDiv">
 
-            <div class="hhk-flex my-3">
+            <div class="hhk-flex my-3" style="gap:1rem; flex-wrap: wrap-reverse;">
                 <?php echo $NiceName; ?>
-                <div class="ui-widget ui-widget-content ui-corner-all hhk-widget-content p-2 ml-3" style="background:#EFDBC2;">
+                <div class="ui-widget ui-widget-content ui-corner-all hhk-widget-content p-2" style="background:#EFDBC2;">
                     <form autocomplete="off">
                         <div style="border-width: 1px; border-color: gray; border-style: ridge; padding: 2px;">
                             <span>Search: </span>
@@ -484,7 +484,7 @@ $alertMessage = $alertMsg->createMarkup();
                 <div class="ui-widget ui-widget-content ui-corner-all hhk-widget-content mb-2 hhk-flex" style="font-size:0.95em;padding: 0.7em 1.0em;">
                     <?php echo $nameMarkup; ?>
                 </div>
-                <div id="linkTabs" class="ui-widget ui-widget-content ui-corner-all hhk-widget-content mb-2 hhk-flex hhk-flex-wrap" style="font-size:0.95em;padding: 0.7em 1.0em;">
+                <div id="linkTabs" class="ui-widget ui-widget-content ui-corner-all hhk-widget-content mb-2 hhk-flex hhk-flex-wrap" style="font-size:0.95em;padding: 0.7em 1.0em; gap:1rem;">
                         <?php echo $relationsMarkup; ?>
                 </div>
                 <div id="divaddrTabs" class="hhk-showonload hhk-flex hhk-flex-wrap" style="display:none;">
