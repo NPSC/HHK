@@ -158,7 +158,7 @@ function getPeopleReport(\PDO $dbh, bool $local, bool $showRelationship, string 
         LEFT JOIN
     hospital h ON hs.idHospital = h.idHospital and h.Type = 'h'
         LEFT JOIN
-    hospital a ON hs.idAssociation = h.idHospital and h.Type = 'a'
+    hospital a ON hs.idAssociation = a.idHospital and a.Type = 'a'
 		LEFT JOIN
 	name_demog nd on s.idName = nd.idName
     $demogJoins
@@ -925,32 +925,11 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
     $end = $filter->getReportEnd();
 
     // Hospitals
-    $whHosp = '';
     $tdHosp = $filter->getSelectedHospitalsString();
-    foreach ($filter->getSelectedHosptials() as $a) {
-        if ($a != '') {
-            if ($whHosp == '') {
-                $whHosp .= $a;
-            } else {
-                $whHosp .= ",". $a;
-            }
-        }
-    }
-
-    $whAssoc = '';
     $tdAssoc = $filter->getSelectedAssocString();
-    foreach ($filter->getSelectedAssocs() as $a) {
 
-        if ($a != '') {
-
-            if ($whAssoc == '') {
-                $whAssoc .= $a;
-            } else {
-                $whAssoc .= ",". $a;
-            }
-        }
-
-    }
+    $whHosp = implode(",", $filter->getSelectedHosptials());
+    $whAssoc = implode(",", $filter->getSelectedAssocs());
 
     if ($whHosp != '') {
         $whHosp = " and hs.idHospital in (".$whHosp.") ";
@@ -1102,7 +1081,7 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
         $sTbl = new HTMLTable();
 
 
-        $whPeople = $whHosp . $whCountry . $whDiags . $whStatus;
+        $whPeople = $whHosp . $whAssoc . $whCountry . $whDiags . $whStatus;
 
         $rptSetting = filter_var($_POST['rbReport'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
@@ -1117,7 +1096,7 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
         switch ($rptSetting) {
 
         	case 'psg':
-        	    $rptArry = getPsgReport($dbh, (bool) $local, $whHosp . $whDiags, $start, $filter->getQueryEnd(), $uS->guestLookups['Patient_Rel_Type'], $uS->guestLookups[GLTableNames::Hospital], $labels, (bool) $showAssoc, (bool) $showDiag, (bool) $uS->ShowDiagTB, (bool) $showLocation, (bool) $uS->ShowBirthDate, (bool) $uS->PatientAsGuest, (bool) $uS->county);
+        	    $rptArry = getPsgReport($dbh, (bool) $local, $whHosp . $whAssoc . $whDiags, $start, $filter->getQueryEnd(), $uS->guestLookups['Patient_Rel_Type'], $uS->guestLookups[GLTableNames::Hospital], $labels, (bool) $showAssoc, (bool) $showDiag, (bool) $uS->ShowDiagTB, (bool) $showLocation, (bool) $uS->ShowBirthDate, (bool) $uS->PatientAsGuest, (bool) $uS->county);
                 $dataTable = $rptArry['table'];
                 $sTbl->addBodyTr(HTMLTable::makeTh($uS->siteName . ' ' . $labels->getString('statement', 'psgLabel', 'PSG') . ' Report', array('colspan'=>'4')));
                 $sTbl->addBodyTr(HTMLTable::makeTd('From', array('class'=>'tdlabel')) . HTMLTable::makeTd(date('M j, Y', strtotime($start))) . HTMLTable::makeTd('Thru', array('class'=>'tdlabel')) . HTMLTable::makeTd(date('M j, Y', strtotime($end))));

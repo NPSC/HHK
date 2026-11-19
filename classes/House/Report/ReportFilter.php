@@ -494,22 +494,14 @@ $ckdate";
         if (filter_has_var(INPUT_POST, 'selAssoc')) {
             $reqs = $_POST['selAssoc'];
             if (is_array($reqs)) {
-                if(count($reqs) > 2 && in_array("", $reqs)){
-                    $k = array_search("", $reqs);
-                    unset($reqs[$k]);
-                }
-                $this->selectedAssocs = self::cleanIdList($reqs);
+                $this->selectedAssocs = self::dropAllWhenOthersSelected(self::cleanIdList($reqs));
             }
         }
 
         if (filter_has_var(INPUT_POST, 'selHospital')) {
             $reqs = $_POST['selHospital'];
             if (is_array($reqs)) {
-                if(count($reqs) > 2 && in_array("", $reqs)){
-                    $k = array_search("", $reqs);
-                    unset($reqs[$k]);
-                }
-                $this->selectedHosptials = self::cleanIdList($reqs);
+                $this->selectedHosptials = self::dropAllWhenOthersSelected(self::cleanIdList($reqs));
             }
         }
 
@@ -536,6 +528,20 @@ $ckdate";
         }
 
         return $ids;
+    }
+
+    /**
+     * Remove the blank "All" option when specific ids are also selected, so the
+     * selection redisplayed to the user matches what the report filters on.
+     *
+     * @param array<string> $ids output of cleanIdList()
+     * @return array<string>
+     */
+    protected static function dropAllWhenOthersSelected(array $ids): array {
+
+        $specific = array_filter($ids, fn($v) => $v !== '');
+
+        return count($specific) > 0 ? $specific : $ids;
     }
 
     /**
@@ -1350,19 +1356,19 @@ $ckdate";
     }
 
     /**
-     * Summary of getSelectedHosptials
-     * @return array
+     * Selected hospital ids, without the blank "All" option (stored when only "All" is selected, so the selector redisplays it).
+     * @return array<int, string>
      */
     public function getSelectedHosptials(): array {
-        return $this->selectedHosptials;
+        return array_values(array_filter($this->selectedHosptials, fn($v) => $v !== ''));
     }
 
     /**
-     * Summary of getSelectedAssocs
-     * @return array
+     * Selected association ids, without the blank "All" option (stored when only "All" is selected, so the selector redisplays it).
+     * @return array<int, string>
      */
     public function getSelectedAssocs(): array {
-        return $this->selectedAssocs;
+        return array_values(array_filter($this->selectedAssocs, fn($v) => $v !== ''));
     }
 
     /**

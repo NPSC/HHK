@@ -2391,6 +2391,11 @@ function resvManager(initData, options) {
                 $rDiv.append($(data.resv.rdiv.rate));
             }
 
+            // Checklist (CheckingIn and add-guest pages); the reservation page gets it inside rstat.
+            if (data.resv.rdiv.checklist !== undefined) {
+                $rDiv.append($(data.resv.rdiv.checklist));
+            }
+
             // Card-on-file
             if (data.resv.rdiv.cof !== undefined) {
                 $rDiv.append(data.resv.rdiv.cof);
@@ -2402,8 +2407,11 @@ function resvManager(initData, options) {
             }
 
             // Reservation Status
-            if (data.resv.rdiv.rstat !== undefined) {
-                $rDiv.append($(data.resv.rdiv.rstat));
+            if (data.resv.rdiv.rstat !== undefined || data.resv.rdiv.checklist !== undefined) {
+
+                if (data.resv.rdiv.rstat !== undefined) {
+                    $rDiv.append($(data.resv.rdiv.rstat));
+                }
 
                 $rDiv.on('change', '.hhk-checkboxlist', function () {
                     if ($(this).prop('checked')) {

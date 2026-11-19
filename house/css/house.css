@@ -1381,3 +1381,13 @@ input:checked + .hhk-slider:before {
 	text-decoration: underline !important;
 	cursor: pointer;
 }
+
+/* checklist item cells (ReservationReport): left aligned, with a gap between the completed icon and the date.
+   tbody raises specificity over DataTables' right-aligned dt-type-date rule, which loads after this file. */
+table.dataTable tbody td.hhk-checklist-item {
+	text-align: left;
+}
+
+td.hhk-checklist-item::before {
+	margin-right: .5em;
+}

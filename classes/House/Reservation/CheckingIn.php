@@ -280,6 +280,12 @@ FROM `reservation` `r`
             $dataArray['vehicle'] = $this->vehicleMarkup($dbh);
         }
 
+        // Checklist (saved by ActiveReservation::saveResv).
+        $checklistMkup = $this->checklistSectionMarkup($dbh);
+        if ($checklistMkup != '') {
+            $dataArray['checklist'] = $checklistMkup;
+        }
+
         // Reservation status title
         $dataArray['rStatTitle'] = '';
 

@@ -878,13 +878,13 @@ $uS->guestId = $id;
                         <table><tr>
                             <th>Reports</th><th>Dates</th>
                         </tr><tr>
-                            <td><input id='cbVisits' type='checkbox' checked="checked"/> Visits</td>
-                            <td>Starting: <input type="text" id="txtactstart" class="ckdate" value="" /></td>
+                            <td><label for="cbVisits"><input id="cbVisits" type="checkbox" checked="checked"/> Visits</label></td>
+                            <td><label for="txtactstart">Starting:</label> <input type="text" id="txtactstart" class="ckdate" value="" /></td>
                         </tr><tr>
-                            <td><input id='cbReserv' type='checkbox'/> Reservations</td>
-                            <td>Ending: <input type="text" id="txtactend" class="ckdate" value="" /></td>
+                            <td><label for="cbReserv"><input id="cbReserv" type="checkbox"/> Reservations</label></td>
+                            <td><label for="txtactend">Ending:</label> <input type="text" id="txtactend" class="ckdate" value="" /></td>
                         </tr><tr>
-                            <td colspan="2"><input id='cbHospStay' type='checkbox'/> <?php echo $labels->getString('hospital', 'hospital', 'Hospital'); ?> Stays</td>
+                            <td colspan="2"><label for="cbHospStay"><input id="cbHospStay" type="checkbox"/> <?php echo $labels->getString('hospital', 'hospital', 'Hospital'); ?> Stays</label></td>
 
                         </tr><tr>
 

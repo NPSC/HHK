@@ -11,7 +11,8 @@ use HHK\House\ReserveData\ReserveData;
 use HHK\House\Resource\AbstractResource;
 use HHK\House\Room\RoomChooser;
 use HHK\House\Visit\Visit;
-use HHK\SysConst\VisitStatus;
+use HHK\Checklist;
+use HHK\SysConst\{ChecklistType, VisitStatus};
 use HHK\Tables\EditRS;
 use HHK\Tables\Reservation\ReservationRS;
 use HHK\Tables\Visit\VisitRS;
@@ -90,6 +91,9 @@ class StayingReservation extends CheckingIn {
             if ($uS->TrackAuto) {
                 Vehicle::saveVehicle($dbh, $this->reserveData->getRawPost(), $reg->getIdRegistration(), $this->reservRs->idReservation->getStoredVal(), $this->reservRs);
             }
+
+            // Save Checklists
+            Checklist::saveChecklist($dbh, $this->reserveData->getRawPost(), $reg->getIdPsg(), ChecklistType::PSG);
         }
 
         return $this;
@@ -140,6 +144,12 @@ class StayingReservation extends CheckingIn {
         $dataArray['rChooser'] = $roomChooser->createAddGuestMarkup($dbh, SecurityComponent::is_Authorized(ReserveData::GUEST_ADMIN));
 
         $dataArray = array_merge($dataArray, $this->createExpDatesControl(TRUE, $this->reserveData->getSpanStartDT()->format('M j, Y')));
+
+        // Checklist (saved in save())
+        $checklistMkup = $this->checklistSectionMarkup($dbh);
+        if ($checklistMkup != '') {
+            $dataArray['checklist'] = $checklistMkup;
+        }
 
         // Vehicles
         if ($uS->TrackAuto) {

@@ -70,6 +70,10 @@ $(document).ready(function () {
     $('input[type="button"], input[type="submit"]').button();
     $('#btnActvtyGo').click(function () {
         $(".hhk-alert").hide();
+        if ($('#cbVisits, #cbReserv, #cbHospStay').filter(':checked').length === 0) {
+            flagAlertMessage('Select at least one report', 'alert');
+            return;
+        }
         let stDate = $('#txtactstart').datepicker("getDate");
         if (stDate === null) {
             $('#txtactstart').addClass('ui-state-highlight');
@@ -84,8 +88,8 @@ $(document).ready(function () {
         }
         let parms = {
             cmd: 'actrpt',
-            start: stDate.toLocaleDateString(),
-            end: edDate.toLocaleDateString()
+            start: $.datepicker.formatDate('yy-mm-dd', stDate),
+            end: $.datepicker.formatDate('yy-mm-dd', edDate)
         };
         if ($('#cbVisits').prop('checked')) {
             parms.visit = 'on';
@@ -152,13 +156,13 @@ $(document).ready(function () {
                 <table><tr>
                         <th>Reports</th><th>Dates</th>
                     </tr><tr>
-                        <td><input id='cbVisits' type='checkbox' checked="checked"/> Visits</td>
-                        <td>Starting: <input type="text" id="txtactstart" class="ckdate" value="" /></td>
+                        <td><label for="cbVisits"><input id="cbVisits" type="checkbox" checked="checked"/> Visits</label></td>
+                        <td><label for="txtactstart">Starting:</label> <input type="text" id="txtactstart" class="ckdate" value="" /></td>
                     </tr><tr>
-                        <td><input id='cbReserv' type='checkbox'/> Reservations</td>
-                        <td>Ending: <input type="text" id="txtactend" class="ckdate" value="" /></td>
+                        <td><label for="cbReserv"><input id="cbReserv" type="checkbox"/> Reservations</label></td>
+                        <td><label for="txtactend">Ending:</label> <input type="text" id="txtactend" class="ckdate" value="" /></td>
                     </tr><tr>
-                        <td><input id='cbHospStay' type='checkbox'/> <?php echo $labels->getString('hospital', 'hospital', 'Hospital'); ?> Stays</td>
+                        <td><label for="cbHospStay"><input id="cbHospStay" type="checkbox"/> <?php echo $labels->getString('hospital', 'hospital', 'Hospital'); ?> Stays</label></td>
                         <td></td>
                     </tr><tr>
                         <td></td>

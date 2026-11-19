@@ -868,6 +868,28 @@ WHERE `r`.`idReservation` = :idResv");
      * @param array $refVehicle
      * @return string
      */
+    /**
+     * PSG checklist section for the check-in and add-guest pages (the reservation page puts it in the status chooser).
+     * @param \PDO $dbh
+     * @return string empty when checklists are off or there are no items
+     */
+    protected function checklistSectionMarkup(\PDO $dbh) {
+
+        $uS = Session::getInstance();
+
+        if (! $uS->useChecklists) {
+            return '';
+        }
+
+        $checklistMkup = Checklist::createChecklistMkup($dbh, $this->reserveData->getIdPsg(), ChecklistType::PSG);
+
+        if ($checklistMkup == '') {
+            return '';
+        }
+
+        return HTMLContainer::generateMarkup("div", $checklistMkup, ["class" => "mr-3 d-inline-block"]);
+    }
+
     protected function vehicleMarkup(\PDO $dbh, array $refVehicle = []) {
 
         $regId = $this->reservRs->idRegistration->getStoredVal();

@@ -520,7 +520,7 @@ $alertMessage = $alertMsg->createMarkup();
                         <?php echo ($name->getMemberDesignation() == MemDesignation::Individual ? "<li id='wbuser'><a href='#vwuser'>Web Account...</a></li>": ''); ?>
                         <li id="changelog"><a href="#vchangelog">Change Log</a></li>
                     </ul>
-                    <div id="vhistory" style="background:#EFDBC2;">
+                    <div class="hhk-overflow-x" id="vhistory" style="background:#EFDBC2;">
                             <?php echo $recHistory; ?>
                     </div>
                     <div id="widget-docs">

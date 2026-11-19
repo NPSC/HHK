@@ -56,7 +56,7 @@
 
     // ---- rendering ----------------------------------------------------
 
-    function buildRow(cat, all) {
+    function buildRow(cat) {
         const $tr = $('<tr>').attr('data-code', cat.code);
 
         $tr.append($('<td class="ce-code">').text(cat.code));
@@ -68,34 +68,6 @@
 
         $tr.append($('<td class="ce-num">').text(cat.members));
 
-        const $delTd = $('<td class="ce-center">');
-        if (cat.builtIn) {
-            $delTd.append($('<span class="ce-builtin">').text('Built in'));
-        } else {
-            $delTd.append(
-                $('<input type="checkbox" value="1" class="ce-del">')
-                    .attr({ name: 'del[' + cat.code + ']', 'aria-label': 'Delete ' + cat.description }),
-                errorDiv()
-            );
-        }
-        $tr.append($delTd);
-
-        // Like Resource Builder: the column shows only while a Delete is checked, and each
-        // row's dropdown only while its own Delete is checked.
-        const $replTd = $('<td class="ce-replCol" style="display:none;">');
-        if (!cat.builtIn && cat.members > 0) {
-            const $sel = $('<select class="ce-repl" disabled style="display:none;">')
-                .attr({ name: 'repl[' + cat.code + ']', 'aria-label': 'Replace ' + cat.description + ' with' })
-                .append($('<option value="">').text('(none - remove members)'));
-            all.forEach(function (o) {
-                if (o.code !== cat.code) {
-                    $sel.append($('<option>').val(o.code).text(o.description));
-                }
-            });
-            $replTd.append($sel, errorDiv());
-        }
-        $tr.append($replTd);
-
         return $tr;
     }
 
@@ -106,11 +78,9 @@
 
         const $body = $('#catRows').empty();
         data.categories.forEach(function (cat) {
-            $body.append(buildRow(cat, data.categories));
+            $body.append(buildRow(cat));
         });
         $('#catCount').text(data.categories.length + (data.categories.length === 1 ? ' Entry' : ' Entries'));
-        $('#catTable .ce-replCol').hide();
-        $('#txtNewDesc').val('');
 
         clearErrors();
         snapshot = formState();
@@ -125,20 +95,8 @@
     function validate() {
         const errors = {};
         const names = {};
-        const deleting = {};
-
-        $form.find('.ce-del:checked').each(function () {
-            deleting[$(this).closest('tr').data('code')] = true;
-        });
 
         current.categories.forEach(function (cat) {
-            if (deleting[cat.code]) {
-                const r = fieldByName('repl[' + cat.code + ']').val();
-                if (r && deleting[r]) {
-                    errors['repl[' + cat.code + ']'] = 'The replacement is also being deleted.';
-                }
-                return;
-            }
             const name = $.trim(fieldByName('desc[' + cat.code + ']').val());
             const key = name.toLowerCase();
             if (name === '') {
@@ -149,28 +107,7 @@
             names[key] = true;
         });
 
-        const newName = $.trim($('#txtNewDesc').val());
-        if (newName !== '' && names[newName.toLowerCase()]) {
-            errors.newDesc = 'A category in this group already has this name.';
-        }
-
         return errors;
-    }
-
-    // Deleting with no replacement removes members from the category; make sure that's intended.
-    function confirmRemovals() {
-        const lines = [];
-        current.categories.forEach(function (cat) {
-            if (cat.members > 0 && fieldByName('del[' + cat.code + ']').prop('checked')
-                    && !fieldByName('repl[' + cat.code + ']').val()) {
-                lines.push(cat.description + ' (' + cat.members + ')');
-            }
-        });
-        if (lines.length === 0) {
-            return true;
-        }
-        return window.confirm('These categories will be deleted and their members removed from them:\n\n'
-            + lines.join('\n') + '\n\nContinue?');
     }
 
     // ---- AJAX ---------------------------------------------------------
@@ -211,10 +148,6 @@
             return;
         }
 
-        if (!confirmRemovals()) {
-            return;
-        }
-
         const $btn = $('#btnSave').prop('disabled', true).val('Saving...');
 
         $.post(PAGE, $form.serialize(), null, 'json')
@@ -251,20 +184,6 @@
                 return;
             }
             load($(this).val());
-        });
-
-        // Show "Replace With" only for rows being deleted, and the column only while any are; strike the name.
-        $form.on('change', '.ce-del', function () {
-            const $tr = $(this).closest('tr');
-            const del = this.checked;
-            $tr.toggleClass('ce-deleting', del);
-            $tr.find('.ce-repl').prop('disabled', !del).toggle(del);
-            $('#catTable .ce-replCol').toggle($form.find('.ce-del:checked').length > 0);
-            $tr.find('input[type=text]').prop('readonly', del);
-            if (!del) {
-                $tr.find('.cf-error').text('');
-                $tr.find('.cf-has-error').removeClass('cf-has-error');
-            }
         });
 
         $form.on('input change', ':input', function () {

@@ -434,11 +434,15 @@ where s.Key = 'AcceptResvPaymt' AND " . $whDates . $whHosp . $whAssoc . $whStatu
 
         $doneCol = (is_string($field[1]) ? ($this->checklistDoneCols[$field[1]] ?? null) : null);
 
-        if ($outputType != 'email' && $doneCol !== null && ($row[$doneCol] ?? 0) == 1) {
-            return ['class' => 'bi bi-check-square-fill', 'title' => 'Completed'];
+        if ($outputType == 'email' || $doneCol === null) {
+            return [];
         }
 
-        return [];
+        if (($row[$doneCol] ?? 0) == 1) {
+            return ['class' => 'hhk-checklist-item bi bi-check2-circle', 'title' => 'Completed'];
+        }
+
+        return ['class' => 'hhk-checklist-item'];
     }
 
     public function generateMarkup(string $outputType = ""){

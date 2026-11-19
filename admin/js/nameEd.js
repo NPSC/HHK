@@ -626,31 +626,10 @@ $(document).ready(function () {
         theUl.find("li > div:first-child").removeClass("header-open")
         .nextAll().hide();
 
-        //e.preventDefault();
-
-        // adjust the size of the vol tab control
-        var sumpx = 0;
-
-        theUl.children().each( function () {
-            sumpx = sumpx + $(this).height();
-        });
-
-        theUl.parent().height(sumpx + 40);
-
     },function(e){
         var theUl = $(this).text("Hide details").parent().next("ul");
         var details = theUl.find("li > div:first-child").addClass("header-open");
         details.next().show();
-        //e.preventDefault();
-
-        // adjust the size of the vol tab control
-        var sumpx = 0;
-
-        theUl.children().each( function () {
-            sumpx = sumpx + $(this).height();
-        });
-
-        theUl.parent().height(sumpx + 40);
 
     });
     
@@ -660,16 +639,6 @@ $(document).ready(function () {
         var details = $(this).parent().toggleClass('header-open');
         details.next().toggle();
         e.preventDefault();
-
-        // adjust the size of the vol tab control
-        // Open:  140, closed: 35
-        var sumpx = 0;
-        var theUl = details.closest('ul');
-        theUl.children().each( function () {
-            sumpx = sumpx + $(this).height();
-        });
-
-        theUl.parent().height(sumpx + 40);
     });
 
     // Hover states on the static widgets

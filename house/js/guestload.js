@@ -617,6 +617,10 @@ $(document).ready(function () {
 
     $('#btnActvtyGo').button().click(function () {
         $(".hhk-alert").hide();
+        if ($('#cbVisits, #cbReserv, #cbHospStay').filter(':checked').length === 0) {
+            flagAlertMessage('Select at least one report', 'alert');
+            return;
+        }
         var stDate = $('#txtactstart').datepicker("getDate");
         if (stDate === null) {
             $('#txtactstart').addClass('ui-state-highlight');
@@ -631,8 +635,8 @@ $(document).ready(function () {
         }
         var parms = {
             cmd: 'actrpt',
-            start: stDate.toLocaleDateString(),
-            end: edDate.toLocaleDateString(),
+            start: $.datepicker.formatDate('yy-mm-dd', stDate),
+            end: $.datepicker.formatDate('yy-mm-dd', edDate),
 			psg: memData.idPsg
         };
         if ($('#cbVisits').prop('checked')) {

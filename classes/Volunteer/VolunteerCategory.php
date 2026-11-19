@@ -91,8 +91,7 @@ class VolunteerCategory {
 
         $volData = $this->getVolCategoryData($dbh, $id, $this->Category_Code);
 
-        $height = (140 * count($volData)) + 45;
-        $hdr = "<div id='".$this->Category_Code."' style='height:".$height."px'>
+        $hdr = "<div id='".$this->Category_Code."'>
         <h2 class='top-header'>Options</h2>
         <div class='toggle-docs-links'><a class='toggle-docs-detail' href='#'>Hide details</a></div>
         <ul class='options-list'>";

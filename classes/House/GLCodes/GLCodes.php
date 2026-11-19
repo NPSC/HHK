@@ -363,8 +363,9 @@ class GLCodes {
 					continue;
 				}
 
-				// map gl code
-				$this->addLine($invNumber, $l['Item_Gl_Code'], 0, (0 - abs($l['il_Amount'])), $this->paymentDate, $this->itemLabel($l) . ' (refund)');
+				// Keep the line's sign: refund lines (deposit refund, MOA payout) are negative, but a checkout
+				// invoice can also carry charges (lodging, fees) that the refund was netted against.
+				$this->addLine($invNumber, $l['Item_Gl_Code'], 0, $l['il_Amount'], $this->paymentDate, $this->itemLabel($l) . ' (refund)');
 			}
 
 		} else {

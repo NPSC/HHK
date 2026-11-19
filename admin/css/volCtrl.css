@@ -35,21 +35,18 @@
     list-style-type: none;
 }
 #widget-docs ul.options-list li {
-    clear: left;
-    float: left;
     width: 100%;
     border: 1px solid #D4CCB0;
 }
 #widget-docs .option-header {
     border-top: 1px solid #DFD9C3;
-    float: left;
+    display: flex;
     padding: 2px 0 1px;
     width: 100%;
 }
 #widget-docs .option-header h3 {
 /*    background: url("../images/spindown-closed.gif") no-repeat scroll left center transparent;*/
     cursor: pointer;
-    float: left;
     line-height: 1.5;
     margin: 0 0 0 10px;
     padding: 0 0 0 15px;

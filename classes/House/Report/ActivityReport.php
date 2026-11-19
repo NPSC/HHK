@@ -26,11 +26,34 @@ class ActivityReport {
      * @param string $endDate
      * @return string HTML table markup
      */
+    /**
+     * Optional Timestamp date-range filter; empty dates are left unbounded.
+     *
+     * @return array{0: string, 1: array<string, string>} [SQL fragment beginning with " AND", bound params]
+     */
+    protected static function dateRangeClause($startDate, $endDate): array {
+        $where = '';
+        $params = [];
+
+        if ($startDate != '') {
+            $where .= " AND DATE(`Timestamp`) >= :start";
+            $params[':start'] = $startDate;
+        }
+        if ($endDate != '') {
+            $where .= " AND DATE(`Timestamp`) <= :end";
+            $params[':end'] = $endDate;
+        }
+
+        return [$where, $params];
+    }
+
     public static function staysLog(\PDO $dbh, $startDate, $endDate, $idPsg = 0) {
 
         if ($idPsg > 0) {
-            $stmt = $dbh->prepare("SELECT * FROM `vstays_log` `sl` WHERE `sl`.`idName` IN (SELECT `idName` FROM `name_guest` WHERE `idPsg` = :idPsg);");
-            $stmt->execute([':idPsg' => $idPsg]);
+            [$dateWhere, $params] = self::dateRangeClause($startDate, $endDate);
+            $params[':idPsg'] = $idPsg;
+            $stmt = $dbh->prepare("SELECT * FROM `vstays_log` `sl` WHERE `sl`.`idName` IN (SELECT `idName` FROM `name_guest` WHERE `idPsg` = :idPsg)" . $dateWhere . ";");
+            $stmt->execute($params);
         } else {
             $query = "SELECT * FROM `vstays_log` WHERE (DATE(`Timestamp`) >= :start AND DATE(`Timestamp`) <= :end);";
 
@@ -162,8 +185,10 @@ class ActivityReport {
 
         } else if ($idPsg > 0) {
 
-            $stmt = $dbh->prepare("SELECT * FROM `vreservation_log` `sl` WHERE `sl`.`idName` IN (SELECT `idName` FROM `name_guest` WHERE `idPsg` = :idPsg);");
-            $stmt->execute([':idPsg' => $idPsg]);
+            [$dateWhere, $params] = self::dateRangeClause($startDate, $endDate);
+            $params[':idPsg'] = $idPsg;
+            $stmt = $dbh->prepare("SELECT * FROM `vreservation_log` `sl` WHERE `sl`.`idName` IN (SELECT `idName` FROM `name_guest` WHERE `idPsg` = :idPsg)" . $dateWhere . ";");
+            $stmt->execute($params);
 
         } else {
 
@@ -263,8 +288,10 @@ class ActivityReport {
 
         if ($idP > 0) {
 
-            $stmt = $dbh->prepare("SELECT * FROM `vhospitalstay_log` WHERE `idPsg` = :idP;");
-            $stmt->execute([':idP' => $idP]);
+            [$dateWhere, $params] = self::dateRangeClause($startDate, $endDate);
+            $params[':idP'] = $idP;
+            $stmt = $dbh->prepare("SELECT * FROM `vhospitalstay_log` WHERE `idPsg` = :idP" . $dateWhere . ";");
+            $stmt->execute($params);
 
         } else if ($startDate != '' && $endDate != '') {
 

@@ -268,7 +268,6 @@ abstract class AbstractReport {
         // get the decoded title; the print view writes the title as HTML, so it keeps the entities.
         $jsonFlags = JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT;
         $textTitle = json_encode(html_entity_decode($this->reportTitle, ENT_QUOTES | ENT_HTML5, 'UTF-8'), $jsonFlags);
-        $htmlTitle = json_encode($this->reportTitle, $jsonFlags);
 
         $uS = Session::getInstance();
 
@@ -312,7 +311,7 @@ abstract class AbstractReport {
                 },' : '') . '
                 paperSize: "letter",
                 title: function(){
-                    return ' . $htmlTitle . ';
+                    return ' . $textTitle . ';
                 },
                 messageTop: function(){
                     return document.getElementById("repSummary").outerHTML;

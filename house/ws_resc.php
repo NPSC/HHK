@@ -250,14 +250,22 @@ try {
 
             if (isset($_REQUEST["start"]) && $_REQUEST["start"] != '') {
                 $startDate = filter_var($_REQUEST["start"], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
-                $startDT = new \DateTime($startDate);
+                try {
+                    $startDT = new \DateTime($startDate);
+                } catch (\Exception $e) {
+                    throw new ValidationException('Invalid start date: ' . $startDate);
+                }
             } else {
                 $startDT = new \DateTime();
             }
 
             if (isset($_REQUEST["end"]) && $_REQUEST["end"] != '') {
                 $endDate = filter_var($_REQUEST["end"], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
-                $endDT = new \DateTime($endDate);
+                try {
+                    $endDT = new \DateTime($endDate);
+                } catch (\Exception $e) {
+                    throw new ValidationException('Invalid end date: ' . $endDate);
+                }
             } else {
                 $endDT = new \DateTime();
             }

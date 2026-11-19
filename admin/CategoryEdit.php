@@ -2,7 +2,6 @@
 
 use HHK\Admin\CategoryEditor;
 use HHK\HTMLControls\HTMLSelector;
-use HHK\sec\Session;
 use HHK\sec\WebInit;
 
 /**
@@ -20,7 +19,6 @@ require ("AdminIncludes.php");
 
 $wInit = new WebInit();
 $dbh = $wInit->dbh;
-$uS = Session::getInstance();
 
 $groups = CategoryEditor::groups($dbh);
 
@@ -61,7 +59,7 @@ if ($cmd) {
                     break;
                 }
 
-                $out['success'] = CategoryEditor::save($dbh, $group, $vals, $uS->username);
+                $out['success'] = CategoryEditor::save($dbh, $group, $vals);
                 $out['categories'] = array_values(CategoryEditor::load($dbh, $group));
 
                 // NameEdit reads categories from the session cache.
@@ -143,26 +141,10 @@ $groupOpt = HTMLSelector::doOptionsMkup(array_map(fn($c, $d) => [$c, $d], array_
                                 <th scope="col">Code</th>
                                 <th scope="col" id="catCount">0 Entries</th>
                                 <th scope="col">Members</th>
-                                <th scope="col">Delete</th>
-                                <th scope="col" class="ce-replCol" style="display:none;">Replace With</th>
                             </tr>
                         </thead>
                         <tbody id="catRows"></tbody>
-                        <tbody>
-                            <tr>
-                                <td></td>
-                                <td>
-                                    <input type="text" id="txtNewDesc" name="newDesc" size="30" maxlength="255" aria-label="New category name" />
-                                    <div class="cf-error" role="alert"></div>
-                                </td>
-                                <td colspan="2">New</td>
-                                <td class="ce-replCol" style="display:none;"></td>
-                            </tr>
-                        </tbody>
                     </table>
-                    <p class="cf-help mb-3">Built-in categories can be renamed but not deleted. Members of a deleted category
-                        move to its replacement, or are removed from it if none is chosen.</p>
-
                     <div class="cf-actions">
                         <input type="button" id="btnReset" value="Reset" class="ui-button ui-widget ui-corner-all" />
                         <input type="submit" id="btnSave" value="Save" class="ui-button ui-widget ui-corner-all" />
