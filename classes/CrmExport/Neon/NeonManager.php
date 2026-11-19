@@ -6,7 +6,7 @@ use HHK\Common;
 use HHK\CreateMarkupFromDB;
 use HHK\CrmExport\AbstractExportManager;
 use HHK\Crypto;
-use HHK\House\ResourceBldr;
+use HHK\House\ResourceBuilder;
 use HHK\HTMLControls\{HTMLTable, HTMLSelector, HTMLInput};
 use HHK\sec\Session;
 use HHK\HTMLControls\HTMLContainer;
@@ -1918,7 +1918,7 @@ WHERE `n`.`External_Id` != :excludeTerm AND `n`.`Member_Status` = :memberStatus 
         }
 
         // Write Custom Field Ids to the config file.
-        ResourceBldr::saveGenLk($dbh, 'Cm_Custom_Fields', $custom_fields, [], []);
+        ResourceBuilder::saveGenLk($dbh, 'Cm_Custom_Fields', $custom_fields, [], []);
 
 
         // Properties

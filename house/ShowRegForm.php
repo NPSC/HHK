@@ -83,12 +83,26 @@ try {
             $paymentMarkup = HTMLContainer::generateMarkup('p', $payResult->getDisplayMessage());
         }
 
+        $gotoPage = 'ShowRegForm.php?' . http_build_query([
+            'regid' => $payResult->getIdRegistration(),
+            'vid' => intval($_GET['vid'] ?? 0),
+            'payId' => $payResult->getIdPayment(),
+            'invoiceNumber' => $payResult->getInvoiceNumber(),
+        ]);
+
         if(WebInit::isAJAX()){
             $data = [($payResult->wasError() ? "error" : "success") => $payResult->getDisplayMessage()];
             if($payResult->wasError() == false){
-                $data["gotopage"] = 'ShowRegForm.php?regid=' . $payResult->getIdRegistration() . '&vid=' . $_GET['vid'] . '&payId=' . $payResult->getIdPayment() . '&invoiceNumber=' . $payResult->getInvoiceNumber();
+                $data["gotopage"] = $gotoPage;
             }
             echo json_encode($data);
+            exit;
+        }
+
+        // Hosted page return (e.g. Instamed comes back with only vid): reload with the
+        // full parameter set, same as the non-gateway check-in path in checkingIn.js.
+        if($payResult->wasError() == false){
+            header('Location: ' . $gotoPage);
             exit;
         }
     }
@@ -114,10 +128,11 @@ $reqParms = filter_input_array(INPUT_GET, [
     'idDoc'         => $intParm,
 ]);
 
-$idRegistration = $reqParms['regid'] ?? 0;
+// Keep values from a hosted payment return when they aren't on the query string.
+$idRegistration = ($reqParms['regid'] ?? 0) ?: $idRegistration;
 $idVisit = $reqParms['vid'] ?? 0;
-$idPayment = $reqParms['payId'] ?? 0;
-$invoiceNumber = $reqParms['invoiceNumber'] ?? '';
+$idPayment = ($reqParms['payId'] ?? 0) ?: $idPayment;
+$invoiceNumber = ($reqParms['invoiceNumber'] ?? '') ?: $invoiceNumber;
 $span = $reqParms['span'] ?? 0;
 $idResv = $reqParms['rid'] ?? 0;
 $idDoc = $reqParms['idDoc'] ?? 0;

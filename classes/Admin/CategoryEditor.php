@@ -2,7 +2,7 @@
 namespace HHK\Admin;
 
 use HHK\Common;
-use HHK\House\ResourceBldr;
+use HHK\House\ResourceBuilder;
 
 /**
  * CategoryEditor.php
@@ -107,7 +107,7 @@ class CategoryEditor {
      */
     public static function save(\PDO $dbh, string $group, array $desc): string {
 
-        ResourceBldr::replaceGenLk($dbh, $group, $desc, null, null, null, null, null, null);
+        ResourceBuilder::replaceGenLk($dbh, $group, $desc, null, null, null, null, null, null);
 
         return 'Categories saved.';
     }

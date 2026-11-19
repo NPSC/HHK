@@ -24,7 +24,7 @@ use HHK\Tables\Registration\{Hospital_StayRS, NoteRS};
  * @author Eric
  *
  */
-class ResourceBldr
+class ResourceBuilder
 {
 
     /**

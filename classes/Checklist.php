@@ -6,7 +6,7 @@ namespace HHK;
 
 use DateTime;
 use HHK\HTMLControls\{HTMLTable, HTMLContainer, HTMLInput};
-use HHK\House\ResourceBldr;
+use HHK\House\ResourceBuilder;
 use HHK\HTMLControls\HTMLSelector;
 use HHK\sec\Labels;
 use HHK\sec\Session;
@@ -55,7 +55,7 @@ class Checklist
             ChecklistType::Reservation => "This checklist applies to individual " . Labels::getString("guestEdit", "reservationTab", "Reservations") . " and do NOT follow through to new " . Labels::getString("guestEdit", "reservationTab", "Reservations")
         ];
 
-        $tbl = ResourceBldr::getSelections($dbh, self::ChecklistRootTablename, 'm', $labels, $checklistDescriptions);
+        $tbl = ResourceBuilder::getSelections($dbh, self::ChecklistRootTablename, 'm', $labels, $checklistDescriptions);
 
         return $tbl->generateMarkup(["class" => "sortable"]);
     }

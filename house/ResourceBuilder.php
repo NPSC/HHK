@@ -10,7 +10,7 @@ use HHK\House\Hospital\Hospital;
 use HHK\House\Insurance\Insurance;
 use HHK\House\Insurance\InsuranceType;
 use HHK\House\RegistrationForm\CustomRegisterForm;
-use HHK\House\ResourceBldr;
+use HHK\House\ResourceBuilder;
 use HHK\House\ResourceView;
 use HHK\HTMLControls\{HTMLTable, HTMLContainer, HTMLInput, HTMLSelector};
 use HHK\Purchase\FinAssistance;
@@ -108,14 +108,14 @@ $newEntryButtons = [
 
 foreach ($newEntryButtons as $btn => [$glTable, $glType]) {
     if (isset($_POST[$btn])) {
-        ResourceBldr::addNewLookupEntry($dbh, $glTable, $glType);
+        ResourceBuilder::addNewLookupEntry($dbh, $glTable, $glType);
         $tabActive = "#lkTable";
     }
 }
 
 // Lookups
 if (isset($_POST['table'])) {
-    ResourceBldr::checkLookups($dbh, $_POST, $labels);
+    ResourceBuilder::checkLookups($dbh, $_POST, $labels);
 }
 
 if (isset($_POST['btnkfSave'])) {
@@ -164,13 +164,13 @@ if (isset($_POST['btnkfSave'])) {
     }
 
     // saveArchive($dbh, $_POST['srrDesc'], $_POST['srrAmt'], 'Static_Room_Rate');
-    ResourceBldr::saveGenLk($dbh, 'Static_Room_Rate', $_POST['srrDesc'], $_POST['srrAmt'], NULL);
+    ResourceBuilder::saveGenLk($dbh, 'Static_Room_Rate', $_POST['srrDesc'], $_POST['srrAmt'], NULL);
 
     // Key Deposit
     if (isset($_POST['kdesc'])) {
 
         // Dave deposit
-        ResourceBldr::saveGenLk($dbh, 'Key_Deposit_Code', $_POST['kdesc'], $_POST['krate'], NULL);
+        ResourceBuilder::saveGenLk($dbh, 'Key_Deposit_Code', $_POST['kdesc'], $_POST['krate'], NULL);
 
         // Copy to item
         foreach ($_POST['krate'] as $k => $p) {
@@ -259,7 +259,7 @@ if (isset($_POST['btnkfSave'])) {
         }
 
         // Amount Changed?
-        if (($defaultCode = ResourceBldr::saveArchive($dbh, $_POST['vfdesc'], $_POST['vfrate'], 'Visit_Fee_Code')) != '') {
+        if (($defaultCode = ResourceBuilder::saveArchive($dbh, $_POST['vfdesc'], $_POST['vfrate'], 'Visit_Fee_Code')) != '') {
             $vfDefault = $defaultCode;
         }
 
@@ -392,7 +392,7 @@ if (isset($_POST['btnkfSave'])) {
     // Excess Pay
     if (isset($_POST['epdesc'][$uS->VisitExcessPaid])) {
 
-        ResourceBldr::saveGenLk($dbh, 'ExcessPays', $_POST['epdesc'], [], NULL);
+        ResourceBuilder::saveGenLk($dbh, 'ExcessPays', $_POST['epdesc'], [], NULL);
     }
 
 
@@ -2236,7 +2236,7 @@ $attrTable = $aTbl->generateMarkup();
 $constraintTable = $constraints->createConstraintTable($dbh);
 
 // Demographics Selection table
-$tbl = ResourceBldr::getSelections($dbh, 'Demographics', 'm', $labels);
+$tbl = ResourceBuilder::getSelections($dbh, 'Demographics', 'm', $labels);
 $demoSelections = $tbl->generateMarkup(["class" => "sortable"]);
 
 // Demographics category selectors
