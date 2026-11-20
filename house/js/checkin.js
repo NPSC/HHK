@@ -31,6 +31,11 @@ $(document).ready(function() {
             }
          ]
      });
+    // Check-in buttons: verify the room is free before going to the check-in page.
+    $(document).on('click', 'a.hhk-ckinLink', function (e) {
+        e.preventDefault();
+        checkinIfRoomFree($(this).data('rid'), $(this).attr('href'));
+    });
     $('#hhk-confResvHdr').click(function () {
         $('#hhk-confResv').toggle('blind');
     });

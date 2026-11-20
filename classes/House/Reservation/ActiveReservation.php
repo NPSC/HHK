@@ -54,7 +54,12 @@ class ActiveReservation extends Reservation {
         // Checking In?
         if ($this->getGotoCheckingIn() === 'yes' && $this->reserveData->getIdResv() > 0) {
 
-            $occupiedMsg = $this->roomOccupiedMessage($dbh, intval($this->reservRs->idResource->getStoredVal(), 10));
+            $occupiedMsg = $this->roomOccupiedMessage(
+                $dbh,
+                intval($this->reservRs->idResource->getStoredVal(), 10),
+                $this->reservRs->Expected_Arrival->getStoredVal(),
+                $this->reservRs->Expected_Departure->getStoredVal()
+            );
 
             if ($occupiedMsg == '') {
                 return array('gotopage'=>'CheckingIn.php?rid=' . $this->reserveData->getIdResv());
@@ -98,14 +103,23 @@ class ActiveReservation extends Reservation {
     }
 
     /**
-     * Returns an error message if another visit is still in the room, otherwise an empty string.
+     * Returns an error message if a visit that is still in the room overlaps the stay being checked in,
+     * otherwise an empty string.
+     *
+     * A visit that has not checked out occupies its room from its span start through the later of its
+     * expected departure or tomorrow (same rule as Reservation_1::findRescsInUse()).  So an overstaying
+     * visit blocks backdated check-ins that start after its expected departure, while a past-dated
+     * check-in that ends before the visit arrived in the room is allowed.
+     *
      * @param \PDO $dbh
      * @param int $idResource
+     * @param string $arrival  Arrival date of the stay being checked in
+     * @param string $departure  Departure date of the stay being checked in
      * @return string
      */
-    protected function roomOccupiedMessage(\PDO $dbh, $idResource) {
+    protected static function roomOccupiedMessage(\PDO $dbh, $idResource, $arrival, $departure) {
 
-        if ($idResource < 1) {
+        if ($idResource < 1 || $arrival == '' || $departure == '') {
             return '';
         }
 
@@ -114,8 +128,16 @@ class ActiveReservation extends Reservation {
                 JOIN resource rc ON rc.idResource = v.idResource
                 LEFT JOIN `name` n ON n.idName = v.idPrimaryGuest
             WHERE v.idResource = :idResc AND v.`Status` IN (:active, :onLeave)
+                AND DATE(ifnull(v.Span_Start, v.Arrival_Date)) < DATE(:departure)
+                AND GREATEST(ifnull(DATE(v.Expected_Departure), CURDATE()), DATE_ADD(CURDATE(), INTERVAL 1 DAY)) > DATE(:arrival)
             LIMIT 1");
-        $stmt->execute([':idResc' => $idResource, ':active' => VisitStatus::Active, ':onLeave' => VisitStatus::OnLeave]);
+        $stmt->execute([
+            ':idResc' => $idResource,
+            ':active' => VisitStatus::Active,
+            ':onLeave' => VisitStatus::OnLeave,
+            ':arrival' => $arrival,
+            ':departure' => $departure,
+        ]);
         $occupied = $stmt->fetch(\PDO::FETCH_ASSOC);
 
         if ($occupied === FALSE) {
@@ -123,6 +145,28 @@ class ActiveReservation extends Reservation {
         }
 
         return 'Room ' . $occupied['Title'] . ' is occupied' . ($occupied['Name_Full'] != '' ? ' by ' . $occupied['Name_Full'] : '') . ' (visit ' . $occupied['idVisit'] . ').  Check out that visit before checking in this reservation.  ';
+    }
+
+    /**
+     * Occupied-room message for clicking a check-in button (check-in list, reservation chooser).
+     * An early check-in starts today, otherwise the stay starts on the expected arrival.
+     *
+     * @param \PDO $dbh
+     * @param int $idResv
+     * @return string
+     */
+    public static function checkinOccupiedMessage(\PDO $dbh, $idResv) {
+
+        $resv = Reservation_1::instantiateFromIdReserv($dbh, $idResv);
+
+        // Already staying (adding a guest) - the room is supposed to be occupied.
+        if ($resv->getIdReservation() < 1 || $resv->getExpectedArrival() == '' || $resv->getStatus() == ReservationStatus::Staying) {
+            return '';
+        }
+
+        $arrival = min((new \DateTime($resv->getExpectedArrival()))->format('Y-m-d'), date('Y-m-d'));
+
+        return self::roomOccupiedMessage($dbh, $resv->getIdResource(), $arrival, $resv->getExpectedDeparture());
     }
 
     /**

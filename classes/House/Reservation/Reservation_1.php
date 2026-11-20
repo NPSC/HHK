@@ -1464,9 +1464,17 @@ WHERE $typeList AND (`rc`.`Retired_At` IS NULL OR DATE(`rc`.`Retired_At`) > :ret
                             $buttonText = "Check In Early";
                         }
 
+                        $linkAttrs = array('href'=>$href);
+
+                        // Check-ins verify the room is free when clicked (checkinIfRoomFree() in pag.js).
+                        if ($reservStatus != ReservationStatus::Staying) {
+                            $linkAttrs['class'] = 'hhk-ckinLink';
+                            $linkAttrs['data-rid'] = $resv->getIdReservation();
+                        }
+
                         $star = HTMLContainer::generateMarkup('a',
                             HTMLInput::generateMarkup($buttonText, array('type'=>'button'))
-                                , array('href'=>$href));
+                                , $linkAttrs);
                     }
 
                     if ($shoDirtyRooms) {

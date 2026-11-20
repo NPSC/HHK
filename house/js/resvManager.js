@@ -2824,7 +2824,7 @@ function resvManager(initData, options) {
 
         // Set up 'Check-in Now' button
         $resvDiag.children().find('.hhk-checkinNow').click(function () {
-            window.open('CheckingIn.php?rid=' + $(this).data('rid') + '&gid=' + data.id, '_self');
+            checkinIfRoomFree($(this).data('rid'), 'CheckingIn.php?rid=' + $(this).data('rid') + '&gid=' + data.id);
         });
 
         // Set up go to PSG chooser button

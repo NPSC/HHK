@@ -617,3 +617,35 @@ function setupNumericInputs($inputs, formatter) {
         this.value = formatter(this.value);
     });
 }
+
+/**
+ * Check-in buttons: make sure no other visit is still in the reservation's room
+ * before going to the check-in page.  Shows the reason if the room is occupied.
+ *
+ * @param {number} rid  Reservation Id
+ * @param {string} url  Check-in page to open when the room is free
+ */
+function checkinIfRoomFree(rid, url) {
+
+    $.post('ws_resv.php', {cmd: 'ckinRoomFree', rid: rid}, function (data) {
+
+        try {
+            data = $.parseJSON(data);
+        } catch (err) {
+            flagAlertMessage(err.message, 'error');
+            return;
+        }
+
+        if (data.error) {
+            flagAlertMessage(data.error, 'error');
+            return;
+        }
+
+        if (data.occupied) {
+            flagAlertMessage(data.occupied, 'error');
+            return;
+        }
+
+        window.open(url, '_self');
+    });
+}

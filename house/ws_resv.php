@@ -139,6 +139,19 @@ try {
         break;
 
 
+    case "ckinRoomFree":
+
+        // Check-in button clicked: is another visit still in the reservation's room?
+        $idResv = 0;
+        if (isset($inputData['rid'])) {
+            $idResv = intval(filter_var($inputData['rid'], FILTER_SANITIZE_NUMBER_INT), 10);
+        }
+
+        $events = ['occupied' => ActiveReservation::checkinOccupiedMessage($dbh, $idResv)];
+
+        break;
+
+
     case 'saveCheckin':
 
         $resv = CheckingIn::reservationFactoy($dbh, $inputData);

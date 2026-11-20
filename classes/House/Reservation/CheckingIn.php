@@ -361,7 +361,7 @@ FROM `reservation` `r`
         }
 
         // Is another visit still in the room?
-        $occupiedMsg = $this->roomOccupiedMessage($dbh, $resv->getIdResource());
+        $occupiedMsg = $this->roomOccupiedMessage($dbh, $resv->getIdResource(), $this->reserveData->getArrivalDT()->format('Y-m-d'), $this->reserveData->getDepartureDT()->format('Y-m-d'));
 
         if ($occupiedMsg != '') {
             $this->reserveData->addError($occupiedMsg);
