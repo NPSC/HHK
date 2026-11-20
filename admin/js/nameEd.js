@@ -1,13 +1,5 @@
-// Init j-query.
-$(document).ready(function () {
+document.addEventListener("DOMContentLoaded", function () {
     "use strict";
-
-    var memData = $.parseJSON('<?php echo $memDataJSON; ?>');
-    var userData = $.parseJSON('<?php echo $usrDataJSON; ?>');
-    var listJSON = 'ws_gen.php?cmd=chglog&uid=' + memData.id;
-    var savePressed = false;
-    var forceNamePrefix = '<?php echo isset($uS->ForceNamePrefix) ? $uS->ForceNamePrefix : "false"; ?>';
-	var showGuestPhoto = '<?php echo $uS->ShowGuestPhoto; ?>';
 
     $.widget( "ui.autocomplete", $.ui.autocomplete, {
         _resizeMenu: function() {
@@ -23,7 +15,7 @@ $(document).ready(function () {
     $('#phEmlTabs').tabs();
     $('#demographicTabs').tabs();
     $('#addrsTabs').tabs();
-    var tabs, tbs;
+    var tabs;
     var listEvtTable;
     tabs = $("#divFuncTabs").tabs({
         collapsible: true,
@@ -70,14 +62,16 @@ $(document).ready(function () {
             }
         }
     });
-    tbs = tabs.find( ".ui-tabs-nav" ).children('li').length;
     // enable tabs for a "new" member
     if (memData.id == '0') {
-        if (userData.donFlag) {
-            tabs.tabs("option", "disabled", [ tbs - 4, tbs - 3, tbs - 2, tbs - 1]);
-        } else {
-            tabs.tabs("option", "disabled", [ tbs - 3, tbs - 2, tbs - 1]);
-        }
+        // Disable by id; which tabs exist depends on donation rights and member designation.
+        var disabledTabs = [];
+        tabs.find(".ui-tabs-nav").children('li').each(function (index) {
+            if (['donations', 'notes', 'wbuser', 'changelog'].indexOf(this.id) >= 0) {
+                disabledTabs.push(index);
+            }
+        });
+        tabs.tabs("option", "disabled", disabledTabs);
         $('#phEmlTabs').tabs("option", "active", 1);
         $('#phEmlTabs').tabs("option", "disabled", [0]);
     } else {
@@ -433,10 +427,7 @@ $(document).ready(function () {
         autoSize: true,
         dateFormat: 'M d, yy'
     });
-
-    // Donations list filter: time period show/hide and its date pickers (ReportFilter::getTimePeriodScript).
-    <?php echo $donFilterScript; ?>
-
+    
     $('#btnDonFilterApply').click(function () {
         setDonationFilter($('#donFilter'));
     });
@@ -619,19 +610,6 @@ $(document).ready(function () {
 
     $('#divFuncTabs').css('display', 'block');
     $('.hhk-showonload').show();
-    //show details/hide details
-    $(".toggle-docs-detail").toggle(function(){
-
-        var theUl = $(this).text("Show details").parent().next("ul");
-        theUl.find("li > div:first-child").removeClass("header-open")
-        .nextAll().hide();
-
-    },function(e){
-        var theUl = $(this).text("Hide details").parent().next("ul");
-        var details = theUl.find("li > div:first-child").addClass("header-open");
-        details.next().show();
-
-    });
     
     //Make list items collapsible
     $('div.option-header h3').on('click', function(e) {

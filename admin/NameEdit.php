@@ -434,7 +434,6 @@ $alertMessage = $alertMsg->createMarkup();
         <?php echo BOOTSTRAP_ICONS_CSS; ?>
         <?php echo NAVBAR_CSS; ?>
         <?php echo UPPLOAD_CSS; ?>
-        <link href="css/volCtrl.css" rel="stylesheet" type="text/css" />
 
         <script type="text/javascript" src="<?php echo JQ_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo JQ_UI_JS; ?>"></script>
@@ -523,9 +522,7 @@ $alertMessage = $alertMsg->createMarkup();
                     <div class="hhk-overflow-x" id="vhistory" style="background:#EFDBC2;">
                             <?php echo $recHistory; ?>
                     </div>
-                    <div id="widget-docs">
-                        <?php echo $volPanelMkup; ?>
-                    </div>
+                    <?php echo $volPanelMkup; ?>
                     <div id="vnotes" >
                         <?php echo $notesMarkup; ?>
                         <div id="vmemnotes"></div>
@@ -588,11 +585,29 @@ $alertMessage = $alertMsg->createMarkup();
             echo '<script type="text/javascript" src="' . UPPLOAD_JS . '"></script>';
         ?>
         	<script>
-        		$(document).ready(function(){
+        		document.addEventListener("DOMContentLoaded", function () {
         			window.uploader = new Upploader.Uppload({lang: Upploader.en});
         		});
         	</script>
         <?php } ?>
-        <script type="text/javascript"><?php include_once("js/nameEd.js") ?></script>
+        <script type="text/javascript">
+            var memData = <?php echo $memDataJSON; ?>;
+            var userData = <?php echo $usrDataJSON; ?>;
+            var listJSON = 'ws_gen.php?cmd=chglog&uid=' + memData.id;
+            var savePressed = false;
+            var forceNamePrefix = <?php echo json_encode(!empty($uS->ForceNamePrefix)); ?>;
+            var showGuestPhoto = '<?php echo $uS->ShowGuestPhoto; ?>';
+        </script>
+
+        <script type="text/javascript" src="js/nameEd.js<?php echo JSV; ?>"></script>
+        <?php if ($donFilterScript != '') { ?>
+        <script type="text/javascript">
+            // Donations list filter (ReportFilter::getTimePeriodScript). Must run after nameEd.js's
+            // DOMContentLoaded handler: its $('.ckdate').datepicker() would otherwise claim every date field.
+            document.addEventListener("DOMContentLoaded", function () {
+                <?php echo $donFilterScript; ?>
+            });
+        </script>
+        <?php } ?>
     </body>
 </html>

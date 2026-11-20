@@ -85,18 +85,15 @@ class VolunteerCategory {
         $this->rankOptions = $rankOptions;
     }
 
-    public function volCategoryDivMarkup($dbh, $id) {
+    public function volCategoryDivMarkup(\PDO $dbh, int $id): string {
 
         $data = "";
 
         $volData = $this->getVolCategoryData($dbh, $id, $this->Category_Code);
 
-        $hdr = "<div id='".$this->Category_Code."'>
-        <h2 class='top-header'>Options</h2>
-        <div class='toggle-docs-links'><a class='toggle-docs-detail' href='#'>Hide details</a></div>
-        <ul class='options-list'>";
+        $hdr = "<div id='".$this->Category_Code."'>";
 
-        $tralr = "</ul></div>";
+        $tralr = "</div>";
 
         foreach ($volData as $row2) {
             $data .= $this->fullGroupMarkup($row2);
@@ -133,13 +130,13 @@ class VolunteerCategory {
         }
 
 
-        $data = "<li id='$liId' class='$this->Category_Code'>
-    <div class='option-header$sty'>
-        <span style='float:left; margin-top:5px;'><input type='checkbox' class='chkVolunteer' name='" . $cbName . "' id='" . $cbId . "' " . $ckd . " title='Check to join/retire this member to ".$rowArray["Description"]."' /></span>
+        $data = "<div id='$liId' class='$this->Category_Code mb-3'>
+    <div class='option-header d-flex px-2 gap-2 ui-corner-top $sty'>
+        <input type='checkbox' class='chkVolunteer' name='" . $cbName . "' id='" . $cbId . "' " . $ckd . " title='Check to join/retire this member to ".$rowArray["Description"]."' />
         <h3 class='option-name' title='Click to show/hide details'><a href='#$liId'>" . $rowArray["Description"] . $vStat . "</a></h3>
     </div>";
 
-        $data .= $this->groupDetailMarkup($rowArray, $deleteRecordCB) . "</li>";
+        $data .= $this->groupDetailMarkup($rowArray, $deleteRecordCB) . "</div>";
         return $data;
     }
 
@@ -163,11 +160,7 @@ class VolunteerCategory {
     protected function groupDetailMarkup(array $rowArray, $deleteRecordCB = TRUE) {
 
         $ipId = $this->Category_Code . "[ckdate][" . $rowArray["Vol_Code"] . "]";
-        //$cbId = $this->Category_Code . "_cb_" . $rowArray["Vol_Code"] . "";
         $taId = $this->Category_Code . "[notes][" . $rowArray["Vol_Code"] . "]";
-        //$dorId = $this->Category_Code . "[dcode][" . $rowArray["Vol_Code"] . "]";
-        //$sdId = $this->Category_Code . "sdid" . $rowArray["Vol_Code"];
-        //$edId = $this->Category_Code . "edid" . $rowArray["Vol_Code"];
         $tdId = $this->Category_Code . "[tdid][" . $rowArray["Vol_Code"] . "]";
         $tnId = $this->Category_Code . "[tnid][" . $rowArray["Vol_Code"] . "]";
         $rank = $this->Category_Code . "[rank][" . $rowArray["Vol_Code"] . "]";
@@ -196,7 +189,7 @@ class VolunteerCategory {
         }
 
         $data = "<div class='option-description' style='display: block;'>
-    <table style='clear:left;'><tr>
+    <table><tr>
     <th>Role</th>
     <th>Upd. By</th>
     <th>Upd. On</th>
@@ -215,7 +208,7 @@ class VolunteerCategory {
     <td><input type='text' name='" . $tnId . "'  value='" . $rowArray["Vol_Trainer"] . "' size='12' /></td>
     <td><input type='text' class='ckdate' name='" . $ipId . "'  value='" . $ckDate . "' size='10' /></td>
     </tr><tr><td style='text-align:left;'>" . $resetControlMarkup .
-    "</td><td colspan='7'><textarea rows='1' cols='84' name='" . $taId . "'>" . $rowArray["Vol_Notes"] . "</textarea></td></tr></table></div>";
+    "</td><td colspan='7'><textarea class='p-1' placeholder='Notes...' rows='2' cols='84' name='" . $taId . "'>" . $rowArray["Vol_Notes"] . "</textarea></td></tr></table></div>";
 
         return $data;
     }
