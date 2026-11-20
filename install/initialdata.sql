@@ -6478,6 +6478,42 @@ VALUES
 		'34',
 		'l',
 		'p'
+	),
+	(
+		143,
+		'OccupancyReport.php',
+		31,
+		'Occupancy Report',
+		'',
+		1,
+		'h',
+		'102',
+		'h',
+		'p'
+	),
+	(
+		144,
+		'BillingAgentReport.php',
+		31,
+		'Billing Agent Report',
+		'',
+		1,
+		'h',
+		'102',
+		'o',
+		'p'
+	),
+	(
+		145,
+		'AdditionalChargesReport.php',
+		31,
+		'Additional Charges Report',
+		'',
+		1,
+		'h',
+		'102',
+		'q',
+		'p'
 	);
 
 -- ;
@@ -6644,7 +6680,13 @@ VALUES
 	(140, 'mm'),
 	(141, 'ga'),
 	(141, 'gr'),
-	(142, 'db');
+	(142, 'db'),
+	(143, 'ga'),
+	(143, 'gr'),
+	(144, 'ga'),
+	(144, 'gr'),
+	(145, 'ga'),
+	(145, 'gr');
 
 -- ;
 UNLOCK TABLES;

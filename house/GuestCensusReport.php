@@ -86,12 +86,20 @@ if (isset($_POST['btnExcel-' . $report->getInputSetReportName()])) {
                     doc.pageMargins = [20, 20, 20, 20];
                     doc.defaultStyle.fontSize = 8;
                     doc.styles.tableHeader.fontSize = 7;
-                    doc.styles.tableBodyEven.alignment = 'center';
-                    doc.styles.tableBodyOdd.alignment = 'center';
                     doc.styles.tableFooter.fontSize = 8;
                     doc.styles.tableFooter.alignment = 'center';
 
                     var body = doc.content[tableIdx].table.body;
+
+                    // Buttons 4 gives body cells no style (no tableBodyEven/Odd; striping is in the table layout),
+                    // so center them directly. Header and footer cells keep their own centered styles.
+                    body.forEach(function (row) {
+                        row.forEach(function (cell) {
+                            if (!cell.style && cell.alignment === undefined) {
+                                cell.alignment = 'center';
+                            }
+                        });
+                    });
                     var rosterCol = body[0].findIndex(function (c) { return c.text === 'Guest Roster'; });
                     var dateCol = body[0].findIndex(function (c) { return c.text === 'Date'; });
 

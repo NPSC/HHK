@@ -735,7 +735,8 @@
             createRoleAutoComplete($('#noteGuest'), 3, {cmd: 'guest'},
             function (item) {
                 if (item.id > 0) {
-                    $('#noteGuest').data("guestId", item.id);
+                    $('#noteGuest').data("guestId", item.id)
+                        .val(new DOMParser().parseFromString(item.value, 'text/html').documentElement.textContent);
                 }
             },
             false);

@@ -241,10 +241,15 @@ function createRoleAutoComplete(txtCtrl, minChars, inputParms, selectFunction, s
         },
         position: { my: "left top", at: "left bottom", collision: "flip" },
         minLength: minChars, 
+        // Never copy item.value into the input (it holds HTML-encoded text);
+        // leave the user's search term alone. Callers that want text set it themselves.
+        focus: function(event) {
+            event.preventDefault();
+        },
         select: function(event, ui) {
-            // a select function returning false keeps the item text out of the input
-            if (ui.item && selectFunction(ui.item) === false) {
-                event.preventDefault();
+            event.preventDefault();
+            if (ui.item) {
+                selectFunction(ui.item);
             }
         },
         delay: 120

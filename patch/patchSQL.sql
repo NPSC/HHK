@@ -314,3 +314,27 @@ UPDATE `sys_config` SET `Show` = '1', `Description` = 'Use General Ledger codes 
 
 -- Campaign percentage cut allows 3 decimal places.
 ALTER TABLE `campaign` MODIFY COLUMN `Percent_Cut` DECIMAL(15, 3) NOT NULL DEFAULT '0.000';
+
+-- Register the Occupancy, Billing Agent and Additional Charges reports (hidden by default).
+-- Sites that already have a page row for one of these are left completely untouched:
+-- the page insert is skipped, and @newPage stays 0 so no security group is added either.
+SET @newPage = 0;
+INSERT INTO `page` (`File_Name`, `Login_Page_Id`, `Title`, `Hide`, `Web_Site`, `Menu_Parent`, `Menu_Position`, `Type`, `Validity_Code`, `Updated_By`, `Last_Updated`)
+SELECT 'OccupancyReport.php', 31, 'Occupancy Report', 1, 'h', '102', 'h', 'p', '', '', NOW() FROM DUAL
+WHERE NOT EXISTS (SELECT 1 FROM `page` WHERE `File_Name` = 'OccupancyReport.php');
+SET @newPage = IF(ROW_COUNT() > 0, LAST_INSERT_ID(), 0);
+INSERT IGNORE INTO `page_securitygroup` (`idPage`, `Group_Code`) SELECT @newPage, 'ga' FROM DUAL WHERE @newPage > 0 UNION ALL SELECT @newPage, 'gr' FROM DUAL WHERE @newPage > 0;
+
+SET @newPage = 0;
+INSERT INTO `page` (`File_Name`, `Login_Page_Id`, `Title`, `Hide`, `Web_Site`, `Menu_Parent`, `Menu_Position`, `Type`, `Validity_Code`, `Updated_By`, `Last_Updated`)
+SELECT 'BillingAgentReport.php', 31, 'Billing Agent Report', 1, 'h', '102', 'o', 'p', '', '', NOW() FROM DUAL
+WHERE NOT EXISTS (SELECT 1 FROM `page` WHERE `File_Name` = 'BillingAgentReport.php');
+SET @newPage = IF(ROW_COUNT() > 0, LAST_INSERT_ID(), 0);
+INSERT IGNORE INTO `page_securitygroup` (`idPage`, `Group_Code`) SELECT @newPage, 'ga' FROM DUAL WHERE @newPage > 0 UNION ALL SELECT @newPage, 'gr' FROM DUAL WHERE @newPage > 0;
+
+SET @newPage = 0;
+INSERT INTO `page` (`File_Name`, `Login_Page_Id`, `Title`, `Hide`, `Web_Site`, `Menu_Parent`, `Menu_Position`, `Type`, `Validity_Code`, `Updated_By`, `Last_Updated`)
+SELECT 'AdditionalChargesReport.php', 31, 'Additional Charges Report', 1, 'h', '102', 'q', 'p', '', '', NOW() FROM DUAL
+WHERE NOT EXISTS (SELECT 1 FROM `page` WHERE `File_Name` = 'AdditionalChargesReport.php');
+SET @newPage = IF(ROW_COUNT() > 0, LAST_INSERT_ID(), 0);
+INSERT IGNORE INTO `page_securitygroup` (`idPage`, `Group_Code`) SELECT @newPage, 'ga' FROM DUAL WHERE @newPage > 0 UNION ALL SELECT @newPage, 'gr' FROM DUAL WHERE @newPage > 0;

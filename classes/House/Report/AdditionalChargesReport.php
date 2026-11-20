@@ -394,7 +394,7 @@ WHERE `i`.`Deleted` = 0 AND " . $whDates . $whBilling . $whDiags . $whCharges . 
             $this->resultSet[$k]["Quantity"] = floatval($r["Quantity"]);
             if($outputType == ""){
                 $this->resultSet[$k]["Invoice_Number"] = HTMLContainer::generateMarkup('a', $r['Invoice_Number'], array('href'=>'ShowInvoice.php?invnum='.$r['Invoice_Number'], 'target'=>'_blank'));
-                $this->resultSet[$k]["idVisit"] = HTMLContainer::generateMarkup('div', $r['idVisit'], array('class'=>'hhk-viewVisit', 'data-gid'=>"", 'data-vid'=>$r['visitId'], 'data-span'=>$r['Span'], 'style'=>'display:inline-table;'));
+                $this->resultSet[$k]["idVisit"] = HTMLContainer::generateMarkup('div', $r['idVisit'], array('class'=>'hhk-viewVisit hhk-btn-small', 'data-gid'=>"", 'data-vid'=>$r['visitId'], 'data-span'=>$r['Span']));
                 $this->resultSet[$k]['pId'] = HTMLContainer::generateMarkup('a', $r['pId'], array('href'=>'GuestEdit.php?id=' . $r['pId'] . '&psg=' . $r['idPsg']));
             }
         }
@@ -513,7 +513,8 @@ GROUP BY `description`
         }
 
         $patientPh = [];
-        $params = [':demographic' => $demographic];
+        // native prepares don't allow a placeholder name to repeat
+        $params = [':demographic' => $demographic, ':demographicJoin' => $demographic];
         foreach ($patientIds as $i => $pid) {
             $ph = ':pid' . $i;
             $patientPh[] = $ph;
@@ -521,9 +522,9 @@ GROUP BY `description`
         }
         $patientList = implode(', ', $patientPh);
 
-        $join = 'LEFT JOIN `name_demog` `nd` ON `nd`.`'.$demographic.'` = `de`.`Code` AND `de`.`Table_Name` = :demographic LEFT JOIN `name` `n` ON `nd`.`idName` = `n`.`idName` AND `n`.`idName` IN (' . $patientList . ')';
+        $join = 'LEFT JOIN `name_demog` `nd` ON `nd`.`'.$demographic.'` = `de`.`Code` AND `de`.`Table_Name` = :demographicJoin LEFT JOIN `name` `n` ON `nd`.`idName` = `n`.`idName` AND `n`.`idName` IN (' . $patientList . ')';
         if($demographic == "Gender"){
-            $join = 'LEFT JOIN `name` `n` ON `n`.`'.$demographic.'` = `de`.`Code` AND `de`.`Table_Name` = :demographic AND `n`.`idName` IN (' . $patientList . ')';
+            $join = 'LEFT JOIN `name` `n` ON `n`.`'.$demographic.'` = `de`.`Code` AND `de`.`Table_Name` = :demographicJoin AND `n`.`idName` IN (' . $patientList . ')';
         }
 
         $query = 'SELECT `de`.`Description` AS "description", COUNT(`n`.`idName`) AS `count` FROM `gen_lookups` `de` '

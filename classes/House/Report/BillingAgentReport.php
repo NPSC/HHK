@@ -145,7 +145,8 @@ class BillingAgentReport extends AbstractReport implements ReportInterface {
             $baPh[] = $ph;
             $this->queryParams[$ph] = $bid;
         }
-        $baList = implode(', ', $baPh);
+        // used once below: native prepares don't allow the same placeholder twice
+        $baList = count($baPh) > 0 ? implode(', ', $baPh) : 'NULL';
         $this->queryParams[':itemLodging'] = ItemId::Lodging;
 
         $this->query = "SELECT
@@ -203,7 +204,7 @@ FROM
         LEFT JOIN
     `gen_lookups` `invs` ON `invs`.`Table_Name` = 'Invoice_Status' AND `invs`.`Code` = `i`.`Status`
         JOIN
-    `name` `ba` ON `i`.`Sold_To_Id` = `ba`.`idName` AND `ba`.`idName` IN (" . $baList . ")
+    `name` `ba` ON `i`.`Sold_To_Id` = `ba`.`idName`
 WHERE `i`.`Deleted` = 0 AND " . $whDates . $whBilling . " GROUP BY `v`.`idVisit`, `v`.`Span`, `i`.`Sold_To_Id` ORDER BY `v`.`idVisit`";
     }
 
@@ -304,7 +305,7 @@ WHERE `i`.`Deleted` = 0 AND " . $whDates . $whBilling . " GROUP BY `v`.`idVisit`
         foreach($this->resultSet as $k=>$r) {
             $this->resultSet[$k]["Invoice_Amount"] = "$" . number_format($r["Invoice_Amount"],2);
             $this->resultSet[$k]["Invoice_Number"] = HTMLContainer::generateMarkup('a', $r['Invoice_Number'], array('href'=>'ShowInvoice.php?invnum='.$r['Invoice_Number'], 'target'=>'_blank'));
-            $this->resultSet[$k]["idVisit"] = HTMLContainer::generateMarkup('div', $r['idVisit'], array('class'=>'hhk-viewVisit', 'data-gid'=>"", 'data-vid'=>$r['visitId'], 'data-span'=>$r['Span'], 'style'=>'display:inline-table;'));
+            $this->resultSet[$k]["idVisit"] = HTMLContainer::generateMarkup('div', $r['idVisit'], array('class'=>'hhk-viewVisit hhk-btn-small', 'data-gid'=>"", 'data-vid'=>$r['visitId'], 'data-span'=>$r['Span']));
             $this->resultSet[$k]['pId'] = HTMLContainer::generateMarkup('a', $r['pId'], array('href'=>'GuestEdit.php?id=' . $r['pId'] . '&psg=' . $r['idPsg']));
         }
 

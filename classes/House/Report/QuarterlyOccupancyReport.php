@@ -237,13 +237,14 @@ class QuarterlyOccupancyReport extends AbstractReport implements ReportInterface
         $roomTypes = Common::readGenLookupsPDO($this->dbh, "Resource_Type");
         $rmtroomTitle = (isset($roomTypes['rmtroom']['Description']) ? $roomTypes['rmtroom']['Description']: "Remote Room");
 
-        $retiredRescSql = "(`re`.`Retired_At` IS NULL OR `re`.`Retired_At` > DATE(:retiredStart))";
+        // Placeholders can't repeat (native prepares), so each use gets its own name.
+        $retiredRescSql = fn(string $p) => "(`re`.`Retired_At` IS NULL OR `re`.`Retired_At` > DATE(:$p))";
 
         $query = '
 SELECT
-(SELECT COUNT(*) FROM `resource` `re` WHERE `re`.`Type` = "room" AND ' .$retiredRescSql .')*DATEDIFF(:end1, :start1) AS "Room-nights available",
+(SELECT COUNT(*) FROM `resource` `re` WHERE `re`.`Type` = "room" AND ' . $retiredRescSql('retiredStart1') .')*DATEDIFF(:end1, :start1) AS "Room-nights available",
 (SELECT SUM(DATEDIFF(LEAST(IFNULL(`v`.`Span_End`, DATE(:end2)), DATE(:end3)), GREATEST(`v`.`Span_Start`, DATE(:start2)))) FROM `visit` `v` WHERE DATE(`v`.`Span_Start`) < DATE(:end4) AND DATE(IFNULL(`v`.`Span_End`, CURDATE())) > DATE(:start3) AND NOT DATE(`v`.`Span_Start`) <=> DATE(`v`.`Span_End`)) AS "Room-nights occupied",
-CONCAT(ROUND((SELECT SUM(DATEDIFF(LEAST(IFNULL(`v`.`Span_End`, DATE(:end5)), DATE(:end6)), GREATEST(`v`.`Span_Start`, DATE(:start4)))) FROM `visit` `v` WHERE DATE(`v`.`Span_Start`) < DATE(:end7) AND DATE(IFNULL(`v`.`Span_End`, CURDATE())) > DATE(:start5))/((SELECT COUNT(*) FROM `resource` `re` WHERE `re`.`Type` = "room" AND ' . $retiredRescSql . ')*DATEDIFF(:end8, :start6))*100,1), "%") AS "Occupancy Rate",'.
+CONCAT(ROUND((SELECT SUM(DATEDIFF(LEAST(IFNULL(`v`.`Span_End`, DATE(:end5)), DATE(:end6)), GREATEST(`v`.`Span_Start`, DATE(:start4)))) FROM `visit` `v` WHERE DATE(`v`.`Span_Start`) < DATE(:end7) AND DATE(IFNULL(`v`.`Span_End`, CURDATE())) > DATE(:start5))/((SELECT COUNT(*) FROM `resource` `re` WHERE `re`.`Type` = "room" AND ' . $retiredRescSql('retiredStart2') . ')*DATEDIFF(:end8, :start6))*100,1), "%") AS "Occupancy Rate",'.
 //ifnull((select SUM(DATEDIFF(least(ifnull(v.Span_End, date("' . $end . '")), date("' . $end . '")), greatest(v.Span_Start, date("' . $start . '")))) from visit v join resource re on v.idResource = re.idResource where re.Type = "rmtroom" and date(v.Span_Start) < date("' . $end . '") and date(ifnull(v.Span_End, curdate())) > date("' . $start . '")), "0") as "' . $rmtroomTitle . '-nights occupied",
 '(SELECT COUNT(DISTINCT `reg`.`idPsg`) FROM `visit` `v` JOIN `registration` `reg` ON `v`.`idRegistration` = `reg`.`idRegistration` WHERE DATE(`v`.`Span_Start`) < DATE(:endDate6) AND DATE(IFNULL(`v`.`Span_End`, CURDATE()+INTERVAL 1 DAY)) > DATE(:startDate6) AND NOT DATE(`v`.`Span_Start`) <=> DATE(`v`.`Span_End`)) AS "Unique ' . Labels::getString("Statement", "psgPlural", "PSGs") . '",
 (SELECT COUNT(DISTINCT `reg`.`idPsg`) FROM `visit` `v` JOIN `registration` `reg` ON `v`.`idRegistration` = `reg`.`idRegistration` WHERE `idVisit` IN (SELECT `fv`.`idVisit` FROM `vlist_first_visit` `fv` WHERE DATE(IFNULL(`fv`.`Span_End`, CURDATE()+INTERVAL 1 DAY)) > DATE(:startDate14) AND DATE(`fv`.`Span_Start`) < DATE(:endDate14) AND NOT DATE(`fv`.`Span_Start`) <=> DATE(`fv`.`Span_End`))) AS "New ' . Labels::getString("Statement", "psgPlural", "PSGs") . '",
@@ -255,7 +256,7 @@ CONCAT(ROUND((SELECT SUM(DATEDIFF(LEAST(IFNULL(`v`.`Span_End`, DATE(:end5)), DAT
 ';
         $stmt = $this->dbh->prepare($query);
         $stmt->execute([
-            ":retiredStart"=>$start,
+            ":retiredStart1"=>$start, ":retiredStart2"=>$start,
             ":start1"=>$start, ":end1"=>$end,
             ":start2"=>$start, ":end2"=>$end, ":end3"=>$end,
             ":start3"=>$start, ":end4"=>$end,
