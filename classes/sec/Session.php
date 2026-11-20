@@ -59,6 +59,13 @@ class Session
     {
         if ( $this->sessionState == self::SESSION_NOT_STARTED || session_status() !== PHP_SESSION_ACTIVE)
         {
+            // Session was closed (session_write_close) and output has begun, e.g. a streamed download.
+            // It can't be restarted now; $_SESSION still holds the closed session's data for reads.
+            if (headers_sent()) {
+                return $this->sessionState = self::SESSION_NOT_STARTED;
+            }
+
+
             ini_set( 'session.cookie_httponly', 1 );
             session_name($this->getSessionName($confPath, $confFile));
             $this->sessionState = session_start();
@@ -131,7 +138,7 @@ class Session
         if ( $this->sessionState == self::SESSION_STARTED ) {
             $this->sessionState = !session_destroy();
 
-        } else {
+        } else if (headers_sent() === FALSE) {
             session_start();
             $_SESSION = array();
 
