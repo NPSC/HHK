@@ -188,7 +188,7 @@ class VolunteerCategory {
             $resetControlMarkup = "<label for='$reset'>Reset to blank </label><input type='checkbox' name='$reset' $resetCbDisabled title='$resetDialogStr' class='hhk-delete-vol' />";
         }
 
-        $data = "<div class='option-description' style='display: block;'>
+        $data = "<div class='option-description hhk-overflow-x' style='display: block;'>
     <table><tr>
     <th>Role</th>
     <th>Upd. By</th>

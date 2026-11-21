@@ -2,6 +2,7 @@
 
 use HHK\Admin\CategoryEditor;
 use HHK\HTMLControls\HTMLSelector;
+use HHK\sec\Session;
 use HHK\sec\WebInit;
 
 /**
@@ -19,6 +20,7 @@ require ("AdminIncludes.php");
 
 $wInit = new WebInit();
 $dbh = $wInit->dbh;
+$uS = Session::getInstance();
 
 $groups = CategoryEditor::groups($dbh);
 
@@ -51,7 +53,7 @@ if ($cmd) {
                     break;
                 }
 
-                [$vals, $errors] = CategoryEditor::validate(CategoryEditor::load($dbh, $group), $_POST);
+                [$vals, $errors] = CategoryEditor::validate(CategoryEditor::load($dbh, $group), $_POST, CategoryEditor::canAddRemove($group));
 
                 if (count($errors) > 0) {
                     $out['errors'] = $errors;
@@ -59,7 +61,7 @@ if ($cmd) {
                     break;
                 }
 
-                $out['success'] = CategoryEditor::save($dbh, $group, $vals);
+                $out['success'] = CategoryEditor::save($dbh, $group, $vals, $uS->username);
                 $out['categories'] = array_values(CategoryEditor::load($dbh, $group));
 
                 // NameEdit reads categories from the session cache.
@@ -71,6 +73,7 @@ if ($cmd) {
         }
 
         $out['group'] = $group;
+        $out['canAddRemove'] = CategoryEditor::canAddRemove($group);
 
     } catch (\Exception $ex) {
         $out['error'] = $ex->getMessage();
@@ -90,6 +93,7 @@ if (!isset($groups[$group])) {
 
 $initial = [
     'group' => $group,
+    'canAddRemove' => CategoryEditor::canAddRemove($group),
     'categories' => ($group === '' ? [] : array_values(CategoryEditor::load($dbh, $group))),
 ];
 
@@ -122,7 +126,7 @@ $groupOpt = HTMLSelector::doOptionsMkup(array_map(fn($c, $d) => [$c, $d], array_
         <div id="contentDiv">
             <h1><?php echo $wInit->pageHeading; ?></h1>
 
-            <div class="ui-widget ui-widget-content ui-corner-all hhk-widget-content mb-3" style="width: 500px;">
+            <div class="ui-widget ui-widget-content ui-corner-all hhk-widget-content mb-3" style="width: fit-content;">
             <?php if (count($groups) === 0) { ?>
                 <p>No category groups are set up.</p>
             <?php } else { ?>
@@ -141,10 +145,24 @@ $groupOpt = HTMLSelector::doOptionsMkup(array_map(fn($c, $d) => [$c, $d], array_
                                 <th scope="col">Code</th>
                                 <th scope="col" id="catCount">0 Entries</th>
                                 <th scope="col">Members</th>
+                                <th scope="col" class="ce-addRemove">Delete</th>
+                                <th scope="col" class="ce-replCol" style="display:none;">Replace With</th>
                             </tr>
                         </thead>
                         <tbody id="catRows"></tbody>
+                        <tbody class="ce-addRemove">
+                            <tr>
+                                <td></td>
+                                <td>
+                                    <input type="text" id="txtNewDesc" name="newDesc" size="30" maxlength="255" aria-label="New category name" />
+                                    <div class="cf-error" role="alert"></div>
+                                </td>
+                                <td colspan="2">New</td>
+                                <td class="ce-replCol" style="display:none;"></td>
+                            </tr>
+                        </tbody>
                     </table>
+
                     <div class="cf-actions">
                         <input type="button" id="btnReset" value="Reset" class="ui-button ui-widget ui-corner-all" />
                         <input type="submit" id="btnSave" value="Save" class="ui-button ui-widget ui-corner-all" />

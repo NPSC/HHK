@@ -56,7 +56,7 @@
 
     // ---- rendering ----------------------------------------------------
 
-    function buildRow(cat) {
+    function buildRow(cat, all, canAddRemove) {
         const $tr = $('<tr>').attr('data-code', cat.code);
 
         $tr.append($('<td class="ce-code">').text(cat.code));
@@ -68,6 +68,33 @@
 
         $tr.append($('<td class="ce-num">').text(cat.members));
 
+        // Locked groups (Member Type) can only be renamed.
+        if (!canAddRemove) {
+            return $tr;
+        }
+
+        $tr.append($('<td class="ce-center">').append(
+            $('<input type="checkbox" value="1" class="ce-del">')
+                .attr({ name: 'del[' + cat.code + ']', 'aria-label': 'Delete ' + cat.description }),
+            errorDiv()
+        ));
+
+        // Like Resource Builder: the column shows only while a Delete is checked, and each
+        // row's dropdown only while its own Delete is checked.
+        const $replTd = $('<td class="ce-replCol" style="display:none;">');
+        if (cat.members > 0) {
+            const $sel = $('<select class="ce-repl" disabled style="display:none;">')
+                .attr({ name: 'repl[' + cat.code + ']', 'aria-label': 'Replace ' + cat.description + ' with' })
+                .append($('<option value="">').text('(none - remove members)'));
+            all.forEach(function (o) {
+                if (o.code !== cat.code) {
+                    $sel.append($('<option>').val(o.code).text(o.description));
+                }
+            });
+            $replTd.append($sel, errorDiv());
+        }
+        $tr.append($replTd);
+
         return $tr;
     }
 
@@ -76,11 +103,18 @@
 
         $('#selGroup').val(data.group);
 
+        const canAddRemove = data.canAddRemove !== false;
+
         const $body = $('#catRows').empty();
         data.categories.forEach(function (cat) {
-            $body.append(buildRow(cat));
+            $body.append(buildRow(cat, data.categories, canAddRemove));
         });
         $('#catCount').text(data.categories.length + (data.categories.length === 1 ? ' Entry' : ' Entries'));
+        $('#catTable .ce-replCol').hide();
+        $form.find('.ce-addRemove').toggle(canAddRemove);
+        $form.find('.ce-locked').toggle(!canAddRemove);
+        // Disabled so a hidden New field is never posted for a locked group.
+        $('#txtNewDesc').val('').prop('disabled', !canAddRemove);
 
         clearErrors();
         snapshot = formState();
@@ -95,8 +129,20 @@
     function validate() {
         const errors = {};
         const names = {};
+        const deleting = {};
+
+        $form.find('.ce-del:checked').each(function () {
+            deleting[$(this).closest('tr').data('code')] = true;
+        });
 
         current.categories.forEach(function (cat) {
+            if (deleting[cat.code]) {
+                const r = fieldByName('repl[' + cat.code + ']').val();
+                if (r && deleting[r]) {
+                    errors['repl[' + cat.code + ']'] = 'The replacement is also being deleted.';
+                }
+                return;
+            }
             const name = $.trim(fieldByName('desc[' + cat.code + ']').val());
             const key = name.toLowerCase();
             if (name === '') {
@@ -107,7 +153,28 @@
             names[key] = true;
         });
 
+        const newName = $.trim($('#txtNewDesc').val());
+        if (newName !== '' && names[newName.toLowerCase()]) {
+            errors.newDesc = 'A category in this group already has this name.';
+        }
+
         return errors;
+    }
+
+    // Deleting with no replacement removes members from the category; make sure that's intended.
+    function confirmRemovals() {
+        const lines = [];
+        current.categories.forEach(function (cat) {
+            if (cat.members > 0 && fieldByName('del[' + cat.code + ']').prop('checked')
+                    && !fieldByName('repl[' + cat.code + ']').val()) {
+                lines.push(cat.description + ' (' + cat.members + ')');
+            }
+        });
+        if (lines.length === 0) {
+            return true;
+        }
+        return window.confirm('These categories will be deleted and their members removed from them:\n\n'
+            + lines.join('\n') + '\n\nContinue?');
     }
 
     // ---- AJAX ---------------------------------------------------------
@@ -130,7 +197,7 @@
                     $('#selGroup').val(current.group);
                     return;
                 }
-                render({ group: resp.group, categories: resp.categories });
+                render({ group: resp.group, canAddRemove: resp.canAddRemove, categories: resp.categories });
             })
             .fail(function (xhr) {
                 $('#selGroup').val(current.group);
@@ -148,6 +215,10 @@
             return;
         }
 
+        if (!confirmRemovals()) {
+            return;
+        }
+
         const $btn = $('#btnSave').prop('disabled', true).val('Saving...');
 
         $.post(PAGE, $form.serialize(), null, 'json')
@@ -159,7 +230,7 @@
                     flagAlertMessage(resp.error, true);
                     return;
                 }
-                render({ group: resp.group, categories: resp.categories });
+                render({ group: resp.group, canAddRemove: resp.canAddRemove, categories: resp.categories });
                 flagAlertMessage(resp.success, false);
             })
             .fail(ajaxFail)
@@ -184,6 +255,20 @@
                 return;
             }
             load($(this).val());
+        });
+
+        // Show "Replace With" only for rows being deleted, and the column only while any are; strike the name.
+        $form.on('change', '.ce-del', function () {
+            const $tr = $(this).closest('tr');
+            const del = this.checked;
+            $tr.toggleClass('ce-deleting', del);
+            $tr.find('.ce-repl').prop('disabled', !del).toggle(del);
+            $('#catTable .ce-replCol').toggle($form.find('.ce-del:checked').length > 0);
+            $tr.find('input[type=text]').prop('readonly', del);
+            if (!del) {
+                $tr.find('.cf-error').text('');
+                $tr.find('.cf-has-error').removeClass('cf-has-error');
+            }
         });
 
         $form.on('input change', ':input', function () {

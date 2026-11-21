@@ -462,7 +462,7 @@ $alertMessage = $alertMsg->createMarkup();
             <?php echo $menuMarkup; ?>
         <div id="contentDiv">
 
-            <div class="hhk-flex my-3" style="gap:1rem; flex-wrap: wrap-reverse;">
+            <div class="hhk-flex my-3 gap-3" style="flex-wrap: wrap-reverse;">
                 <?php echo $NiceName; ?>
                 <div class="ui-widget ui-widget-content ui-corner-all hhk-widget-content p-2" style="background:#EFDBC2;">
                     <form autocomplete="off">
@@ -486,8 +486,8 @@ $alertMessage = $alertMsg->createMarkup();
                 <div id="linkTabs" class="ui-widget ui-widget-content ui-corner-all hhk-widget-content mb-2 hhk-flex hhk-flex-wrap" style="font-size:0.95em;padding: 0.7em 1.0em; gap:1rem;">
                         <?php echo $relationsMarkup; ?>
                 </div>
-                <div id="divaddrTabs" class="hhk-showonload hhk-flex hhk-flex-wrap" style="display:none;">
-                    <div id="phEmlTabs" class="hhk-member-detail mr-2 mb-2">
+                <div id="divaddrTabs" class="hhk-showonload hhk-flex hhk-flex-wrap gap-2 mb-2" style="display:none;">
+                    <div id="phEmlTabs" class="hhk-member-detail">
                         <ul>
                             <li><a href="#prefTab" title="Show only preferred phone and Email">Summary</a></li>
                             <li><a href="#phonesTab" title="Edit the Phone Numbers and designate the preferred number">Phone</a></li>
@@ -503,10 +503,10 @@ $alertMessage = $alertMsg->createMarkup();
                             <?php echo $emailMkup; ?>
                         </div>
                     </div>
-                    <div id="addrsTabs" class="hhk-member-detail mr-2 mb-2">
+                    <div id="addrsTabs" class="hhk-member-detail">
                         <?php echo $addrPanelMkup; ?>
                     </div>
-                    <div id="demographicTabs" class="hhk-member-detail mr-2 mb-2">
+                    <div id="demographicTabs" class="hhk-member-detail">
                         <?php echo $miscTabs; ?>
                     </div>
                 </div>
