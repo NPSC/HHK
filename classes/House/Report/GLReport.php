@@ -26,7 +26,7 @@ use HHK\TableLog\HouseLog;
  * GL Report
  *
  * One row per journal line of the GL file for the selected fiscal month(s). The same mapping (GLCodes) builds the
- * file for Download CSV, Transfer via SFTP and the monthly cron job (house/GenLedger.php).
+ * file for Download CSV, Transfer via SFTP and the monthly Job Scheduler job (HHK\Cron\GenLedgerTransferJob).
  * Settings are on Admin > Configure > General Ledger.
  */
 class GLReport extends AbstractReport implements ReportInterface {

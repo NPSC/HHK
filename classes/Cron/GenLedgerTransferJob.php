@@ -25,7 +25,7 @@ use PDO;
  * (sys_config fm_Start_Day) and uploads it to the GL SFTP server, then emails the
  * results to the notification address(es).
  *
- * Replaces running house/GenLedger.php from the server's crontab.  Schedule it monthly
+ * Replaces the old house/GenLedger.php crontab script (removed).  Schedule it monthly
  * on or after the fiscal month start day.  A dry run maps the records and reports what
  * would be sent, but does not upload or email.
  */
@@ -100,7 +100,7 @@ class GenLedgerTransferJob extends AbstractJob implements JobInterface {
     }
 
     /**
-     * Mail the transfer report, the same report house/GenLedger.php sent.
+     * Mail the transfer report to the job's notification address(es).
      */
     protected function sendNotification(GLParameters $glParm, GLCodes $glCodes, int|bool $bytesWritten): void {
 
