@@ -823,6 +823,17 @@ class GLCodes {
 		return $this->fileId;
 	}
 
+	public function getStartDate(): \DateTimeImmutable {
+		return $this->startDate;
+	}
+
+	/**
+	 * Last day of the period (inclusive).
+	 */
+	public function getPeriodEndDate(): \DateTimeImmutable {
+		return $this->endDate->sub(new \DateInterval('P1D'));
+	}
+
 	public function getStopoAtInvoice() {
 		return $this->stopAtInvoice;
 	}

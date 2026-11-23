@@ -261,6 +261,9 @@ VALUES ('bednight','bed night','s','vi','','Default: bed night');
 INSERT IGNORE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `Order`) VALUES
 ('cronJobTypes', 'PurgeAuditLogJob', 'Purge Old Audit Log', '', 0);
 
+INSERT IGNORE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `Order`) VALUES
+('cronJobTypes', 'GenLedgerTransferJob', 'General Ledger Transfer', '', 0);
+
 -- Retire DiagnosisBuilder.php: Diagnosis/Location lookups are edited on Resource Builder (the file is now a redirect)
 delete from `page_securitygroup` where `idPage` in (select idPage from `page` where `File_Name` = "DiagnosisBuilder.php");
 delete from `page` where `File_Name` = "DiagnosisBuilder.php";
