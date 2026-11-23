@@ -3,9 +3,9 @@ parameters:
     paths:
         - classes
         - functions
-        - admin
-        - house
-        - install
+        - public/admin
+        - public/house
+        - public/install
     ignoreErrors:
         -
             identifier: property.notFound

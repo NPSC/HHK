@@ -22,7 +22,7 @@ header('Cache-Control: no-store');
 
 try {
     $login = new Login();
-    $login->initHhkSession(CONF_PATH, ciCFG_FILE);
+    $login->initHhkSession();
     $dbh = Common::initPDO(TRUE);
 } catch (Exception $ex) {
     exit(json_encode(["error" => "Database Access Error."]));

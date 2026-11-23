@@ -146,7 +146,7 @@ if (filter_has_var(INPUT_POST, 'btnSaveSQL')) {
     $patch = new Patch();
 
     // Update Tables
-    $resultAccumulator .= $patch->updateWithSqlStmts($dbh, '../sql/CreateAllTables.sql', "Tables");
+    $resultAccumulator .= $patch->updateWithSqlStmts($dbh, REL_BASE_DIR . 'sql/CreateAllTables.sql', "Tables");
     foreach ($patch->results as $err) {
 
         if ($err['errno'] == 1091 || $err['errno'] == 1061) {  // key not exist, Duplicate Key name
@@ -157,12 +157,12 @@ if (filter_has_var(INPUT_POST, 'btnSaveSQL')) {
     }
 
 
-    $resultAccumulator .= $patch->updateWithSqlStmts($dbh, '../sql/CreateAllViews.sql', 'Views');
+    $resultAccumulator .= $patch->updateWithSqlStmts($dbh, REL_BASE_DIR . 'sql/CreateAllViews.sql', 'Views');
     foreach ($patch->results as $err) {
         $errorMsg .= 'Create View Error: ' . $err['error'] . ', ' . $err['errno'] . '; Query=' . $err['query'] . '<br/>';
     }
 
-    $resultAccumulator .= $patch->updateWithSqlStmts($dbh, '../sql/CreateAllRoutines.sql', 'Stored Procedures', '$$', '-- ;');
+    $resultAccumulator .= $patch->updateWithSqlStmts($dbh, REL_BASE_DIR . 'sql/CreateAllRoutines.sql', 'Stored Procedures', '$$', '-- ;');
     foreach ($patch->results as $err) {
         $errorMsg .= 'Create Stored Procedures Error: ' . $err['error'] . ', ' . $err['errno'] . '; Query=' . $err['query'] . '<br/>';
     }

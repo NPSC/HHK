@@ -11,7 +11,7 @@ namespace HHK\SysConst;
  */
 
 // operating mode of site, live, demo, training and dev
-// in site.cfg file.
+// (sys_config 'mode').
 class Mode {
     const Live = "live";
     const Demo = "demo";

@@ -5,6 +5,7 @@ namespace HHK;
 use DateTime;
 use DebugBar\DataCollector\PDO\PDOCollector;
 use DebugBar\DataCollector\PDO\TraceablePDO;
+use HHK\Config\Env;
 use HHK\Debug\DebugBarSupport;
 use HHK\Exception\RuntimeException;
 use HHK\Exception\UnexpectedValueException;
@@ -49,17 +50,8 @@ class Common {
         $dbName = $ssn->databaseName;
 
         if ($roleCode >= WebRole::Guest && $override === FALSE) {
-            // Get the site configuration object
-            try {
-                //$config = parse_ini_file(ciCFG_FILE, true);
-                $config = parse_ini_file(CONF_PATH . ciCFG_FILE, true);
-            } catch (\Exception $ex) {
-                $ssn->destroy();
-                throw new RuntimeException("<p>Missing Database Session Initialization: " . $ex->getMessage() . "</p>");
-            }
-
-            $dbuName = (!empty($config['db'][ 'ReadonlyUser']) ? $config['db'][ 'ReadonlyUser'] : '');
-            $dbPw = Crypto::decryptMessage((!empty($config['db']['ReadonlyPassword']) ? $config['db']['ReadonlyPassword'] : ''));
+            $dbuName = Env::get('DB_READONLY_USER');
+            $dbPw = Crypto::decryptMessage(Env::get('DB_READONLY_PASSWORD'));
         }
 
         try {

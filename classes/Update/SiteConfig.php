@@ -3,6 +3,7 @@ namespace HHK\Update;
 
 use DateTime;
 use HHK\Common;
+use HHK\Config\Env;
 use HHK\Exception\ValidationException;
 use HHK\House\OperatingHours;
 use HHK\HTMLControls\{HTMLTable, HTMLInput, HTMLSelector, HTMLContainer};
@@ -528,10 +529,18 @@ class SiteConfig {
 
         }
 
-        $config = parse_ini_file(CONF_PATH . ciCFG_FILE, true);
-        if(SecurityComponent::is_TheAdmin() && $category == NULL && isset($config['db'])){
-            // site.cfg entries
-            $tblMkup = self::createCliteMarkup($config['db'])->generateMarkup();
+        if(SecurityComponent::is_TheAdmin() && $category == NULL){
+            // .env database entries (passwords are masked by createCliteMarkup)
+            $dbConfig = [
+                'DBMS' => Env::get('DBMS'),
+                'URL' => Env::get('DB_URL'),
+                'User' => Env::get('DB_USER'),
+                'Password' => Env::get('DB_PASSWORD'),
+                'Schema' => Env::get('DB_SCHEMA'),
+                'ReadonlyUser' => Env::get('DB_READONLY_USER'),
+                'ReadonlyPassword' => Env::get('DB_READONLY_PASSWORD'),
+            ];
+            $tblMkup = self::createCliteMarkup($dbConfig)->generateMarkup();
         }else{
             $tblMkup = '';
         }

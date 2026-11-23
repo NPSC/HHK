@@ -25,8 +25,10 @@ jobs:
         run: composer install --no-dev --optimize-autoloader
 
       # 4. Package production files into a ZIP archive
-      # This excludes development files and tests. conf/site.cfg ships as
-      # conf/site.cfg.example so unzipping over a site can't overwrite its config.
+      # This excludes development files and tests. Site config lives in .env
+      # (never in the repo); only .env.example ships, so unzipping over a site
+      # can't overwrite its config. debugbar-assets is a symlink into a dev-only
+      # package, so it is left out too.
       - name: Create Zip Archive
         run: |
           FOLDER_NAME="hhk"
@@ -44,9 +46,8 @@ jobs:
             --exclude="phpstan*" \
             --exclude="phpunit.xml" \
             --exclude="GuestCensusReportNotes.md" \
-            --exclude="/conf/site.cfg"
-
-          cp conf/site.cfg "$FOLDER_NAME/conf/site.cfg.example"
+            --exclude="/.env" \
+            --exclude="/public/debugbar-assets"
 
           zip -r "$ZIP_NAME" "$FOLDER_NAME"
 

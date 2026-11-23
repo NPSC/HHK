@@ -19,7 +19,7 @@ use HHK\SysConst\Mode;
  * @license   GPL and MIT
  * @link      https://github.com/ecrane57/Hospitality-HouseKeeper
  */
-require('functions/commonDefines.php');
+require(__DIR__ . '/../functions/commonDefines.php');
 
 // get session instance
 $uS = Session::getInstance();
@@ -36,7 +36,7 @@ if ($log == "lo") {
 try {
 
     $login = new Login();
-    $dbh = $login->initHhkSession(CONF_PATH, ciCFG_FILE);
+    $dbh = $login->initHhkSession();
 
 } catch (InvalidArgumentException $pex) {
     exit ("<h3>Database Access Error.   <a href='index.php'>Continue</a></h3>");

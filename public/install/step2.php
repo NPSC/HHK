@@ -22,7 +22,7 @@ require_once ("InstallIncludes.php");
 
 try {
     $login = new Login();
-    $config = $login->initHhkSession(CONF_PATH, ciCFG_FILE);
+    $config = $login->initHhkSession();
 } catch (PDOException $pex) {
     echo ("Database Error.  " . $pex->getMessage());
 } catch (Exception $ex) {
@@ -76,18 +76,18 @@ if (isset($_POST['btnSave'])) {
         $patch = new Patch();
 
         // Update Tables
-        $resultAccumulator .= $patch->updateWithSqlStmts($dbh, '../sql/CreateAllTables.sql', "Tables");
+        $resultAccumulator .= $patch->updateWithSqlStmts($dbh, REL_BASE_DIR . 'sql/CreateAllTables.sql', "Tables");
         foreach ($patch->results as $err) {
             $errorMsg .= 'Create Table Error: ' . $err['error'] . ', ' . $err['errno'] . '; Query=' . $err['query'] . '<br/>';
         }
 
 
-        $resultAccumulator .= $patch->updateWithSqlStmts($dbh, '../sql/CreateAllViews.sql', 'Views');
+        $resultAccumulator .= $patch->updateWithSqlStmts($dbh, REL_BASE_DIR . 'sql/CreateAllViews.sql', 'Views');
         foreach ($patch->results as $err) {
             $errorMsg .= 'Create View Error: ' . $err['error'] . ', ' . $err['errno'] . '; Query=' . $err['query'] . '<br/>';
         }
 
-        $resultAccumulator .= $patch->updateWithSqlStmts($dbh, '../sql/CreateAllRoutines.sql', 'Stored Procedures', '$$', '-- ;');
+        $resultAccumulator .= $patch->updateWithSqlStmts($dbh, REL_BASE_DIR . 'sql/CreateAllRoutines.sql', 'Stored Procedures', '$$', '-- ;');
         foreach ($patch->results as $err) {
             $errorMsg .= 'Create Stored Procedures Error: ' . $err['error'] . ', ' . $err['errno'] . '; Query=' . $err['query'] . '<br/>';
         }
