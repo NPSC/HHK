@@ -50,14 +50,20 @@ Check it: `https://<site>/.env` and `https://<site>/vendor/autoload.php` must re
 
 ### 4. Update the crontab
 
-Script paths moved under `public/`:
-
 | Old                     | New                            |
 |-------------------------|--------------------------------|
-| `admin/ws_cron.php`     | `public/admin/ws_cron.php`     |
+| `admin/ws_cron.php`     | `bin/cron.php`                 |
 | `house/GenLedger.php`   | removed, see below             |
 
-The scripts no longer need a `cd` into their folder first, so `php /var/www/<site>/public/admin/ws_cron.php` works from anywhere.
+The Job Scheduler runner moved out of the web root to `bin/cron.php`, and it only runs from the command line now. Replace the old line with:
+
+```
+* * * * * php /var/www/<site>/bin/cron.php
+```
+
+Keep the same user and schedule the old line had. It works from any directory; no `cd` needed. Errors go to stderr and the script exits non-zero when the database can't be reached.
+
+If a site ran the scheduler by calling the `admin/ws_cron.php` URL (an outside cron service, with an HHK login) instead of the command line, that no longer works. Set up a command-line cron job on the server instead.
 
 **GL transfer (sites with `useGLCodes` on):** `GenLedger.php` is gone; the transfer is now a Job Scheduler job instead of its own crontab line. Until the job is set up, no GL file is sent.
 
@@ -65,7 +71,7 @@ The scripts no longer need a `cd` into their folder first, so `php /var/www/<sit
 2. In the Job Scheduler, add a **General Ledger Transfer** job. Set it to monthly, on or after the fiscal month start day (Site Configuration, `fm_Start_Day`). Set the notification email; it defaults to `NotificationAddress`.
 3. Do a dry run first. The log should show the period and the number of journal lines, and nothing is uploaded.
 
-The job only runs if the site has the `ws_cron.php` crontab line from the table above.
+The job only runs if the site has the `bin/cron.php` crontab line above.
 
 ### 5. Clean up
 

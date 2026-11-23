@@ -3,6 +3,7 @@ parameters:
     paths:
         - classes
         - functions
+        - bin
         - public/admin
         - public/house
         - public/install

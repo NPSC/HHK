@@ -1304,14 +1304,6 @@ WHERE `n`.`idName` IS NOT NULL AND `u`.`Status` IN ('a', 'd') AND `n`.`Member_St
     }
 
     /**
-     * Summary of isCron
-     * @return bool
-     */
-    public static function isCron(): bool{
-        return (php_sapi_name() == 'cli')? true:false;
-    }
-
-    /**
      * Summary of _logout
      * @return void
      */

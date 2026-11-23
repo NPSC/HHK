@@ -406,7 +406,7 @@ class SecurityComponent {
 
         $scriptName = filter_var($_SERVER["SCRIPT_NAME"] ?? '', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
-        // No SERVER_NAME under the CLI (ws_cron.php reaches here via Login), so a missing one
+        // No SERVER_NAME under the CLI (bin/cron.php reaches here via Login), so a missing one
         // leaves the host name blank rather than throwing.
         $serverName = filter_var($_SERVER["SERVER_NAME"] ?? '', FILTER_SANITIZE_URL);
 
