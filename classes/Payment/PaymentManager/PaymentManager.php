@@ -560,6 +560,14 @@ class PaymentManager {
 
                 // Make the payment
                 $payResult = PaymentSvcs::payAmount($dbh, $this->invoice, $this->pmp, $postBackPage);
+
+                if (!$payResult instanceof PaymentResult) {
+                    $payResult = new PaymentResult(0, 0, 0);
+                    $payResult->setStatus(PaymentResult::ERROR);
+                    $payResult->setReplyMessage('Payment Error = no result from the payment processor.  ' . $this->result);
+                    return $payResult;
+                }
+
                 if (strlen($payResult->getDisplayMessage() . $this->result) > 0) {
                     $payResult->setReplyMessage($payResult->getDisplayMessage() . '  ' . $this->result);
                 }

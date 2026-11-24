@@ -1837,7 +1837,6 @@ $(document).ready(function () {
        columns: cgCols,
        "buttons": getDtBtns("Current " + visitorLabel + "s - " + moment().format("MMM D, YYYY"), false, "hhk-strip-links"),
        "layout": { topStart: ['buttons', 'info'] },
-       autoWidth:false,
     });
 
 

@@ -156,7 +156,9 @@ class AdditionalChargesReport extends AbstractReport implements ReportInterface 
                 }
             }
 
-            $whCharges = " AND `il`.`description` IN (" . implode(', ', $chargePh) . ")";
+            if (count($chargePh) > 0) {
+                $whCharges = " AND `il`.`description` IN (" . implode(', ', $chargePh) . ")";
+            }
         }
 
 
@@ -167,6 +169,7 @@ class AdditionalChargesReport extends AbstractReport implements ReportInterface 
     CONCAT(`v`.`idVisit`, '-', `v`.`Span`) AS `idVisit`,
     `v`.`idVisit` AS `visitId`,
     `v`.`Span` AS `Span`,
+    `i`.`idInvoice` AS `idInvoice`,
     IFNULL(`p`.`idName`, '') AS `pId`,
     IFNULL(`hs`.`idPsg`, '') AS `idPsg`,
     IFNULL(`p`.`Name_Last`, '') AS `Name_Last`,
@@ -245,18 +248,21 @@ WHERE `i`.`Deleted` = 0 AND " . $whDates . $whBilling . $whDiags . $whCharges . 
             $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
             $patientIds = array();
             $visitIds = array();
+            $invoiceIds = array();
             $totalBilled = 0.00;
-            
+
             foreach ($rows as $row){
                 $patientIds[] = $row["pId"];
                 $visitIds[] = $row["visitId"] . "-" . $row["Span"];
+                $invoiceIds[] = $row["idInvoice"];
                 $totalBilled+= $row["Invoice_Amount"];
             }
 
             $patientIds = array_unique($patientIds);
             $visitIds = array_unique($visitIds);
+            $invoiceIds = array_unique($invoiceIds);
 
-            $this->statsArray = ["TotalPatientsServed" => count($patientIds), "TotalBilled"=>$totalBilled, "patientIds"=>$patientIds, "visitIds"=>$visitIds];
+            $this->statsArray = ["TotalPatientsServed" => count($patientIds), "TotalBilled"=>$totalBilled, "patientIds"=>$patientIds, "visitIds"=>$visitIds, "invoiceIds"=>$invoiceIds];
         }
 
         return $this->statsArray;
@@ -344,7 +350,7 @@ WHERE `i`.`Deleted` = 0 AND " . $whDates . $whBilling . $whDiags . $whCharges . 
         }
 
         $totalsMkup = "";
-        $totalsMkup .= $this->generateSummaryTable($this->addnlChargeLabel, $this->getAdditionalChargeCounts())->generateMarkup(['class'=>'mx-2 mb-2']);
+        $totalsMkup .= $this->generateSummaryTable($this->addnlChargeLabel . '/' . $this->discountLabel, $this->getAdditionalChargeCounts())->generateMarkup(['class'=>'mx-2 mb-2']);
         
 
         foreach($this->colSelector->getFilteredFields() as $fld){
@@ -403,43 +409,38 @@ WHERE `i`.`Deleted` = 0 AND " . $whDates . $whBilling . $whDiags . $whCharges . 
     }
 
     protected function getAdditionalChargeCounts(){
-        $visitIds = $this->getStats()["visitIds"];
+        // Count lines on the invoices the report lists, so every report filter
+        // (dates, billing agent, diagnosis, charge/discount) applies here too.
+        $invoiceIds = $this->getStats()["invoiceIds"];
 
-        $params = [':itemAddnlCharge' => ItemId::AddnlCharge];
+        if (count($invoiceIds) == 0) {
+            return [];
+        }
 
-        $visitPh = [];
-        if(count($visitIds) == 0){
-            $visitPh[] = ':vid0';
-            $params[':vid0'] = 'null';
-        }else{
-            foreach($visitIds as $i=>$v){
-                $ph = ':vid' . $i;
-                $visitPh[] = $ph;
-                $params[$ph] = $v;
+        $params = [':itemAddnlCharge' => ItemId::AddnlCharge, ':itemDiscount' => ItemId::Discount];
+
+        $invoicePh = [];
+        foreach (array_values($invoiceIds) as $i => $id) {
+            $ph = ':inv' . $i;
+            $invoicePh[] = $ph;
+            $params[$ph] = $id;
+        }
+
+        $chargePh = [];
+        foreach ($this->selectedAdditionalCharges as $i => $d) {
+            if ($d != '' && isset($this->additionalCharges[$d])) {
+                $ph = ':chg' . $i;
+                $chargePh[] = $ph;
+                $params[$ph] = $this->additionalCharges[$d]["Description"];
             }
         }
 
-        $selectedCharges = $this->selectedAdditionalCharges;
-        $whCharges = "";
-        if(count($selectedCharges) > 0){
-            $chargePh = [];
-            foreach($selectedCharges as $i => $d){
-                if ($d != '' && isset($this->additionalCharges[$d])) {
-                    $ph = ':chg' . $i;
-                    $chargePh[] = $ph;
-                    $params[$ph] = $this->additionalCharges[$d]["Description"];
-                }
-            }
-
-            $whCharges = " AND `il`.`description` IN (" . implode(', ', $chargePh) . ")";
-        }
+        $whCharges = (count($chargePh) > 0 ? " AND `il`.`description` IN (" . implode(', ', $chargePh) . ")" : "");
 
         $query = 'SELECT `il`.`description`, SUM(`il`.`Quantity`) AS `count` FROM `invoice_line` `il`
-JOIN `invoice` `i` ON `il`.`Invoice_Id` = `i`.`idInvoice`
-JOIN `visit` `v` ON `i`.`Order_Number` = `v`.`idVisit` AND `i`.`Suborder_Number` = `v`.`Span`
-WHERE `il`.`Item_Id` = :itemAddnlCharge AND
+WHERE `il`.`Item_Id` IN (:itemAddnlCharge, :itemDiscount) AND
 `il`.`Deleted` = 0 AND
-CONCAT(`v`.`idVisit`, "-", `v`.`Span`) IN (' . implode(', ', $visitPh) .') ' . $whCharges . '
+`il`.`Invoice_Id` IN (' . implode(', ', $invoicePh) . ')' . $whCharges . '
 GROUP BY `il`.`Description`';
 
         $stmt = $this->dbh->prepare($query);
@@ -658,7 +659,7 @@ GROUP BY `de`.`description` ORDER BY `de`.`Order` ASC, `de`.`Code` ASC
         $this->getResultSet();
 
         //summary sheet
-        $this->generateExcelSummaryTable($this->addnlChargeLabel, $this->getAdditionalChargeCounts(), $writer);
+        $this->generateExcelSummaryTable($this->addnlChargeLabel . '/' . $this->discountLabel, $this->getAdditionalChargeCounts(), $writer);
 
         foreach($this->colSelector->getFilteredFields() as $fld){
             if($fld[1] == "Age"){

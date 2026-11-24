@@ -193,6 +193,13 @@ class PaymentSvcs {
             $payResult->setDisplayMessage('Amount Invoiced.  ');
             break;
 
+          default:
+            // e.g. a Pay_Type lookup added by hand whose Substitute isn't a payment method.
+            $payResult = new PaymentResult(0, 0, 0);
+            $payResult->setStatus(PaymentResult::ERROR);
+            $payResult->setReplyMessage('Error:  Unknown pay type "' . htmlspecialchars((string)$pmp->getPayType(), ENT_QUOTES) . '".  Check the Pay Types settings.  ');
+            break;
+
         }
 
         return $payResult;

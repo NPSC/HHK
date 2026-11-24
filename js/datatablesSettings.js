@@ -15,6 +15,8 @@
             console.error(message);
         }
     };
+    
+        DataTable.defaults.autoWidth = false;
 
     // Standard control layout (DataTables 2+):
     //   top:    info ............ search

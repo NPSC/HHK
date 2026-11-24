@@ -214,7 +214,6 @@ function saveResource(idresc, type, clas) {
             } else if (data.roomList) {
                 $('#roomTable').children().remove().end().append($(data.roomList));
                 $('#tblroom').dataTable({
-                    "autoWidth": false,
                     "pageLength": 50,
                     "order": [[1, 'asc']],
                     "lengthMenu": [[20, 50, -1], [20, 50, "All"]]
@@ -222,7 +221,6 @@ function saveResource(idresc, type, clas) {
             } else if (data.rescList) {
                 $('#rescTable').children().remove().end().append($(data.rescList));
                 $('#tblresc').dataTable({
-                    "autoWidth": false,
                     "pageLength": 50,
                     "order": [[6, 'asc'], [1, 'asc']],
                     "lengthMenu": [[20, 50, -1], [20, 50, "All"]]
@@ -437,14 +435,12 @@ $(document).ready(function () {
 	});
 
     $('#tblresc').dataTable({
-        "autoWidth": false,
         "pageLength": 50,
         "order": [[6, 'asc'], [1, 'asc']],
         "lengthMenu": [[20, 50, -1], [20, 50, "All"]]
     });
 
     $('#tblroom').dataTable({
-        "autoWidth": false,
         "pageLength": 50,
         "order": [[1, 'asc']],
         "lengthMenu": [[20, 50, -1], [20, 50, "All"]]

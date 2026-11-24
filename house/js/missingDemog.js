@@ -71,7 +71,6 @@ $(document).ready(function () {
         "serverSide": true,
         "processing": true,
         "deferRender": true,
-        "autoWidth": false,
         "language": {"search": "Search missing demographics:"},
         "order": [[0,'desc']],
         "pageLength": 25,

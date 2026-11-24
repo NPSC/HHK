@@ -299,7 +299,6 @@
             order: [[8, 'desc']],
             pageLength: 25,
             lengthMenu: [[25, 50, 100], [25, 50, 100]],
-            autoWidth: false,
             ajax: {
                 url: opts.url,
                 data: function (d) {
