@@ -56,15 +56,22 @@ $(function () {
         $('<div class="row mx-0 mt-2"/>').append(
             $('<div class="col-12" style="font-size: smaller;"/>').text('If you enter a password, it must have at least ' + minPwLength + ' characters with at least 1 uppercase letter, 1 lowercase letter, a number and a symbol. It cannot include < or >. Do not use names or dictionary words.')
         ),
-        $('<div class="hhk-reset-msg" style="margin: 0.5em 0;"/>'),
+        $('<div class="hhk-reset-msg ui-corner-all" style="display:none; padding: 0.3em; margin: 0.5em 0;"/>'),
         $('<div class="hhk-reset-pw" style="display:none; margin: 0.5em 0;"/>')
     );
+
+    $reset.find('.showPw').button();
 
     var fieldInputs = {newer: '#wgNewPw1', confirm: '#wgNewPw2'},
         fieldMsgs = {newer: '#wgNewPwErr', confirm: '#wgConfirmPwErr'};
 
+    function showResetMessage(msg, isError) {
+        $reset.find('.hhk-reset-msg').text(msg || '').toggle(!!msg)
+            .toggleClass('ui-state-error', !!isError).toggleClass('ui-state-highlight', !isError);
+    }
+
     function clearResetMessages() {
-        $reset.find('.hhk-reset-msg').text('');
+        showResetMessage('');
         $reset.find('.hhk-reset-pw').empty().hide();
         $reset.find('.fieldErrMsg').empty();
         $reset.find('input').removeClass('ui-state-error').prop('type', 'password');
@@ -72,8 +79,7 @@ $(function () {
     }
 
     function resetPassword() {
-        var $msg = $reset.find('.hhk-reset-msg'),
-            $pw = $reset.find('.hhk-reset-pw'),
+        var $pw = $reset.find('.hhk-reset-pw'),
             newPw = $('#wgNewPw1').val(),
             confirmPw = $('#wgNewPw2').val();
 
@@ -91,7 +97,7 @@ $(function () {
                 if (data.reauth) {
                     hhkReauth.forget(purpose);
                     hhkReauth.require(purpose).then(resetPassword, function () {
-                        $msg.text(data.error);
+                        showResetMessage(data.error, true);
                     });
                 } else if (data.error) {
                     if (data.gotopage) {
@@ -103,10 +109,10 @@ $(function () {
                             $(fieldMsgs[field]).html(msgs.join('<br>'));
                         }
                     });
-                    $msg.text(data.error);
+                    showResetMessage(data.error, true);
                 } else if (data.success) {
                     $reset.find('input').val('');
-                    $msg.text(data.success);
+                    showResetMessage(data.success, false);
                     $reset.dialog('option', 'buttons', { "Close": function () { $reset.dialog('close'); } });
                     if (data.tempPW) {
                         $pw.append(
@@ -117,7 +123,7 @@ $(function () {
                 }
             })
             .catch(function () {
-                $msg.text('Unexpected response from the server.  Password may be unchanged.');
+                showResetMessage('Unexpected response from the server.  Password may be unchanged.', true);
             });
     }
 
@@ -128,7 +134,7 @@ $(function () {
 
     $reset.dialog({
         autoOpen: false,
-        width: 'auto',
+        width: getDialogWidth(550),
         resizable: true,
         modal: true,
         title: 'Reset Password for ' + memName

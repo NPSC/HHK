@@ -506,7 +506,7 @@ if ($stmt->execute() !== FALSE) {
 
         <script type="text/javascript" src="<?php echo NOTY_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo NOTY_SETTINGS_JS; ?>"></script>
-        <script type="text/javascript" src="js/misc.js"></script>
+        <script type="text/javascript" src="js/misc.js<?php echo JSV; ?>"></script>
 
     </head>
     <body <?php if ($wInit->testVersion) echo "class='testbody'"; ?>>

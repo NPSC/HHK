@@ -434,6 +434,7 @@ $alertMessage = $alertMsg->createMarkup();
         <?php echo BOOTSTRAP_ICONS_CSS; ?>
         <?php echo NAVBAR_CSS; ?>
         <?php echo UPPLOAD_CSS; ?>
+        <link href="../css/userSettings.css<?php echo JSV; ?>" rel="stylesheet" type="text/css" />
 
         <script type="text/javascript" src="<?php echo JQ_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo JQ_UI_JS; ?>"></script>
@@ -455,7 +456,7 @@ $alertMessage = $alertMsg->createMarkup();
         <script type="text/javascript" src="<?php echo HTMLENTITIES_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo DOMPURIFY_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo NOTES_VIEWER_JS; ?>"></script>
-        <script type="text/javascript" src="js/genfunc.js"></script>
+        <script type="text/javascript" src="js/genfunc.js<?php echo JSV; ?>"></script>
 
     </head>
     <body <?php if ($testVersion) echo "class='testbody'"; ?>>
